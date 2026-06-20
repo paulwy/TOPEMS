@@ -23,6 +23,7 @@ import {
 } from "@/api/template";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
+import { apiLogger } from "@/utils/logger";
 import {
   Box,
   Button,
@@ -63,6 +64,7 @@ const TemplateManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -81,7 +83,7 @@ const TemplateManagementPage: React.FC = () => {
         setCategories(categoriesRes.data);
       }
     } catch (err: any) {
-      console.error("Error loading templates:", err);
+      apiLogger.error("Error loading templates:", err);
     } finally {
       setLoading(false);
     }

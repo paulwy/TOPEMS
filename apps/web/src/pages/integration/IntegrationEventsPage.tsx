@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { integrationApi } from "@/api/integration";
 import type { IntegrationEvent } from "@/api/integration";
+import { logger } from "@/utils/logger";
 
 const IntegrationEventsPage: React.FC = () => {
   const [events, setEvents] = useState<IntegrationEvent[]>([]);
@@ -13,7 +14,7 @@ const IntegrationEventsPage: React.FC = () => {
       const res = await integrationApi.listEvents();
       if (res.success && res.data !== undefined) setEvents(res.data);
     } catch (error) {
-      console.error("Error loading data:", error);
+      logger.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }

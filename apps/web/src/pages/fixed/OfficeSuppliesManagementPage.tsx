@@ -99,6 +99,7 @@ const OfficeSuppliesManagementPage: React.FC<
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -358,6 +359,7 @@ const OfficeSuppliesManagementPage: React.FC<
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -577,7 +579,11 @@ const OfficeSuppliesManagementPage: React.FC<
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+                  gridTemplateColumns: {
+                    xs: "repeat(1, 1fr)",
+                    sm: "repeat(2, 1fr)",
+                    md: "repeat(3, 1fr)",
+                  },
                   gap: 2,
                 }}
               >
@@ -615,7 +621,10 @@ const OfficeSuppliesManagementPage: React.FC<
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+                  gridTemplateColumns: {
+                    xs: "repeat(1, 1fr)",
+                    md: "repeat(2, 1fr)",
+                  },
                   gap: 2,
                 }}
               >
@@ -710,7 +719,11 @@ const OfficeSuppliesManagementPage: React.FC<
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+                    gridTemplateColumns: {
+                      xs: "repeat(1, 1fr)",
+                      sm: "repeat(2, 1fr)",
+                      md: "repeat(3, 1fr)",
+                    },
                     gap: 2,
                   }}
                 >
@@ -754,7 +767,10 @@ const OfficeSuppliesManagementPage: React.FC<
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+                    gridTemplateColumns: {
+                      xs: "repeat(1, 1fr)",
+                      md: "repeat(2, 1fr)",
+                    },
                     gap: 2,
                   }}
                 >

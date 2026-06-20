@@ -3,7 +3,7 @@
  * 管理企业固定资产信息，包括折旧跟踪和会计集成
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Plus,
   Edit,
@@ -38,6 +38,7 @@ import {
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 import { ImageUpload } from "@/components/common";
 
+import { apiLogger } from "@/utils/logger";
 /** 资产状态配置 */
 const STATUS_CONFIG: Record<string, { label: string; sx: object }> = {
   normal: { label: "正常", sx: { bgcolor: "success.main", color: "white" } },
@@ -411,14 +412,14 @@ export default function FixedAssetManagementPage() {
 
   // 处理创建
   const handleCreate = (data: FixedAssetFormData) => {
-    console.log("创建固定资产:", data);
+    apiLogger.info("创建固定资产:", data);
     setIsCreating(false);
   };
 
   // 处理更新
   const handleUpdate = (data: FixedAssetFormData) => {
     if (!selectedAsset) return;
-    console.log("更新固定资产:", selectedAsset.id, data);
+    apiLogger.info("更新固定资产:", selectedAsset.id, data);
     setIsEditing(false);
     setSelectedAsset(null);
   };
@@ -426,7 +427,7 @@ export default function FixedAssetManagementPage() {
   // 处理删除
   const handleDelete = () => {
     if (!deletingId) return;
-    console.log("删除固定资产:", deletingId);
+    apiLogger.info("删除固定资产:", deletingId);
     setDeletingId(null);
   };
 
@@ -997,7 +998,11 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
         />
 
         <Box>
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mb: 1, display: "block" }}
+          >
             资产图片
           </Typography>
           <ImageUpload

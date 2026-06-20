@@ -1,21 +1,11 @@
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
-import {
-  render,
-  screen,
-  waitFor,
-  cleanup,
-  act,
-} from "@testing-library/react";
+import { render, screen, waitFor, cleanup, act } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import FinanceInvoicePage from "@/pages/finance/FinanceInvoicePage";
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>,
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 describe("FinanceInvoicePage", () => {
@@ -40,9 +30,12 @@ describe("FinanceInvoicePage", () => {
         renderWithProviders(<FinanceInvoicePage />);
       });
 
-      await waitFor(() => {
-        expect(screen.queryByText("发票管理")).toBeTruthy();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.queryByText("发票管理")).toBeTruthy();
+        },
+        { timeout: 3000 },
+      );
     });
   });
 });

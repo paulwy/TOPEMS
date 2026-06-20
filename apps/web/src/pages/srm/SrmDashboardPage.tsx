@@ -12,6 +12,7 @@ import { MetricCard } from "@/components/MetricCard";
 import { StatsChart } from "@/components/StatsChart";
 import { srmApi } from "@/api/srm";
 import type { SrmDetailedStatistics } from "@/api/srm";
+import { apiLogger } from "@/utils/logger";
 
 const SrmDashboardPage: React.FC = () => {
   const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(
@@ -31,7 +32,7 @@ const SrmDashboardPage: React.FC = () => {
         setStatistics(response.data);
       }
     } catch (err) {
-      console.error("加载统计数据失败:", err);
+      apiLogger.error("加载统计数据失败:", err);
     } finally {
       setLoading(false);
     }
@@ -155,54 +156,59 @@ const SrmDashboardPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" },
+            gridTemplateColumns: {
+              xs: "repeat(1, 1fr)",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+              xl: "repeat(6, 1fr)",
+            },
             gap: 2,
             mb: 4,
           }}
         >
           <MetricCard
             title="供应商总数"
-            value={statistics.basic.total_suppliers}
+            value={statistics.basic.total_suppliers ?? 0}
             icon={<Users sx={{ width: 24, height: 24 }} />}
             gradient={["#6366F1", "#8B5CF6"]}
-            subtitle={`${statistics.basic.active_suppliers} 个启用中`}
+            subtitle={`${statistics.basic.active_suppliers ?? 0} 个启用中`}
             trend="neutral"
           />
           <MetricCard
             title="平均评分"
-            value={statistics.basic.avg_score.toFixed(1)}
+            value={(statistics.basic.avg_score ?? 0).toFixed(1)}
             icon={<Award sx={{ width: 24, height: 24 }} />}
             gradient={["#F59E0B", "#D97706"]}
-            subtitle={`${statistics.basic.total_evaluations} 次评估`}
+            subtitle={`${statistics.basic.total_evaluations ?? 0} 次评估`}
             trend="neutral"
           />
           <MetricCard
             title="采购订单"
-            value={statistics.basic.total_orders}
+            value={statistics.basic.total_orders ?? 0}
             icon={<ClipboardList sx={{ width: 24, height: 24 }} />}
             gradient={["#10B981", "#059669"]}
-            subtitle={`${statistics.basic.pending_orders} 个待处理`}
+            subtitle={`${statistics.basic.pending_orders ?? 0} 个待处理`}
             trend="neutral"
           />
           <MetricCard
             title="订单总额"
-            value={`¥${statistics.basic.total_order_amount.toLocaleString()}`}
+            value={`¥${(statistics.basic.total_order_amount ?? 0).toLocaleString()}`}
             icon={<DollarSign sx={{ width: 24, height: 24 }} />}
             gradient={["#14B8A6", "#0D9488"]}
-            subtitle={`${statistics.basic.completed_orders} 个已完成`}
+            subtitle={`${statistics.basic.completed_orders ?? 0} 个已完成`}
             trend="neutral"
           />
           <MetricCard
             title="合同总数"
-            value={statistics.basic.total_contracts}
+            value={statistics.basic.total_contracts ?? 0}
             icon={<ScrollText sx={{ width: 24, height: 24 }} />}
             gradient={["#EC4899", "#DB2777"]}
-            subtitle={`${statistics.basic.active_contracts} 个有效`}
+            subtitle={`${statistics.basic.active_contracts ?? 0} 个有效`}
             trend="neutral"
           />
           <MetricCard
             title="供应商分类"
-            value={statistics.supplier_by_category.length}
+            value={statistics.supplier_by_category?.length ?? 0}
             icon={<Building2 sx={{ width: 24, height: 24 }} />}
             gradient={["#8B5CF6", "#7C3AED"]}
             subtitle="类别数量"
@@ -223,7 +229,7 @@ const SrmDashboardPage: React.FC = () => {
               <StatsChart
                 title="供应商状态分布"
                 type="pie"
-                data={statistics.supplier_by_status.map((s) => ({
+                data={(statistics.supplier_by_status ?? []).map((s) => ({
                   name: mapStatusToChinese(s.status),
                   value: s.count,
                   color: s.status === "active" ? "#10B981" : "#6B7280",
@@ -238,7 +244,7 @@ const SrmDashboardPage: React.FC = () => {
               <StatsChart
                 title="订单状态分布"
                 type="pie"
-                data={statistics.order_by_status.map((s) => ({
+                data={(statistics.order_by_status ?? []).map((s) => ({
                   name: mapStatusToChinese(s.status),
                   value: s.count,
                 }))}
@@ -262,10 +268,12 @@ const SrmDashboardPage: React.FC = () => {
               <StatsChart
                 title="评估分数分布"
                 type="bar"
-                data={statistics.evaluation_score_distribution.map((s) => ({
-                  name: s.range,
-                  value: s.count,
-                }))}
+                data={(statistics.evaluation_score_distribution ?? []).map(
+                  (s) => ({
+                    name: s.range,
+                    value: s.count,
+                  }),
+                )}
                 yKey="value"
                 xKey="name"
               />
@@ -276,7 +284,7 @@ const SrmDashboardPage: React.FC = () => {
               <StatsChart
                 title="月度订单趋势"
                 type="line"
-                data={statistics.monthly_order_trend.map((t) => ({
+                data={(statistics.monthly_order_trend ?? []).map((t) => ({
                   name: t.month,
                   value: t.order_count,
                   amount: t.total_amount,
@@ -288,7 +296,7 @@ const SrmDashboardPage: React.FC = () => {
           </Card>
         </Box>
 
-        {statistics.contract_by_status.length > 0 && (
+        {(statistics.contract_by_status ?? []).length > 0 && (
           <Card>
             <CardContent>
               <StatsChart

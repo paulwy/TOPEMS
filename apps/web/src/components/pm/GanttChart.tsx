@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Box, Typography, Button, Paper, IconButton } from "@mui/material";
 import { ChevronRight, ChevronLeft, ZoomIn, ZoomOut } from "lucide-react";
 import type { GanttPhase, GanttMilestone } from "@/api/pm";
 
@@ -117,115 +118,213 @@ const GanttChart: React.FC<GanttChartProps> = ({
   }, [scrollLeft]);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <button
+    <Paper
+      sx={{
+        backgroundColor: "white",
+        borderRadius: 2,
+        border: "1px solid #e5e7eb",
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 4,
+          py: 3,
+          backgroundColor: "#f9fafb",
+          borderBottom: "1px solid #e5e7eb",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton
             onClick={() => scroll("left")}
-            className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+            sx={{
+              p: 1.5,
+              borderRadius: 1,
+              "&:hover": { backgroundColor: "#e5e7eb" },
+            }}
           >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
+            <ChevronLeft style={{ width: 16, height: 16 }} />
+          </IconButton>
+          <IconButton
             onClick={() => scroll("right")}
-            className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+            sx={{
+              p: 1.5,
+              borderRadius: 1,
+              "&:hover": { backgroundColor: "#e5e7eb" },
+            }}
           >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
+            <ChevronRight style={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton
             onClick={() => handleZoom(-10)}
-            className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+            sx={{
+              p: 1.5,
+              borderRadius: 1,
+              "&:hover": { backgroundColor: "#e5e7eb" },
+            }}
             title="缩小"
           >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          <span className="text-sm text-gray-600">{zoom}%</span>
-          <button
+            <ZoomOut style={{ width: 16, height: 16 }} />
+          </IconButton>
+          <Typography sx={{ fontSize: "0.875rem", color: "#4b5563" }}>
+            {zoom}%
+          </Typography>
+          <IconButton
             onClick={() => handleZoom(10)}
-            className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+            sx={{
+              p: 1.5,
+              borderRadius: 1,
+              "&:hover": { backgroundColor: "#e5e7eb" },
+            }}
             title="放大"
           >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+            <ZoomIn style={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Box>
+      </Box>
 
-      <div className="flex">
-        <div className="w-48 flex-shrink-0 border-r border-gray-200">
-          <div className="h-16 px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center">
-            <span className="text-sm font-medium text-gray-600">任务</span>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
+      <Box sx={{ display: "flex" }}>
+        <Box
+          sx={{ width: 192, flexShrink: 0, borderRight: "1px solid #e5e7eb" }}
+        >
+          <Box
+            sx={{
+              height: 64,
+              px: 3,
+              py: 2,
+              backgroundColor: "#f9fafb",
+              borderBottom: "1px solid #e5e7eb",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}
+            >
+              任务
+            </Typography>
+          </Box>
+          <Box sx={{ maxHeight: 384, overflowY: "auto" }}>
             {phases.map((phase) => (
-              <div
+              <Box
                 key={phase.id}
-                className="h-12 px-3 py-2 border-b border-gray-100 flex items-center hover:bg-gray-50 transition-colors"
+                sx={{
+                  height: 48,
+                  px: 3,
+                  py: 2,
+                  borderBottom: "1px solid #f3f4f6",
+                  display: "flex",
+                  alignItems: "center",
+                  "&:hover": { backgroundColor: "#f9fafb" },
+                }}
               >
-                <div className="truncate">
-                  <div className="font-medium text-sm text-gray-900 truncate">
+                <Box sx={{ overflow: "hidden" }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                      color: "#111827",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {phase.name}
-                  </div>
+                  </Typography>
                   {phase.progress > 0 && (
-                    <div className="text-xs text-gray-500">
+                    <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
                       {phase.progress}% 完成
-                    </div>
+                    </Typography>
                   )}
-                </div>
-              </div>
+                </Box>
+              </Box>
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div
+        <Box
           ref={containerRef}
-          className="flex-1 overflow-x-auto"
+          sx={{
+            flex: 1,
+            overflowX: "auto",
+          }}
           onScroll={(e) =>
             setScrollLeft((e.target as HTMLDivElement).scrollLeft)
           }
         >
-          <div
-            className="min-w-max"
-            style={{ width: `${daysToShow * (zoom / 100) * 20}px` }}
+          <Box
+            sx={{
+              minWidth: "max-content",
+              width: `${daysToShow * (zoom / 100) * 20}px`,
+            }}
           >
-            <div className="h-16 border-b border-gray-200">
-              <div className="flex">
+            <Box sx={{ height: 64, borderBottom: "1px solid #e5e7eb" }}>
+              <Box sx={{ display: "flex" }}>
                 {monthLabels.map((label, index) => (
-                  <div
+                  <Box
                     key={index}
-                    className="absolute bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600"
-                    style={{
+                    sx={{
+                      position: "absolute",
+                      backgroundColor: "#f9fafb",
+                      px: 2,
+                      py: 1,
+                      fontSize: "0.75rem",
+                      fontWeight: 500,
+                      color: "#4b5563",
                       left: `${48 + label.offset * (zoom / 100) * 20}px`,
                       top: 0,
                     }}
                   >
                     {label.date.getFullYear()}年{label.date.getMonth() + 1}月
-                  </div>
+                  </Box>
                 ))}
-              </div>
-              <div className="flex pt-6 border-t border-gray-200">
+              </Box>
+              <Box
+                sx={{ display: "flex", pt: 6, borderTop: "1px solid #e5e7eb" }}
+              >
                 {dayLabels.map((label, index) => (
-                  <div
+                  <Box
                     key={index}
-                    className="flex-shrink-0 text-center text-xs text-gray-400"
-                    style={{ width: `${(zoom / 100) * 140}px` }}
+                    sx={{
+                      flexShrink: 0,
+                      textAlign: "center",
+                      fontSize: "0.75rem",
+                      color: "#9ca3af",
+                      width: `${(zoom / 100) * 140}px`,
+                    }}
                   >
                     {label.day}
-                  </div>
+                  </Box>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className="border-t border-gray-100">
+            <Box sx={{ borderTop: "1px solid #f3f4f6" }}>
               {phases.map((phase) => (
-                <div
+                <Box
                   key={phase.id}
-                  className="h-12 border-b border-gray-100 relative"
+                  sx={{
+                    height: 48,
+                    borderBottom: "1px solid #f3f4f6",
+                    position: "relative",
+                  }}
                 >
-                  <div
-                    className="absolute top-2 rounded-md h-8 flex items-center px-2 cursor-pointer transition-all hover:shadow-md"
-                    style={{
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      borderRadius: 2,
+                      height: 32,
+                      display: "flex",
+                      alignItems: "center",
+                      px: 2,
+                      cursor: "pointer",
+                      transition: "all",
+                      "&:hover": { boxShadow: 3 },
                       left: `${48 + getDayOffset(phase.start_date) * (zoom / 100) * 20}px`,
                       width: `${getBarWidth(phase.start_date, phase.end_date) * (zoom / 100) * 20 - 4}px`,
                       backgroundColor:
@@ -236,53 +335,123 @@ const GanttChart: React.FC<GanttChartProps> = ({
                             : "#9CA3AF",
                     }}
                   >
-                    <span className="text-xs text-white font-medium truncate px-1">
+                    <Typography
+                      sx={{
+                        fontSize: "0.75rem",
+                        color: "white",
+                        fontWeight: 500,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        px: 1,
+                      }}
+                    >
                       {phase.name}
-                    </span>
-                    <div
-                      className="absolute bottom-0 left-0 h-1 bg-white/30 rounded-b-md"
-                      style={{ width: `${phase.progress}%` }}
+                    </Typography>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        height: 4,
+                        backgroundColor: "rgba(255, 255, 255, 0.3)",
+                        borderRadius: "0 0 4px 4px",
+                        width: `${phase.progress}%`,
+                      }}
                     />
-                  </div>
+                  </Box>
 
                   {milestones
                     .filter((m) => m.project_id === phase.project_id)
                     .map((milestone) => (
-                      <div
+                      <Box
                         key={milestone.id}
-                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-yellow-400 bg-yellow-200"
-                        style={{
+                        sx={{
+                          position: "absolute",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: 12,
+                          height: 12,
+                          borderRadius: "50%",
+                          border: "2px solid #facc15",
+                          backgroundColor: "#fef3c7",
                           left: `${48 + getDayOffset(milestone.date) * (zoom / 100) * 20 - 6}px`,
                         }}
                         title={milestone.name}
                       />
                     ))}
-                </div>
+                </Box>
               ))}
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-blue-500" />
-          <span className="text-xs text-gray-600">进行中</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-green-500" />
-          <span className="text-xs text-gray-600">已完成</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full border-2 border-yellow-400 bg-yellow-200" />
-          <span className="text-xs text-gray-600">里程碑</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-gray-400" />
-          <span className="text-xs text-gray-600">未开始</span>
-        </div>
-      </div>
-    </div>
+      <Box
+        sx={{
+          px: 4,
+          py: 3,
+          backgroundColor: "#f9fafb",
+          borderTop: "1px solid #e5e7eb",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: 1,
+              backgroundColor: "#3b82f6",
+            }}
+          />
+          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+            进行中
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: 1,
+              backgroundColor: "#22c55e",
+            }}
+          />
+          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+            已完成
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              border: "2px solid #facc15",
+              backgroundColor: "#fef3c7",
+            }}
+          />
+          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+            里程碑
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: 1,
+              backgroundColor: "#9ca3af",
+            }}
+          />
+          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+            未开始
+          </Typography>
+        </Box>
+      </Box>
+    </Paper>
   );
 };
 

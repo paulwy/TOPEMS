@@ -1,4 +1,5 @@
 import React from "react";
+import { Box, Typography } from "@mui/material";
 import {
   AreaChart as RechartsAreaChart,
   Area,
@@ -44,7 +45,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   };
 
   return (
-    <div style={{ height }}>
+    <Box sx={{ height }}>
       <ResponsiveContainer
         width="100%"
         height="100%"
@@ -109,7 +110,9 @@ export const AreaChart: React.FC<AreaChartProps> = ({
               iconType="circle"
               iconSize={8}
               formatter={(value) => (
-                <span className="text-sm text-slate-600">{value}</span>
+                <Typography sx={{ fontSize: "0.875rem", color: "#475569" }}>
+                  {value}
+                </Typography>
               )}
             />
           )}
@@ -131,7 +134,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
           ))}
         </RechartsAreaChart>
       </ResponsiveContainer>
-    </div>
+    </Box>
   );
 };
 

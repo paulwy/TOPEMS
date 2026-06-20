@@ -18,6 +18,7 @@ import { Plus, Eye, Clock, Search, Users, Calendar } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ehsApi } from "@/api/ehs";
+import { apiLogger } from "@/utils/logger";
 import type { DrillRecord } from "@/api/ehs";
 import { toast } from "react-toastify";
 
@@ -68,7 +69,7 @@ const EhsDrillPage: React.FC = () => {
         setDrills([]);
       }
     } catch (err) {
-      console.error("加载演练记录数据失败:", err);
+      apiLogger.error("加载演练记录数据失败:", err);
       setDrills([]);
     } finally {
       setLoading(false);
@@ -189,7 +190,7 @@ const EhsDrillPage: React.FC = () => {
       loadDrills();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建演练记录失败:", err);
+      apiLogger.error("创建演练记录失败:", err);
     }
   };
 

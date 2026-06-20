@@ -44,6 +44,7 @@ import {
   vs,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { aiApi } from "@/api/ai";
+import { apiLogger } from "@/utils/logger";
 import { useAppStore } from "../../store";
 import AISettingsModal from "@/components/AISettingsModal";
 import {
@@ -190,6 +191,7 @@ const AIPage: React.FC = () => {
     }
 
     loadDocuments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -253,7 +255,7 @@ const AIPage: React.FC = () => {
         setDocuments(docs);
       }
     } catch (err) {
-      console.error("加载文档列表失败:", err);
+      apiLogger.error("加载文档列表失败:", err);
       addNotification({
         title: "加载失败",
         message: "加载文档列表失败",
@@ -610,7 +612,7 @@ const AIPage: React.FC = () => {
         type: "success",
       });
     } catch (err) {
-      console.error("AI 问答失败:", err);
+      apiLogger.error("AI 问答失败:", err);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",

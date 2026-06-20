@@ -29,6 +29,7 @@ import { reportApi } from "@/api/report";
 import ReportBuilder from "./ReportBuilder";
 import ReportViewer from "./ReportViewer";
 import ExportModal from "../../components/ExportModal";
+import { apiLogger } from "@/utils/logger";
 
 const ReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -207,6 +208,7 @@ const ReportPage: React.FC = () => {
 
   useEffect(() => {
     loadReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const showNotification = (type: "success" | "error", message: string) => {
@@ -227,7 +229,7 @@ const ReportPage: React.FC = () => {
       }
     } catch (err) {
       showNotification("error", "删除报表失败");
-      console.error("删除报表失败:", err);
+      apiLogger.error("删除报表失败:", err);
     }
   };
 

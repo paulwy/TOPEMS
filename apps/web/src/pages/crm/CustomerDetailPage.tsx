@@ -40,6 +40,7 @@ import {
 } from "@/hooks/useCrmFinance";
 import { useNotification } from "@/hooks/useNotification";
 import type { Customer } from "@/api/modules/crm/crm";
+import { apiLogger } from "@/utils/logger";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -86,6 +87,7 @@ const CustomerDetailPage: React.FC = () => {
     if (id) {
       loadCustomer(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadCustomer = async (customerId: string) => {
@@ -96,7 +98,7 @@ const CustomerDetailPage: React.FC = () => {
         setCustomer(res.data);
       }
     } catch (err) {
-      console.error("Failed to load customer:", err);
+      apiLogger.error("Failed to load customer:", err);
       error("加载客户信息失败");
     } finally {
       setLoading(false);
@@ -526,7 +528,10 @@ const CustomerDetailPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  lg: "repeat(2, 1fr)",
+                },
                 gap: 3,
               }}
             >

@@ -45,6 +45,7 @@ import {
   useGenerateCashFlowStatement,
   useExportFinancialReport,
 } from "@/hooks/useFinancialReport";
+import { apiLogger } from "@/utils/logger";
 
 // 报表类型配置
 const REPORT_TYPE_CONFIG = {
@@ -223,7 +224,7 @@ export default function FinancialReportsPage() {
       });
       setShowGenerateModal(false);
     } catch (error) {
-      console.error("Generate report failed:", error);
+      apiLogger.error("Generate report failed:", error);
     }
   };
 
@@ -237,7 +238,7 @@ export default function FinancialReportsPage() {
         format,
       });
     } catch (error) {
-      console.error("Export report failed:", error);
+      apiLogger.error("Export report failed:", error);
     }
   };
 

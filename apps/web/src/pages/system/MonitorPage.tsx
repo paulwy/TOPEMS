@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { monitorApi } from "@/api/shared/monitor";
+import { apiLogger } from "@/utils/logger";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
@@ -64,6 +65,7 @@ const MonitorPage: React.FC = () => {
     loadData();
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -78,7 +80,7 @@ const MonitorPage: React.FC = () => {
       setServiceHealth(healthRes.data || []);
       setAlerts(alertsRes.data?.items || []);
     } catch (error) {
-      console.error("加载监控数据失败:", error);
+      apiLogger.error("加载监控数据失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",

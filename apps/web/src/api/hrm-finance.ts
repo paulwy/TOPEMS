@@ -298,8 +298,7 @@ export const hrmFinanceApi = {
   batchGeneratePayrollVouchers: (params: {
     periods: string[];
     company_id: string;
-  }) =>
-    apiClient.hrm.post("/api/hrm/payroll/batch-generate-vouchers", params),
+  }) => apiClient.hrm.post("/api/hrm/payroll/batch-generate-vouchers", params),
 
   /**
    * 导出银行报盘文件
@@ -375,8 +374,7 @@ export const hrmFinanceApi = {
   updateSocialSecurityConfig: (
     configId: string,
     data: Partial<SocialSecurityConfig>,
-  ) =>
-    apiClient.hrm.put(`/api/hrm/social-security/configs/${configId}`, data),
+  ) => apiClient.hrm.put(`/api/hrm/social-security/configs/${configId}`, data),
 
   /**
    * 删除社保配置

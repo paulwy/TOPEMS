@@ -1,4 +1,17 @@
-import { Button, Card, CardContent, CardHeader, Tabs, Tab, Box, TextField, FormControl, FormLabel, Typography, Chip } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Tabs,
+  Tab,
+  Box,
+  TextField,
+  FormControl,
+  FormLabel,
+  Typography,
+  Chip,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 
 import {
@@ -15,6 +28,7 @@ import type {
   TemplateCategory,
   TemplateVariable,
 } from "../../api/template";
+import { logger } from "@/utils/logger";
 
 // Mock数据 - 模拟从API获取的模板列表
 const mockTemplates: Template[] = [
@@ -398,13 +412,13 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     if (!selectedTemplate) return;
 
     setIsLoading(true);
-    console.log("=== 开始模板渲染 ===");
-    console.log("模板名称:", selectedTemplate.name);
-    console.log("模板ID:", selectedTemplate.id);
-    console.log("原始内容长度:", selectedTemplate.content.length);
-    console.log("原始内容:\n", selectedTemplate.content);
-    console.log("变量配置:", JSON.stringify(templateVariables, null, 2));
-    console.log(
+    logger.info("=== 开始模板渲染 ===");
+    logger.info("模板名称:", selectedTemplate.name);
+    logger.info("模板ID:", selectedTemplate.id);
+    logger.info("原始内容长度:", selectedTemplate.content.length);
+    logger.debug("原始内容:\n", selectedTemplate.content);
+    logger.debug("变量配置:", JSON.stringify(templateVariables, null, 2));
+    logger.debug(
       "变量定义:",
       JSON.stringify(selectedTemplate.variables, null, 2),
     );
@@ -415,7 +429,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     let stepNumber = 1;
 
     // 步骤1: 替换变量
-    console.log(`\n--- 步骤${stepNumber}: 替换变量 ---`);
+    logger.info(`\n--- 步骤${stepNumber}: 替换变量 ---`);
     Object.entries(templateVariables).forEach(([key, value]) => {
       const pattern = new RegExp(`{{${key}}}`, "g");
       const matches = result.match(pattern);
@@ -424,29 +438,29 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
       result = result.replace(pattern, String(value));
       const replacedCount = beforeReplace.split(pattern).length - 1;
 
-      console.log(`变量 [${key}]:`);
-      console.log(`  - 值: "${value}" (类型: ${typeof value})`);
-      console.log(`  - 匹配次数: ${matchCount}`);
-      console.log(`  - 替换次数: ${replacedCount}`);
-      console.log(`  - 正则模式: ${pattern}`);
+      logger.info(`变量 [${key}]:`);
+      logger.info(`  - 值: "${value}" (类型: ${typeof value})`);
+      logger.info(`  - 匹配次数: ${matchCount}`);
+      logger.info(`  - 替换次数: ${replacedCount}`);
+      logger.debug(`  - 正则模式: ${pattern}`);
 
       if (matchCount === 0) {
-        console.warn(`  ⚠️ 警告: 模板中未找到变量 {{${key}}}`);
+        logger.warn(`  ⚠️ 警告: 模板中未找到变量 {{${key}}}`);
       }
 
       // 检查是否还有未替换的变量
       const remainingPattern = new RegExp(`{{${key}}}`, "g");
       if (remainingPattern.test(result)) {
-        console.error(`  ❌ 错误: 变量 {{${key}}} 替换后仍存在`);
+        logger.error(`  ❌ 错误: 变量 {{${key}}} 替换后仍存在`);
       }
     });
     stepNumber++;
 
     // 步骤2: 处理条件判断
-    console.log(`\n--- 步骤${stepNumber}: 处理条件判断 ---`);
+    logger.info(`\n--- 步骤${stepNumber}: 处理条件判断 ---`);
     const conditionPattern = /\{\{#if (\w+)\}\}(.*?)\{\{\/if\}\}/gs;
     let conditionMatches = result.match(conditionPattern);
-    console.log(
+    logger.info(
       "找到的条件块数量:",
       conditionMatches ? conditionMatches.length : 0,
     );
@@ -456,12 +470,12 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
       (_: string, condition: string, content: string) => {
         const value = templateVariables[condition];
         const conditionResult = value ? content.trim() : "";
-        console.log(`条件块 {{#if ${condition}}}:`);
-        console.log(`  - 条件变量: ${condition}`);
-        console.log(`  - 变量值: "${value}" (类型: ${typeof value})`);
-        console.log(`  - 布尔转换: ${Boolean(value)}`);
-        console.log(`  - 内容长度: ${content.length}`);
-        console.log(
+        logger.info(`条件块 {{#if ${condition}}}:`);
+        logger.info(`  - 条件变量: ${condition}`);
+        logger.info(`  - 变量值: "${value}" (类型: ${typeof value})`);
+        logger.debug(`  - 布尔转换: ${Boolean(value)}`);
+        logger.debug(`  - 内容长度: ${content.length}`);
+        logger.debug(
           `  - 处理结果: "${conditionResult}" (保留: ${Boolean(value)})`,
         );
         return conditionResult;
@@ -470,10 +484,10 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     stepNumber++;
 
     // 步骤3: 处理默认值
-    console.log(`\n--- 步骤${stepNumber}: 处理默认值 ---`);
+    logger.info(`\n--- 步骤${stepNumber}: 处理默认值 ---`);
     const defaultPattern = /\{\{(\w+)\s*\|\|\s*["']([^"']+)["']\}\}/g;
     let defaultMatches = result.match(defaultPattern);
-    console.log(
+    logger.info(
       "找到的默认值块数量:",
       defaultMatches ? defaultMatches.length : 0,
     );
@@ -483,65 +497,65 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
       (_: string, key: string, defaultValue: string) => {
         const value = templateVariables[key];
         const finalValue = value && value !== "" ? String(value) : defaultValue;
-        console.log(
+        logger.info(
           `默认值块 {${"${" + "{"}${key} || "${defaultValue}"${"}" + "}"}:`,
         );
-        console.log(`  - 变量: ${key}`);
-        console.log(`  - 变量值: "${value}"`);
-        console.log(`  - 默认值: "${defaultValue}"`);
-        console.log(`  - 最终值: "${finalValue}"`);
-        console.log(`  - 使用默认值: ${!value || value === ""}`);
+        logger.info(`  - 变量: ${key}`);
+        logger.info(`  - 变量值: "${value}"`);
+        logger.info(`  - 默认值: "${defaultValue}"`);
+        logger.info(`  - 最终值: "${finalValue}"`);
+        logger.debug(`  - 使用默认值: ${!value || value === ""}`);
         return finalValue;
       },
     );
     stepNumber++;
 
     // 步骤4: 替换动态变量
-    console.log(`\n--- 步骤${stepNumber}: 替换动态变量 ---`);
+    logger.info(`\n--- 步骤${stepNumber}: 替换动态变量 ---`);
     const now = new Date();
     const todayValue = now.toISOString().split("T")[0];
     const nowValue = now.toISOString();
 
-    console.log("动态变量:");
-    console.log(`  - {{today}}: "${todayValue}"`);
-    console.log(`  - {{now}}: "${nowValue}"`);
+    logger.info("动态变量:");
+    logger.info(`  - {{today}}: "${todayValue}"`);
+    logger.info(`  - {{now}}: "${nowValue}"`);
 
     const todayPattern = /\{\{today\}\}/g;
     const todayMatches = result.match(todayPattern);
-    console.log(
+    logger.info(
       `  - {{today}} 匹配次数: ${todayMatches ? todayMatches.length : 0}`,
     );
     result = result.replace(todayPattern, todayValue);
 
     const nowPattern = /\{\{now\}\}/g;
     const nowMatches = result.match(nowPattern);
-    console.log(`  - {{now}} 匹配次数: ${nowMatches ? nowMatches.length : 0}`);
+    logger.info(`  - {{now}} 匹配次数: ${nowMatches ? nowMatches.length : 0}`);
     result = result.replace(nowPattern, nowValue);
     stepNumber++;
 
     // 步骤5: 检查未处理的变量
-    console.log(`\n--- 步骤${stepNumber}: 检查未处理的变量 ---`);
+    logger.info(`\n--- 步骤${stepNumber}: 检查未处理的变量 ---`);
     const remainingVarsPattern = /\{\{([^#/][^}]+)\}\}/g;
     const remainingVars = result.match(remainingVarsPattern);
     if (remainingVars && remainingVars.length > 0) {
-      console.warn("⚠️ 发现未处理的变量:");
+      logger.warn("⚠️ 发现未处理的变量:");
       remainingVars.forEach((varMatch) => {
-        console.warn(`  - ${varMatch}`);
+        logger.warn(`  - ${varMatch}`);
       });
-      console.warn("建议检查:");
-      console.warn("  1. 变量名是否正确");
-      console.warn("  2. 变量是否已配置值");
-      console.warn("  3. 变量格式是否正确");
+      logger.warn("建议检查:");
+      logger.warn("  1. 变量名是否正确");
+      logger.warn("  2. 变量是否已配置值");
+      logger.warn("  3. 变量格式是否正确");
     } else {
-      console.log("✅ 所有变量已成功处理");
+      logger.info("✅ 所有变量已成功处理");
     }
     stepNumber++;
 
     // 最终结果
-    console.log("\n=== 渲染完成 ===");
-    console.log("最终内容长度:", result.length);
-    console.log("最终内容:\n", result);
-    console.log("渲染耗时:", "300ms (模拟延迟)");
+    logger.info("\n=== 渲染完成 ===");
+    logger.info("最终内容长度:", result.length);
+    logger.debug("最终内容:\n", result);
+    logger.info("渲染耗时:", "300ms (模拟延迟)");
 
     setRenderedContent(result);
     setIsLoading(false);

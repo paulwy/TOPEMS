@@ -5,11 +5,12 @@
  * and fallback to static imports for local modules.
  */
 
-import React, { useEffect, useState, Suspense, lazy } from 'react';
-import { Route, useLocation } from 'react-router-dom';
-import { ModuleLoadingFallback } from './ModuleLoader';
-import { moduleRegistry } from '../registry';
-import { eventBus, ModuleEvents } from './EventBus';
+import React, { useEffect, useState, Suspense, lazy } from "react";
+import { Route, useLocation } from "react-router-dom";
+import { ModuleLoadingFallback } from "./ModuleLoader";
+import { moduleRegistry } from "../registry";
+import { eventBus, ModuleEvents } from "./EventBus";
+import { logger } from "@/utils/logger";
 
 // Remote module container type
 interface RemoteContainer {
@@ -18,13 +19,13 @@ interface RemoteContainer {
 }
 
 // Global types injected by Module Federation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 declare const __webpack_share_scopes__: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 declare const __webpack_init_sharing__: (scope: string) => Promise<void>;
 
 // Cache for loaded remote modules
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const remoteModuleCache: Map<string, any> = new Map();
 
 /**
@@ -32,7 +33,7 @@ const remoteModuleCache: Map<string, any> = new Map();
  */
 async function loadRemoteModule(
   remoteName: string,
-  modulePath: string
+  modulePath: string,
 ): Promise<React.ComponentType> {
   const cacheKey = `${remoteName}:${modulePath}`;
 
@@ -41,13 +42,15 @@ async function loadRemoteModule(
   }
 
   try {
-    await __webpack_init_sharing__('default');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const container = (window as any)[remoteName] as RemoteContainer | undefined;
+    await __webpack_init_sharing__("default");
+
+    const container = (window as any)[remoteName] as
+      | RemoteContainer
+      | undefined;
 
     if (!container) {
       throw new Error(
-        `Remote module "${remoteName}" not found. Make sure the remote is loaded.`
+        `Remote module "${remoteName}" not found. Make sure the remote is loaded.`,
       );
     }
 
@@ -61,9 +64,9 @@ async function loadRemoteModule(
 
     return resolvedModule;
   } catch (error) {
-    console.error(
+    logger.error(
       `[DynamicRouter] Failed to load remote module ${remoteName}:${modulePath}`,
-      error
+      error,
     );
     throw error;
   }
@@ -76,7 +79,7 @@ function createRemoteLazyComponent(
   remoteName: string,
   modulePath: string,
   onLoad?: () => void,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
 ): React.LazyExoticComponent<React.ComponentType> {
   return lazy(async () => {
     try {
@@ -121,7 +124,7 @@ export const DynamicRouter: React.FC = () => {
                 moduleId: route.path,
                 error,
               });
-            }
+            },
           );
 
           return {
@@ -151,7 +154,7 @@ export const DynamicRouter: React.FC = () => {
                 error,
               });
               throw error;
-            })
+            }),
         );
 
         return {
@@ -169,16 +172,13 @@ export const DynamicRouter: React.FC = () => {
     loadRoutes();
 
     const handleModuleLoaded = (data: { moduleId: string }) => {
-      console.log(`[DynamicRouter] Module loaded: ${data.moduleId}`);
+      logger.info(`[DynamicRouter] Module loaded: ${data.moduleId}`);
     };
 
-    const handleModuleError = (data: {
-      moduleId: string;
-      error: Error;
-    }) => {
-      console.error(
+    const handleModuleError = (data: { moduleId: string; error: Error }) => {
+      logger.error(
         `[DynamicRouter] Module load error: ${data.moduleId}`,
-        data.error
+        data.error,
       );
     };
 
@@ -192,7 +192,7 @@ export const DynamicRouter: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log(`[DynamicRouter] Navigated to: ${location.pathname}`);
+    logger.info(`[DynamicRouter] Navigated to: ${location.pathname}`);
   }, [location]);
 
   return (
@@ -225,15 +225,15 @@ export async function preloadRemoteModules(): Promise<void> {
   await Promise.all(
     remotes.map(async (remote) => {
       try {
-        await loadRemoteModule(remote.name, './store');
-        console.log(`[DynamicRouter] Preloaded remote: ${remote.name}`);
+        await loadRemoteModule(remote.name, "./store");
+        logger.info(`[DynamicRouter] Preloaded remote: ${remote.name}`);
       } catch (error) {
-        console.warn(
+        logger.warn(
           `[DynamicRouter] Failed to preload remote: ${remote.name}`,
-          error
+          error,
         );
       }
-    })
+    }),
   );
 }
 
@@ -242,7 +242,7 @@ export async function preloadRemoteModules(): Promise<void> {
  */
 export async function loadRemotePage(
   remoteName: string,
-  pagePath: string
+  pagePath: string,
 ): Promise<React.ComponentType> {
   return loadRemoteModule(remoteName, pagePath);
 }

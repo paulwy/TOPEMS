@@ -29,6 +29,7 @@ import {
 import NotificationItem from "@/components/notifications/NotificationItem";
 import NotificationSettings from "@/components/notifications/NotificationSettings";
 import useNotificationSettings from "@/hooks/useNotificationSettings";
+import { apiLogger } from "@/utils/logger";
 
 type NotificationFilterType = "all" | NotificationTypeEnum;
 
@@ -51,6 +52,7 @@ const NotificationCenter: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter, page]);
 
   const fetchNotifications = async () => {
@@ -64,7 +66,7 @@ const NotificationCenter: React.FC = () => {
         setUnreadCount(response.data.unread_count);
       }
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      apiLogger.error("Failed to fetch notifications:", error);
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ const NotificationCenter: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Failed to mark as read:", error);
+      apiLogger.error("Failed to mark as read:", error);
     }
   };
 
@@ -103,7 +105,7 @@ const NotificationCenter: React.FC = () => {
         await fetchNotifications();
       }
     } catch (error) {
-      console.error("Failed to mark all as read:", error);
+      apiLogger.error("Failed to mark all as read:", error);
     }
   };
 
@@ -124,7 +126,7 @@ const NotificationCenter: React.FC = () => {
         setTotal((prev) => prev - 1);
       }
     } catch (error) {
-      console.error("Failed to delete notification:", error);
+      apiLogger.error("Failed to delete notification:", error);
     }
   };
 
@@ -137,7 +139,7 @@ const NotificationCenter: React.FC = () => {
         setSelectedNotifications(new Set());
       }
     } catch (error) {
-      console.error("Failed to bulk delete:", error);
+      apiLogger.error("Failed to bulk delete:", error);
     }
   };
 
@@ -150,7 +152,7 @@ const NotificationCenter: React.FC = () => {
         setSelectedNotifications(new Set());
       }
     } catch (error) {
-      console.error("Failed to bulk mark as read:", error);
+      apiLogger.error("Failed to bulk mark as read:", error);
     }
   };
 

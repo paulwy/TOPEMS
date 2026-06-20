@@ -3,7 +3,8 @@
  * 显示员工的银行账户、薪资、社保公积金等财务信息
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { logger } from "@/utils/logger";
 import {
   useEmployeeFinanceInfo,
   useUpdateEmployeeFinanceInfo,
@@ -79,7 +80,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
       });
       setIsEditing(false);
     } catch (err) {
-      console.error("Failed to save:", err);
+      logger.error("Failed to save:", err);
     }
   };
 

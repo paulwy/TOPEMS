@@ -3,7 +3,10 @@ import "@testing-library/jest-dom";
 import { vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { FormPageTemplate } from "../templates/FormPageTemplate";
-import type { FormSection, FieldDependency } from "../templates/FormPageTemplate";
+import type {
+  FormSection,
+  FieldDependency,
+} from "../templates/FormPageTemplate";
 
 // Mock localStorage
 const localStorageMock = (() => {

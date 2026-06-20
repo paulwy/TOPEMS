@@ -115,18 +115,18 @@ export const useNotificationWebSocket = ({
           oscillator.start(audioContext.currentTime);
           oscillator.stop(audioContext.currentTime + 0.2);
         } catch (beepErr) {
-          console.log("Web Audio API not available:", beepErr);
+          logger.debug("Web Audio API not available:", beepErr);
         }
       };
 
       const audio = new Audio("/notification-sound.mp3");
       audio.volume = 0.5;
       audio.play().catch((err) => {
-        console.log("Audio file not found, using fallback beep:", err);
+        logger.debug("Audio file not found, using fallback beep:", err);
         playBeep();
       });
     } catch (err) {
-      console.log("Audio initialization failed:", err);
+      logger.debug("Audio initialization failed:", err);
     }
   }, [shouldPlaySound]);
 

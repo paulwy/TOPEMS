@@ -6,6 +6,7 @@ import type {
   CreateReportRequest,
 } from "@/api/report";
 import { reportApi } from "@/api/report";
+import { logger } from "@/utils/logger";
 
 interface ReportBuilderProps {
   onClose: () => void;
@@ -191,7 +192,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
         alert(response.message || "创建报表失败");
       }
     } catch (err) {
-      console.error("创建报表失败:", err);
+      logger.error("创建报表失败:", err);
       alert("创建报表失败，请重试");
     } finally {
       setCreating(false);

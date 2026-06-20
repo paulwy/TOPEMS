@@ -1,72 +1,184 @@
-import config from "../config/runtime";
+/**
+ * 统一日志系统
+ * 用于替代 console.log/error/warn
+ * 使用方法：import logger from "@/utils/logger";
+ */
 
-const LOG_LEVELS = {
+export type LogLevel = "debug" | "info" | "warn" | "error";
+
+export interface LoggerOptions {
+  level?: LogLevel;
+  enableTimestamp?: boolean;
+  enableConsole?: boolean;
+  prefix?: string;
+  context?: Record<string, any>;
+}
+
+export interface Logger {
+  debug: (...args: any[]) => void;
+  info: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  group: (label: string, fn: () => void) => void;
+  table: (data: any) => void;
+  time: (label: string) => void;
+  timeEnd: (label: string) => void;
+  child: (childOptions: LoggerOptions) => Logger;
+  setLevel: (newLevel: LogLevel) => void;
+}
+
+const LOG_LEVELS: Record<LogLevel, number> = {
   debug: 0,
   info: 1,
   warn: 2,
   error: 3,
 };
 
-const levelMap: Record<string, number> = {
-  debug: LOG_LEVELS.debug,
-  info: LOG_LEVELS.info,
-  warn: LOG_LEVELS.warn,
-  error: LOG_LEVELS.error,
-};
+/**
+ * 创建日志记录器
+ */
+function createLogger(name: string, options: LoggerOptions = {}): Logger {
+  const {
+    level = "info",
+    enableTimestamp = true,
+    enableConsole = true,
+    prefix = "",
+    context = {},
+  } = options;
 
-const currentLevel = levelMap[config.logging.level] || LOG_LEVELS.info;
+  let minLevel = LOG_LEVELS[level];
 
-export interface Logger {
-  debug: (...args: unknown[]) => void;
-  info: (...args: unknown[]) => void;
-  warn: (...args: unknown[]) => void;
-  error: (...args: unknown[]) => void;
-  group: (label: string) => void;
-  groupEnd: () => void;
-}
+  function formatMessage(level: LogLevel, ...args: any[]): string {
+    const parts: string[] = [];
 
-const createLogger = (namespace: string): Logger => {
-  const prefix = `[${namespace}]`;
+    if (enableTimestamp) {
+      const timestamp = new Date().toISOString();
+      parts.push(`[${timestamp}]`);
+    }
 
-  const shouldLog = (level: number): boolean => {
-    if (config.features.debugMode) return true;
-    return level >= currentLevel;
-  };
+    parts.push(`[${level.toUpperCase()}]`);
 
-  return {
-    debug: (...args: unknown[]) => {
-      if (shouldLog(LOG_LEVELS.debug)) {
-        console.debug(prefix, ...args);
+    if (prefix) {
+      parts.push(`[${prefix}]`);
+    }
+
+    if (name) {
+      parts.push(`[${name}]`);
+    }
+
+    return parts.join(" ");
+  }
+
+  function shouldLog(level: LogLevel): boolean {
+    return LOG_LEVELS[level] >= minLevel;
+  }
+
+  const logger = {
+    debug: (...args: any[]) => {
+      if (shouldLog("debug") && enableConsole) {
+        console.debug(formatMessage("debug"), ...args);
       }
     },
-    info: (...args: unknown[]) => {
-      if (shouldLog(LOG_LEVELS.info)) {
-        console.info(prefix, ...args);
+
+    info: (...args: any[]) => {
+      if (shouldLog("info") && enableConsole) {
+        console.info(formatMessage("info"), ...args);
       }
     },
-    warn: (...args: unknown[]) => {
-      if (shouldLog(LOG_LEVELS.warn)) {
-        console.warn(prefix, ...args);
+
+    warn: (...args: any[]) => {
+      if (shouldLog("warn") && enableConsole) {
+        console.warn(formatMessage("warn"), ...args);
       }
     },
-    error: (...args: unknown[]) => {
-      if (shouldLog(LOG_LEVELS.error)) {
-        console.error(prefix, ...args);
+
+    error: (...args: any[]) => {
+      if (shouldLog("error") && enableConsole) {
+        console.error(formatMessage("error"), ...args);
       }
     },
-    group: (label: string) => {
-      if (shouldLog(LOG_LEVELS.debug)) {
-        console.group(`${prefix} ${label}`);
-      }
-    },
-    groupEnd: () => {
-      if (shouldLog(LOG_LEVELS.debug)) {
+
+    /**
+     * 记录分组
+     */
+    group: (label: string, fn: () => void) => {
+      if (enableConsole) {
+        console.group(label);
+        fn();
         console.groupEnd();
       }
     },
-  };
-};
 
+    /**
+     * 记录表格
+     */
+    table: (data: any) => {
+      if (enableConsole && shouldLog("debug")) {
+        console.table(data);
+      }
+    },
+
+    /**
+     * 记录时间
+     */
+    time: (label: string) => {
+      if (enableConsole && shouldLog("debug")) {
+        console.time(label);
+      }
+    },
+
+    /**
+     * 结束时间记录
+     */
+    timeEnd: (label: string) => {
+      if (enableConsole && shouldLog("debug")) {
+        console.timeEnd(label);
+      }
+    },
+
+    /**
+     * 创建子日志记录器
+     */
+    child: (childOptions: LoggerOptions) => {
+      return createLogger(name, {
+        ...options,
+        ...childOptions,
+        context: { ...context, ...childOptions.context },
+      });
+    },
+
+    /**
+     * 设置日志级别
+     */
+    setLevel: (newLevel: LogLevel) => {
+      minLevel = LOG_LEVELS[newLevel];
+    },
+  };
+
+  return logger;
+}
+
+// 导出日志记录器工厂函数（同时支持默认导出和命名导出）
+export { createLogger };
 export default createLogger;
 
-export const globalLogger = createLogger("TOPEMS");
+// 导出预设的日志记录器
+export const logger = createLogger("App", {
+  level: import.meta.env.PROD ? "error" : "debug",
+  enableTimestamp: true,
+});
+
+export const apiLogger = createLogger("API", {
+  level: import.meta.env.PROD ? "warn" : "info",
+  prefix: "API",
+});
+
+export const authLogger = createLogger("Auth", {
+  level: import.meta.env.PROD ? "error" : "info",
+  prefix: "AUTH",
+});
+
+export const errorLogger = createLogger("Error", {
+  level: "error",
+  prefix: "ERROR",
+});

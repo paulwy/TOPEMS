@@ -13,6 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 import {
   Plus,
   Eye,
@@ -69,7 +70,7 @@ const PdmStepPage: React.FC = () => {
         setSteps([]);
       }
     } catch (err) {
-      console.error("加载工序步骤数据失败:", err);
+      apiLogger.error("加载工序步骤数据失败:", err);
       setSteps([]);
     } finally {
       setLoading(false);
@@ -184,7 +185,7 @@ const PdmStepPage: React.FC = () => {
       loadSteps();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建工序步骤失败:", err);
+      apiLogger.error("创建工序步骤失败:", err);
     }
   };
 

@@ -25,6 +25,7 @@ import {
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
 import { Box, Typography } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 
 const NotificationArchivePage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const NotificationArchivePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const loadData = async () => {
@@ -64,7 +66,7 @@ const NotificationArchivePage: React.FC = () => {
         setArchiveConfig(configRes.data);
       }
     } catch (err) {
-      console.error("Error loading data:", err);
+      apiLogger.error("Error loading data:", err);
     } finally {
       setLoading(false);
     }

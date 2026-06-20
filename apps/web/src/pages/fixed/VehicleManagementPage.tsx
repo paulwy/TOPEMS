@@ -1,22 +1,19 @@
 import {
   Button,
-  Card,
-  CardContent,
   Chip,
   Typography,
   Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  Car,
-  Plus,
-  Edit,
-  Trash2,
-  ChevronLeft,
-  AlertCircle,
-  Calendar,
-  User,
-} from "lucide-react";
+import { Car, Plus, Edit, Trash2, Calendar, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   vehicleApi,
@@ -25,25 +22,10 @@ import {
   type VehicleRequest,
 } from "@/api/erp";
 import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
-
-import {
-  Button as MuiButton,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Tabs,
-  Tab,
-  Tooltip,
-} from "@mui/material";
-import { ModeToggle } from "@/components/ModeToggle";
+import ListPageTemplate, {
+  type ColumnDef,
+  type RowAction,
+} from "@/components/templates/ListPageTemplate";
 
 interface VehicleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -87,6 +69,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -157,7 +140,6 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
   };
 
   const handleDeleteVehicle = async (id: string) => {
-    if (!confirm("确定要删除这辆车吗？")) return;
     try {
       const res = await vehicleApi.delete(id);
       if (res.success) {
@@ -251,35 +233,6 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
     }
   };
 
-  const handleUpdateRequestStatus = async (id: string, status: string) => {
-    try {
-      const request = requests.find((r) => r.id === id);
-      if (!request) return;
-
-      const res = await vehicleRequestApi.update(id, { ...request, status });
-      if (res.success) {
-        addNotification({
-          title: "成功",
-          message: "申请状态更新成功",
-          type: "success",
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: "失败",
-          message: res.message || "更新申请状态失败",
-          type: "error",
-        });
-      }
-    } catch (err: any) {
-      addNotification({
-        title: "失败",
-        message: err.message || "更新申请状态失败",
-        type: "error",
-      });
-    }
-  };
-
   const getVehicleStatusBadge = (status: string) => {
     const colors: Record<string, "success" | "info" | "warning" | "error"> = {
       available: "success",
@@ -303,416 +256,148 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
     );
   };
 
-  const getRequestStatusBadge = (status: string) => {
-    const colors: Record<string, "default" | "success" | "error" | "info"> = {
-      pending: "default",
-      approved: "success",
-      rejected: "error",
-      completed: "info",
-    };
-    const labels: Record<string, string> = {
-      pending: "待审批",
-      approved: "已批准",
-      rejected: "已拒绝",
-      completed: "已完成",
-    };
-    return (
-      <Chip
-        size="small"
-        color={colors[status] || "default"}
-        label={labels[status] || status}
-        variant="outlined"
-      />
-    );
-  };
-
-  const vehicleColumns = useMemo<ColumnDef<Vehicle>[]>(
+  const columns = useMemo<ColumnDef<Vehicle>[]>(
     () => [
       {
-        accessorKey: "plate_number",
-        header: "车牌号",
-        cell: ({ row }) => (
-          <Typography sx={{ fontWeight: "medium", color: "slate.900" }}>
-            {row.original.plate_number}
+        id: "plate_number",
+        label: "车牌号",
+        render: (row) => (
+          <Typography sx={{ fontWeight: 500, color: "#0f172a" }}>
+            {row.plate_number}
           </Typography>
         ),
       },
       {
-        accessorKey: "brand",
-        header: "品牌",
-        cell: ({ row }) => (
-          <Typography sx={{ color: "slate.900" }}>
-            {row.original.brand || "-"}
+        id: "brand",
+        label: "品牌",
+        render: (row) => (
+          <Typography sx={{ color: "#0f172a" }}>{row.brand || "-"}</Typography>
+        ),
+      },
+      {
+        id: "model",
+        label: "型号",
+        render: (row) => (
+          <Typography sx={{ color: "#0f172a" }}>{row.model || "-"}</Typography>
+        ),
+      },
+      {
+        id: "vehicle_type",
+        label: "车辆类型",
+        render: (row) => (
+          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
+            {row.vehicle_type || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "model",
-        header: "型号",
-        cell: ({ row }) => (
-          <Typography sx={{ color: "slate.900" }}>
-            {row.original.model || "-"}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: "vehicle_type",
-        header: "车辆类型",
-        cell: ({ row }) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "slate.500" }}>
-            {row.original.vehicle_type || "-"}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: "driver",
-        header: "司机",
-        cell: ({ row }) => (
+        id: "driver",
+        label: "司机",
+        render: (row) => (
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
               fontSize: "0.875rem",
-              color: "slate.900",
+              color: "#0f172a",
             }}
           >
-            <User sx={{ width: 12, height: 12, mr: 0.5, color: "blue.600" }} />
-            {row.original.driver || "-"}
+            <User
+              sx={{ width: 12, height: 12, marginRight: 4, color: "#2563eb" }}
+            />
+            {row.driver || "-"}
           </Box>
         ),
       },
       {
-        accessorKey: "fuel_type",
-        header: "燃料类型",
-        cell: ({ row }) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "slate.500" }}>
-            {row.original.fuel_type || "-"}
+        id: "fuel_type",
+        label: "燃料类型",
+        render: (row) => (
+          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
+            {row.fuel_type || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "mileage",
-        header: "里程(km)",
-        cell: ({ row }) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "slate.500" }}>
-            {row.original.mileage ? row.original.mileage.toLocaleString() : "-"}
+        id: "mileage",
+        label: "里程(km)",
+        render: (row) => (
+          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
+            {row.mileage ? row.mileage.toLocaleString() : "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getVehicleStatusBadge(row.original.status),
-      },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const vehicle = row.original;
-          return (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-              <Tooltip title="申请用车">
-                <MuiButton
-                  variant="text"
-                  size="small"
-                  onClick={() => {
-                    setNewRequest({
-                      ...newRequest,
-                      vehicle_id: vehicle.id,
-                      vehicle_plate: vehicle.plate_number,
-                    });
-                    setShowRequestModal(true);
-                  }}
-                >
-                  用车
-                </MuiButton>
-              </Tooltip>
-              <Tooltip title="编辑">
-                <MuiButton
-                  variant="text"
-                  size="small"
-                  onClick={() => {
-                    setSelectedVehicle(vehicle);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <Edit sx={{ width: 16, height: 16 }} />
-                </MuiButton>
-              </Tooltip>
-              <Tooltip title="删除">
-                <MuiButton
-                  variant="text"
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteVehicle(vehicle.id)}
-                >
-                  <Trash2 sx={{ width: 16, height: 16 }} />
-                </MuiButton>
-              </Tooltip>
-            </Box>
-          );
-        },
+        id: "status",
+        label: "状态",
+        render: (row) => getVehicleStatusBadge(row.status),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [vehicles],
   );
 
-  const requestColumns = useMemo<ColumnDef<VehicleRequest>[]>(
+  const rowActions = useMemo<RowAction<Vehicle>[]>(
     () => [
       {
-        accessorKey: "vehicle_plate",
-        header: "车牌号",
-        cell: ({ row }) => (
-          <Typography sx={{ fontWeight: "medium", color: "slate.900" }}>
-            {row.original.vehicle_plate}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: "requester",
-        header: "申请人",
-        cell: ({ row }) => (
-          <Typography sx={{ color: "slate.900" }}>
-            {row.original.requester}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: "purpose",
-        header: "用途",
-        cell: ({ row }) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "slate.500" }}>
-            {row.original.purpose || "-"}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: "start_time",
-        header: "开始时间",
-        cell: ({ row }) => (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: "0.875rem",
-              color: "slate.900",
-            }}
-          >
-            <Calendar
-              sx={{ width: 12, height: 12, mr: 0.5, color: "blue.600" }}
-            />
-            {row.original.start_time
-              ? new Date(row.original.start_time).toLocaleString()
-              : "-"}
-          </Box>
-        ),
-      },
-      {
-        accessorKey: "end_time",
-        header: "结束时间",
-        cell: ({ row }) => (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: "0.875rem",
-              color: "slate.900",
-            }}
-          >
-            <Calendar
-              sx={{ width: 12, height: 12, mr: 0.5, color: "blue.600" }}
-            />
-            {row.original.end_time
-              ? new Date(row.original.end_time).toLocaleString()
-              : "-"}
-          </Box>
-        ),
-      },
-      {
-        accessorKey: "driver_required",
-        header: "需要司机",
-        cell: ({ row }) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "slate.500" }}>
-            {row.original.driver_required ? "是" : "否"}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getRequestStatusBadge(row.original.status),
-      },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const request = row.original;
-          return (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-              {request.status === "pending" && (
-                <>
-                  <Tooltip title="批准申请">
-                    <MuiButton
-                      variant="text"
-                      size="small"
-                      color="success"
-                      onClick={() =>
-                        handleUpdateRequestStatus(request.id, "approved")
-                      }
-                    >
-                      批准
-                    </MuiButton>
-                  </Tooltip>
-                  <Tooltip title="拒绝申请">
-                    <MuiButton
-                      variant="text"
-                      size="small"
-                      color="error"
-                      onClick={() =>
-                        handleUpdateRequestStatus(request.id, "rejected")
-                      }
-                    >
-                      拒绝
-                    </MuiButton>
-                  </Tooltip>
-                </>
-              )}
-              {request.status === "approved" && (
-                <Tooltip title="标记完成">
-                  <MuiButton
-                    variant="text"
-                    size="small"
-                    color="info"
-                    onClick={() =>
-                      handleUpdateRequestStatus(request.id, "completed")
-                    }
-                  >
-                    完成
-                  </MuiButton>
-                </Tooltip>
-              )}
-            </Box>
-          );
+        label: "申请用车",
+        icon: <Calendar sx={{ width: 16, height: 16 }} />,
+        onClick: (row) => {
+          setNewRequest({
+            ...newRequest,
+            vehicle_id: row.id,
+            vehicle_plate: row.plate_number,
+          });
+          setShowRequestModal(true);
         },
       },
+      {
+        label: "编辑",
+        icon: <Edit sx={{ width: 16, height: 16 }} />,
+        onClick: (row) => {
+          setSelectedVehicle(row);
+          setShowEditModal(true);
+        },
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error",
+        onClick: (row) => handleDeleteVehicle(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这辆车吗？",
+      },
     ],
-    [requests],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "slate.50" }}>
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      <ListPageTemplate
+        title="车辆管理"
+        subtitle="管理企业车辆和用车申请"
+        backButton={{
+          onClick: () => navigate("/dashboard"),
         }}
-      >
-        <Box sx={{ maxWidth: "xl", mx: "auto", px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <MuiButton variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </MuiButton>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Car
-                    sx={{ width: 28, height: 28, mr: 1, color: "blue.600" }}
-                  />
-                  车辆管理
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.5 }}
-                >
-                  管理企业车辆和用车申请
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ModeToggle />
-              <MuiButton
-                variant="contained"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus sx={{ width: 20, height: 20, mr: 1 }} />
-                添加车辆
-              </MuiButton>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: "xl", mx: "auto", px: 3, py: 4 }}>
-        <Tabs value="vehicles" sx={{ mb: 3 }}>
-          <Tab label="车辆列表" value="vehicles" />
-          <Tab label="用车申请" value="requests" />
-        </Tabs>
-
-        {true && (
-          <Card>
-            <CardContent sx={{ p: 0 }}>
-              {loading ? (
-                <Box sx={{ p: 4, textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      display: "inline-block",
-                      width: 32,
-                      height: 32,
-                      border: 4,
-                      borderColor: "primary.main",
-                      borderTopColor: "transparent",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
-                      "@keyframes spin": {
-                        "0%": { transform: "rotate(0deg)" },
-                        "100%": { transform: "rotate(360deg)" },
-                      },
-                    }}
-                  />
-                  <Typography color="text.secondary" sx={{ mt: 2 }}>
-                    加载中...
-                  </Typography>
-                </Box>
-              ) : error ? (
-                <Box sx={{ p: 4, textAlign: "center" }}>
-                  <AlertCircle
-                    sx={{ width: 48, height: 48, color: "error.main", mb: 1.5 }}
-                  />
-                  <Typography color="error">{error}</Typography>
-                  <MuiButton onClick={loadData} sx={{ mt: 2 }}>
-                    重试
-                  </MuiButton>
-                </Box>
-              ) : (
-                <EnhancedDataTable
-                  columns={vehicleColumns}
-                  data={vehicles}
-                  searchPlaceholder="搜索车牌号、品牌、型号..."
-                  searchKey="plate_number"
-                  loading={loading}
-                  exportFileName="vehicle-report"
-                  onRefresh={loadData}
-                />
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </Box>
+        columns={columns}
+        data={vehicles}
+        loading={loading}
+        error={error || undefined}
+        getRowId={(row) => row.id}
+        searchable
+        searchPlaceholder="搜索车牌号、品牌、型号..."
+        rowActions={rowActions}
+        onRefresh={loadData}
+        actions={[
+          {
+            label: "添加车辆",
+            icon: <Plus sx={{ width: 16, height: 16 }} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ]}
+      />
 
       <Dialog
         open={showCreateModal}
@@ -734,10 +419,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                 label="车牌号 *"
                 value={newVehicle.plate_number || ""}
                 onChange={(e) =>
-                  setNewVehicle({
-                    ...newVehicle,
-                    plate_number: e.target.value,
-                  })
+                  setNewVehicle({ ...newVehicle, plate_number: e.target.value })
                 }
                 fullWidth
                 required
@@ -801,10 +483,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                   value={newVehicle.fuel_type || ""}
                   label="燃料类型"
                   onChange={(e) =>
-                    setNewVehicle({
-                      ...newVehicle,
-                      fuel_type: e.target.value,
-                    })
+                    setNewVehicle({ ...newVehicle, fuel_type: e.target.value })
                   }
                 >
                   <MenuItem value="gasoline">汽油</MenuItem>
@@ -852,10 +531,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
               type="date"
               value={newVehicle.last_service || ""}
               onChange={(e) =>
-                setNewVehicle({
-                  ...newVehicle,
-                  last_service: e.target.value,
-                })
+                setNewVehicle({ ...newVehicle, last_service: e.target.value })
               }
               fullWidth
               slotProps={{ inputLabel: { shrink: true } }}
@@ -869,15 +545,15 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                 mt: 2,
               }}
             >
-              <MuiButton
+              <Button
                 variant="outlined"
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
-              </MuiButton>
-              <MuiButton variant="contained" type="submit">
+              </Button>
+              <Button variant="contained" type="submit">
                 添加
-              </MuiButton>
+              </Button>
             </Box>
           </Box>
         </DialogContent>
@@ -1051,7 +727,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                   mt: 2,
                 }}
               >
-                <MuiButton
+                <Button
                   variant="outlined"
                   onClick={() => {
                     setShowEditModal(false);
@@ -1059,10 +735,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                   }}
                 >
                   取消
-                </MuiButton>
-                <MuiButton variant="contained" type="submit">
+                </Button>
+                <Button variant="contained" type="submit">
                   保存
-                </MuiButton>
+                </Button>
               </Box>
             </Box>
           )}
@@ -1133,10 +809,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                 type="datetime-local"
                 value={newRequest.start_time || ""}
                 onChange={(e) =>
-                  setNewRequest({
-                    ...newRequest,
-                    start_time: e.target.value,
-                  })
+                  setNewRequest({ ...newRequest, start_time: e.target.value })
                 }
                 fullWidth
                 required
@@ -1180,7 +853,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                 mt: 2,
               }}
             >
-              <MuiButton
+              <Button
                 variant="outlined"
                 onClick={() => {
                   setShowRequestModal(false);
@@ -1197,10 +870,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                 }}
               >
                 取消
-              </MuiButton>
-              <MuiButton variant="contained" type="submit">
+              </Button>
+              <Button variant="contained" type="submit">
                 提交申请
-              </MuiButton>
+              </Button>
             </Box>
           </Box>
         </DialogContent>

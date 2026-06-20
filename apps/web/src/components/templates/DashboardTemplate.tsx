@@ -20,9 +20,7 @@ import {
   Chip,
   Stack,
 } from "@mui/material";
-import {
-  Grid,
-} from "@mui/material";
+import { Grid } from "@mui/material";
 import {
   TrendingUp,
   TrendingDown,
@@ -37,11 +35,19 @@ import {
 } from "lucide-react";
 import type { BreadcrumbItem } from "./PageHeader";
 import { PageHeader } from "./PageHeader";
+import { logger } from "@/utils/logger";
 
 // ============ 类型定义 ============
 
 // 图表类型
-export type ChartType = "line" | "bar" | "pie" | "area" | "scatter" | "radar" | "gauge";
+export type ChartType =
+  | "line"
+  | "bar"
+  | "pie"
+  | "area"
+  | "scatter"
+  | "radar"
+  | "gauge";
 
 // 图表数据点
 export interface ChartDataPoint {
@@ -301,9 +307,24 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
   const bgColor = colorMap[color] || colorMap.primary;
 
   const sizeStyles = {
-    small: { padding: 1.5, iconSize: 36, titleSize: "body2" as const, valueSize: "h5" as const },
-    medium: { padding: 2, iconSize: 48, titleSize: "body2" as const, valueSize: "h4" as const },
-    large: { padding: 3, iconSize: 56, titleSize: "body1" as const, valueSize: "h3" as const },
+    small: {
+      padding: 1.5,
+      iconSize: 36,
+      titleSize: "body2" as const,
+      valueSize: "h5" as const,
+    },
+    medium: {
+      padding: 2,
+      iconSize: 48,
+      titleSize: "body2" as const,
+      valueSize: "h4" as const,
+    },
+    large: {
+      padding: 3,
+      iconSize: 56,
+      titleSize: "body1" as const,
+      valueSize: "h3" as const,
+    },
   };
 
   const currentSize = sizeStyles[size];
@@ -333,8 +354,13 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
           }}
         >
           <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-              <Typography variant={currentSize.titleSize} color="text.secondary">
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+            >
+              <Typography
+                variant={currentSize.titleSize}
+                color="text.secondary"
+              >
                 {title}
               </Typography>
               {tags && tags.length > 0 && (
@@ -356,7 +382,11 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
               )}
             </Box>
             {subtitle && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.5 }}
+              >
                 {subtitle}
               </Typography>
             )}
@@ -367,7 +397,10 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
               </>
             ) : (
               <>
-                <Typography variant={currentSize.valueSize} sx={{ fontWeight: 700 }}>
+                <Typography
+                  variant={currentSize.valueSize}
+                  sx={{ fontWeight: 700 }}
+                >
                   {value}
                   {unit && (
                     <Typography
@@ -390,11 +423,17 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                     }}
                   >
                     {change > 0 ? (
-                      <TrendingUp style={{ width: 14, height: 14, color: "#22c55e" }} />
+                      <TrendingUp
+                        style={{ width: 14, height: 14, color: "#22c55e" }}
+                      />
                     ) : change < 0 ? (
-                      <TrendingDown style={{ width: 14, height: 14, color: "#ef4444" }} />
+                      <TrendingDown
+                        style={{ width: 14, height: 14, color: "#ef4444" }}
+                      />
                     ) : (
-                      <Minus style={{ width: 14, height: 14, color: "#9ca3af" }} />
+                      <Minus
+                        style={{ width: 14, height: 14, color: "#9ca3af" }}
+                      />
                     )}
                     <Typography
                       variant="caption"
@@ -415,7 +454,13 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                 )}
                 {progress !== undefined && (
                   <Box sx={{ mt: 1 }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
+                    >
                       <Typography variant="caption" color="text.secondary">
                         {progressLabel || "进度"}
                       </Typography>
@@ -474,16 +519,21 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
 };
 
 // 迷你趋势图组件
-const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
+const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({
+  data,
+  color,
+}) => {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
 
-  const points = data.map((value, index) => {
-    const x = (index / (data.length - 1)) * 100;
-    const y = 100 - ((value - min) / range) * 100;
-    return `${x},${y}`;
-  }).join(" ");
+  const points = data
+    .map((value, index) => {
+      const x = (index / (data.length - 1)) * 100;
+      const y = 100 - ((value - min) / range) * 100;
+      return `${x},${y}`;
+    })
+    .join(" ");
 
   return (
     <svg width="100%" height="100%" preserveAspectRatio="none">
@@ -591,7 +641,10 @@ const ChartCardComponent: React.FC<ChartCard> = ({
                 <IconButton
                   size="small"
                   onClick={() => setExpanded(!expanded)}
-                  sx={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s" }}
+                  sx={{
+                    transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.3s",
+                  }}
                 >
                   <TrendingUp style={{ width: 18, height: 18 }} />
                 </IconButton>
@@ -599,7 +652,11 @@ const ChartCardComponent: React.FC<ChartCard> = ({
               <IconButton size="small" onClick={handleMenuOpen}>
                 <MoreVertical style={{ width: 18, height: 18 }} />
               </IconButton>
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+              >
                 {onRefresh && (
                   <MenuItem onClick={handleRefresh}>
                     <ListItemIcon>
@@ -715,7 +772,11 @@ const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
             </Tabs>
           )}
           {layout === "tabs" ? (
-            <Box>{cards[activeTab] && <StatCardComponent {...cards[activeTab]} loading={loading} />}</Box>
+            <Box>
+              {cards[activeTab] && (
+                <StatCardComponent {...cards[activeTab]} loading={loading} />
+              )}
+            </Box>
           ) : (
             <Grid container spacing={2}>
               {cards.map((card) => (
@@ -764,10 +825,10 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
   // 状态管理
   const [statsLayout, setStatsLayout] = useState<"grid" | "carousel" | "tabs">(
-    layout?.statsLayout || "grid"
+    layout?.statsLayout || "grid",
   );
   const [chartsLayout, setChartsLayout] = useState<"grid" | "stack" | "tabs">(
-    (layout?.chartsLayout || "grid") as "grid" | "stack" | "tabs"
+    (layout?.chartsLayout || "grid") as "grid" | "stack" | "tabs",
   );
   const [activeChartTab, setActiveChartTab] = useState(0);
   const [statsTab, setStatsTab] = useState(0);
@@ -785,7 +846,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
           if (config.statsLayout) setStatsLayout(config.statsLayout);
           if (config.chartsLayout) setChartsLayout(config.chartsLayout);
         } catch (e) {
-          console.error("Failed to load dashboard config:", e);
+          logger.error("Failed to load dashboard config:", e);
         }
       }
     }
@@ -823,7 +884,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   const renderStats = () => {
     // 如果有自定义统计区域，直接渲染
     if (statsArea) return statsArea;
-    
+
     if (!stats || stats.length === 0) return null;
 
     if (customRenderers?.statCard) {
@@ -843,13 +904,18 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     if (statsLayout === "tabs") {
       return (
         <Paper sx={{ borderRadius: 2, mb: 3 }}>
-          <Tabs value={statsTab} onChange={(_, newValue) => setStatsTab(newValue)}>
+          <Tabs
+            value={statsTab}
+            onChange={(_, newValue) => setStatsTab(newValue)}
+          >
             {stats.map((stat) => (
               <Tab key={stat.id} label={stat.title} />
             ))}
           </Tabs>
           <Box sx={{ p: 2 }}>
-            {stats[statsTab] && <StatCardComponent {...stats[statsTab]} loading={loading} />}
+            {stats[statsTab] && (
+              <StatCardComponent {...stats[statsTab]} loading={loading} />
+            )}
           </Box>
         </Paper>
       );
@@ -909,7 +975,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   const renderCharts = () => {
     // 如果有自定义图表区域，直接渲染
     if (chartsArea) return chartsArea;
-    
+
     if (!charts || charts.length === 0) return null;
 
     if (customRenderers?.chartCard) {
@@ -929,13 +995,21 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     if (chartsLayout === "tabs") {
       return (
         <Paper sx={{ borderRadius: 2, mb: 3 }}>
-          <Tabs value={activeChartTab} onChange={(_, newValue) => setActiveChartTab(newValue)}>
+          <Tabs
+            value={activeChartTab}
+            onChange={(_, newValue) => setActiveChartTab(newValue)}
+          >
             {charts.map((chart) => (
               <Tab key={chart.id} label={chart.title} />
             ))}
           </Tabs>
           <Box sx={{ p: 2 }}>
-            {charts[activeChartTab] && <ChartCardComponent {...charts[activeChartTab]} loading={loading} />}
+            {charts[activeChartTab] && (
+              <ChartCardComponent
+                {...charts[activeChartTab]}
+                loading={loading}
+              />
+            )}
           </Box>
         </Paper>
       );
@@ -954,7 +1028,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     }
 
     const currentChartsLayout = chartsLayout as "grid" | "stack" | "tabs";
-    
+
     return (
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
@@ -972,7 +1046,9 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
               <Tooltip title="堆叠视图">
                 <IconButton
                   size="small"
-                  color={currentChartsLayout === "stack" ? "primary" : "default"}
+                  color={
+                    currentChartsLayout === "stack" ? "primary" : "default"
+                  }
                   onClick={() => setChartsLayout("stack")}
                 >
                   <LayoutDashboard style={{ width: 18, height: 18 }} />
@@ -1005,7 +1081,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   const renderRecentItems = () => {
     // 如果有自定义最近事项区域，直接渲染
     if (recentItemsArea) return recentItemsArea;
-    
+
     if (!recentItems || recentItems.length === 0) return null;
 
     if (customRenderers?.recentItem) {
@@ -1017,7 +1093,8 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             </Typography>
           </Box>
           <Box sx={{ p: 0 }}>
-            {customRenderers?.recentItem && recentItems.map((item) => customRenderers.recentItem?.(item))}
+            {customRenderers?.recentItem &&
+              recentItems.map((item) => customRenderers.recentItem?.(item))}
           </Box>
         </Paper>
       );
@@ -1074,7 +1151,9 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        bgcolor: item.status ? `${item.status}.light` : "grey.100",
+                        bgcolor: item.status
+                          ? `${item.status}.light`
+                          : "grey.100",
                         color: item.status ? `${item.status}.main` : "grey.600",
                       }}
                     >
@@ -1151,7 +1230,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   const renderQuickActions = () => {
     // 如果有自定义快捷操作区域，直接渲染
     if (quickActionsArea) return quickActionsArea;
-    
+
     if (!quickActions || quickActions.length === 0) return null;
 
     if (customRenderers?.quickAction) {
@@ -1163,7 +1242,10 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             </Typography>
           </Box>
           <Box sx={{ p: 2 }}>
-            {customRenderers?.quickAction && quickActions.map((action) => customRenderers.quickAction?.(action))}
+            {customRenderers?.quickAction &&
+              quickActions.map((action) =>
+                customRenderers.quickAction?.(action),
+              )}
           </Box>
         </Paper>
       );

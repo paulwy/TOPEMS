@@ -18,6 +18,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { logger } from "@/utils/logger";
 
 interface UseOfflineTilesOptions {
   tileDir?: string;
@@ -76,7 +77,7 @@ export function useOfflineTiles(
   // 注册 Service Worker
   const registerSW = useCallback(async () => {
     if (!isSWSupported) {
-      console.warn("Service Worker is not supported");
+      logger.warn("Service Worker is not supported");
       return;
     }
 
@@ -85,16 +86,16 @@ export function useOfflineTiles(
         scope: "/",
       });
 
-      console.log("[SW] Registered:", registration.scope);
+      logger.info("[SW] Registered:", registration.scope);
 
       registration.addEventListener("updatefound", () => {
-        console.log("[SW] New version available");
+        logger.info("[SW] New version available");
       });
 
       setIsRegistered(true);
       setIsSWReady(true);
     } catch (error) {
-      console.error("[SW] Registration failed:", error);
+      logger.error("[SW] Registration failed:", error);
     }
   }, [isSWSupported]);
 
@@ -107,7 +108,7 @@ export function useOfflineTiles(
       const count = await getTileCount(db);
       setCachedTileCount(count);
     } catch (error) {
-      console.error("Error getting cached tile count:", error);
+      logger.error("Error getting cached tile count:", error);
     }
   }, []);
 
@@ -162,7 +163,7 @@ export function useOfflineTiles(
         const result = await getTileFromDB(db, key);
         return !!result;
       } catch (error) {
-        console.error("Error checking tile cache:", error);
+        logger.error("Error checking tile cache:", error);
         return false;
       }
     },
@@ -205,9 +206,9 @@ export function useOfflineTiles(
       const db = await openTileDB();
       await clearTileStore(db);
       setCachedTileCount(0);
-      console.log("[OfflineTiles] Cache cleared");
+      logger.info("[OfflineTiles] Cache cleared");
     } catch (error) {
-      console.error("Error clearing cache:", error);
+      logger.error("Error clearing cache:", error);
     }
   }, []);
 

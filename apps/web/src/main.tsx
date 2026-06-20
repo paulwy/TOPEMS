@@ -5,12 +5,13 @@ import App from "./App";
 import "./index.css";
 import { createPermissionInterceptor } from "./api/permissionInterceptor";
 import { queryClient } from "./lib/react-query";
+import { logger } from "@/utils/logger";
 
 createPermissionInterceptor();
 
 window.addEventListener("permission-denied", (event: Event) => {
   const customEvent = event as CustomEvent;
-  console.warn("Permission denied:", customEvent.detail);
+  logger.warn("Permission denied:", customEvent.detail);
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

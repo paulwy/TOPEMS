@@ -1,5 +1,13 @@
 import React, { useState, useRef, type ChangeEvent } from "react";
-import { Button, TextField, FormLabel, Divider } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  FormLabel,
+  Divider,
+  Paper,
+} from "@mui/material";
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from "lucide-react";
 
 // --- Types ---
@@ -173,16 +181,42 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
 
   // --- Render ---
   return (
-    <div className="flex flex-col h-screen w-full bg-gray-50 dark:bg-gray-900">
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        width: "100%",
+        backgroundColor: "#f9fafb",
+      }}
+    >
       {/* Toolbar */}
-      <div className="flex items-center gap-2 p-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700 shadow-sm z-10">
-        <h2 className="font-bold text-lg mr-4 text-gray-800 dark:text-white">
+      <Paper
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          p: 4,
+          backgroundColor: "white",
+          borderBottom: "1px solid #e5e7eb",
+          boxShadow: 1,
+          zIndex: 10,
+        }}
+      >
+        <Typography
+          sx={{
+            fontWeight: 700,
+            fontSize: "1.125rem",
+            mr: 4,
+            color: "#1f2937",
+          }}
+        >
           流程设计器
-        </h2>
+        </Typography>
 
         <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
 
-        <div style={{ display: "flex", gap: 4 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           {(
             ["start", "task", "approval", "condition", "end"] as NodeType[]
           ).map((type) => (
@@ -204,11 +238,11 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                       : "结束"}
             </Button>
           ))}
-        </div>
+        </Box>
 
         <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
 
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <Button
             onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
             variant="text"
@@ -216,9 +250,9 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           >
             <ZoomOut style={{ width: 16, height: 16 }} />
           </Button>
-          <span style={{ fontSize: 12, width: 48, textAlign: "center" }}>
+          <Typography sx={{ fontSize: 12, width: 48, textAlign: "center" }}>
             {Math.round(zoom * 100)}%
-          </span>
+          </Typography>
           <Button
             onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
             variant="text"
@@ -226,20 +260,25 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           >
             <ZoomIn style={{ width: 16, height: 16 }} />
           </Button>
-        </div>
+        </Box>
 
         <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
 
-        <Button onClick={() => onSave?.(nodes, edges)} className="ml-auto">
-          <Save className="w-4 h-4 mr-2" /> 保存
+        <Button onClick={() => onSave?.(nodes, edges)} sx={{ ml: "auto" }}>
+          <Save style={{ width: 16, height: 16, marginRight: 8 }} /> 保存
         </Button>
-      </div>
+      </Paper>
 
       {/* Main Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Canvas */}
-        <div
-          className="flex-1 bg-gray-100 dark:bg-gray-800 relative cursor-move"
+        <Box
+          sx={{
+            flex: 1,
+            backgroundColor: "#f3f4f6",
+            position: "relative",
+            cursor: "move",
+          }}
           onMouseMove={handleMouseMove}
           onMouseUp={() => {
             handleMouseUp();
@@ -252,7 +291,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         >
           <svg
             ref={svgRef}
-            className="w-full h-full"
+            style={{ width: "100%", height: "100%" }}
             onMouseDown={handleMouseDown}
           >
             {/* Grid Background */}
@@ -288,10 +327,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 const controlXOffset = dx * 0.5;
 
                 return (
-                  <g
-                    key={`edge-${edge.id}`}
-                    className="edge cursor-pointer hover:opacity-80"
-                  >
+                  <g key={`edge-${edge.id}`} style={{ cursor: "pointer" }}>
                     <path
                       d={`M ${s.x} ${s.y} C ${s.x + controlXOffset} ${s.y}, ${t.x - controlXOffset} ${t.y}, ${t.x} ${t.y}`}
                       fill="none"
@@ -337,7 +373,18 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     width="140"
                     height="60"
                     rx="8"
-                    className={`fill-white stroke-2 ${selectedNode?.id === node.id ? "stroke-blue-500 shadow-lg" : "stroke-gray-300"} transition-all`}
+                    fill="white"
+                    stroke={
+                      selectedNode?.id === node.id ? "#3b82f6" : "#d1d5db"
+                    }
+                    strokeWidth="2"
+                    style={{
+                      transition: "all",
+                      filter:
+                        selectedNode?.id === node.id
+                          ? "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"
+                          : "none",
+                    }}
                   />
                   <rect
                     x="0"
@@ -345,10 +392,8 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     width="140"
                     height="60"
                     rx="8"
-                    className="fill-current opacity-10"
-                    style={{
-                      fill: selectedNode?.id === node.id ? "#3b82f6" : "#000",
-                    }}
+                    fill={selectedNode?.id === node.id ? "#3b82f6" : "#000"}
+                    opacity={0.1}
                   />
 
                   {/* Label */}
@@ -356,7 +401,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     x="70"
                     y="25"
                     textAnchor="middle"
-                    className="text-xs font-bold fill-gray-700"
+                    style={{ fontSize: 12, fontWeight: 700, fill: "#374151" }}
                   >
                     {NODE_ICONS[node.type]} {node.label}
                   </text>
@@ -364,7 +409,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     x="70"
                     y="42"
                     textAnchor="middle"
-                    className="text-[10px] fill-gray-500"
+                    style={{ fontSize: 10, fill: "#6b7280" }}
                   >
                     {node.type}
                   </text>
@@ -375,7 +420,10 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     cx="0"
                     cy="30"
                     r="6"
-                    className="fill-white stroke-gray-400 hover:fill-blue-500 cursor-pointer"
+                    fill="white"
+                    stroke="#9ca3af"
+                    strokeWidth="2"
+                    style={{ cursor: "pointer" }}
                     onMouseUp={(e) => handlePortMouseUp(e, node.id)}
                   />
                   {/* Right Port (Source) */}
@@ -383,68 +431,75 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     cx="140"
                     cy="30"
                     r="6"
-                    className="fill-white stroke-gray-400 hover:fill-blue-500 cursor-pointer"
+                    fill="white"
+                    stroke="#9ca3af"
+                    strokeWidth="2"
+                    style={{ cursor: "pointer" }}
                     onMouseDown={(e) => handlePortMouseDown(e, node.id)}
                   />
                 </g>
               ))}
             </g>
           </svg>
-        </div>
+        </Box>
 
         {/* Properties Panel */}
-        <div className="w-80 bg-white dark:bg-gray-800 border-l dark:border-gray-700 flex flex-col">
-          <div className="p-4 border-b dark:border-gray-700">
-            <h3 className="font-semibold text-gray-800 dark:text-white">
+        <Paper
+          sx={{
+            width: 320,
+            backgroundColor: "white",
+            borderLeft: "1px solid #e5e7eb",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Box sx={{ p: 4, borderBottom: "1px solid #e5e7eb" }}>
+            <Typography sx={{ fontWeight: 600, color: "#1f2937" }}>
               属性
-            </h3>
-          </div>
-          <div className="p-4 flex-1 overflow-y-auto">
+            </Typography>
+          </Box>
+          <Box sx={{ p: 4, flex: 1, overflowY: "auto" }}>
             {selectedNode ? (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 16 }}
-              >
-                <div>
-                  <FormLabel sx={{ color: "text.secondary" }}>
-                    节点 ID
-                  </FormLabel>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <Box>
+                  <FormLabel sx={{ color: "#6b7280" }}>节点 ID</FormLabel>
                   <TextField
                     value={selectedNode.id}
                     disabled
                     sx={{
-                      marginTop: 1,
-                      backgroundColor: "background.disabled",
+                      mt: 1,
+                      backgroundColor: "#f3f4f6",
                     }}
                     fullWidth
                   />
-                </div>
-                <div>
-                  <FormLabel sx={{ color: "text.secondary" }}>类型</FormLabel>
-                  <div
-                    style={{
-                      marginTop: 8,
+                </Box>
+                <Box>
+                  <FormLabel sx={{ color: "#6b7280" }}>类型</FormLabel>
+                  <Box
+                    sx={{
+                      mt: 2,
                       fontSize: 14,
-                      padding: "4px 8px",
-                      borderRadius: 4,
+                      p: "4px 8px",
+                      borderRadius: 1,
                       backgroundColor: "#f3f4f6",
                     }}
                   >
                     {selectedNode.type}
-                  </div>
-                </div>
-                <div>
-                  <FormLabel sx={{ color: "text.secondary" }}>标签</FormLabel>
+                  </Box>
+                </Box>
+                <Box>
+                  <FormLabel sx={{ color: "#6b7280" }}>标签</FormLabel>
                   <TextField
                     value={selectedNode.label}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       updateNode(selectedNode.id, { label: e.target.value })
                     }
-                    sx={{ marginTop: 1 }}
+                    sx={{ mt: 1 }}
                     fullWidth
                   />
-                </div>
-                <div>
-                  <FormLabel sx={{ color: "text.secondary" }}>描述</FormLabel>
+                </Box>
+                <Box>
+                  <FormLabel sx={{ color: "#6b7280" }}>描述</FormLabel>
                   <TextField
                     value={selectedNode.description || ""}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -452,10 +507,10 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                         description: e.target.value,
                       })
                     }
-                    sx={{ marginTop: 1 }}
+                    sx={{ mt: 1 }}
                     fullWidth
                   />
-                </div>
+                </Box>
                 <Divider />
                 <Button
                   variant="contained"
@@ -463,19 +518,27 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   fullWidth
                   onClick={() => deleteNode(selectedNode.id)}
                 >
-                  <Trash2 className="w-4 h-4 mr-2" /> 删除节点
+                  <Trash2 style={{ width: 16, height: 16, marginRight: 8 }} />{" "}
+                  删除节点
                 </Button>
-              </div>
+              </Box>
             ) : (
-              <div className="text-center text-gray-500 mt-10">
-                <Move className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                <p>选择一个节点来编辑属性</p>
-              </div>
+              <Box sx={{ textAlign: "center", color: "#6b7280", mt: 10 }}>
+                <Move
+                  style={{
+                    width: 40,
+                    height: 40,
+                    margin: "0 auto 8px",
+                    opacity: 0.5,
+                  }}
+                />
+                <Typography>选择一个节点来编辑属性</Typography>
+              </Box>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Paper>
+      </Box>
+    </Box>
   );
 };
 

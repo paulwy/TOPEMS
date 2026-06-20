@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Box } from "@mui/material";
 
 interface LazyImageProps {
   src: string;
@@ -11,38 +12,41 @@ interface LazyImageProps {
   onError?: () => void;
 }
 
+const DefaultPlaceholder = () => (
+  <Box
+    sx={{
+      backgroundColor: "#e5e7eb",
+      borderRadius: "4px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "100%",
+      height: "100%",
+    }}
+  >
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#9ca3af"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+      <polyline points="21 15 16 10 5 21" />
+    </svg>
+  </Box>
+);
+
 export const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
   className = "",
   style = {},
-  placeholder = (
-    <div
-      style={{
-        backgroundColor: "#e5e7eb",
-        borderRadius: "4px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="text-gray-400"
-      >
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-        <polyline points="21 15 16 10 5 21" />
-      </svg>
-    </div>
-  ),
+  placeholder = <DefaultPlaceholder />,
   fallbackSrc,
   onLoad,
   onError,
@@ -69,7 +73,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       {
         rootMargin: "100px",
         threshold: 0.1,
-      }
+      },
     );
 
     observerRef.current.observe(img);
@@ -102,7 +106,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   }
 
   return (
-    <div className={className} style={style}>
+    <Box className={className} sx={style}>
       {!isLoaded && placeholder}
       <img
         ref={imgRef}
@@ -117,7 +121,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         onLoad={handleLoad}
         onError={handleError}
       />
-    </div>
+    </Box>
   );
 };
 

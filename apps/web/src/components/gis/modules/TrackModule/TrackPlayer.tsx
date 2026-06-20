@@ -1,6 +1,15 @@
 // modules/TrackModule/TrackPlayer.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, Square, SkipBack, SkipForward } from "lucide-react";
+import {
+  Box,
+  Button,
+  Typography,
+  Paper,
+  IconButton,
+  Slider,
+  Grid,
+} from "@mui/material";
 import type { TrackRecord, TrackStatistics } from "./types";
 
 interface TrackPlayerProps {
@@ -76,9 +85,20 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
 
   if (!track) {
     return (
-      <div className="flex items-center justify-center h-16 bg-gray-50 rounded-lg">
-        <span className="text-gray-500 text-sm">请选择设备轨迹</span>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 64,
+          bgcolor: "#f9fafb",
+          borderRadius: 2,
+        }}
+      >
+        <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>
+          请选择设备轨迹
+        </Typography>
+      </Box>
     );
   }
 
@@ -88,120 +108,167 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
       : 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
+    <Paper sx={{ borderRadius: 2, boxShadow: 2, p: 4 }}>
       {/* Track Info */}
-      <div className="mb-4">
-        <h3 className="font-semibold text-gray-900">{track.device_name}</h3>
-        <p className="text-sm text-gray-500">
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="subtitle1"
+          sx={{ fontWeight: 600, color: "#111827" }}
+        >
+          {track.device_name}
+        </Typography>
+        <Typography variant="body2" sx={{ color: "#6b7280" }}>
           {new Date(track.start_time).toLocaleString()} -{" "}
           {new Date(track.end_time).toLocaleString()}
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Progress Bar */}
-      <div
-        ref={progressRef}
-        className="h-2 bg-gray-200 rounded-full cursor-pointer mb-4"
+      <Box
+        sx={{
+          height: 8,
+          bgcolor: "#e5e7eb",
+          borderRadius: "50%",
+          cursor: "pointer",
+          mb: 4,
+        }}
         onClick={handleProgressClick}
       >
-        <div
-          className="h-full bg-blue-500 rounded-full transition-all"
-          style={{ width: `${progress}%` }}
+        <Box
+          sx={{
+            height: "100%",
+            bgcolor: "#2563eb",
+            borderRadius: "50%",
+            transition: "all",
+            width: `${progress}%`,
+          }}
         />
-      </div>
+      </Box>
 
       {/* Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton
             onClick={() => setCurrentIndex(0)}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            sx={{ p: 2, "&:hover": { bgcolor: "#f3f4f6" } }}
             title="跳到开始"
           >
-            <SkipBack className="w-5 h-5 text-gray-600" />
-          </button>
-          <button
+            <SkipBack size={20} style={{ color: "#4b5563" }} />
+          </IconButton>
+          <IconButton
             onClick={isPlaying ? onPause : onPlay}
-            className="p-3 bg-blue-500 hover:bg-blue-600 rounded-full text-white"
+            sx={{
+              p: 3,
+              bgcolor: "#2563eb",
+              color: "white",
+              "&:hover": { bgcolor: "#1d4ed8" },
+            }}
             title={isPlaying ? "暂停" : "播放"}
           >
-            {isPlaying ? (
-              <Pause className="w-5 h-5" />
-            ) : (
-              <Play className="w-5 h-5" />
-            )}
-          </button>
-          <button
+            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+          </IconButton>
+          <IconButton
             onClick={onStop}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            sx={{ p: 2, "&:hover": { bgcolor: "#f3f4f6" } }}
             title="停止"
           >
-            <Square className="w-5 h-5 text-gray-600" />
-          </button>
-          <button
+            <Square size={20} style={{ color: "#4b5563" }} />
+          </IconButton>
+          <IconButton
             onClick={() => setCurrentIndex(track.points.length - 1)}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            sx={{ p: 2, "&:hover": { bgcolor: "#f3f4f6" } }}
             title="跳到结尾"
           >
-            <SkipForward className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
+            <SkipForward size={20} style={{ color: "#4b5563" }} />
+          </IconButton>
+        </Box>
 
         {/* Speed Control */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">速度:</span>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="body2" sx={{ color: "#6b7280" }}>
+            速度:
+          </Typography>
           {speedOptions.map((speed) => (
-            <button
+            <Button
               key={speed}
               onClick={() => onSpeedChange(speed)}
-              className={`px-2 py-1 text-sm rounded ${
-                playbackSpeed === speed
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+              sx={{
+                px: 2,
+                py: 1,
+                fontSize: "0.875rem",
+                borderRadius: 1,
+                bgcolor: playbackSpeed === speed ? "#2563eb" : "#f1f5f9",
+                color: playbackSpeed === speed ? "white" : "#4b5563",
+                "&:hover": {
+                  bgcolor: playbackSpeed === speed ? "#2563eb" : "#e5e7eb",
+                },
+                textTransform: "none",
+              }}
             >
               {speed}x
-            </button>
+            </Button>
           ))}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Statistics */}
       {statistics && (
-        <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-4">
-          <div>
-            <div className="text-xs text-gray-500">总距离</div>
-            <div className="font-medium text-gray-900">
-              {statistics.total_distance < 1000
-                ? `${statistics.total_distance.toFixed(0)} 米`
-                : `${(statistics.total_distance / 1000).toFixed(2)} 公里`}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">平均速度</div>
-            <div className="font-medium text-gray-900">
-              {statistics.avg_speed.toFixed(1)} km/h
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500">最大速度</div>
-            <div className="font-medium text-gray-900">
-              {statistics.max_speed.toFixed(1)} km/h
-            </div>
-          </div>
-        </div>
+        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: "#e5e7eb" }}>
+          <Grid container spacing={4}>
+            <Grid size={4}>
+              <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                总距离
+              </Typography>
+              <Typography sx={{ fontWeight: 500, color: "#111827" }}>
+                {statistics.total_distance < 1000
+                  ? `${statistics.total_distance.toFixed(0)} 米`
+                  : `${(statistics.total_distance / 1000).toFixed(2)} 公里`}
+              </Typography>
+            </Grid>
+            <Grid size={4}>
+              <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                平均速度
+              </Typography>
+              <Typography sx={{ fontWeight: 500, color: "#111827" }}>
+                {statistics.avg_speed.toFixed(1)} km/h
+              </Typography>
+            </Grid>
+            <Grid size={4}>
+              <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                最大速度
+              </Typography>
+              <Typography sx={{ fontWeight: 500, color: "#111827" }}>
+                {statistics.max_speed.toFixed(1)} km/h
+              </Typography>
+            </Grid>
+          </Grid>
+        </Box>
       )}
 
       {/* Current Position */}
       {currentPosition && (
-        <div className="mt-4 pt-4 border-t">
-          <div className="text-xs text-gray-500">当前位置</div>
-          <div className="font-mono text-sm text-gray-700">
+        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: "#e5e7eb" }}>
+          <Typography variant="caption" sx={{ color: "#6b7280" }}>
+            当前位置
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "monospace",
+              fontSize: "0.875rem",
+              color: "#374151",
+            }}
+          >
             {currentPosition[0].toFixed(6)}, {currentPosition[1].toFixed(6)}
-          </div>
-        </div>
+          </Typography>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 };
 

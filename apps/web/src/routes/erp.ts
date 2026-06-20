@@ -16,16 +16,24 @@ const EquipmentInspectionPage = lazy(
 const EquipmentMaintenancePage = lazy(
   () => import("../pages/fixed/EquipmentMaintenancePage"),
 );
-const FinanceExpensePage = lazy(() => import("../pages/finance/FinanceExpensePage"));
+const FinanceExpensePage = lazy(
+  () => import("../pages/finance/FinanceExpensePage"),
+);
 const FinanceVoucherPage = lazy(
   () => import("../pages/finance/FinanceVoucherPage"),
 );
 const FinanceReceivablePayablePage = lazy(
   () => import("../pages/finance/FinanceReceivablePayablePage"),
 );
-const FinanceReportsPage = lazy(() => import("../pages/finance/FinanceReportsPage"));
-const FinanceBudgetPage = lazy(() => import("../pages/finance/FinanceBudgetPage"));
-const AdministrationPage = lazy(() => import("../pages/admin/AdministrationPage"));
+const FinanceReportsPage = lazy(
+  () => import("../pages/finance/FinanceReportsPage"),
+);
+const FinanceBudgetPage = lazy(
+  () => import("../pages/finance/FinanceBudgetPage"),
+);
+const AdministrationPage = lazy(
+  () => import("../pages/admin/AdministrationPage"),
+);
 const BudgetManagementPage = lazy(
   () => import("../pages/finance/BudgetManagementPage"),
 );
@@ -41,7 +49,9 @@ const VehicleManagementPage = lazy(
 const AnnouncementManagementPage = lazy(
   () => import("../pages/common/AnnouncementManagementPage"),
 );
-const VoucherTemplatePage = lazy(() => import("../pages/fixed/VoucherTemplatePage"));
+const VoucherTemplatePage = lazy(
+  () => import("../pages/fixed/VoucherTemplatePage"),
+);
 const FinancialReportsPage = lazy(
   () => import("../pages/finance/FinancialReportsPage"),
 );
@@ -63,9 +73,11 @@ const ConsolidationReportsPage = lazy(
 const CompanyStructurePage = lazy(
   () => import("../pages/admin/CompanyStructurePage"),
 );
-const OpeningBalancePage = lazy(() => import("../pages/finance/OpeningBalancePage"));
+const OpeningBalancePage = lazy(
+  () => import("../pages/finance/OpeningBalancePage"),
+);
 
-  const ERPHomePage = lazy(() => import("../pages/erp/DashboardPage"));
+const ERPHomePage = lazy(() => import("../pages/erp/DashboardPage"));
 export const erpRoutes: RouteConfig[] = [
   {
     path: "/erp",

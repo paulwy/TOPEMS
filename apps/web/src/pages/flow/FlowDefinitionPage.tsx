@@ -1,37 +1,19 @@
 import React, { useState, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Pagination,
-  Select,
-  Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { FileUpload } from "@/components/common";
-import { DataExport } from "@/components/common";
-import {
-  Eye,
-  Plus,
-  Edit,
-  Send,
-  Ban,
-  Search,
-  GitBranch,
-  Loader2,
-  Upload,
-} from "lucide-react";
+import { Eye, Plus, Edit, Send, Ban, Upload, GitBranch } from "lucide-react";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
 
 interface FlowDefinition {
   id: string;
@@ -142,14 +124,28 @@ const getStatusText = (status: FlowDefinition["status"]) => {
   }
 };
 
+const getTypeText = (type: string) => {
+  switch (type) {
+    case "approval":
+      return "审批流程";
+    case "reimbursement":
+      return "报销流程";
+    case "contract":
+      return "合同流程";
+    case "purchase":
+      return "采购流程";
+    case "travel":
+      return "差旅流程";
+    default:
+      return type;
+  }
+};
+
 const FlowDefinitionPage: React.FC = () => {
   const [data, setData] = useState<FlowDefinition[]>(mockFlowDefinitions);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<FlowDefinition | null>(null);
@@ -159,18 +155,10 @@ const FlowDefinitionPage: React.FC = () => {
     const matchesSearch = item.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || item.type === typeFilter;
-    const matchesStatus =
-      statusFilter === "all" || item.status === statusFilter;
+    const matchesType = !typeFilter || item.type === typeFilter;
+    const matchesStatus = !statusFilter || item.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
   });
-
-  const paginatedData = filteredData.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
 
   const handleView = (flow: FlowDefinition) => {
     setSelectedFlow(flow);
@@ -178,7 +166,7 @@ const FlowDefinitionPage: React.FC = () => {
   };
 
   const handleEdit = (flow: FlowDefinition) => {
-    console.log("编辑流程:", flow.id);
+    apiLogger.info("编辑流程:", flow.id);
   };
 
   const handlePublish = (flow: FlowDefinition) => {
@@ -197,254 +185,153 @@ const FlowDefinitionPage: React.FC = () => {
     );
   };
 
-  // 导出字段配置
-  const exportFields = useMemo(
+  const columns = useMemo<ColumnDef<FlowDefinition>[]>(
     () => [
-      { key: "name", title: "流程名称" },
-      { key: "type", title: "流程类型" },
-      { key: "version", title: "版本" },
-      { key: "status", title: "状态" },
-      { key: "creator", title: "创建人" },
-      { key: "createdAt", title: "创建时间" },
+      {
+        id: "name",
+        label: "流程名称",
+        render: (row) => (
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            {row.name}
+          </Typography>
+        ),
+      },
+      {
+        id: "type",
+        label: "流程类型",
+        render: (row) => getTypeText(row.type),
+      },
+      {
+        id: "version",
+        label: "版本",
+        render: (row) => row.version,
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => (
+          <Chip
+            size="small"
+            label={getStatusText(row.status)}
+            color={getStatusColor(row.status)}
+          />
+        ),
+      },
+      {
+        id: "creator",
+        label: "创建人",
+        render: (row) => row.creator,
+      },
+      {
+        id: "createdAt",
+        label: "创建时间",
+        render: (row) => row.createdAt,
+      },
     ],
     [],
   );
 
+  const rowActions = useMemo<RowAction<FlowDefinition>[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: (row) => handleView(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: "发布",
+        icon: <Send size={16} />,
+        color: "success",
+        onClick: (row: FlowDefinition) => handlePublish(row),
+        condition: (row: FlowDefinition) => row.status !== "active",
+      },
+      {
+        label: "禁用",
+        icon: <Ban size={16} />,
+        color: "error",
+        onClick: (row: FlowDefinition) => handleDisable(row),
+        condition: (row: FlowDefinition) => row.status === "active",
+      },
+    ],
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "type",
+        label: "流程类型",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "approval", label: "审批流程" },
+          { value: "reimbursement", label: "报销流程" },
+          { value: "contract", label: "合同流程" },
+          { value: "purchase", label: "采购流程" },
+          { value: "travel", label: "差旅流程" },
+        ],
+        value: typeFilter,
+        onChange: (value) => {
+          setTypeFilter(value as string);
+        },
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "active", label: "已发布" },
+          { value: "draft", label: "草稿" },
+          { value: "inactive", label: "已禁用" },
+        ],
+        value: statusFilter,
+        onChange: (value) => {
+          setStatusFilter(value as string);
+        },
+      },
+    ],
+    [typeFilter, statusFilter],
+  );
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
-      <Box
-        sx={{ bgcolor: "white", borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}
-      >
-        <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              bgcolor: "primary.light",
-              borderRadius: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <GitBranch size={24} style={{ color: "#8b5cf6" }} />
-          </Box>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              流程定义
-            </Typography>
-            <Typography variant="body2" sx={{ color: "grey.500" }}>
-              管理所有流程的定义和配置
-            </Typography>
-          </Box>
-        </Stack>
-      </Box>
-
-      <Box
-        sx={{ bgcolor: "white", borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}
-      >
-        <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
-          <TextField
-            size="small"
-            type="text"
-            placeholder="搜索流程名称..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <Search
-                    size={20}
-                    style={{ marginRight: 8, color: "#9ca3af" }}
-                  />
-                ),
-              },
-            }}
-            sx={{ flex: 1, maxWidth: 300 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>流程类型</InputLabel>
-            <Select
-              value={typeFilter}
-              label="流程类型"
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
-              <MenuItem value="all">全部</MenuItem>
-              <MenuItem value="approval">审批流程</MenuItem>
-              <MenuItem value="reimbursement">报销流程</MenuItem>
-              <MenuItem value="contract">合同流程</MenuItem>
-              <MenuItem value="purchase">采购流程</MenuItem>
-              <MenuItem value="travel">差旅流程</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>状态</InputLabel>
-            <Select
-              value={statusFilter}
-              label="状态"
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="all">全部</MenuItem>
-              <MenuItem value="active">已发布</MenuItem>
-              <MenuItem value="draft">草稿</MenuItem>
-              <MenuItem value="inactive">已禁用</MenuItem>
-            </Select>
-          </FormControl>
-          <DataExport
-            data={data as unknown as Record<string, unknown>[]}
-            fields={exportFields}
-            defaultFileName="流程定义数据"
-            buttonText="导出"
-          />
-          <Button
-            variant="contained"
-            startIcon={<Plus size={16} />}
-            sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" } }}
-          >
-            新建流程
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Upload size={16} />}
-            onClick={() => setShowUploadModal(true)}
-          >
-            上传
-          </Button>
-          <IconButton onClick={() => setLoading(true)} title="刷新">
-            <Loader2
-              size={20}
-              sx={{
-                animation: loading ? "spin 1s linear infinite" : "none",
-              }}
-            />
-          </IconButton>
-        </Stack>
-      </Box>
-
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ overflowX: "auto" }}>
-            <Box
-              component="table"
-              sx={{ width: "100%", borderCollapse: "collapse" }}
-            >
-              <Box component="thead">
-                <Box
-                  component="tr"
-                  sx={{
-                    bgcolor: "grey.100",
-                    "& th": {
-                      px: 3,
-                      py: 2,
-                      textAlign: "left",
-                      fontWeight: 600,
-                      fontSize: 14,
-                      color: "grey.700",
-                    },
-                  }}
-                >
-                  <th>流程名称</th>
-                  <th>流程类型</th>
-                  <th>版本</th>
-                  <th>状态</th>
-                  <th>创建人</th>
-                  <th>创建时间</th>
-                  <th>操作</th>
-                </Box>
-              </Box>
-              <Box component="tbody">
-                {paginatedData.map((flow, index) => (
-                  <Box
-                    component="tr"
-                    key={flow.id}
-                    sx={{
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                      bgcolor: index % 2 === 0 ? "white" : "grey.50",
-                      "&:hover": { bgcolor: "primary.light" },
-                      "& td": {
-                        px: 3,
-                        py: 2,
-                        fontSize: 14,
-                      },
-                    }}
-                  >
-                    <td>{flow.name}</td>
-                    <td>
-                      {flow.type === "approval"
-                        ? "审批流程"
-                        : flow.type === "reimbursement"
-                          ? "报销流程"
-                          : flow.type === "contract"
-                            ? "合同流程"
-                            : flow.type === "purchase"
-                              ? "采购流程"
-                              : "差旅流程"}
-                    </td>
-                    <td>{flow.version}</td>
-                    <td>
-                      <Chip
-                        size="small"
-                        label={getStatusText(flow.status)}
-                        color={getStatusColor(flow.status)}
-                      />
-                    </td>
-                    <td>{flow.creator}</td>
-                    <td>{flow.createdAt}</td>
-                    <td>
-                      <Stack direction="row" spacing={1}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleView(flow)}
-                          title="查看"
-                        >
-                          <Eye size={18} />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEdit(flow)}
-                          title="编辑"
-                        >
-                          <Edit size={18} />
-                        </IconButton>
-                        {flow.status !== "active" && (
-                          <IconButton
-                            size="small"
-                            onClick={() => handlePublish(flow)}
-                            title="发布"
-                          >
-                            <Send size={18} />
-                          </IconButton>
-                        )}
-                        {flow.status === "active" && (
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDisable(flow)}
-                            title="禁用"
-                          >
-                            <Ban size={18} />
-                          </IconButton>
-                        )}
-                      </Stack>
-                    </td>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, newPage) => setPage(newPage)}
-            color="primary"
-          />
-        </Box>
-      )}
+    <>
+      <ListPageTemplate<FlowDefinition>
+        title="流程定义"
+        subtitle="管理所有流程的定义和配置"
+        backButton={{
+          href: "/dashboard",
+        }}
+        columns={columns}
+        data={filteredData}
+        searchable
+        searchPlaceholder="搜索流程名称..."
+        searchValue={searchTerm}
+        onSearch={(value) => {
+          setSearchTerm(value);
+        }}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "上传",
+            icon: <Upload size={18} />,
+            onClick: () => setShowUploadModal(true),
+            variant: "outlined",
+          },
+          {
+            label: "新建流程",
+            icon: <Plus size={18} />,
+            onClick: () => {},
+            variant: "contained",
+          },
+        ]}
+      />
 
       <Dialog
         open={showDetailModal}
@@ -455,26 +342,28 @@ const FlowDefinitionPage: React.FC = () => {
         <DialogTitle>流程详情</DialogTitle>
         <DialogContent>
           {selectedFlow && (
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              <Box>
+            <Box sx={{ mt: 2 }}>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
                   流程名称
                 </Typography>
                 <Typography variant="body1">{selectedFlow.name}</Typography>
               </Box>
-              <Box>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
                   流程类型
                 </Typography>
-                <Typography variant="body1">{selectedFlow.type}</Typography>
+                <Typography variant="body1">
+                  {getTypeText(selectedFlow.type)}
+                </Typography>
               </Box>
-              <Box>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
                   版本
                 </Typography>
                 <Typography variant="body1">{selectedFlow.version}</Typography>
               </Box>
-              <Box>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
                   状态
                 </Typography>
@@ -484,7 +373,7 @@ const FlowDefinitionPage: React.FC = () => {
                   color={getStatusColor(selectedFlow.status)}
                 />
               </Box>
-              <Box>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
                   创建人
                 </Typography>
@@ -498,7 +387,7 @@ const FlowDefinitionPage: React.FC = () => {
                   {selectedFlow.createdAt}
                 </Typography>
               </Box>
-            </Stack>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
@@ -528,7 +417,7 @@ const FlowDefinitionPage: React.FC = () => {
             variant="contained"
             sx={{ bgcolor: "#8b5cf6" }}
             onClick={() => {
-              console.log("上传的流程文件:", attachments);
+              apiLogger.info("上传的流程文件:", attachments);
               setShowUploadModal(false);
             }}
           >
@@ -536,7 +425,7 @@ const FlowDefinitionPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

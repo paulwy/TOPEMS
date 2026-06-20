@@ -69,7 +69,9 @@ export const exportToExcel = <T>(
         return "";
       }
       if (typeof value === "boolean") {
-        return value ? i18next.t("common.yes", "是") : i18next.t("common.no", "否");
+        return value
+          ? i18next.t("common.yes", "是")
+          : i18next.t("common.no", "否");
       }
       if (
         value instanceof Date ||

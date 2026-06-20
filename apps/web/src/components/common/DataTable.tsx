@@ -202,7 +202,10 @@ const loadColumnVisibility = (key: string): VisibilityState => {
 /**
  * 保存列配置到localStorage
  */
-const saveColumnVisibility = (key: string, visibility: VisibilityState): void => {
+const saveColumnVisibility = (
+  key: string,
+  visibility: VisibilityState,
+): void => {
   try {
     localStorage.setItem(`datatable:${key}`, JSON.stringify(visibility));
   } catch {
@@ -283,11 +286,11 @@ export function DataTable<TData, TValue>({
     pageIndex: currentPage,
     pageSize: pageSize,
   });
-  
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    persistColumnConfig ? loadColumnVisibility(columnConfigKey) : {}
+    persistColumnConfig ? loadColumnVisibility(columnConfigKey) : {},
   );
-  
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -309,7 +312,10 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onPaginationChange: (newPagination) => {
-      const paginationState = typeof newPagination === 'function' ? newPagination(pagination) : newPagination;
+      const paginationState =
+        typeof newPagination === "function"
+          ? newPagination(pagination)
+          : newPagination;
       setPagination(newPagination);
       if (onPageChange) {
         onPageChange(paginationState.pageIndex);
@@ -357,7 +363,9 @@ export function DataTable<TData, TValue>({
     if (selectedKeys.size === filteredRows.length && filteredRows.length > 0) {
       handleSelectionChange(new Set());
     } else {
-      const allKeys = new Set(filteredRows.map((row) => getRowKey(row.original)));
+      const allKeys = new Set(
+        filteredRows.map((row) => getRowKey(row.original)),
+      );
       handleSelectionChange(allKeys);
     }
   }, [selectedKeys, table, getRowKey, handleSelectionChange]);
@@ -448,9 +456,7 @@ export function DataTable<TData, TValue>({
       ? totalItems
       : table.getFilteredRowModel().rows.length;
   const totalPageCount =
-    totalPages !== undefined
-      ? totalPages
-      : table.getPageCount();
+    totalPages !== undefined ? totalPages : table.getPageCount();
 
   const renderRowNumber = (index: number) => {
     return currentPageIndex * pageSize + index + 1;
@@ -470,7 +476,7 @@ export function DataTable<TData, TValue>({
         }}
       >
         {/* 左侧：搜索框 */}
-        {(showSearch && searchKey) && (
+        {showSearch && searchKey && (
           <Box
             sx={{
               width: { xs: "100%", sm: "auto" },
@@ -602,7 +608,11 @@ export function DataTable<TData, TValue>({
       </Box>
 
       {/* 列设置菜单 */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
         <MenuItem sx={{ fontWeight: 600, fontSize: 14 }}>显示/隐藏列</MenuItem>
         <Divider />
         {table.getAllLeafColumns().map((column) => (
@@ -649,8 +659,8 @@ export function DataTable<TData, TValue>({
         }}
       >
         <Box sx={{ overflowX: responsive ? "auto" : "hidden" }}>
-          <Table 
-            sx={{ 
+          <Table
+            sx={{
               minWidth: 640,
               ...(enableStickyHeader && {
                 thead: {
@@ -667,7 +677,15 @@ export function DataTable<TData, TValue>({
                 <TableRow key={headerGroup.id} sx={{ bgcolor: "grey.50" }}>
                   {/* 选择列 */}
                   {showSelection && (
-                    <TableCell padding="checkbox" sx={{ position: "sticky", left: 0, zIndex: 2, bgcolor: "grey.50" }}>
+                    <TableCell
+                      padding="checkbox"
+                      sx={{
+                        position: "sticky",
+                        left: 0,
+                        zIndex: 2,
+                        bgcolor: "grey.50",
+                      }}
+                    >
                       <Checkbox
                         checked={
                           selectedKeys.size ===
@@ -712,8 +730,12 @@ export function DataTable<TData, TValue>({
                         textTransform: "uppercase",
                         letterSpacing: 0.5,
                         color: "text.secondary",
-                        position: (showSelection || showRowNumber) ? "sticky" : "relative",
-                        left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                        position:
+                          showSelection || showRowNumber
+                            ? "sticky"
+                            : "relative",
+                        left:
+                          (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
                         zIndex: 2,
                         bgcolor: "grey.50",
                       }}
@@ -750,9 +772,9 @@ export function DataTable<TData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={
-                      columns.length + 
-                      (showSelection ? 1 : 0) + 
-                      (showRowNumber ? 1 : 0) + 
+                      columns.length +
+                      (showSelection ? 1 : 0) +
+                      (showRowNumber ? 1 : 0) +
                       (enableRowExpansion ? 1 : 0)
                     }
                     sx={{ height: 120, textAlign: "center" }}
@@ -781,7 +803,7 @@ export function DataTable<TData, TValue>({
                 table.getRowModel().rows.map((row, rowIndex) => {
                   const rowKey = getRowKey(row.original);
                   const isExpanded = expandedRows.has(rowKey);
-                  
+
                   return (
                     <>
                       <TableRow
@@ -797,9 +819,14 @@ export function DataTable<TData, TValue>({
                       >
                         {/* 选择列 */}
                         {showSelection && (
-                          <TableCell 
-                            padding="checkbox" 
-                            sx={{ position: "sticky", left: 0, zIndex: 1, bgcolor: "inherit" }}
+                          <TableCell
+                            padding="checkbox"
+                            sx={{
+                              position: "sticky",
+                              left: 0,
+                              zIndex: 1,
+                              bgcolor: "inherit",
+                            }}
                           >
                             <Checkbox
                               checked={selectedKeys.has(rowKey)}
@@ -829,8 +856,13 @@ export function DataTable<TData, TValue>({
                             sx={{
                               whiteSpace: "nowrap",
                               fontSize: 14,
-                              position: (showSelection || showRowNumber) ? "sticky" : "relative",
-                              left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                              position:
+                                showSelection || showRowNumber
+                                  ? "sticky"
+                                  : "relative",
+                              left:
+                                (showSelection ? 56 : 0) +
+                                (showRowNumber ? 64 : 0),
                               zIndex: 1,
                               bgcolor: "inherit",
                             }}
@@ -867,26 +899,28 @@ export function DataTable<TData, TValue>({
                         ))}
                       </TableRow>
                       {/* 展开行 */}
-                      {enableRowExpansion && isExpanded && expandedRowRender && (
-                        <TableRow key={`${row.id}-expanded`}>
-                          <TableCell
-                            colSpan={
-                              columns.length + 
-                              (showSelection ? 1 : 0) + 
-                              (showRowNumber ? 1 : 0) + 
-                              (enableRowExpansion ? 1 : 0)
-                            }
-                            sx={{
-                              padding: 2,
-                              bgcolor: "grey.50",
-                              borderTop: "1px solid",
-                              borderTopColor: "divider",
-                            }}
-                          >
-                            {expandedRowRender(row.original)}
-                          </TableCell>
-                        </TableRow>
-                      )}
+                      {enableRowExpansion &&
+                        isExpanded &&
+                        expandedRowRender && (
+                          <TableRow key={`${row.id}-expanded`}>
+                            <TableCell
+                              colSpan={
+                                columns.length +
+                                (showSelection ? 1 : 0) +
+                                (showRowNumber ? 1 : 0) +
+                                (enableRowExpansion ? 1 : 0)
+                              }
+                              sx={{
+                                padding: 2,
+                                bgcolor: "grey.50",
+                                borderTop: "1px solid",
+                                borderTopColor: "divider",
+                              }}
+                            >
+                              {expandedRowRender(row.original)}
+                            </TableCell>
+                          </TableRow>
+                        )}
                     </>
                   );
                 })
@@ -894,9 +928,9 @@ export function DataTable<TData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={
-                      columns.length + 
-                      (showSelection ? 1 : 0) + 
-                      (showRowNumber ? 1 : 0) + 
+                      columns.length +
+                      (showSelection ? 1 : 0) +
+                      (showRowNumber ? 1 : 0) +
                       (enableRowExpansion ? 1 : 0)
                     }
                     sx={{ height: 120, textAlign: "center" }}
@@ -913,7 +947,7 @@ export function DataTable<TData, TValue>({
       </Box>
 
       {/* 分页栏 */}
-      {(enablePagination && totalPageCount > 1) && (
+      {enablePagination && totalPageCount > 1 && (
         <Box
           sx={{
             display: "flex",

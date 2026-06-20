@@ -1,4 +1,5 @@
 import React from "react";
+import { Box, Typography } from "@mui/material";
 import {
   RadarChart as RechartsRadarChart,
   Radar,
@@ -35,7 +36,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
   };
 
   return (
-    <div style={{ height }}>
+    <Box sx={{ height }}>
       <ResponsiveContainer
         width="100%"
         height="100%"
@@ -68,7 +69,9 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               iconType="circle"
               iconSize={8}
               formatter={(value) => (
-                <span className="text-sm text-slate-600">{value}</span>
+                <Typography sx={{ fontSize: "0.875rem", color: "#475569" }}>
+                  {value}
+                </Typography>
               )}
             />
           )}
@@ -89,7 +92,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
           ))}
         </RechartsRadarChart>
       </ResponsiveContainer>
-    </div>
+    </Box>
   );
 };
 

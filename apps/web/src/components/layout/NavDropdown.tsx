@@ -77,6 +77,7 @@ export const NavDropdown: React.FC<NavDropdownProps> = ({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anchorEl]);
 
   const handleCloseMenu = useCallback(() => {

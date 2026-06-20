@@ -7,6 +7,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Receipt, CheckCircle, Clock, AlertCircle, Send } from "lucide-react";
 import { PageHeader } from "@/components/templates";
+import { apiLogger } from "@/utils/logger";
 
 const CRMBillingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const CRMBillingPage: React.FC = () => {
 
   useEffect(() => {
     loadBills();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const loadBills = async () => {
@@ -36,7 +38,7 @@ const CRMBillingPage: React.FC = () => {
       );
       setBills(response.data?.items || []);
     } catch (error) {
-      console.error("加载账单数据失败:", error);
+      apiLogger.error("加载账单数据失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -57,7 +59,7 @@ const CRMBillingPage: React.FC = () => {
       });
       loadBills();
     } catch (error) {
-      console.error("标记支付失败:", error);
+      apiLogger.error("标记支付失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",
@@ -75,7 +77,7 @@ const CRMBillingPage: React.FC = () => {
         message: "账单通知已发送",
       });
     } catch (error) {
-      console.error("发送通知失败:", error);
+      apiLogger.error("发送通知失败:", error);
       addNotification({
         type: "error",
         title: "发送失败",

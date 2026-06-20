@@ -3,7 +3,7 @@
  * 管理母子公司关系、持股比例、控制类型等，用于合并报表
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   Plus,

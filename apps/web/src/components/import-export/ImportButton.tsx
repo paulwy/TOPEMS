@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@mui/material";
 import { Upload } from "lucide-react";
 
 export interface ImportButtonProps {
@@ -15,14 +16,31 @@ export const ImportButton: React.FC<ImportButtonProps> = ({
   className = "",
 }) => {
   return (
-    <button
+    <Button
       onClick={onImport}
       disabled={disabled}
-      className={`inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={className}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        px: 4,
+        py: 2,
+        backgroundColor: "#22c55e",
+        color: "white",
+        borderRadius: 2,
+        transition: "all",
+        "&:hover": {
+          backgroundColor: "#16a34a",
+        },
+        "&:disabled": {
+          opacity: 0.5,
+          cursor: "not-allowed",
+        },
+      }}
     >
-      <Upload className="w-4 h-4 mr-2" />
+      <Upload style={{ width: 16, height: 16, marginRight: 8 }} />
       {label}
-    </button>
+    </Button>
   );
 };
 

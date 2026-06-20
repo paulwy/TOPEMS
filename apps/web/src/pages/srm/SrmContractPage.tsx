@@ -22,6 +22,7 @@ import type {
   CreateSupplierContractRequest,
 } from "@/api/srm";
 import { toast } from "react-toastify";
+import { apiLogger } from "@/utils/logger";
 
 interface ContractWithAmount extends SupplierContract {
   amount: number;
@@ -75,7 +76,7 @@ const SrmContractPage: React.FC = () => {
         setContracts([]);
       }
     } catch (err) {
-      console.error("加载合同数据失败:", err);
+      apiLogger.error("加载合同数据失败:", err);
       setContracts([]);
     } finally {
       setLoading(false);
@@ -178,7 +179,7 @@ const SrmContractPage: React.FC = () => {
       loadContracts();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建合同失败:", err);
+      apiLogger.error("创建合同失败:", err);
     }
   };
 
@@ -302,7 +303,11 @@ const SrmContractPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" },
+            gridTemplateColumns: {
+              xs: "repeat(1, 1fr)",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(5, 1fr)",
+            },
             gap: 2,
             mb: 4,
           }}

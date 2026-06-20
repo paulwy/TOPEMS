@@ -2,31 +2,13 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Button,
   TextField,
-  Card,
-  CardContent,
-  CardHeader,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Checkbox,
   Box,
   Typography,
-  Stack,
-  Paper,
-  IconButton,
-  Pagination,
 } from "@mui/material";
 import type {
   Contact,
@@ -35,23 +17,20 @@ import type {
 } from "@/api/modules/crm/crm";
 import { crmApi } from "@/api/modules/crm/crm";
 import { useAppStore } from "@/store";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
-import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { logger } from "@/utils/logger";
 import { DataExport } from "@/components/common";
+import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
 
 const ContactManagementPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [formData, setFormData] = useState<
     CreateContactRequest & { customer_id?: string }
   >({
@@ -67,25 +46,22 @@ const ContactManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadContacts();
-  }, [currentPage, pageSize, searchTerm, statusFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter]);
 
   const loadContacts = async () => {
     try {
       setLoading(true);
-      const params: any = {
-        page: currentPage,
-        pageSize,
-      };
+      const params: any = {};
       if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== "all") params.status = statusFilter;
+      if (statusFilter) params.status = statusFilter;
 
       const response = await crmApi.contacts.list(params);
       if (response.success && response.data) {
         setContacts(response.data.items || []);
-        setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载联系人列表失败:", error);
+      logger.error("加载联系人列表失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -121,7 +97,7 @@ const ContactManagementPage: React.FC = () => {
       resetForm();
       loadContacts();
     } catch (error) {
-      console.error("操作失败:", error);
+      logger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",
@@ -141,34 +117,11 @@ const ContactManagementPage: React.FC = () => {
       });
       loadContacts();
     } catch (error) {
-      console.error("删除失败:", error);
+      logger.error("删除失败:", error);
       addNotification({
         type: "error",
         title: "删除失败",
         message: "无法删除联系人",
-      });
-    }
-  };
-
-  const handleBatchDelete = async () => {
-    if (selectedIds.length === 0) return;
-    if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 个联系人吗?`))
-      return;
-    try {
-      await crmApi.contacts.batchDelete(selectedIds);
-      addNotification({
-        type: "success",
-        title: "删除成功",
-        message: `已删除 ${selectedIds.length} 个联系人`,
-      });
-      setSelectedIds([]);
-      loadContacts();
-    } catch (error) {
-      console.error("批量删除失败:", error);
-      addNotification({
-        type: "error",
-        title: "删除失败",
-        message: "批量删除失败",
       });
     }
   };
@@ -204,20 +157,6 @@ const ContactManagementPage: React.FC = () => {
     });
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === contacts.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(contacts.map((c) => c.id));
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const statusMap: Record<
       string,
@@ -240,11 +179,86 @@ const ContactManagementPage: React.FC = () => {
     return <Chip size="small" color={s.color} label={s.label} />;
   };
 
-  const handlePageChange = (_: React.ChangeEvent<any>, page: number) => {
-    setCurrentPage(page);
-  };
+  const columns = useMemo<ColumnDef<Contact>[]>(
+    () => [
+      {
+        id: "name",
+        label: "姓名",
+        render: (row) => (
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            {row.first_name} {row.last_name || ""}
+          </Typography>
+        ),
+      },
+      {
+        id: "email",
+        label: "邮箱",
+        render: (row) => row.email || "-",
+      },
+      {
+        id: "phone",
+        label: "电话",
+        render: (row) => row.phone || "-",
+      },
+      {
+        id: "position",
+        label: "职位",
+        render: (row) => row.position || "-",
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
 
-  // 导出字段配置
+  const rowActions = useMemo<RowAction<Contact>[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: (row) => handleViewDetail(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个联系人吗?",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "active", label: "活跃" },
+          { value: "inactive", label: "非活跃" },
+        ],
+        value: statusFilter,
+        onChange: (value) => {
+          setStatusFilter(value as string);
+        },
+      },
+    ],
+    [statusFilter],
+  );
+
   const exportFields = useMemo(
     () => [
       { key: "first_name", title: "名" },
@@ -257,208 +271,52 @@ const ContactManagementPage: React.FC = () => {
     [],
   );
 
-  if (loading) return <LoadingSpinner />;
-
   return (
-    <Box sx={{ mt: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            联系人管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理联系人信息,包括姓名、联系方式、职位等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ mb: 3 }}
-          >
-            <Box sx={{ flex: 1, position: "relative" }}>
-              <Search
-                sx={{
-                  position: "absolute",
-                  left: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 16,
-                  height: 16,
-                  color: "gray",
-                }}
-              />
-              <TextField
-                size="small"
-                placeholder="搜索联系人姓名或邮箱..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                sx={{ pl: 5, width: "100%" }}
-              />
-            </Box>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>状态筛选</InputLabel>
-              <Select
-                value={statusFilter}
-                label="状态筛选"
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              >
-                <MenuItem value="all">全部状态</MenuItem>
-                <MenuItem value="active">活跃</MenuItem>
-                <MenuItem value="inactive">非活跃</MenuItem>
-              </Select>
-            </FormControl>
-            <DataExport
-              data={contacts as unknown as Record<string, unknown>[]}
-              fields={exportFields}
-              defaultFileName="联系人数据"
-              buttonText="导出"
-            />
-            <Button
-              variant="contained"
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-              startIcon={<Plus style={{ width: 16, height: 16 }} />}
-            >
-              新增联系人
-            </Button>
-          </Stack>
+    <>
+      <ListPageTemplate<Contact>
+        title="联系人管理"
+        subtitle="管理联系人信息，包括姓名、联系方式、职位等"
+        backButton={{
+          href: "/dashboard",
+        }}
+        columns={columns}
+        data={contacts}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索联系人姓名或邮箱..."
+        searchValue={searchTerm}
+        onSearch={(value) => {
+          setSearchTerm(value);
+        }}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "导出",
+            icon: <Eye size={18} />,
+            onClick: () => {},
+            variant: "outlined",
+          },
+          {
+            label: "新增联系人",
+            icon: <Plus size={18} />,
+            onClick: () => {
+              resetForm();
+              setShowDialog(true);
+            },
+            variant: "contained",
+          },
+        ]}
+        headerContent={
+          <DataExport
+            data={contacts as unknown as Record<string, unknown>[]}
+            fields={exportFields}
+            defaultFileName="联系人数据"
+            buttonText=""
+          />
+        }
+      />
 
-          {selectedIds.length > 0 && (
-            <Paper sx={{ p: 1.5, mb: 2, bgcolor: "grey.100" }}>
-              <Stack
-                direction="row"
-                sx={{ justifyContent: "space-between", alignItems: "center" }}
-              >
-                <Typography variant="body2">
-                  已选择 {selectedIds.length} 个联系人
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  onClick={handleBatchDelete}
-                  startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
-                >
-                  批量删除
-                </Button>
-              </Stack>
-            </Paper>
-          )}
-
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={
-                        selectedIds.length === contacts.length &&
-                        contacts.length > 0
-                      }
-                      onChange={toggleSelectAll}
-                    />
-                  </TableCell>
-                  <TableCell>姓名</TableCell>
-                  <TableCell>邮箱</TableCell>
-                  <TableCell>电话</TableCell>
-                  <TableCell>职位</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell align="right">操作</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {contacts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <EmptyState
-                        title="暂无联系人数据"
-                        description="点击上方按钮添加第一个联系人"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  contacts.map((contact) => (
-                    <TableRow key={contact.id}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedIds.includes(contact.id)}
-                          onChange={() => toggleSelect(contact.id)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: "medium" }}>
-                        {contact.first_name} {contact.last_name || ""}
-                      </TableCell>
-                      <TableCell>{contact.email || "-"}</TableCell>
-                      <TableCell>{contact.phone || "-"}</TableCell>
-                      <TableCell>{contact.position || "-"}</TableCell>
-                      <TableCell>{getStatusBadge(contact.status)}</TableCell>
-                      <TableCell align="right">
-                        <Stack
-                          direction="row"
-                          spacing={0.5}
-                          sx={{ justifyContent: "flex-end" }}
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={() => handleViewDetail(contact)}
-                          >
-                            <Eye style={{ width: 16, height: 16 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEdit(contact)}
-                          >
-                            <Edit style={{ width: 16, height: 16 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDelete(contact.id)}
-                          >
-                            <Trash2 style={{ width: 16, height: 16 }} />
-                          </IconButton>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Stack
-            direction="row"
-            sx={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              mt: 2,
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <Pagination
-              count={Math.ceil(total / pageSize) || 1}
-              page={currentPage}
-              onChange={handlePageChange}
-              shape="rounded"
-              size="small"
-            />
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {/* 新增/编辑对话框 */}
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
@@ -543,7 +401,6 @@ const ContactManagementPage: React.FC = () => {
         </form>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
@@ -626,7 +483,7 @@ const ContactManagementPage: React.FC = () => {
           </DialogContent>
         )}
       </Dialog>
-    </Box>
+    </>
   );
 };
 

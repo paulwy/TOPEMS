@@ -29,6 +29,7 @@ import {
 } from "@/api/notification";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
+import { apiLogger } from "@/utils/logger";
 
 const NotificationTemplatesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ const NotificationTemplatesPage: React.FC = () => {
 
   useEffect(() => {
     loadTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, selectedStatus]);
 
   const loadTemplates = async () => {
@@ -62,7 +64,7 @@ const NotificationTemplatesPage: React.FC = () => {
         setTotal(response.data.total);
       }
     } catch (err) {
-      console.error("Error loading templates:", err);
+      apiLogger.error("Error loading templates:", err);
     } finally {
       setLoading(false);
     }
@@ -976,7 +978,10 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  md: "repeat(2, 1fr)",
+                },
                 gap: 2,
               }}
             >

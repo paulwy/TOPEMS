@@ -567,10 +567,7 @@ export const externalErpApi = {
     company_id?: string;
     sync_modules?: string[];
   }) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/full",
-      data,
-    ),
+    apiClient.integration.post("/api/integration/external-erp/sync/full", data),
 
   /**
    * 取消同步

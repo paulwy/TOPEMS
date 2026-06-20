@@ -29,6 +29,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { WorkflowInstance, Approval, ApprovalRecord } from "@/api/flow";
 import { flowApi } from "@/api/flow";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 
 interface InstanceDetails {
   instance: WorkflowInstance;
@@ -47,6 +48,7 @@ const FlowInstanceDetailPage: React.FC = () => {
     if (id) {
       loadInstanceDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadInstanceDetails = async () => {
@@ -66,7 +68,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("加载实例详情失败:", err);
+      apiLogger.error("加载实例详情失败:", err);
       addNotification({
         title: "错误",
         message: "加载实例详情失败",

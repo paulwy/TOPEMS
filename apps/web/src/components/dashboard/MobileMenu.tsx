@@ -1,4 +1,5 @@
 import React from "react";
+import { Box, Typography, IconButton, Button } from "@mui/material";
 import {
   X,
   Activity,
@@ -72,25 +73,51 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-40 mobile-only"
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        zIndex: 40,
+      }}
       onClick={onClose}
     >
-      <div
-        className="absolute top-14 left-0 right-0 bg-white max-h-[70vh] overflow-y-auto"
+      <Box
+        sx={{
+          position: "absolute",
+          top: 56,
+          left: 0,
+          right: 0,
+          backgroundColor: "white",
+          maxHeight: "70vh",
+          overflowY: "auto",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">菜单</h2>
-            <button
+        <Box sx={{ p: 4 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 6,
+            }}
+          >
+            <Typography sx={{ fontSize: "1.125rem", fontWeight: 600 }}>
+              菜单
+            </Typography>
+            <IconButton
               onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-lg"
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                "&:hover": { backgroundColor: "#f1f5f9" },
+              }}
             >
               <X size={20} />
-            </button>
-          </div>
-          <div className="space-y-2">
+            </IconButton>
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {menuItems
               .filter(
                 (item) =>
@@ -101,23 +128,36 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               .map((item) => {
                 const Icon = item.icon;
                 return (
-                  <button
+                  <Button
                     key={item.id}
                     onClick={() => handleNavigate(item)}
-                    className={`w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors ${
-                      currentPage === item.id
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-slate-700"
-                    }`}
+                    sx={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 3,
+                      p: 3,
+                      borderRadius: 2,
+                      justifyContent: "flex-start",
+                      backgroundColor:
+                        currentPage === item.id ? "#eff6ff" : "transparent",
+                      color: currentPage === item.id ? "#2563eb" : "#334155",
+                      "&:hover": {
+                        backgroundColor:
+                          currentPage === item.id ? "#dbeafe" : "#f1f5f9",
+                      },
+                    }}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
+                    <Icon style={{ width: 20, height: 20 }} />
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {item.label}
+                    </Typography>
+                  </Button>
                 );
               })}
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };

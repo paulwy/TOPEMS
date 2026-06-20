@@ -1,5 +1,6 @@
 import apiClient from "./client";
 import type { ApiResponse } from "./client";
+import { apiLogger } from "@/utils/logger";
 
 // Backend returns data structures
 export interface QualityStandardBackend {
@@ -749,7 +750,7 @@ export const qmsApi = {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error("Failed to calculate QMS statistics:", error);
+      apiLogger.error("Failed to calculate QMS statistics:", error);
       const fallbackStats: QmsStatistics = {
         total_standards: 0,
         active_standards: 0,

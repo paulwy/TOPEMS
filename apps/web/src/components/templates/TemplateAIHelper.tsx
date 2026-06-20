@@ -1,4 +1,13 @@
-import { Button, TextField, FormLabel, Card, CardContent, CardHeader, Typography, CircularProgress } from "@mui/material";
+import {
+  Button,
+  TextField,
+  FormLabel,
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import React, { useState } from "react";
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from "lucide-react";

@@ -1,5 +1,6 @@
 import { Grid } from "@/components/Grid";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
@@ -107,7 +108,7 @@ const RsProjectCreatePage: React.FC = () => {
       return;
     }
     // 提交表单数据
-    console.log("提交数据:", formData);
+    apiLogger.info("提交数据:", formData);
     navigate("/rs/projects");
   };
 

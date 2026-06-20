@@ -33,6 +33,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 
 const InventoryPage: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -58,6 +59,7 @@ const InventoryPage: React.FC = () => {
 
   useEffect(() => {
     loadItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadItems = async () => {
@@ -72,7 +74,7 @@ const InventoryPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载库存失败:", error);
+      apiLogger.error("加载库存失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -108,7 +110,7 @@ const InventoryPage: React.FC = () => {
       resetForm();
       loadItems();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",
@@ -144,7 +146,7 @@ const InventoryPage: React.FC = () => {
       });
       loadItems();
     } catch (error) {
-      console.error("删除失败:", error);
+      apiLogger.error("删除失败:", error);
       addNotification({
         type: "error",
         title: "删除失败",

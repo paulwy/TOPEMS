@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Box, Typography, Paper } from "@mui/material";
+import { logger } from "@/utils/logger";
 
 interface PerformanceMetrics {
   pageLoadTime: number;
@@ -59,7 +61,7 @@ class PerformanceMonitor {
     try {
       fpObserver.observe({ type: "paint", buffered: true });
     } catch (e) {
-      console.warn("FP observer not supported");
+      logger.warn("FP observer not supported");
     }
 
     // 监控 FCP (First Contentful Paint)
@@ -74,7 +76,7 @@ class PerformanceMonitor {
     try {
       fcpObserver.observe({ type: "paint", buffered: true });
     } catch (e) {
-      console.warn("FCP observer not supported");
+      logger.warn("FCP observer not supported");
     }
 
     // 监控资源加载时间
@@ -89,7 +91,7 @@ class PerformanceMonitor {
     try {
       resourceObserver.observe({ type: "resource", buffered: true });
     } catch (e) {
-      console.warn("Resource observer not supported");
+      logger.warn("Resource observer not supported");
     }
   }
 
@@ -285,30 +287,44 @@ export function PerformanceWarnings() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md shadow-lg">
-      <h3 className="font-semibold text-yellow-800 mb-2">⚠️ 性能警告</h3>
+    <Paper
+      sx={{
+        position: "fixed",
+        bottom: 16,
+        right: 16,
+        backgroundColor: "#fef3c7",
+        border: "1px solid #fde68a",
+        borderRadius: 2,
+        p: 4,
+        maxWidth: 400,
+        boxShadow: 3,
+      }}
+    >
+      <Typography sx={{ fontWeight: 600, color: "#92400e", mb: 2 }}>
+        ⚠️ 性能警告
+      </Typography>
 
       {successRate < 95 && (
-        <div className="text-sm text-yellow-700 mb-2">
+        <Typography sx={{ fontSize: "0.875rem", color: "#b45309", mb: 2 }}>
           API 成功率: {successRate.toFixed(1)}%
-        </div>
+        </Typography>
       )}
 
       {slowCalls.length > 0 && (
-        <div className="text-sm text-yellow-700">
-          <div className="font-medium mb-1">
+        <Box sx={{ fontSize: "0.875rem", color: "#b45309" }}>
+          <Typography sx={{ fontWeight: 500, mb: 1 }}>
             慢 API 调用 ({slowCalls.length}):
-          </div>
-          <ul className="list-disc list-inside">
+          </Typography>
+          <Box sx={{ pl: 4 }}>
             {slowCalls.slice(0, 3).map((call, idx) => (
-              <li key={idx}>
+              <Typography key={idx}>
                 {call.endpoint}: {(call.duration / 1000).toFixed(2)}s
-              </li>
+              </Typography>
             ))}
-          </ul>
-        </div>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 }
 

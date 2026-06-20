@@ -23,6 +23,7 @@ import { ContactList } from "./ContactList";
 import { ChatSettingsModal } from "./ChatSettingsModal";
 
 import { useAppStore } from "../../store";
+import { logger } from "@/utils/logger";
 
 type TabType = "all" | "direct" | "group" | "notifications" | "contacts";
 
@@ -90,6 +91,7 @@ export const ChatInterface: React.FC = () => {
     return () => {
       disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connect, disconnect]);
 
   useEffect(() => {
@@ -97,6 +99,7 @@ export const ChatInterface: React.FC = () => {
       loadMessages(selectedRoom.id);
       markAllMessagesRead(selectedRoom.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoom]);
 
   useEffect(() => {
@@ -113,7 +116,7 @@ export const ChatInterface: React.FC = () => {
         setChatRooms(rooms);
       }
     } catch (error) {
-      console.error("Failed to load chat rooms:", error);
+      logger.error("Failed to load chat rooms:", error);
       addNotification({
         title: "加载失败",
         message: "无法加载聊天室列表",
@@ -152,7 +155,7 @@ export const ChatInterface: React.FC = () => {
       }
       setActiveTab("direct");
     } catch (error) {
-      console.error("Failed to create chat room:", error);
+      logger.error("Failed to create chat room:", error);
       addNotification({
         title: "创建失败",
         message: "无法创建聊天会话",
@@ -170,7 +173,7 @@ export const ChatInterface: React.FC = () => {
         setMessages(msgs);
       }
     } catch (error) {
-      console.error("Failed to load messages:", error);
+      logger.error("Failed to load messages:", error);
     }
   };
 
@@ -184,7 +187,7 @@ export const ChatInterface: React.FC = () => {
       }
       setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
     } catch (error) {
-      console.error("Failed to mark messages as read:", error);
+      logger.error("Failed to mark messages as read:", error);
     }
   };
 
@@ -203,7 +206,7 @@ export const ChatInterface: React.FC = () => {
         setFilteredMessages(data.data.messages || []);
       }
     } catch (error) {
-      console.error("Failed to search messages:", error);
+      logger.error("Failed to search messages:", error);
     }
   };
 
@@ -223,7 +226,7 @@ export const ChatInterface: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error("Failed to edit message:", error);
+      logger.error("Failed to edit message:", error);
       addNotification({
         title: "编辑失败",
         message: "无法编辑消息",
@@ -246,7 +249,7 @@ export const ChatInterface: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Failed to delete message:", error);
+      logger.error("Failed to delete message:", error);
       addNotification({
         title: "删除失败",
         message: "无法删除消息",
@@ -277,7 +280,7 @@ export const ChatInterface: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Failed to mute room:", error);
+      logger.error("Failed to mute room:", error);
     }
   };
 
@@ -299,7 +302,7 @@ export const ChatInterface: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Failed to unmute room:", error);
+      logger.error("Failed to unmute room:", error);
     }
   };
 
@@ -321,7 +324,7 @@ export const ChatInterface: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Failed to pin room:", error);
+      logger.error("Failed to pin room:", error);
     }
   };
 
@@ -345,7 +348,7 @@ export const ChatInterface: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Failed to unpin room:", error);
+      logger.error("Failed to unpin room:", error);
     }
   };
 
@@ -365,7 +368,7 @@ export const ChatInterface: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("Failed to delete room:", error);
+      logger.error("Failed to delete room:", error);
       addNotification({
         title: "失败",
         message: "删除会话失败",
@@ -409,7 +412,7 @@ export const ChatInterface: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Failed to send message:", error);
+      logger.error("Failed to send message:", error);
       addNotification({
         title: "发送失败",
         message: "消息发送失败",
@@ -434,7 +437,7 @@ export const ChatInterface: React.FC = () => {
       }
       return null;
     } catch (error) {
-      console.error("Failed to upload file:", error);
+      logger.error("Failed to upload file:", error);
       return null;
     }
   };

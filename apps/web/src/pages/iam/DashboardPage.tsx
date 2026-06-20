@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-} from "@mui/material";
+import { Box, Typography, Card, CardContent, Button } from "@mui/material";
 import { Grid } from "@/components/Grid";
 import {
   Users,
@@ -17,7 +11,10 @@ import {
 } from "lucide-react";
 import PieChartComponent from "../../components/charts/PieChart";
 
-const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
+const iconMap: Record<
+  string,
+  React.ComponentType<{ className?: string; size?: number }>
+> = {
   Users,
   Shield,
   Activity,
@@ -94,7 +91,7 @@ export const DashboardPage: React.FC = () => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
-        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
+        <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
           系统管理
         </Typography>
         <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
@@ -137,8 +134,7 @@ export const DashboardPage: React.FC = () => {
                         </Typography>
                         <Typography
                           variant="h4"
-                          sx={{  color: "#1e293b" , fontWeight: 600 }}
-                          
+                          sx={{ color: "#1e293b", fontWeight: 600 }}
                         >
                           {stat.value}
                         </Typography>
@@ -148,7 +144,8 @@ export const DashboardPage: React.FC = () => {
                           width: 48,
                           height: 48,
                           borderRadius: "12px",
-                          background: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
+                          background:
+                            "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -239,10 +236,7 @@ export const DashboardPage: React.FC = () => {
                         >
                           {user.name}
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "#94a3b8" }}
-                        >
+                        <Typography variant="caption" sx={{ color: "#94a3b8" }}>
                           {user.role} · {user.time}
                         </Typography>
                       </Box>
@@ -263,10 +257,7 @@ export const DashboardPage: React.FC = () => {
                             user.status === "活跃" ? "#10b981" : "#94a3b8",
                         }}
                       />
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "#64748b" }}
-                      >
+                      <Typography variant="caption" sx={{ color: "#64748b" }}>
                         {user.status}
                       </Typography>
                     </Box>
@@ -284,7 +275,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   用户角色分布
                 </Typography>
                 <PieChartComponent data={pieData} />
@@ -295,8 +286,7 @@ export const DashboardPage: React.FC = () => {
 
         <Typography
           variant="h6"
-          sx={{  mt: 4, mb: 2, color: "#1e293b" , fontWeight: 600 }}
-          
+          sx={{ mt: 4, mb: 2, color: "#1e293b", fontWeight: 600 }}
         >
           快速操作
         </Typography>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
+import { logger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -15,7 +17,24 @@ import {
   FileCheck,
   Trash2,
 } from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions,  Button, TextField, Chip, Card, CardContent, CardHeader, Box, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -65,7 +84,7 @@ const EhsIncidentReportPage: React.FC = () => {
         setIncidents(incidentsArray);
       }
     } catch (error) {
-      console.error("加载事件报告失败:", error);
+      apiLogger.error("加载事件报告失败:", error);
       toast.error("加载事件报告失败");
     } finally {
       setLoading(false);
@@ -88,7 +107,7 @@ const EhsIncidentReportPage: React.FC = () => {
         setActions(actionsArray);
       }
     } catch (error) {
-      console.error("加载事件详情失败:", error);
+      apiLogger.error("加载事件详情失败:", error);
       toast.error("加载事件详情失败");
     }
   };
@@ -119,7 +138,7 @@ const EhsIncidentReportPage: React.FC = () => {
         toast.error("创建失败，请稍后重试");
       }
     } catch (error) {
-      console.error("创建事件报告失败:", error);
+      apiLogger.error("创建事件报告失败:", error);
       toast.error("创建失败，请稍后重试");
     }
   };
@@ -135,7 +154,7 @@ const EhsIncidentReportPage: React.FC = () => {
         toast.error("删除失败，请稍后重试");
       }
     } catch (error) {
-      console.error("删除事件报告失败:", error);
+      apiLogger.error("删除事件报告失败:", error);
       toast.error("删除失败，请稍后重试");
     }
   };

@@ -9,6 +9,7 @@
  */
 
 import { openDB } from "idb";
+import { logger } from "@/utils/logger";
 
 const DB_NAME = "gis_offline_db";
 const DB_VERSION = 1;
@@ -87,7 +88,7 @@ export async function importTilesFromManifest(
       }
     } catch (error) {
       failed++;
-      console.warn(`Failed to import tile ${key}:`, error);
+      logger.warn(`Failed to import tile ${key}:`, error);
     }
 
     if (onProgress) {
@@ -188,6 +189,6 @@ if (typeof window !== "undefined") {
   };
 }
 
-console.log(
+logger.info(
   "离线瓦片工具已加载。使用 gisOffline.importTilesFromManifest(manifest) 导入瓦片。",
 );

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { logger } from "@/utils/logger";
 import {
   fetchSummaryDashboard,
   fetchDevelopmentAnalytics,
@@ -120,7 +121,7 @@ export const useBIStore = create<BIStore>((set, get) => ({
         error: null,
       });
     } catch (err) {
-      console.error("Failed to load BI data:", err);
+      logger.error("Failed to load BI data:", err);
       set({
         loading: false,
         refreshing: false,

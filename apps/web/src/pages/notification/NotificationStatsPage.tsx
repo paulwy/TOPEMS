@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import {
   BarChart3,
   ChevronLeft,
@@ -64,7 +65,7 @@ const NotificationStatsPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("Error loading stats:", err);
+      logger.error("Error loading stats:", err);
     } finally {
       setLoading(false);
     }

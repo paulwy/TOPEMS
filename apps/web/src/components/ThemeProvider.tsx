@@ -43,6 +43,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return () => {
       mediaQuery.removeEventListener("change", handleSystemThemeChange);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
 
   const updateDOM = (newTheme: "light" | "dark") => {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import config from "../config/runtime";
+import { logger } from "@/utils/logger";
 
 export interface WsMessage {
   msg_type: string;
@@ -58,7 +59,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     }
 
     const fullWsUrl = `${wsUrl}/ws`;
-    console.log("[useWebSocket] Attempting to connect to:", fullWsUrl);
+    logger.info("[useWebSocket] Attempting to connect to:", fullWsUrl);
 
     const ws = new WebSocket(fullWsUrl);
 
@@ -74,12 +75,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         const message: WsMessage = JSON.parse(event.data);
         callbacksRef.current.onMessage?.(message);
       } catch (err) {
-        console.error("Failed to parse WebSocket message:", err);
+        logger.error("Failed to parse WebSocket message:", err);
       }
     };
 
     ws.onclose = (event) => {
-      console.log(
+      logger.info(
         "[useWebSocket] Connection closed:",
         event.code,
         event.reason,
@@ -89,7 +90,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
       if (reconnectCountRef.current < reconnectAttempts) {
         reconnectCountRef.current++;
-        console.log(
+        logger.info(
           "[useWebSocket] Reconnecting attempt:",
           reconnectCountRef.current,
         );
@@ -100,7 +101,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     };
 
     ws.onerror = (event) => {
-      console.error("[useWebSocket] Connection error:", event);
+      logger.error("[useWebSocket] Connection error:", event);
       setError(event);
       callbacksRef.current.onError?.(event);
     };
@@ -121,7 +122,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
-      console.error("WebSocket is not connected");
+      logger.error("WebSocket is not connected");
     }
   }, []);
 

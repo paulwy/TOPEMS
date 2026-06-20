@@ -13,6 +13,7 @@ import type { SalesForecast, ForecastFactor } from "@/api/modules/crm/crm";
 import { crmApi } from "@/api/modules/crm/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { apiLogger } from "@/utils/logger";
 import {
   TrendingUp,
   Target,
@@ -48,6 +49,7 @@ const CRMSalesForecastPage: React.FC = () => {
 
   useEffect(() => {
     loadForecasts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [periodType]);
 
   const loadForecasts = async () => {
@@ -58,7 +60,7 @@ const CRMSalesForecastPage: React.FC = () => {
       });
       setForecasts(response.data?.items || []);
     } catch (error) {
-      console.error("加载销售预测数据失败:", error);
+      apiLogger.error("加载销售预测数据失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -88,7 +90,7 @@ const CRMSalesForecastPage: React.FC = () => {
       });
       loadForecasts();
     } catch (error) {
-      console.error("生成销售预测失败:", error);
+      apiLogger.error("生成销售预测失败:", error);
       addNotification({
         type: "error",
         title: "生成失败",
@@ -366,7 +368,10 @@ const CRMSalesForecastPage: React.FC = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                lg: "repeat(2, 1fr)",
+              },
               gap: 3,
             }}
           >

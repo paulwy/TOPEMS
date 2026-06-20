@@ -16,13 +16,27 @@ import {
   Plus,
   BarChart3,
 } from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions,  Button, TextField, Chip, Card, CardContent, CardHeader, Box, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+} from "@mui/material";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { limsApi } from "@/api/lims";
 import type { Sample, InspectionTask, InspectionRecord } from "@/api/lims";
 import { toast } from "react-toastify";
+import { logger } from "@/utils/logger";
 import {
   BarChart,
   Bar,
@@ -111,7 +125,7 @@ const LimsSampleDetailPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("加载样品详情失败:", error);
+      logger.error("加载样品详情失败:", error);
     } finally {
       setLoading(false);
     }
@@ -161,7 +175,7 @@ const LimsSampleDetailPage: React.FC = () => {
         toast.error("更新失败，请稍后重试");
       }
     } catch (error) {
-      console.error("更新样品失败:", error);
+      logger.error("更新样品失败:", error);
       toast.error("更新失败，请稍后重试");
     }
   };
@@ -178,7 +192,7 @@ const LimsSampleDetailPage: React.FC = () => {
         toast.error("删除失败，请稍后重试");
       }
     } catch (error) {
-      console.error("删除样品失败:", error);
+      logger.error("删除样品失败:", error);
       toast.error("删除失败，请稍后重试");
     }
   };

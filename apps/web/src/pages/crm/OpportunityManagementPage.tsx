@@ -11,21 +11,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Checkbox,
-  Stack,
-  Paper,
-  IconButton,
-  Pagination,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import type {
@@ -35,24 +20,21 @@ import type {
 } from "@/api/modules/crm/crm";
 import { crmApi } from "@/api/modules/crm/crm";
 import { useAppStore } from "@/store";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
-import { Search, Plus, Edit, Trash2, Eye, TrendingUp } from "lucide-react";
+import { logger } from "@/utils/logger";
 import { DataExport } from "@/components/common";
+import { Plus, Edit, Trash2, Eye, TrendingUp } from "lucide-react";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
 
 const OpportunityManagementPage: React.FC = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stageFilter, setStageFilter] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [stageFilter, setStageFilter] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [formData, setFormData] = useState<
     CreateOpportunityRequest & { customer_id?: string }
   >({
@@ -67,25 +49,22 @@ const OpportunityManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadOpportunities();
-  }, [currentPage, pageSize, searchTerm, stageFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, stageFilter]);
 
   const loadOpportunities = async () => {
     try {
       setLoading(true);
-      const params: any = {
-        page: currentPage,
-        pageSize,
-      };
+      const params: any = {};
       if (searchTerm) params.search = searchTerm;
-      if (stageFilter !== "all") params.stage = stageFilter;
+      if (stageFilter) params.stage = stageFilter;
 
       const response = await crmApi.opportunities.list(params);
       if (response.success && response.data) {
         setOpportunities(response.data.items || []);
-        setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载商机列表失败:", error);
+      logger.error("加载商机列表失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -121,7 +100,7 @@ const OpportunityManagementPage: React.FC = () => {
       resetForm();
       loadOpportunities();
     } catch (error) {
-      console.error("操作失败:", error);
+      logger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",
@@ -141,34 +120,11 @@ const OpportunityManagementPage: React.FC = () => {
       });
       loadOpportunities();
     } catch (error) {
-      console.error("删除失败:", error);
+      logger.error("删除失败:", error);
       addNotification({
         type: "error",
         title: "删除失败",
         message: "无法删除商机",
-      });
-    }
-  };
-
-  const handleBatchDelete = async () => {
-    if (selectedIds.length === 0) return;
-    if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 个商机吗?`))
-      return;
-    try {
-      await crmApi.opportunities.batchDelete(selectedIds);
-      addNotification({
-        type: "success",
-        title: "删除成功",
-        message: `已删除 ${selectedIds.length} 个商机`,
-      });
-      setSelectedIds([]);
-      loadOpportunities();
-    } catch (error) {
-      console.error("批量删除失败:", error);
-      addNotification({
-        type: "error",
-        title: "删除失败",
-        message: "批量删除失败",
       });
     }
   };
@@ -202,20 +158,6 @@ const OpportunityManagementPage: React.FC = () => {
     });
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === opportunities.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(opportunities.map((o) => o.id));
-    }
-  };
-
   const getStageBadge = (stage: string) => {
     const stageMap: Record<
       string,
@@ -242,7 +184,6 @@ const OpportunityManagementPage: React.FC = () => {
     return <Chip size="small" color={s.color} label={s.label} />;
   };
 
-  // 计算销售漏斗数据
   const getFunnelData = () => {
     const stages = [
       "lead",
@@ -280,11 +221,93 @@ const OpportunityManagementPage: React.FC = () => {
   const funnelData = getFunnelData();
   const maxValue = Math.max(...funnelData.map((f) => f.value), 1);
 
-  const handlePageChange = (_: React.ChangeEvent<any>, page: number) => {
-    setCurrentPage(page);
-  };
+  const columns = useMemo<ColumnDef<Opportunity>[]>(
+    () => [
+      {
+        id: "name",
+        label: "商机名称",
+        render: (row) => (
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            {row.name}
+          </Typography>
+        ),
+      },
+      {
+        id: "value",
+        label: "金额",
+        render: (row) => `¥${(row.value || 0).toLocaleString()}`,
+      },
+      {
+        id: "stage",
+        label: "阶段",
+        render: (row) => getStageBadge(row.stage),
+      },
+      {
+        id: "probability",
+        label: "概率",
+        render: (row) => (row.probability ? `${row.probability}%` : "-"),
+      },
+      {
+        id: "close_date",
+        label: "预计成交日期",
+        render: (row) =>
+          row.close_date
+            ? new Date(row.close_date).toLocaleDateString("zh-CN")
+            : "-",
+      },
+    ],
+    [],
+  );
 
-  // 导出字段配置
+  const rowActions = useMemo<RowAction<Opportunity>[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: (row) => handleViewDetail(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个商机吗?",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "stage",
+        label: "阶段",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "lead", label: "线索" },
+          { value: "qualified", label: "合格" },
+          { value: "proposal", label: "提案" },
+          { value: "negotiation", label: "谈判" },
+          { value: "closed_won", label: "赢单" },
+          { value: "closed_lost", label: "输单" },
+        ],
+        value: stageFilter,
+        onChange: (value) => {
+          setStageFilter(value as string);
+        },
+      },
+    ],
+    [stageFilter],
+  );
+
   const exportFields = useMemo(
     () => [
       { key: "name", title: "商机名称" },
@@ -298,11 +321,8 @@ const OpportunityManagementPage: React.FC = () => {
     [],
   );
 
-  if (loading) return <LoadingSpinner />;
-
   return (
-    <Box sx={{ mt: 3 }}>
-      {/* 销售漏斗可视化 */}
+    <>
       <Card sx={{ mb: 3 }}>
         <CardHeader>
           <Typography
@@ -367,221 +387,50 @@ const OpportunityManagementPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* 商机列表 */}
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            商机管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理商机信息,跟踪销售机会和成交进度
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ mb: 3 }}
-          >
-            <Box sx={{ flex: 1, position: "relative" }}>
-              <Search
-                style={{
-                  position: "absolute",
-                  left: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 16,
-                  height: 16,
-                  color: "gray",
-                }}
-              />
-              <TextField
-                size="small"
-                placeholder="搜索商机名称..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                sx={{ pl: 5, width: "100%" }}
-              />
-            </Box>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>阶段筛选</InputLabel>
-              <Select
-                value={stageFilter}
-                label="阶段筛选"
-                onChange={(e) => {
-                  setStageFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              >
-                <MenuItem value="all">全部阶段</MenuItem>
-                <MenuItem value="lead">线索</MenuItem>
-                <MenuItem value="qualified">合格</MenuItem>
-                <MenuItem value="proposal">提案</MenuItem>
-                <MenuItem value="negotiation">谈判</MenuItem>
-                <MenuItem value="closed_won">赢单</MenuItem>
-                <MenuItem value="closed_lost">输单</MenuItem>
-              </Select>
-            </FormControl>
-            <DataExport
-              data={opportunities as unknown as Record<string, unknown>[]}
-              fields={exportFields}
-              defaultFileName="商机数据"
-              buttonText="导出"
-            />
-            <Button
-              variant="contained"
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-              startIcon={<Plus style={{ width: 16, height: 16 }} />}
-            >
-              新增商机
-            </Button>
-          </Stack>
+      <ListPageTemplate<Opportunity>
+        title="商机管理"
+        subtitle="管理商机信息，跟踪销售机会和成交进度"
+        backButton={{
+          href: "/dashboard",
+        }}
+        columns={columns}
+        data={opportunities}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索商机名称..."
+        searchValue={searchTerm}
+        onSearch={(value) => {
+          setSearchTerm(value);
+        }}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "导出",
+            icon: <Eye size={18} />,
+            onClick: () => {},
+            variant: "outlined",
+          },
+          {
+            label: "新增商机",
+            icon: <Plus size={18} />,
+            onClick: () => {
+              resetForm();
+              setShowDialog(true);
+            },
+            variant: "contained",
+          },
+        ]}
+        headerContent={
+          <DataExport
+            data={opportunities as unknown as Record<string, unknown>[]}
+            fields={exportFields}
+            defaultFileName="商机数据"
+            buttonText=""
+          />
+        }
+      />
 
-          {selectedIds.length > 0 && (
-            <Paper sx={{ p: 1.5, mb: 2, bgcolor: "grey.100" }}>
-              <Stack
-                direction="row"
-                sx={{ justifyContent: "space-between", alignItems: "center" }}
-              >
-                <Typography variant="body2">
-                  已选择 {selectedIds.length} 个商机
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  onClick={handleBatchDelete}
-                  startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
-                >
-                  批量删除
-                </Button>
-              </Stack>
-            </Paper>
-          )}
-
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={
-                        selectedIds.length === opportunities.length &&
-                        opportunities.length > 0
-                      }
-                      onChange={toggleSelectAll}
-                    />
-                  </TableCell>
-                  <TableCell>商机名称</TableCell>
-                  <TableCell>金额</TableCell>
-                  <TableCell>阶段</TableCell>
-                  <TableCell>概率</TableCell>
-                  <TableCell>预计成交日期</TableCell>
-                  <TableCell align="right">操作</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {opportunities.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <EmptyState
-                        title="暂无商机数据"
-                        description="点击上方按钮添加第一个商机"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  opportunities.map((opportunity) => (
-                    <TableRow key={opportunity.id}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedIds.includes(opportunity.id)}
-                          onChange={() => toggleSelect(opportunity.id)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: "medium" }}>
-                        {opportunity.name}
-                      </TableCell>
-                      <TableCell>
-                        ¥{(opportunity.value || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell>{getStageBadge(opportunity.stage)}</TableCell>
-                      <TableCell>
-                        {opportunity.probability
-                          ? `${opportunity.probability}%`
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {opportunity.close_date
-                          ? new Date(opportunity.close_date).toLocaleDateString(
-                              "zh-CN",
-                            )
-                          : "-"}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack
-                          direction="row"
-                          spacing={0.5}
-                          sx={{ justifyContent: "flex-end" }}
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={() => handleViewDetail(opportunity)}
-                          >
-                            <Eye style={{ width: 16, height: 16 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEdit(opportunity)}
-                          >
-                            <Edit style={{ width: 16, height: 16 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDelete(opportunity.id)}
-                          >
-                            <Trash2 style={{ width: 16, height: 16 }} />
-                          </IconButton>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Stack
-            direction="row"
-            sx={{
-              justifyContent: "space-between",
-              alignItems: "center",
-              mt: 2,
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <Pagination
-              count={Math.ceil(total / pageSize) || 1}
-              page={currentPage}
-              onChange={handlePageChange}
-              shape="rounded"
-              size="small"
-            />
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {/* 新增/编辑对话框 */}
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
@@ -645,29 +494,8 @@ const OpportunityManagementPage: React.FC = () => {
                   setFormData({ ...formData, close_date: e.target.value })
                 }
                 fullWidth
+                sx={{ gridColumn: "span 2" }}
               />
-              {selectedOpportunity && (
-                <FormControl fullWidth>
-                  <InputLabel>阶段</InputLabel>
-                  <Select
-                    value={selectedOpportunity.stage}
-                    label="阶段"
-                    onChange={(e) =>
-                      setSelectedOpportunity({
-                        ...selectedOpportunity,
-                        stage: e.target.value,
-                      })
-                    }
-                  >
-                    <MenuItem value="lead">线索</MenuItem>
-                    <MenuItem value="qualified">合格</MenuItem>
-                    <MenuItem value="proposal">提案</MenuItem>
-                    <MenuItem value="negotiation">谈判</MenuItem>
-                    <MenuItem value="closed_won">赢单</MenuItem>
-                    <MenuItem value="closed_lost">输单</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
               <TextField
                 label="备注"
                 multiline
@@ -690,7 +518,6 @@ const OpportunityManagementPage: React.FC = () => {
         </form>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
@@ -707,7 +534,7 @@ const OpportunityManagementPage: React.FC = () => {
                 gap: 2,
               }}
             >
-              <Box sx={{ gridColumn: "span 2" }}>
+              <Box>
                 <Typography variant="caption" color="text.secondary">
                   商机名称
                 </Typography>
@@ -763,16 +590,6 @@ const OpportunityManagementPage: React.FC = () => {
                   )}
                 </Typography>
               </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  更新时间
-                </Typography>
-                <Typography>
-                  {new Date(selectedOpportunity.updated_at).toLocaleString(
-                    "zh-CN",
-                  )}
-                </Typography>
-              </Box>
               <Box sx={{ gridColumn: "span 2" }}>
                 <Typography variant="caption" color="text.secondary">
                   备注
@@ -783,7 +600,7 @@ const OpportunityManagementPage: React.FC = () => {
           </DialogContent>
         )}
       </Dialog>
-    </Box>
+    </>
   );
 };
 

@@ -95,7 +95,11 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
         padding: currentSize.padding,
         cursor: "pointer",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        transform: isHovered ? "translateY(-4px)" : isClicked ? "scale(0.98)" : "translateY(0)",
+        transform: isHovered
+          ? "translateY(-4px)"
+          : isClicked
+            ? "scale(0.98)"
+            : "translateY(0)",
         boxShadow: isHovered
           ? "0 20px 40px rgba(0, 0, 0, 0.12)"
           : "0 4px 6px rgba(0, 0, 0, 0.05)",
@@ -111,11 +115,12 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
           left: 0,
           right: 0,
           height: "3px",
-          background: item.status === "online" 
-            ? "linear-gradient(90deg, #22c55e, #16a34a)"
-            : item.status === "beta"
-            ? "linear-gradient(90deg, #f59e0b, #ca8a04)"
-            : "linear-gradient(90deg, #94a3b8, #64748b)",
+          background:
+            item.status === "online"
+              ? "linear-gradient(90deg, #22c55e, #16a34a)"
+              : item.status === "beta"
+                ? "linear-gradient(90deg, #f59e0b, #ca8a04)"
+                : "linear-gradient(90deg, #94a3b8, #64748b)",
           transition: "opacity 0.3s ease",
           opacity: isHovered ? 1 : 0.6,
         }}
@@ -133,11 +138,16 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
             justifyContent: "center",
             flexShrink: 0,
             transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            transform: isHovered ? "scale(1.1) rotate(5deg)" : "scale(1) rotate(0deg)",
+            transform: isHovered
+              ? "scale(1.1) rotate(5deg)"
+              : "scale(1) rotate(0deg)",
             boxShadow: isHovered
               ? `0 8px 24px ${colorToGradient[item.color] || "#3b82f6"}40`
               : "0 4px 12px rgba(0,0,0,0.15)",
-            animation: item.status === "online" ? "glow 2s ease-in-out infinite" : "none",
+            animation:
+              item.status === "online"
+                ? "glow 2s ease-in-out infinite"
+                : "none",
           }}
         >
           <Icon

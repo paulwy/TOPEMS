@@ -133,12 +133,7 @@ describe("DashboardTemplate", () => {
     });
 
     it("渲染面包屑导航", () => {
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          stats={basicStats}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" stats={basicStats} />);
 
       // 组件应该正常渲染
       expect(screen.getByText("数据概览")).toBeInTheDocument();
@@ -160,12 +155,7 @@ describe("DashboardTemplate", () => {
 
   describe("统计卡片", () => {
     it("渲染统计卡片", () => {
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          stats={basicStats}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" stats={basicStats} />);
 
       expect(screen.getByText("总用户数")).toBeInTheDocument();
       expect(screen.getByText("1234")).toBeInTheDocument();
@@ -174,12 +164,7 @@ describe("DashboardTemplate", () => {
     });
 
     it("渲染增长趋势数据", () => {
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          stats={basicStats}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" stats={basicStats} />);
 
       expect(screen.getByText("总用户数")).toBeInTheDocument();
       expect(screen.getByText("1234")).toBeInTheDocument();
@@ -199,12 +184,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          stats={statsWithProgress}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" stats={statsWithProgress} />);
 
       expect(screen.getByText("本月进度")).toBeInTheDocument();
       expect(screen.getByText("75%")).toBeInTheDocument();
@@ -220,12 +200,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          stats={statsWithTrend}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" stats={statsWithTrend} />);
 
       expect(screen.getByText("销售额")).toBeInTheDocument();
       // SVG趋势图应该被渲染
@@ -246,12 +221,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          stats={statsWithTags}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" stats={statsWithTags} />);
 
       expect(screen.getByText("重要")).toBeInTheDocument();
       expect(screen.getByText("活跃")).toBeInTheDocument();
@@ -268,12 +238,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          stats={clickableStats}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" stats={clickableStats} />);
 
       const card = screen.getByText("总用户数").closest("div");
       await userEvent.click(card!);
@@ -292,12 +257,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          cardGroups={cardGroups}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" cardGroups={cardGroups} />);
 
       expect(screen.getByText("用户统计")).toBeInTheDocument();
       expect(screen.getByText("总用户数")).toBeInTheDocument();
@@ -315,12 +275,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          cardGroups={cardGroups}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" cardGroups={cardGroups} />);
 
       // 初始状态：分组展开
       expect(screen.getByText("用户统计")).toBeInTheDocument();
@@ -337,12 +292,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          cardGroups={cardGroups}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" cardGroups={cardGroups} />);
 
       // 检查tabs
       expect(screen.getByRole("tab", { name: "总用户数" })).toBeInTheDocument();
@@ -360,12 +310,7 @@ describe("DashboardTemplate", () => {
 
   describe("图表卡片", () => {
     it("渲染图表卡片", () => {
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          charts={basicCharts}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" charts={basicCharts} />);
 
       expect(screen.getByText("用户增长趋势")).toBeInTheDocument();
       expect(screen.getByTestId("mock-chart")).toBeInTheDocument();
@@ -374,12 +319,7 @@ describe("DashboardTemplate", () => {
     });
 
     it("渲染图表类型标签", () => {
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          charts={basicCharts}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" charts={basicCharts} />);
 
       expect(screen.getByText("line")).toBeInTheDocument();
       expect(screen.getByText("bar")).toBeInTheDocument();
@@ -396,12 +336,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          charts={chartsWithRefresh}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" charts={chartsWithRefresh} />);
 
       // 图表卡片应该正常渲染
       expect(screen.getByText("用户增长趋势")).toBeInTheDocument();
@@ -420,10 +355,7 @@ describe("DashboardTemplate", () => {
       ];
 
       render(
-        <DashboardTemplate
-          title="数据概览"
-          charts={chartsWithDownload}
-        />,
+        <DashboardTemplate title="数据概览" charts={chartsWithDownload} />,
       );
 
       // 图表卡片应该正常渲染
@@ -442,12 +374,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          charts={expandableCharts}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" charts={expandableCharts} />);
 
       // 初始状态：图表展开
       expect(screen.getByTestId("mock-chart")).toBeInTheDocument();
@@ -464,12 +391,7 @@ describe("DashboardTemplate", () => {
         },
       ];
 
-      render(
-        <DashboardTemplate
-          title="数据概览"
-          charts={chartsWithError}
-        />,
-      );
+      render(<DashboardTemplate title="数据概览" charts={chartsWithError} />);
 
       expect(screen.getByText("数据加载失败")).toBeInTheDocument();
     });
@@ -493,10 +415,7 @@ describe("DashboardTemplate", () => {
 
     it("渲染状态标签", () => {
       render(
-        <DashboardTemplate
-          title="数据概览"
-          recentItems={basicRecentItems}
-        />,
+        <DashboardTemplate title="数据概览" recentItems={basicRecentItems} />,
       );
 
       expect(screen.getByText("success")).toBeInTheDocument();
@@ -508,18 +427,12 @@ describe("DashboardTemplate", () => {
         {
           id: "item-1",
           title: "新用户注册",
-          tags: [
-            { label: "重要" },
-            { label: "VIP" },
-          ],
+          tags: [{ label: "重要" }, { label: "VIP" }],
         },
       ];
 
       render(
-        <DashboardTemplate
-          title="数据概览"
-          recentItems={itemsWithTags}
-        />,
+        <DashboardTemplate title="数据概览" recentItems={itemsWithTags} />,
       );
 
       expect(screen.getByText("重要")).toBeInTheDocument();
@@ -537,10 +450,7 @@ describe("DashboardTemplate", () => {
       ];
 
       render(
-        <DashboardTemplate
-          title="数据概览"
-          recentItems={clickableItems}
-        />,
+        <DashboardTemplate title="数据概览" recentItems={clickableItems} />,
       );
 
       const item = screen.getByText("新用户注册").closest("div");
@@ -577,10 +487,7 @@ describe("DashboardTemplate", () => {
       ];
 
       render(
-        <DashboardTemplate
-          title="数据概览"
-          quickActions={actionsWithBadge}
-        />,
+        <DashboardTemplate title="数据概览" quickActions={actionsWithBadge} />,
       );
 
       expect(screen.getByText("5")).toBeInTheDocument();
@@ -598,10 +505,7 @@ describe("DashboardTemplate", () => {
       ];
 
       render(
-        <DashboardTemplate
-          title="数据概览"
-          quickActions={disabledActions}
-        />,
+        <DashboardTemplate title="数据概览" quickActions={disabledActions} />,
       );
 
       const action = screen.getByText("新建项目").closest("div");
@@ -620,10 +524,7 @@ describe("DashboardTemplate", () => {
       ];
 
       render(
-        <DashboardTemplate
-          title="数据概览"
-          quickActions={clickableActions}
-        />,
+        <DashboardTemplate title="数据概览" quickActions={clickableActions} />,
       );
 
       const action = screen.getByText("新建项目").closest("div");
@@ -670,7 +571,9 @@ describe("DashboardTemplate", () => {
 
       // 检查tabs
       expect(screen.getByRole("tab", { name: "总用户数" })).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: "用户增长趋势" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: "用户增长趋势" }),
+      ).toBeInTheDocument();
     });
 
     it("stack布局", () => {
@@ -728,10 +631,13 @@ describe("DashboardTemplate", () => {
 
     it("从localStorage加载布局配置", async () => {
       // 先保存一个配置
-      localStorageMock.setItem("test-dashboard-config", JSON.stringify({
-        statsLayout: "tabs",
-        chartsLayout: "stack",
-      }));
+      localStorageMock.setItem(
+        "test-dashboard-config",
+        JSON.stringify({
+          statsLayout: "tabs",
+          chartsLayout: "stack",
+        }),
+      );
 
       render(
         <DashboardTemplate
@@ -745,7 +651,9 @@ describe("DashboardTemplate", () => {
 
       // 等待配置加载
       await waitFor(() => {
-        expect(screen.getByRole("tab", { name: "总用户数" })).toBeInTheDocument();
+        expect(
+          screen.getByRole("tab", { name: "总用户数" }),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -754,9 +662,7 @@ describe("DashboardTemplate", () => {
     it("使用自定义统计卡片渲染器", () => {
       const customRenderers = {
         statCard: (stat: StatCard) => (
-          <div data-testid="custom-stat-card">
-            Custom: {stat.title}
-          </div>
+          <div data-testid="custom-stat-card">Custom: {stat.title}</div>
         ),
       };
 
@@ -776,9 +682,7 @@ describe("DashboardTemplate", () => {
     it("使用自定义图表卡片渲染器", () => {
       const customRenderers = {
         chartCard: (chart: ChartCard) => (
-          <div data-testid="custom-chart-card">
-            Custom: {chart.title}
-          </div>
+          <div data-testid="custom-chart-card">Custom: {chart.title}</div>
         ),
       };
 

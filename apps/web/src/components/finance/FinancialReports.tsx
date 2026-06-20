@@ -36,6 +36,7 @@ import type {
   IncomeStatement,
   CashFlowStatement,
 } from "@/types/erp-finance";
+import { logger } from "@/utils/logger";
 
 // ============================================
 // 一、通用组件
@@ -1301,7 +1302,7 @@ export function FinancialReportsViewer({
 
   const handleExport = () => {
     // TODO: 实现导出功能
-    console.log("Export report");
+    logger.info("Export report");
   };
 
   return (

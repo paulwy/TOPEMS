@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import type { Notification } from "@/api/notification";
 import { getNotifications, getUnreadCount } from "@/api/notification";
+import { logger } from "@/utils/logger";
 
 interface NotificationState {
   notifications: Notification[];
@@ -54,7 +55,7 @@ export const useNotificationState = (enabled = true) => {
         error.name !== "AbortError" &&
         error.response?.status !== 401
       ) {
-        console.error("Failed to fetch unread count:", error);
+        logger.error("Failed to fetch unread count:", error);
       }
     }
   }, []);
@@ -108,6 +109,7 @@ export const useNotificationState = (enabled = true) => {
     if (!enabled) return;
     fetchNotifications();
     fetchUnreadCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
   return {

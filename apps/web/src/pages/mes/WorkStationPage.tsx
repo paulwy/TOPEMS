@@ -33,6 +33,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Plus, Edit } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 
 const WorkStationPage: React.FC = () => {
   const [workstations, setWorkstations] = useState<WorkStation[]>([]);
@@ -55,6 +56,7 @@ const WorkStationPage: React.FC = () => {
 
   useEffect(() => {
     loadWorkStations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadWorkStations = async () => {
@@ -69,7 +71,7 @@ const WorkStationPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载工作站列表失败:", error);
+      apiLogger.error("加载工作站列表失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -105,7 +107,7 @@ const WorkStationPage: React.FC = () => {
       resetForm();
       loadWorkStations();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",

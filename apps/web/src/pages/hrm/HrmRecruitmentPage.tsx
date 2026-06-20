@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Chip } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
 import { StatCardGroup } from "@/components/mui";
@@ -228,7 +229,7 @@ const HrmRecruitmentPage: React.FC = () => {
       setInterviews(transformedInterviews);
     } catch (err) {
       error("加载数据失败");
-      console.error("Failed to load recruitment data:", err);
+      apiLogger.error("Failed to load recruitment data:", err);
     } finally {
       setLoading(false);
     }

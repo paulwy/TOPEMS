@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import { Link } from "react-router-dom";
 import {
   Plus,
@@ -186,7 +187,7 @@ const BIReportPage = () => {
         setLoading(false);
       }, 500);
     } catch (error) {
-      console.error("Failed to load reports:", error);
+      logger.error("Failed to load reports:", error);
       setLoading(false);
     }
   };
@@ -336,7 +337,7 @@ const BIReportPage = () => {
             description="还没有创建任何报表，点击下方按钮创建第一个报表"
             action={{
               label: "创建报表",
-              onClick: () => console.log("Create report"),
+              onClick: () => logger.info("Create report"),
             }}
           />
         ) : (

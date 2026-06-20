@@ -1,5 +1,6 @@
 import apiClient from "./client";
 import type { ApiResponse } from "./client";
+import { apiLogger } from "@/utils/logger";
 
 export type NotificationTypeEnum =
   | "info"
@@ -132,7 +133,9 @@ export const getNotifications = async (
   } catch (error: any) {
     // 处理 401 错误
     if (error.response?.status === 401) {
-      console.debug("Notification list request returned 401, returning empty");
+      apiLogger.debug(
+        "Notification list request returned 401, returning empty",
+      );
       return {
         code: 0,
         success: true,
@@ -173,7 +176,7 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
       error.code === "ECONNABORTED" ||
       error.name === "AbortError"
     ) {
-      console.debug("Notification count request was canceled or aborted");
+      apiLogger.debug("Notification count request was canceled or aborted");
       return {
         code: 0,
         success: true,
@@ -184,7 +187,7 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
     }
     // 401 errors are handled by the API client interceptor, suppress them here
     if (error.response?.status === 401) {
-      console.debug("Notification count request returned 401, skipping");
+      apiLogger.debug("Notification count request returned 401, skipping");
       return {
         code: 0,
         success: true,
@@ -193,7 +196,7 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
         timestamp: new Date().toISOString(),
       };
     }
-    console.error("Failed to fetch unread count:", error);
+    apiLogger.error("Failed to fetch unread count:", error);
     throw error;
   }
 };
@@ -278,8 +281,9 @@ export const runAutoArchive = async (): Promise<
 export const getMyNotificationStats = async (): Promise<
   ApiResponse<NotificationStats>
 > => {
-  const response =
-    await apiClient.notification.get<NotificationStats>("/api/notifications/stats/me");
+  const response = await apiClient.notification.get<NotificationStats>(
+    "/api/notifications/stats/me",
+  );
   return response;
 };
 

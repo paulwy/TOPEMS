@@ -97,7 +97,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   // Calculate grid-column span based on breakpoints
   const getGridColumnSpan = () => {
     const spans: string[] = [];
-    
+
     if (effectiveXs !== undefined) {
       spans.push(`span ${effectiveXs}`);
     }
@@ -113,14 +113,14 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
     if (effectiveXl !== undefined) {
       spans.push(`span ${Math.floor(effectiveXl * 8.33)}`);
     }
-    
+
     return spans.length > 0 ? spans.join(" / ") : undefined;
   };
 
   // For responsive grid items, calculate proper column spans
   const getResponsiveColumnSpan = () => {
     const styles: Record<string, unknown> = {};
-    
+
     if (effectiveXs !== undefined) {
       styles.gridColumn = `span ${effectiveXs}`;
     }
@@ -144,7 +144,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
         gridColumn: `span ${effectiveXl}`,
       };
     }
-    
+
     return Object.keys(styles).length > 0 ? styles : undefined;
   };
 

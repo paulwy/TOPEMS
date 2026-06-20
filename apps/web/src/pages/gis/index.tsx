@@ -22,6 +22,7 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Button,
 } from "@mui/material";
 import type {
   DevicePoint,
@@ -60,8 +61,6 @@ const GisContent: React.FC = () => {
     loading,
     error,
   } = state;
-
-  
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
@@ -118,58 +117,292 @@ const GisContent: React.FC = () => {
     }
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <Box sx={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", fontSize: "0.875rem" }}>
           <thead>
-            <tr className="bg-gray-50">
+            <tr style={{ backgroundColor: "#f9fafb" }}>
               {type === "devicePoints" && (
                 <>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">名称</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">类型</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">坐标</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">状态</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    名称
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    类型
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    坐标
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    状态
+                  </th>
                 </>
               )}
               {type === "pipelines" && (
                 <>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">名称</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">类型</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">起点</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">终点</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">状态</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    名称
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    类型
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    起点
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    终点
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    状态
+                  </th>
                 </>
               )}
               {type === "storageLocations" && (
                 <>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">名称</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">类型</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">容量</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">坐标</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    名称
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    类型
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    容量
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    坐标
+                  </th>
                 </>
               )}
               {type === "evidenceRecords" && (
                 <>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">标题</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">类型</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">记录人</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">时间</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    标题
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    类型
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    记录人
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    时间
+                  </th>
                 </>
               )}
               {type === "factoryMaps" && (
                 <>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">名称</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">编号</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">类型</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">创建时间</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    名称
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    编号
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    类型
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    创建时间
+                  </th>
                 </>
               )}
               {type === "businessLocations" && (
                 <>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">名称</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">类型</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">地址</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">联系人</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">状态</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    名称
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    类型
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    地址
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    联系人
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                      color: "#374151",
+                    }}
+                  >
+                    状态
+                  </th>
                 </>
               )}
             </tr>
@@ -177,51 +410,79 @@ const GisContent: React.FC = () => {
           <tbody>
             {type === "devicePoints" &&
               (data as DevicePoint[]).map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{item.name}</td>
-                  <td className="px-4 py-3">{item.device_type}</td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "12px 16px" }}>{item.name}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.device_type}</td>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      fontFamily: "monospace",
+                      fontSize: "0.75rem",
+                    }}
+                  >
                     {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
                   </td>
-                  <td className="px-4 py-3">{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {<StatusChip status={item.status} />}
+                  </td>
                 </tr>
               ))}
             {type === "pipelines" &&
               (data as Pipeline[]).map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{item.name}</td>
-                  <td className="px-4 py-3">{item.pipeline_type}</td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "12px 16px" }}>{item.name}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.pipeline_type}</td>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      fontFamily: "monospace",
+                      fontSize: "0.75rem",
+                    }}
+                  >
                     {item.start_point
                       ? `${item.start_point[0].toFixed(4)}, ${item.start_point[1].toFixed(4)}`
                       : ""}
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      fontFamily: "monospace",
+                      fontSize: "0.75rem",
+                    }}
+                  >
                     {item.end_point
                       ? `${item.end_point[0].toFixed(4)}, ${item.end_point[1].toFixed(4)}`
                       : ""}
                   </td>
-                  <td className="px-4 py-3">{<StatusChip status={item.status} />}</td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {<StatusChip status={item.status} />}
+                  </td>
                 </tr>
               ))}
             {type === "storageLocations" &&
               (data as StorageLocation[]).map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{item.name}</td>
-                  <td className="px-4 py-3">{item.location_type}</td>
-                  <td className="px-4 py-3">{item.capacity}</td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "12px 16px" }}>{item.name}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.location_type}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.capacity}</td>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      fontFamily: "monospace",
+                      fontSize: "0.75rem",
+                    }}
+                  >
                     {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
                   </td>
                 </tr>
               ))}
             {type === "evidenceRecords" &&
               (data as EvidenceRecord[]).map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{item.title}</td>
-                  <td className="px-4 py-3">{item.evidence_type}</td>
-                  <td className="px-4 py-3">{item.recorded_by}</td>
-                  <td className="px-4 py-3">
+                <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "12px 16px" }}>{item.title}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.evidence_type}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.recorded_by}</td>
+                  <td style={{ padding: "12px 16px" }}>
                     {item.recorded_at
                       ? new Date(item.recorded_at).toLocaleString()
                       : ""}
@@ -230,11 +491,11 @@ const GisContent: React.FC = () => {
               ))}
             {type === "factoryMaps" &&
               (data as FactoryMap[]).map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{item.name}</td>
-                  <td className="px-4 py-3">{item.code}</td>
-                  <td className="px-4 py-3">{item.map_type}</td>
-                  <td className="px-4 py-3">
+                <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "12px 16px" }}>{item.name}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.code}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.map_type}</td>
+                  <td style={{ padding: "12px 16px" }}>
                     {item.created_at
                       ? new Date(item.created_at).toLocaleDateString()
                       : ""}
@@ -243,17 +504,21 @@ const GisContent: React.FC = () => {
               ))}
             {type === "businessLocations" &&
               (data as BusinessLocation[]).map((item) => (
-                <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{item.business_name}</td>
-                  <td className="px-4 py-3">{item.business_type}</td>
-                  <td className="px-4 py-3">{item.address}</td>
-                  <td className="px-4 py-3">{item.contact_person}</td>
-                  <td className="px-4 py-3">{<StatusChip status={item.status} />}</td>
+                <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "12px 16px" }}>{item.business_name}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.business_type}</td>
+                  <td style={{ padding: "12px 16px" }}>{item.address}</td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {item.contact_person}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {<StatusChip status={item.status} />}
+                  </td>
                 </tr>
               ))}
           </tbody>
         </table>
-      </div>
+      </Box>
     );
   };
 
@@ -287,9 +552,14 @@ const GisContent: React.FC = () => {
         <Stack
           direction="row"
           spacing={2}
-          sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', mb: 4 }}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            mb: 4,
+          }}
         >
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 GIS地图
@@ -299,17 +569,28 @@ const GisContent: React.FC = () => {
               </Typography>
             </Box>
           </Stack>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-            <button
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Button
               onClick={() => loadAllData(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              startIcon={
+                <RefreshCw
+                  size={18}
+                  className={loading ? "animate-spin" : ""}
+                />
+              }
+              sx={{
+                bgcolor: "white",
+                border: 1,
+                borderColor: "#e5e7eb",
+                borderRadius: 2,
+                "&:hover": { bgcolor: "#f9fafb" },
+                textTransform: "none",
+              }}
             >
-              <RefreshCw
-                size={18}
-                className={loading ? "animate-spin" : ""}
-              />
-              <span className="text-sm font-medium">刷新数据</span>
-            </button>
+              <Typography sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                刷新数据
+              </Typography>
+            </Button>
           </Stack>
         </Stack>
 
@@ -344,106 +625,283 @@ const GisContent: React.FC = () => {
           </Alert>
         </Snackbar>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+              lg: "repeat(6, 1fr)",
+            },
+            gap: 4,
+            mb: 6,
+          }}
+        >
+          <Paper
+            sx={{
+              borderRadius: 2,
+              p: 4,
+              boxShadow: 1,
+              border: 1,
+              borderColor: "#f3f4f6",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: "#dcfce7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <MapPin size={20} style={{ color: "#16a34a" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "#111827" }}
+                >
                   {statistics?.device_points || devicePoints.length}
-                </div>
-                <div className="text-sm text-gray-500">设备点位</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <ArrowRight className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                  设备点位
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              p: 4,
+              boxShadow: 1,
+              border: 1,
+              borderColor: "#f3f4f6",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: "#eef2ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ArrowRight size={20} style={{ color: "#6366f1" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "#111827" }}
+                >
                   {statistics?.pipelines || pipelines.length}
-                </div>
-                <div className="text-sm text-gray-500">管线管理</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                <Warehouse className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                  管线管理
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              p: 4,
+              boxShadow: 1,
+              border: 1,
+              borderColor: "#f3f4f6",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: "#fef3c7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Warehouse size={20} style={{ color: "#d97706" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "#111827" }}
+                >
                   {statistics?.storage_locations || storageLocations.length}
-                </div>
-                <div className="text-sm text-gray-500">仓储位置</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center">
-                <Camera className="w-5 h-5 text-pink-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                  仓储位置
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              p: 4,
+              boxShadow: 1,
+              border: 1,
+              borderColor: "#f3f4f6",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: "#fce7f3",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Camera size={20} style={{ color: "#db2777" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "#111827" }}
+                >
                   {statistics?.evidence_records || evidenceRecords.length}
-                </div>
-                <div className="text-sm text-gray-500">现场取证</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                <Map className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                  现场取证
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              p: 4,
+              boxShadow: 1,
+              border: 1,
+              borderColor: "#f3f4f6",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: "#f3e8ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Map size={20} style={{ color: "#9333ea" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "#111827" }}
+                >
                   {statistics?.factory_maps || factoryMaps.length}
-                </div>
-                <div className="text-sm text-gray-500">厂区地图</div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                  厂区地图
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              p: 4,
+              boxShadow: 1,
+              border: 1,
+              borderColor: "#f3f4f6",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: "#ccfbf1",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Building2 size={20} style={{ color: "#14b8a6" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "#111827" }}
+                >
                   {statistics?.business_locations || businessLocations.length}
-                </div>
-                <div className="text-sm text-gray-500">业务位置</div>
-              </div>
-            </div>
-          </div>
-        </div>
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                  业务位置
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+        </Box>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="flex border-b border-gray-100 overflow-x-auto">
+        <Paper
+          sx={{
+            borderRadius: 2,
+            boxShadow: 1,
+            border: 1,
+            borderColor: "#f3f4f6",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              borderBottom: 1,
+              borderColor: "#f3f4f6",
+              overflowX: "auto",
+            }}
+          >
             {tabs.map((tab) => (
-              <button
+              <Button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? "text-cyan-600 border-b-2 border-cyan-600 bg-cyan-50"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  px: 20,
+                  py: 12,
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  color: activeTab === tab.id ? "#0891b2" : "#4b5563",
+                  borderBottom: activeTab === tab.id ? 2 : 0,
+                  borderColor: activeTab === tab.id ? "#0891b2" : "transparent",
+                  bgcolor: activeTab === tab.id ? "#ecfeff" : "transparent",
+                  "&:hover": {
+                    bgcolor: activeTab === tab.id ? "#ecfeff" : "#f9fafb",
+                  },
+                  textTransform: "none",
+                }}
               >
                 {tab.icon}
                 {tab.label}
-              </button>
+              </Button>
             ))}
-          </div>
+          </Box>
 
-          <div className="p-4">
+          <Box sx={{ p: 4 }}>
             {loading ? (
               <Box
                 sx={{
@@ -460,8 +918,8 @@ const GisContent: React.FC = () => {
                 sx={{
                   height: 600,
                   border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1.5,
+                  borderColor: "#e5e7eb",
+                  borderRadius: 3,
                   overflow: "hidden",
                 }}
               >
@@ -474,8 +932,8 @@ const GisContent: React.FC = () => {
             ) : (
               renderDataTable(getCurrentData(), activeTab)
             )}
-          </div>
-        </div>
+          </Box>
+        </Paper>
       </Box>
     </Box>
   );

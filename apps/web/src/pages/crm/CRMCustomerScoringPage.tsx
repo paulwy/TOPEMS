@@ -18,6 +18,7 @@ import type { CustomerScore, ScoreFactor } from "@/api/modules/crm/crm";
 import { crmApi } from "@/api/modules/crm/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { logger } from "@/utils/logger";
 import {
   Star,
   TrendingUp,
@@ -40,6 +41,7 @@ const CRMCustomerScoringPage: React.FC = () => {
 
   useEffect(() => {
     loadCustomerScores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadCustomerScores = async () => {
@@ -48,7 +50,7 @@ const CRMCustomerScoringPage: React.FC = () => {
       const response = await crmApi.customerScoring.list();
       setScores(response.data?.items || []);
     } catch (error) {
-      console.error("加载客户评分失败:", error);
+      logger.error("加载客户评分失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -85,7 +87,7 @@ const CRMCustomerScoringPage: React.FC = () => {
       });
       loadCustomerScores();
     } catch (error) {
-      console.error("批量计算评分失败:", error);
+      logger.error("批量计算评分失败:", error);
       addNotification({
         type: "error",
         title: "计算失败",

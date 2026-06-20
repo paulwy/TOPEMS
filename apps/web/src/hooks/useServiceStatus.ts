@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { PLUGIN_TIMEOUT } from "@/constants/timeouts";
 
 export interface ServiceInfo {
   key: string;
@@ -24,8 +25,12 @@ const services: ServiceInfo[] = [
   { key: "mobile", name: "移动服务", port: 8070 },
 ];
 
-export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
-  const [serviceStatuses, setServiceStatuses] = useState<Record<string, boolean>>({});
+export const useServiceStatus = (
+  autoRefreshInterval: number = PLUGIN_TIMEOUT.DEFAULT,
+) => {
+  const [serviceStatuses, setServiceStatuses] = useState<
+    Record<string, boolean>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const intervalRef = useRef<number | null>(null);
 
@@ -33,7 +38,10 @@ export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
     async (serviceKey: string): Promise<boolean> => {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          PLUGIN_TIMEOUT.DEFAULT,
+        );
 
         const response = await fetch(`/${serviceKey}/health`, {
           signal: controller.signal,
@@ -69,7 +77,10 @@ export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
     checkAllServicesStatus();
 
     if (autoRefreshInterval > 0) {
-      intervalRef.current = window.setInterval(checkAllServicesStatus, autoRefreshInterval);
+      intervalRef.current = window.setInterval(
+        checkAllServicesStatus,
+        autoRefreshInterval,
+      );
     }
 
     return () => {

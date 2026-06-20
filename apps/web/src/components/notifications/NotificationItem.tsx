@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Check, Trash2, ExternalLink } from "lucide-react";
 import type { Notification } from "@/api/notification";
 import { markAsRead, deleteNotification } from "@/api/notification";
+import { logger } from "@/utils/logger";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -220,7 +221,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onUpdate(response.data);
       }
     } catch (error) {
-      console.error("Failed to mark as read:", error);
+      logger.error("Failed to mark as read:", error);
     }
   };
 
@@ -233,7 +234,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onDelete(notification.id);
       }
     } catch (error) {
-      console.error("Failed to delete notification:", error);
+      logger.error("Failed to delete notification:", error);
       setIsDeleting(false);
     }
   };

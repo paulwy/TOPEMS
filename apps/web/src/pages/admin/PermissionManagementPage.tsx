@@ -55,6 +55,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
 
   useEffect(() => {
     loadPermissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPermissions = async () => {

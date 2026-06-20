@@ -17,6 +17,7 @@ import type {
   GeoJSONFeature,
 } from "../../../../api/gis";
 import type { DrawFeature } from "../shared/types";
+import { EARTH } from "@/constants/numbers";
 import MapEvents from "./MapEvents";
 import MapControls from "./MapControls";
 import LayerManager from "./LayerManager";
@@ -79,7 +80,7 @@ const calculateTotalDistance = (points: [number, number][]): number => {
 const calculateArea = (points: [number, number][]): number => {
   if (points.length < 3) return 0;
   let area = 0;
-  const R = 6371000;
+  const R = EARTH.RADIUS_METERS;
   const n = points.length;
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n;
@@ -93,17 +94,17 @@ const calculateArea = (points: [number, number][]): number => {
 };
 
 const formatDistance = (meters: number): string => {
-  if (meters < 1000) {
+  if (meters < EARTH.METERS_PER_KILOMETER) {
     return `${meters.toFixed(2)} 米`;
   }
-  return `${(meters / 1000).toFixed(2)} 公里`;
+  return `${(meters / EARTH.METERS_PER_KILOMETER).toFixed(2)} 公里`;
 };
 
 const formatArea = (squareMeters: number): string => {
-  if (squareMeters < 10000) {
+  if (squareMeters < EARTH.SQUARE_METERS_PER_HECTARE) {
     return `${squareMeters.toFixed(2)} 平方米`;
   }
-  return `${(squareMeters / 10000).toFixed(2)} 公顷`;
+  return `${(squareMeters / EARTH.SQUARE_METERS_PER_HECTARE).toFixed(2)} 公顷`;
 };
 
 const getStatusColor = (status: string) => {
@@ -138,8 +139,17 @@ const MeasureTooltip: React.FC<{
   content: string;
 }> = ({ position, content }) => (
   <div
-    className="absolute bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none z-50"
     style={{
+      position: "absolute",
+      backgroundColor: "#1f2937",
+      color: "white",
+      fontSize: "0.75rem",
+      padding: "0.25rem 0.5rem",
+      borderRadius: "0.25rem",
+      boxShadow:
+        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+      pointerEvents: "none",
+      zIndex: 50,
       left: position[1] + 10,
       top: position[0] - 20,
       transform: "translateX(-50%)",
@@ -158,76 +168,207 @@ const DetailsPanel: React.FC<{
 
   const formatCoordinate = (value: number) => value.toFixed(6);
 
+  const getStatusStyles = (status: string) => {
+    const s = status.toLowerCase();
+    if (s.includes("active") || s.includes("启用")) {
+      return {
+        backgroundColor: "#dcfce7",
+        color: "#166534",
+      };
+    }
+    if (s.includes("pending") || s.includes("待处理")) {
+      return {
+        backgroundColor: "#fef3c7",
+        color: "#92400e",
+      };
+    }
+    return {
+      backgroundColor: "#fee2e2",
+      color: "#991b1b",
+    };
+  };
+
   return (
-    <div className="absolute bottom-4 left-4 w-80 bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500">
-        <h3 className="font-semibold text-white">详情信息</h3>
+    <div
+      style={{
+        position: "absolute",
+        bottom: "1rem",
+        left: "1rem",
+        width: "20rem",
+        backgroundColor: "white",
+        borderRadius: "0.75rem",
+        boxShadow:
+          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        overflow: "hidden",
+        border: "1px solid #e5e7eb",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0.75rem 1rem",
+          background: "linear-gradient(to right, #06b6d4, #3b82f6)",
+        }}
+      >
+        <h3 style={{ fontWeight: 600, color: "white", margin: 0 }}>详情信息</h3>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-white/20 rounded transition-colors"
+          style={{
+            padding: "0.25rem",
+            borderRadius: "0.25rem",
+            transition: "background-color 0.2s",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
         >
-          <X className="w-5 h-5 text-white" />
+          <X style={{ width: "1.25rem", height: "1.25rem", color: "white" }} />
         </button>
       </div>
-      <div className="p-4 space-y-4">
-        <div>
-          <div className="text-sm text-gray-500 mb-1">名称</div>
-          <div className="font-medium text-gray-900">{selectedItem.name}</div>
+      <div style={{ padding: "1rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
+          <div
+            style={{
+              fontSize: "0.875rem",
+              color: "#6b7280",
+              marginBottom: "0.25rem",
+            }}
+          >
+            名称
+          </div>
+          <div style={{ fontWeight: 500, color: "#111827" }}>
+            {selectedItem.name}
+          </div>
         </div>
         {"device_type" in selectedItem && (
-          <div>
-            <div className="text-sm text-gray-500 mb-1">设备类型</div>
-            <div className="text-gray-700">{selectedItem.device_type}</div>
+          <div style={{ marginBottom: "1rem" }}>
+            <div
+              style={{
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                marginBottom: "0.25rem",
+              }}
+            >
+              设备类型
+            </div>
+            <div style={{ color: "#374151" }}>{selectedItem.device_type}</div>
           </div>
         )}
         {"location_type" in selectedItem && (
-          <div>
-            <div className="text-sm text-gray-500 mb-1">位置类型</div>
-            <div className="text-gray-700">{selectedItem.location_type}</div>
+          <div style={{ marginBottom: "1rem" }}>
+            <div
+              style={{
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                marginBottom: "0.25rem",
+              }}
+            >
+              位置类型
+            </div>
+            <div style={{ color: "#374151" }}>{selectedItem.location_type}</div>
           </div>
         )}
         {"status" in selectedItem && (
-          <div>
-            <div className="text-sm text-gray-500 mb-1">状态</div>
+          <div style={{ marginBottom: "1rem" }}>
+            <div
+              style={{
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                marginBottom: "0.25rem",
+              }}
+            >
+              状态
+            </div>
             <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                selectedItem.status.toLowerCase().includes("active") ||
-                selectedItem.status.includes("启用")
-                  ? "bg-green-100 text-green-800"
-                  : selectedItem.status.toLowerCase().includes("pending") ||
-                      selectedItem.status.includes("待处理")
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-red-100 text-red-800"
-              }`}
+              style={{
+                padding: "0.25rem 0.5rem",
+                borderRadius: "9999px",
+                fontSize: "0.75rem",
+                fontWeight: 500,
+                ...getStatusStyles(selectedItem.status),
+              }}
             >
               {selectedItem.status}
             </span>
           </div>
         )}
         {"capacity" in selectedItem && selectedItem.capacity !== undefined && (
-          <div>
-            <div className="text-sm text-gray-500 mb-1">容量</div>
-            <div className="text-gray-700">{selectedItem.capacity}</div>
+          <div style={{ marginBottom: "1rem" }}>
+            <div
+              style={{
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                marginBottom: "0.25rem",
+              }}
+            >
+              容量
+            </div>
+            <div style={{ color: "#374151" }}>{selectedItem.capacity}</div>
           </div>
         )}
         {"current_usage" in selectedItem &&
           selectedItem.current_usage !== undefined && (
-            <div>
-              <div className="text-sm text-gray-500 mb-1">当前用量</div>
-              <div className="text-gray-700">{selectedItem.current_usage}</div>
+            <div style={{ marginBottom: "1rem" }}>
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#6b7280",
+                  marginBottom: "0.25rem",
+                }}
+              >
+                当前用量
+              </div>
+              <div style={{ color: "#374151" }}>
+                {selectedItem.current_usage}
+              </div>
             </div>
           )}
         {"description" in selectedItem && selectedItem.description && (
-          <div>
-            <div className="text-sm text-gray-500 mb-1">描述</div>
-            <div className="text-gray-600 text-sm">
+          <div style={{ marginBottom: "1rem" }}>
+            <div
+              style={{
+                fontSize: "0.875rem",
+                color: "#6b7280",
+                marginBottom: "0.25rem",
+              }}
+            >
+              描述
+            </div>
+            <div style={{ color: "#4b5563", fontSize: "0.875rem" }}>
               {selectedItem.description}
             </div>
           </div>
         )}
-        <div className="pt-2 border-t">
-          <div className="text-sm text-gray-500 mb-1">坐标</div>
-          <div className="text-gray-700 text-sm font-mono">
+        <div
+          style={{
+            paddingTop: "0.5rem",
+            borderTop: "1px solid #e5e7eb",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "0.875rem",
+              color: "#6b7280",
+              marginBottom: "0.25rem",
+            }}
+          >
+            坐标
+          </div>
+          <div
+            style={{
+              color: "#374151",
+              fontSize: "0.875rem",
+              fontFamily: "monospace",
+            }}
+          >
             {formatCoordinate(selectedItem.latitude)},{" "}
             {formatCoordinate(selectedItem.longitude)}
           </div>
@@ -245,8 +386,8 @@ const MapView: React.FC<MapViewProps> = ({
   onMarkerClick,
 }) => {
   // State
-  const [mapCenter] = useState<[number, number]>([31.2304, 121.4737]);
-  const [zoom, setZoom] = useState(14);
+  const [mapCenter] = useState<[number, number]>([39.9, 116.4]); // 北京
+  const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
   const [selectedItem, setSelectedItem] = useState<
     DevicePoint | StorageLocation | null
   >(null);
@@ -275,7 +416,7 @@ const MapView: React.FC<MapViewProps> = ({
   );
   const [mapType, setMapType] = useState<"osm" | "amap">("osm");
   const [show3DView, setShow3DView] = useState(false);
-  const [offlineMode, setOfflineMode] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(true); // 默认使用离线瓦片
 
   // Icons
   const deviceIcon = useMemo(() => createDeviceIcon(), []);
@@ -517,7 +658,7 @@ const MapView: React.FC<MapViewProps> = ({
   }, [currentDrawing, clearMeasure, finishDrawing]);
 
   return (
-    <div className="relative w-full h-full">
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
       {/* Map Type Switch */}
       {mapType === "amap" ? (
         <AmapLayer
@@ -588,11 +729,20 @@ const MapView: React.FC<MapViewProps> = ({
                   opacity={0.8}
                 >
                   <Tooltip direction="top" offset={[0, -10]}>
-                    <div className="bg-white px-3 py-2 rounded-lg shadow-lg min-w-[120px]">
-                      <div className="font-medium text-gray-900">
+                    <div
+                      style={{
+                        backgroundColor: "white",
+                        padding: "0.5rem 0.75rem",
+                        borderRadius: "0.5rem",
+                        boxShadow:
+                          "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                        minWidth: "120px",
+                      }}
+                    >
+                      <div style={{ fontWeight: 500, color: "#111827" }}>
                         {pipeline.name}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
                         {pipeline.pipeline_type}
                       </div>
                     </div>
@@ -610,15 +760,36 @@ const MapView: React.FC<MapViewProps> = ({
                 icon={deviceIcon}
                 eventHandlers={{ click: () => handleMarkerClick(point) }}
               >
-                <Popup className="max-w-xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-green-500" />
-                      <h4 className="font-semibold text-gray-900">
+                <Popup>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                      maxWidth: "320px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <MapPin
+                        style={{
+                          width: "1.25rem",
+                          height: "1.25rem",
+                          color: "#22c55e",
+                        }}
+                      />
+                      <h4
+                        style={{ fontWeight: 600, color: "#111827", margin: 0 }}
+                      >
                         {point.name}
                       </h4>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div style={{ fontSize: "0.875rem", color: "#4b5563" }}>
                       <div>类型: {point.device_type}</div>
                       <div>
                         状态:{" "}
@@ -626,20 +797,54 @@ const MapView: React.FC<MapViewProps> = ({
                           {point.status}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Navigation className="w-3 h-3" />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          marginTop: "0.25rem",
+                        }}
+                      >
+                        <Navigation
+                          style={{ width: "0.75rem", height: "0.75rem" }}
+                        />
                         {point.latitude.toFixed(4)},{" "}
                         {point.longitude.toFixed(4)}
                       </div>
                     </div>
                     {point.description && (
-                      <div className="text-sm text-gray-500 border-t pt-2 mt-2">
+                      <div
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "#6b7280",
+                          borderTop: "1px solid #e5e7eb",
+                          paddingTop: "0.5rem",
+                          marginTop: "0.5rem",
+                        }}
+                      >
                         {point.description}
                       </div>
                     )}
                     <button
                       onClick={() => handleMarkerClick(point)}
-                      className="w-full mt-2 px-2 py-1 text-sm text-cyan-600 bg-cyan-50 rounded hover:bg-cyan-100 transition-colors"
+                      style={{
+                        width: "100%",
+                        marginTop: "0.5rem",
+                        padding: "0.25rem 0.5rem",
+                        fontSize: "0.875rem",
+                        color: "#0891b2",
+                        backgroundColor: "#ecfeff",
+                        borderRadius: "0.25rem",
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#cffafe";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#ecfeff";
+                      }}
                     >
                       查看详情
                     </button>
@@ -657,15 +862,36 @@ const MapView: React.FC<MapViewProps> = ({
                 icon={storageIcon}
                 eventHandlers={{ click: () => handleMarkerClick(location) }}
               >
-                <Popup className="max-w-xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Info className="w-5 h-5 text-amber-500" />
-                      <h4 className="font-semibold text-gray-900">
+                <Popup>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.5rem",
+                      maxWidth: "320px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <Info
+                        style={{
+                          width: "1.25rem",
+                          height: "1.25rem",
+                          color: "#f59e0b",
+                        }}
+                      />
+                      <h4
+                        style={{ fontWeight: 600, color: "#111827", margin: 0 }}
+                      >
                         {location.name}
                       </h4>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div style={{ fontSize: "0.875rem", color: "#4b5563" }}>
                       <div>类型: {location.location_type}</div>
                       {location.capacity !== undefined && (
                         <div>容量: {location.capacity}</div>
@@ -673,15 +899,41 @@ const MapView: React.FC<MapViewProps> = ({
                       {location.current_usage !== undefined && (
                         <div>当前: {location.current_usage}</div>
                       )}
-                      <div className="flex items-center gap-1 mt-1">
-                        <Navigation className="w-3 h-3" />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          marginTop: "0.25rem",
+                        }}
+                      >
+                        <Navigation
+                          style={{ width: "0.75rem", height: "0.75rem" }}
+                        />
                         {location.latitude.toFixed(4)},{" "}
                         {location.longitude.toFixed(4)}
                       </div>
                     </div>
                     <button
                       onClick={() => handleMarkerClick(location)}
-                      className="w-full mt-2 px-2 py-1 text-sm text-cyan-600 bg-cyan-50 rounded hover:bg-cyan-100 transition-colors"
+                      style={{
+                        width: "100%",
+                        marginTop: "0.5rem",
+                        padding: "0.25rem 0.5rem",
+                        fontSize: "0.875rem",
+                        color: "#0891b2",
+                        backgroundColor: "#ecfeff",
+                        borderRadius: "0.25rem",
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#cffafe";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#ecfeff";
+                      }}
                     >
                       查看详情
                     </button>
@@ -847,8 +1099,21 @@ const MapView: React.FC<MapViewProps> = ({
 
       {/* Measure Result Display */}
       {(toolMode === "measure-distance" || toolMode === "measure-area") && (
-        <div className="absolute top-4 left-32 bg-white rounded-lg shadow-md px-4 py-2">
-          <span className="text-sm font-medium text-gray-700">
+        <div
+          style={{
+            position: "absolute",
+            top: "1rem",
+            left: "8rem",
+            backgroundColor: "white",
+            borderRadius: "0.5rem",
+            boxShadow:
+              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            padding: "0.5rem 1rem",
+          }}
+        >
+          <span
+            style={{ fontSize: "0.875rem", fontWeight: 500, color: "#374151" }}
+          >
             {measureResult}
           </span>
         </div>
@@ -856,8 +1121,18 @@ const MapView: React.FC<MapViewProps> = ({
 
       {/* Tool Mode Hint */}
       {toolMode !== "select" && (
-        <div className="absolute bottom-4 left-4 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
-          <span className="text-xs text-yellow-700">
+        <div
+          style={{
+            position: "absolute",
+            bottom: "1rem",
+            left: "1rem",
+            backgroundColor: "#fefce8",
+            border: "1px solid #fde047",
+            borderRadius: "0.5rem",
+            padding: "0.5rem 1rem",
+          }}
+        >
+          <span style={{ fontSize: "0.75rem", color: "#a16207" }}>
             按 ESC 退出工具模式 | 按 Enter 完成绘制
           </span>
         </div>
@@ -895,8 +1170,29 @@ const MapView: React.FC<MapViewProps> = ({
 
       {/* Track Panel Modal */}
       {showTrackPanel && (
-        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl w-[90%] max-w-4xl h-[80%] max-h-[600px] overflow-hidden">
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "0.75rem",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              width: "90%",
+              maxWidth: "1024px",
+              height: "80%",
+              maxHeight: "600px",
+              overflow: "hidden",
+            }}
+          >
             <DeviceTrackPanel
               devicePoints={devicePoints}
               onClose={() => setShowTrackPanel(false)}
@@ -907,15 +1203,36 @@ const MapView: React.FC<MapViewProps> = ({
 
       {/* Heatmap Legend */}
       {showHeatmap && (
-        <div className="absolute bottom-4 right-24">
+        <div style={{ position: "absolute", bottom: "1rem", right: "6rem" }}>
           <HeatmapLegend mode={heatmapMode} />
         </div>
       )}
 
       {/* 3D View Modal */}
       {show3DView && (
-        <div className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl w-[95%] max-w-6xl h-[90%] max-h-[700px] overflow-hidden">
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "0.75rem",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              width: "95%",
+              maxWidth: "1152px",
+              height: "90%",
+              maxHeight: "700px",
+              overflow: "hidden",
+            }}
+          >
             <Map3DView
               devicePoints={devicePoints}
               pipelines={pipelines}

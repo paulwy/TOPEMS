@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import { Box, Typography } from "@mui/material";
 import {
   TrendingUp,
@@ -279,7 +280,7 @@ const HrmPerformancePage: React.FC = () => {
       setRankings(rankings);
     } catch (err) {
       error("加载数据失败");
-      console.error("Failed to load performance data:", err);
+      apiLogger.error("Failed to load performance data:", err);
     } finally {
       setLoading(false);
     }

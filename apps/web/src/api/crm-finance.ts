@@ -257,8 +257,7 @@ export const crmFinanceApi = {
   /**
    * 获取销售发票详情
    */
-  getSalesInvoice: (id: string) =>
-    apiClient.crm.get(`/api/crm/invoices/${id}`),
+  getSalesInvoice: (id: string) => apiClient.crm.get(`/api/crm/invoices/${id}`),
 
   /**
    * 创建销售发票
@@ -408,8 +407,7 @@ export const crmFinanceApi = {
     min_overdue_days?: number;
     page?: number;
     page_size?: number;
-  }) =>
-    apiClient.crm.get("/api/crm/reports/overdue-receivables", { params }),
+  }) => apiClient.crm.get("/api/crm/reports/overdue-receivables", { params }),
 
   /**
    * 获取应收账款汇总
@@ -426,8 +424,7 @@ export const crmFinanceApi = {
     start_date: string;
     end_date: string;
     group_by: "customer" | "salesperson" | "month";
-  }) =>
-    apiClient.crm.get("/api/crm/reports/collection-statistics", { params }),
+  }) => apiClient.crm.get("/api/crm/reports/collection-statistics", { params }),
 
   // -------- 导出 --------
 

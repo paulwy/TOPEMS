@@ -21,6 +21,7 @@ import {
   Container,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -55,6 +56,7 @@ import {
 } from "@/api/hrm";
 import { useNotification } from "@/hooks/useNotification";
 import { StatCardGroup } from "@/components/mui";
+import { logger } from "@/utils/logger";
 
 const HrmEmployeeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -86,7 +88,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         setEditData({ ...res.data });
       }
     } catch (err) {
-      console.error("Failed to load employee:", err);
+      apiLogger.error("Failed to load employee:", err);
       error("加载员工信息失败");
     } finally {
       setLoading(false);
@@ -100,7 +102,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         setDepartments(res.data?.items || []);
       }
     } catch (err) {
-      console.error("Failed to load departments:", err);
+      apiLogger.error("Failed to load departments:", err);
     }
   };
 
@@ -120,7 +122,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         loadEmployee(id);
       }
     } catch (err) {
-      console.error("Failed to save:", err);
+      apiLogger.error("Failed to save:", err);
       error("保存失败");
     }
   };

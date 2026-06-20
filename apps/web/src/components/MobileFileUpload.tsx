@@ -76,6 +76,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
       const files = Array.from(event.target.files || []);
       processFiles(files);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -85,6 +86,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
 
     const files = Array.from(event.dataTransfer.files);
     processFiles(files);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDragOver = useCallback(

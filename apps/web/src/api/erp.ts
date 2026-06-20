@@ -1250,7 +1250,9 @@ export const openingBalanceApi = {
   },
 
   async get(id: string): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.get(`/api/erp/finance/accounts/opening-balances/${id}`);
+    return apiClient.erp.get(
+      `/api/erp/finance/accounts/opening-balances/${id}`,
+    );
   },
 
   async create(

@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-} from "@mui/material";
+import { Box, Typography, Card, CardContent, Button } from "@mui/material";
 import { Grid } from "@/components/Grid";
 import { QuickSearch } from "@/components/common";
 import {
@@ -20,7 +14,10 @@ import BarChartComponent from "../../components/charts/BarChart";
 import PieChartComponent from "../../components/charts/PieChart";
 import LineChartComponent from "../../components/charts/LineChart";
 
-const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
+const iconMap: Record<
+  string,
+  React.ComponentType<{ className?: string; size?: number }>
+> = {
   Warehouse,
   Package,
   AlertCircle,
@@ -98,7 +95,8 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box sx={{
+      <Box
+        sx={{
           padding: "24px 32px",
           background: "white",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
@@ -108,7 +106,7 @@ export const DashboardPage: React.FC = () => {
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
+          <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
             仓储管理
           </Typography>
           <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
@@ -159,8 +157,7 @@ export const DashboardPage: React.FC = () => {
                         </Typography>
                         <Typography
                           variant="h4"
-                          sx={{  color: "#1e293b" , fontWeight: 600 }}
-                          
+                          sx={{ color: "#1e293b", fontWeight: 600 }}
                         >
                           {stat.value}
                         </Typography>
@@ -170,7 +167,8 @@ export const DashboardPage: React.FC = () => {
                           width: 48,
                           height: 48,
                           borderRadius: "12px",
-                          background: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
+                          background:
+                            "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -208,7 +206,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   各仓库库存分布
                 </Typography>
                 <BarChartComponent data={barData} xKey="name" yKey="value" />
@@ -224,7 +222,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   库存类型分布
                 </Typography>
                 <PieChartComponent data={pieData} />
@@ -242,7 +240,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                   每日出入库趋势
                 </Typography>
                 <LineChartComponent data={lineData} xKey="name" yKey="value" />
@@ -253,8 +251,7 @@ export const DashboardPage: React.FC = () => {
 
         <Typography
           variant="h6"
-          sx={{  mt: 4, mb: 2, color: "#1e293b" , fontWeight: 600 }}
-          
+          sx={{ mt: 4, mb: 2, color: "#1e293b", fontWeight: 600 }}
         >
           快速操作
         </Typography>

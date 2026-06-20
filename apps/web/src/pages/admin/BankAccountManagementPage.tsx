@@ -3,7 +3,8 @@
  * 管理企业银行账户信息
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Plus,
   Edit,
@@ -17,7 +18,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
   Typography,
   TextField,
   Chip,
@@ -32,7 +32,8 @@ import {
   AlertTitle,
   Stack,
 } from "@mui/material";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
 
 /** 账户类型配置 */
 const ACCOUNT_TYPE_CONFIG: Record<
@@ -140,128 +141,159 @@ export default function BankAccountManagementPage() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  // 表格列定义 - 使用 any 类型简化
-  const columns: any[] = [
-    {
-      id: "account_number",
-      header: "账号",
-      accessorKey: "account_number",
-      cell: ({ row }: { row: BankAccount }) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <CreditCard sx={{ width: 16, height: 16, color: "grey.400" }} />
-          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
-            {row.account_number}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: "account_name",
-      header: "账户名称",
-      accessorKey: "account_name",
-    },
-    {
-      id: "bank_name",
-      header: "开户银行",
-      accessorKey: "bank_name",
-    },
-    {
-      id: "account_type",
-      header: "账户类型",
-      accessorKey: "account_type",
-      cell: ({ row }: { row: BankAccount }) => {
-        const config = ACCOUNT_TYPE_CONFIG[row.account_type] || {
-          label: row.account_type,
-          color: "default" as const,
-        };
-        return <Chip size="small" color={config.color} label={config.label} />;
+  // 表格列定义
+  const columns: ColumnDef<BankAccount>[] = useMemo(
+    () => [
+      {
+        id: "account_number",
+        label: "账号",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CreditCard size={16} color="#9e9e9e" />
+            <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+              {row.account_number}
+            </Typography>
+          </Box>
+        ),
       },
-    },
-    {
-      id: "currency",
-      header: "币种",
-      accessorKey: "currency",
-      cell: ({ row }: { row: BankAccount }) => (
-        <span>{row.currency === "CNY" ? "人民币" : row.currency}</span>
-      ),
-    },
-    {
-      id: "balance",
-      header: "余额",
-      accessorKey: "balance",
-      cell: ({ row }: { row: BankAccount }) => (
-        <Typography
-          variant="body2"
-          sx={{ fontFamily: "monospace", textAlign: "right" }}
-        >
-          {row.balance.toLocaleString("zh-CN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </Typography>
-      ),
-    },
-    {
-      id: "status",
-      header: "状态",
-      accessorKey: "status",
-      cell: ({ row }: { row: BankAccount }) => {
-        const config = STATUS_CONFIG[row.status] || {
-          label: row.status,
-          color: "default" as const,
-        };
-        return <Chip size="small" color={config.color} label={config.label} />;
+      {
+        id: "account_name",
+        label: "账户名称",
+        render: (row) => row.account_name,
       },
-    },
-    {
-      id: "is_primary",
-      header: "主账户",
-      accessorKey: "is_primary",
-      cell: ({ row }: { row: BankAccount }) =>
-        row.is_primary ? (
-          <Chip size="small" color="warning" label="主账户" />
-        ) : (
-          <Typography variant="body2" color="text.disabled">
-            -
+      {
+        id: "bank_name",
+        label: "开户银行",
+        render: (row) => row.bank_name,
+      },
+      {
+        id: "account_type",
+        label: "账户类型",
+        render: (row) => {
+          const config = ACCOUNT_TYPE_CONFIG[row.account_type] || {
+            label: row.account_type,
+            color: "default" as const,
+          };
+          return <Chip size="small" color={config.color} label={config.label} />;
+        },
+      },
+      {
+        id: "currency",
+        label: "币种",
+        render: (row) => row.currency === "CNY" ? "人民币" : row.currency,
+      },
+      {
+        id: "balance",
+        label: "余额",
+        render: (row) => (
+          <Typography
+            variant="body2"
+            sx={{ fontFamily: "monospace", textAlign: "right" }}
+          >
+            {row.balance.toLocaleString("zh-CN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </Typography>
         ),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }: { row: BankAccount }) => (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <IconButton
-            size="small"
-            onClick={() => {
-              setSelectedAccount(row);
-              setIsEditing(true);
-            }}
-          >
-            <Edit sx={{ width: 16, height: 16 }} />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => setDeletingId(row.id)}
-          >
-            <Trash2 sx={{ width: 16, height: 16 }} />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => {
+          const config = STATUS_CONFIG[row.status] || {
+            label: row.status,
+            color: "default" as const,
+          };
+          return <Chip size="small" color={config.color} label={config.label} />;
+        },
+      },
+      {
+        id: "is_primary",
+        label: "主账户",
+        render: (row) =>
+          row.is_primary ? (
+            <Chip size="small" color="warning" label="主账户" />
+          ) : (
+            <Typography variant="body2" color="text.disabled">-</Typography>
+          ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 行操作
+  const rowActions: RowAction<BankAccount>[] = useMemo(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => {
+          setSelectedAccount(row);
+          setIsEditing(true);
+        },
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => setDeletingId(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除该银行账户吗？此操作不可恢复。",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 筛选配置
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "type",
+        label: "账户类型",
+        options: [
+          { value: "all", label: "全部类型" },
+          { value: "checking", label: "基本户" },
+          { value: "savings", label: "一般户" },
+          { value: "dedicated", label: "专用户" },
+          { value: "foreign", label: "外币户" },
+        ],
+      },
+      {
+        id: "status",
+        label: "账户状态",
+        options: [
+          { value: "all", label: "全部状态" },
+          { value: "active", label: "正常" },
+          { value: "frozen", label: "冻结" },
+          { value: "closed", label: "销户" },
+        ],
+      },
+    ],
+    [],
+  );
+
+  // 处理筛选变化
+  const handleFilterChange = (filterId: string, value: string) => {
+    if (filterId === "type") {
+      setTypeFilter(value);
+    } else if (filterId === "status") {
+      setStatusFilter(value);
+    }
+  };
 
   // 处理创建
   const handleCreate = (data: BankAccountFormData) => {
-    console.log("创建银行账户:", data);
+    apiLogger.info("创建银行账户:", data);
     setIsCreating(false);
   };
 
   // 处理更新
   const handleUpdate = (data: BankAccountFormData) => {
     if (!selectedAccount) return;
-    console.log("更新银行账户:", selectedAccount.id, data);
+    apiLogger.info("更新银行账户:", selectedAccount.id, data);
     setIsEditing(false);
     setSelectedAccount(null);
   };
@@ -269,7 +301,7 @@ export default function BankAccountManagementPage() {
   // 处理删除
   const handleDelete = () => {
     if (!deletingId) return;
-    console.log("删除银行账户:", deletingId);
+    apiLogger.info("删除银行账户:", deletingId);
     setDeletingId(null);
   };
 
@@ -284,50 +316,6 @@ export default function BankAccountManagementPage() {
           gap: 3,
         }}
       >
-        {/* 头部 */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 1,
-                bgcolor: "primary.main",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Building2 sx={{ width: 24, height: 24, color: "white" }} />
-            </Box>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                银行账户管理
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                管理企业银行账户信息
-              </Typography>
-            </Box>
-          </Box>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-            onClick={() => {
-              setSelectedAccount(null);
-              setIsCreating(true);
-            }}
-          >
-            新增账户
-          </Button>
-        </Box>
-
         {/* 统计卡片 */}
         <Box
           sx={{
@@ -395,73 +383,28 @@ export default function BankAccountManagementPage() {
           </Card>
         </Box>
 
-        {/* 筛选和搜索 */}
-        <Card>
-          <CardContent>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <TextField
-                size="small"
-                placeholder="搜索账户名称、账号或银行..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search
-                          sx={{ width: 16, height: 16, color: "grey.400" }}
-                        />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-                sx={{ flex: 1, minWidth: 200 }}
-              />
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel>账户类型</InputLabel>
-                <Select
-                  value={typeFilter}
-                  label="账户类型"
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                >
-                  <MenuItem value="all">全部类型</MenuItem>
-                  <MenuItem value="checking">基本户</MenuItem>
-                  <MenuItem value="savings">一般户</MenuItem>
-                  <MenuItem value="dedicated">专用户</MenuItem>
-                  <MenuItem value="foreign">外币户</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>账户状态</InputLabel>
-                <Select
-                  value={statusFilter}
-                  label="账户状态"
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <MenuItem value="all">全部状态</MenuItem>
-                  <MenuItem value="active">正常</MenuItem>
-                  <MenuItem value="frozen">冻结</MenuItem>
-                  <MenuItem value="closed">销户</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </CardContent>
-        </Card>
-
         {/* 账户列表 */}
-        <Card>
-          <CardHeader
-            title="银行账户列表"
-            subheader={`共 ${filteredAccounts.length} 个账户`}
-          />
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredAccounts}
-              searchPlaceholder="搜索账户..."
-            />
-          </CardContent>
-        </Card>
+        <ListPageTemplate
+          title="银行账户管理"
+          subtitle="管理企业银行账户信息"
+          titleIcon={<Building2 size={24} />}
+          data={filteredAccounts}
+          columns={columns}
+          rowActions={rowActions}
+          searchPlaceholder="搜索账户名称、账号或银行..."
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          filters={filters}
+          filterValues={{ type: typeFilter, status: statusFilter }}
+          onFilterChange={handleFilterChange}
+          onCreateNew={() => {
+            setSelectedAccount(null);
+            setIsCreating(true);
+          }}
+          createButtonLabel="新增账户"
+          emptyIcon={<CreditCard size={48} color="#9e9e9e" />}
+          emptyMessage="暂无银行账户"
+        />
       </Box>
 
       {/* 创建/编辑侧边栏 */}

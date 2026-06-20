@@ -22,6 +22,7 @@ import type {
   InvoiceStatus,
   PaginatedResult,
 } from "@/types/erp-finance";
+import { apiLogger } from "@/utils/logger";
 
 import {
   Button,
@@ -113,7 +114,7 @@ const FinanceInvoicePage: React.FC = () => {
           });
         }
       } catch (err) {
-        console.error("获取发票列表失败:", err);
+        apiLogger.error("获取发票列表失败:", err);
         error("获取发票列表失败");
       } finally {
         setLoading(false);
@@ -246,7 +247,7 @@ const FinanceInvoicePage: React.FC = () => {
         error((response as any).message || "开具失败");
       }
     } catch (err) {
-      console.error("开具发票失败:", err);
+      apiLogger.error("开具发票失败:", err);
       error("开具发票失败");
     }
   };
@@ -267,7 +268,7 @@ const FinanceInvoicePage: React.FC = () => {
         error((response as any).message || "认证失败");
       }
     } catch (err) {
-      console.error("认证发票失败:", err);
+      apiLogger.error("认证发票失败:", err);
       error("认证发票失败");
     }
   };
@@ -289,7 +290,7 @@ const FinanceInvoicePage: React.FC = () => {
         error((response as any).message || "删除失败");
       }
     } catch (err) {
-      console.error("删除发票失败:", err);
+      apiLogger.error("删除发票失败:", err);
       error("删除发票失败");
     }
   };

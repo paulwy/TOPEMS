@@ -8,7 +8,9 @@ const lazy = lazyWithRetry;
 const LimsSamplePage = lazy(() => import("../pages/lims/LimsSamplePage"));
 const LimsProcessPage = lazy(() => import("../pages/lims/LimsProcessPage"));
 const LimsTaskPage = lazy(() => import("../pages/lims/LimsTaskPage"));
-const LimsInstrumentPage = lazy(() => import("../pages/lims/LimsInstrumentPage"));
+const LimsInstrumentPage = lazy(
+  () => import("../pages/lims/LimsInstrumentPage"),
+);
 const QmsStandardPage = lazy(
   () => import("../pages/qms/QmsQualityControlPage"),
 );

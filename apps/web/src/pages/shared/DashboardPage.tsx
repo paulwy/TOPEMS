@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
@@ -112,7 +113,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     isAuthenticated,
     hasPermission,
   } = useAuth();
-  const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
+  const { serviceStatuses, refresh: refreshServiceStatuses } =
+    useServiceStatus();
   const shortcuts = useAppStore((state) => state.shortcuts);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -143,6 +145,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     { id: 5, title: "参加项目评审会议", type: "meeting", done: false },
   ]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const moduleToService: Record<string, string> = {
     rs: "rs",
     lims: "lims",
@@ -192,7 +195,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
       setStats(newStats);
     } catch (err) {
-      console.error("加载统计失败:", err);
+      apiLogger.error("加载统计失败:", err);
     }
   }, []);
 
@@ -268,13 +271,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       try {
         await refreshServiceStatuses();
         await loadStats().catch((err) => {
-          console.warn("加载统计数据失败:", err);
+          apiLogger.warn("加载统计数据失败:", err);
         });
         await loadRecentActivities().catch((err) => {
-          console.warn("加载最近活动失败:", err);
+          apiLogger.warn("加载最近活动失败:", err);
         });
       } catch (err) {
-        console.error("初始化失败:", err);
+        apiLogger.error("初始化失败:", err);
       } finally {
         setLoading(false);
       }

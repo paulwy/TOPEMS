@@ -2,7 +2,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
   Chip,
   Typography,
   Box,
@@ -13,18 +12,18 @@ import {
   MenuItem,
   IconButton,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Clock,
   Search,
   ChevronLeft,
-  AlertCircle,
   Shield,
   User,
   Activity,
   FileText,
   FlaskConical,
   Filter,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { AuditLog as LimsAuditLog } from "@/api/lims";
@@ -32,6 +31,9 @@ import { auditLimsApi } from "@/api/lims";
 import type { AuditLog as RsAuditLog } from "@/api/rs";
 import { auditRsApi } from "@/api/rs";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, FilterConfig } from "@/components/mui";
 
 import { ModeToggle } from "@/components/ModeToggle";
 
@@ -83,7 +85,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         setTotal(0);
       }
     } catch (error: any) {
-      console.error("加载审计日志失败:", error);
+      apiLogger.error("加载审计日志失败:", error);
       setLogs([]);
       addNotification({
         title: "加载失败",
@@ -97,6 +99,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     loadLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, currentPage, filterStatus, filterAction, filterEntityType]);
 
   const getStatusBadge = (status: string) => {
@@ -157,6 +160,153 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   const uniqueEntityTypes = Array.from(
     new Set(logs.map((log) => log.entity_type)),
   ).sort();
+
+  const columns: ColumnDef<AuditLog>[] = useMemo(
+    () => [
+      {
+        id: "created_at",
+        label: "时间",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {new Date(row.created_at).toLocaleString("zh-CN")}
+          </Typography>
+        ),
+      },
+      {
+        id: "user",
+        label: "用户",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                bgcolor: "primary.light",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <User size={16} color="#1976d2" />
+            </Box>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {row.user_name || row.user_id || "-"}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "action",
+        label: "操作",
+        render: (row) => (
+          <Typography variant="body2">{formatAction(row.action)}</Typography>
+        ),
+      },
+      {
+        id: "entity_type",
+        label: "实体类型",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {row.entity_type}
+          </Typography>
+        ),
+      },
+      {
+        id: "ip_address",
+        label: "IP地址",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {row.ip_address || "-"}
+          </Typography>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: "details",
+        label: "详情",
+        render: (row) => (
+          <Box sx={{ maxWidth: 200 }}>
+            {row.error_message && (
+              <Typography
+                variant="body2"
+                sx={{ fontSize: "0.75rem", color: "error.main" }}
+              >
+                {row.error_message}
+              </Typography>
+            )}
+            {!row.error_message && row.request_details && (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: "0.75rem",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {JSON.stringify(row.request_details)}
+              </Typography>
+            )}
+            {!row.error_message && !row.request_details && "-"}
+          </Box>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        options: [
+          { value: "all", label: "全部状态" },
+          { value: "success", label: "成功" },
+          { value: "partial", label: "部分成功" },
+          { value: "error", label: "失败" },
+        ],
+      },
+      {
+        id: "action",
+        label: "操作",
+        options: [
+          { value: "all", label: "全部操作" },
+          ...uniqueActions.map((action) => ({
+            value: action,
+            label: formatAction(action),
+          })),
+        ],
+      },
+      {
+        id: "entity_type",
+        label: "实体",
+        options: [
+          { value: "all", label: "全部实体" },
+          ...uniqueEntityTypes.map((type) => ({ value: type, label: type })),
+        ],
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [uniqueActions, uniqueEntityTypes],
+  );
+
+  const handleFilterChange = (filterId: string, value: string) => {
+    if (filterId === "status") {
+      setFilterStatus(value);
+    } else if (filterId === "action") {
+      setFilterAction(value);
+    } else if (filterId === "entity_type") {
+      setFilterEntityType(value);
+    }
+    setCurrentPage(1);
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
@@ -228,7 +378,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
               <Button
                 variant="contained"
                 onClick={loadLogs}
-                startIcon={<Activity size={16} />}
+                startIcon={<RefreshCw size={16} />}
               >
                 刷新
               </Button>
@@ -238,389 +388,31 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
       </Box>
 
       <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
-        {/* 搜索和筛选 */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Box sx={{ flex: 1, minWidth: 200, position: "relative" }}>
-                <Search
-                  style={{
-                    position: "absolute",
-                    left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: 20,
-                    height: 20,
-                    color: "#9e9e9e",
-                  }}
-                />
-                <TextField
-                  size="small"
-                  placeholder="搜索用户名、操作、实体类型、IP..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{ width: "100%", pl: 5 }}
-                />
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Filter size={16} color="#9e9e9e" />
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <InputLabel>全部状态</InputLabel>
-                  <Select
-                    value={filterStatus}
-                    label="全部状态"
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                  >
-                    <MenuItem value="all">全部状态</MenuItem>
-                    <MenuItem value="success">成功</MenuItem>
-                    <MenuItem value="partial">部分成功</MenuItem>
-                    <MenuItem value="error">失败</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <InputLabel>全部操作</InputLabel>
-                  <Select
-                    value={filterAction}
-                    label="全部操作"
-                    onChange={(e) => setFilterAction(e.target.value)}
-                  >
-                    <MenuItem value="all">全部操作</MenuItem>
-                    {uniqueActions.map((action) => (
-                      <MenuItem key={action} value={action}>
-                        {formatAction(action)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <InputLabel>全部实体</InputLabel>
-                  <Select
-                    value={filterEntityType}
-                    label="全部实体"
-                    onChange={(e) => setFilterEntityType(e.target.value)}
-                  >
-                    <MenuItem value="all">全部实体</MenuItem>
-                    {uniqueEntityTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        {/* 日志列表 */}
         <Card>
           <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "primary.main",
-                    borderTop: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                  }}
-                />
-                <Typography sx={{ mt: 2, color: "text.secondary" }}>
-                  加载中...
-                </Typography>
-              </Box>
-            ) : filteredLogs.length === 0 ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Clock size={48} color="#9e9e9e" />
-                <Typography sx={{ color: "text.secondary", mt: 2 }}>
-                  暂无审计日志
-                </Typography>
-              </Box>
-            ) : (
-              <>
-                <Box sx={{ overflowX: "auto" }}>
-                  <Box
-                    component="table"
-                    sx={{ width: "100%", borderCollapse: "collapse" }}
-                  >
-                    <Box component="thead" sx={{ bgcolor: "grey.100" }}>
-                      <Box component="tr">
-                        <Box
-                          component="th"
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: "left",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          时间
-                        </Box>
-                        <Box
-                          component="th"
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: "left",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          用户
-                        </Box>
-                        <Box
-                          component="th"
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: "left",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          操作
-                        </Box>
-                        <Box
-                          component="th"
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: "left",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          实体类型
-                        </Box>
-                        <Box
-                          component="th"
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: "left",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          IP地址
-                        </Box>
-                        <Box
-                          component="th"
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: "left",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          状态
-                        </Box>
-                        <Box
-                          component="th"
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: "left",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          详情
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box component="tbody">
-                      {filteredLogs.map((log) => (
-                        <Box
-                          component="tr"
-                          key={log.id}
-                          sx={{ "&:hover": { bgcolor: "grey.50" } }}
-                        >
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              fontSize: "0.875rem",
-                              color: "text.secondary",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {new Date(log.created_at).toLocaleString("zh-CN")}
-                          </Box>
-                          <Box component="td" sx={{ px: 3, py: 2 }}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <Box
-                                sx={{
-                                  width: 32,
-                                  height: 32,
-                                  borderRadius: "50%",
-                                  bgcolor: "primary.light",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                <User size={16} color="#1976d2" />
-                              </Box>
-                              <Box
-                                sx={{ fontSize: "0.875rem", fontWeight: 500 }}
-                              >
-                                {log.user_name || log.user_id || "-"}
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2, fontSize: "0.875rem" }}
-                          >
-                            {formatAction(log.action)}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              fontSize: "0.875rem",
-                              color: "text.secondary",
-                            }}
-                          >
-                            {log.entity_type}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              fontSize: "0.875rem",
-                              color: "text.secondary",
-                            }}
-                          >
-                            {log.ip_address || "-"}
-                          </Box>
-                          <Box component="td" sx={{ px: 3, py: 2 }}>
-                            {getStatusBadge(log.status)}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              fontSize: "0.875rem",
-                              color: "text.secondary",
-                              maxWidth: 200,
-                            }}
-                          >
-                            {log.error_message && (
-                              <Typography
-                                sx={{
-                                  fontSize: "0.75rem",
-                                  color: "error.main",
-                                }}
-                              >
-                                {log.error_message}
-                              </Typography>
-                            )}
-                            {!log.error_message && log.request_details && (
-                              <Typography
-                                sx={{
-                                  fontSize: "0.75rem",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {JSON.stringify(log.request_details)}
-                              </Typography>
-                            )}
-                            {!log.error_message && !log.request_details && "-"}
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                </Box>
-
-                {total > pageSize && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      px: 3,
-                      py: 2,
-                      borderTop: 1,
-                      borderColor: "divider",
-                      bgcolor: "grey.50",
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      显示第 {(currentPage - 1) * pageSize + 1} -{" "}
-                      {Math.min(currentPage * pageSize, total)} 条，共 {total}{" "}
-                      条
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(1, prev - 1))
-                        }
-                        disabled={currentPage === 1}
-                      >
-                        上一页
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => setCurrentPage((prev) => prev + 1)}
-                        disabled={currentPage * pageSize >= total}
-                      >
-                        下一页
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-              </>
-            )}
+            <ListPageTemplate
+              title="审计日志"
+              subtitle={`共 ${total} 条记录`}
+              data={filteredLogs}
+              columns={columns}
+              loading={loading}
+              searchPlaceholder="搜索用户名、操作、实体类型、IP..."
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              filters={filters}
+              filterValues={{
+                status: filterStatus,
+                action: filterAction,
+                entity_type: filterEntityType,
+              }}
+              onFilterChange={handleFilterChange}
+              pagination={{
+                page: currentPage,
+                pageSize: pageSize,
+                total: total,
+                onPageChange: setCurrentPage,
+              }}
+              emptyIcon={<Clock size={48} color="#9e9e9e" />}
+              emptyMessage="暂无审计日志"
+            />
           </CardContent>
-        </Card>
-      </Box>
-    </Box>
-  );
-};
-
-export default AuditLogPage;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
 import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button, Box, Typography } from "@mui/material";
@@ -68,7 +69,7 @@ const PmContractCreatePage: React.FC = () => {
         setProjects(response.data);
       }
     } catch (error) {
-      console.error("Failed to load projects", error);
+      apiLogger.error("Failed to load projects", error);
     }
   };
 
@@ -81,7 +82,7 @@ const PmContractCreatePage: React.FC = () => {
         navigate("/pm/contracts");
       }
     } catch (error) {
-      console.error("Failed to create contract", error);
+      apiLogger.error("Failed to create contract", error);
     } finally {
       setLoading(false);
     }
@@ -874,7 +875,16 @@ const PmContractCreatePage: React.FC = () => {
                 <FileUpload
                   value={contractAttachments}
                   onChange={setContractAttachments}
-                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.xls', '.xlsx']}
+                  accept={[
+                    ".pdf",
+                    ".doc",
+                    ".docx",
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".xls",
+                    ".xlsx",
+                  ]}
                   maxCount={10}
                   maxSize={50}
                   maxTotalSize={200}

@@ -90,6 +90,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, debouncedSearch]);
 
   const loadData = async () => {
@@ -600,6 +601,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

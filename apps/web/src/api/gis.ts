@@ -26,13 +26,17 @@ function adaptResponse<T>(
   dataKey: string,
 ): PaginatedResponse<T> {
   const data = (response[dataKey] as T[]) || [];
-  const total = response.total as number || data.length;
+  const total = (response.total as number) || data.length;
   return {
     data,
     total,
-    page: response.page as number || 1,
-    pageSize: (response.pageSize as number) || (response.page_size as number) || data.length,
-    totalPages: (response.totalPages as number) || (response.total_pages as number) || 1,
+    page: (response.page as number) || 1,
+    pageSize:
+      (response.pageSize as number) ||
+      (response.page_size as number) ||
+      data.length,
+    totalPages:
+      (response.totalPages as number) || (response.total_pages as number) || 1,
   };
 }
 
@@ -433,7 +437,10 @@ export const gisApi = {
       `/api/gis/warehouse-locations?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<StorageLocation>(response.data, "warehouse_locations");
+      response.data = adaptResponse<StorageLocation>(
+        response.data,
+        "warehouse_locations",
+      );
     }
     return response as ApiResponse<PaginatedResponse<StorageLocation>>;
   },
@@ -492,7 +499,10 @@ export const gisApi = {
       `/api/gis/location-photos?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<EvidenceRecord>(response.data, "location_photos");
+      response.data = adaptResponse<EvidenceRecord>(
+        response.data,
+        "location_photos",
+      );
     }
     return response as ApiResponse<PaginatedResponse<EvidenceRecord>>;
   },
@@ -574,7 +584,10 @@ export const gisApi = {
       `/api/gis/business-locations?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<BusinessLocation>(response.data, "business_locations");
+      response.data = adaptResponse<BusinessLocation>(
+        response.data,
+        "business_locations",
+      );
     }
     return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },
@@ -598,7 +611,10 @@ export const gisApi = {
       `/api/gis/business-locations/type/${type}?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<BusinessLocation>(response.data, "business_locations");
+      response.data = adaptResponse<BusinessLocation>(
+        response.data,
+        "business_locations",
+      );
     }
     return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },

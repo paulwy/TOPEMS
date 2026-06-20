@@ -353,12 +353,9 @@ export const pmFinanceApi = {
     apiClient.pm.delete(`/api/pm/cost-allocation-rules/${ruleId}`),
 
   applyCostAllocationRules: (projectId: string, costRecordIds?: string[]) =>
-    apiClient.pm.post(
-      `/api/pm/projects/${projectId}/apply-allocation-rules`,
-      {
-        cost_record_ids: costRecordIds,
-      },
-    ),
+    apiClient.pm.post(`/api/pm/projects/${projectId}/apply-allocation-rules`, {
+      cost_record_ids: costRecordIds,
+    }),
 
   previewCostAllocation: (projectId: string, costRecordIds?: string[]) =>
     apiClient.pm.post(`/api/pm/projects/${projectId}/preview-allocation`, {

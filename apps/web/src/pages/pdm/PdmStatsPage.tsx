@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Card, CardContent, Typography } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 import {
   TrendingUp,
   Factory,
@@ -104,7 +105,7 @@ const PdmStatsPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.error("加载统计数据失败:", err);
+      apiLogger.error("加载统计数据失败:", err);
     } finally {
       setLoading(false);
     }
@@ -226,7 +227,12 @@ const PdmStatsPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" },
+            gridTemplateColumns: {
+              xs: "repeat(1, 1fr)",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+              xl: "repeat(6, 1fr)",
+            },
             gap: 2,
             mb: 4,
           }}
@@ -361,7 +367,11 @@ const PdmStatsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(4, 1fr)",
+                },
                 gap: 3,
               }}
             >

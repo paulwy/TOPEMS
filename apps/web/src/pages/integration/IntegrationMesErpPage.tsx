@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { integrationApi } from "@/api/integration";
 import type { MesErpSync, CreateMesErpSyncRequest } from "@/api/integration";
+import { logger } from "@/utils/logger";
 
 const IntegrationMesErpPage: React.FC = () => {
   const [syncs, setSyncs] = useState<MesErpSync[]>([]);
@@ -14,7 +15,7 @@ const IntegrationMesErpPage: React.FC = () => {
       const res = await integrationApi.listMesErpSyncs();
       if (res.success && res.data !== undefined) setSyncs(res.data);
     } catch (error) {
-      console.error("Error loading data:", error);
+      logger.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
@@ -46,7 +47,7 @@ const IntegrationMesErpPage: React.FC = () => {
       e.currentTarget.reset();
       loadData();
     } catch (error) {
-      console.error("Error creating sync:", error);
+      logger.error("Error creating sync:", error);
       showToast("Failed to create sync");
     }
   };
@@ -57,7 +58,7 @@ const IntegrationMesErpPage: React.FC = () => {
       showToast("MES-ERP sync completed");
       loadData();
     } catch (error) {
-      console.error("Error syncing:", error);
+      logger.error("Error syncing:", error);
       showToast("Failed to sync");
     }
   };

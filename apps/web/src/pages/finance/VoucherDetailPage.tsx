@@ -38,6 +38,7 @@ import {
 import { DetailPageTemplate } from "@/components/templates";
 import { voucherApi, type FinancialVoucher, type VoucherItem } from "@/api/erp";
 import { useAppStore } from "@/store";
+import { apiLogger } from "@/utils/logger";
 
 interface TabConfig {
   id: string;
@@ -76,7 +77,7 @@ const VoucherDetailPage: React.FC = () => {
         setVoucherItems(itemsResult.data);
       }
     } catch (err) {
-      console.error("加载凭证详情失败:", err);
+      apiLogger.error("加载凭证详情失败:", err);
       addNotification({
         title: "错误",
         message: "加载凭证详情失败",

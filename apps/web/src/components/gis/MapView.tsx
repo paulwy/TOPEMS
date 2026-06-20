@@ -39,6 +39,14 @@ import {
   Thermometer,
   Box,
 } from "lucide-react";
+import {
+  Box as MuiBox,
+  Button,
+  Typography,
+  Paper,
+  Chip,
+  IconButton,
+} from "@mui/material";
 import type {
   DevicePoint,
   Pipeline,
@@ -89,19 +97,32 @@ const LayerToggle: React.FC<{
   onChange: (checked: boolean) => void;
   color: string;
 }> = ({ label, icon: _, checked, onChange, color }) => (
-  <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-    <div
-      className={`w-3 h-3 rounded-full ${checked ? "" : "bg-gray-300"}`}
-      style={{ backgroundColor: checked ? color : undefined }}
+  <MuiBox
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: 1,
+      cursor: "pointer",
+      padding: "4px 8px",
+      borderRadius: 1,
+      "&:hover": {
+        backgroundColor: "#f9fafb",
+      },
+    }}
+    onClick={() => onChange(!checked)}
+  >
+    <MuiBox
+      sx={{
+        width: 12,
+        height: 12,
+        borderRadius: "50%",
+        backgroundColor: checked ? color : "#d1d5db",
+      }}
     />
-    <span className="text-sm text-gray-700">{label}</span>
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="hidden"
-    />
-  </label>
+    <Typography variant="body2" sx={{ color: "#374151", fontSize: "0.875rem" }}>
+      {label}
+    </Typography>
+  </MuiBox>
 );
 
 const FitBoundsControl: React.FC<{
@@ -116,13 +137,22 @@ const FitBoundsControl: React.FC<{
   }, [mapRef, bounds]);
 
   return (
-    <button
+    <IconButton
       onClick={fitBounds}
-      className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
       title="缩放到所有标记"
+      sx={{
+        padding: 1,
+        backgroundColor: "white",
+        borderRadius: 2,
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "&:hover": {
+          backgroundColor: "#f9fafb",
+        },
+        transition: "background-color 0.2s",
+      }}
     >
-      <Maximize2 className="w-5 h-5 text-gray-700" />
-    </button>
+      <Maximize2 size={20} style={{ color: "#374151" }} />
+    </IconButton>
   );
 };
 
@@ -268,16 +298,24 @@ const MeasureTooltip: React.FC<{
   content: string;
 }> = ({ position, content }) => {
   return (
-    <div
-      className="absolute bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none z-50"
-      style={{
+    <Paper
+      sx={{
+        position: "absolute",
+        backgroundColor: "#111827",
+        color: "white",
+        fontSize: "0.75rem",
+        padding: "4px 8px",
+        borderRadius: 1,
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+        pointerEvents: "none",
+        zIndex: 50,
         left: position[1] + 10,
         top: position[0] - 20,
         transform: "translateX(-50%)",
       }}
     >
       {content}
-    </div>
+    </Paper>
   );
 };
 
@@ -302,9 +340,10 @@ const MapView: React.FC<MapViewProps> = ({
   onMarkerClick,
 }) => {
   const [mapCenter, _setMapCenter] = useState<[number, number]>([
-    31.2304, 121.4737,
+    39.9,
+    116.4, // 北京
   ]);
-  const [zoom, setZoom] = useState(14);
+  const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
   const [selectedItem, setSelectedItem] = useState<
     DevicePoint | StorageLocation | null
   >(null);
@@ -333,6 +372,7 @@ const MapView: React.FC<MapViewProps> = ({
   );
   const [mapType, setMapType] = useState<"osm" | "amap">("osm");
   const [show3DView, setShow3DView] = useState(false);
+  const [offlineMode, setOfflineMode] = useState(true); // 默认使用离线瓦片
   const _mapRef = useRef<any>(null);
   const leafletMapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -343,15 +383,14 @@ const MapView: React.FC<MapViewProps> = ({
   // Force new key when map type changes to ensure proper remount
   const handleSetMapType = (type: "osm" | "amap") => {
     if (type !== mapType) {
-      renderCountRef.current = 0;
       setMapKey((prev) => prev + 1);
       setMapType(type);
     }
   };
 
-  // Generate unique key that changes on each render to handle StrictMode
-  // Using useId for stability + renderCountRef for uniqueness across mounts
-  const currentMapKey = `${stableId}-${mapKey}-${renderCountRef.current++}`;
+  // Generate unique key that only changes when map type changes
+  // Using useId for stability + mapKey for map type changes
+  const currentMapKey = `${stableId}-${mapKey}`;
 
   const calculateDistance = (
     lat1: number,
@@ -715,12 +754,6 @@ const MapView: React.FC<MapViewProps> = ({
     return value.toFixed(6);
   };
 
-  const getToolColor = (tool: ToolMode) => {
-    return toolMode === tool
-      ? "bg-blue-500 text-white"
-      : "bg-white text-gray-700 hover:bg-gray-50";
-  };
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -734,10 +767,19 @@ const MapView: React.FC<MapViewProps> = ({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDrawing]);
 
   return (
-    <div className="relative w-full h-full" ref={containerRef}>
+    <MuiBox
+      sx={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        minHeight: 500,
+      }}
+      ref={containerRef}
+    >
       {mapType === "amap" ? (
         <AmapLayer
           devicePoints={devicePoints}
@@ -749,7 +791,7 @@ const MapView: React.FC<MapViewProps> = ({
         <MapContainer
           center={mapCenter}
           zoom={zoom}
-          style={{ height: "100%", width: "100%" }}
+          style={{ height: "100%", width: "100%", minHeight: 500 }}
           ref={leafletMapRef}
           key={currentMapKey}
         >
@@ -772,7 +814,11 @@ const MapView: React.FC<MapViewProps> = ({
           />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            url={
+              offlineMode
+                ? "/offline_tiles/amap/{z}/{x}/{y}.png"
+                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            }
           />
 
           {visibleLayers.pipelines &&
@@ -803,14 +849,33 @@ const MapView: React.FC<MapViewProps> = ({
                   opacity={0.8}
                 >
                   <Tooltip direction="top" offset={[0, -10]}>
-                    <div className="bg-white px-3 py-2 rounded-lg shadow-lg min-w-[120px]">
-                      <div className="font-medium text-gray-900">
+                    <Paper
+                      sx={{
+                        backgroundColor: "white",
+                        padding: "8px 12px",
+                        borderRadius: 2,
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                        minWidth: "120px",
+                      }}
+                    >
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontWeight: "medium",
+                          color: "#111827",
+                        }}
+                      >
                         {pipeline.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "#6b7280",
+                        }}
+                      >
                         {pipeline.pipeline_type}
-                      </div>
-                    </div>
+                      </Typography>
+                    </Paper>
                   </Tooltip>
                 </Polyline>
               );
@@ -824,40 +889,79 @@ const MapView: React.FC<MapViewProps> = ({
                 icon={deviceIcon}
                 eventHandlers={{ click: () => handleMarkerClick(point) }}
               >
-                <Popup className="max-w-xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-green-500" />
-                      <h4 className="font-semibold text-gray-900">
+                <Popup>
+                  <MuiBox sx={{ maxWidth: "320px" }}>
+                    <MuiBox
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <MapPin size={20} style={{ color: "#00C897" }} />
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: "semibold", color: "#111827" }}
+                      >
                         {point.name}
-                      </h4>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <div>类型: {point.device_type}</div>
-                      <div>
+                      </Typography>
+                    </MuiBox>
+                    <MuiBox sx={{ fontSize: "0.875rem", color: "#4b5563" }}>
+                      <Typography variant="body2">
+                        类型: {point.device_type}
+                      </Typography>
+                      <Typography variant="body2">
                         状态:{" "}
                         <span style={{ color: getStatusColor(point.status) }}>
                           {point.status}
                         </span>
-                      </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Navigation className="w-3 h-3" />
-                        {point.latitude.toFixed(4)},{" "}
-                        {point.longitude.toFixed(4)}
-                      </div>
-                    </div>
+                      </Typography>
+                      <MuiBox
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          mt: 0.5,
+                        }}
+                      >
+                        <Navigation size={12} />
+                        <Typography variant="body2">
+                          {point.latitude.toFixed(4)},{" "}
+                          {point.longitude.toFixed(4)}
+                        </Typography>
+                      </MuiBox>
+                    </MuiBox>
                     {point.description && (
-                      <div className="text-sm text-gray-500 border-t pt-2 mt-2">
+                      <MuiBox
+                        sx={{
+                          fontSize: "0.875rem",
+                          color: "#6b7280",
+                          borderTop: "1px solid #e5e7eb",
+                          paddingTop: 1,
+                          marginTop: 1,
+                        }}
+                      >
                         {point.description}
-                      </div>
+                      </MuiBox>
                     )}
-                    <button
+                    <Button
+                      fullWidth
                       onClick={() => handleMarkerClick(point)}
-                      className="w-full mt-2 px-2 py-1 text-sm text-cyan-600 bg-cyan-50 rounded hover:bg-cyan-100 transition-colors"
+                      sx={{
+                        mt: 1,
+                        color: "#0891b2",
+                        backgroundColor: "#ecfeff",
+                        "&:hover": {
+                          backgroundColor: "#cffafe",
+                        },
+                        fontSize: "0.875rem",
+                        padding: "4px 8px",
+                      }}
                     >
                       查看详情
-                    </button>
-                  </div>
+                    </Button>
+                  </MuiBox>
                 </Popup>
               </Marker>
             ))}
@@ -870,35 +974,70 @@ const MapView: React.FC<MapViewProps> = ({
                 icon={storageIcon}
                 eventHandlers={{ click: () => handleMarkerClick(location) }}
               >
-                <Popup className="max-w-xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Info className="w-5 h-5 text-amber-500" />
-                      <h4 className="font-semibold text-gray-900">
+                <Popup>
+                  <MuiBox sx={{ maxWidth: "320px" }}>
+                    <MuiBox
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <Info size={20} style={{ color: "#F59E0B" }} />
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: "semibold", color: "#111827" }}
+                      >
                         {location.name}
-                      </h4>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <div>类型: {location.location_type}</div>
+                      </Typography>
+                    </MuiBox>
+                    <MuiBox sx={{ fontSize: "0.875rem", color: "#4b5563" }}>
+                      <Typography variant="body2">
+                        类型: {location.location_type}
+                      </Typography>
                       {location.capacity !== undefined && (
-                        <div>容量: {location.capacity}</div>
+                        <Typography variant="body2">
+                          容量: {location.capacity}
+                        </Typography>
                       )}
                       {location.current_usage !== undefined && (
-                        <div>当前: {location.current_usage}</div>
+                        <Typography variant="body2">
+                          当前: {location.current_usage}
+                        </Typography>
                       )}
-                      <div className="flex items-center gap-1 mt-1">
-                        <Navigation className="w-3 h-3" />
-                        {location.latitude.toFixed(4)},{" "}
-                        {location.longitude.toFixed(4)}
-                      </div>
-                    </div>
-                    <button
+                      <MuiBox
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          mt: 0.5,
+                        }}
+                      >
+                        <Navigation size={12} />
+                        <Typography variant="body2">
+                          {location.latitude.toFixed(4)},{" "}
+                          {location.longitude.toFixed(4)}
+                        </Typography>
+                      </MuiBox>
+                    </MuiBox>
+                    <Button
+                      fullWidth
                       onClick={() => handleMarkerClick(location)}
-                      className="w-full mt-2 px-2 py-1 text-sm text-cyan-600 bg-cyan-50 rounded hover:bg-cyan-100 transition-colors"
+                      sx={{
+                        mt: 1,
+                        color: "#0891b2",
+                        backgroundColor: "#ecfeff",
+                        "&:hover": {
+                          backgroundColor: "#cffafe",
+                        },
+                        fontSize: "0.875rem",
+                        padding: "4px 8px",
+                      }}
                     >
                       查看详情
-                    </button>
-                  </div>
+                    </Button>
+                  </MuiBox>
                 </Popup>
               </Marker>
             ))}
@@ -1029,363 +1168,790 @@ const MapView: React.FC<MapViewProps> = ({
         </MapContainer>
       )}
 
-      <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="px-3 py-2 border-b border-gray-100">
-          <span className="text-xs font-medium text-gray-500">工具</span>
-        </div>
-        <div className="p-2 space-y-1">
-          <button
+      <Paper
+        sx={{
+          position: "absolute",
+          top: 16,
+          left: 16,
+          backgroundColor: "white",
+          borderRadius: 2,
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+        }}
+      >
+        <MuiBox sx={{ padding: "12px", borderBottom: "1px solid #f3f4f6" }}>
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: "medium", color: "#6b7280" }}
+          >
+            工具
+          </Typography>
+        </MuiBox>
+        <MuiBox
+          sx={{
+            padding: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
+          }}
+        >
+          <Button
+            fullWidth
             onClick={() => setTool("select")}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("select")}`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: toolMode === "select" ? "#3b82f6" : "white",
+              color: toolMode === "select" ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor: toolMode === "select" ? "#2563eb" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="选择工具"
           >
-            <div className="w-4 h-4 border-2 border-gray-600 rounded" />
-            <span className="text-xs">选择</span>
-          </button>
-          <button
+            <MuiBox
+              sx={{
+                width: 16,
+                height: 16,
+                border: "2px solid #374151",
+                borderRadius: 1,
+              }}
+            />
+            选择
+          </Button>
+          <Button
+            fullWidth
             onClick={() => setTool("measure-distance")}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("measure-distance")}`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor:
+                toolMode === "measure-distance" ? "#3b82f6" : "white",
+              color: toolMode === "measure-distance" ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor:
+                  toolMode === "measure-distance" ? "#2563eb" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="距离测量"
           >
-            <Ruler className="w-4 h-4" />
-            <span className="text-xs">测距</span>
-          </button>
-          <button
+            <Ruler size={16} />
+            测距
+          </Button>
+          <Button
+            fullWidth
             onClick={() => setTool("measure-area")}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("measure-area")}`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor:
+                toolMode === "measure-area" ? "#3b82f6" : "white",
+              color: toolMode === "measure-area" ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor:
+                  toolMode === "measure-area" ? "#2563eb" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="面积测量"
           >
-            <Ruler className="w-4 h-4" />
-            <span className="text-xs">测面积</span>
-          </button>
-          <div className="border-t border-gray-100 my-2" />
-          <button
+            <Ruler size={16} />
+            测面积
+          </Button>
+          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <Button
+            fullWidth
             onClick={() => setTool("draw-point")}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("draw-point")}`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: toolMode === "draw-point" ? "#3b82f6" : "white",
+              color: toolMode === "draw-point" ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor:
+                  toolMode === "draw-point" ? "#2563eb" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="绘制点"
           >
-            <Pencil className="w-4 h-4" />
-            <span className="text-xs">绘点</span>
-          </button>
-          <button
+            <Pencil size={16} />
+            绘点
+          </Button>
+          <Button
+            fullWidth
             onClick={() => setTool("draw-line")}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("draw-line")}`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: toolMode === "draw-line" ? "#3b82f6" : "white",
+              color: toolMode === "draw-line" ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor:
+                  toolMode === "draw-line" ? "#2563eb" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="绘制线"
           >
-            <Pencil className="w-4 h-4" />
-            <span className="text-xs">绘线</span>
-          </button>
-          <button
+            <Pencil size={16} />
+            绘线
+          </Button>
+          <Button
+            fullWidth
             onClick={() => setTool("draw-polygon")}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("draw-polygon")}`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor:
+                toolMode === "draw-polygon" ? "#3b82f6" : "white",
+              color: toolMode === "draw-polygon" ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor:
+                  toolMode === "draw-polygon" ? "#2563eb" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="绘制多边形"
           >
-            <Pencil className="w-4 h-4" />
-            <span className="text-xs">绘多边形</span>
-          </button>
-          <div className="border-t border-gray-100 my-2" />
+            <Pencil size={16} />
+            绘多边形
+          </Button>
+          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
           {(toolMode === "measure-distance" || toolMode === "measure-area") && (
-            <button
+            <Button
+              fullWidth
               onClick={clearMeasure}
-              className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200"
+              sx={{
+                padding: 1,
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                backgroundColor: "#f3f4f6",
+                color: "#374151",
+                "&:hover": {
+                  backgroundColor: "#e5e7eb",
+                },
+                fontSize: "0.75rem",
+              }}
               title="清除测量"
             >
-              <Eraser className="w-4 h-4" />
-              <span className="text-xs">清除</span>
-            </button>
+              <Eraser size={16} />
+              清除
+            </Button>
           )}
           {drawFeatures.length > 0 && (
-            <button
+            <Button
+              fullWidth
               onClick={clearDrawings}
-              className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100"
+              sx={{
+                padding: 1,
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                backgroundColor: "#fee2e2",
+                color: "#dc2626",
+                "&:hover": {
+                  backgroundColor: "#fecaca",
+                },
+                fontSize: "0.75rem",
+              }}
               title="清除所有绘制"
             >
-              <Trash2 className="w-4 h-4" />
-              <span className="text-xs">清除绘制</span>
-            </button>
+              <Trash2 size={16} />
+              清除绘制
+            </Button>
           )}
           {currentDrawing && (
-            <button
+            <Button
+              fullWidth
               onClick={finishDrawing}
-              className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-green-50 text-green-600 hover:bg-green-100"
+              sx={{
+                padding: 1,
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                backgroundColor: "#dcfce7",
+                color: "#16a34a",
+                "&:hover": {
+                  backgroundColor: "#bbf7d0",
+                },
+                fontSize: "0.75rem",
+              }}
               title="完成绘制 (Enter)"
             >
-              <span className="text-xs">完成绘制</span>
-            </button>
+              完成绘制
+            </Button>
           )}
-          <div className="border-t border-gray-100 my-2" />
-          <button
+          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <Button
+            fullWidth
             onClick={() => {
               setShowTrackPanel(true);
               setToolMode("select");
             }}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-              showTrackPanel
-                ? "bg-purple-500 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: showTrackPanel ? "#9333ea" : "white",
+              color: showTrackPanel ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor: showTrackPanel ? "#7c3aed" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="设备轨迹追踪"
           >
-            <PlayCircle className="w-4 h-4" />
-            <span className="text-xs">轨迹追踪</span>
-          </button>
-          <div className="border-t border-gray-100 my-2" />
-          <button
+            <PlayCircle size={16} />
+            轨迹追踪
+          </Button>
+          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <Button
+            fullWidth
             onClick={() => exportGeoJSON()}
-            className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: "#dbeafe",
+              color: "#2563eb",
+              "&:hover": {
+                backgroundColor: "#bfdbfe",
+              },
+              fontSize: "0.75rem",
+            }}
             title="导出GeoJSON"
           >
-            <Download className="w-4 h-4" />
-            <span className="text-xs">导出GeoJSON</span>
-          </button>
-          <button
+            <Download size={16} />
+            导出GeoJSON
+          </Button>
+          <Button
+            fullWidth
             onClick={() => exportGeoJSON(true)}
-            className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: "#e0e7ff",
+              color: "#4f46e5",
+              "&:hover": {
+                backgroundColor: "#c7d2fe",
+              },
+              fontSize: "0.75rem",
+            }}
             title="导出绘制图形"
           >
-            <FileJson className="w-4 h-4" />
-            <span className="text-xs">导出绘制图形</span>
-          </button>
-          <div className="border-t border-gray-100 my-2" />
-          <button
+            <FileJson size={16} />
+            导出绘制图形
+          </Button>
+          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <Button
+            fullWidth
             onClick={() => handleSetMapType(mapType === "osm" ? "amap" : "osm")}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-              mapType === "amap"
-                ? "bg-blue-500 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: mapType === "amap" ? "#3b82f6" : "white",
+              color: mapType === "amap" ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor: mapType === "amap" ? "#2563eb" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="切换地图"
           >
-            <Globe className="w-4 h-4" />
-            <span className="text-xs">
-              {mapType === "osm" ? "切换高德" : "切换OSM"}
-            </span>
-          </button>
-          <div className="border-t border-gray-100 my-2" />
-          <button
+            <Globe size={16} />
+            {mapType === "osm" ? "切换高德" : "切换OSM"}
+          </Button>
+          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <Button
+            fullWidth
             onClick={() => setShowHeatmap(!showHeatmap)}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-              showHeatmap
-                ? "bg-red-500 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: showHeatmap ? "#ef4444" : "white",
+              color: showHeatmap ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor: showHeatmap ? "#dc2626" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="热力图"
           >
-            <Thermometer className="w-4 h-4" />
-            <span className="text-xs">热力图</span>
-          </button>
+            <Thermometer size={16} />
+            热力图
+          </Button>
           {showHeatmap && (
-            <div className="px-2 py-1 space-y-1">
-              <button
+            <MuiBox
+              sx={{
+                padding: "4px 8px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+              }}
+            >
+              <Button
+                fullWidth
                 onClick={() => setHeatmapMode("density")}
-                className={`w-full p-1.5 rounded text-xs text-left transition-colors ${
-                  heatmapMode === "density"
-                    ? "bg-red-100 text-red-700"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                sx={{
+                  padding: "6px",
+                  borderRadius: 1,
+                  textAlign: "left",
+                  backgroundColor:
+                    heatmapMode === "density" ? "#fee2e2" : "transparent",
+                  color: heatmapMode === "density" ? "#b91c1c" : "#4b5563",
+                  "&:hover": {
+                    backgroundColor:
+                      heatmapMode === "density" ? "#fecaca" : "#f3f4f6",
+                  },
+                  fontSize: "0.75rem",
+                }}
               >
                 密度模式
-              </button>
-              <button
+              </Button>
+              <Button
+                fullWidth
                 onClick={() => setHeatmapMode("status")}
-                className={`w-full p-1.5 rounded text-xs text-left transition-colors ${
-                  heatmapMode === "status"
-                    ? "bg-red-100 text-red-700"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                sx={{
+                  padding: "6px",
+                  borderRadius: 1,
+                  textAlign: "left",
+                  backgroundColor:
+                    heatmapMode === "status" ? "#fee2e2" : "transparent",
+                  color: heatmapMode === "status" ? "#b91c1c" : "#4b5563",
+                  "&:hover": {
+                    backgroundColor:
+                      heatmapMode === "status" ? "#fecaca" : "#f3f4f6",
+                  },
+                  fontSize: "0.75rem",
+                }}
               >
                 状态模式
-              </button>
-            </div>
+              </Button>
+            </MuiBox>
           )}
-          <button
+          <Button
+            fullWidth
             onClick={() => {
               setShow3DView(true);
               setToolMode("select");
             }}
-            className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-              show3DView
-                ? "bg-indigo-500 text-white"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            sx={{
+              padding: 1,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: show3DView ? "#4f46e5" : "white",
+              color: show3DView ? "white" : "#374151",
+              "&:hover": {
+                backgroundColor: show3DView ? "#4338ca" : "#f9fafb",
+              },
+              fontSize: "0.75rem",
+            }}
             title="3D视图"
           >
-            <Box className="w-4 h-4" />
-            <span className="text-xs">3D视图</span>
-          </button>
-        </div>
-      </div>
+            <Box size={16} />
+            3D视图
+          </Button>
+        </MuiBox>
+      </Paper>
 
       {(toolMode === "measure-distance" || toolMode === "measure-area") && (
-        <div className="absolute top-4 left-32 bg-white rounded-lg shadow-md px-4 py-2">
-          <span className="text-sm font-medium text-gray-700">
+        <Paper
+          sx={{
+            position: "absolute",
+            top: 16,
+            left: 128,
+            backgroundColor: "white",
+            borderRadius: 2,
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            padding: "8px 16px",
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: "medium", color: "#374151" }}
+          >
             {measureResult}
-          </span>
-        </div>
+          </Typography>
+        </Paper>
       )}
 
       {toolMode !== "select" && (
-        <div className="absolute bottom-4 left-4 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
-          <span className="text-xs text-yellow-700">
+        <Paper
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            left: 16,
+            backgroundColor: "#fef3c7",
+            border: "1px solid #fde68a",
+            borderRadius: 2,
+            padding: "8px 16px",
+          }}
+        >
+          <Typography variant="caption" sx={{ color: "#92400e" }}>
             按 ESC 退出工具模式 | 按 Enter 完成绘制
-          </span>
-        </div>
+          </Typography>
+        </Paper>
       )}
 
-      <div className="absolute bottom-4 right-4 flex flex-col gap-2">
-        <button
+      <MuiBox
+        sx={{
+          position: "absolute",
+          bottom: 16,
+          right: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+      >
+        <IconButton
           onClick={() => setZoom((z) => Math.min(z + 1, 18))}
-          className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
           title="放大"
+          sx={{
+            padding: 1,
+            backgroundColor: "white",
+            borderRadius: 2,
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            "&:hover": {
+              backgroundColor: "#f9fafb",
+            },
+          }}
         >
-          <ZoomIn className="w-5 h-5 text-gray-700" />
-        </button>
-        <button
+          <ZoomIn size={20} style={{ color: "#374151" }} />
+        </IconButton>
+        <IconButton
           onClick={() => setZoom((z) => Math.max(z - 1, 1))}
-          className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
           title="缩小"
+          sx={{
+            padding: 1,
+            backgroundColor: "white",
+            borderRadius: 2,
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            "&:hover": {
+              backgroundColor: "#f9fafb",
+            },
+          }}
         >
-          <ZoomOut className="w-5 h-5 text-gray-700" />
-        </button>
+          <ZoomOut size={20} style={{ color: "#374151" }} />
+        </IconButton>
         <FitBoundsControl bounds={bounds} mapRef={leafletMapRef} />
-      </div>
+      </MuiBox>
 
-      <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md overflow-hidden">
-        <button
+      <Paper
+        sx={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          backgroundColor: "white",
+          borderRadius: 2,
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+        }}
+      >
+        <Button
+          fullWidth
           onClick={() => setShowLayerPanel(!showLayerPanel)}
-          className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          sx={{
+            padding: "8px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            "&:hover": {
+              backgroundColor: "#f9fafb",
+            },
+          }}
         >
-          <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-gray-700" />
-            <span className="text-sm font-medium text-gray-700">图层</span>
-          </div>
+          <MuiBox sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Layers size={20} style={{ color: "#374151" }} />
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: "medium", color: "#374151" }}
+            >
+              图层
+            </Typography>
+          </MuiBox>
           {showLayerPanel ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
+            <ChevronUp size={16} style={{ color: "#6b7280" }} />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown size={16} style={{ color: "#6b7280" }} />
           )}
-        </button>
+        </Button>
         {showLayerPanel && (
-          <div className="px-3 py-3 space-y-2 border-t">
+          <MuiBox
+            sx={{
+              padding: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              borderTop: "1px solid #e5e7eb",
+            }}
+          >
             <LayerToggle
               label="设备点位"
-              icon={<MapPin className="w-4 h-4" />}
+              icon={<MapPin size={16} />}
               checked={visibleLayers.devices}
               onChange={() => toggleLayer("devices")}
               color="#00C897"
             />
             <LayerToggle
               label="管线"
-              icon={<Navigation className="w-4 h-4" />}
+              icon={<Navigation size={16} />}
               checked={visibleLayers.pipelines}
               onChange={() => toggleLayer("pipelines")}
               color="#6366F1"
             />
             <LayerToggle
               label="仓储位置"
-              icon={<Info className="w-4 h-4" />}
+              icon={<Info size={16} />}
               checked={visibleLayers.storage}
               onChange={() => toggleLayer("storage")}
               color="#F59E0B"
             />
             {drawFeatures.length > 0 && (
-              <div className="border-t pt-2 mt-2">
+              <MuiBox
+                sx={{
+                  borderTop: "1px solid #e5e7eb",
+                  paddingTop: 1,
+                  marginTop: 1,
+                }}
+              >
                 <LayerToggle
                   label="绘制图形"
-                  icon={<Pencil className="w-4 h-4" />}
+                  icon={<Pencil size={16} />}
                   checked={true}
                   onChange={() => {}}
                   color="#EF4444"
                 />
-              </div>
+              </MuiBox>
             )}
-          </div>
+          </MuiBox>
         )}
-      </div>
+      </Paper>
 
       {showDetailsPanel && selectedItem && (
-        <div className="absolute bottom-4 left-4 w-80 bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500">
-            <h3 className="font-semibold text-white">详情信息</h3>
-            <button
-              onClick={closeDetailsPanel}
-              className="p-1 hover:bg-white/20 rounded transition-colors"
+        <Paper
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            left: 16,
+            width: "320px",
+            backgroundColor: "white",
+            borderRadius: 3,
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+            overflow: "hidden",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <MuiBox
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "12px 16px",
+              background: "linear-gradient(to right, #06b6d4, #3b82f6)",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: "semibold", color: "white" }}
             >
-              <X className="w-5 h-5 text-white" />
-            </button>
-          </div>
-          <div className="p-4 space-y-4">
-            <div>
-              <div className="text-sm text-gray-500 mb-1">名称</div>
-              <div className="font-medium text-gray-900">
+              详情信息
+            </Typography>
+            <IconButton
+              onClick={closeDetailsPanel}
+              sx={{
+                padding: 0.5,
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                },
+                borderRadius: 1,
+              }}
+            >
+              <X size={20} style={{ color: "white" }} />
+            </IconButton>
+          </MuiBox>
+          <MuiBox
+            sx={{
+              padding: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <MuiBox>
+              <Typography
+                variant="caption"
+                sx={{ color: "#6b7280", marginBottom: 0.5 }}
+              >
+                名称
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: "medium", color: "#111827" }}
+              >
                 {selectedItem.name}
-              </div>
-            </div>
+              </Typography>
+            </MuiBox>
             {"device_type" in selectedItem && (
-              <div>
-                <div className="text-sm text-gray-500 mb-1">设备类型</div>
-                <div className="text-gray-700">{selectedItem.device_type}</div>
-              </div>
+              <MuiBox>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                >
+                  设备类型
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#374151" }}>
+                  {selectedItem.device_type}
+                </Typography>
+              </MuiBox>
             )}
             {"location_type" in selectedItem && (
-              <div>
-                <div className="text-sm text-gray-500 mb-1">位置类型</div>
-                <div className="text-gray-700">
+              <MuiBox>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                >
+                  位置类型
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#374151" }}>
                   {selectedItem.location_type}
-                </div>
-              </div>
+                </Typography>
+              </MuiBox>
             )}
             {"status" in selectedItem && (
-              <div>
-                <div className="text-sm text-gray-500 mb-1">状态</div>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedItem.status.toLowerCase().includes("active") ||
-                    selectedItem.status.includes("启用")
-                      ? "bg-green-100 text-green-800"
-                      : selectedItem.status.toLowerCase().includes("pending") ||
-                          selectedItem.status.includes("待处理")
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                  }`}
+              <MuiBox>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
                 >
-                  {selectedItem.status}
-                </span>
-              </div>
+                  状态
+                </Typography>
+                <Chip
+                  label={selectedItem.status}
+                  size="small"
+                  sx={{
+                    backgroundColor:
+                      selectedItem.status.toLowerCase().includes("active") ||
+                      selectedItem.status.includes("启用")
+                        ? "#d1fae5"
+                        : selectedItem.status
+                              .toLowerCase()
+                              .includes("pending") ||
+                            selectedItem.status.includes("待处理")
+                          ? "#fef3c7"
+                          : "#fee2e2",
+                    color:
+                      selectedItem.status.toLowerCase().includes("active") ||
+                      selectedItem.status.includes("启用")
+                        ? "#065f46"
+                        : selectedItem.status
+                              .toLowerCase()
+                              .includes("pending") ||
+                            selectedItem.status.includes("待处理")
+                          ? "#92400e"
+                          : "#991b1b",
+                    fontWeight: "medium",
+                  }}
+                />
+              </MuiBox>
             )}
             {"capacity" in selectedItem &&
               selectedItem.capacity !== undefined && (
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">容量</div>
-                  <div className="text-gray-700">{selectedItem.capacity}</div>
-                </div>
+                <MuiBox>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                  >
+                    容量
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#374151" }}>
+                    {selectedItem.capacity}
+                  </Typography>
+                </MuiBox>
               )}
             {"current_usage" in selectedItem &&
               selectedItem.current_usage !== undefined && (
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">当前用量</div>
-                  <div className="text-gray-700">
+                <MuiBox>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                  >
+                    当前用量
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#374151" }}>
                     {selectedItem.current_usage}
-                  </div>
-                </div>
+                  </Typography>
+                </MuiBox>
               )}
             {"description" in selectedItem && selectedItem.description && (
-              <div>
-                <div className="text-sm text-gray-500 mb-1">描述</div>
-                <div className="text-gray-600 text-sm">
+              <MuiBox>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                >
+                  描述
+                </Typography>
+                <Typography variant="body2" sx={{ color: "#4b5563" }}>
                   {selectedItem.description}
-                </div>
-              </div>
+                </Typography>
+              </MuiBox>
             )}
-            <div className="pt-2 border-t">
-              <div className="text-sm text-gray-500 mb-1">坐标</div>
-              <div className="text-gray-700 text-sm font-mono">
+            <MuiBox sx={{ paddingTop: 1, borderTop: "1px solid #e5e7eb" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "#6b7280", marginBottom: 0.5 }}
+              >
+                坐标
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: "#374151", fontFamily: "monospace" }}
+              >
                 {formatCoordinate(selectedItem.latitude)},{" "}
                 {formatCoordinate(selectedItem.longitude)}
-              </div>
-            </div>
-          </div>
-        </div>
+              </Typography>
+            </MuiBox>
+          </MuiBox>
+        </Paper>
       )}
 
       {showMeasureTooltip && (
@@ -1393,35 +1959,77 @@ const MapView: React.FC<MapViewProps> = ({
       )}
 
       {showTrackPanel && (
-        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl w-[90%] max-w-4xl h-[80%] max-h-[600px] overflow-hidden">
+        <MuiBox
+          sx={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Paper
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 3,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              width: "90%",
+              maxWidth: "1024px",
+              height: "80%",
+              maxHeight: "600px",
+              overflow: "hidden",
+            }}
+          >
             <DeviceTrackPanel
               devicePoints={devicePoints}
               onClose={() => setShowTrackPanel(false)}
             />
-          </div>
-        </div>
+          </Paper>
+        </MuiBox>
       )}
 
       {showHeatmap && (
-        <div className="absolute bottom-4 right-24">
+        <MuiBox sx={{ position: "absolute", bottom: 16, right: 96 }}>
           <HeatmapLegend mode={heatmapMode} />
-        </div>
+        </MuiBox>
       )}
 
       {show3DView && (
-        <div className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl w-[95%] max-w-6xl h-[90%] max-h-[700px] overflow-hidden">
+        <MuiBox
+          sx={{
+            position: "absolute",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Paper
+            sx={{
+              backgroundColor: "white",
+              borderRadius: 3,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              width: "95%",
+              maxWidth: "1536px",
+              height: "90%",
+              maxHeight: "700px",
+              overflow: "hidden",
+            }}
+          >
             <Map3DView
               devicePoints={devicePoints}
               pipelines={pipelines}
               storageLocations={storageLocations}
               onClose={() => setShow3DView(false)}
             />
-          </div>
-        </div>
+          </Paper>
+        </MuiBox>
       )}
-    </div>
+    </MuiBox>
   );
 };
 

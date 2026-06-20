@@ -39,6 +39,7 @@ import {
   type Payable,
 } from "@/api/erp";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 
 const FinanceReceivablePayablePage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -89,7 +90,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         setPayables(payableRes.data.items || []);
       }
     } catch (err) {
-      console.error("加载数据失败:", err);
+      apiLogger.error("加载数据失败:", err);
       addNotification({
         title: "错误",
         message: "加载数据失败",
@@ -123,7 +124,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("创建应收账款失败:", err);
+      apiLogger.error("创建应收账款失败:", err);
       addNotification({
         title: "错误",
         message: "创建应收账款失败",
@@ -155,7 +156,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("创建应付账款失败:", err);
+      apiLogger.error("创建应付账款失败:", err);
       addNotification({
         title: "错误",
         message: "创建应付账款失败",
@@ -189,7 +190,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("更新应收账款失败:", err);
+      apiLogger.error("更新应收账款失败:", err);
       addNotification({
         title: "错误",
         message: "更新应收账款失败",
@@ -223,7 +224,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("更新应付账款失败:", err);
+      apiLogger.error("更新应付账款失败:", err);
       addNotification({
         title: "错误",
         message: "更新应付账款失败",
@@ -245,7 +246,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("删除应收账款失败:", err);
+      apiLogger.error("删除应收账款失败:", err);
       addNotification({
         title: "错误",
         message: "删除应收账款失败",
@@ -267,7 +268,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("删除应付账款失败:", err);
+      apiLogger.error("删除应付账款失败:", err);
       addNotification({
         title: "错误",
         message: "删除应付账款失败",

@@ -31,7 +31,13 @@ interface StatCardProps {
   color: string;
   trend?: string;
 }
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, trend }) => (
+const StatCard: React.FC<StatCardProps> = ({
+  title,
+  value,
+  icon,
+  color,
+  trend,
+}) => (
   <Paper
     sx={{
       p: 4,
@@ -39,13 +45,13 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, trend })
       border: 1,
       borderColor: "grey.100",
       transition: "transform 0.2s, boxShadow 0.2s",
-      '&:hover': {
+      "&:hover": {
         transform: "translateY(-2px)",
         boxShadow: 2,
       },
     }}
   >
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
       <Box
         sx={{
           width: 48,
@@ -66,15 +72,20 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, trend })
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
           {value}
         </Typography>
-        {trend && (<Typography variant="caption" color="success.main">
-          {trend}
-        </Typography>)}
+        {trend && (
+          <Typography variant="caption" color="success.main">
+            {trend}
+          </Typography>
+        )}
       </Box>
     </Box>
   </Paper>
 );
 
-const iconMap: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+const iconMap: Record<
+  string,
+  React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+> = {
   Building,
   FolderKanban,
   FlaskConical,
@@ -147,40 +158,68 @@ export const HybridDashboard: React.FC = () => {
     setModuleCards(mappedCards);
   }, []);
   const stats = [
-    { title: "待审批", value: 12, icon: <Clock size={24} color="white" />, color: "primary.main", trend: "+3 今天" },
-    { title: "待处理", value: 8, icon: <AlertCircle size={24} color="white" />, color: "warning.main" },
-    { title: "在线用户", value: 156, icon: <Users size={24} color="white" />, color: "success.main", trend: "+12%" },
-    { title: "文件数量", value: "2.4K", icon: <FileText size={24} color="white" />, color: "info.main" },
+    {
+      title: "待审批",
+      value: 12,
+      icon: <Clock size={24} color="white" />,
+      color: "primary.main",
+      trend: "+3 今天",
+    },
+    {
+      title: "待处理",
+      value: 8,
+      icon: <AlertCircle size={24} color="white" />,
+      color: "warning.main",
+    },
+    {
+      title: "在线用户",
+      value: 156,
+      icon: <Users size={24} color="white" />,
+      color: "success.main",
+      trend: "+12%",
+    },
+    {
+      title: "文件数量",
+      value: "2.4K",
+      icon: <FileText size={24} color="white" />,
+      color: "info.main",
+    },
   ];
   return (
     <Container maxWidth="xl" sx={{ py: 6 }}>
       <DashboardHeader />
       <Box sx={{ mt: 6 }}>
-        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
+        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
           数据概览
         </Typography>
         <Grid container spacing={3}>
-          {stats.map((stat, index) => (<Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard {...stat} />
-          </Grid>))}
+          {stats.map((stat, index) => (
+            <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
+              <StatCard {...stat} />
+            </Grid>
+          ))}
         </Grid>
       </Box>
       <Box sx={{ mt: 8 }}>
-        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
+        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
           业务分析
         </Typography>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
-              <Typography variant="h6" sx={{  mb: 3 , fontWeight: 600 }} >
+            <Paper
+              sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}
+            >
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                 模块使用量
               </Typography>
               <BarChartComponent data={homeBarData} xKey="name" yKey="value" />
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
-              <Typography variant="h6" sx={{  mb: 3 , fontWeight: 600 }} >
+            <Paper
+              sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}
+            >
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                 业务分布
               </Typography>
               <PieChartComponent data={homePieData} />
@@ -189,41 +228,55 @@ export const HybridDashboard: React.FC = () => {
         </Grid>
         <Grid container spacing={3} sx={{ mt: 3 }}>
           <Grid size={12}>
-            <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
-              <Typography variant="h6" sx={{  mb: 3 , fontWeight: 600 }} >
+            <Paper
+              sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}
+            >
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                 月度活跃趋势
               </Typography>
-              <LineChartComponent data={homeLineData} xKey="name" yKey="value" />
+              <LineChartComponent
+                data={homeLineData}
+                xKey="name"
+                yKey="value"
+              />
             </Paper>
           </Grid>
         </Grid>
       </Box>
       <Box sx={{ mt: 8 }}>
-        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
+        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
           服务监控
         </Typography>
         <ServiceStatusMonitor />
       </Box>
       <Box sx={{ mt: 8 }}>
-        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
+        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
           模块入口
         </Typography>
         <Grid container spacing={3}>
-          {moduleCards.map((card) => (<Grid key={card.path} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <ModuleCard item={card} onClick={() => {}} />
-          </Grid>))}
+          {moduleCards.map((card) => (
+            <Grid key={card.path} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <ModuleCard item={card} onClick={() => {}} />
+            </Grid>
+          ))}
         </Grid>
       </Box>
       <Box sx={{ mt: { xs: 4, sm: 6, lg: 8 } }}>
         <Grid container spacing={{ xs: 3, sm: 4, lg: 6 }}>
           <Grid size={{ xs: 12, md: 8, lg: 8 }}>
-            <Typography variant="h5" sx={{ mb: { xs: 2, sm: 3, lg: 4 }, fontWeight: 600 }}>
+            <Typography
+              variant="h5"
+              sx={{ mb: { xs: 2, sm: 3, lg: 4 }, fontWeight: 600 }}
+            >
               待办事项
             </Typography>
             <RecentActivities />
           </Grid>
           <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-            <Typography variant="h5" sx={{ mb: { xs: 2, sm: 3, lg: 4 }, fontWeight: 600 }}>
+            <Typography
+              variant="h5"
+              sx={{ mb: { xs: 2, sm: 3, lg: 4 }, fontWeight: 600 }}
+            >
               系统状态
             </Typography>
             <ModuleStatsCard />

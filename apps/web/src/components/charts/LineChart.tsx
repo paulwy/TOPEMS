@@ -1,5 +1,14 @@
 import React from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface LineChartProps {
   data: any[];
@@ -24,27 +33,31 @@ export const LineChartComponent: React.FC<LineChartProps> = ({
 
   return (
     <div>
-      {title && <h4 style={{ marginBottom: "16px", color: "#1e293b", fontWeight: 600 }}>{title}</h4>}
+      {title && (
+        <h4 style={{ marginBottom: "16px", color: "#1e293b", fontWeight: 600 }}>
+          {title}
+        </h4>
+      )}
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
           <XAxis dataKey={xKey} tick={{ fill: "#64748b", fontSize: 12 }} />
           <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: "white", 
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "white",
               border: "1px solid #e2e8f0",
               borderRadius: "8px",
               padding: "12px",
             }}
           />
           {series.map((item) => (
-            <Line 
+            <Line
               key={item.key}
-              type="monotone" 
-              dataKey={item.key} 
+              type="monotone"
+              dataKey={item.key}
               name={item.name}
-              stroke={item.color || color} 
+              stroke={item.color || color}
               strokeWidth={2}
               dot={{ r: 4, fill: item.color || color }}
               activeDot={{ r: 6, fill: item.color || color }}

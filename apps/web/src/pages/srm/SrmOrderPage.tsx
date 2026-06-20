@@ -19,6 +19,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { srmApi } from "@/api/srm";
 import type { PurchaseOrder } from "@/api/srm";
 import { toast } from "react-toastify";
+import { apiLogger } from "@/utils/logger";
 
 const SrmOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
@@ -67,7 +68,7 @@ const SrmOrderPage: React.FC = () => {
         setOrders([]);
       }
     } catch (err) {
-      console.error("加载订单数据失败:", err);
+      apiLogger.error("加载订单数据失败:", err);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -149,7 +150,7 @@ const SrmOrderPage: React.FC = () => {
       loadOrders();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建订单失败:", err);
+      apiLogger.error("创建订单失败:", err);
     }
   };
 
@@ -273,7 +274,11 @@ const SrmOrderPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" },
+            gridTemplateColumns: {
+              xs: "repeat(1, 1fr)",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(5, 1fr)",
+            },
             gap: 2,
             mb: 4,
           }}

@@ -23,6 +23,7 @@ import {
   type DictItem,
 } from "@/api/system";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 
 import {
   Box,
@@ -112,6 +113,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
 
   useEffect(() => {
     loadDictTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -156,7 +158,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
         setDictItems([]);
       }
     } catch (err: any) {
-      console.error("加载字典项失败:", err);
+      apiLogger.error("加载字典项失败:", err);
       setDictItems([]);
     } finally {
       setItemsLoading(false);

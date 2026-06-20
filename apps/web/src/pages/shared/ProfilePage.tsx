@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   User,
   Mail,
@@ -162,7 +163,7 @@ const ProfilePage: React.FC = () => {
         setActivities(res.data);
       }
     } catch (err) {
-      console.error("加载活动记录失败", err);
+      apiLogger.error("加载活动记录失败", err);
     } finally {
       setLoadingActivities(false);
     }
@@ -348,7 +349,7 @@ const ProfilePage: React.FC = () => {
           type: "success",
         });
       } catch (err) {
-        console.error("保存通知设置失败", err);
+        apiLogger.error("保存通知设置失败", err);
         addNotification({
           title: "错误",
           message: "保存通知设置失败",
@@ -356,6 +357,7 @@ const ProfilePage: React.FC = () => {
         });
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [notificationSettings, addNotification],
   );
 
@@ -385,7 +387,7 @@ const ProfilePage: React.FC = () => {
       setShortcuts(newShortcuts);
 
       authApi.updatePreferences({ shortcuts: newShortcuts }).catch((err) => {
-        console.error("保存快捷方式失败", err);
+        apiLogger.error("保存快捷方式失败", err);
       });
     },
     [shortcuts, setShortcuts, addNotification],

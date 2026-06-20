@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import { Link } from "react-router-dom";
 import {
   Plus,
@@ -198,7 +199,7 @@ const BIDataSourcePage = () => {
         },
       ]);
     } catch (error) {
-      console.error("Failed to load datasources:", error);
+      logger.error("Failed to load datasources:", error);
     } finally {
       setLoading(false);
     }
@@ -223,11 +224,11 @@ const BIDataSourcePage = () => {
   };
 
   const handleSync = (ds: DataSource) => {
-    console.log("Sync:", ds.id);
+    logger.info("Sync:", ds.id);
   };
 
   const handleTestConnection = (ds: DataSource) => {
-    console.log("Test connection:", ds.id);
+    logger.info("Test connection:", ds.id);
   };
 
   if (loading) {
@@ -357,7 +358,7 @@ const BIDataSourcePage = () => {
             description="还没有配置任何数据源，点击下方按钮添加第一个数据源"
             action={{
               label: "添加数据源",
-              onClick: () => console.log("Add datasource"),
+              onClick: () => logger.info("Add datasource"),
             }}
           />
         ) : (

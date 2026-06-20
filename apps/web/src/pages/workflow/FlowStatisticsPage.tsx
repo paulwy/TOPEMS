@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { flowApi } from "@/api/flow";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 
 interface Statistics {
   total_workflows: number;
@@ -71,6 +72,7 @@ const FlowStatisticsPage: React.FC = () => {
 
   useEffect(() => {
     loadStatistics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const loadStatistics = async () => {
@@ -88,7 +90,7 @@ const FlowStatisticsPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("加载统计数据失败:", err);
+      apiLogger.error("加载统计数据失败:", err);
       addNotification({
         title: "错误",
         message: "加载统计数据失败",

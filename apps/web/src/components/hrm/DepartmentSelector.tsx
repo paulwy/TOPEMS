@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Button, TextField, Paper } from "@mui/material";
 import { Building2, ChevronRight } from "lucide-react";
 import { type Department } from "@/api/hrm";
 import type { TreeNode } from "../TreeView";
@@ -56,25 +57,46 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
   }, [departments, employees]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Building2 className="w-5 h-5 text-emerald-600" />
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: "1.125rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <Building2 style={{ width: 20, height: 20, color: "#10b981" }} />
           部门树
-        </h3>
-        <div className="text-sm text-slate-500">
+        </Typography>
+        <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
           {departments.length} 个部门
-        </div>
-      </div>
+        </Typography>
+      </Box>
       {treeData.length === 0 ? (
-        <div className="p-8 text-center text-slate-500">
-          <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p>暂无部门数据</p>
-        </div>
+        <Box sx={{ p: 8, textAlign: "center", color: "#64748b" }}>
+          <Building2
+            style={{
+              width: 48,
+              height: 48,
+              color: "#9ca3af",
+              margin: "0 auto 12px",
+            }}
+          />
+          <Typography>暂无部门数据</Typography>
+        </Box>
       ) : (
         <TreeView data={treeData} onSelect={onSelect} selectedId={selectedId} />
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -92,24 +114,45 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({
   items,
 }) => {
   return (
-    <nav className="flex items-center gap-2 text-sm">
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        fontSize: "0.875rem",
+      }}
+    >
       {items.map((item, index) => (
-        <div key={index} className="flex items-center">
+        <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
           {index > 0 && (
-            <ChevronRight className="w-4 h-4 text-slate-400 mx-1" />
+            <ChevronRight
+              style={{
+                width: 16,
+                height: 16,
+                color: "#94a3b8",
+                margin: "0 4px",
+              }}
+            />
           )}
           {item.onClick ? (
-            <button
+            <Button
               onClick={item.onClick}
-              className="text-slate-500 hover:text-slate-700 transition-colors"
+              sx={{
+                fontSize: "0.875rem",
+                color: "#64748b",
+                transition: "color",
+                "&:hover": { color: "#334155" },
+              }}
             >
               {item.label}
-            </button>
+            </Button>
           ) : (
-            <span className="text-slate-900 font-medium">{item.label}</span>
+            <Typography sx={{ color: "#0f172a", fontWeight: 500 }}>
+              {item.label}
+            </Typography>
           )}
-        </div>
+        </Box>
       ))}
-    </nav>
+    </Box>
   );
 };

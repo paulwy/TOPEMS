@@ -4,6 +4,7 @@ import { OrbitControls, Sphere, Box, Line, Html } from "@react-three/drei";
 import type * as THREE from "three";
 import type { DevicePoint, Pipeline, StorageLocation } from "../../api/gis";
 import { X, RotateCcw, Maximize2 } from "lucide-react";
+import { Box as MuiBox, Typography, IconButton, Paper } from "@mui/material";
 
 interface Map3DViewProps {
   devicePoints: DevicePoint[];
@@ -78,8 +79,8 @@ function DeviceMarker({
             whiteSpace: "nowrap",
           }}
         >
-          <div className="font-medium">{name}</div>
-          <div className="text-xs opacity-75">{status}</div>
+          <div style={{ fontWeight: 500 }}>{name}</div>
+          <div style={{ fontSize: "0.75rem", opacity: 0.75 }}>{status}</div>
         </Html>
       )}
     </group>
@@ -127,8 +128,8 @@ function StorageMarker({
             whiteSpace: "nowrap",
           }}
         >
-          <div className="font-medium">{name}</div>
-          <div className="text-xs opacity-75">仓储位置</div>
+          <div style={{ fontWeight: 500 }}>{name}</div>
+          <div style={{ fontSize: "0.75rem", opacity: 0.75 }}>仓储位置</div>
         </Html>
       )}
     </group>
@@ -283,30 +284,63 @@ const Map3DView: React.FC<Map3DViewProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Maximize2 className="w-5 h-5" />
+    <MuiBox
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <MuiBox
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 4,
+          py: 3,
+          background: "linear-gradient(to right, #6366f1, #9333ea)",
+          color: "white",
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <Maximize2 size={20} />
           3D 视图
-        </h3>
-        <div className="flex items-center gap-2">
-          <button
+        </Typography>
+        <MuiBox sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton
             onClick={() => setRotation([0, 0, 0])}
-            className="p-1 hover:bg-white/20 rounded transition-colors"
+            sx={{
+              p: 1,
+              color: "white",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
             title="重置视角"
           >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-          <button
+            <RotateCcw size={16} />
+          </IconButton>
+          <IconButton
             onClick={onClose}
-            className="p-1 hover:bg-white/20 rounded transition-colors"
+            sx={{
+              p: 1,
+              color: "white",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+            <X size={20} />
+          </IconButton>
+        </MuiBox>
+      </MuiBox>
 
-      <div className="flex-1 relative">
+      <MuiBox sx={{ flex: 1, position: "relative" }}>
         <Canvas
           ref={canvasRef}
           camera={{ position: [0, 0, 2.5], fov: 60 }}
@@ -321,39 +355,91 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           />
         </Canvas>
 
-        <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur rounded-lg p-4 text-white">
-          <div className="text-xs space-y-2">
-            <div className="font-medium mb-2">3D 视图操作</div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span>设备点位</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-amber-500" />
-              <span>仓储位置</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-0.5 bg-indigo-500" />
-              <span>管线</span>
-            </div>
-            <div className="border-t border-white/20 pt-2 mt-2 text-gray-300">
-              <div>左键拖拽: 旋转视角</div>
-              <div>滚轮: 缩放</div>
-              <div>悬停: 查看详情</div>
-            </div>
-          </div>
-        </div>
+        <Paper
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            left: 16,
+            bgcolor: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(8px)",
+            borderRadius: 2,
+            p: 4,
+            color: "white",
+          }}
+        >
+          <MuiBox sx={{ fontSize: "0.75rem" }}>
+            <Typography sx={{ fontWeight: 500, mb: 2 }}>3D 视图操作</Typography>
+            <MuiBox
+              sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+            >
+              <MuiBox
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  bgcolor: "#22c55e",
+                }}
+              />
+              <Typography variant="caption">设备点位</Typography>
+            </MuiBox>
+            <MuiBox
+              sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+            >
+              <MuiBox
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 1,
+                  bgcolor: "#f59e0b",
+                }}
+              />
+              <Typography variant="caption">仓储位置</Typography>
+            </MuiBox>
+            <MuiBox sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <MuiBox sx={{ width: 24, height: 2, bgcolor: "#6366f1" }} />
+              <Typography variant="caption">管线</Typography>
+            </MuiBox>
+            <MuiBox
+              sx={{
+                borderTop: 1,
+                borderColor: "rgba(255,255,255,0.2)",
+                pt: 2,
+                mt: 2,
+                color: "#d1d5db",
+              }}
+            >
+              <Typography variant="caption">左键拖拽: 旋转视角</Typography>
+              <Typography variant="caption">滚轮: 缩放</Typography>
+              <Typography variant="caption">悬停: 查看详情</Typography>
+            </MuiBox>
+          </MuiBox>
+        </Paper>
 
-        <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur rounded-lg p-3 text-white">
-          <div className="text-xs">
-            <div className="font-medium mb-1">统计信息</div>
-            <div>设备: {devicePoints.length}</div>
-            <div>管线: {pipelines.length}</div>
-            <div>仓储: {storageLocations.length}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Paper
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            bgcolor: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(8px)",
+            borderRadius: 2,
+            p: 3,
+            color: "white",
+          }}
+        >
+          <MuiBox sx={{ fontSize: "0.75rem" }}>
+            <Typography sx={{ fontWeight: 500, mb: 1 }}>统计信息</Typography>
+            <Typography variant="caption">
+              设备: {devicePoints.length}
+            </Typography>
+            <Typography variant="caption">管线: {pipelines.length}</Typography>
+            <Typography variant="caption">
+              仓储: {storageLocations.length}
+            </Typography>
+          </MuiBox>
+        </Paper>
+      </MuiBox>
+    </MuiBox>
   );
 };
 

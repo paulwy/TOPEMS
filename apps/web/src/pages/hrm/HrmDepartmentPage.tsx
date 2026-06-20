@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Button,
   Card,
@@ -66,6 +67,7 @@ import {
   type RowAction,
 } from "@/components/mui";
 import { ImageUpload } from "@/components/common";
+import { logger } from "@/utils/logger";
 
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();
@@ -155,7 +157,7 @@ const HrmDepartmentPage: React.FC = () => {
         setEmployees([]);
       }
     } catch (error: any) {
-      console.error("Failed to fetch employees:", error);
+      apiLogger.error("Failed to fetch employees:", error);
       setEmployees([]);
     }
   }, []);
@@ -226,7 +228,7 @@ const HrmDepartmentPage: React.FC = () => {
         setCompanies(data.items || []);
       }
     } catch (error: any) {
-      console.error("Failed to fetch companies:", error);
+      apiLogger.error("Failed to fetch companies:", error);
     }
   }, []);
 

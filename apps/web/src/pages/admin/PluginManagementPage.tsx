@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Box,
   Typography,
@@ -128,7 +129,8 @@ export const PluginManagementPage: React.FC = () => {
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [marketplaceTab, setMarketplaceTab] = useState(0);
   const [marketplaceSearch, setMarketplaceSearch] = useState("");
-  const [installingPlugin, setInstallingPlugin] = useState<MarketplacePlugin | null>(null);
+  const [installingPlugin, setInstallingPlugin] =
+    useState<MarketplacePlugin | null>(null);
   const [installStep, setInstallStep] = useState(0);
   const [installLoading, setInstallLoading] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
@@ -163,8 +165,8 @@ export const PluginManagementPage: React.FC = () => {
           plugin_type: info.plugin_type,
           is_published: true,
           category: info.category,
-          runtime_status: 'running',
-          runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
+          runtime_status: "running",
+          runtime_url: PLUGIN_REGISTRY[info.code]?.url || "",
           base_path: `/api/${info.code}`,
         }));
 
@@ -197,7 +199,7 @@ export const PluginManagementPage: React.FC = () => {
         loadPlugins();
       }
     } catch (err) {
-      console.error("Failed to enable plugin:", err);
+      apiLogger.error("Failed to enable plugin:", err);
     } finally {
       setActionLoading(null);
     }
@@ -216,7 +218,7 @@ export const PluginManagementPage: React.FC = () => {
             loadPlugins();
           }
         } catch (err) {
-          console.error("Failed to disable plugin:", err);
+          apiLogger.error("Failed to disable plugin:", err);
         } finally {
           setActionLoading(null);
           setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -238,7 +240,7 @@ export const PluginManagementPage: React.FC = () => {
             loadPlugins();
           }
         } catch (err) {
-          console.error("Failed to uninstall plugin:", err);
+          apiLogger.error("Failed to uninstall plugin:", err);
         } finally {
           setActionLoading(null);
           setConfirmDialog((prev) => ({ ...prev, open: false }));
@@ -299,16 +301,39 @@ export const PluginManagementPage: React.FC = () => {
   const getStatusChip = (status: string | undefined) => {
     switch (status) {
       case "running":
-        return <Chip icon={<CheckCircle size={14} />} label="Running" color="success" size="small" />;
+        return (
+          <Chip
+            icon={<CheckCircle size={14} />}
+            label="Running"
+            color="success"
+            size="small"
+          />
+        );
       case "stopped":
-        return <Chip icon={<XCircle size={14} />} label="Stopped" color="error" size="small" />;
+        return (
+          <Chip
+            icon={<XCircle size={14} />}
+            label="Stopped"
+            color="error"
+            size="small"
+          />
+        );
       default:
-        return <Chip icon={<AlertCircle size={14} />} label="Unknown" color="warning" size="small" />;
+        return (
+          <Chip
+            icon={<AlertCircle size={14} />}
+            label="Unknown"
+            color="warning"
+            size="small"
+          />
+        );
     }
   };
 
   // Get all available plugins from registry
-  const allMarketplacePlugins: MarketplacePlugin[] = Object.entries(PLUGIN_REGISTRY).map(([code, config]) => ({
+  const allMarketplacePlugins: MarketplacePlugin[] = Object.entries(
+    PLUGIN_REGISTRY,
+  ).map(([code, config]) => ({
     code,
     name: PLUGIN_DISPLAY_NAMES[code] || code.toUpperCase(),
     version: "1.0.0",
@@ -335,7 +360,14 @@ export const PluginManagementPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 400,
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -343,22 +375,43 @@ export const PluginManagementPage: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Package size={24} />
-          <Typography variant="h5" component="h1">Plugin Management</Typography>
+          <Typography variant="h5" component="h1">
+            Plugin Management
+          </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button variant="outlined" startIcon={<Store size={18} />} onClick={handleOpenMarketplace}>
+          <Button
+            variant="outlined"
+            startIcon={<Store size={18} />}
+            onClick={handleOpenMarketplace}
+          >
             Browse Marketplace
           </Button>
-          <Button variant="outlined" startIcon={<RefreshCw size={18} />} onClick={loadPlugins}>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshCw size={18} />}
+            onClick={loadPlugins}
+          >
             Refresh
           </Button>
         </Stack>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       <Card>
         <TableContainer>
@@ -378,51 +431,100 @@ export const PluginManagementPage: React.FC = () => {
               {plugins.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
-                    <Typography color="text.secondary" sx={{ py: 4 }}>No plugins installed</Typography>
+                    <Typography color="text.secondary" sx={{ py: 4 }}>
+                      No plugins installed
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
                 plugins.map((plugin) => (
                   <TableRow key={plugin.code}>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Package size={18} />
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{plugin.name}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {plugin.name}
+                          </Typography>
                           {plugin.description && (
-                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                display: "block",
+                                maxWidth: 300,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
                               {plugin.description}
                             </Typography>
                           )}
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell><code style={{ fontSize: 12 }}>{plugin.code}</code></TableCell>
-                    <TableCell>{plugin.version}</TableCell>
-                    <TableCell><Chip label={plugin.plugin_type} size="small" variant="outlined" /></TableCell>
-                    <TableCell>{getStatusChip(plugin.runtime_status)}</TableCell>
                     <TableCell>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+                      <code style={{ fontSize: 12 }}>{plugin.code}</code>
+                    </TableCell>
+                    <TableCell>{plugin.version}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={plugin.plugin_type}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {getStatusChip(plugin.runtime_status)}
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontFamily: "monospace" }}
+                      >
                         {plugin.runtime_url || "-"}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ justifyContent: "flex-end" }}
+                      >
                         {plugin.runtime_status === "running" ? (
                           <Tooltip title="Disable">
-                            <IconButton size="small" color="warning" onClick={() => handleDisable(plugin.code)} disabled={actionLoading === plugin.code}>
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() => handleDisable(plugin.code)}
+                              disabled={actionLoading === plugin.code}
+                            >
                               <Square size={18} />
                             </IconButton>
                           </Tooltip>
                         ) : (
                           <Tooltip title="Enable">
-                            <IconButton size="small" color="success" onClick={() => handleEnable(plugin.code)} disabled={actionLoading === plugin.code}>
+                            <IconButton
+                              size="small"
+                              color="success"
+                              onClick={() => handleEnable(plugin.code)}
+                              disabled={actionLoading === plugin.code}
+                            >
                               <Play size={18} />
                             </IconButton>
                           </Tooltip>
                         )}
                         <Tooltip title="Uninstall">
-                          <IconButton size="small" color="error" onClick={() => handleUninstall(plugin.code)} disabled={actionLoading === plugin.code}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleUninstall(plugin.code)}
+                            disabled={actionLoading === plugin.code}
+                          >
                             <Trash2 size={18} />
                           </IconButton>
                         </Tooltip>
@@ -437,19 +539,39 @@ export const PluginManagementPage: React.FC = () => {
       </Card>
 
       {/* Confirm Dialog */}
-      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}>
+      <Dialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+      >
         <DialogTitle>{confirmDialog.title}</DialogTitle>
         <DialogContent>
           <Typography>{confirmDialog.message}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}>Cancel</Button>
-          <Button onClick={confirmDialog.action} variant="contained" color="error">Confirm</Button>
+          <Button
+            onClick={() =>
+              setConfirmDialog((prev) => ({ ...prev, open: false }))
+            }
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDialog.action}
+            variant="contained"
+            color="error"
+          >
+            Confirm
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Marketplace Dialog */}
-      <Dialog open={marketplaceOpen} onClose={handleCloseMarketplace} maxWidth="md" fullWidth>
+      <Dialog
+        open={marketplaceOpen}
+        onClose={handleCloseMarketplace}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Store size={24} />
@@ -460,38 +582,64 @@ export const PluginManagementPage: React.FC = () => {
           {installingPlugin ? (
             <Box>
               <Stepper activeStep={installStep} sx={{ mb: 3 }}>
-                <Step><StepLabel>Confirm</StepLabel></Step>
-                <Step><StepLabel>Install</StepLabel></Step>
-                <Step><StepLabel>Complete</StepLabel></Step>
+                <Step>
+                  <StepLabel>Confirm</StepLabel>
+                </Step>
+                <Step>
+                  <StepLabel>Install</StepLabel>
+                </Step>
+                <Step>
+                  <StepLabel>Complete</StepLabel>
+                </Step>
               </Stepper>
 
               {installStep === 0 && (
                 <Box>
-                  <Typography variant="h6" gutterBottom>Confirm Installation</Typography>
+                  <Typography variant="h6" gutterBottom>
+                    Confirm Installation
+                  </Typography>
                   <Typography variant="body1" sx={{ mb: 2 }}>
                     You are about to install the following plugin:
                   </Typography>
                   <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{installingPlugin.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">{installingPlugin.description}</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {installingPlugin.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {installingPlugin.description}
+                    </Typography>
                     <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
                         <GitBranch size={14} />
-                        <Typography variant="caption">Version: {installingPlugin.latest_version}</Typography>
+                        <Typography variant="caption">
+                          Version: {installingPlugin.latest_version}
+                        </Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
                         <Download size={14} />
-                        <Typography variant="caption">Downloads: {installingPlugin.downloads}</Typography>
+                        <Typography variant="caption">
+                          Downloads: {installingPlugin.downloads}
+                        </Typography>
                       </Box>
                     </Stack>
                   </Card>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                  >
                     This plugin will request the following permissions:
                   </Typography>
                   <List dense>
                     {installingPlugin.permissions.map((perm) => (
                       <ListItem key={perm.code} disableGutters>
-                        <ListItemIcon sx={{ minWidth: 32 }}><Shield size={14} /></ListItemIcon>
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                          <Shield size={14} />
+                        </ListItemIcon>
                         <ListItemText
                           primary={perm.name}
                           secondary={perm.code}
@@ -507,32 +655,56 @@ export const PluginManagementPage: React.FC = () => {
                   {installLoading ? (
                     <>
                       <CircularProgress size={48} sx={{ mb: 2 }} />
-                      <Typography>Installing {installingPlugin?.name}...</Typography>
+                      <Typography>
+                        Installing {installingPlugin?.name}...
+                      </Typography>
                     </>
                   ) : installError ? (
-                    <Alert severity="error" sx={{ mb: 2 }}>{installError}</Alert>
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {installError}
+                    </Alert>
                   ) : null}
                 </Box>
               )}
 
               {installStep === 2 && (
                 <Box sx={{ textAlign: "center", py: 4 }}>
-                  <CheckCircle size={64} color="green" style={{ marginBottom: 16 }} />
-                  <Typography variant="h6" gutterBottom>Installation Complete!</Typography>
-                  <Typography color="text.secondary">{installingPlugin?.name} has been installed successfully.</Typography>
+                  <CheckCircle
+                    size={64}
+                    color="green"
+                    style={{ marginBottom: 16 }}
+                  />
+                  <Typography variant="h6" gutterBottom>
+                    Installation Complete!
+                  </Typography>
+                  <Typography color="text.secondary">
+                    {installingPlugin?.name} has been installed successfully.
+                  </Typography>
                 </Box>
               )}
 
-              <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end', mt: 3 }}>
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{ justifyContent: "flex-end", mt: 3 }}
+              >
                 {installStep > 0 && installStep < 2 && (
-                  <Button onClick={handleInstallBack} disabled={installLoading}>Back</Button>
+                  <Button onClick={handleInstallBack} disabled={installLoading}>
+                    Back
+                  </Button>
                 )}
                 {installStep < 2 ? (
-                  <Button variant="contained" onClick={handleInstallNext} disabled={installLoading}>
+                  <Button
+                    variant="contained"
+                    onClick={handleInstallNext}
+                    disabled={installLoading}
+                  >
                     {installStep === 0 ? "Next" : "Install"}
                   </Button>
                 ) : (
-                  <Button variant="contained" onClick={handleInstallNext}>Done</Button>
+                  <Button variant="contained" onClick={handleInstallNext}>
+                    Done
+                  </Button>
                 )}
               </Stack>
             </Box>
@@ -554,7 +726,11 @@ export const PluginManagementPage: React.FC = () => {
                   },
                 }}
               />
-              <Tabs value={marketplaceTab} onChange={(_, v) => setMarketplaceTab(v)} sx={{ mb: 2 }}>
+              <Tabs
+                value={marketplaceTab}
+                onChange={(_, v) => setMarketplaceTab(v)}
+                sx={{ mb: 2 }}
+              >
                 <Tab label="All Plugins" />
                 <Tab label="Business" />
                 <Tab label="Analytics" />
@@ -573,36 +749,87 @@ export const PluginManagementPage: React.FC = () => {
                     return (
                       <ListItem
                         key={plugin.code}
-                        sx={{ border: 1, borderColor: "divider", borderRadius: 1, mb: 1 }}
+                        sx={{
+                          border: 1,
+                          borderColor: "divider",
+                          borderRadius: 1,
+                          mb: 1,
+                        }}
                         secondaryAction={
                           isInstalled ? (
-                            <Chip label="Installed" color="success" size="small" />
+                            <Chip
+                              label="Installed"
+                              color="success"
+                              size="small"
+                            />
                           ) : (
-                            <Button variant="outlined" size="small" startIcon={<Download size={14} />} onClick={() => handleInstallPlugin(plugin)}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<Download size={14} />}
+                              onClick={() => handleInstallPlugin(plugin)}
+                            >
                               Install
                             </Button>
                           )
                         }
                       >
-                        <ListItemIcon><Package size={24} /></ListItemIcon>
+                        <ListItemIcon>
+                          <Package size={24} />
+                        </ListItemIcon>
                         <ListItemText
                           primary={
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
                               {plugin.name}
-                              <Chip label={`v${plugin.latest_version}`} size="small" variant="outlined" />
+                              <Chip
+                                label={`v${plugin.latest_version}`}
+                                size="small"
+                                variant="outlined"
+                              />
                             </Box>
                           }
                           secondary={
                             <Box>
-                              <Typography variant="caption" color="text.secondary">{plugin.description}</Typography>
-                              <Stack direction="row" spacing={2} sx={{ mt: 0.5 }}>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {plugin.description}
+                              </Typography>
+                              <Stack
+                                direction="row"
+                                spacing={2}
+                                sx={{ mt: 0.5 }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                  }}
+                                >
                                   <Download size={12} />
-                                  <Typography variant="caption">{plugin.downloads}</Typography>
+                                  <Typography variant="caption">
+                                    {plugin.downloads}
+                                  </Typography>
                                 </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                  }}
+                                >
                                   <Calendar size={12} />
-                                  <Typography variant="caption">{plugin.published_at}</Typography>
+                                  <Typography variant="caption">
+                                    {plugin.published_at}
+                                  </Typography>
                                 </Box>
                               </Stack>
                             </Box>

@@ -1,7 +1,9 @@
 import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
-const NotificationCenter = lazy(() => import("../pages/notification/NotificationCenter"));
+const NotificationCenter = lazy(
+  () => import("../pages/notification/NotificationCenter"),
+);
 const NotificationTemplatesPage = lazy(
   () => import("../pages/notification/NotificationTemplatesPage"),
 );

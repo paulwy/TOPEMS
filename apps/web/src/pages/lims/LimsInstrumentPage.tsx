@@ -52,6 +52,7 @@ import { limsApi } from "@/api/lims";
 import { MetricCard } from "@/components/MetricCard";
 import { StatsChart } from "@/components/StatsChart";
 import { PageHeader } from "@/components/templates/PageHeader";
+import { apiLogger } from "@/utils/logger";
 
 const LimsInstrumentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -165,6 +166,7 @@ const LimsInstrumentPage: React.FC = () => {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceStatuses.lims]);
 
   const loadStatistics = async () => {
@@ -174,7 +176,7 @@ const LimsInstrumentPage: React.FC = () => {
         setStats(response.data);
       }
     } catch (err) {
-      console.error("加载统计数据失败:", err);
+      apiLogger.error("加载统计数据失败:", err);
     }
   };
 
@@ -208,7 +210,7 @@ const LimsInstrumentPage: React.FC = () => {
         setInstruments([]);
       }
     } catch (err) {
-      console.error("加载仪器失败:", err);
+      apiLogger.error("加载仪器失败:", err);
       setInstruments([]);
     }
   };
@@ -253,7 +255,7 @@ const LimsInstrumentPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.error("加载维护记录失败:", err);
+      apiLogger.error("加载维护记录失败:", err);
       setInstrumentMaintenanceRecords([]);
     }
   };
@@ -459,7 +461,7 @@ const LimsInstrumentPage: React.FC = () => {
           >
             <ClipboardList size={32} color="#0891b2" />
           </Avatar>
-          <Typography variant="h5"  sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}>
+          <Typography variant="h5" sx={{ ...{ mb: 2 }, fontWeight: "bold" }}>
             实验室管理服务未启动
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
@@ -626,7 +628,7 @@ const LimsInstrumentPage: React.FC = () => {
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid size={6}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                       {safeInstruments.length}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -636,7 +638,7 @@ const LimsInstrumentPage: React.FC = () => {
                   <Grid size={6}>
                     <Typography
                       variant="h4"
-                      sx={{ fontWeight: 'bold' }}
+                      sx={{ fontWeight: "bold" }}
                       color="success.main"
                     >
                       {
@@ -651,8 +653,7 @@ const LimsInstrumentPage: React.FC = () => {
                   <Grid size={6}>
                     <Typography
                       variant="h4"
-                      
-                      sx={{ ...{ color: "#ea580c" }, fontWeight: 'bold' }}
+                      sx={{ ...{ color: "#ea580c" }, fontWeight: "bold" }}
                     >
                       {
                         safeInstruments.filter((i) => i.status === "校准中")
@@ -666,7 +667,7 @@ const LimsInstrumentPage: React.FC = () => {
                   <Grid size={6}>
                     <Typography
                       variant="h4"
-                      sx={{ fontWeight: 'bold' }}
+                      sx={{ fontWeight: "bold" }}
                       color="error.main"
                     >
                       {
@@ -703,7 +704,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       仪器总数
                     </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                       {safeInstruments.length}
                     </Typography>
                   </Box>
@@ -744,7 +745,7 @@ const LimsInstrumentPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant="h4"
-                      sx={{ fontWeight: 'bold' }}
+                      sx={{ fontWeight: "bold" }}
                       color="success.main"
                     >
                       {
@@ -790,8 +791,7 @@ const LimsInstrumentPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant="h4"
-                      
-                      sx={{ ...{ color: "#ea580c" }, fontWeight: 'bold' }}
+                      sx={{ ...{ color: "#ea580c" }, fontWeight: "bold" }}
                     >
                       {
                         safeInstruments.filter((i) => i.status === "维修中")
@@ -820,7 +820,7 @@ const LimsInstrumentPage: React.FC = () => {
 
         <Paper sx={{ borderRadius: 2 }} variant="outlined">
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
               仪器设备
             </Typography>
           </Box>
@@ -889,7 +889,10 @@ const LimsInstrumentPage: React.FC = () => {
                               flexWrap: "wrap",
                             }}
                           >
-                            <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: "semibold" }}
+                            >
                               {instrument.name}
                             </Typography>
                             <Chip
@@ -921,7 +924,7 @@ const LimsInstrumentPage: React.FC = () => {
                             direction="row"
                             spacing={2}
                             useFlexGap
-                            sx={{ fontSize: 14, flexWrap: 'wrap' }}
+                            sx={{ fontSize: 14, flexWrap: "wrap" }}
                             color="text.secondary"
                           >
                             <span>
@@ -1025,7 +1028,7 @@ const LimsInstrumentPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
             {isEditingInstrument ? "编辑仪器" : "添加仪器"}
           </Typography>
           <IconButton
@@ -1307,7 +1310,7 @@ const LimsInstrumentPage: React.FC = () => {
                   mb: 3,
                 }}
               >
-                <Typography variant="h5" sx={{ fontWeight: 'semibold' }}>
+                <Typography variant="h5" sx={{ fontWeight: "semibold" }}>
                   仪器详情
                 </Typography>
                 <IconButton onClick={() => setShowInstrumentDetailModal(false)}>
@@ -1325,7 +1328,7 @@ const LimsInstrumentPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+                    <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
                       {selectedInstrument.name}
                     </Typography>
                     <Chip
@@ -1377,7 +1380,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       制造商
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedInstrument.manufacturer || "-"}
                     </Typography>
                   </Grid>
@@ -1389,7 +1392,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       型号
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedInstrument.model || "-"}
                     </Typography>
                   </Grid>
@@ -1402,8 +1405,10 @@ const LimsInstrumentPage: React.FC = () => {
                       序列号
                     </Typography>
                     <Typography
-                      
-                      sx={{ ...{ fontFamily: "monospace" }, fontWeight: 'medium' }}
+                      sx={{
+                        ...{ fontFamily: "monospace" },
+                        fontWeight: "medium",
+                      }}
                     >
                       {selectedInstrument.serial_number || "-"}
                     </Typography>
@@ -1416,7 +1421,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       存放位置
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedInstrument.location || "-"}
                     </Typography>
                   </Grid>
@@ -1428,7 +1433,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       负责人
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedInstrument.responsible_person || "-"}
                     </Typography>
                   </Grid>
@@ -1440,7 +1445,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       购买日期
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedInstrument.purchase_date
                         ? new Date(
                             selectedInstrument.purchase_date,
@@ -1456,7 +1461,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       上次校准
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedInstrument.calibration_date
                         ? new Date(
                             selectedInstrument.calibration_date,
@@ -1473,12 +1478,14 @@ const LimsInstrumentPage: React.FC = () => {
                       下次校准
                     </Typography>
                     <Typography
-                      
-                      sx={{ ...{
-                        color: selectedInstrument.next_calibration_date
-                          ? "#ea580c"
-                          : "text.primary",
-                      }, fontWeight: 'medium' }}
+                      sx={{
+                        ...{
+                          color: selectedInstrument.next_calibration_date
+                            ? "#ea580c"
+                            : "text.primary",
+                        },
+                        fontWeight: "medium",
+                      }}
                     >
                       {selectedInstrument.next_calibration_date
                         ? new Date(
@@ -1495,7 +1502,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       创建时间
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {new Date(selectedInstrument.created_at).toLocaleString(
                         "zh-CN",
                       )}
@@ -1509,7 +1516,7 @@ const LimsInstrumentPage: React.FC = () => {
                     >
                       更新时间
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {new Date(selectedInstrument.updated_at).toLocaleString(
                         "zh-CN",
                       )}
@@ -1518,7 +1525,7 @@ const LimsInstrumentPage: React.FC = () => {
                 </Grid>
 
                 <Box>
-                  <Typography  sx={{ ...{ mb: 1.5 }, fontWeight: 'semibold' }}>
+                  <Typography sx={{ ...{ mb: 1.5 }, fontWeight: "semibold" }}>
                     维护记录
                   </Typography>
                   {instrumentMaintenanceRecords.length === 0 ? (
@@ -1545,8 +1552,10 @@ const LimsInstrumentPage: React.FC = () => {
                             }}
                           >
                             <Typography
-                              
-                              sx={{ ...{ color: "#0f766e" }, fontWeight: 'medium' }}
+                              sx={{
+                                ...{ color: "#0f766e" },
+                                fontWeight: "medium",
+                              }}
                             >
                               {record.maintenance_type}
                             </Typography>
@@ -1633,7 +1642,7 @@ const LimsInstrumentPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
             添加维护记录
           </Typography>
           <IconButton
@@ -1654,7 +1663,9 @@ const LimsInstrumentPage: React.FC = () => {
                 >
                   仪器名称
                 </Typography>
-                <Typography sx={{ ...{ color: "#0f766e" }, fontWeight: 'medium' }} >
+                <Typography
+                  sx={{ ...{ color: "#0f766e" }, fontWeight: "medium" }}
+                >
                   {selectedInstrument.name}
                 </Typography>
               </Box>

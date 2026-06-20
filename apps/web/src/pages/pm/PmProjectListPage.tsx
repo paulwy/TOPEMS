@@ -37,6 +37,7 @@ import {
 import type { Project } from "@/api/pm";
 import { pmApi } from "@/api/pm";
 import { DataExport } from "@/components/common";
+import { apiLogger } from "@/utils/logger";
 
 const PROJECT_TYPES = [
   { value: "__ALL__", label: "全部类型" },
@@ -72,6 +73,7 @@ const PmProjectListPage: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
     loadProjects(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType, selectedStatus]);
 
   const loadProjects = async (page: number) => {
@@ -89,7 +91,7 @@ const PmProjectListPage: React.FC = () => {
         setTotalCount(response.data.total_count || 0);
       }
     } catch (error) {
-      console.error("Failed to load projects:", error);
+      apiLogger.error("Failed to load projects:", error);
     } finally {
       setLoading(false);
     }
@@ -108,7 +110,7 @@ const PmProjectListPage: React.FC = () => {
         loadProjects(currentPage);
       }
     } catch (error) {
-      console.error("Failed to delete project:", error);
+      apiLogger.error("Failed to delete project:", error);
     }
   };
 

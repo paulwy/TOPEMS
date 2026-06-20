@@ -1,4 +1,5 @@
 import React from "react";
+import { Box, Typography, IconButton, Button } from "@mui/material";
 import { Clock, LogOut, Zap } from "lucide-react";
 import { NotificationBell } from "../notifications";
 import { ModeToggle } from "../ModeToggle";
@@ -24,61 +25,159 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   }, []);
 
   return (
-    <header className="bg-[#1e293b]/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+    <Box
+      component="header"
+      sx={{
+        backgroundColor: "rgba(30, 41, 59, 0.8)",
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+      }}
+    >
+      <Box
+        sx={{
+          maxWidth: 1280,
+          mx: "auto",
+          px: { xs: 2, sm: 3, lg: 4 },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            height: 64,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: 3,
+                }}
+              >
+                <Zap style={{ width: 20, height: 20, color: "white" }} />
+              </Box>
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                    background:
+                      "linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%)",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
                   TOPEMS
-                </h1>
-                <span className="text-xs text-slate-400 hidden md:inline">
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "#94a3b8",
+                    display: { xs: "none", md: "inline" },
+                  }}
+                >
                   化工新材料数字化平台
-                </span>
-              </div>
-            </div>
-          </div>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
 
-          <div className="flex items-center space-x-3">
-            <div className="hidden md:flex items-center space-x-2 text-sm text-slate-400">
-              <Clock className="w-4 h-4" />
-              <span>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Box
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                gap: 2,
+                fontSize: "0.875rem",
+                color: "#94a3b8",
+              }}
+            >
+              <Clock style={{ width: 16, height: 16 }} />
+              <Typography
+                component="span"
+                sx={{ fontSize: "0.875rem", color: "#94a3b8" }}
+              >
                 {currentTime.toLocaleTimeString("zh-CN", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
-              </span>
-            </div>
+              </Typography>
+            </Box>
 
             <NotificationBell />
             <ModeToggle />
 
-            <div className="flex items-center space-x-3 pl-4 border-l border-white/10">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
+                pl: 4,
+                borderLeft: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                  boxShadow: 3,
+                }}
+              >
                 {user?.username?.charAt(0).toUpperCase() || "U"}
-              </div>
-              <div className="hidden md:block">
-                <div className="text-sm font-medium text-white">
+              </Box>
+              <Box sx={{ display: { xs: "none", md: "block" } }}>
+                <Typography
+                  sx={{ fontSize: "0.875rem", fontWeight: 500, color: "white" }}
+                >
                   {user?.full_name || user?.username}
-                </div>
-                <div className="text-xs text-slate-400">{getRoleName()}</div>
-              </div>
-            </div>
+                </Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                  {getRoleName()}
+                </Typography>
+              </Box>
+            </Box>
 
-            <button
+            <IconButton
               onClick={onLogout}
-              className="p-2.5 hover:bg-white/10 rounded-lg transition-all text-slate-300 hover:text-red-400 hover:bg-red-500/10"
+              sx={{
+                p: 2.5,
+                borderRadius: 2,
+                color: "#cbd5e1",
+                transition: "all",
+                "&:hover": {
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  color: "#f87171",
+                },
+              }}
               title="退出登录"
             >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
+              <LogOut style={{ width: 20, height: 20 }} />
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };

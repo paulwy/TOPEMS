@@ -33,6 +33,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Plus, Edit } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 
 const ProductionProcessPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);
@@ -56,6 +57,7 @@ const ProductionProcessPage: React.FC = () => {
 
   useEffect(() => {
     loadProcesses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadProcesses = async () => {
@@ -70,7 +72,7 @@ const ProductionProcessPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载工序列表失败:", error);
+      apiLogger.error("加载工序列表失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -106,7 +108,7 @@ const ProductionProcessPage: React.FC = () => {
       resetForm();
       loadProcesses();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",

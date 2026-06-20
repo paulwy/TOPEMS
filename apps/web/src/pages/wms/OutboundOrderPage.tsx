@@ -28,6 +28,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Plus } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 
 const OutboundOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<OutboundOrder[]>([]);
@@ -50,6 +51,7 @@ const OutboundOrderPage: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadOrders = async () => {
@@ -64,7 +66,7 @@ const OutboundOrderPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载出库订单失败:", error);
+      apiLogger.error("加载出库订单失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -96,7 +98,7 @@ const OutboundOrderPage: React.FC = () => {
       });
       loadOrders();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",

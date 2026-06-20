@@ -151,9 +151,7 @@ export const fileApi = {
   },
 
   async getPermissions(id: string): Promise<ApiResponse<FilePermission[]>> {
-    return apiClient.file.get<FilePermission[]>(
-      `/api/files/${id}/permissions`,
-    );
+    return apiClient.file.get<FilePermission[]>(`/api/files/${id}/permissions`);
   },
 
   async revokePermission(

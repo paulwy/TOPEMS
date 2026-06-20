@@ -1,3 +1,6 @@
+import React from "react";
+import { Box, Typography } from "@mui/material";
+
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
@@ -19,13 +22,33 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl shadow-xl px-4 py-3 min-w-[140px]">
+    <Box
+      sx={{
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(4px)",
+        border: "1px solid #e2e8f0",
+        borderRadius: 3,
+        boxShadow: 10,
+        px: 4,
+        py: 3,
+        minWidth: 140,
+      }}
+    >
       {label && (
-        <p className="text-xs font-medium text-slate-500 mb-2 pb-2 border-b border-slate-100">
+        <Typography
+          sx={{
+            fontSize: "0.75rem",
+            fontWeight: 500,
+            color: "#64748b",
+            mb: 2,
+            pb: 2,
+            borderBottom: "1px solid #f1f5f9",
+          }}
+        >
           {label}
-        </p>
+        </Typography>
       )}
-      <div className="space-y-1.5">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         {payload.map((entry, index) => {
           const [displayValue, displayName] = formatter
             ? formatter(entry.value, entry.name)
@@ -37,25 +60,38 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
               ];
 
           return (
-            <div
+            <Box
               key={index}
-              className="flex items-center justify-between gap-4"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 4,
+              }}
             >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: entry.color }}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    backgroundColor: entry.color,
+                  }}
                 />
-                <span className="text-sm text-slate-600">{displayName}</span>
-              </div>
-              <span className="text-sm font-semibold text-slate-900">
+                <Typography sx={{ fontSize: "0.875rem", color: "#475569" }}>
+                  {displayName}
+                </Typography>
+              </Box>
+              <Typography
+                sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a" }}
+              >
                 {displayValue}
-              </span>
-            </div>
+              </Typography>
+            </Box>
           );
         })}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

@@ -18,6 +18,7 @@ import {
 } from "@/api/notification";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
+import { apiLogger } from "@/utils/logger";
 
 const NotificationDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const NotificationDetailPage: React.FC = () => {
 
   useEffect(() => {
     loadNotification();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadNotification = async () => {
@@ -48,7 +50,7 @@ const NotificationDetailPage: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error("Error loading notification:", err);
+      apiLogger.error("Error loading notification:", err);
     } finally {
       setLoading(false);
     }

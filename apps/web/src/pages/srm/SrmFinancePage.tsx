@@ -32,6 +32,7 @@ import {
   CreatePurchaseOrderRequest,
   CreateSupplierContractRequest,
 } from "@/api/srm";
+import { apiLogger } from "@/utils/logger";
 
 interface FinanceRecord {
   id: string;
@@ -131,7 +132,7 @@ const SrmFinancePage: React.FC = () => {
 
       setRecords([...paymentRecords, ...invoiceRecords]);
     } catch (err) {
-      console.error("加载财务数据失败:", err);
+      apiLogger.error("加载财务数据失败:", err);
       setRecords([]);
     } finally {
       setLoading(false);
@@ -266,7 +267,7 @@ const SrmFinancePage: React.FC = () => {
       loadRecords();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建财务记录失败:", err);
+      apiLogger.error("创建财务记录失败:", err);
     }
   };
 
@@ -431,7 +432,12 @@ const SrmFinancePage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" },
+            gridTemplateColumns: {
+              xs: "repeat(1, 1fr)",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+              xl: "repeat(6, 1fr)",
+            },
             gap: 2,
             mb: 4,
           }}

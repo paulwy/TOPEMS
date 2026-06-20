@@ -25,7 +25,9 @@ const CRMSalesForecastPage = lazy(
   () => import("../pages/crm/CRMSalesForecastPage"),
 );
 const CRMBillingPage = lazy(() => import("../pages/crm/CRMBillingPage"));
-const CustomerDetailPage = lazy(() => import("../pages/crm/CustomerDetailPage"));
+const CustomerDetailPage = lazy(
+  () => import("../pages/crm/CustomerDetailPage"),
+);
 
 export const crmRoutes: RouteConfig[] = [
   {

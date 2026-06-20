@@ -1,14 +1,14 @@
-import { Box, Typography, CircularProgress } from '@mui/material';
+import { Box, Typography, CircularProgress } from "@mui/material";
 
 export default function ComingSoon() {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
         gap: 2,
       }}
     >

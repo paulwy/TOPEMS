@@ -1,4 +1,13 @@
-import { Button, Card, CardContent, Select, MenuItem, FormLabel, Typography, Box } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  Select,
+  MenuItem,
+  FormLabel,
+  Typography,
+  Box,
+} from "@mui/material";
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check, Quote } from "lucide-react";
 
@@ -51,6 +60,7 @@ export function AISummarizer({
       setCopied(false);
       handleSummarize();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleSummarize = async () => {

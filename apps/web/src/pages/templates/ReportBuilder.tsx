@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   FileText,
   Calendar,
@@ -25,6 +25,7 @@ import type {
   ExportFormat,
   CreateReportRequest,
 } from "@/api/report";
+import { logger } from "@/utils/logger";
 
 interface ReportBuilderProps {
   onClose: () => void;
@@ -228,10 +229,10 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
         },
       };
 
-      console.log("生成报表:", request);
+      logger.info("生成报表:", request);
       onSuccess();
     } catch (err) {
-      console.error("生成报表失败:", err);
+      logger.error("生成报表失败:", err);
       setErrors({ submit: "生成报表失败，请重试" });
     } finally {
       setSubmitting(false);
@@ -425,7 +426,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                },
                 gap: 2,
               }}
             >
@@ -602,7 +607,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+                  gridTemplateColumns: {
+                    xs: "repeat(1, 1fr)",
+                    sm: "repeat(2, 1fr)",
+                    md: "repeat(3, 1fr)",
+                  },
                   gap: 2,
                 }}
               >

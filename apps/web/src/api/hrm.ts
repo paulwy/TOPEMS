@@ -447,8 +447,9 @@ export const roleApi: CrudOperations<Role> =
 export const positionApi: CrudOperations<Position> =
   createCrudApi<Position>("/api/hrm/positions");
 
-export const candidateApi: CrudOperations<Candidate> =
-  createCrudApi<Candidate>("/api/hrm/candidates");
+export const candidateApi: CrudOperations<Candidate> = createCrudApi<Candidate>(
+  "/api/hrm/candidates",
+);
 
 export const leaveApi = {
   ...createCrudApi<LeaveRequest>("/api/hrm/leaves"),

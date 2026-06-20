@@ -62,6 +62,7 @@ import type { BreadcrumbItem } from "./PageHeader";
 import { PageHeader } from "./PageHeader";
 import FileUpload from "../common/FileUpload";
 import ImageUpload from "../common/ImageUpload";
+import { logger } from "@/utils/logger";
 
 // ============ 类型定义 ============
 
@@ -169,11 +170,24 @@ export interface FieldDependency {
   /** 目标字段名称 */
   targetField: string;
   /** 联动类型 */
-  type: "visibility" | "options" | "value" | "required" | "disabled" | "editable";
+  type:
+    | "visibility"
+    | "options"
+    | "value"
+    | "required"
+    | "disabled"
+    | "editable";
   /** 触发条件 */
   condition: {
     /** 条件类型 */
-    type: "equals" | "notEquals" | "contains" | "notEmpty" | "empty" | "greaterThan" | "lessThan";
+    type:
+      | "equals"
+      | "notEquals"
+      | "contains"
+      | "notEmpty"
+      | "empty"
+      | "greaterThan"
+      | "lessThan";
     /** 条件值 */
     value?: any;
   };
@@ -182,7 +196,9 @@ export interface FieldDependency {
     /** 可见性（用于visibility类型） */
     visible?: boolean;
     /** 更新选项（用于options类型） */
-    options?: Array<{ label: string; value: any }> | ((value: any) => Array<{ label: string; value: any }>);
+    options?:
+      | Array<{ label: string; value: any }>
+      | ((value: any) => Array<{ label: string; value: any }>);
     /** 设置值（用于value类型） */
     value?: any | ((value: any) => any);
     /** 是否必填（用于required类型） */
@@ -310,7 +326,9 @@ export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
 /**
  * 从localStorage读取草稿
  */
-const loadDrafts = (key: string): Array<{ data: Record<string, any>; timestamp: number }> => {
+const loadDrafts = (
+  key: string,
+): Array<{ data: Record<string, any>; timestamp: number }> => {
   try {
     const stored = localStorage.getItem(`form:draft:${key}`);
     if (stored) {
@@ -325,7 +343,11 @@ const loadDrafts = (key: string): Array<{ data: Record<string, any>; timestamp: 
 /**
  * 保存草稿到localStorage
  */
-const saveDraft = (key: string, data: Record<string, any>, maxDrafts: number = 5): void => {
+const saveDraft = (
+  key: string,
+  data: Record<string, any>,
+  maxDrafts: number = 5,
+): void => {
   try {
     const drafts = loadDrafts(key);
     drafts.unshift({ data, timestamp: Date.now() });
@@ -506,7 +528,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   const [showHint, setShowHint] = useState(false);
 
   // 草稿状态
-  const [drafts, setDrafts] = useState<Array<{ data: Record<string, any>; timestamp: number }>>([]);
+  const [drafts, setDrafts] = useState<
+    Array<{ data: Record<string, any>; timestamp: number }>
+  >([]);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
 
   // 当前分组标签
@@ -535,24 +559,28 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   // 计算表单进度
   const formProgress = useMemo(() => {
     if (!showProgress) return 0;
-    
-    const allFields = sections.flatMap(s => s.fields);
-    const requiredFields = allFields.filter(f => f.required || dynamicRequired[f.name]);
+
+    const allFields = sections.flatMap((s) => s.fields);
+    const requiredFields = allFields.filter(
+      (f) => f.required || dynamicRequired[f.name],
+    );
     if (requiredFields.length === 0) return 100;
-    
-    const filledRequiredFields = requiredFields.filter(f => {
+
+    const filledRequiredFields = requiredFields.filter((f) => {
       const value = formValues[f.name];
       return value !== undefined && value !== null && value !== "";
     });
-    
-    return Math.round((filledRequiredFields.length / requiredFields.length) * 100);
+
+    return Math.round(
+      (filledRequiredFields.length / requiredFields.length) * 100,
+    );
   }, [sections, formValues, dynamicRequired, showProgress]);
 
   // 获取所有分组
   const groups = useMemo(() => {
     const groupSet = new Set<string>();
-    sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach((section) => {
+      section.fields.forEach((field) => {
         if (field.group) {
           groupSet.add(field.group);
         }
@@ -566,7 +594,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     if (draftConfig?.enabled && draftConfig.storageKey) {
       const savedDrafts = loadDrafts(draftConfig.storageKey);
       setDrafts(savedDrafts);
-      
+
       // 如果有草稿且表单为空，自动加载最新草稿
       if (savedDrafts.length > 0 && !defaultValues) {
         const latestDraft = savedDrafts[0];
@@ -577,20 +605,24 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
   // 自动保存草稿
   useEffect(() => {
-    if (!draftConfig?.enabled || !draftConfig.storageKey || !draftConfig.autoSaveInterval) {
+    if (
+      !draftConfig?.enabled ||
+      !draftConfig.storageKey ||
+      !draftConfig.autoSaveInterval
+    ) {
       return;
     }
-    
+
     const storageKey = draftConfig.storageKey as string;
     const maxDrafts = draftConfig.maxDrafts || 5;
-    
+
     const interval = setInterval(() => {
       if (isDirty) {
         const currentValues = getValues();
         saveDraft(storageKey, currentValues, maxDrafts);
       }
     }, draftConfig.autoSaveInterval);
-    
+
     return () => clearInterval(interval);
   }, [draftConfig, isDirty, getValues]);
 
@@ -644,9 +676,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             break;
           case "options":
             if (dep.effect.options) {
-              const newOptions = typeof dep.effect.options === "function"
-                ? dep.effect.options(sourceValue)
-                : dep.effect.options;
+              const newOptions =
+                typeof dep.effect.options === "function"
+                  ? dep.effect.options(sourceValue)
+                  : dep.effect.options;
               setDynamicOptions((prev) => ({
                 ...prev,
                 [dep.targetField]: newOptions!,
@@ -655,9 +688,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             break;
           case "value":
             if (dep.effect.value) {
-              const newValue = typeof dep.effect.value === "function"
-                ? dep.effect.value(sourceValue)
-                : dep.effect.value;
+              const newValue =
+                typeof dep.effect.value === "function"
+                  ? dep.effect.value(sourceValue)
+                  : dep.effect.value;
               setValue(dep.targetField, newValue);
             }
             break;
@@ -726,7 +760,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         }
 
         await onSubmit(visibleData);
-        
+
         // 清除草稿
         if (draftConfig?.enabled && draftConfig.storageKey) {
           clearDrafts(draftConfig.storageKey);
@@ -737,17 +771,23 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         if (errorToast) {
           displayValidationHint(errorToast);
         }
-        console.error("Form submit error:", err);
+        logger.error("Form submit error:", err);
       }
     },
-    [onSubmit, fieldVisibility, validationToasts, displayValidationHint, draftConfig],
+    [
+      onSubmit,
+      fieldVisibility,
+      validationToasts,
+      displayValidationHint,
+      draftConfig,
+    ],
   );
 
   // 处理重置
   const handleReset = useCallback(() => {
     reset();
     onReset?.();
-    
+
     // 清除草稿
     if (draftConfig?.enabled && draftConfig.storageKey) {
       clearDrafts(draftConfig.storageKey);
@@ -756,14 +796,17 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   }, [reset, onReset, draftConfig]);
 
   // 加载草稿
-  const handleLoadDraft = useCallback((draft: { data: Record<string, any>; timestamp: number }) => {
-    reset(draft.data);
-    setShowDraftDialog(false);
-    displayValidationHint({
-      message: `已加载草稿（保存于 ${new Date(draft.timestamp).toLocaleString()}）`,
-      type: "info",
-    });
-  }, [reset, displayValidationHint]);
+  const handleLoadDraft = useCallback(
+    (draft: { data: Record<string, any>; timestamp: number }) => {
+      reset(draft.data);
+      setShowDraftDialog(false);
+      displayValidationHint({
+        message: `已加载草稿（保存于 ${new Date(draft.timestamp).toLocaleString()}）`,
+        type: "info",
+      });
+    },
+    [reset, displayValidationHint],
+  );
 
   // 切换区块展开
   const toggleSection = useCallback((sectionId: string) => {
@@ -802,7 +845,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     }
 
     // 检查分组过滤
-    if (showGroupTabs && currentGroup !== "all" && field.group !== currentGroup) {
+    if (
+      showGroupTabs &&
+      currentGroup !== "all" &&
+      field.group !== currentGroup
+    ) {
       return null;
     }
 
@@ -810,8 +857,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     const errorMessage = getErrorMessage(field.name, field);
     const isRequired = dynamicRequired[field.name] || field.required;
     const options = dynamicOptions[field.name] || field.options;
-    const isDisabled = dynamicDisabled[field.name] || field.disabled || submitting || mode === "view";
-    const isEditable = dynamicEditable[field.name] && permissions.canEdit && mode !== "view";
+    const isDisabled =
+      dynamicDisabled[field.name] ||
+      field.disabled ||
+      submitting ||
+      mode === "view";
+    const isEditable =
+      dynamicEditable[field.name] && permissions.canEdit && mode !== "view";
 
     const commonProps = {
       label: field.label,
@@ -835,16 +887,20 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             </IconButton>
           </Tooltip>
         )}
-        
+
         {dirtyFields[field.name] && (
           <Chip
             label="已修改"
             size="small"
             color="primary"
-            sx={{ position: "absolute", top: -8, right: field.tooltip ? 32 : 0 }}
+            sx={{
+              position: "absolute",
+              top: -8,
+              right: field.tooltip ? 32 : 0,
+            }}
           />
         )}
-        
+
         <Controller
           name={field.name}
           control={control}
@@ -1125,7 +1181,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {section.icon && (
-              <Box sx={{ color: section.color ? `${section.color}.main` : "inherit" }}>
+              <Box
+                sx={{
+                  color: section.color ? `${section.color}.main` : "inherit",
+                }}
+              >
                 {section.icon}
               </Box>
             )}
@@ -1164,7 +1224,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             {loading ? (
               <Grid container spacing={2}>
                 {section.fields.map((field) => (
-                  <Grid key={field.name} md={Math.floor(12 / columns) * (field.span || 1)} size={{ xs: 12, sm: 6 }}>
+                  <Grid
+                    key={field.name}
+                    md={Math.floor(12 / columns) * (field.span || 1)}
+                    size={{ xs: 12, sm: 6 }}
+                  >
                     <Skeleton
                       variant="rectangular"
                       height={56}
@@ -1176,7 +1240,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             ) : (
               <Grid container spacing={2}>
                 {section.fields.map((field) => (
-                  <Grid key={field.name} md={Math.floor(12 / columns) * (field.span || 1)} size={{ xs: 12, sm: 6 }}>
+                  <Grid
+                    key={field.name}
+                    md={Math.floor(12 / columns) * (field.span || 1)}
+                    size={{ xs: 12, sm: 6 }}
+                  >
                     {renderField(field)}
                   </Grid>
                 ))}
@@ -1212,11 +1280,24 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
     return (
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1,
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
             表单填写进度
           </Typography>
-          <Typography variant="body2" sx={{ fontWeight: "bold", color: formProgress === 100 ? "success.main" : "primary.main" }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: "bold",
+              color: formProgress === 100 ? "success.main" : "primary.main",
+            }}
+          >
             {formProgress}%
           </Typography>
         </Box>
@@ -1449,9 +1530,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 }}
                 onClick={() => handleLoadDraft(draft)}
               >
-                <Typography variant="body2">
-                  草稿 #{index + 1}
-                </Typography>
+                <Typography variant="body2">草稿 #{index + 1}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   {new Date(draft.timestamp).toLocaleString()}
                 </Typography>

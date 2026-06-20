@@ -28,6 +28,7 @@ import {
 import type { Document } from "@/api/ai";
 import { aiApi } from "@/api/ai";
 import { useAppStore } from "@/store";
+import { logger } from "@/utils/logger";
 
 export interface DocumentManagerProps {
   className?: string;
@@ -63,6 +64,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   useEffect(() => {
     loadDocuments();
     loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDocuments = async () => {
@@ -73,7 +75,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         setDocuments(response.data.items);
       }
     } catch (err) {
-      console.error("加载文档失败:", err);
+      logger.error("加载文档失败:", err);
       addNotification({
         title: "加载失败",
         message: "加载文档列表失败",
@@ -94,7 +96,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       };
       setStats(mockStats);
     } catch (err) {
-      console.error("加载统计失败:", err);
+      logger.error("加载统计失败:", err);
     }
   };
 
@@ -123,7 +125,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         throw new Error(response.message);
       }
     } catch (err) {
-      console.error("上传文档失败:", err);
+      logger.error("上传文档失败:", err);
       addNotification({
         title: "上传失败",
         message: "上传文档时出错",
@@ -155,7 +157,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         throw new Error(response.message);
       }
     } catch (err) {
-      console.error("删除文档失败:", err);
+      logger.error("删除文档失败:", err);
       addNotification({
         title: "删除失败",
         message: "删除文档时出错",
@@ -186,7 +188,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
         setSearchResults(results);
       }
     } catch (err) {
-      console.error("搜索失败:", err);
+      logger.error("搜索失败:", err);
       addNotification({
         title: "搜索失败",
         message: "搜索时出错",

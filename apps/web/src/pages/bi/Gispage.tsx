@@ -1,5 +1,6 @@
 import { Grid } from "@/components/Grid";
 import React, { useState, useMemo, useCallback } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   MapPin,
   Plus,
@@ -326,7 +327,7 @@ const GisContent: React.FC = () => {
       resetModal();
     } catch (err) {
       showNotification("error", "创建失败");
-      console.error("创建失败:", err);
+      apiLogger.error("创建失败:", err);
     }
   };
 
@@ -434,7 +435,7 @@ const GisContent: React.FC = () => {
       resetModal();
     } catch (err) {
       showNotification("error", "更新失败");
-      console.error("更新失败:", err);
+      apiLogger.error("更新失败:", err);
     }
   };
 
@@ -463,7 +464,7 @@ const GisContent: React.FC = () => {
       showNotification("success", "删除成功");
     } catch (err) {
       showNotification("error", "删除失败");
-      console.error("删除失败:", err);
+      apiLogger.error("删除失败:", err);
     }
   };
 
@@ -854,7 +855,7 @@ const GisContent: React.FC = () => {
       await loadAllData(true);
     } catch (err) {
       showNotification("error", "导入失败");
-      console.error("导入失败:", err);
+      apiLogger.error("导入失败:", err);
     }
   };
 
@@ -987,9 +988,14 @@ const GisContent: React.FC = () => {
         <Stack
           direction="row"
           spacing={2}
-          sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', mb: 4 }}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            mb: 4,
+          }}
         >
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <IconButton onClick={() => navigate("/dashboard")}>
               <ChevronRight style={{ transform: "rotate(180deg)" }} />
             </IconButton>
@@ -1002,7 +1008,7 @@ const GisContent: React.FC = () => {
               </Typography>
             </Box>
           </Stack>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Button
               variant="contained"
               color="success"
@@ -1264,7 +1270,7 @@ const GisContent: React.FC = () => {
               <Stack
                 direction="row"
                 spacing={2}
-                sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                sx={{ justifyContent: "space-between", alignItems: "center" }}
               >
                 <TextField
                   size="small"
@@ -1394,9 +1400,9 @@ const GisContent: React.FC = () => {
         >
           <DialogTitle>
             <Stack
-                  direction="row"
-                  sx={{ justifyContent: 'space-between', alignItems: 'center' }}
-                >
+              direction="row"
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
+            >
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 {modalType === "create" ? "新建" : "编辑"}
               </Typography>
@@ -1819,9 +1825,9 @@ const GisContent: React.FC = () => {
         >
           <DialogTitle>
             <Stack
-                  direction="row"
-                  sx={{ justifyContent: 'space-between', alignItems: 'center' }}
-                >
+              direction="row"
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
+            >
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 导入数据
               </Typography>
@@ -1873,7 +1879,11 @@ const GisContent: React.FC = () => {
                   <Typography color="text.secondary">
                     点击或拖拽文件到此处
                   </Typography>
-                  <Typography variant="caption" color="text.disabled" sx={{ mt: 1 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.disabled"
+                    sx={{ mt: 1 }}
+                  >
                     支持CSV格式文件
                   </Typography>
                 </Box>
@@ -1882,9 +1892,16 @@ const GisContent: React.FC = () => {
                 <Paper sx={{ p: 1.5, bgcolor: "grey.50", borderRadius: 1.5 }}>
                   <Stack
                     direction="row"
-                    sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                    sx={{
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
                   >
-                    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                    <Stack
+                      direction="row"
+                      spacing={1.5}
+                      sx={{ alignItems: "center" }}
+                    >
                       <FileText size={32} color="#6b7280" />
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>

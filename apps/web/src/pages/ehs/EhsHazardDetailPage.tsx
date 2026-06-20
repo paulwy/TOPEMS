@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
+import { logger } from "@/utils/logger";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -12,7 +14,24 @@ import {
   AlertCircle,
   Trash2,
 } from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions,  Button, TextField, Chip, Card, CardContent, CardHeader, Box, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -131,7 +150,7 @@ const EhsHazardDetailPage: React.FC = () => {
         setControls(controlsArray);
       }
     } catch (error) {
-      console.error("加载危险源详情失败:", error);
+      apiLogger.error("加载危险源详情失败:", error);
       toast.error("加载危险源详情失败");
     } finally {
       setLoading(false);
@@ -170,7 +189,7 @@ const EhsHazardDetailPage: React.FC = () => {
         toast.error("更新失败，请稍后重试");
       }
     } catch (error) {
-      console.error("更新危险源失败:", error);
+      apiLogger.error("更新危险源失败:", error);
       toast.error("更新失败，请稍后重试");
     }
   };
@@ -203,7 +222,7 @@ const EhsHazardDetailPage: React.FC = () => {
         toast.error("添加失败，请稍后重试");
       }
     } catch (error) {
-      console.error("添加控制措施失败:", error);
+      apiLogger.error("添加控制措施失败:", error);
       toast.error("添加失败，请稍后重试");
     }
   };
@@ -220,7 +239,7 @@ const EhsHazardDetailPage: React.FC = () => {
         toast.error("删除失败，请稍后重试");
       }
     } catch (error) {
-      console.error("删除控制措施失败:", error);
+      apiLogger.error("删除控制措施失败:", error);
       toast.error("删除失败，请稍后重试");
     }
   };

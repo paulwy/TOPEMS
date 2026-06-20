@@ -7,6 +7,7 @@ import {
   type Department,
   type Employee,
 } from "@/api/hrm";
+import { logger } from "@/utils/logger";
 
 export interface OrganizationData {
   companies: Company[];
@@ -61,7 +62,7 @@ export const useOrganization = (): UseOrganizationReturn => {
       if (error?.name === "AbortError" || error?.code === "ERR_CANCELED") {
         return;
       }
-      console.error("Failed to load companies:", error);
+      logger.error("Failed to load companies:", error);
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export const useOrganization = (): UseOrganizationReturn => {
       if (error?.name === "AbortError" || error?.code === "ERR_CANCELED") {
         return;
       }
-      console.error("Failed to load departments:", error);
+      logger.error("Failed to load departments:", error);
     } finally {
       setLoading(false);
     }
@@ -111,7 +112,7 @@ export const useOrganization = (): UseOrganizationReturn => {
       if (error?.name === "AbortError" || error?.code === "ERR_CANCELED") {
         return;
       }
-      console.error("Failed to load employees:", error);
+      logger.error("Failed to load employees:", error);
     } finally {
       setLoading(false);
     }

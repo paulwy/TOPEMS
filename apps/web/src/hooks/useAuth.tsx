@@ -12,9 +12,20 @@ import { authApi } from "@/api/iam";
 import apiClient from "../api/client";
 import type { User } from "@topems/shared-types";
 import { mapApiUserToUser } from "@topems/shared-types";
+import { authLogger } from "@/utils/logger";
 
 // Re-export User type for backward compatibility
 export type { User } from "@topems/shared-types";
+
+// 会话配置常量
+const SESSION = {
+  SESSION_CHECK_INTERVAL: 5 * 60 * 1000, // 5分钟
+  TOKEN_REFRESH_INTERVAL: 10 * 60 * 1000, // 10分钟
+};
+
+const REFRESH_INTERVAL = {
+  MINUTE_5: 5 * 60 * 1000, // 5分钟
+};
 
 // 默认 token 过期时间（24小时，毫秒）- 当无法解析 JWT 时使用
 const DEFAULT_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
@@ -29,7 +40,7 @@ const parseTokenExpiryFromJWT = (token: string): number => {
       return payload.exp * 1000;
     }
   } catch (e) {
-    console.warn("Failed to parse token expiry from JWT:", e);
+    authLogger.warn("Failed to parse token expiry from JWT:", e);
   }
   // 解析失败时返回默认过期时间
   return Date.now() + DEFAULT_TOKEN_EXPIRY_MS;
@@ -112,8 +123,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     if (!tokenExpiryRef.current) return false;
     const now = Date.now();
     const timeUntilExpiry = tokenExpiryRef.current - now;
-    // 5分钟 = 300000毫秒
-    return timeUntilExpiry > 0 && timeUntilExpiry < 5 * 60 * 1000;
+    // 使用会话配置常量
+    return (
+      timeUntilExpiry > 0 && timeUntilExpiry < SESSION.SESSION_CHECK_INTERVAL
+    );
   }, []);
 
   // 获取距离过期的剩余时间（秒）
@@ -153,7 +166,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         throttleTimer = setTimeout(() => {
           handleActivity();
           throttleTimer = null;
-        }, 60000); // 每分钟最多更新一次
+        }, SESSION.TOKEN_REFRESH_INTERVAL); // 使用会话刷新间隔常量
       }
     };
 
@@ -193,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         return true;
       }
     } catch (error) {
-      console.error("Token refresh failed:", error);
+      authLogger.error("Token refresh failed:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
@@ -239,16 +252,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             permissions,
           });
 
-          // 每50分钟刷新一次 token
+          // 使用刷新间隔常量刷新 token
           refreshInterval = setInterval(
             async () => {
-              console.log("Attempting to refresh token...");
+              authLogger.info("Attempting to refresh token...");
               await refreshToken();
             },
-            50 * 60 * 1000,
+            REFRESH_INTERVAL.MINUTE_5, // 5分钟刷新一次
           );
         } catch (error) {
-          console.error("Failed to initialize auth:", error);
+          authLogger.error("Failed to initialize auth:", error);
           logout();
         }
       } else {
@@ -263,6 +276,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         clearInterval(refreshInterval);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshToken]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
@@ -309,7 +323,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       return response;
     } catch (error) {
-      console.error("Login error:", error);
+      authLogger.error("Login error:", error);
       throw error;
     }
   }, []);
@@ -357,10 +371,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     // 直接从 localStorage 读取权限，确保获取最新数据
     const userStr = localStorage.getItem("user");
     const permissionsStr = localStorage.getItem("permissions");
-    
+
     let user = null;
     let permissions: string[] = [];
-    
+
     try {
       if (userStr) {
         user = JSON.parse(userStr);
@@ -369,12 +383,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         permissions = JSON.parse(permissionsStr);
       }
     } catch (e) {
-      console.error("Failed to parse auth data from localStorage:", e);
+      authLogger.error("Failed to parse auth data from localStorage:", e);
     }
-    
+
     // 超级用户拥有所有权限
     if (user?.is_superuser) return true;
-    
+
     // 检查是否有任意一个要求的权限
     return perms.some((perm) => permissions.includes(perm));
   }, []);
@@ -383,10 +397,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     // 直接从 localStorage 读取权限
     const userStr = localStorage.getItem("user");
     const permissionsStr = localStorage.getItem("permissions");
-    
+
     let user = null;
     let permissions: string[] = [];
-    
+
     try {
       if (userStr) {
         user = JSON.parse(userStr);
@@ -395,12 +409,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         permissions = JSON.parse(permissionsStr);
       }
     } catch (e) {
-      console.error("Failed to parse auth data from localStorage:", e);
+      authLogger.error("Failed to parse auth data from localStorage:", e);
     }
-    
+
     // 超级用户拥有所有权限
     if (user?.is_superuser) return true;
-    
+
     // 检查是否拥有所有要求的权限
     return perms.every((perm) => permissions.includes(perm));
   }, []);
@@ -409,10 +423,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     // 直接从 localStorage 读取权限
     const userStr = localStorage.getItem("user");
     const permissionsStr = localStorage.getItem("permissions");
-    
+
     let user = null;
     let permissions: string[] = [];
-    
+
     try {
       if (userStr) {
         user = JSON.parse(userStr);
@@ -421,12 +435,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         permissions = JSON.parse(permissionsStr);
       }
     } catch (e) {
-      console.error("Failed to parse auth data from localStorage:", e);
+      authLogger.error("Failed to parse auth data from localStorage:", e);
     }
-    
+
     // 超级用户拥有所有权限
     if (user?.is_superuser) return true;
-    
+
     return permissions.includes(permission);
   }, []);
 
@@ -449,7 +463,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }));
       }
     } catch (error) {
-      console.error("Failed to refresh permissions:", error);
+      authLogger.error("Failed to refresh permissions:", error);
     }
   }, []);
 

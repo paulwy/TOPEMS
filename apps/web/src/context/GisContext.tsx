@@ -16,6 +16,7 @@ import type {
   GisStatistics,
 } from "../api/gis";
 import { gisApi } from "../api/gis";
+import { logger } from "@/utils/logger";
 
 type GisState = {
   devicePoints: DevicePoint[];
@@ -278,7 +279,7 @@ const saveCache = (state: GisState) => {
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
   } catch (e) {
-    console.warn("Failed to save cache:", e);
+    logger.warn("Failed to save cache:", e);
   }
 };
 
@@ -303,7 +304,7 @@ const loadCache = (): Partial<GisState> | null => {
       cacheTimestamp: cacheData.timestamp,
     };
   } catch (e) {
-    console.warn("Failed to load cache:", e);
+    logger.warn("Failed to load cache:", e);
     return null;
   }
 };
@@ -439,13 +440,13 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
           } catch (e) {
-            console.warn("Failed to save cache:", e);
+            logger.warn("Failed to save cache:", e);
           }
         }, 100);
       } catch (err) {
         const errorMessage = getErrorMessage(err);
         setError(errorMessage);
-        console.error("加载GIS数据失败:", err);
+        logger.error("加载GIS数据失败:", err);
       } finally {
         setLoading(false);
       }

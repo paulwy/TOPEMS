@@ -36,6 +36,7 @@ import { useNavigate } from "react-router-dom";
 import { docApi, type Folder as FolderType } from "@/api/doc";
 import { useAppStore } from "../../store";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
+import { apiLogger } from "@/utils/logger";
 
 import {
   Button,
@@ -110,7 +111,7 @@ const CreateFolderModal: React.FC<{
         setError(response.message || "创建失败，请重试");
       }
     } catch (err: any) {
-      console.error("创建文件夹失败:", err);
+      apiLogger.error("创建文件夹失败:", err);
       const errorMessage =
         err.response?.data?.message || err.message || "创建失败，请重试";
       setError(errorMessage);
@@ -195,10 +196,12 @@ const DocumentsPage: React.FC = () => {
   useEffect(() => {
     loadFolders();
     loadFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     loadFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolderId]);
 
   const loadFolders = async () => {
@@ -208,7 +211,7 @@ const DocumentsPage: React.FC = () => {
         setFolders(response.data.folders);
       }
     } catch (err) {
-      console.error("加载文件夹列表失败:", err);
+      apiLogger.error("加载文件夹列表失败:", err);
     }
   };
 
@@ -231,7 +234,7 @@ const DocumentsPage: React.FC = () => {
         setFiles(mappedFiles);
       }
     } catch (err) {
-      console.error("加载文件列表失败:", err);
+      apiLogger.error("加载文件列表失败:", err);
       addNotification({
         title: "加载失败",
         message: "加载文件列表失败",
@@ -297,7 +300,7 @@ const DocumentsPage: React.FC = () => {
       }
     } catch (err: any) {
       clearInterval(progressInterval);
-      console.error("上传文件失败:", err);
+      apiLogger.error("上传文件失败:", err);
       const errorMessage =
         err.response?.data?.message || err.message || "文件上传失败";
       addNotification({ title: "失败", message: errorMessage, type: "error" });
@@ -330,7 +333,7 @@ const DocumentsPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("删除文件失败:", err);
+      apiLogger.error("删除文件失败:", err);
       addNotification({
         title: "失败",
         message: "文件删除失败",
@@ -356,7 +359,7 @@ const DocumentsPage: React.FC = () => {
         type: "success",
       });
     } catch (err) {
-      console.error("删除文件夹失败:", err);
+      apiLogger.error("删除文件夹失败:", err);
       addNotification({
         title: "失败",
         message: "文件夹删除失败",
@@ -382,7 +385,7 @@ const DocumentsPage: React.FC = () => {
         type: "success",
       });
     } catch (err) {
-      console.error("下载失败:", err);
+      apiLogger.error("下载失败:", err);
       addNotification({
         title: "失败",
         message: "文件下载失败",
@@ -419,6 +422,7 @@ const DocumentsPage: React.FC = () => {
   const handleCreateFolderSuccess = useCallback(() => {
     loadFolders();
     loadFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleFileSelect = useCallback((fileId: string) => {
@@ -455,13 +459,14 @@ const DocumentsPage: React.FC = () => {
         type: "success",
       });
     } catch (err) {
-      console.error("批量删除失败:", err);
+      apiLogger.error("批量删除失败:", err);
       addNotification({
         title: "失败",
         message: "批量删除失败",
         type: "error",
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles, addNotification]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -496,7 +501,7 @@ const DocumentsPage: React.FC = () => {
             uploadedCount++;
           }
         } catch (err) {
-          console.error(`上传文件 ${file.name} 失败:`, err);
+          apiLogger.error(`上传文件 ${file.name} 失败:`, err);
         }
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
@@ -513,6 +518,7 @@ const DocumentsPage: React.FC = () => {
         });
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedFolderId, addNotification],
   );
 
@@ -962,7 +968,10 @@ const DocumentsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  md: "repeat(4, 1fr)",
+                },
                 gap: 3,
                 mb: 3,
               }}
@@ -1094,7 +1103,12 @@ const DocumentsPage: React.FC = () => {
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(4, 1fr)" },
+                  gridTemplateColumns: {
+                    xs: "repeat(1, 1fr)",
+                    md: "repeat(2, 1fr)",
+                    lg: "repeat(3, 1fr)",
+                    xl: "repeat(4, 1fr)",
+                  },
                   gap: 3,
                 }}
               >

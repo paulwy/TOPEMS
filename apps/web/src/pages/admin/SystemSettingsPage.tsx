@@ -3,7 +3,8 @@
  * 管理系统基础配置、邮件设置、短信设置、日志设置
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Box,
   Typography,
@@ -113,7 +114,7 @@ export default function SystemSettingsPage() {
 
   const handleSave = () => {
     // 保存设置
-    console.log("保存设置:", settings);
+    apiLogger.info("保存设置:", settings);
     setHasChanges(false);
   };
 

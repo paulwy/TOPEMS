@@ -45,6 +45,7 @@ import {
 } from "@/api/erp";
 import { useAppStore } from "../../store";
 import { ListPageTemplate, StatCardGroup } from "@/components/mui";
+import { apiLogger } from "@/utils/logger";
 
 const FinanceVoucherPage: React.FC = () => {
   const navigate = useNavigate();
@@ -99,7 +100,7 @@ const FinanceVoucherPage: React.FC = () => {
         setSubjects(subjectResult.data.items || []);
       }
     } catch (err) {
-      console.error("加载数据失败:", err);
+      apiLogger.error("加载数据失败:", err);
       addNotification({
         title: "错误",
         message: "加载数据失败",
@@ -117,7 +118,7 @@ const FinanceVoucherPage: React.FC = () => {
         setVoucherItems(result.data);
       }
     } catch (err) {
-      console.error("加载凭证明细失败:", err);
+      apiLogger.error("加载凭证明细失败:", err);
     }
   };
 
@@ -295,7 +296,7 @@ const FinanceVoucherPage: React.FC = () => {
             message: `成功导入${success_count}张，失败${failed_count}张`,
             type: "warning",
           });
-          errors.forEach((err) => console.warn("导入错误:", err));
+          errors.forEach((err) => apiLogger.warn("导入错误:", err));
         }
         setShowImportModal(false);
         loadData();

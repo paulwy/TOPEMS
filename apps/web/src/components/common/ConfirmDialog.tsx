@@ -30,12 +30,24 @@ import { useAppStore } from "@/store";
 /**
  * 对话框类型
  */
-export type DialogType = "alert" | "confirm" | "prompt" | "info" | "success" | "warning" | "error";
+export type DialogType =
+  | "alert"
+  | "confirm"
+  | "prompt"
+  | "info"
+  | "success"
+  | "warning"
+  | "error";
 
 /**
  * 按钮类型
  */
-export type DialogButtonType = "primary" | "secondary" | "success" | "warning" | "error";
+export type DialogButtonType =
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error";
 
 /**
  * 对话框尺寸
@@ -281,7 +293,8 @@ export default function ConfirmDialog({
 
   React.useEffect(() => {
     if (isDragging) {
-      const onMouseMove = (e: MouseEvent) => handleMouseMove(e as unknown as React.MouseEvent);
+      const onMouseMove = (e: MouseEvent) =>
+        handleMouseMove(e as unknown as React.MouseEvent);
       const onMouseUp = () => handleMouseUp();
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
@@ -302,7 +315,9 @@ export default function ConfirmDialog({
   const paperSx = {
     width: SIZE_MAP[size],
     maxWidth: "95vw",
-    transform: isDragging ? `translate(${position.x}px, ${position.y}px)` : undefined,
+    transform: isDragging
+      ? `translate(${position.x}px, ${position.y}px)`
+      : undefined,
     cursor: draggable ? "move" : "default",
     ...(sx?.paper || {}),
   };
@@ -350,7 +365,9 @@ export default function ConfirmDialog({
               boxShadow: `0 4px 20px ${config.color}30`,
             }}
           >
-            {icon || <IconComponent size={40} style={{ color: config.color }} />}
+            {icon || (
+              <IconComponent size={40} style={{ color: config.color }} />
+            )}
           </Box>
         </Box>
       )}
@@ -367,7 +384,10 @@ export default function ConfirmDialog({
       >
         {showTitle && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            {!showSuccessIcon && (icon || <IconComponent size={20} style={{ color: config.color }} />)}
+            {!showSuccessIcon &&
+              (icon || (
+                <IconComponent size={20} style={{ color: config.color }} />
+              ))}
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               {title}
             </Typography>
@@ -402,10 +422,10 @@ export default function ConfirmDialog({
                 button.type === "success"
                   ? "success"
                   : button.type === "warning"
-                  ? "warning"
-                  : button.type === "error"
-                  ? "error"
-                  : "primary"
+                    ? "warning"
+                    : button.type === "error"
+                      ? "error"
+                      : "primary"
               }
               onClick={button.onClick}
               disabled={button.disabled || button.loading || isLoading}
@@ -429,11 +449,23 @@ export default function ConfirmDialog({
             )}
             <Button
               variant="contained"
-              color={danger ? "error" : confirmColor === "success" ? "success" : confirmColor === "warning" ? "warning" : confirmColor === "error" ? "error" : "primary"}
+              color={
+                danger
+                  ? "error"
+                  : confirmColor === "success"
+                    ? "success"
+                    : confirmColor === "warning"
+                      ? "warning"
+                      : confirmColor === "error"
+                        ? "error"
+                        : "primary"
+              }
               onClick={handleConfirm}
               disabled={confirmDisabled || isLoading}
               sx={{
-                ...(danger ? { bgcolor: "#dc2626", "&:hover": { bgcolor: "#b91c1c" } } : {}),
+                ...(danger
+                  ? { bgcolor: "#dc2626", "&:hover": { bgcolor: "#b91c1c" } }
+                  : {}),
               }}
             >
               {isLoading ? (
@@ -454,41 +486,41 @@ export default function ConfirmDialog({
 /**
  * 警告对话框
  */
-export const AlertDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (props) => (
-  <ConfirmDialog {...props} type="alert" />
-);
+export const AlertDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
+  props,
+) => <ConfirmDialog {...props} type="alert" />;
 
 /**
  * 信息对话框
  */
-export const InfoDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (props) => (
-  <ConfirmDialog {...props} type="info" />
-);
+export const InfoDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
+  props,
+) => <ConfirmDialog {...props} type="info" />;
 
 /**
  * 成功对话框
  */
-export const SuccessDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (props) => (
-  <ConfirmDialog {...props} type="success" showSuccessIcon />
-);
+export const SuccessDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
+  props,
+) => <ConfirmDialog {...props} type="success" showSuccessIcon />;
 
 /**
  * 警告对话框
  */
-export const WarningDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (props) => (
-  <ConfirmDialog {...props} type="warning" />
-);
+export const WarningDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
+  props,
+) => <ConfirmDialog {...props} type="warning" />;
 
 /**
  * 错误对话框
  */
-export const ErrorDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (props) => (
-  <ConfirmDialog {...props} type="error" />
-);
+export const ErrorDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
+  props,
+) => <ConfirmDialog {...props} type="error" />;
 
 /**
  * 确认对话框（默认）
  */
-export const ConfirmationDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (props) => (
-  <ConfirmDialog {...props} type="confirm" />
-);
+export const ConfirmationDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
+  props,
+) => <ConfirmDialog {...props} type="confirm" />;

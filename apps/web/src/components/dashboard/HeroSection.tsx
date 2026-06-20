@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { Sparkles, ChevronRight, Activity } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -25,16 +25,20 @@ export const HeroSection: React.FC = () => {
           border: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       >
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            opacity: 0.3,
             background:
               "radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.15) 0%, transparent 50%)",
           }}
         />
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            opacity: 0.2,
             background:
               "radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.15) 0%, transparent 50%)",
           }}
@@ -78,9 +82,18 @@ export const HeroSection: React.FC = () => {
             }}
           >
             欢迎回到
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <Box
+              component="span"
+              sx={{
+                background:
+                  "linear-gradient(to right, rgb(96, 165, 250), rgb(167, 139, 250), rgb(244, 114, 182))",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
               {" TOPEMS "}
-            </span>
+            </Box>
             平台
           </Typography>
 
@@ -96,21 +109,65 @@ export const HeroSection: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-            <button className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105">
+            <Button
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                px: 3,
+                py: 1.5,
+                background:
+                  "linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234))",
+                color: "white",
+                fontWeight: 600,
+                borderRadius: 2,
+                transition: "all 0.3s",
+                "&:hover": {
+                  boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.25)",
+                  transform: "scale(1.05)",
+                },
+              }}
+            >
               <Activity size={20} />
               <span>开始工作</span>
-              <ChevronRight
-                size={18}
-                className="group-hover:translate-x-1 transition-transform"
-              />
-            </button>
-            <button className="flex items-center gap-2 px-6 py-3 bg-white/5 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10">
+              <ChevronRight size={18} />
+            </Button>
+            <Button
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                px: 3,
+                py: 1.5,
+                bgcolor: "rgba(255, 255, 255, 0.05)",
+                color: "white",
+                fontWeight: 600,
+                borderRadius: 2,
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                transition: "all 0.3s",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.1)",
+                },
+              }}
+            >
               <span>了解更多</span>
-            </button>
+            </Button>
           </Box>
         </Box>
 
-        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-full blur-3xl" />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: "-5rem",
+            right: "-5rem",
+            width: "16rem",
+            height: "16rem",
+            background:
+              "linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2))",
+            borderRadius: "50%",
+            filter: "blur(64px)",
+          }}
+        />
       </Box>
     </Box>
   );

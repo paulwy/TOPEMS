@@ -1,4 +1,5 @@
 import { Grid } from "@/components/Grid";
+import { apiLogger } from "@/utils/logger";
 import { QuickSearch } from "@/components/common";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -220,6 +221,7 @@ const AdministrationPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -258,7 +260,7 @@ const AdministrationPage: React.FC = () => {
       setIfFulfilled(6, setVehicles);
       setIfFulfilled(7, setAnnouncements);
     } catch (err: any) {
-      console.error("加载数据失败:", err);
+      apiLogger.error("加载数据失败:", err);
       if (err.response?.status === 401) {
         addNotification({
           title: "认证失败",
@@ -351,6 +353,7 @@ const AdministrationPage: React.FC = () => {
       todayAttendance,
       pendingExpenses,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employees, leaveRequests, attendanceRecords, expenseClaims]);
 
   const renderOverview = () => (
@@ -2181,7 +2184,15 @@ const AdministrationPage: React.FC = () => {
       </Drawer>
 
       <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 3 }, py: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            mb: 3,
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
           <Stack
             component="div"
             direction="row"
@@ -2203,7 +2214,7 @@ const AdministrationPage: React.FC = () => {
             <QuickSearch
               placeholder="搜索行政内容..."
               onSearch={(query) => {
-                console.log("搜索:", query);
+                apiLogger.info("搜索:", query);
               }}
               width={320}
             />

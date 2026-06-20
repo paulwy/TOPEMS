@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import { integrationApi } from "@/api/integration";
 import type { SyncStats, IntegrationEvent } from "@/api/integration";
+import { logger } from "@/utils/logger";
 
 const IntegrationDashboardPage: React.FC = () => {
   const [stats, setStats] = useState<SyncStats | null>(null);
@@ -21,7 +22,7 @@ const IntegrationDashboardPage: React.FC = () => {
       if (eventsRes.success && eventsRes.data !== undefined)
         setEvents(eventsRes.data);
     } catch (error) {
-      console.error("Error loading data:", error);
+      logger.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }

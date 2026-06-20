@@ -1,6 +1,7 @@
 import { Button, TextField } from "@mui/material";
 import React, { useState, useRef } from "react";
 import { Send, Paperclip, Image, FileText } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 interface ChatInputProps {
   onSendMessage: (
@@ -67,7 +68,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
       }
     } catch (error) {
-      console.error("Failed to upload file:", error);
+      logger.error("Failed to upload file:", error);
     } finally {
       setUploading(false);
       setShowFileMenu(false);

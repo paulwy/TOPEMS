@@ -31,6 +31,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { Approval, ApprovalRecord } from "@/api/flow";
 import { flowApi } from "@/api/flow";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 
 const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,7 @@ const FlowApprovalDetailPage: React.FC = () => {
     if (id) {
       loadApprovalDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadApprovalDetails = async () => {
@@ -81,7 +83,7 @@ const FlowApprovalDetailPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("加载审批详情失败:", err);
+      apiLogger.error("加载审批详情失败:", err);
       addNotification({
         title: "错误",
         message: "加载审批详情失败",
@@ -134,7 +136,7 @@ const FlowApprovalDetailPage: React.FC = () => {
         message: "处理审批失败",
         type: "error",
       });
-      console.error("处理审批失败:", err);
+      apiLogger.error("处理审批失败:", err);
     } finally {
       setProcessing(false);
     }

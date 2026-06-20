@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ProtectedRoute, GuestRoute } from "./components/ProtectedRoute";
 import { ModuleGate } from "./components/PermissionGate";
@@ -13,9 +14,11 @@ import { TemplateDemoPage } from "./components/templates/index";
 import { GlobalLayout } from "./components/layout";
 import { DynamicRouter } from "./modules/loader/DynamicRouter";
 import { eventBus, ModuleEvents } from "./modules/loader/EventBus";
+import { logger } from "@/utils/logger";
 
 // Check if we're in static mode (Module Federation disabled)
-const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== "module-federation";
+const IS_STATIC_MODE =
+  import.meta.env.VITE_DEPLOYMENT_MODE !== "module-federation";
 
 import {
   authRoutes,
@@ -40,12 +43,22 @@ import {
 } from "./routes";
 
 const PageLoader: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="text-center">
+  <Box
+    sx={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      bgcolor: "var(--color-background)",
+    }}
+  >
+    <Box sx={{ textAlign: "center" }}>
       <LoadingSpinner size="lg" />
-      <p className="mt-4 text-gray-600">加载中...</p>
-    </div>
-  </div>
+      <Typography sx={{ mt: 2, color: "var(--color-text-secondary)" }}>
+        加载中...
+      </Typography>
+    </Box>
+  </Box>
 );
 
 // 需要跳过 GlobalLayout 的模块（这些模块有自己的布局）
@@ -98,11 +111,14 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     const handleModuleLoaded = (data: { moduleId: string; path: string }) => {
-      console.log(`[Dynamic Router] Module loaded: ${data.moduleId}`);
+      logger.info(`[Dynamic Router] Module loaded: ${data.moduleId}`);
     };
 
     const handleModuleError = (data: { moduleId: string; error: Error }) => {
-      console.error(`[Dynamic Router] Module load error: ${data.moduleId}`, data.error);
+      logger.error(
+        `[Dynamic Router] Module load error: ${data.moduleId}`,
+        data.error,
+      );
     };
 
     eventBus.on(ModuleEvents.MODULE_LOADED, handleModuleLoaded);
@@ -116,13 +132,13 @@ const AppContent: React.FC = () => {
 
   const renderElement = (route: RouteConfig) => {
     const { element } = route;
-    
+
     // Use React.isValidElement to check if it's a React element (from React.createElement)
     // vs a component type (including LazyExoticComponent from React.lazy)
     if (React.isValidElement(element)) {
       return element;
     }
-    
+
     // It's a component type (including LazyExoticComponent from React.lazy), render as Element
     const Element = element as React.ComponentType;
     return <Element />;
@@ -223,12 +239,22 @@ const AppContent: React.FC = () => {
                 <GlobalLayout>
                   <div style={{ padding: "20px" }}>
                     <h2>核心模块</h2>
-                    <p>核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用 Module Federation。</p>
+                    <p>
+                      核心模块在静态模式下不可用。请设置
+                      VITE_DEPLOYMENT_MODE=module-federation 启用 Module
+                      Federation。
+                    </p>
                     <p>或者访问其他模块：</p>
                     <ul>
-                      <li><a href="/hrm">人力资源管理</a></li>
-                      <li><a href="/crm">客户关系管理</a></li>
-                      <li><a href="/dashboard">仪表盘</a></li>
+                      <li>
+                        <a href="/hrm">人力资源管理</a>
+                      </li>
+                      <li>
+                        <a href="/crm">客户关系管理</a>
+                      </li>
+                      <li>
+                        <a href="/dashboard">仪表盘</a>
+                      </li>
                     </ul>
                   </div>
                 </GlobalLayout>

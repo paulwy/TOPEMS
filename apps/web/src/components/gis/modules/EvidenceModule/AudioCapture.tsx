@@ -1,6 +1,8 @@
 // modules/EvidenceModule/AudioCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import { Mic, Square, Pause, Play, X, Check } from "lucide-react";
+import { Box, Button, IconButton, Typography, Paper } from "@mui/material";
+import { logger } from "@/utils/logger";
 
 interface AudioCaptureProps {
   onCapture: (file: File, duration: number) => void;
@@ -78,8 +80,9 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
       }, 1000);
     } catch (err) {
       setError("无法访问麦克风，请确保已授予麦克风权限");
-      console.error("Audio capture error:", err);
+      logger.error("Audio capture error:", err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxDuration]);
 
   // Pause/Resume recording
@@ -104,6 +107,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
       }
     }
     setIsPaused(!isPaused);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused, maxDuration]);
 
   // Stop recording
@@ -145,93 +149,176 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
   }, [audioUrl]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-900">
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        bgcolor: "#111827",
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <h3 className="text-white font-medium">录音取证</h3>
-        <button onClick={onCancel} className="p-1 hover:bg-gray-800 rounded">
-          <X className="w-5 h-5 text-gray-400" />
-        </button>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          p: 16,
+          borderBottom: 1,
+          borderColor: "#374151",
+        }}
+      >
+        <Typography sx={{ color: "white", fontWeight: 500 }}>
+          录音取证
+        </Typography>
+        <IconButton
+          onClick={onCancel}
+          sx={{ borderRadius: 4, "&:hover": { bgcolor: "#1f2937" } }}
+        >
+          <X size={20} style={{ color: "#9ca3af" }} />
+        </IconButton>
+      </Box>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 24,
+        }}
+      >
         {error && (
-          <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm">
-            {error}
-          </div>
+          <Paper
+            sx={{
+              mb: 16,
+              p: 12,
+              bgcolor: "rgba(239,68,68,0.2)",
+              border: 1,
+              borderColor: "#ef4444",
+              borderRadius: 8,
+            }}
+          >
+            <Typography sx={{ color: "#f87171", fontSize: "0.875rem" }}>
+              {error}
+            </Typography>
+          </Paper>
         )}
 
         {/* Timer Display */}
-        <div className="text-6xl font-mono text-white mb-8">
+        <Typography
+          sx={{
+            fontSize: "3.75rem",
+            fontFamily: "monospace",
+            color: "white",
+            mb: 32,
+          }}
+        >
           {formatTime(duration)}
-        </div>
+        </Typography>
 
         {/* Max Duration Hint */}
-        <div className="text-gray-500 text-sm mb-8">
+        <Typography sx={{ color: "#6b7280", fontSize: "0.875rem", mb: 32 }}>
           最长 {formatTime(maxDuration)}
-        </div>
+        </Typography>
 
         {/* Controls */}
-        <div className="flex items-center gap-4">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 16 }}>
           {!isRecording && !recordedBlob && (
-            <button
+            <IconButton
               onClick={startRecording}
-              className="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white transition-colors"
+              sx={{
+                p: 16,
+                bgcolor: "#ef4444",
+                borderRadius: "9999px",
+                color: "white",
+                "&:hover": { bgcolor: "#dc2626" },
+              }}
             >
-              <Mic className="w-8 h-8" />
-            </button>
+              <Mic size={32} />
+            </IconButton>
           )}
 
           {isRecording && (
             <>
-              <button
+              <IconButton
                 onClick={togglePause}
-                className="p-3 bg-gray-700 hover:bg-gray-600 rounded-full text-white"
+                sx={{
+                  p: 12,
+                  bgcolor: "#374151",
+                  borderRadius: "9999px",
+                  color: "white",
+                  "&:hover": { bgcolor: "#4b5563" },
+                }}
               >
-                {isPaused ? (
-                  <Play className="w-6 h-6" />
-                ) : (
-                  <Pause className="w-6 h-6" />
-                )}
-              </button>
-              <button
+                {isPaused ? <Play size={24} /> : <Pause size={24} />}
+              </IconButton>
+              <IconButton
                 onClick={stopRecording}
-                className="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white transition-colors"
+                sx={{
+                  p: 16,
+                  bgcolor: "#ef4444",
+                  borderRadius: "9999px",
+                  color: "white",
+                  "&:hover": { bgcolor: "#dc2626" },
+                }}
               >
-                <Square className="w-8 h-8" />
-              </button>
+                <Square size={32} />
+              </IconButton>
             </>
           )}
-        </div>
+        </Box>
 
         {/* Audio Preview */}
         {audioUrl && !isRecording && (
-          <div className="mt-8 w-full max-w-md">
-            <audio src={audioUrl} controls className="w-full" />
-            <div className="flex justify-center gap-4 mt-4">
-              <button
+          <Box sx={{ mt: 32, width: "100%", maxWidth: 400 }}>
+            <audio src={audioUrl} controls style={{ width: "100%" }} />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 16,
+                mt: 16,
+              }}
+            >
+              <Button
                 onClick={() => {
                   setRecordedBlob(null);
                   setAudioUrl(null);
                   setDuration(0);
                 }}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                sx={{
+                  px: 16,
+                  py: 8,
+                  bgcolor: "#374151",
+                  borderRadius: 8,
+                  color: "white",
+                  "&:hover": { bgcolor: "#4b5563" },
+                }}
               >
                 重新录制
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={saveRecording}
-                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center gap-2"
+                startIcon={<Check size={16} />}
+                sx={{
+                  px: 16,
+                  py: 8,
+                  bgcolor: "#22c55e",
+                  borderRadius: 8,
+                  color: "white",
+                  "&:hover": { bgcolor: "#16a34a" },
+                }}
               >
-                <Check className="w-4 h-4" />
                 保存
-              </button>
-            </div>
-          </div>
+              </Button>
+            </Box>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

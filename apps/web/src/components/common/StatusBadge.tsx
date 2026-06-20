@@ -557,9 +557,7 @@ const VARIANT_STYLES: Record<StatusVariant, any> = {
 /**
  * 将自定义颜色转换为MUI颜色
  */
-const mapColorToMui = (
-  color?: StatusColor | string,
-): StatusColor => {
+const mapColorToMui = (color?: StatusColor | string): StatusColor => {
   const validColors: StatusColor[] = [
     "default",
     "primary",
@@ -570,7 +568,7 @@ const mapColorToMui = (
     "info",
   ];
   return validColors.includes(color as StatusColor)
-    ? color as StatusColor
+    ? (color as StatusColor)
     : "default";
 };
 
@@ -665,7 +663,11 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       label={label || config.label}
       color={chipColor}
       size={chipSize}
-      icon={showIcon && (icon || config.icon) ? <>{icon || config.icon}</> : undefined}
+      icon={
+        showIcon && (icon || config.icon) ? (
+          <>{icon || config.icon}</>
+        ) : undefined
+      }
       variant={variant === "outlined" ? "outlined" : "filled"}
       onClick={clickable && !disabled ? onClick : undefined}
       disabled={disabled}
@@ -681,108 +683,63 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
  */
 export const EmployeeStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * HRM考勤状态徽章
  */
 export const AttendanceStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * HRM请假状态徽章
  */
-export const LeaveStatusBadge: React.FC<
-  Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+export const LeaveStatusBadge: React.FC<Omit<StatusBadgeProps, "statusMap">> = (
+  props,
+) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * CRM客户状态徽章
  */
 export const CustomerStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * CRM商机状态徽章
  */
 export const OpportunityStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * 项目状态徽章
  */
 export const ProjectStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * 工作流状态徽章
  */
 export const WorkflowStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * 财务状态徽章
  */
 export const FinanceStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 /**
  * Dashboard模块状态徽章
  */
 export const ModuleStatusBadge: React.FC<
   Omit<StatusBadgeProps, "statusMap">
-> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+> = (props) => <StatusBadge {...props} statusMap={DEFAULT_STATUS_MAP} />;
 
 // ============ 默认导出 ============
 

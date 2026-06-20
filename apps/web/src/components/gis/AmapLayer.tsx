@@ -2,6 +2,7 @@ import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import type { DevicePoint, StorageLocation } from "../../api/gis";
 import config from "../../config/runtime";
+import { logger } from "@/utils/logger";
 
 interface AmapLayerProps {
   devicePoints: DevicePoint[];
@@ -64,8 +65,9 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
           };
         })
         .catch((error) => {
-          console.error("高德地图加载失败:", error);
+          logger.error("高德地图加载失败:", error);
         });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -74,6 +76,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       mapRef.current.plugin(["AMap.Marker"], () => {
         updateMarkers((window as any).AMap, mapRef.current);
       });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [devicePoints, storageLocations]);
 
     const updateMarkers = (AMap: any, map: any) => {

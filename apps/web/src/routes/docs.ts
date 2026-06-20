@@ -2,9 +2,15 @@ import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
 const DocumentsPage = lazy(() => import("../pages/common/DocumentsPage"));
-const DocumentsDashboardPage = lazy(() => import("../pages/common/DashboardPage"));
-const DocumentCenterPage = lazy(() => import("../pages/common/DocumentCenterPage"));
-const KnowledgeBasePage = lazy(() => import("../pages/common/KnowledgeBasePage"));
+const DocumentsDashboardPage = lazy(
+  () => import("../pages/common/DashboardPage"),
+);
+const DocumentCenterPage = lazy(
+  () => import("../pages/common/DocumentCenterPage"),
+);
+const KnowledgeBasePage = lazy(
+  () => import("../pages/common/KnowledgeBasePage"),
+);
 const TemplateManagementPage = lazy(
   () => import("../pages/templates/TemplateManagementPage"),
 );
