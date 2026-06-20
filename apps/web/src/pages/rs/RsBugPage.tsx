@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Container,
@@ -36,6 +36,7 @@ import {
   Filter,
   CheckCircle,
 } from "lucide-react";
+import { DataExport } from "@/components/common";
 
 interface Bug {
   id: string;
@@ -276,6 +277,20 @@ const RsBugPage: React.FC = () => {
     setBugs(bugs.map((b) => (b.id === bugId ? { ...b, status: "closed" } : b)));
   };
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "bug_no", title: "缺陷编号" },
+      { key: "bug_title", title: "缺陷标题" },
+      { key: "severity", title: "严重程度" },
+      { key: "priority", title: "优先级" },
+      { key: "status", title: "状态" },
+      { key: "assignee", title: "指派给" },
+      { key: "create_time", title: "创建时间" },
+    ],
+    [],
+  );
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
@@ -290,14 +305,22 @@ const RsBugPage: React.FC = () => {
           <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             缺陷管理
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Plus size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-            onClick={() => setNewBugDialogOpen(true)}
-          >
-            新建缺陷
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <DataExport
+              data={bugs as Record<string, unknown>[]}
+              fields={exportFields}
+              defaultFileName="缺陷数据"
+              buttonText="导出"
+            />
+            <Button
+              variant="contained"
+              startIcon={<Plus size={18} />}
+              sx={{ bgcolor: "#3b82f6" }}
+              onClick={() => setNewBugDialogOpen(true)}
+            >
+              新建缺陷
+            </Button>
+          </Box>
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>

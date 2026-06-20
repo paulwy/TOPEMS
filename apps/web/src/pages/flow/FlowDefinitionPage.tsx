@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -19,6 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FileUpload } from "@/components/common";
+import { DataExport } from "@/components/common";
 import {
   Eye,
   Plus,
@@ -195,6 +196,19 @@ const FlowDefinitionPage: React.FC = () => {
     );
   };
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "name", title: "流程名称" },
+      { key: "type", title: "流程类型" },
+      { key: "version", title: "版本" },
+      { key: "status", title: "状态" },
+      { key: "creator", title: "创建人" },
+      { key: "createdAt", title: "创建时间" },
+    ],
+    [],
+  );
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       <Box
@@ -275,6 +289,12 @@ const FlowDefinitionPage: React.FC = () => {
               <MenuItem value="inactive">已禁用</MenuItem>
             </Select>
           </FormControl>
+          <DataExport
+            data={data as Record<string, unknown>[]}
+            fields={exportFields}
+            defaultFileName="流程定义数据"
+            buttonText="导出"
+          />
           <Button
             variant="contained"
             startIcon={<Plus size={16} />}
