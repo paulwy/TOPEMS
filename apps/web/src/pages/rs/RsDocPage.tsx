@@ -27,6 +27,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
+import { FileUpload } from "@/components/common";
 import {
   Plus,
   Search,
@@ -62,7 +63,9 @@ const RsDocPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [newDocDialogOpen, setNewDocDialogOpen] = useState(false);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [attachments, setAttachments] = useState<string[]>([]);
   const [newDocForm, setNewDocForm] = useState({
     doc_name: "",
     doc_type: "设计文档",
@@ -228,7 +231,7 @@ const RsDocPage: React.FC = () => {
             文档管理
           </Typography>
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<Upload size={18} />}>
+            <Button variant="outlined" startIcon={<Upload size={18} />} onClick={() => setUploadDialogOpen(true)}>
               上传
             </Button>
             <Button
@@ -512,6 +515,40 @@ const RsDocPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setVersionDialogOpen(false)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>上传文档</DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <FileUpload
+              value={attachments}
+              onChange={setAttachments}
+              accept={["pdf", "doc", "docx", "xls", "xlsx", "txt", "md"]}
+              maxCount={10}
+              maxSize={50}
+              maxTotalSize={200}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUploadDialogOpen(false)}>关闭</Button>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={() => {
+              console.log("上传的文件:", attachments);
+              setUploadDialogOpen(false);
+            }}
+          >
+            完成上传
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

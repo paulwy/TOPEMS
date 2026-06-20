@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Card, CardContent, Button } from "@mui/material";
 import { Grid } from "@/components/Grid";
+import { QuickSearch } from "@/components/common";
 import { FileText, FolderOpen, Clock, Star, ArrowRight } from "lucide-react";
 import PieChartComponent from "../../components/charts/PieChart";
 
@@ -84,14 +85,26 @@ export const DashboardPage: React.FC = () => {
           padding: "24px 32px",
           background: "white",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
-          文档中心
-        </Typography>
-        <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
-          {getGreeting()}，文档管理与协作
-        </Typography>
+        <Box>
+          <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
+            文档中心
+          </Typography>
+          <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
+            {getGreeting()}，文档管理与协作
+          </Typography>
+        </Box>
+        <QuickSearch
+          placeholder="搜索文档..."
+          onSearch={(query) => {
+            navigate(`/documents?search=${encodeURIComponent(query)}`);
+          }}
+          width={320}
+        />
       </Box>
 
       <Box sx={{ padding: "24px 32px" }}>

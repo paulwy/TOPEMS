@@ -66,7 +66,7 @@ import {
   AIDataCompleter,
   AIFormValidator,
 } from "@/components/ai";
-import type { CompletionItem } from "@/types/ai";
+import { ImageUpload, DataExport } from "@/components/common";
 
 type ViewMode = "list" | "tree";
 
@@ -589,6 +589,19 @@ const HrmEmployeePage: React.FC = () => {
     [departments, getStatusBadge],
   );
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "name", title: "员工姓名" },
+      { key: "employee_no", title: "工号" },
+      { key: "position", title: "职位" },
+      { key: "email", title: "邮箱" },
+      { key: "phone", title: "电话" },
+      { key: "status", title: "状态" },
+    ],
+    [],
+  );
+
   // 行操作
   const rowActions = useMemo<RowAction<Employee>[]>(
     () => [
@@ -795,6 +808,12 @@ const HrmEmployeePage: React.FC = () => {
               树形
             </Button>
           </Box>
+          <DataExport
+            data={data.items as Record<string, unknown>[]}
+            fields={exportFields}
+            defaultFileName="员工数据"
+            buttonText="导出"
+          />
           <Button
             variant="contained"
             startIcon={<Plus style={{ width: 18, height: 18 }} />}
@@ -1098,6 +1117,21 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             ))}
           </Select>
         </FormControl>
+
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+            员工头像
+          </Typography>
+          <ImageUpload
+            value={(formData as Employee)?.avatar_url ? [(formData as Employee).avatar_url as string] : []}
+            onChange={(files) => onChange("avatar_url", files[0] || "")}
+            maxCount={1}
+            accept="image/*"
+            cropEnabled
+            cropAspect={1}
+            height={120}
+          />
+        </Box>
 
         <Box sx={{ display: "grid", gridTemplateColumns: 2, gap: 2 }}>
           <TextField

@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { DataExport } from "@/components/common";
 
 import {
   Button,
@@ -183,14 +184,6 @@ const FinanceLedgerPage: React.FC = () => {
     setShowDetailModal(true);
   };
 
-  const handleExport = () => {
-    addNotification({
-      title: "导出成功",
-      message: "总账数据已导出",
-      type: "success",
-    });
-  };
-
   const columns = useMemo<ColumnDef<LedgerEntry>[]>(
     () => [
       {
@@ -343,13 +336,20 @@ const FinanceLedgerPage: React.FC = () => {
               </Box>
             </Stack>
             <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<Download sx={{ width: 20, height: 20 }} />}
-                onClick={handleExport}
-              >
-                导出
-              </Button>
+              <DataExport
+                data={filteredData as Record<string, unknown>[]}
+                fields={[
+                  { key: "account_code", title: "科目编码" },
+                  { key: "account_name", title: "科目名称" },
+                  { key: "category", title: "类别" },
+                  { key: "opening_balance", title: "期初余额" },
+                  { key: "debit_amount", title: "借方发生额" },
+                  { key: "credit_amount", title: "贷方发生额" },
+                  { key: "closing_balance", title: "期末余额" },
+                ]}
+                defaultFileName="总账数据"
+                buttonText="导出"
+              />
             </Stack>
           </Stack>
         </Box>
