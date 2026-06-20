@@ -17,7 +17,7 @@ import {
  * 查看资产负债表、利润表、现金流量表
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart3,
@@ -31,7 +31,11 @@ import {
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
+  Wallet,
+  Briefcase,
+  PiggyBank,
 } from "lucide-react";
+import { StatCardGroup } from "@/components/mui";
 import {
   useBalanceSheet,
   useIncomeStatement,
@@ -63,6 +67,14 @@ const REPORT_TYPE_CONFIG = {
     bgColor: "purple.100",
   },
 };
+
+type ColorType =
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info";
 
 export default function FinancialReportsPage() {
   const navigate = useNavigate();
@@ -103,6 +115,97 @@ export default function FinancialReportsPage() {
       : reportType === "income_statement"
         ? incomeStatement
         : cashFlowStatement;
+
+  // 统计卡片数据
+  const statCards = useMemo(() => {
+    if (!currentReport) return [];
+
+    const getColor = (condition: boolean): ColorType =>
+      condition ? "success" : "error";
+
+    if (reportType === "balance_sheet") {
+      return [
+        {
+          title: "总资产",
+          value: formatCurrency(currentReport?.assets?.total),
+          icon: <Wallet size={24} />,
+          color: "primary" as ColorType,
+        },
+        {
+          title: "总负债",
+          value: formatCurrency(currentReport?.liabilities?.total),
+          icon: <Briefcase size={24} />,
+          color: "warning" as ColorType,
+        },
+        {
+          title: "所有者权益",
+          value: formatCurrency(currentReport?.equity?.total),
+          icon: <PiggyBank size={24} />,
+          color: "success" as ColorType,
+        },
+        {
+          title: "流动资产",
+          value: formatCurrency(currentReport?.assets?.current?.total),
+          icon: <DollarSign size={24} />,
+          color: "info" as ColorType,
+        },
+      ];
+    } else if (reportType === "income_statement") {
+      return [
+        {
+          title: "营业收入",
+          value: formatCurrency(currentReport?.revenue?.total),
+          icon: <TrendingUp size={24} />,
+          color: "success" as ColorType,
+        },
+        {
+          title: "营业成本",
+          value: formatCurrency(currentReport?.cost_of_sales?.total),
+          icon: <TrendingDown size={24} />,
+          color: "error" as ColorType,
+        },
+        {
+          title: "毛利润",
+          value: formatCurrency(currentReport?.gross_profit),
+          icon: <Wallet size={24} />,
+          color: "primary" as ColorType,
+        },
+        {
+          title: "净利润",
+          value: formatCurrency(currentReport?.net_profit),
+          icon: <PiggyBank size={24} />,
+          color: getColor(currentReport?.net_profit >= 0),
+        },
+      ];
+    } else {
+      return [
+        {
+          title: "经营活动净流量",
+          value: formatCurrency(currentReport?.operating?.net_flow),
+          icon: <TrendingUp size={24} />,
+          color: getColor(currentReport?.operating?.net_flow >= 0),
+        },
+        {
+          title: "投资活动净流量",
+          value: formatCurrency(currentReport?.investing?.net_flow),
+          icon: <Briefcase size={24} />,
+          color: getColor(currentReport?.investing?.net_flow >= 0),
+        },
+        {
+          title: "筹资活动净流量",
+          value: formatCurrency(currentReport?.financing?.net_flow),
+          icon: <DollarSign size={24} />,
+          color: getColor(currentReport?.financing?.net_flow >= 0),
+        },
+        {
+          title: "现金净增加额",
+          value: formatCurrency(currentReport?.cash_equivalent_change),
+          icon: <Wallet size={24} />,
+          color: getColor(currentReport?.cash_equivalent_change >= 0),
+        },
+      ];
+    }
+  }, [currentReport, reportType]);
 
   // 处理生成报表
   const handleGenerate = async () => {
@@ -181,6 +284,13 @@ export default function FinancialReportsPage() {
           </FormControl>
         </Box>
       </Box>
+
+      {/* 统计卡片 */}
+      {currentReport && (
+        <Box sx={{ mb: 3 }}>
+          <StatCardGroup stats={statCards} columns={4} />
+        </Box>
+      )}
 
       {/* 筛选条件 */}
       <Card sx={{ mb: 3 }}>

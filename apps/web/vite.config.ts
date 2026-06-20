@@ -119,6 +119,7 @@ export default defineConfig({
       '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
       '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
+      'react-transition-group/TransitionGroupContext': 'react-transition-group/cjs/TransitionGroupContext.js',
     },
     dedupe: ['react', 'react-dom', 'scheduler'],
   },
@@ -211,6 +212,12 @@ export default defineConfig({
       },
       
       // ========== [IAM 服务代理] ==========
+      // IAM 登录专用路由（必须在 /iam/api 之前）
+      '/iam/api/iam/auth/login': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\/auth\//, '/api/v1/auth/'),
+      },
       '/iam/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -224,7 +231,7 @@ export default defineConfig({
       '/flow': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/flow(\/.*)$/, '/api/core/flow$1'),
+        rewrite: (path: string) => path.replace(/^\/flow(\/.*)$/, '/api/flow$1'),
       },
       '/file': {
         target: 'http://localhost:8000',

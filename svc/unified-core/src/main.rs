@@ -158,6 +158,8 @@ async fn main() {
         .route("/api/core/iam/users/{id}", get(modules::iam::user::get_user))
         .route("/api/core/iam/users/{id}", put(modules::iam::user::update_user))
         .route("/api/core/iam/users/{id}", delete(modules::iam::user::delete_user))
+        .route("/api/core/iam/users/me", get(modules::iam::user::get_current_user))
+        .route("/api/iam/users/me", get(modules::iam::user::get_current_user))
         .route("/api/core/iam/users/{id}/disable", post(modules::iam::user::disable_user))
         .route("/api/core/iam/users/{id}/enable", post(modules::iam::user::enable_user))
         .route("/api/core/iam/users/{id}/password", put(modules::iam::user::change_password))

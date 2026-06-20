@@ -26,10 +26,13 @@ import {
 } from "@/api/hrm";
 import { useAppStore } from "../../store";
 import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import {
+  ListPageTemplate,
+  type ColumnDef as ListColumnDef,
+} from "@/components/mui";
+import type { StatCard } from "@/components/templates/DashboardTemplate";
 import type { OrganizationFilterValue } from "@/components/ui/OrganizationFilter";
 import OrganizationFilter from "@/components/ui/OrganizationFilter";
-import { MetricCard } from "@/components/MetricCard";
 import { StatsChart } from "@/components/StatsChart";
 
 import {
@@ -53,6 +56,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { ModeToggle } from "@/components/ModeToggle";
+import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 
 const FinanceExpensePage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,6 +92,7 @@ const FinanceExpensePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationFilter]);
 
   const loadData = async () => {
@@ -443,8 +448,8 @@ const FinanceExpensePage: React.FC = () => {
   const advancedFilters = useMemo(
     () => [
       {
+        id: "status",
         label: "状态",
-        key: "status",
         type: "select" as const,
         options: [
           { value: "pending", label: "待审批" },
@@ -456,8 +461,8 @@ const FinanceExpensePage: React.FC = () => {
         onChange: setFilterStatus,
       },
       {
+        id: "expense_type",
         label: "费用类型",
-        key: "expense_type",
         type: "select" as const,
         options: [
           { value: "travel", label: "差旅费" },
@@ -475,21 +480,21 @@ const FinanceExpensePage: React.FC = () => {
     [filterStatus, filterType],
   );
 
-  const columns = useMemo<ColumnDef<Expense>[]>(
+  const columns = useMemo<ListColumnDef<Expense>[]>(
     () => [
       {
-        accessorKey: "expense_number",
-        header: "报销编号",
-        cell: ({ row }) => (
+        id: "expense_number",
+        label: "报销编号",
+        render: (row) => (
           <Box sx={{ fontWeight: 500, color: "primary.main" }}>
-            {row.original.expense_number}
+            {row.expense_number}
           </Box>
         ),
       },
       {
-        accessorKey: "applicant_name",
-        header: "申请人",
-        cell: ({ row }) => (
+        id: "applicant_name",
+        label: "申请人",
+        render: (row) => (
           <Box
             sx={{
               display: "flex",
@@ -500,41 +505,41 @@ const FinanceExpensePage: React.FC = () => {
             <User
               sx={{ width: 16, height: 16, mr: 1, color: "primary.main" }}
             />
-            {getEmployeeName(row.original.applicant_name || "")}
+            {getEmployeeName(row.applicant_name || "")}
           </Box>
         ),
       },
       {
-        accessorKey: "department_id",
-        header: "部门",
-        cell: ({ row }) => (
+        id: "department_id",
+        label: "部门",
+        render: (row) => (
           <Box sx={{ color: "text.primary" }}>
-            {getDepartmentName(row.original.department_id || "")}
+            {getDepartmentName(row.department_id || "")}
           </Box>
         ),
       },
       {
-        accessorKey: "expense_type",
-        header: "费用类型",
-        cell: ({ row }) => (
+        id: "expense_type",
+        label: "费用类型",
+        render: (row) => (
           <Box sx={{ color: "text.primary" }}>
-            {getExpenseTypeName(row.original.expense_type || "")}
+            {getExpenseTypeName(row.expense_type || "")}
           </Box>
         ),
       },
       {
-        accessorKey: "amount",
-        header: "金额",
-        cell: ({ row }) => (
+        id: "amount",
+        label: "金额",
+        render: (row) => (
           <Box sx={{ fontWeight: 700, color: "success.main" }}>
-            ¥{row.original.amount.toLocaleString()}
+            ¥{row.amount.toLocaleString()}
           </Box>
         ),
       },
       {
-        accessorKey: "expense_date",
-        header: "日期",
-        cell: ({ row }) => (
+        id: "expense_date",
+        label: "日期",
+        render: (row) => (
           <Box
             sx={{
               display: "flex",
@@ -544,29 +549,27 @@ const FinanceExpensePage: React.FC = () => {
             }}
           >
             <Calendar sx={{ width: 12, height: 12, mr: 0.5 }} />
-            {row.original.expense_date?.split("T")[0] || "-"}
+            {row.expense_date?.split("T")[0] || "-"}
           </Box>
         ),
       },
       {
-        accessorKey: "receipt_count",
-        header: "票据数",
-        cell: ({ row }) => (
-          <Box sx={{ color: "text.primary" }}>
-            {row.original.receipt_count || 0} 张
-          </Box>
+        id: "receipt_count",
+        label: "票据数",
+        render: (row) => (
+          <Box sx={{ color: "text.primary" }}>{row.receipt_count || 0} 张</Box>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusChip(row.original.status),
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusChip(row.status),
       },
       {
         id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const expense = row.original;
+        label: "操作",
+        render: (row) => {
+          const expense = row;
           return (
             <Stack direction="row" spacing={1}>
               {expense.status === "pending" && (
@@ -602,6 +605,7 @@ const FinanceExpensePage: React.FC = () => {
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [departments],
   );
 
@@ -698,137 +702,68 @@ const FinanceExpensePage: React.FC = () => {
     [expenses],
   );
 
+  const statsCards: StatCard[] = [
+    {
+      id: "pending",
+      title: "待审批",
+      value: pendingCount,
+      color: "warning",
+      icon: <Clock size={20} />,
+    },
+    {
+      id: "approved",
+      title: "已审批",
+      value: approvedCount,
+      color: "primary",
+      icon: <Check size={20} />,
+    },
+    {
+      id: "reimbursed",
+      title: "已报销",
+      value: reimbursedCount,
+      color: "success",
+      icon: <DollarSign size={20} />,
+    },
+    {
+      id: "total",
+      title: "总金额",
+      value: `¥${totalAmount.toLocaleString()}`,
+      color: "secondary",
+      icon: <Send size={20} />,
+    },
+  ];
+
+  const listTemplateColumns = useMemo(() => {
+    return columns.map((col) => ({
+      id: col.id,
+      label: col.label,
+      render: col.render,
+      align: col.align as "left" | "center" | "right" | undefined,
+      sortable: col.sortable,
+      width: col.width,
+      minWidth: col.minWidth,
+    }));
+  }, [columns]);
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: "sm",
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Box
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
+    <DashboardTemplate
+      title="费用报销"
+      subtitle="管理员工费用报销申请，审批报销流程"
+      stats={statsCards}
+      onRefresh={loadData}
+      headerContent={
+        <Stack direction="row" spacing={1}>
+          <ModeToggle />
+          <Button
+            variant="contained"
+            startIcon={<Plus sx={{ width: 20, height: 20 }} />}
+            onClick={() => setShowCreateModal(true)}
           >
-            <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
-              <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: 700,
-                  }}
-                >
-                  <FileText
-                    sx={{ width: 28, height: 28, mr: 1.5, color: "indigo.600" }}
-                  />
-                  费用报销
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  管理员工费用报销申请，审批报销流程
-                </Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <ModeToggle />
-              <Button
-                variant="contained"
-                startIcon={<Plus sx={{ width: 20, height: 20 }} />}
-                onClick={() => setShowCreateModal(true)}
-              >
-                新建报销
-              </Button>
-            </Stack>
-          </Stack>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <MetricCard
-            title="待审批"
-            value={expenseStats.pendingCount}
-            icon={<Clock sx={{ width: 20, height: 20 }} />}
-            trend={null}
-            color="orange"
-          />
-          <MetricCard
-            title="已审批"
-            value={expenseStats.approvedCount}
-            icon={<Check sx={{ width: 20, height: 20 }} />}
-            trend={null}
-            color="blue"
-          />
-          <MetricCard
-            title="已报销"
-            value={expenseStats.reimbursedCount}
-            icon={<DollarSign sx={{ width: 20, height: 20 }} />}
-            trend={null}
-            color="green"
-          />
-          <MetricCard
-            title="总金额"
-            value={`¥${expenseStats.totalAmount.toLocaleString()}`}
-            icon={<Send sx={{ width: 20, height: 20 }} />}
-            trend={null}
-            color="purple"
-          />
-        </Box>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <MetricCard
-            title="已拒绝"
-            value={expenseStats.rejectedCount}
-            icon={<AlertCircle sx={{ width: 20, height: 20 }} />}
-            trend={null}
-            color="red"
-          />
-          <MetricCard
-            title="费用总数"
-            value={expenseStats.totalExpenses}
-            icon={<FileText sx={{ width: 20, height: 20 }} />}
-            trend={null}
-            color="blue"
-          />
-          <MetricCard
-            title="平均金额"
-            value={`¥${Math.round(expenseStats.avgAmount).toLocaleString()}`}
-            icon={<DollarSign sx={{ width: 20, height: 20 }} />}
-            trend={null}
-            color="teal"
-          />
-        </Box>
-
+            新建报销
+          </Button>
+        </Stack>
+      }
+      chartsArea={
         <Box
           sx={{
             display: "grid",
@@ -865,128 +800,125 @@ const FinanceExpensePage: React.FC = () => {
             <StatsChart type="bar" data={expenseTypeData} height={250} />
           </Box>
         </Box>
-
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-          }}
-          spacing={2}
+      }
+      charts={[]}
+    >
+      <Stack
+        sx={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+        spacing={2}
+      >
+        <OrganizationFilter
+          value={organizationFilter}
+          onChange={setOrganizationFilter}
+          showCompany={true}
+          showDepartment={true}
+          showEmployee={true}
+        />
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
+          onClick={loadData}
         >
-          <OrganizationFilter
-            value={organizationFilter}
-            onChange={setOrganizationFilter}
-            showCompany={true}
-            showDepartment={true}
-            showEmployee={true}
-          />
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
-            onClick={loadData}
-          >
-            刷新
-          </Button>
-        </Stack>
+          刷新
+        </Button>
+      </Stack>
 
-        {selectedIds.length > 0 && (
-          <Card sx={{ mb: 2, bgcolor: "action.selected" }}>
-            <CardContent>
-              <Stack
-                direction="row"
-                sx={{ justifyContent: "space-between", alignItems: "center" }}
-              >
-                <Typography variant="body2" color="primary">
-                  已选择 <Chip label={selectedIds.length} size="small" /> 条记录
-                </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="success"
-                    startIcon={<Check sx={{ width: 16, height: 16 }} />}
-                    onClick={handleBatchApprove}
-                  >
-                    批量审批
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="warning"
-                    startIcon={<AlertCircle sx={{ width: 16, height: 16 }} />}
-                    onClick={handleBatchReject}
-                  >
-                    批量拒绝
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="error"
-                    startIcon={<Trash2 sx={{ width: 16, height: 16 }} />}
-                    onClick={handleBatchDelete}
-                  >
-                    批量删除
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setSelectedIds([])}
-                  >
-                    取消选择
-                  </Button>
-                </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
+      {selectedIds.length > 0 && (
+        <Card sx={{ mb: 2, bgcolor: "action.selected" }}>
           <CardContent>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    animation: "spin 1s linear infinite",
-                    borderRadius: "50%",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "primary.main",
-                    borderTopColor: "transparent",
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1 }}
+            <Stack
+              direction="row"
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
+            >
+              <Typography variant="body2" color="primary">
+                已选择 <Chip label={selectedIds.length} size="small" /> 条记录
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="success"
+                  startIcon={<Check sx={{ width: 16, height: 16 }} />}
+                  onClick={handleBatchApprove}
                 >
-                  加载中...
-                </Typography>
-              </Box>
-            ) : (
-              <EnhancedDataTable
-                columns={columns}
-                data={filteredExpenses}
-                searchPlaceholder="搜索报销编号、申请人..."
-                searchKey="expense_number"
-                loading={loading}
-                enableSelection={true}
-                selectedIds={selectedIds}
-                onSelectionChange={setSelectedIds}
-                selectionKey="id"
-                enableAdvancedFilter={true}
-                advancedFilters={advancedFilters}
-                exportFileName="expense-report"
-                onRefresh={loadData}
-              />
-            )}
+                  批量审批
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="warning"
+                  startIcon={<AlertCircle sx={{ width: 16, height: 16 }} />}
+                  onClick={handleBatchReject}
+                >
+                  批量拒绝
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="error"
+                  startIcon={<Trash2 sx={{ width: 16, height: 16 }} />}
+                  onClick={handleBatchDelete}
+                >
+                  批量删除
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setSelectedIds([])}
+                >
+                  取消选择
+                </Button>
+              </Stack>
+            </Stack>
           </CardContent>
         </Card>
-      </Box>
+      )}
+
+      <ListPageTemplate
+        columns={listTemplateColumns}
+        data={filteredExpenses}
+        loading={loading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={(ids) => setSelectedIds(ids as string[])}
+        getRowId={(row) => row.id}
+        searchable
+        searchPlaceholder="搜索报销编号、申请人..."
+        filters={advancedFilters}
+        onFilterChange={(filters) => {
+          if (filters.status) setFilterStatus(filters.status);
+          if (filters.expense_type) setFilterType(filters.expense_type);
+        }}
+        onRefresh={loadData}
+        batchActions={[
+          {
+            label: "批量审批",
+            icon: <Check size={16} />,
+            color: "success",
+            onClick: handleBatchApprove,
+          },
+          {
+            label: "批量拒绝",
+            icon: <AlertCircle size={16} />,
+            color: "warning",
+            onClick: handleBatchReject,
+          },
+          {
+            label: "批量删除",
+            icon: <Trash2 size={16} />,
+            color: "error",
+            confirm: true,
+            confirmMessage: `确定要删除选中的 ${selectedIds.length} 条费用报销记录吗？`,
+            onClick: handleBatchDelete,
+          },
+        ]}
+      />
 
       {/* Create Dialog */}
       <Dialog
@@ -1301,7 +1233,7 @@ const FinanceExpensePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </DashboardTemplate>
   );
 };
 

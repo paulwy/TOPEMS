@@ -39,8 +39,7 @@ import {
 } from "@mui/material";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
-import { MetricCard } from "@/components/bi/MetricCard";
-import { StatsChart } from "@/components/bi/StatsChart";
+import { StatCardGroup } from "@/components/mui";
 import { StatusBadge } from "@/components/hrm/StatusBadge";
 
 interface AttendanceRecord {
@@ -704,119 +703,59 @@ const HrmAttendancePage: React.FC = () => {
         {activeTab === "statistics" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* 统计卡片 */}
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  md: "repeat(2, 1fr)",
-                  lg: "repeat(4, 1fr)",
+            <StatCardGroup
+              stats={[
+                {
+                  title: "总员工数",
+                  value: attendanceStats.totalEmployees,
+                  icon: <Users size={20} />,
+                  color: "primary",
                 },
-                gap: 2,
-              }}
-            >
-              <MetricCard
-                title="总员工数"
-                value={attendanceStats.totalEmployees}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <Users size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="blue"
-              />
-              <MetricCard
-                title="出勤人数"
-                value={attendanceStats.totalPresent}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <CheckCircle size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="green"
-              />
-              <MetricCard
-                title="出勤率"
-                value={`${attendanceStats.presentRate}%`}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <BarChart3 size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="blue"
-              />
-              <MetricCard
-                title="平均工时"
-                value={`${attendanceStats.avgWorkHours}h`}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <Clock size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="purple"
-              />
-            </Box>
-
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  md: "repeat(2, 1fr)",
-                  lg: "repeat(4, 1fr)",
+                {
+                  title: "出勤人数",
+                  value: attendanceStats.totalPresent,
+                  icon: <CheckCircle size={20} />,
+                  color: "success",
                 },
-                gap: 2,
-              }}
-            >
-              <MetricCard
-                title="迟到人数"
-                value={attendanceStats.totalLate}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <AlertCircle size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="yellow"
-              />
-              <MetricCard
-                title="缺勤人数"
-                value={attendanceStats.totalAbsent}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <XCircle size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="red"
-              />
-              <MetricCard
-                title="待审批请假"
-                value={attendanceStats.pendingLeaves}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <Clock size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="orange"
-              />
-              <MetricCard
-                title="准时率"
-                value={`${attendanceStats.avgOnTimeRate}%`}
-                icon={
-                  <Box sx={{ display: "flex" }}>
-                    <CheckCircle size={20} />
-                  </Box>
-                }
-                trend={null}
-                color="green"
-              />
-            </Box>
+                {
+                  title: "出勤率",
+                  value: `${attendanceStats.presentRate}%`,
+                  icon: <BarChart3 size={20} />,
+                  color: "primary",
+                },
+                {
+                  title: "平均工时",
+                  value: `${attendanceStats.avgWorkHours}h`,
+                  icon: <Clock size={20} />,
+                  color: "secondary",
+                },
+                {
+                  title: "迟到人数",
+                  value: attendanceStats.totalLate,
+                  icon: <AlertCircle size={20} />,
+                  color: "warning",
+                },
+                {
+                  title: "缺勤人数",
+                  value: attendanceStats.totalAbsent,
+                  icon: <XCircle size={20} />,
+                  color: "error",
+                },
+                {
+                  title: "待审批请假",
+                  value: attendanceStats.pendingLeaves,
+                  icon: <Clock size={20} />,
+                  color: "warning",
+                },
+                {
+                  title: "准时率",
+                  value: `${attendanceStats.avgOnTimeRate}%`,
+                  icon: <CheckCircle size={20} />,
+                  color: "success",
+                },
+              ]}
+              columns={4}
+            />
 
             {/* 图表区域 */}
             <Box
@@ -829,22 +768,66 @@ const HrmAttendancePage: React.FC = () => {
               <Card sx={{ borderRadius: 2 }}>
                 <CardHeader title="考勤状态分布" />
                 <CardContent>
-                  <StatsChart
-                    type="pie"
-                    data={attendanceStatusData}
-                    height={250}
-                  />
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                    {attendanceStatusData.map((item) => (
+                      <Box
+                        key={item.name}
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            bgcolor: item.color,
+                          }}
+                        />
+                        <Typography variant="body2">
+                          {item.name}: {item.value}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
                 </CardContent>
               </Card>
 
               <Card sx={{ borderRadius: 2 }}>
                 <CardHeader title="部门出勤率对比" />
                 <CardContent>
-                  <StatsChart
-                    type="bar"
-                    data={departmentOnTimeData}
-                    height={250}
-                  />
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    {departmentOnTimeData.map((item) => (
+                      <Box
+                        key={item.name}
+                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                      >
+                        <Typography variant="body2" sx={{ width: 80 }}>
+                          {item.name}
+                        </Typography>
+                        <Box
+                          sx={{
+                            flex: 1,
+                            bgcolor: "grey.200",
+                            borderRadius: 1,
+                            height: 8,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: `${item.value}%`,
+                              bgcolor: item.color,
+                              height: "100%",
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="body2" sx={{ width: 50 }}>
+                          {item.value}%
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
                 </CardContent>
               </Card>
             </Box>
@@ -852,11 +835,26 @@ const HrmAttendancePage: React.FC = () => {
             <Card sx={{ borderRadius: 2 }}>
               <CardHeader title="各部门出勤人数" />
               <CardContent>
-                <StatsChart
-                  type="bar"
-                  data={departmentAttendanceData}
-                  height={300}
-                />
+                <Box sx={{ display: "flex", gap: 4 }}>
+                  {departmentAttendanceData.map((item) => (
+                    <Box
+                      key={item.name}
+                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: "50%",
+                          bgcolor: item.color,
+                        }}
+                      />
+                      <Typography variant="body2">
+                        {item.name}: {item.value}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
               </CardContent>
             </Card>
 

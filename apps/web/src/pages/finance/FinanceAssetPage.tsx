@@ -8,12 +8,16 @@ import {
   Calculator,
   AlertTriangle,
   Search,
+  Package,
+  CheckCircle,
+  PauseCircle,
+  XCircle,
+  DollarSign,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
 import { DataExport } from "@/components/common";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate, StatCardGroup } from "@/components/mui";
 
 import {
   Box,
@@ -23,8 +27,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -171,6 +173,62 @@ const FinanceAssetPage: React.FC = () => {
     });
   }, [assetData, filterCategory, filterStatus, searchQuery]);
 
+  // 统计卡片数据
+  const statCards = useMemo(() => {
+    const totalCount = assetData.length;
+    const inUseCount = assetData.filter(
+      (a) => a.usage_status === "使用中",
+    ).length;
+    const idleCount = assetData.filter((a) => a.usage_status === "闲置").length;
+    const scrappedCount = assetData.filter(
+      (a) => a.usage_status === "已报废",
+    ).length;
+    const totalOriginalValue = assetData.reduce(
+      (sum, a) => sum + a.original_value,
+      0,
+    );
+    const totalNetValue = assetData.reduce((sum, a) => sum + a.net_value, 0);
+
+    return [
+      {
+        title: "总资产数",
+        value: totalCount,
+        icon: <Package size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "使用中",
+        value: inUseCount,
+        icon: <CheckCircle size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "闲置",
+        value: idleCount,
+        icon: <PauseCircle size={24} />,
+        color: "warning" as const,
+      },
+      {
+        title: "已报废",
+        value: scrappedCount,
+        icon: <XCircle size={24} />,
+        color: "error" as const,
+      },
+      {
+        title: "总原值",
+        value: `¥${totalOriginalValue.toLocaleString()}`,
+        icon: <DollarSign size={24} />,
+        color: "secondary" as const,
+      },
+      {
+        title: "总净值",
+        value: `¥${totalNetValue.toLocaleString()}`,
+        icon: <DollarSign size={24} />,
+        color: "info" as const,
+      },
+    ];
+  }, [assetData]);
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, "success" | "warning" | "error" | "default"> =
       {
@@ -280,53 +338,53 @@ const FinanceAssetPage: React.FC = () => {
     });
   };
 
-  const columns = useMemo<ColumnDef<Asset>[]>(
+  const columns = useMemo(
     () => [
       {
-        accessorKey: "asset_code",
-        header: "资产编号",
-        cell: ({ row }) => (
+        id: "asset_code",
+        label: "资产编号",
+        render: (row: Asset) => (
           <MuiBox sx={{ fontWeight: 600, color: "success.main" }}>
-            {row.original.asset_code}
+            {row.asset_code}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "asset_name",
-        header: "资产名称",
-        cell: ({ row }) => (
-          <MuiBox sx={{ fontWeight: 500 }}>{row.original.asset_name}</MuiBox>
+        id: "asset_name",
+        label: "资产名称",
+        render: (row: Asset) => (
+          <MuiBox sx={{ fontWeight: 500 }}>{row.asset_name}</MuiBox>
         ),
       },
       {
-        accessorKey: "asset_category",
-        header: "资产类别",
-        cell: ({ row }) => (
-          <Chip label={row.original.asset_category} size="small" />
+        id: "asset_category",
+        label: "资产类别",
+        render: (row: Asset) => (
+          <Chip label={row.asset_category} size="small" />
         ),
       },
       {
-        accessorKey: "original_value",
-        header: "原值",
-        cell: ({ row }) => (
+        id: "original_value",
+        label: "原值",
+        render: (row: Asset) => (
           <MuiBox sx={{ fontFamily: "monospace" }}>
-            ¥{row.original.original_value.toLocaleString()}
+            ¥{row.original_value.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "accumulated_depreciation",
-        header: "累计折旧",
-        cell: ({ row }) => (
+        id: "accumulated_depreciation",
+        label: "累计折旧",
+        render: (row: Asset) => (
           <MuiBox sx={{ color: "warning.main", fontFamily: "monospace" }}>
-            ¥{row.original.accumulated_depreciation.toLocaleString()}
+            ¥{row.accumulated_depreciation.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "net_value",
-        header: "净值",
-        cell: ({ row }) => (
+        id: "net_value",
+        label: "净值",
+        render: (row: Asset) => (
           <MuiBox
             sx={{
               fontWeight: 700,
@@ -334,70 +392,60 @@ const FinanceAssetPage: React.FC = () => {
               fontFamily: "monospace",
             }}
           >
-            ¥{row.original.net_value.toLocaleString()}
+            ¥{row.net_value.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "usage_status",
-        header: "使用状态",
-        cell: ({ row }) => (
+        id: "usage_status",
+        label: "使用状态",
+        render: (row: Asset) => (
           <Chip
-            label={row.original.usage_status}
+            label={row.usage_status}
             size="small"
-            color={getStatusColor(row.original.usage_status)}
+            color={getStatusColor(row.usage_status)}
           />
-        ),
-      },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            <Tooltip title="计提折旧">
-              <IconButton
-                size="small"
-                color="success"
-                onClick={() => handleDepreciation(row.original)}
-              >
-                <Calculator sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="编辑">
-              <IconButton size="small" onClick={() => handleEdit(row.original)}>
-                <Edit sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="报废">
-              <IconButton
-                size="small"
-                color="warning"
-                onClick={() => handleScrap(row.original)}
-              >
-                <AlertTriangle sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="删除">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => handleDelete(row.original.id)}
-              >
-                <Trash2 sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
         ),
       },
     ],
     [],
   );
 
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "计提折旧",
+        icon: <Calculator sx={{ width: 16, height: 16 }} />,
+        color: "success" as const,
+        onClick: (row: Asset) => handleDepreciation(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit sx={{ width: 16, height: 16 }} />,
+        onClick: (row: Asset) => handleEdit(row),
+      },
+      {
+        label: "报废",
+        icon: <AlertTriangle sx={{ width: 16, height: 16 }} />,
+        color: "warning" as const,
+        onClick: (row: Asset) => handleScrap(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error" as const,
+        onClick: (row: Asset) => handleDelete(row.id),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   const advancedFilters = useMemo(
     () => [
       {
+        id: "asset_category",
         label: "资产类别",
-        key: "asset_category",
         type: "select" as const,
         options: [
           { value: "生产设备", label: "生产设备" },
@@ -411,8 +459,8 @@ const FinanceAssetPage: React.FC = () => {
         onChange: setFilterCategory,
       },
       {
+        id: "usage_status",
         label: "使用状态",
-        key: "usage_status",
         type: "select" as const,
         options: [
           { value: "使用中", label: "使用中" },
@@ -504,7 +552,7 @@ const FinanceAssetPage: React.FC = () => {
                 导出
               </Button>
               <DataExport
-                data={assetData as Record<string, unknown>[]}
+                data={assetData as unknown as Record<string, unknown>[]}
                 fields={exportFields}
                 defaultFileName="资产数据"
                 buttonText="数据导出"
@@ -524,50 +572,29 @@ const FinanceAssetPage: React.FC = () => {
       <MuiBox
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
       >
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            gap: 2,
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
-            <TextField
-              size="small"
-              placeholder="搜索资产编号、名称..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ width: 280 }}
-            />
-          </Stack>
-        </Stack>
+        {/* 统计卡片 */}
+        <StatCardGroup stats={statCards} columns={6} />
 
-        <Card>
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredData}
-              searchPlaceholder="搜索资产..."
-              searchKey="asset_name"
-              enableAdvancedFilter={true}
-              advancedFilters={advancedFilters}
-              exportFileName="finance-assets"
-            />
-          </CardContent>
-        </Card>
+        <ListPageTemplate
+          columns={columns}
+          data={filteredData}
+          searchable
+          searchPlaceholder="搜索资产编号、名称..."
+          searchValue={searchQuery}
+          onSearch={setSearchQuery}
+          filters={advancedFilters}
+          filtersValue={{
+            asset_category: filterCategory,
+            usage_status: filterStatus,
+          }}
+          onFilterChange={(filters) => {
+            if (filters.asset_category !== undefined)
+              setFilterCategory(filters.asset_category as string);
+            if (filters.usage_status !== undefined)
+              setFilterStatus(filters.usage_status as string);
+          }}
+          rowActions={rowActions}
+        />
       </MuiBox>
 
       {/* Create Modal */}

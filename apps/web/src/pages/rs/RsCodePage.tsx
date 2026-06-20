@@ -193,7 +193,7 @@ const RsCodePage: React.FC = () => {
             代码管理
           </Typography>
           <DataExport
-            data={filteredRepos as Record<string, unknown>[]}
+            data={filteredRepos as unknown as Record<string, unknown>[]}
             fields={[
               { key: "repo_name", title: "仓库名称" },
               { key: "branch_name", title: "分支名称" },

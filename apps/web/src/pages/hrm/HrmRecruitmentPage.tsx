@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Typography, Chip } from "@mui/material";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
+import { StatCardGroup } from "@/components/mui";
 import {
   jobOpeningApi,
   candidateApi,
@@ -99,6 +100,7 @@ const HrmRecruitmentPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -477,6 +479,47 @@ const HrmRecruitmentPage: React.FC = () => {
             </Box>
           </Box>
         </Box>
+      </Box>
+
+      {/* 统计卡片 */}
+      <Box
+        sx={{
+          maxWidth: 1280,
+          mx: "auto",
+          px: { xs: 2, sm: 3, lg: 4 },
+          py: 3,
+        }}
+      >
+        <StatCardGroup
+          stats={[
+            {
+              title: "招聘岗位数",
+              value: positions.length,
+              icon: <Briefcase style={{ width: 24, height: 24 }} />,
+              color: "primary",
+            },
+            {
+              title: "候选人总数",
+              value: candidates.length,
+              icon: <Users style={{ width: 24, height: 24 }} />,
+              color: "secondary",
+            },
+            {
+              title: "面试安排数",
+              value: interviews.length,
+              icon: <Calendar style={{ width: 24, height: 24 }} />,
+              color: "warning",
+            },
+            {
+              title: "已录用数",
+              value: candidates.filter((c) => c.status === "hired").length,
+              icon: <CheckCircle style={{ width: 24, height: 24 }} />,
+              color: "success",
+            },
+          ]}
+          columns={4}
+          loading={loading}
+        />
       </Box>
 
       {/* Tabs */}

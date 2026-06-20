@@ -61,6 +61,7 @@ import {
   useConsolidationScopes,
 } from "@/hooks/useConsolidation";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { StatCardGroup } from "@/components/mui";
 import type {
   ConsolidationReport,
   ConsolidationReportLine,
@@ -71,33 +72,33 @@ import type {
 type ReportTypeConfig = {
   name: string;
   icon: React.ElementType;
-  color: string;
+  color: "primary" | "success" | "warning" | "error" | "secondary" | "info";
 };
 const REPORT_TYPE_CONFIG: Record<ConsolidationReportType, ReportTypeConfig> = {
   consolidated_balance_sheet: {
     name: "合并资产负债表",
     icon: Building2,
-    color: "text-blue-600",
+    color: "primary",
   },
   consolidated_income_statement: {
     name: "合并利润表",
     icon: TrendingUp,
-    color: "text-green-600",
+    color: "success",
   },
   consolidated_cash_flow: {
     name: "合并现金流量表",
     icon: DollarSign,
-    color: "text-purple-600",
+    color: "secondary",
   },
   consolidated_statement_changes: {
     name: "合并所有者权益变动表",
     icon: BarChart3,
-    color: "text-orange-600",
+    color: "warning",
   },
   elimination_work_sheet: {
     name: "抵消工作底稿",
     icon: FileSpreadsheet,
-    color: "text-gray-600",
+    color: "info",
   },
 };
 
@@ -409,6 +410,58 @@ export default function ConsolidationReportsPage() {
     },
   ];
 
+  // 报表汇总统计数据
+  const reportStats = [
+    {
+      title: "合并资产负债表",
+      value:
+        reportsData?.items?.filter(
+          (r) => r.report_type === "consolidated_balance_sheet",
+        ).length || 0,
+      icon: <Building2 style={{ width: 24, height: 24 }} />,
+      color: "primary" as const,
+      onClick: () =>
+        setReportType("consolidated_balance_sheet" as ConsolidationReportType),
+    },
+    {
+      title: "合并利润表",
+      value:
+        reportsData?.items?.filter(
+          (r) => r.report_type === "consolidated_income_statement",
+        ).length || 0,
+      icon: <TrendingUp style={{ width: 24, height: 24 }} />,
+      color: "success" as const,
+      onClick: () =>
+        setReportType(
+          "consolidated_income_statement" as ConsolidationReportType,
+        ),
+    },
+    {
+      title: "合并现金流量表",
+      value:
+        reportsData?.items?.filter(
+          (r) => r.report_type === "consolidated_cash_flow",
+        ).length || 0,
+      icon: <DollarSign style={{ width: 24, height: 24 }} />,
+      color: "secondary" as const,
+      onClick: () =>
+        setReportType("consolidated_cash_flow" as ConsolidationReportType),
+    },
+    {
+      title: "合并所有者权益变动表",
+      value:
+        reportsData?.items?.filter(
+          (r) => r.report_type === "consolidated_statement_changes",
+        ).length || 0,
+      icon: <BarChart3 style={{ width: 24, height: 24 }} />,
+      color: "warning" as const,
+      onClick: () =>
+        setReportType(
+          "consolidated_statement_changes" as ConsolidationReportType,
+        ),
+    },
+  ];
+
   return (
     <Box
       sx={{
@@ -567,88 +620,7 @@ export default function ConsolidationReportsPage() {
       </Card>
 
       {/* 报表汇总卡片 */}
-      <Grid container spacing={2}>
-        {[
-          {
-            key: "consolidated_balance_sheet",
-            name: "合并资产负债表",
-            icon: Building2,
-            color: "#2563eb",
-          },
-          {
-            key: "consolidated_income_statement",
-            name: "合并利润表",
-            icon: TrendingUp,
-            color: "#16a34a",
-          },
-          {
-            key: "consolidated_cash_flow",
-            name: "合并现金流量表",
-            icon: DollarSign,
-            color: "#9333ea",
-          },
-          {
-            key: "consolidated_statement_changes",
-            name: "合并所有者权益变动表",
-            icon: BarChart3,
-            color: "#ea580c",
-          },
-        ].map(({ key, name, icon: IconComponent, color }) => {
-          const count =
-            reportsData?.items?.filter((r) => r.report_type === key).length ||
-            0;
-          return (
-            <Grid size={{ xs: 12, md: 3 }} key={key}>
-              <Card
-                sx={{
-                  cursor: "pointer",
-                  border: 1,
-                  borderColor: "divider",
-                  transition: "border-color 0.2s",
-                  "&:hover": { borderColor: "#2563eb" },
-                }}
-                onClick={() => setReportType(key as ConsolidationReportType)}
-              >
-                <CardContent sx={{ pt: 3 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        {name}
-                      </Typography>
-                      <Typography
-                        variant="h5"
-                        sx={{ fontWeight: "bold", mt: 0.5 }}
-                      >
-                        {count}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                        bgcolor: "grey.100",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color,
-                      }}
-                    >
-                      <IconComponent style={{ width: 24, height: 24 }} />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
+      <StatCardGroup stats={reportStats} loading={isLoading} />
 
       {/* 报表列表 */}
       <Card>

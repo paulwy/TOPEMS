@@ -20,7 +20,7 @@ import {
   Avatar,
   Container,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -38,14 +38,23 @@ import {
   Heart,
   FileText,
   Plus,
+  Clock,
+  Users,
+  FileCheck,
+  Award,
 } from "lucide-react";
 import {
   employeeApi,
   departmentApi,
+  contractApi,
+  performanceReviewApi,
   type Employee,
   type Department,
+  type Contract,
+  type PerformanceReview,
 } from "@/api/hrm";
 import { useNotification } from "@/hooks/useNotification";
+import { StatCardGroup } from "@/components/mui";
 
 const HrmEmployeeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,6 +74,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
       loadEmployee(id);
     }
     loadDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadEmployee = async (employeeId: string) => {
@@ -346,7 +356,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
                     <Box
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+                        gridTemplateColumns: {
+                          xs: "repeat(1, 1fr)",
+                          md: "repeat(3, 1fr)",
+                        },
                         gap: 2,
                       }}
                     >
@@ -535,7 +548,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
                   <Box
                     sx={{
                       display: "grid",
-                      gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+                      gridTemplateColumns: {
+                        xs: "repeat(1, 1fr)",
+                        md: "repeat(2, 1fr)",
+                      },
                       gap: 2,
                     }}
                   >
@@ -724,7 +740,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
                       <Box
                         sx={{
                           display: "grid",
-                          gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+                          gridTemplateColumns: {
+                            xs: "repeat(1, 1fr)",
+                            md: "repeat(2, 1fr)",
+                          },
                           gap: 2,
                           ml: 4,
                         }}
@@ -843,7 +862,11 @@ const HrmEmployeeDetailPage: React.FC = () => {
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+                  gridTemplateColumns: {
+                    xs: "repeat(1, 1fr)",
+                    sm: "repeat(2, 1fr)",
+                    md: "repeat(4, 1fr)",
+                  },
                   gap: 2,
                 }}
               >

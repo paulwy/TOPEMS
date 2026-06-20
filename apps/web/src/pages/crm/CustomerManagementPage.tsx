@@ -358,7 +358,7 @@ const CustomerManagementPage: React.FC = () => {
               导入导出
             </Button>
             <DataExport
-              data={customers as Record<string, unknown>[]}
+              data={customers as unknown as Record<string, unknown>[]}
               fields={[
                 { key: "name", title: "客户名称" },
                 { key: "code", title: "客户代码" },

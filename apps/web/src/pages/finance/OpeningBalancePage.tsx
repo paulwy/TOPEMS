@@ -23,6 +23,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { StatCardGroup } from "@/components/mui";
 /**
  * 期初余额管理页面
  * 管理会计科目的期初余额设置
@@ -300,132 +301,49 @@ export default function OpeningBalancePage() {
       </Card>
 
       {/* 期初余额汇总 */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Card sx={{ bgcolor: "primary.main", color: "white" }}>
-          <CardContent sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  借方合计
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}
-                >
-                  ¥
-                  {totals.totalDebit.toLocaleString("zh-CN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.2)",
-                }}
-              >
-                <DollarSign sx={{ width: 24, height: 24 }} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-        <Card sx={{ bgcolor: "error.main", color: "white" }}>
-          <CardContent sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  贷方合计
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}
-                >
-                  ¥
-                  {totals.totalCredit.toLocaleString("zh-CN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.2)",
-                }}
-              >
-                <DollarSign sx={{ width: 24, height: 24 }} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-        <Card
-          sx={{
-            bgcolor:
+      <StatCardGroup
+        columns={3}
+        stats={[
+          {
+            title: "借方合计",
+            value: totals.totalDebit.toLocaleString("zh-CN", {
+              minimumFractionDigits: 2,
+            }),
+            unit: "¥",
+            color: "primary",
+            icon: <DollarSign sx={{ width: 24, height: 24 }} />,
+            gradient: true,
+          },
+          {
+            title: "贷方合计",
+            value: totals.totalCredit.toLocaleString("zh-CN", {
+              minimumFractionDigits: 2,
+            }),
+            unit: "¥",
+            color: "error",
+            icon: <DollarSign sx={{ width: 24, height: 24 }} />,
+            gradient: true,
+          },
+          {
+            title: "差额",
+            value: Math.abs(
+              totals.totalDebit - totals.totalCredit,
+            ).toLocaleString("zh-CN", { minimumFractionDigits: 2 }),
+            unit: "¥",
+            color:
               totals.totalDebit - totals.totalCredit === 0
-                ? "success.main"
-                : "warning.main",
-            color: "white",
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  差额
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}
-                >
-                  ¥
-                  {Math.abs(
-                    totals.totalDebit - totals.totalCredit,
-                  ).toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.2)",
-                }}
-              >
-                {totals.totalDebit - totals.totalCredit === 0 ? (
-                  <CheckCircle sx={{ width: 24, height: 24 }} />
-                ) : (
-                  <AlertCircle sx={{ width: 24, height: 24 }} />
-                )}
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
+                ? "success"
+                : "warning",
+            icon:
+              totals.totalDebit - totals.totalCredit === 0 ? (
+                <CheckCircle sx={{ width: 24, height: 24 }} />
+              ) : (
+                <AlertCircle sx={{ width: 24, height: 24 }} />
+              ),
+            gradient: true,
+          },
+        ]}
+      />
 
       {/* 余额表格 */}
       <Card>

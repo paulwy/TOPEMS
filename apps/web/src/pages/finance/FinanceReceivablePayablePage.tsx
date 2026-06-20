@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
   Typography,
   TextField,
@@ -17,26 +14,24 @@ import {
   DialogActions,
   Tabs,
   Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Box,
 } from "@mui/material";
 import {
   Plus,
-  Search,
   Edit2,
   Trash2,
   Eye,
-  Users,
   CreditCard,
-  AlertCircle,
   RefreshCw,
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
+import {
+  ListPageTemplate,
+  StatCardGroup,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/mui";
 import {
   receivableApi,
   payableApi,
@@ -77,6 +72,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -370,6 +366,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
     return new Date(dueDate) < new Date();
   };
 
+  // 统计数据计算
   const totalReceivable = receivables.reduce((sum, r) => sum + r.amount, 0);
   const receivedAmount = receivables.reduce(
     (sum, r) => sum + (r.received_amount || 0),
@@ -391,23 +388,314 @@ const FinanceReceivablePayablePage: React.FC = () => {
     .filter((p) => isOverdue(p.due_date) && p.status !== "paid")
     .reduce((sum, p) => sum + (p.amount - (p.paid_amount || 0)), 0);
 
-  const filteredReceivables = receivables.filter((r) => {
-    const matchesSearch =
-      r.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.project_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !filterStatus || r.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  // 统计卡片配置
+  const statCards = useMemo(
+    () => [
+      {
+        title: "应收总额",
+        value: formatCurrency(totalReceivable),
+        icon: <ArrowUpRight size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "应付总额",
+        value: formatCurrency(totalPayable),
+        icon: <ArrowDownRight size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "待收金额",
+        value: formatCurrency(pendingReceivable),
+        icon: <CreditCard size={24} />,
+        color: "warning" as const,
+      },
+      {
+        title: "待付金额",
+        value: formatCurrency(pendingPayable),
+        icon: <CreditCard size={24} />,
+        color: "secondary" as const,
+      },
+    ],
+    [totalReceivable, totalPayable, pendingReceivable, pendingPayable],
+  );
 
-  const filteredPayables = payables.filter((p) => {
-    const matchesSearch =
-      p.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.category?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !filterStatus || p.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  // 筛选后的应收账款数据
+  const filteredReceivables = useMemo(() => {
+    return receivables.filter((r) => {
+      const matchesSearch =
+        r.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.project_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !filterStatus || r.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [receivables, searchTerm, filterStatus]);
+
+  // 筛选后的应付账款数据
+  const filteredPayables = useMemo(() => {
+    return payables.filter((p) => {
+      const matchesSearch =
+        p.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !filterStatus || p.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [payables, searchTerm, filterStatus]);
+
+  // 应收账款列定义
+  const receivableColumns = useMemo<ColumnDef<Receivable>[]>(
+    () => [
+      {
+        id: "invoice_number",
+        label: "单据编号",
+        render: (row) => (
+          <Box sx={{ fontWeight: "medium" }}>{row.invoice_number}</Box>
+        ),
+      },
+      {
+        id: "customer_name",
+        label: "客户名称",
+        render: (row) => row.customer_name || "-",
+      },
+      {
+        id: "project_name",
+        label: "项目名称",
+        render: (row) => row.project_name || "-",
+      },
+      {
+        id: "amount",
+        label: "金额",
+        align: "right",
+        render: (row) => (
+          <Box sx={{ fontFamily: "monospace" }}>
+            {formatCurrency(row.amount)}
+          </Box>
+        ),
+      },
+      {
+        id: "received_amount",
+        label: "已收",
+        align: "right",
+        render: (row) => (
+          <Box sx={{ fontFamily: "monospace", color: "success.main" }}>
+            {formatCurrency(row.received_amount || 0)}
+          </Box>
+        ),
+      },
+      {
+        id: "pending_amount",
+        label: "待收",
+        align: "right",
+        render: (row) => (
+          <Box
+            sx={{
+              fontFamily: "monospace",
+              fontWeight: "medium",
+              color:
+                isOverdue(row.due_date) && row.status !== "paid"
+                  ? "error.main"
+                  : "warning.main",
+            }}
+          >
+            {formatCurrency(row.amount - (row.received_amount || 0))}
+          </Box>
+        ),
+      },
+      {
+        id: "due_date",
+        label: "到期日期",
+        render: (row) => (
+          <Box
+            sx={{
+              color:
+                isOverdue(row.due_date) && row.status !== "paid"
+                  ? "error.main"
+                  : "text.primary",
+            }}
+          >
+            {row.due_date ? new Date(row.due_date).toLocaleDateString() : "-"}
+          </Box>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
+
+  // 应付账款列定义
+  const payableColumns = useMemo<ColumnDef<Payable>[]>(
+    () => [
+      {
+        id: "invoice_number",
+        label: "单据编号",
+        render: (row) => (
+          <Box sx={{ fontWeight: "medium" }}>{row.invoice_number}</Box>
+        ),
+      },
+      {
+        id: "supplier_name",
+        label: "供应商",
+        render: (row) => row.supplier_name || "-",
+      },
+      {
+        id: "category",
+        label: "费用类别",
+        render: (row) => row.category || "-",
+      },
+      {
+        id: "amount",
+        label: "金额",
+        align: "right",
+        render: (row) => (
+          <Box sx={{ fontFamily: "monospace" }}>
+            {formatCurrency(row.amount)}
+          </Box>
+        ),
+      },
+      {
+        id: "paid_amount",
+        label: "已付",
+        align: "right",
+        render: (row) => (
+          <Box sx={{ fontFamily: "monospace", color: "success.main" }}>
+            {formatCurrency(row.paid_amount || 0)}
+          </Box>
+        ),
+      },
+      {
+        id: "pending_amount",
+        label: "待付",
+        align: "right",
+        render: (row) => (
+          <Box
+            sx={{
+              fontFamily: "monospace",
+              fontWeight: "medium",
+              color:
+                isOverdue(row.due_date) && row.status !== "paid"
+                  ? "error.main"
+                  : "warning.main",
+            }}
+          >
+            {formatCurrency(row.amount - (row.paid_amount || 0))}
+          </Box>
+        ),
+      },
+      {
+        id: "due_date",
+        label: "到期日期",
+        render: (row) => (
+          <Box
+            sx={{
+              color:
+                isOverdue(row.due_date) && row.status !== "paid"
+                  ? "error.main"
+                  : "text.primary",
+            }}
+          >
+            {row.due_date ? new Date(row.due_date).toLocaleDateString() : "-"}
+          </Box>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
+
+  // 应收账款行操作
+  const receivableRowActions = useMemo<RowAction<Receivable>[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: (row) => openDetailDialog(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit2 size={16} />,
+        onClick: (row) => openEditDialog(row),
+        color: "primary",
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeleteReceivable(row.id),
+        color: "error",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 应付账款行操作
+  const payableRowActions = useMemo<RowAction<Payable>[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: (row) => openDetailDialog(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit2 size={16} />,
+        onClick: (row) => openEditDialog(row),
+        color: "primary",
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDeletePayable(row.id),
+        color: "error",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 筛选器配置
+  const filters = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select" as const,
+        options: [
+          { value: "", label: "全部" },
+          {
+            value: "pending",
+            label: activeTab === "receivable" ? "待收" : "待付",
+          },
+          {
+            value: "partial",
+            label: activeTab === "receivable" ? "部分收" : "部分付",
+          },
+          { value: "paid", label: "已结清" },
+          { value: "overdue", label: "已逾期" },
+        ],
+        value: filterStatus,
+        onChange: setFilterStatus,
+      },
+    ],
+    [filterStatus, activeTab],
+  );
+
+  const handleSearch = () => {
+    // 搜索逻辑已通过 useMemo 实现前端筛选
+  };
+
+  const handleReset = () => {
+    setSearchTerm("");
+    setFilterStatus("");
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -432,244 +720,18 @@ const FinanceReceivablePayablePage: React.FC = () => {
         </Button>
       </Box>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
-          gap: 2,
-        }}
-      >
-        <Card
-          sx={{
-            background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-            color: "white",
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  应收总额
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                  {formatCurrency(totalReceivable)}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.2)",
-                }}
-              >
-                <ArrowUpRight sx={{ width: 24, height: 24 }} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
+      {/* 统计卡片 */}
+      <StatCardGroup stats={statCards} columns={4} />
 
-        <Card
-          sx={{
-            background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)",
-            color: "white",
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  应付总额
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                  {formatCurrency(totalPayable)}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.2)",
-                }}
-              >
-                <ArrowDownRight sx={{ width: 24, height: 24 }} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Card
-          sx={{
-            background: "linear-gradient(135deg, #f97316 0%, #ef4444 100%)",
-            color: "white",
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  待收金额
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                  {formatCurrency(pendingReceivable)}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.2)",
-                }}
-              >
-                <CreditCard sx={{ width: 24, height: 24 }} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Card
-          sx={{
-            background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
-            color: "white",
-          }}
-        >
-          <CardContent sx={{ p: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  待付金额
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                  {formatCurrency(pendingPayable)}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.2)",
-                }}
-              >
-                <CreditCard sx={{ width: 24, height: 24 }} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Card>
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-            <Tab
-              value="receivable"
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <ArrowUpRight sx={{ width: 16, height: 16 }} />
-                  <span>应收账款</span>
-                </Box>
-              }
-            />
-            <Tab
-              value="payable"
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <ArrowDownRight sx={{ width: 16, height: 16 }} />
-                  <span>应付账款</span>
-                </Box>
-              }
-            />
-          </Tabs>
-        </Box>
-
-        <Box
-          sx={{ p: 3, display: activeTab === "receivable" ? "block" : "none" }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ position: "relative", flex: 1 }}>
-              <Box
-                sx={{
-                  position: "absolute",
-                  left: 3,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-              >
-                <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
-              </Box>
-              <TextField
-                size="small"
-                placeholder="搜索单据编号、客户名称或项目..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ pl: 5, width: "100%" }}
-              />
-            </Box>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                displayEmpty
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="pending">待收</MenuItem>
-                <MenuItem value="partial">部分收</MenuItem>
-                <MenuItem value="paid">已结清</MenuItem>
-                <MenuItem value="overdue">已逾期</MenuItem>
-              </Select>
-            </FormControl>
-            <Button variant="outlined" size="small" onClick={loadData}>
-              <RefreshCw sx={{ width: 16, height: 16, mr: 1 }} />
-              刷新
-            </Button>
-          </Box>
-
-          <Card>
-            <CardHeader>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Users
-                    sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
-                  />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    应收账款列表
-                  </Typography>
-                </Box>
+      {/* Tab 切换 */}
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+          <Tab
+            value="receivable"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ArrowUpRight sx={{ width: 16, height: 16 }} />
+                <span>应收账款</span>
                 {overdueReceivable > 0 && (
                   <Chip
                     size="small"
@@ -678,212 +740,14 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   />
                 )}
               </Box>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Box sx={{ p: 8, textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      display: "inline-block",
-                      width: 32,
-                      height: 32,
-                      border: 4,
-                      borderColor: "primary.main",
-                      borderTopColor: "transparent",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
-                    }}
-                  />
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 2 }}
-                  >
-                    加载中...
-                  </Typography>
-                </Box>
-              ) : (
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>单据编号</TableCell>
-                      <TableCell>客户名称</TableCell>
-                      <TableCell>项目名称</TableCell>
-                      <TableCell align="right">金额</TableCell>
-                      <TableCell align="right">已收</TableCell>
-                      <TableCell align="right">待收</TableCell>
-                      <TableCell>到期日期</TableCell>
-                      <TableCell>状态</TableCell>
-                      <TableCell align="right">操作</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredReceivables.length > 0 ? (
-                      filteredReceivables.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell sx={{ fontWeight: "medium" }}>
-                            {item.invoice_number}
-                          </TableCell>
-                          <TableCell>{item.customer_name || "-"}</TableCell>
-                          <TableCell>{item.project_name || "-"}</TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(item.amount)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(item.received_amount || 0)}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              fontWeight: "medium",
-                              color:
-                                isOverdue(item.due_date) &&
-                                item.status !== "paid"
-                                  ? "error.main"
-                                  : "warning.main",
-                            }}
-                          >
-                            {formatCurrency(
-                              item.amount - (item.received_amount || 0),
-                            )}
-                          </TableCell>
-                          <TableCell
-                            sx={{
-                              color:
-                                isOverdue(item.due_date) &&
-                                item.status !== "paid"
-                                  ? "error.main"
-                                  : "text.primary",
-                            }}
-                          >
-                            {item.due_date
-                              ? new Date(item.due_date).toLocaleDateString()
-                              : "-"}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(item.status)}</TableCell>
-                          <TableCell align="right">
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                gap: 0.5,
-                              }}
-                            >
-                              <Button
-                                variant="text"
-                                size="small"
-                                onClick={() => openDetailDialog(item)}
-                              >
-                                <Eye sx={{ width: 16, height: 16 }} />
-                              </Button>
-                              <Button
-                                variant="text"
-                                size="small"
-                                onClick={() => openEditDialog(item)}
-                              >
-                                <Edit2 sx={{ width: 16, height: 16 }} />
-                              </Button>
-                              <Button
-                                variant="text"
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteReceivable(item.id)}
-                              >
-                                <Trash2 sx={{ width: 16, height: 16 }} />
-                              </Button>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
-                          <AlertCircle
-                            sx={{
-                              width: 48,
-                              height: 48,
-                              mx: "auto",
-                              color: "grey.300",
-                              mb: 1,
-                            }}
-                          />
-                          <Typography color="text.secondary">
-                            暂无应收账款数据
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Box sx={{ p: 3, display: activeTab === "payable" ? "block" : "none" }}>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ position: "relative", flex: 1 }}>
-              <Box
-                sx={{
-                  position: "absolute",
-                  left: 3,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-              >
-                <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
-              </Box>
-              <TextField
-                size="small"
-                placeholder="搜索单据编号、供应商或类别..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ pl: 5, width: "100%" }}
-              />
-            </Box>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                displayEmpty
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="pending">待付</MenuItem>
-                <MenuItem value="partial">部分付</MenuItem>
-                <MenuItem value="paid">已结清</MenuItem>
-                <MenuItem value="overdue">已逾期</MenuItem>
-              </Select>
-            </FormControl>
-            <Button variant="outlined" size="small" onClick={loadData}>
-              <RefreshCw sx={{ width: 16, height: 16, mr: 1 }} />
-              刷新
-            </Button>
-          </Box>
-
-          <Card>
-            <CardHeader>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <CreditCard
-                    sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
-                  />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    应付账款列表
-                  </Typography>
-                </Box>
+            }
+          />
+          <Tab
+            value="payable"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ArrowDownRight sx={{ width: 16, height: 16 }} />
+                <span>应付账款</span>
                 {overduePayable > 0 && (
                   <Chip
                     size="small"
@@ -892,149 +756,64 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   />
                 )}
               </Box>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Box sx={{ p: 8, textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      display: "inline-block",
-                      width: 32,
-                      height: 32,
-                      border: 4,
-                      borderColor: "primary.main",
-                      borderTopColor: "transparent",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
-                    }}
-                  />
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 2 }}
-                  >
-                    加载中...
-                  </Typography>
-                </Box>
-              ) : (
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>单据编号</TableCell>
-                      <TableCell>供应商</TableCell>
-                      <TableCell>费用类别</TableCell>
-                      <TableCell align="right">金额</TableCell>
-                      <TableCell align="right">已付</TableCell>
-                      <TableCell align="right">待付</TableCell>
-                      <TableCell>到期日期</TableCell>
-                      <TableCell>状态</TableCell>
-                      <TableCell align="right">操作</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredPayables.length > 0 ? (
-                      filteredPayables.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell sx={{ fontWeight: "medium" }}>
-                            {item.invoice_number}
-                          </TableCell>
-                          <TableCell>{item.supplier_name || "-"}</TableCell>
-                          <TableCell>{item.category || "-"}</TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(item.amount)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(item.paid_amount || 0)}
-                          </TableCell>
-                          <TableCell
-                            align="right"
-                            sx={{
-                              fontWeight: "medium",
-                              color:
-                                isOverdue(item.due_date) &&
-                                item.status !== "paid"
-                                  ? "error.main"
-                                  : "warning.main",
-                            }}
-                          >
-                            {formatCurrency(
-                              item.amount - (item.paid_amount || 0),
-                            )}
-                          </TableCell>
-                          <TableCell
-                            sx={{
-                              color:
-                                isOverdue(item.due_date) &&
-                                item.status !== "paid"
-                                  ? "error.main"
-                                  : "text.primary",
-                            }}
-                          >
-                            {item.due_date
-                              ? new Date(item.due_date).toLocaleDateString()
-                              : "-"}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(item.status)}</TableCell>
-                          <TableCell align="right">
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                gap: 0.5,
-                              }}
-                            >
-                              <Button
-                                variant="text"
-                                size="small"
-                                onClick={() => openDetailDialog(item)}
-                              >
-                                <Eye sx={{ width: 16, height: 16 }} />
-                              </Button>
-                              <Button
-                                variant="text"
-                                size="small"
-                                onClick={() => openEditDialog(item)}
-                              >
-                                <Edit2 sx={{ width: 16, height: 16 }} />
-                              </Button>
-                              <Button
-                                variant="text"
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeletePayable(item.id)}
-                              >
-                                <Trash2 sx={{ width: 16, height: 16 }} />
-                              </Button>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
-                          <AlertCircle
-                            sx={{
-                              width: 48,
-                              height: 48,
-                              mx: "auto",
-                              color: "grey.300",
-                              mb: 1,
-                            }}
-                          />
-                          <Typography color="text.secondary">
-                            暂无应付账款数据
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
-      </Card>
+            }
+          />
+        </Tabs>
+      </Box>
 
+      {/* 应收账款列表 */}
+      {activeTab === "receivable" && (
+        <ListPageTemplate
+          columns={receivableColumns}
+          data={filteredReceivables}
+          loading={loading}
+          searchable
+          searchPlaceholder="搜索单据编号、客户名称或项目..."
+          searchValue={searchTerm}
+          onSearch={setSearchTerm}
+          filters={filters}
+          filtersValue={{ status: filterStatus }}
+          onFilterChange={(filters) => {
+            if (filters.status !== undefined)
+              setFilterStatus(filters.status as string);
+          }}
+          rowActions={receivableRowActions}
+          onRefresh={loadData}
+          actions={[
+            { label: "搜索", variant: "outlined", onClick: handleSearch },
+            { label: "重置", variant: "outlined", onClick: handleReset },
+          ]}
+          emptyMessage="暂无应收账款数据"
+        />
+      )}
+
+      {/* 应付账款列表 */}
+      {activeTab === "payable" && (
+        <ListPageTemplate
+          columns={payableColumns}
+          data={filteredPayables}
+          loading={loading}
+          searchable
+          searchPlaceholder="搜索单据编号、供应商或类别..."
+          searchValue={searchTerm}
+          onSearch={setSearchTerm}
+          filters={filters}
+          filtersValue={{ status: filterStatus }}
+          onFilterChange={(filters) => {
+            if (filters.status !== undefined)
+              setFilterStatus(filters.status as string);
+          }}
+          rowActions={payableRowActions}
+          onRefresh={loadData}
+          actions={[
+            { label: "搜索", variant: "outlined", onClick: handleSearch },
+            { label: "重置", variant: "outlined", onClick: handleReset },
+          ]}
+          emptyMessage="暂无应付账款数据"
+        />
+      )}
+
+      {/* 创建/编辑对话框 */}
       <Dialog
         open={showCreateDialog}
         onClose={() => {
@@ -1204,6 +983,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}

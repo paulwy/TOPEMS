@@ -15,9 +15,9 @@ export const parseFileExtension = (filename: string): string => {
 
 export const getImportModeLabel = (mode: string): string => {
   const labels: Record<string, string> = {
-    create: i18next.t("import.mode.create", "仅创建（跳过已存在）"),
-    update: i18next.t("import.mode.update", "仅更新"),
-    create_update: i18next.t("import.mode.createUpdate", "创建或更新"),
+    create: "仅创建（跳过已存在）",
+    update: "仅更新",
+    create_update: "创建或更新",
   };
   return labels[mode] || mode;
 };

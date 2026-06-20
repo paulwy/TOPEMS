@@ -42,6 +42,7 @@ export { ListPageTemplate } from "../templates/ListPageTemplate";
 export type {
   ColumnDef,
   RowAction,
+  BatchAction,
   ListPageTemplateProps,
 } from "../templates/ListPageTemplate";
 

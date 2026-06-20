@@ -36,6 +36,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
 
   useEffect(() => {
     loadEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadEmployees = async () => {
@@ -212,6 +213,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
         color: "error",
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

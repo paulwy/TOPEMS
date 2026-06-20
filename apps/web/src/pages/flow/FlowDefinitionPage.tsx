@@ -6,6 +6,7 @@ import {
   CardContent,
   Chip,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
@@ -290,7 +291,7 @@ const FlowDefinitionPage: React.FC = () => {
             </Select>
           </FormControl>
           <DataExport
-            data={data as Record<string, unknown>[]}
+            data={data as unknown as Record<string, unknown>[]}
             fields={exportFields}
             defaultFileName="流程定义数据"
             buttonText="导出"

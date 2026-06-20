@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'react-transition-group/TransitionGroupContext': 'react-transition-group/cjs/TransitionGroupContext.js',
     },
   },
   test: {
@@ -19,10 +20,8 @@ export default defineConfig({
     ],
     include: ['src/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
     css: false,
-    resolve: {
-      alias: {
-        'react-transition-group/TransitionGroupContext': 'react-transition-group/cjs/TransitionGroupContext.js',
-      },
+    deps: {
+      inline: ['react-transition-group'],
     },
   },
 });

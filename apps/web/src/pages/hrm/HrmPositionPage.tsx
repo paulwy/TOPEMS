@@ -1,8 +1,5 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
   Typography,
   TextField,
@@ -14,23 +11,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
   Box,
-  Stack,
-  IconButton,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Briefcase,
-  Search,
   Plus,
   Edit,
   Trash2,
-  ChevronLeft,
-  AlertCircle,
   Eye,
+  Users,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import {
   positionApi,
   departmentApi,
@@ -39,20 +32,18 @@ import {
   type ListParams,
 } from "@/api/hrm";
 import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/DataTable";
-
+import {
+  ListPageTemplate,
+  StatCardGroup,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/mui";
 import { ModeToggle } from "@/components/theme/ModeToggle";
 import { DataExport } from "@/components/common";
 
-interface PositionManagementPageProps {
-  onNavigate?: (page: string) => void;
-}
+interface PositionManagementPageProps {}
 
-const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
-  onNavigate,
-}) => {
-  const navigate = useNavigate();
+const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
@@ -127,23 +118,8 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
   useEffect(() => {
     fetchPositions();
     fetchDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleSearch = () => {
-    fetchPositions({
-      page: 1,
-      search: searchText || undefined,
-      status: statusFilter || undefined,
-      department_id: departmentFilter || undefined,
-    });
-  };
-
-  const handleReset = () => {
-    setSearchText("");
-    setStatusFilter("");
-    setDepartmentFilter("");
-    fetchPositions({ page: 1 });
-  };
 
   const handleAdd = () => {
     setSelectedPosition(null);
@@ -263,12 +239,54 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
     );
   };
 
+  // 计算统计数据
+  const stats = useMemo(() => {
+    const totalPositions = data.total;
+    const activePositions = data.items.filter(
+      (item) => item.status === "active",
+    ).length;
+    const inactivePositions = data.items.filter(
+      (item) => item.status === "inactive",
+    ).length;
+    const totalEmployees = data.items.reduce(
+      (sum, item) => sum + (item.employee_count || 0),
+      0,
+    );
+
+    return [
+      {
+        title: "总岗位数",
+        value: totalPositions,
+        icon: <Briefcase style={{ width: 24, height: 24 }} />,
+        color: "primary" as const,
+      },
+      {
+        title: "启用岗位",
+        value: activePositions,
+        icon: <CheckCircle style={{ width: 24, height: 24 }} />,
+        color: "success" as const,
+      },
+      {
+        title: "禁用岗位",
+        value: inactivePositions,
+        icon: <XCircle style={{ width: 24, height: 24 }} />,
+        color: "warning" as const,
+      },
+      {
+        title: "总人数",
+        value: totalEmployees,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "info" as const,
+      },
+    ];
+  }, [data]);
+
   const columns = useMemo<ColumnDef<Position>[]>(
     () => [
       {
-        accessorKey: "name",
-        header: "岗位名称",
-        cell: ({ row }) => {
+        id: "name",
+        label: "岗位名称",
+        render: (row: Position) => {
           return (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box
@@ -283,7 +301,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                 }}
               >
                 <Briefcase
-                  sx={{ width: 20, height: 20, color: "indigo.600" }}
+                  style={{ width: 20, height: 20, color: "#4f46e5" }}
                 />
               </Box>
               <Box>
@@ -291,11 +309,11 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   variant="body2"
                   sx={{ fontWeight: 500, color: "grey.900" }}
                 >
-                  {row.original.name}
+                  {row.name}
                 </Typography>
-                {row.original.code && (
+                {row.code && (
                   <Typography variant="caption" sx={{ color: "grey.500" }}>
-                    {row.original.code}
+                    {row.code}
                   </Typography>
                 )}
               </Box>
@@ -304,73 +322,61 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
         },
       },
       {
-        accessorKey: "department_id",
-        header: "所属部门",
-        cell: ({ row }) => (
+        id: "department_id",
+        label: "所属部门",
+        render: (row: Position) => (
           <Typography variant="body2" sx={{ color: "grey.900" }}>
-            {departments.find((d) => d.id === row.original.department_id)
-              ?.name || "-"}
+            {departments.find((d) => d.id === row.department_id)?.name || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "level",
-        header: "岗位级别",
-        cell: ({ row }) => (
+        id: "level",
+        label: "岗位级别",
+        render: (row: Position) => (
           <Typography variant="body2" sx={{ color: "grey.900" }}>
-            {row.original.level || "-"}
+            {row.level || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "salary_range",
-        header: "薪资范围",
-        cell: ({ row }) => (
+        id: "salary_range",
+        label: "薪资范围",
+        render: (row: Position) => (
           <Typography variant="body2" sx={{ color: "grey.900" }}>
-            {row.original.min_salary || 0} - {row.original.max_salary || 0}
+            {row.min_salary || 0} - {row.max_salary || 0}
           </Typography>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const position = row.original;
-          return (
-            <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-              <Tooltip title="查看">
-                <IconButton size="small" onClick={() => handleView(position)}>
-                  <Eye sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="编辑">
-                <IconButton size="small" onClick={() => handleEdit(position)}>
-                  <Edit sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="删除">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => handleDelete(position.id)}
-                >
-                  <Trash2 sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          );
-        },
+        id: "status",
+        label: "状态",
+        render: (row: Position) => getStatusBadge(row.status),
       },
     ],
     [departments],
   );
+
+  const rowActions: RowAction<Position>[] = [
+    {
+      label: "查看",
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: handleView,
+    },
+    {
+      label: "编辑",
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: handleEdit,
+    },
+    {
+      label: "删除",
+      icon: <Trash2 style={{ width: 16, height: 16 }} />,
+      color: "error",
+      onClick: (row: Position) => handleDelete(row.id),
+      confirm: true,
+      confirmMessage: "确定要删除这个岗位吗？",
+    },
+  ];
 
   // 导出字段配置
   const exportFields = useMemo(
@@ -388,124 +394,147 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      {/* 页面头部 */}
-      <Box
-        sx={{
-          bgcolor: "white",
-          borderBottom: 1,
-          borderColor: "divider",
-          boxShadow: 1,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
-          {/* 面包屑导航 */}
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              component="a"
-              href="/hrm"
-              sx={{
-                color: "text.secondary",
-                textDecoration: "none",
-                fontSize: "0.875rem",
-                "&:hover": {
-                  color: "primary.main",
-                  textDecoration: "underline",
-                },
-              }}
-            >
-              人力资源
-            </Typography>
-            <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
-              /
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ color: "text.primary", fontSize: "0.875rem" }}
-            >
-              岗位管理
-            </Typography>
-          </Box>
+      {/* 统计卡片 */}
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, pt: 3, pb: 2 }}>
+        <StatCardGroup stats={stats} loading={loading} columns={4} />
+      </Box>
 
-          <Stack
-            direction="row"
-            sx={{ alignItems: "center", justifyContent: "space-between" }}
-          >
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 600, color: "grey.900" }}
-              >
-                岗位管理
-              </Typography>
-              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
-                管理企业岗位信息、薪资范围
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      {/* 列表页模板 */}
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, pb: 3 }}>
+        <ListPageTemplate
+          title="岗位管理"
+          subtitle="管理企业岗位信息、薪资范围"
+          breadcrumbs={[
+            { label: "人力资源", href: "/hrm" },
+            { label: "岗位管理" },
+          ]}
+          columns={columns}
+          data={data.items}
+          loading={loading}
+          rowActions={rowActions}
+          pagination={{
+            page: data.page - 1,
+            pageSize: data.page_size,
+            total: data.total,
+            onPageChange: (page: number) => fetchPositions({ page: page + 1 }),
+          }}
+          searchable
+          searchPlaceholder="搜索岗位名称或编码"
+          searchValue={searchText}
+          onSearch={(value: string) => setSearchText(value)}
+          filters={[
+            {
+              id: "department",
+              label: "部门",
+              type: "select",
+              options: [
+                { label: "全部部门", value: "all" },
+                ...departments.map((d) => ({ label: d.name, value: d.id })),
+              ],
+              value: departmentFilter,
+              onChange: (value: string) => setDepartmentFilter(value),
+            },
+            {
+              id: "status",
+              label: "状态",
+              type: "select",
+              options: [
+                { label: "全部状态", value: "all" },
+                { label: "启用", value: "active" },
+                { label: "禁用", value: "inactive" },
+              ],
+              value: statusFilter,
+              onChange: (value: string) => setStatusFilter(value),
+            },
+          ]}
+          actions={[
+            {
+              label: "导出",
+              icon: <Briefcase style={{ width: 18, height: 18 }} />,
+              onClick: () => {
+                // 导出功能通过 DataExport 组件实现
+              },
+              variant: "outlined",
+            },
+            {
+              label: "新增岗位",
+              icon: <Plus style={{ width: 18, height: 18 }} />,
+              onClick: handleAdd,
+              variant: "contained",
+            },
+          ]}
+          onRefresh={() => fetchPositions()}
+          emptyMessage="暂无岗位数据"
+          emptyIcon={
+            <Briefcase style={{ width: 48, height: 48, color: "#9ca3af" }} />
+          }
+          headerContent={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <ModeToggle />
               <DataExport
-                data={data.items as Record<string, unknown>[]}
+                data={data.items as unknown as Record<string, unknown>[]}
                 fields={exportFields}
                 defaultFileName="岗位数据"
                 buttonText="导出"
               />
-              <Button
-                variant="contained"
-                onClick={handleAdd}
-                startIcon={<Plus size={18} />}
-              >
-                新增岗位
-              </Button>
             </Box>
-          </Stack>
-        </Box>
+          }
+        />
       </Box>
 
-      {/* 内容区域 */}
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <Card sx={{ mb: 0 }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 2,
-                  alignItems: "center",
-                }}
-              >
-                <Box sx={{ flex: 1, minWidth: 200, position: "relative" }}>
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      left: 12,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      display: "flex",
-                      alignItems: "center",
-                      zIndex: 1,
-                    }}
-                  >
-                    <Search sx={{ width: 20, height: 20, color: "grey.400" }} />
-                  </Box>
-                  <TextField
-                    size="small"
-                    type="text"
-                    placeholder="搜索岗位名称或编码"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    sx={{ pl: 10, width: "100%" }}
-                  />
-                </Box>
-                <FormControl size="small" sx={{ minWidth: 160 }}>
-                  <InputLabel>部门</InputLabel>
+      {/* 创建对话框 */}
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
+        <DialogTitle>新增岗位</DialogTitle>
+        <DialogContent sx={{ maxWidth: 500 }}>
+          <form onSubmit={handleCreate}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  岗位名称 *
+                </Typography>
+                <TextField
+                  id="create-name"
+                  size="small"
+                  type="text"
+                  required
+                  fullWidth
+                  value={(formData as Position)?.name || ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("name", e.target.value)
+                  }
+                  placeholder="请输入岗位名称"
+                />
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  岗位编码
+                </Typography>
+                <TextField
+                  id="create-code"
+                  size="small"
+                  type="text"
+                  fullWidth
+                  value={(formData as Position)?.code || ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("code", e.target.value)
+                  }
+                  placeholder="请输入岗位编码"
+                />
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  所属部门
+                </Typography>
+                <FormControl size="small" fullWidth>
+                  <InputLabel>请选择</InputLabel>
                   <Select
-                    value={departmentFilter}
-                    label="部门"
-                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                    value={(formData as Position)?.department_id || ""}
+                    label="请选择"
+                    onChange={(e) =>
+                      handleInputChange("department_id", e.target.value)
+                    }
                   >
-                    <MenuItem value="all">全部部门</MenuItem>
+                    <MenuItem value="none">无</MenuItem>
                     {departments.map((d) => (
                       <MenuItem key={d.id} value={d.id}>
                         {d.name}
@@ -513,91 +542,151 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     ))}
                   </Select>
                 </FormControl>
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <InputLabel>状态</InputLabel>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  岗位级别
+                </Typography>
+                <TextField
+                  id="create-level"
+                  size="small"
+                  type="text"
+                  fullWidth
+                  value={(formData as Position)?.level || ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("level", e.target.value)
+                  }
+                  placeholder="请输入岗位级别"
+                />
+              </Box>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    最低薪资
+                  </Typography>
+                  <TextField
+                    id="create-min-salary"
+                    size="small"
+                    type="number"
+                    fullWidth
+                    value={(formData as Position)?.min_salary || ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange(
+                        "min_salary",
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
+                    placeholder="最低薪资"
+                  />
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    最高薪资
+                  </Typography>
+                  <TextField
+                    id="create-max-salary"
+                    size="small"
+                    type="number"
+                    fullWidth
+                    value={(formData as Position)?.max_salary || ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange(
+                        "max_salary",
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
+                    placeholder="最高薪资"
+                  />
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  岗位描述
+                </Typography>
+                <TextField
+                  id="create-description"
+                  size="small"
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={(formData as Position)?.description || ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  placeholder="请输入岗位描述"
+                />
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  任职要求
+                </Typography>
+                <TextField
+                  id="create-requirements"
+                  size="small"
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={(formData as Position)?.requirements || ""}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange("requirements", e.target.value)
+                  }
+                  placeholder="请输入任职要求"
+                />
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  状态
+                </Typography>
+                <FormControl size="small" fullWidth>
+                  <InputLabel>请选择</InputLabel>
                   <Select
-                    value={statusFilter}
-                    label="状态"
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    value={(formData as Position)?.status || "active"}
+                    label="请选择"
+                    onChange={(e) =>
+                      handleInputChange("status", e.target.value)
+                    }
                   >
-                    <MenuItem value="all">全部状态</MenuItem>
                     <MenuItem value="active">启用</MenuItem>
                     <MenuItem value="inactive">禁用</MenuItem>
                   </Select>
                 </FormControl>
-                <Button variant="outlined" onClick={handleSearch}>
-                  搜索
-                </Button>
-                <Button variant="outlined" onClick={handleReset}>
-                  重置
-                </Button>
               </Box>
-            </CardContent>
-          </Card>
+            </Box>
+            <DialogActions sx={{ mt: 3 }}>
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={() => setShowCreateModal(false)}
+              >
+                取消
+              </Button>
+              <Button type="submit" variant="contained">
+                创建
+              </Button>
+            </DialogActions>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-          <Card>
-            <CardContent sx={{ p: 0 }}>
-              {loading ? (
-                <Box sx={{ p: 4, textAlign: "center" }}>
-                  <Box
-                    sx={{
-                      display: "inline-block",
-                      animation: "spin 1s linear infinite",
-                      border: 4,
-                      borderColor: "primary.main",
-                      borderTopColor: "transparent",
-                      borderRadius: "50%",
-                      width: 32,
-                      height: 32,
-                    }}
-                  />
-                  <Typography sx={{ mt: 2, color: "text.secondary" }}>
-                    加载中...
-                  </Typography>
-                </Box>
-              ) : data.items.length === 0 ? (
-                <Box sx={{ p: 4, textAlign: "center" }}>
-                  <Briefcase
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      color: "grey.400",
-                      mx: "auto",
-                      mb: 2,
-                    }}
-                  />
-                  <Typography sx={{ color: "text.secondary" }}>
-                    暂无岗位数据
-                  </Typography>
-                </Box>
-              ) : (
-                <DataTable
-                  columns={columns}
-                  data={data.items}
-                  enablePagination={true}
-                  pageCount={Math.ceil(data.total / data.page_size)}
-                  onPageChange={(page: number) => fetchPositions({ page })}
-                  currentPage={data.page}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Dialog
-          open={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-        >
-          <DialogTitle>新增岗位</DialogTitle>
-          <DialogContent sx={{ maxWidth: 500 }}>
-            <form onSubmit={handleCreate}>
+      {/* 编辑对话框 */}
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)}>
+        <DialogTitle>编辑岗位</DialogTitle>
+        <DialogContent sx={{ maxWidth: 500 }}>
+          {selectedPosition && (
+            <form onSubmit={handleUpdate}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   <Typography variant="body2" sx={{ mb: 0.5 }}>
                     岗位名称 *
                   </Typography>
                   <TextField
-                    id="create-name"
+                    id="edit-name"
                     size="small"
                     type="text"
                     required
@@ -606,7 +695,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("name", e.target.value)
                     }
-                    placeholder="请输入岗位名称"
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -614,7 +702,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     岗位编码
                   </Typography>
                   <TextField
-                    id="create-code"
+                    id="edit-code"
                     size="small"
                     type="text"
                     fullWidth
@@ -622,7 +710,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("code", e.target.value)
                     }
-                    placeholder="请输入岗位编码"
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -652,7 +739,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     岗位级别
                   </Typography>
                   <TextField
-                    id="create-level"
+                    id="edit-level"
                     size="small"
                     type="text"
                     fullWidth
@@ -660,7 +747,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("level", e.target.value)
                     }
-                    placeholder="请输入岗位级别"
                   />
                 </Box>
                 <Box
@@ -677,7 +763,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       最低薪资
                     </Typography>
                     <TextField
-                      id="create-min-salary"
+                      id="edit-min-salary"
                       size="small"
                       type="number"
                       fullWidth
@@ -688,7 +774,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                           parseFloat(e.target.value) || 0,
                         )
                       }
-                      placeholder="最低薪资"
                     />
                   </Box>
                   <Box
@@ -698,7 +783,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       最高薪资
                     </Typography>
                     <TextField
-                      id="create-max-salary"
+                      id="edit-max-salary"
                       size="small"
                       type="number"
                       fullWidth
@@ -709,7 +794,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                           parseFloat(e.target.value) || 0,
                         )
                       }
-                      placeholder="最高薪资"
                     />
                   </Box>
                 </Box>
@@ -718,7 +802,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     岗位描述
                   </Typography>
                   <TextField
-                    id="create-description"
+                    id="edit-description"
                     size="small"
                     multiline
                     rows={3}
@@ -727,7 +811,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("description", e.target.value)
                     }
-                    placeholder="请输入岗位描述"
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -735,7 +818,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     任职要求
                   </Typography>
                   <TextField
-                    id="create-requirements"
+                    id="edit-requirements"
                     size="small"
                     multiline
                     rows={3}
@@ -744,7 +827,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("requirements", e.target.value)
                     }
-                    placeholder="请输入任职要求"
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -770,386 +852,152 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                 <Button
                   type="button"
                   variant="outlined"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedPosition(null);
+                  }}
                 >
                   取消
                 </Button>
                 <Button type="submit" variant="contained">
-                  创建
+                  保存
                 </Button>
               </DialogActions>
             </form>
-          </DialogContent>
-        </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
 
-        <Dialog open={showEditModal} onClose={() => setShowEditModal(false)}>
-          <DialogTitle>编辑岗位</DialogTitle>
-          <DialogContent sx={{ maxWidth: 500 }}>
-            {selectedPosition && (
-              <form onSubmit={handleUpdate}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      岗位名称 *
-                    </Typography>
-                    <TextField
-                      id="edit-name"
-                      size="small"
-                      type="text"
-                      required
-                      fullWidth
-                      value={(formData as Position)?.name || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("name", e.target.value)
-                      }
-                    />
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      岗位编码
-                    </Typography>
-                    <TextField
-                      id="edit-code"
-                      size="small"
-                      type="text"
-                      fullWidth
-                      value={(formData as Position)?.code || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("code", e.target.value)
-                      }
-                    />
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      所属部门
-                    </Typography>
-                    <FormControl size="small" fullWidth>
-                      <InputLabel>请选择</InputLabel>
-                      <Select
-                        value={(formData as Position)?.department_id || ""}
-                        label="请选择"
-                        onChange={(e) =>
-                          handleInputChange("department_id", e.target.value)
-                        }
-                      >
-                        <MenuItem value="none">无</MenuItem>
-                        {departments.map((d) => (
-                          <MenuItem key={d.id} value={d.id}>
-                            {d.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      岗位级别
-                    </Typography>
-                    <TextField
-                      id="edit-level"
-                      size="small"
-                      type="text"
-                      fullWidth
-                      value={(formData as Position)?.level || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("level", e.target.value)
-                      }
-                    />
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 2,
-                    }}
-                  >
-                    <Box
-                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                    >
-                      <Typography variant="body2" sx={{ mb: 0.5 }}>
-                        最低薪资
-                      </Typography>
-                      <TextField
-                        id="edit-min-salary"
-                        size="small"
-                        type="number"
-                        fullWidth
-                        value={(formData as Position)?.min_salary || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange(
-                            "min_salary",
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                      />
-                    </Box>
-                    <Box
-                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                    >
-                      <Typography variant="body2" sx={{ mb: 0.5 }}>
-                        最高薪资
-                      </Typography>
-                      <TextField
-                        id="edit-max-salary"
-                        size="small"
-                        type="number"
-                        fullWidth
-                        value={(formData as Position)?.max_salary || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange(
-                            "max_salary",
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                      />
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      岗位描述
-                    </Typography>
-                    <TextField
-                      id="edit-description"
-                      size="small"
-                      multiline
-                      rows={3}
-                      fullWidth
-                      value={(formData as Position)?.description || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("description", e.target.value)
-                      }
-                    />
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      任职要求
-                    </Typography>
-                    <TextField
-                      id="edit-requirements"
-                      size="small"
-                      multiline
-                      rows={3}
-                      fullWidth
-                      value={(formData as Position)?.requirements || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("requirements", e.target.value)
-                      }
-                    />
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                  >
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      状态
-                    </Typography>
-                    <FormControl size="small" fullWidth>
-                      <InputLabel>请选择</InputLabel>
-                      <Select
-                        value={(formData as Position)?.status || "active"}
-                        label="请选择"
-                        onChange={(e) =>
-                          handleInputChange("status", e.target.value)
-                        }
-                      >
-                        <MenuItem value="active">启用</MenuItem>
-                        <MenuItem value="inactive">禁用</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Box>
-                </Box>
-                <DialogActions sx={{ mt: 3 }}>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setSelectedPosition(null);
-                    }}
-                  >
-                    取消
-                  </Button>
-                  <Button type="submit" variant="contained">
-                    保存
-                  </Button>
-                </DialogActions>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showViewModal} onClose={() => setShowViewModal(false)}>
-          <DialogTitle>岗位详情</DialogTitle>
-          <DialogContent sx={{ maxWidth: 500 }}>
-            {selectedPosition && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      岗位名称
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedPosition.name}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      岗位编码
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedPosition.code || "-"}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      所属部门
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {departments.find(
-                        (d) => d.id === selectedPosition.department_id,
-                      )?.name || "-"}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      岗位级别
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedPosition.level || "-"}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      薪资范围
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedPosition.min_salary || 0} -{" "}
-                      {selectedPosition.max_salary || 0}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      状态
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {getStatusBadge(selectedPosition.status)}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                >
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    岗位描述
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "text.primary" }}>
-                    {selectedPosition.description || "-"}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                >
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    任职要求
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "text.primary" }}>
-                    {selectedPosition.requirements || "-"}
-                  </Typography>
-                </Box>
-                {selectedPosition.created_at && (
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      创建时间
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      {selectedPosition.created_at}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            )}
-            <DialogActions sx={{ mt: 3 }}>
-              <Button
-                onClick={() => setShowViewModal(false)}
-                variant="contained"
+      {/* 查看对话框 */}
+      <Dialog open={showViewModal} onClose={() => setShowViewModal(false)}>
+        <DialogTitle>岗位详情</DialogTitle>
+        <DialogContent sx={{ maxWidth: 500 }}>
+          {selectedPosition && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                }}
               >
-                关闭
-              </Button>
-            </DialogActions>
-          </DialogContent>
-        </Dialog>
-      </Box>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    岗位名称
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                    {selectedPosition.name}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    岗位编码
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                    {selectedPosition.code || "-"}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                }}
+              >
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    所属部门
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                    {departments.find(
+                      (d) => d.id === selectedPosition.department_id,
+                    )?.name || "-"}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    岗位级别
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                    {selectedPosition.level || "-"}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                }}
+              >
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    薪资范围
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                    {selectedPosition.min_salary || 0} -{" "}
+                    {selectedPosition.max_salary || 0}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    状态
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                    {getStatusBadge(selectedPosition.status)}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  岗位描述
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.primary" }}>
+                  {selectedPosition.description || "-"}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  任职要求
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.primary" }}>
+                  {selectedPosition.requirements || "-"}
+                </Typography>
+              </Box>
+              {selectedPosition.created_at && (
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    创建时间
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    {selectedPosition.created_at}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+          <DialogActions sx={{ mt: 3 }}>
+            <Button onClick={() => setShowViewModal(false)} variant="contained">
+              关闭
+            </Button>
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

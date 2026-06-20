@@ -426,7 +426,7 @@ const OpportunityManagementPage: React.FC = () => {
               </Select>
             </FormControl>
             <DataExport
-              data={opportunities as Record<string, unknown>[]}
+              data={opportunities as unknown as Record<string, unknown>[]}
               fields={exportFields}
               defaultFileName="商机数据"
               buttonText="导出"

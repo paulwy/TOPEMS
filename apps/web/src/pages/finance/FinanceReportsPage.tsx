@@ -7,24 +7,13 @@ import {
   BarChart3,
   ChevronLeft,
   Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
   Building2,
   Clock,
   FileText,
-  Users,
-  CreditCard,
   Wallet,
   Activity,
-  Target,
-  Minus,
-  RefreshCw,
-  Layers,
-  PiggyBank,
   Download,
-  BarChart2,
   LineChart as LineChartIcon,
-  PieChartIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -35,7 +24,6 @@ import {
   type CashFlowStatement,
   type ProjectFinancialSummary,
   type MonthlyTrend,
-  type KeyRatios,
   type DepartmentFinancialSummary,
   type AgingAnalysis,
   type CashFlowAnalysis,
@@ -73,6 +61,7 @@ import {
   formatCurrency,
   formatPercent,
 } from "@/components/charts/CustomTooltip";
+import { StatCardGroup } from "@/components/mui";
 
 const FinanceReportsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -170,6 +159,7 @@ const FinanceReportsPage: React.FC = () => {
 
   useEffect(() => {
     loadReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   const loadReports = async () => {
@@ -239,69 +229,6 @@ const FinanceReportsPage: React.FC = () => {
   const formatCurrencyLocal = (amount: number) =>
     `¥${amount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}`;
   const formatPercentLocal = (value: number) => `${value.toFixed(2)}%`;
-
-  const StatCard: React.FC<{
-    title: string;
-    value: string;
-    change?: number;
-    icon: React.ReactNode;
-    color: string;
-  }> = ({ title, value, change, icon, color }) => (
-    <Card sx={{ "&:hover": { boxShadow: 2 }, transition: "box-shadow 0.2s" }}>
-      <CardContent sx={{ p: 2 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              {title}
-            </Typography>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: "bold", mt: 0.5, color }}
-            >
-              {value}
-            </Typography>
-            {change !== undefined && (
-              <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                {change >= 0 ? (
-                  <ArrowUpRight size={16} style={{ color: "#16a34a" }} />
-                ) : (
-                  <ArrowDownRight size={16} style={{ color: "#dc2626" }} />
-                )}
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: change >= 0 ? "success.main" : "error.main",
-                    ml: 0.5,
-                  }}
-                >
-                  {Math.abs(change)}%
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: "50%",
-              bgcolor: color.includes("green")
-                ? "success.light"
-                : color.includes("red")
-                  ? "error.light"
-                  : "primary.light",
-            }}
-          >
-            {icon}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
 
   const KeyRatioCard: React.FC<{
     title: string;
@@ -693,59 +620,45 @@ const FinanceReportsPage: React.FC = () => {
             ) : (
               businessOverview && (
                 <>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        sm: "repeat(2, 1fr)",
-                        md: "repeat(4, 1fr)",
+                  <StatCardGroup
+                    stats={[
+                      {
+                        title: "总资产",
+                        value: formatCurrencyLocal(
+                          businessOverview.total_assets,
+                        ),
+                        change: 5.2,
+                        icon: <DollarSign size={20} />,
+                        color: "primary",
                       },
-                      gap: 2,
-                      mb: 3,
-                    }}
-                  >
-                    <StatCard
-                      title="总资产"
-                      value={formatCurrencyLocal(businessOverview.total_assets)}
-                      change={5.2}
-                      icon={
-                        <DollarSign size={20} style={{ color: "#6366f1" }} />
-                      }
-                      color="#6366f1"
-                    />
-                    <StatCard
-                      title="总负债"
-                      value={formatCurrencyLocal(
-                        businessOverview.total_liabilities,
-                      )}
-                      change={-2.1}
-                      icon={
-                        <TrendingDown size={20} style={{ color: "#ea580c" }} />
-                      }
-                      color="#ea580c"
-                    />
-                    <StatCard
-                      title="总收入"
-                      value={formatCurrencyLocal(
-                        businessOverview.total_revenue,
-                      )}
-                      change={12.5}
-                      icon={
-                        <TrendingUp size={20} style={{ color: "#16a34a" }} />
-                      }
-                      color="#16a34a"
-                    />
-                    <StatCard
-                      title="净利润"
-                      value={formatCurrencyLocal(businessOverview.net_profit)}
-                      change={18.3}
-                      icon={
-                        <TrendingUp size={20} style={{ color: "#059669" }} />
-                      }
-                      color="#059669"
-                    />
-                  </Box>
+                      {
+                        title: "总负债",
+                        value: formatCurrencyLocal(
+                          businessOverview.total_liabilities,
+                        ),
+                        change: -2.1,
+                        icon: <TrendingDown size={20} />,
+                        color: "warning",
+                      },
+                      {
+                        title: "总收入",
+                        value: formatCurrencyLocal(
+                          businessOverview.total_revenue,
+                        ),
+                        change: 12.5,
+                        icon: <TrendingUp size={20} />,
+                        color: "success",
+                      },
+                      {
+                        title: "净利润",
+                        value: formatCurrencyLocal(businessOverview.net_profit),
+                        change: 18.3,
+                        icon: <TrendingUp size={20} />,
+                        color: "info",
+                      },
+                    ]}
+                    columns={4}
+                  />
 
                   <Box
                     sx={{

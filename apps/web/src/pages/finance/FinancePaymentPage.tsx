@@ -1,12 +1,8 @@
 import React, { useState, useMemo } from "react";
 import {
-  Box,
-  ChevronLeft,
   Plus,
-  Edit,
   Trash2,
   Download,
-  Search,
   CreditCard,
   CheckCircle,
   Clock,
@@ -14,11 +10,12 @@ import {
   Send,
   Eye,
 } from "lucide-react";
+import { Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
+import type { ColumnDef } from "@/components/mui";
+import { ListPageTemplate, StatCard } from "@/components/mui";
 import { DataExport } from "@/components/common";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
 import {
   Button,
@@ -27,8 +24,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -39,7 +34,6 @@ import {
   Stack,
   IconButton,
   Tooltip,
-  InputAdornment,
 } from "@mui/material";
 
 interface Payment {
@@ -262,44 +256,83 @@ const FinancePaymentPage: React.FC = () => {
     });
   };
 
+  // 统计卡片数据
+  const statsData = useMemo(() => {
+    const totalPayments = paymentData.length;
+    const paidAmount = paymentData
+      .filter((p) => p.status === "已付款")
+      .reduce((sum, p) => sum + p.amount, 0);
+    const pendingApproval = paymentData.filter(
+      (p) => p.status === "待审批",
+    ).length;
+    const inApproval = paymentData.filter((p) => p.status === "审批中").length;
+
+    return [
+      {
+        title: "总付款次数",
+        value: totalPayments,
+        icon: <CreditCard size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "已付款金额",
+        value: `¥${paidAmount.toLocaleString()}`,
+        icon: <CheckCircle size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "待审批",
+        value: pendingApproval,
+        icon: <Clock size={24} />,
+        color: "warning" as const,
+      },
+      {
+        title: "审批中",
+        value: inApproval,
+        icon: <Send size={24} />,
+        color: "info" as const,
+      },
+    ];
+  }, [paymentData]);
+
+  // 列定义 - ListPageTemplate 格式
   const columns = useMemo<ColumnDef<Payment>[]>(
     () => [
       {
-        accessorKey: "payment_number",
-        header: "付款单号",
-        cell: ({ row }) => (
+        id: "payment_number",
+        label: "付款单号",
+        render: (row) => (
           <MuiBox sx={{ fontWeight: 600, color: "success.main" }}>
-            {row.original.payment_number}
+            {row.payment_number}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "payment_date",
-        header: "付款日期",
-        cell: ({ row }) => (
+        id: "payment_date",
+        label: "付款日期",
+        render: (row) => (
           <MuiBox sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-            {row.original.payment_date}
+            {row.payment_date}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "supplier",
-        header: "供应商",
-        cell: ({ row }) => (
-          <MuiBox sx={{ fontWeight: 500 }}>{row.original.supplier}</MuiBox>
+        id: "supplier",
+        label: "供应商",
+        render: (row) => (
+          <MuiBox sx={{ fontWeight: 500 }}>{row.supplier}</MuiBox>
         ),
       },
       {
-        accessorKey: "payment_method",
-        header: "付款方式",
-        cell: ({ row }) => (
-          <Chip label={row.original.payment_method} size="small" />
-        ),
+        id: "payment_method",
+        label: "付款方式",
+        render: (row) => <Chip label={row.payment_method} size="small" />,
       },
       {
-        accessorKey: "amount",
-        header: "付款金额",
-        cell: ({ row }) => (
+        id: "amount",
+        label: "付款金额",
+        align: "right" as const,
+        render: (row) => (
           <MuiBox
             sx={{
               fontWeight: 700,
@@ -307,27 +340,27 @@ const FinancePaymentPage: React.FC = () => {
               fontFamily: "monospace",
             }}
           >
-            ¥{row.original.amount.toLocaleString()}
+            ¥{row.amount.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "bank_account",
-        header: "银行账户",
-        cell: ({ row }) => (
+        id: "bank_account",
+        label: "银行账户",
+        render: (row) => (
           <MuiBox sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-            {row.original.bank_account}
+            {row.bank_account}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => {
-          const config = getStatusConfig(row.original.status);
+        id: "status",
+        label: "状态",
+        render: (row) => {
+          const config = getStatusConfig(row.status);
           return (
             <Chip
-              label={row.original.status}
+              label={row.status}
               size="small"
               color={config.color}
               icon={config.icon as React.ReactElement}
@@ -335,61 +368,59 @@ const FinancePaymentPage: React.FC = () => {
           );
         },
       },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            {row.original.status === "待审批" && (
-              <>
-                <Tooltip title="审批">
-                  <IconButton
-                    size="small"
-                    color="success"
-                    onClick={() => handleApprove(row.original)}
-                  >
-                    <CheckCircle sx={{ width: 16, height: 16 }} />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="拒绝">
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleReject(row.original)}
-                  >
-                    <XCircle sx={{ width: 16, height: 16 }} />
-                  </IconButton>
-                </Tooltip>
-              </>
-            )}
-            {row.original.status === "已付款" && (
-              <Tooltip title="查看">
-                <IconButton size="small">
-                  <Eye sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title="删除">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => handleDelete(row.original.id)}
-              >
-                <Trash2 sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        ),
-      },
     ],
     [],
+  );
+
+  // 行操作渲染
+  const renderRowActions = (row: Payment) => (
+    <Stack direction="row" spacing={1}>
+      {row.status === "待审批" && (
+        <>
+          <Tooltip title="审批">
+            <IconButton
+              size="small"
+              color="success"
+              onClick={() => handleApprove(row)}
+            >
+              <CheckCircle sx={{ width: 16, height: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="拒绝">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => handleReject(row)}
+            >
+              <XCircle sx={{ width: 16, height: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </>
+      )}
+      {row.status === "已付款" && (
+        <Tooltip title="查看">
+          <IconButton size="small">
+            <Eye sx={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Tooltip>
+      )}
+      <Tooltip title="删除">
+        <IconButton
+          size="small"
+          color="error"
+          onClick={() => handleDelete(row.id)}
+        >
+          <Trash2 sx={{ width: 16, height: 16 }} />
+        </IconButton>
+      </Tooltip>
+    </Stack>
   );
 
   const advancedFilters = useMemo(
     () => [
       {
+        id: "payment_method",
         label: "付款方式",
-        key: "payment_method",
         type: "select" as const,
         options: [
           { value: "银行转账", label: "银行转账" },
@@ -401,8 +432,8 @@ const FinancePaymentPage: React.FC = () => {
         onChange: setFilterMethod,
       },
       {
+        id: "status",
         label: "状态",
-        key: "status",
         type: "select" as const,
         options: [
           { value: "已付款", label: "已付款" },
@@ -432,134 +463,53 @@ const FinancePaymentPage: React.FC = () => {
   );
 
   return (
-    <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <MuiBox
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: "sm",
-          borderBottom: 1,
-          borderColor: "divider",
+    <>
+      <ListPageTemplate
+        title="付款管理"
+        subtitle="管理供应商付款申请，审批和确认付款"
+        backButton={{
+          onClick: () => navigate("/dashboard"),
         }}
-      >
-        <MuiBox
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
-            <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
-              <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
-              <MuiBox>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: 700,
-                  }}
-                >
-                  <MuiBox
-                    component="span"
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      mr: 1.5,
-                      color: "success.main",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <CreditCard size={28} />
-                  </MuiBox>
-                  付款管理
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  管理供应商付款申请，审批和确认付款
-                </Typography>
-              </MuiBox>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<Download sx={{ width: 20, height: 20 }} />}
-                onClick={handleExport}
-              >
-                导出
-              </Button>
-              <DataExport
-                data={paymentData as Record<string, unknown>[]}
-                fields={exportFields}
-                defaultFileName="付款数据"
-                buttonText="数据导出"
-              />
-              <Button
-                variant="contained"
-                startIcon={<Plus sx={{ width: 20, height: 20 }} />}
-                onClick={() => setShowCreateModal(true)}
-              >
-                付款申请
-              </Button>
-            </Stack>
-          </Stack>
-        </MuiBox>
-      </MuiBox>
+        columns={columns}
+        data={filteredData}
+        searchable
+        searchPlaceholder="搜索付款单号、供应商..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={advancedFilters}
+        renderRowActions={renderRowActions}
+        headerContent={
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {statsData.map((stat, index) => (
+              <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard {...stat} />
+              </Grid>
+            ))}
+          </Grid>
+        }
+        actions={[
+          {
+            label: "导出",
+            variant: "outlined",
+            icon: <Download sx={{ width: 20, height: 20 }} />,
+            onClick: handleExport,
+          },
+          {
+            label: "付款申请",
+            variant: "contained",
+            icon: <Plus sx={{ width: 20, height: 20 }} />,
+            onClick: () => setShowCreateModal(true),
+          },
+        ]}
+      />
 
-      <MuiBox
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
-      >
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            gap: 2,
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
-            <TextField
-              size="small"
-              placeholder="搜索付款单号、供应商..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ width: 280 }}
-            />
-          </Stack>
-        </Stack>
-
-        <Card>
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredData}
-              searchPlaceholder="搜索付款..."
-              searchKey="payment_number"
-              enableAdvancedFilter={true}
-              advancedFilters={advancedFilters}
-              exportFileName="finance-payments"
-            />
-          </CardContent>
-        </Card>
-      </MuiBox>
+      {/* DataExport 组件 */}
+      <DataExport
+        data={paymentData as unknown as Record<string, unknown>[]}
+        fields={exportFields}
+        defaultFileName="付款数据"
+        buttonText="数据导出"
+      />
 
       {/* Create Modal */}
       <Dialog
@@ -723,7 +673,7 @@ const FinancePaymentPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </MuiBox>
+    </>
   );
 };
 

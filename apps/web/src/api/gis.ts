@@ -323,7 +323,14 @@ export const gisApi = {
       `/api/gis/device-locations?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<DevicePoint>(response.data, "device_locations");
+      const adapted = adaptResponse<any>(response.data, "device_locations");
+      // 转换 position.{lat,lng} 到 latitude/longitude
+      adapted.data = adapted.data.map((item: any) => ({
+        ...item,
+        latitude: item.position?.lat ?? item.latitude ?? 0,
+        longitude: item.position?.lng ?? item.longitude ?? 0,
+      }));
+      response.data = adapted;
     }
     return response as ApiResponse<PaginatedResponse<DevicePoint>>;
   },

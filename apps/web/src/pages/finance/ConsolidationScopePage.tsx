@@ -3,7 +3,7 @@
  * 管理多公司合并报表的合并范围配置
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Button,
   Card,
@@ -32,6 +32,10 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
+  FolderOpen,
+  PlayCircle,
+  Users2,
+  Briefcase,
 } from "lucide-react";
 import {
   useConsolidationScopes,
@@ -41,6 +45,7 @@ import {
   useRemoveCompanyFromScope,
 } from "@/hooks/useConsolidation";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { StatCardGroup } from "@/components/mui";
 import type {
   ConsolidationScope,
   ConsolidationCompany,
@@ -146,6 +151,43 @@ export default function ConsolidationScopePage() {
   // 从合并范围移除公司
   const removeCompany = useRemoveCompanyFromScope();
 
+  // 统计数据
+  const stats = useMemo(() => {
+    const totalCount = scopesData?.items?.length || 0;
+    const activeCount =
+      scopesData?.items?.filter((s) => s.status === "active").length || 0;
+    const totalCompanies = companiesData?.data?.length || 0;
+    const parentCount =
+      companiesData?.data?.filter((c) => c.is_parent).length || 0;
+
+    return [
+      {
+        title: "总范围数",
+        value: totalCount,
+        icon: <FolderOpen sx={{ width: 20, height: 20 }} />,
+        color: "primary" as const,
+      },
+      {
+        title: "启用数",
+        value: activeCount,
+        icon: <PlayCircle sx={{ width: 20, height: 20 }} />,
+        color: "success" as const,
+      },
+      {
+        title: "公司总数",
+        value: totalCompanies,
+        icon: <Users2 sx={{ width: 20, height: 20 }} />,
+        color: "info" as const,
+      },
+      {
+        title: "母公司数",
+        value: parentCount,
+        icon: <Briefcase sx={{ width: 20, height: 20 }} />,
+        color: "secondary" as const,
+      },
+    ];
+  }, [scopesData?.items, companiesData?.data]);
+
   // 处理选择合并范围
   const handleSelectScope = (scope: ConsolidationScope) => {
     setSelectedScope(scope);
@@ -159,16 +201,16 @@ export default function ConsolidationScopePage() {
   };
 
   // 合并范围列定义
-  const scopeColumns = [
+  const scopeColumns: ColumnDef<ConsolidationScope>[] = [
     {
       id: "code",
       header: "合并范围编码",
       accessorKey: "code",
-      cell: ({ row }: { row: ConsolidationScope }) => (
+      cell: ({ row }) => (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Network sx={{ width: 16, height: 16, color: "#2563eb" }} />
           <span style={{ fontFamily: "monospace", fontSize: 14 }}>
-            {row.code}
+            {row.getValue("code")}
           </span>
         </div>
       ),
@@ -177,17 +219,20 @@ export default function ConsolidationScopePage() {
       id: "name",
       header: "合并范围名称",
       accessorKey: "name",
-      cell: ({ row }: { row: ConsolidationScope }) => (
-        <div style={{ fontWeight: 500 }}>{row.name}</div>
+      cell: ({ row }) => (
+        <div style={{ fontWeight: 500 }}>{row.getValue("name")}</div>
       ),
     },
     {
       id: "consolidation_method",
       header: "合并方法",
       accessorKey: "consolidation_method",
-      cell: ({ row }: { row: ConsolidationScope }) => {
-        const config = METHOD_CONFIG[row.consolidation_method] || {
-          label: row.consolidation_method,
+      cell: ({ row }) => {
+        const method = row.getValue<string>("consolidation_method");
+        const config = (
+          METHOD_CONFIG as Record<string, { label: string; color: string }>
+        )[method] || {
+          label: method,
           color: "bg-gray-100 text-gray-800",
         };
         return (
@@ -203,9 +248,9 @@ export default function ConsolidationScopePage() {
       id: "description",
       header: "说明",
       accessorKey: "description",
-      cell: ({ row }: { row: ConsolidationScope }) => (
+      cell: ({ row }) => (
         <span style={{ color: "#6b7280", fontSize: 14 }}>
-          {row.description || "-"}
+          {row.getValue("description") || "-"}
         </span>
       ),
     },
@@ -213,13 +258,18 @@ export default function ConsolidationScopePage() {
       id: "status",
       header: "状态",
       accessorKey: "status",
-      cell: ({ row }: { row: ConsolidationScope }) => {
-        const config = STATUS_CONFIG[row.status] || {
-          label: row.status,
+      cell: ({ row }) => {
+        const status = row.getValue<string>("status");
+        const config = (
+          STATUS_CONFIG as Record<
+            string,
+            { label: string; color: string; icon: React.ComponentType<any> }
+          >
+        )[status] || {
+          label: status,
           color: "bg-gray-100 text-gray-800",
           icon: AlertCircle,
         };
-        const Icon = config.icon;
         return (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Chip
@@ -234,12 +284,14 @@ export default function ConsolidationScopePage() {
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }: { row: ConsolidationScope }) => (
+      cell: ({ row }) => (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Button
             variant="text"
             size="small"
-            onClick={() => navigate(`/finance/consolidation/${row.id}/rules`)}
+            onClick={() =>
+              navigate(`/finance/consolidation/${row.original.id}/rules`)
+            }
             startIcon={<Settings sx={{ width: 16, height: 16 }} />}
           >
             规则
@@ -247,7 +299,7 @@ export default function ConsolidationScopePage() {
           <Button
             variant="text"
             size="small"
-            onClick={() => handleDeleteScope(row.id)}
+            onClick={() => handleDeleteScope(row.original.id)}
           >
             <Trash2 sx={{ width: 16, height: 16, color: "#ef4444" }} />
           </Button>
@@ -427,6 +479,14 @@ export default function ConsolidationScopePage() {
         </CardContent>
       </Card>
 
+      {/* 统计卡片 */}
+      <Box sx={{ mb: 3 }}>
+        <StatCardGroup
+          stats={stats}
+          loading={scopesLoading || companiesLoading}
+        />
+      </Box>
+
       {/* 合并范围列表和详情 */}
       <Box
         sx={{
@@ -467,83 +527,12 @@ export default function ConsolidationScopePage() {
                   暂无合并范围，点击右上角新建
                 </Box>
               ) : (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {scopesData?.items?.map((scope) => (
-                    <Box
-                      key={scope.id}
-                      sx={{
-                        p: 2,
-                        borderRadius: 1,
-                        border: 1,
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        borderColor:
-                          selectedScope?.id === scope.id
-                            ? "primary.main"
-                            : "divider",
-                        bgcolor:
-                          selectedScope?.id === scope.id
-                            ? "primary.50"
-                            : "transparent",
-                        "&:hover": {
-                          borderColor: "primary.main",
-                          bgcolor: "primary.50",
-                        },
-                      }}
-                      onClick={() => handleSelectScope(scope)}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Typography
-                              variant="body1"
-                              sx={{ fontWeight: 500 }}
-                            >
-                              {scope.name}
-                            </Typography>
-                            {STATUS_CONFIG[scope.status] && (
-                              <Chip
-                                size="small"
-                                label={STATUS_CONFIG[scope.status].label}
-                                sx={{
-                                  bgcolor: "success.100",
-                                  color: "success.main",
-                                }}
-                              />
-                            )}
-                          </Box>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: "text.secondary",
-                              mt: 0.5,
-                              display: "block",
-                            }}
-                          >
-                            {scope.code} |{" "}
-                            {METHOD_CONFIG[scope.consolidation_method]?.label ||
-                              scope.consolidation_method}
-                          </Typography>
-                        </Box>
-                        <ChevronRight
-                          sx={{ width: 20, height: 20, color: "#9ca3af" }}
-                        />
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
+                <EnhancedDataTable
+                  columns={scopeColumns}
+                  data={scopesData?.items || []}
+                  loading={scopesLoading}
+                  onRowClick={(row) => handleSelectScope(row)}
+                />
               )}
             </CardContent>
           </Card>

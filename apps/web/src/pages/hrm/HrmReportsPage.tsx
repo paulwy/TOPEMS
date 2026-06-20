@@ -26,6 +26,7 @@ import {
 import { useNotification } from "@/hooks/useNotification";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { PageHeader } from "@/components/templates";
+import { StatCardGroup } from "@/components/mui";
 
 interface EmployeeSummary {
   total_employees: number;
@@ -104,6 +105,7 @@ const HrmReportsPage: React.FC = () => {
 
   useEffect(() => {
     loadReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const loadReports = async () => {
@@ -208,176 +210,47 @@ const HrmReportsPage: React.FC = () => {
             </Select>
           </FormControl>
         </Box>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" sx={{ color: "#dbeafe" }}>
-                    总员工数
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {formatNumber(employeeSummary?.total_employees || 0)}
-                  </Typography>
-                </Box>
-                <Users sx={{ width: 40, height: 40, color: "#bfdbfe" }} />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #22c55e, #16a34a)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" sx={{ color: "#dcfce7" }}>
-                    在职员工
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {formatNumber(employeeSummary?.active_employees || 0)}
-                  </Typography>
-                </Box>
-                <Briefcase sx={{ width: 40, height: 40, color: "#bbf7d0" }} />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #a855f7, #9333ea)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" sx={{ color: "#f3e8ff" }}>
-                    活跃合同
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {formatNumber(contractSummary?.active_contracts || 0)}
-                  </Typography>
-                </Box>
-                <FileText sx={{ width: 40, height: 40, color: "#e9d5ff" }} />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" sx={{ color: "#ffedd5" }}>
-                    本月新入职
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {formatNumber(employeeSummary?.new_hires_this_month || 0)}
-                  </Typography>
-                </Box>
-                <TrendingUp sx={{ width: 40, height: 40, color: "#fed7aa" }} />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #ef4444, #dc2626)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" sx={{ color: "#fee2e2" }}>
-                    培训完成率
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {trainingSummary?.avg_completion_rate || 0}%
-                  </Typography>
-                </Box>
-                <BookOpen sx={{ width: 40, height: 40, color: "#fecaca" }} />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" sx={{ color: "#e0e7ff" }}>
-                    考勤率
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {attendanceSummary?.attendance_rate || 0}%
-                  </Typography>
-                </Box>
-                <Clock sx={{ width: 40, height: 40, color: "#c7d2fe" }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
+        <StatCardGroup
+          stats={[
+            {
+              title: "总员工数",
+              value: formatNumber(employeeSummary?.total_employees || 0),
+              icon: <Users sx={{ width: 24, height: 24 }} />,
+              color: "primary",
+            },
+            {
+              title: "在职员工",
+              value: formatNumber(employeeSummary?.active_employees || 0),
+              icon: <Briefcase sx={{ width: 24, height: 24 }} />,
+              color: "success",
+            },
+            {
+              title: "活跃合同",
+              value: formatNumber(contractSummary?.active_contracts || 0),
+              icon: <FileText sx={{ width: 24, height: 24 }} />,
+              color: "secondary",
+            },
+            {
+              title: "本月新入职",
+              value: formatNumber(employeeSummary?.new_hires_this_month || 0),
+              icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
+              color: "warning",
+            },
+            {
+              title: "培训完成率",
+              value: `${trainingSummary?.avg_completion_rate || 0}%`,
+              icon: <BookOpen sx={{ width: 24, height: 24 }} />,
+              color: "error",
+            },
+            {
+              title: "考勤率",
+              value: `${attendanceSummary?.attendance_rate || 0}%`,
+              icon: <Clock sx={{ width: 24, height: 24 }} />,
+              color: "info",
+            },
+          ]}
+          columns={6}
+        />
 
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs
@@ -428,7 +301,10 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                },
                 gap: 3,
               }}
             >
@@ -594,7 +470,10 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  lg: "repeat(2, 1fr)",
+                },
                 gap: 3,
               }}
             >
@@ -824,7 +703,10 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  lg: "repeat(2, 1fr)",
+                },
                 gap: 3,
               }}
             >
@@ -1025,7 +907,10 @@ const HrmReportsPage: React.FC = () => {
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+                    gridTemplateColumns: {
+                      xs: "repeat(1, 1fr)",
+                      md: "repeat(2, 1fr)",
+                    },
                     gap: 3,
                   }}
                 >
@@ -1128,7 +1013,10 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                },
                 gap: 3,
               }}
             >
@@ -1365,7 +1253,10 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(4, 1fr)" },
+                gridTemplateColumns: {
+                  xs: "repeat(1, 1fr)",
+                  lg: "repeat(4, 1fr)",
+                },
                 gap: 2,
               }}
             >

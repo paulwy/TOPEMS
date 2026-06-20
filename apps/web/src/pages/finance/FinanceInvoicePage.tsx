@@ -1,23 +1,27 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Box,
   ChevronLeft,
   Plus,
-  Edit,
   Trash2,
-  Download,
-  Search,
   FileText,
   CheckCircle,
   XCircle,
   Clock,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store";
 import { DataExport } from "@/components/common";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate, StatCard, StatCardGroup } from "@/components/mui";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/notification/NotificationContainer";
+import { receivablePayableApi } from "@/api/finance";
+import type {
+  SalesInvoice,
+  InvoiceStatus,
+  PaginatedResult,
+} from "@/types/erp-finance";
 
 import {
   Button,
@@ -26,8 +30,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -37,160 +39,146 @@ import {
   Typography,
   Stack,
   IconButton,
-  Tooltip,
-  InputAdornment,
+  CircularProgress,
 } from "@mui/material";
 
-interface Invoice {
-  id: string;
-  invoice_number: string;
-  invoice_date: string;
-  buyer: string;
-  seller: string;
-  amount: number;
+interface InvoiceListItem extends SalesInvoice {
   tax_rate: number;
-  tax_amount: number;
-  status: string;
-  invoice_type: string;
 }
 
-const mockInvoiceData: Invoice[] = [
-  {
-    id: "1",
-    invoice_number: "FP202401001",
-    invoice_date: "2024-01-15",
-    buyer: "深圳市科技有限公司",
-    seller: "广州电子有限公司",
-    amount: 100000,
-    tax_rate: 13,
-    tax_amount: 13000,
-    status: "已认证",
-    invoice_type: "增值税专用发票",
-  },
-  {
-    id: "2",
-    invoice_number: "FP202401002",
-    invoice_date: "2024-01-18",
-    buyer: "深圳市科技有限公司",
-    seller: "东莞制造有限公司",
-    amount: 50000,
-    tax_rate: 13,
-    tax_amount: 6500,
-    status: "待认证",
-    invoice_type: "增值税专用发票",
-  },
-  {
-    id: "3",
-    invoice_number: "FP202401003",
-    invoice_date: "2024-01-20",
-    buyer: "广州贸易公司",
-    seller: "深圳市科技有限公司",
-    amount: 80000,
-    tax_rate: 13,
-    tax_amount: 10400,
-    status: "已认证",
-    invoice_type: "增值税专用发票",
-  },
-  {
-    id: "4",
-    invoice_number: "FP202401004",
-    invoice_date: "2024-01-22",
-    buyer: "佛山实业公司",
-    seller: "广州电子有限公司",
-    amount: 30000,
-    tax_rate: 13,
-    tax_amount: 3900,
-    status: "已作废",
-    invoice_type: "增值税专用发票",
-  },
-  {
-    id: "5",
-    invoice_number: "FP202401005",
-    invoice_date: "2024-01-25",
-    buyer: "深圳市科技有限公司",
-    seller: "惠州材料有限公司",
-    amount: 200000,
-    tax_rate: 13,
-    tax_amount: 26000,
-    status: "已认证",
-    invoice_type: "增值税专用发票",
-  },
-  {
-    id: "6",
-    invoice_number: "FP202402001",
-    invoice_date: "2024-02-05",
-    buyer: "广州贸易公司",
-    seller: "深圳贸易公司",
-    amount: 150000,
-    tax_rate: 13,
-    tax_amount: 19500,
-    status: "待认证",
-    invoice_type: "增值税专用发票",
-  },
-  {
-    id: "7",
-    invoice_number: "FP202402002",
-    invoice_date: "2024-02-10",
-    buyer: "东莞市公司",
-    seller: "深圳市科技有限公司",
-    amount: 60000,
-    tax_rate: 13,
-    tax_amount: 7800,
-    status: "已认证",
-    invoice_type: "增值税专用发票",
-  },
-  {
-    id: "8",
-    invoice_number: "FP202402003",
-    invoice_date: "2024-02-15",
-    buyer: "深圳市科技有限公司",
-    seller: "广州物流有限公司",
-    amount: 25000,
-    tax_rate: 6,
-    tax_amount: 1500,
-    status: "已认证",
-    invoice_type: "增值税普通发票",
-  },
-];
+interface GetInvoiceListParams {
+  customer_id?: string;
+  status?: string | string[];
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  page_size?: number;
+  keyword?: string;
+}
 
 const FinanceInvoicePage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const { success, error, notifications, hideNotification } = useNotification();
 
-  const [invoiceData, setInvoiceData] = useState<Invoice[]>(mockInvoiceData);
-  const [filterType, setFilterType] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<InvoiceListItem[]>([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
+  const [filterType, setFilterType] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedInvoice, setSelectedInvoice] =
+    useState<InvoiceListItem | null>(null);
+  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
 
   const [newInvoice, setNewInvoice] = useState({
-    invoice_number: "",
-    buyer: "",
-    seller: "",
+    customer_id: "",
+    customer_name: "",
     amount: 0,
     tax_rate: 13,
-    invoice_type: "增值税专用发票",
+    invoice_type: "normal" as "normal" | "special",
   });
 
-  const filteredData = useMemo(() => {
-    return invoiceData.filter((invoice) => {
-      if (filterType && invoice.invoice_type !== filterType) return false;
-      if (filterStatus && invoice.status !== filterStatus) return false;
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (
-          !invoice.invoice_number.toLowerCase().includes(query) &&
-          !invoice.buyer.toLowerCase().includes(query) &&
-          !invoice.seller.toLowerCase().includes(query)
-        ) {
-          return false;
+  // 获取发票列表
+  const fetchInvoiceList = useCallback(
+    async (params?: GetInvoiceListParams) => {
+      setLoading(true);
+      try {
+        const response = await receivablePayableApi.listSalesInvoices({
+          status: filterStatus || undefined,
+          page: params?.page || pagination.page,
+          page_size: params?.page_size || pagination.pageSize,
+        });
+
+        if (response.success && response.data) {
+          // 计算税率 (tax_amount / amount * 100)
+          const itemsWithTaxRate = (response.data.items || []).map((item) => ({
+            ...item,
+            tax_rate:
+              item.amount > 0
+                ? Math.round((item.tax_amount / item.amount) * 100)
+                : 0,
+          }));
+          setInvoiceData(itemsWithTaxRate);
+          setPagination({
+            page: response.data.page || 1,
+            pageSize: response.data.page_size || 10,
+            total: response.data.total || 0,
+          });
         }
+      } catch (err) {
+        console.error("获取发票列表失败:", err);
+        error("获取发票列表失败");
+      } finally {
+        setLoading(false);
       }
-      return true;
-    });
-  }, [invoiceData, filterType, filterStatus, searchQuery]);
+    },
+    [filterStatus, pagination.page, pagination.pageSize, error],
+  );
+
+  useEffect(() => {
+    fetchInvoiceList();
+  }, [fetchInvoiceList]);
+
+  // 统计卡片数据
+  const statCards = useMemo(() => {
+    const totalCount = pagination.total;
+    const verifiedCount = invoiceData.filter(
+      (i) => i.status === "approved" || i.status === "invoiced",
+    ).length;
+    const pendingCount = invoiceData.filter((i) => i.status === "draft").length;
+    const voidedCount = 0; // InvoiceStatus 没有 cancelled 状态
+    const totalAmount = invoiceData.reduce((sum, i) => sum + i.amount, 0);
+    const totalTaxAmount = invoiceData.reduce(
+      (sum, i) => sum + i.tax_amount,
+      0,
+    );
+
+    return [
+      {
+        title: "总发票数",
+        value: totalCount,
+        icon: <FileText size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "已开票",
+        value: verifiedCount,
+        icon: <CheckCircle size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "待开票",
+        value: pendingCount,
+        icon: <Clock size={24} />,
+        color: "warning" as const,
+      },
+      {
+        title: "已作废",
+        value: voidedCount,
+        icon: <XCircle size={24} />,
+        color: "error" as const,
+      },
+      {
+        title: "总金额",
+        value: `¥${totalAmount.toLocaleString()}`,
+        icon: <FileText size={24} />,
+        color: "secondary" as const,
+      },
+      {
+        title: "总税额",
+        value: `¥${totalTaxAmount.toLocaleString()}`,
+        icon: <FileText size={24} />,
+        color: "info" as const,
+      },
+    ];
+  }, [invoiceData, pagination.total]);
 
   const getStatusConfig = (status: string) => {
     const configs: Record<
@@ -198,151 +186,206 @@ const FinanceInvoicePage: React.FC = () => {
       {
         color: "success" | "warning" | "error" | "default";
         icon: React.ReactNode;
+        label: string;
       }
     > = {
-      已认证: { color: "success", icon: <CheckCircle size={12} /> },
-      待认证: { color: "warning", icon: <Clock size={12} /> },
-      已作废: { color: "error", icon: <XCircle size={12} /> },
+      draft: { color: "warning", icon: <Clock size={12} />, label: "草稿" },
+      approved: {
+        color: "success",
+        icon: <CheckCircle size={12} />,
+        label: "已批准",
+      },
+      invoiced: {
+        color: "success",
+        icon: <CheckCircle size={12} />,
+        label: "已开票",
+      },
+      partial_received: {
+        color: "warning",
+        icon: <Clock size={12} />,
+        label: "部分收款",
+      },
+      received: {
+        color: "success",
+        icon: <CheckCircle size={12} />,
+        label: "已收款",
+      },
+      overdue: { color: "error", icon: <Clock size={12} />, label: "已逾期" },
     };
-    return configs[status] || { color: "default", icon: null };
+    return configs[status] || { color: "default", icon: null, label: status };
   };
 
-  const handleCreate = () => {
-    const tax_amount = newInvoice.amount * (newInvoice.tax_rate / 100);
-    const newEntry: Invoice = {
-      id: String(invoiceData.length + 1),
-      invoice_number: newInvoice.invoice_number || `FP${Date.now()}`,
-      invoice_date: new Date().toISOString().split("T")[0],
-      buyer: newInvoice.buyer,
-      seller: newInvoice.seller,
-      amount: newInvoice.amount,
-      tax_rate: newInvoice.tax_rate,
-      tax_amount,
-      status: "待认证",
-      invoice_type: newInvoice.invoice_type,
-    };
-    setInvoiceData([...invoiceData, newEntry]);
-    addNotification({
-      title: "成功",
-      message: "发票开具成功",
-      type: "success",
-    });
-    setShowCreateModal(false);
-    setNewInvoice({
-      invoice_number: "",
-      buyer: "",
-      seller: "",
-      amount: 0,
-      tax_rate: 13,
-      invoice_type: "增值税专用发票",
-    });
+  const handleCreate = async () => {
+    if (!newInvoice.customer_id || !newInvoice.amount) {
+      error("请填写必填信息");
+      return;
+    }
+
+    try {
+      const response = await receivablePayableApi.createSalesInvoice({
+        customer_id: newInvoice.customer_id,
+        invoice_date: new Date().toISOString().split("T")[0],
+        amount: newInvoice.amount,
+        tax_amount: newInvoice.amount * (newInvoice.tax_rate / 100),
+        total_amount: newInvoice.amount * (1 + newInvoice.tax_rate / 100),
+        invoice_type: newInvoice.invoice_type,
+      });
+
+      if (response.success) {
+        success("发票开具成功");
+        setShowCreateModal(false);
+        fetchInvoiceList();
+        setNewInvoice({
+          customer_id: "",
+          customer_name: "",
+          amount: 0,
+          tax_rate: 13,
+          invoice_type: "normal",
+        });
+      } else {
+        error((response as any).message || "开具失败");
+      }
+    } catch (err) {
+      console.error("开具发票失败:", err);
+      error("开具发票失败");
+    }
   };
 
-  const handleVerify = (invoice: Invoice) => {
-    setInvoiceData(
-      invoiceData.map((i) =>
-        i.id === invoice.id ? { ...i, status: "已认证" } : i,
-      ),
-    );
-    addNotification({
-      title: "成功",
-      message: "发票认证成功",
-      type: "success",
-    });
+  const handleVerify = async (invoice: InvoiceListItem) => {
+    try {
+      const response = await receivablePayableApi.updateSalesInvoice(
+        invoice.id,
+        {
+          status: "invoiced",
+        },
+      );
+
+      if (response.success) {
+        success("发票认证成功");
+        fetchInvoiceList();
+      } else {
+        error((response as any).message || "认证失败");
+      }
+    } catch (err) {
+      console.error("认证发票失败:", err);
+      error("认证发票失败");
+    }
   };
 
-  const handleViewDetail = (invoice: Invoice) => {
+  const handleViewDetail = (invoice: InvoiceListItem) => {
     setSelectedInvoice(invoice);
     setShowDetailModal(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("确定要删除该发票吗？")) return;
-    setInvoiceData(invoiceData.filter((i) => i.id !== id));
-    addNotification({
-      title: "成功",
-      message: "发票删除成功",
-      type: "success",
-    });
+
+    try {
+      const response = await receivablePayableApi.deleteSalesInvoice(id);
+      if (response.success) {
+        success("发票删除成功");
+        fetchInvoiceList();
+      } else {
+        error((response as any).message || "删除失败");
+      }
+    } catch (err) {
+      console.error("删除发票失败:", err);
+      error("删除发票失败");
+    }
   };
 
-  const handleExport = () => {
-    addNotification({
-      title: "导出成功",
-      message: "发票数据已导出",
-      type: "success",
-    });
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, page: page + 1 }));
+    fetchInvoiceList({ page: page + 1 });
   };
 
-  const columns = useMemo<ColumnDef<Invoice>[]>(
+  const handlePageSizeChange = (pageSize: number) => {
+    setPagination((prev) => ({ ...prev, pageSize, page: 1 }));
+    fetchInvoiceList({ page_size: pageSize, page: 1 });
+  };
+
+  const handleSearch = () => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchInvoiceList({ page: 1 });
+  };
+
+  const handleReset = () => {
+    setSearchQuery("");
+    setFilterStatus("");
+    setFilterType("");
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchInvoiceList({ page: 1 });
+  };
+
+  const columns = useMemo(
     () => [
       {
-        accessorKey: "invoice_number",
-        header: "发票号码",
-        cell: ({ row }) => (
+        id: "invoice_no",
+        label: "发票号码",
+        render: (row: InvoiceListItem) => (
           <MuiBox sx={{ fontWeight: 600, color: "success.main" }}>
-            {row.original.invoice_number}
+            {row.invoice_no}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "invoice_date",
-        header: "开票日期",
-        cell: ({ row }) => (
+        id: "invoice_date",
+        label: "开票日期",
+        render: (row: InvoiceListItem) => (
           <MuiBox sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-            {row.original.invoice_date}
+            {row.invoice_date}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "buyer",
-        header: "购买方",
-        cell: ({ row }) => (
-          <MuiBox sx={{ fontWeight: 500 }}>{row.original.buyer}</MuiBox>
+        id: "customer_name",
+        label: "客户名称",
+        render: (row: InvoiceListItem) => (
+          <MuiBox sx={{ fontWeight: 500 }}>{row.customer_name}</MuiBox>
         ),
       },
       {
-        accessorKey: "seller",
-        header: "销售方",
-        cell: ({ row }) => (
-          <MuiBox sx={{ color: "text.secondary" }}>
-            {row.original.seller}
-          </MuiBox>
-        ),
-      },
-      {
-        accessorKey: "amount",
-        header: "金额",
-        cell: ({ row }) => (
+        id: "amount",
+        label: "金额",
+        render: (row: InvoiceListItem) => (
           <MuiBox sx={{ fontFamily: "monospace", fontWeight: 600 }}>
-            ¥{row.original.amount.toLocaleString()}
+            ¥{row.amount.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "tax_rate",
-        header: "税率",
-        cell: ({ row }) => (
-          <Chip label={`${row.original.tax_rate}%`} size="small" />
+        id: "tax_rate",
+        label: "税率",
+        render: (row: InvoiceListItem) => (
+          <Chip label={`${row.tax_rate}%`} size="small" />
         ),
       },
       {
-        accessorKey: "tax_amount",
-        header: "税额",
-        cell: ({ row }) => (
+        id: "tax_amount",
+        label: "税额",
+        render: (row: InvoiceListItem) => (
           <MuiBox sx={{ color: "warning.main", fontFamily: "monospace" }}>
-            ¥{row.original.tax_amount.toLocaleString()}
+            ¥{row.tax_amount.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => {
-          const config = getStatusConfig(row.original.status);
+        id: "total_amount",
+        label: "价税合计",
+        render: (row: InvoiceListItem) => (
+          <MuiBox sx={{ fontFamily: "monospace", fontWeight: 600 }}>
+            ¥{row.total_amount.toLocaleString()}
+          </MuiBox>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row: InvoiceListItem) => {
+          const config = getStatusConfig(row.status);
           return (
             <Chip
-              label={row.original.status}
+              label={config.label}
               size="small"
               color={config.color}
               icon={config.icon as React.ReactElement}
@@ -350,67 +393,58 @@ const FinanceInvoicePage: React.FC = () => {
           );
         },
       },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo(
+    () => [
       {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            <Tooltip title="查看详情">
-              <IconButton
-                size="small"
-                onClick={() => handleViewDetail(row.original)}
-              >
-                <Eye sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-            {row.original.status === "待认证" && (
-              <Tooltip title="认证抵扣">
-                <IconButton
-                  size="small"
-                  color="success"
-                  onClick={() => handleVerify(row.original)}
-                >
-                  <CheckCircle sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title="删除">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => handleDelete(row.original.id)}
-              >
-                <Trash2 sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        ),
+        label: "查看详情",
+        icon: <Eye sx={{ width: 16, height: 16 }} />,
+        onClick: (row: InvoiceListItem) => handleViewDetail(row),
+      },
+      {
+        label: "认证抵扣",
+        icon: <CheckCircle sx={{ width: 16, height: 16 }} />,
+        color: "success" as const,
+        show: (row: InvoiceListItem) => row.status === "draft",
+        onClick: (row: InvoiceListItem) => handleVerify(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error" as const,
+        onClick: (row: InvoiceListItem) => handleDelete(row.id),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
   const advancedFilters = useMemo(
     () => [
       {
+        id: "invoice_type",
         label: "发票类型",
-        key: "invoice_type",
         type: "select" as const,
         options: [
-          { value: "增值税专用发票", label: "增值税专用发票" },
-          { value: "增值税普通发票", label: "增值税普通发票" },
+          { value: "normal", label: "增值税普通发票" },
+          { value: "special", label: "增值税专用发票" },
         ],
         value: filterType,
         onChange: setFilterType,
       },
       {
+        id: "status",
         label: "状态",
-        key: "status",
         type: "select" as const,
         options: [
-          { value: "已认证", label: "已认证" },
-          { value: "待认证", label: "待认证" },
-          { value: "已作废", label: "已作废" },
+          { value: "pending", label: "待开票" },
+          { value: "approved", label: "已批准" },
+          { value: "invoiced", label: "已开票" },
+          { value: "paid", label: "已收款" },
+          { value: "cancelled", label: "已作废" },
         ],
         value: filterStatus,
         onChange: setFilterStatus,
@@ -419,24 +453,26 @@ const FinanceInvoicePage: React.FC = () => {
     [filterType, filterStatus],
   );
 
-  // 导出字段配置
   const exportFields = useMemo(
     () => [
-      { key: "invoice_number", title: "发票号码" },
-      { key: "invoice_date", title: "发票日期" },
-      { key: "buyer", title: "购买方" },
-      { key: "seller", title: "销售方" },
+      { key: "invoice_no", title: "发票号码" },
+      { key: "invoice_date", title: "开票日期" },
+      { key: "customer_name", title: "客户名称" },
       { key: "amount", title: "金额" },
       { key: "tax_rate", title: "税率" },
       { key: "tax_amount", title: "税额" },
+      { key: "total_amount", title: "价税合计" },
       { key: "status", title: "状态" },
-      { key: "invoice_type", title: "发票类型" },
     ],
     [],
   );
 
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <NotificationContainer
+        notifications={notifications}
+        onClose={hideNotification}
+      />
       <MuiBox
         sx={{
           bgcolor: "background.paper",
@@ -491,15 +527,11 @@ const FinanceInvoicePage: React.FC = () => {
               </MuiBox>
             </Stack>
             <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<Download sx={{ width: 20, height: 20 }} />}
-                onClick={handleExport}
-              >
-                导出
-              </Button>
+              <IconButton onClick={() => fetchInvoiceList()} disabled={loading}>
+                <RefreshCw sx={{ width: 20, height: 20 }} />
+              </IconButton>
               <DataExport
-                data={invoiceData as Record<string, unknown>[]}
+                data={invoiceData as unknown as Record<string, unknown>[]}
                 fields={exportFields}
                 defaultFileName="发票数据"
                 buttonText="数据导出"
@@ -519,50 +551,43 @@ const FinanceInvoicePage: React.FC = () => {
       <MuiBox
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
       >
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            gap: 2,
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
-            <TextField
-              size="small"
-              placeholder="搜索发票号码、购买方、销售方..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ width: 320 }}
-            />
-          </Stack>
-        </Stack>
+        {/* 统计卡片 */}
+        <StatCardGroup stats={statCards} columns={6} />
 
-        <Card>
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredData}
-              searchPlaceholder="搜索发票..."
-              searchKey="invoice_number"
-              enableAdvancedFilter={true}
-              advancedFilters={advancedFilters}
-              exportFileName="finance-invoices"
-            />
-          </CardContent>
-        </Card>
+        <ListPageTemplate
+          columns={columns}
+          data={invoiceData}
+          loading={loading}
+          searchable
+          searchPlaceholder="搜索发票号或客户..."
+          filters={advancedFilters}
+          filtersValue={{
+            invoice_type: filterType,
+            status: filterStatus,
+          }}
+          onFilterChange={(filters) => {
+            if (filters.invoice_type !== undefined)
+              setFilterType(filters.invoice_type as string);
+            if (filters.status !== undefined)
+              setFilterStatus(filters.status as string);
+          }}
+          onSearch={handleSearch}
+          actions={[
+            { label: "搜索", variant: "outlined", onClick: handleSearch },
+            { label: "重置", variant: "outlined", onClick: handleReset },
+          ]}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          rowActions={rowActions}
+          pagination={{
+            page: pagination.page - 1,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            onPageChange: handlePageChange,
+            onPageSizeChange: handlePageSizeChange,
+          }}
+        />
       </MuiBox>
 
       {/* Create Modal */}
@@ -576,38 +601,20 @@ const FinanceInvoicePage: React.FC = () => {
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 2 }}>
             <TextField
-              label="发票号码"
+              label="客户ID *"
               fullWidth
-              value={newInvoice.invoice_number}
+              value={newInvoice.customer_id}
               onChange={(e) =>
-                setNewInvoice({ ...newInvoice, invoice_number: e.target.value })
+                setNewInvoice({ ...newInvoice, customer_id: e.target.value })
               }
-              placeholder="系统自动生成"
+              placeholder="请输入客户ID"
             />
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="购买方 *"
-                fullWidth
-                value={newInvoice.buyer}
-                onChange={(e) =>
-                  setNewInvoice({ ...newInvoice, buyer: e.target.value })
-                }
-              />
-              <TextField
-                label="销售方 *"
-                fullWidth
-                value={newInvoice.seller}
-                onChange={(e) =>
-                  setNewInvoice({ ...newInvoice, seller: e.target.value })
-                }
-              />
-            </Stack>
             <Stack direction="row" spacing={2}>
               <TextField
                 label="金额 *"
                 type="number"
                 fullWidth
-                value={newInvoice.amount}
+                value={newInvoice.amount || ""}
                 onChange={(e) =>
                   setNewInvoice({
                     ...newInvoice,
@@ -640,11 +647,14 @@ const FinanceInvoicePage: React.FC = () => {
                 value={newInvoice.invoice_type}
                 label="发票类型"
                 onChange={(e) =>
-                  setNewInvoice({ ...newInvoice, invoice_type: e.target.value })
+                  setNewInvoice({
+                    ...newInvoice,
+                    invoice_type: e.target.value as "normal" | "special",
+                  })
                 }
               >
-                <MenuItem value="增值税专用发票">增值税专用发票</MenuItem>
-                <MenuItem value="增值税普通发票">增值税普通发票</MenuItem>
+                <MenuItem value="normal">增值税普通发票</MenuItem>
+                <MenuItem value="special">增值税专用发票</MenuItem>
               </Select>
             </FormControl>
           </Stack>
@@ -683,7 +693,7 @@ const FinanceInvoicePage: React.FC = () => {
                     variant="body1"
                     sx={{ fontWeight: 600, color: "success.main" }}
                   >
-                    {selectedInvoice.invoice_number}
+                    {selectedInvoice.invoice_no}
                   </Typography>
                 </MuiBox>
                 <MuiBox>
@@ -704,18 +714,18 @@ const FinanceInvoicePage: React.FC = () => {
               >
                 <MuiBox>
                   <Typography variant="body2" color="text.secondary">
-                    购买方
+                    客户名称
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {selectedInvoice.buyer}
+                    {selectedInvoice.customer_name}
                   </Typography>
                 </MuiBox>
                 <MuiBox>
                   <Typography variant="body2" color="text.secondary">
-                    销售方
+                    客户编码
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {selectedInvoice.seller}
+                    {selectedInvoice.customer_code}
                   </Typography>
                 </MuiBox>
               </MuiBox>
@@ -756,16 +766,37 @@ const FinanceInvoicePage: React.FC = () => {
                   </Typography>
                 </MuiBox>
               </MuiBox>
-              <MuiBox>
-                <Typography variant="body2" color="text.secondary">
-                  状态
-                </Typography>
-                <Chip
-                  label={selectedInvoice.status}
-                  size="small"
-                  color={getStatusConfig(selectedInvoice.status).color}
-                  sx={{ mt: 0.5 }}
-                />
+              <MuiBox
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                }}
+              >
+                <MuiBox
+                  sx={{ p: 2, bgcolor: "success.light", borderRadius: 1 }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    价税合计
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, color: "success.main" }}
+                  >
+                    ¥{selectedInvoice.total_amount.toLocaleString()}
+                  </Typography>
+                </MuiBox>
+                <MuiBox>
+                  <Typography variant="body2" color="text.secondary">
+                    状态
+                  </Typography>
+                  <Chip
+                    label={getStatusConfig(selectedInvoice.status).label}
+                    size="small"
+                    color={getStatusConfig(selectedInvoice.status).color}
+                    sx={{ mt: 0.5 }}
+                  />
+                </MuiBox>
               </MuiBox>
             </Stack>
           )}

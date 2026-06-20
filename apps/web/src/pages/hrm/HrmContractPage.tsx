@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Plus,
   Search,
@@ -17,6 +17,9 @@ import {
 import type { Contract, ContractRenewal, Employee } from "@/api/hrm";
 import { contractApi, contractRenewalApi, employeeApi } from "@/api/hrm";
 import type { PaginatedResult } from "@/api/hrm";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction } from "@/components/mui";
+import { StatCard } from "@/components/mui/StatCard";
 
 import {
   Button,
@@ -40,13 +43,6 @@ import {
   FormControlLabel,
   Tabs,
   Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableContainer,
-  Paper,
   IconButton,
   Tooltip,
   Divider,
@@ -130,6 +126,14 @@ export default function ContractManagementPage() {
   const [showExpiringOnly, setShowExpiringOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 统计卡片数据
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    expiring: 0,
+    expired: 0,
+  });
+
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<"create" | "edit" | "view">(
     "create",
@@ -189,6 +193,7 @@ export default function ContractManagementPage() {
   useEffect(() => {
     loadData();
     loadEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, statusFilter, showExpiringOnly]);
 
   const loadData = async () => {
@@ -209,6 +214,11 @@ export default function ContractManagementPage() {
         });
         if (result.code === 0 && result.data) {
           setData(result.data);
+          // 计算即将到期统计
+          const expiringCount = result.data.items.filter((c) =>
+            hasExpiringSoon(c.end_date),
+          ).length;
+          setStats((prev) => ({ ...prev, expiring: expiringCount }));
         } else {
           showNotification("error", result.message || "获取即将到期合同失败");
         }
@@ -216,6 +226,22 @@ export default function ContractManagementPage() {
         const result = await contractApi.list(params);
         if (result.code === 0 && result.data) {
           setData(result.data);
+          // 计算各项统计
+          const activeCount = result.data.items.filter(
+            (c) => c.status === "active",
+          ).length;
+          const expiredCount = result.data.items.filter(
+            (c) => c.status === "expired",
+          ).length;
+          const expiringCount = result.data.items.filter((c) =>
+            hasExpiringSoon(c.end_date),
+          ).length;
+          setStats({
+            total: result.data.total,
+            active: activeCount,
+            expired: expiredCount,
+            expiring: expiringCount,
+          });
         } else {
           showNotification("error", result.message || "获取合同列表失败");
         }
@@ -285,7 +311,9 @@ export default function ContractManagementPage() {
       contract_file_path: contract.contract_file_path || "",
       notes: contract.notes || "",
     });
-    setContractAttachments(contract.contract_file_path ? [contract.contract_file_path] : []);
+    setContractAttachments(
+      contract.contract_file_path ? [contract.contract_file_path] : [],
+    );
     setModalVisible(true);
   };
 
@@ -467,6 +495,168 @@ export default function ContractManagementPage() {
     return days !== null && days > 0 && days <= 30;
   };
 
+  // 统计卡片数据
+  const statCards = useMemo(
+    () => [
+      {
+        id: "total",
+        title: "合同总数",
+        value: stats.total,
+        icon: <FileText size={24} />,
+        color: "primary" as const,
+      },
+      {
+        id: "active",
+        title: "生效中",
+        value: stats.active,
+        icon: <Check size={24} />,
+        color: "success" as const,
+      },
+      {
+        id: "expiring",
+        title: "即将到期",
+        value: stats.expiring,
+        icon: <AlertCircle size={24} />,
+        color: "warning" as const,
+      },
+      {
+        id: "expired",
+        title: "已到期",
+        value: stats.expired,
+        icon: <Clock size={24} />,
+        color: "error" as const,
+      },
+    ],
+    [stats],
+  );
+
+  // 列定义
+  const columns: ColumnDef<Contract>[] = useMemo(
+    () => [
+      {
+        id: "contract_no",
+        label: "合同编号",
+        width: 128,
+        render: (row) => (
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <FileTextIcon size={16} style={{ color: "#3b82f6" }} />
+            <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
+              {row.contract_no || "-"}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        id: "employee",
+        label: "员工",
+        render: (row) => getEmployeeName(row.employee_id),
+      },
+      {
+        id: "contract_type",
+        label: "合同类型",
+        render: (row) =>
+          contractTypes.find((t) => t.value === row.contract_type)?.label ||
+          row.contract_type,
+      },
+      {
+        id: "salary",
+        label: "薪资",
+        width: 96,
+        render: (row) => (row.salary ? `${row.salary.toLocaleString()}` : "-"),
+      },
+      {
+        id: "validity",
+        label: "有效期",
+        width: 192,
+        render: (row) => {
+          const days = getDaysUntilExpiry(row.end_date);
+          const isExpiringSoon = hasExpiringSoon(row.end_date);
+          return (
+            <Box>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <Calendar size={14} style={{ color: "#9ca3af" }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: isExpiringSoon ? "warning.main" : "grey.600",
+                    fontWeight: isExpiringSoon ? 500 : 400,
+                  }}
+                >
+                  {new Date(row.start_date).toLocaleDateString("zh-CN")} ~{" "}
+                  {row.end_date
+                    ? new Date(row.end_date).toLocaleDateString("zh-CN")
+                    : "无固定期限"}
+                </Typography>
+              </Stack>
+              {isExpiringSoon && days !== null && (
+                <Stack
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    mt: 0.5,
+                  }}
+                >
+                  <AlertCircle size={12} style={{ color: "#ea580c" }} />
+                  <Typography variant="caption" sx={{ color: "warning.main" }}>
+                    剩余{days}天到期
+                  </Typography>
+                </Stack>
+              )}
+            </Box>
+          );
+        },
+      },
+      {
+        id: "status",
+        label: "状态",
+        width: 80,
+        render: (row) => (
+          <Chip
+            size="small"
+            label={statusMap[row.status]?.text || row.status}
+            color={statusMap[row.status]?.color || "default"}
+          />
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [employees],
+  );
+
+  // 行操作
+  const rowActions: RowAction<Contract>[] = useMemo(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: handleView,
+      },
+      {
+        label: "编辑",
+        icon: <Edit2 size={16} />,
+        onClick: handleEdit,
+      },
+      {
+        label: "续签",
+        icon: <RefreshCw size={16} />,
+        color: "success",
+        show: (row) => row.status === "active",
+        onClick: handleRenew,
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        confirm: true,
+        confirmMessage: "确定删除该合同吗?",
+        onClick: (row) => handleDelete(row.id),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       <Snackbar
@@ -566,307 +756,86 @@ export default function ContractManagementPage() {
       </Box>
 
       <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+        {/* 统计卡片 */}
+        <Box sx={{ mb: 3 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 2,
+            }}
+          >
+            {statCards.map((stat) => (
+              <StatCard key={stat.id} {...stat} />
+            ))}
+          </Box>
+        </Box>
+
         <Card sx={{ boxShadow: 1 }}>
-          <CardHeader
-            sx={{ pb: 1 }}
-            title={
-              <Stack
-                direction="row"
-                sx={{ alignItems: "center", justifyContent: "space-between" }}
-                spacing={2}
-              >
-                <Stack
-                  direction="row"
-                  sx={{ alignItems: "center" }}
-                  spacing={2}
-                >
-                  <TextField
-                    size="small"
-                    type="text"
-                    placeholder="搜索合同编号或员工姓名"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <Search
-                            size={16}
-                            style={{ marginRight: 8, color: "#9ca3af" }}
-                          />
-                        ),
-                      },
-                    }}
-                    sx={{ width: 280 }}
-                  />
-                  <FormControl size="small" sx={{ width: 160 }}>
-                    <InputLabel>状态</InputLabel>
-                    <Select
-                      value={statusFilter}
-                      label="状态"
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <MenuItem value="">全部状态</MenuItem>
-                      <MenuItem value="active">生效中</MenuItem>
-                      <MenuItem value="expired">已到期</MenuItem>
-                      <MenuItem value="terminated">已终止</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={showExpiringOnly}
-                        onChange={(e) => {
-                          setShowExpiringOnly(e.target.checked);
-                          setCurrentPage(1);
-                        }}
-                      />
-                    }
-                    label={
-                      <Typography variant="body2">
-                        仅显示即将到期(30天内)
-                      </Typography>
-                    }
-                  />
-                </Stack>
-                <Button
-                  variant="outlined"
-                  onClick={loadData}
-                  startIcon={<RefreshCw size={16} />}
-                >
-                  刷新
-                </Button>
-              </Stack>
-            }
+          <ListPageTemplate
+            columns={columns}
+            data={data.items}
+            loading={loading}
+            rowActions={rowActions}
+            getRowId={(row) => row.id}
+            pagination={{
+              page: currentPage,
+              pageSize: data.page_size,
+              total: data.total,
+              onPageChange: setCurrentPage,
+            }}
+            searchable
+            searchPlaceholder="搜索合同编号或员工姓名"
+            searchValue={searchText}
+            onSearch={(value) => {
+              setSearchText(value);
+              setCurrentPage(1);
+            }}
+            filters={[
+              {
+                id: "status",
+                label: "状态",
+                type: "select",
+                options: [
+                  { label: "全部状态", value: "" },
+                  { label: "生效中", value: "active" },
+                  { label: "已到期", value: "expired" },
+                  { label: "已终止", value: "terminated" },
+                ],
+                value: statusFilter,
+              },
+              {
+                id: "expiring",
+                label: "仅显示即将到期",
+                type: "select",
+                options: [
+                  { label: "全部", value: "false" },
+                  { label: "30天内到期", value: "true" },
+                ],
+                value: showExpiringOnly ? "true" : "false",
+              },
+            ]}
+            onFilterChange={(filters) => {
+              if (filters.status !== undefined) {
+                setStatusFilter(filters.status as string);
+              }
+              if (filters.expiring !== undefined) {
+                setShowExpiringOnly(filters.expiring === "true");
+              }
+              setCurrentPage(1);
+            }}
+            actions={[
+              {
+                label: "刷新",
+                icon: <RefreshCw size={16} />,
+                onClick: loadData,
+              },
+            ]}
+            emptyMessage="暂无合同数据"
           />
-          <CardContent sx={{ pt: 0 }}>
-            <TableContainer sx={{ maxHeight: 600 }}>
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: 128 }}>合同编号</TableCell>
-                    <TableCell>员工</TableCell>
-                    <TableCell>合同类型</TableCell>
-                    <TableCell sx={{ width: 96 }}>薪资</TableCell>
-                    <TableCell sx={{ width: 192 }}>有效期</TableCell>
-                    <TableCell sx={{ width: 80 }}>状态</TableCell>
-                    <TableCell sx={{ width: 160 }}>操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                        <Box sx={{ display: "flex", justifyContent: "center" }}>
-                          <Box
-                            sx={{
-                              animation: "spin 1s linear infinite",
-                              width: 32,
-                              height: 32,
-                              border: 2,
-                              borderColor: "primary.main",
-                              borderTopColor: "transparent",
-                              borderRadius: "50%",
-                            }}
-                          />
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ) : data.items.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        align="center"
-                        sx={{ py: 6, color: "grey.500" }}
-                      >
-                        暂无数据
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    data.items.map((item) => {
-                      const days = getDaysUntilExpiry(item.end_date);
-                      const isExpiringSoon = hasExpiringSoon(item.end_date);
-
-                      return (
-                        <TableRow key={item.id} hover>
-                          <TableCell>
-                            <Stack
-                              direction="row"
-                              sx={{ alignItems: "center" }}
-                              spacing={1}
-                            >
-                              <FileTextIcon
-                                size={16}
-                                style={{ color: "#3b82f6" }}
-                              />
-                              <Typography
-                                sx={{ fontWeight: 500, color: "grey.900" }}
-                              >
-                                {item.contract_no || "-"}
-                              </Typography>
-                            </Stack>
-                          </TableCell>
-                          <TableCell>
-                            {getEmployeeName(item.employee_id)}
-                          </TableCell>
-                          <TableCell>
-                            {contractTypes.find(
-                              (t) => t.value === item.contract_type,
-                            )?.label || item.contract_type}
-                          </TableCell>
-                          <TableCell>
-                            {item.salary
-                              ? `${item.salary.toLocaleString()}`
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <Stack
-                              direction="row"
-                              sx={{ alignItems: "center" }}
-                              spacing={1}
-                            >
-                              <Calendar
-                                size={14}
-                                style={{ color: "#9ca3af" }}
-                              />
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  color: isExpiringSoon
-                                    ? "warning.main"
-                                    : "grey.600",
-                                  fontWeight: isExpiringSoon ? 500 : 400,
-                                }}
-                              >
-                                {new Date(item.start_date).toLocaleDateString(
-                                  "zh-CN",
-                                )}{" "}
-                                ~{" "}
-                                {item.end_date
-                                  ? new Date(item.end_date).toLocaleDateString(
-                                      "zh-CN",
-                                    )
-                                  : "无固定期限"}
-                              </Typography>
-                            </Stack>
-                            {isExpiringSoon && days !== null && (
-                              <Stack
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "row",
-                                  alignItems: "center",
-                                  mt: 0.5,
-                                }}
-                              >
-                                <AlertCircle
-                                  size={12}
-                                  style={{ color: "#ea580c" }}
-                                />
-                                <Typography
-                                  variant="caption"
-                                  sx={{ color: "warning.main" }}
-                                >
-                                  剩余{days}天到期
-                                </Typography>
-                              </Stack>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={
-                                statusMap[item.status]?.text || item.status
-                              }
-                              color={statusMap[item.status]?.color || "default"}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Stack direction="row" spacing={0.5}>
-                              <Tooltip title="查看">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleView(item)}
-                                >
-                                  <Eye size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="编辑">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEdit(item)}
-                                >
-                                  <Edit2 size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              {item.status === "active" && (
-                                <Tooltip title="续签">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleRenew(item)}
-                                    sx={{
-                                      color: "success.main",
-                                      "&:hover": { bgcolor: "success.lighter" },
-                                    }}
-                                  >
-                                    <RefreshCw size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              <Tooltip title="删除">
-                                <IconButton
-                                  size="small"
-                                  onClick={() =>
-                                    showConfirm("确定删除该合同吗?", () =>
-                                      handleDelete(item.id),
-                                    )
-                                  }
-                                  sx={{
-                                    color: "error.main",
-                                    "&:hover": { bgcolor: "error.lighter" },
-                                  }}
-                                >
-                                  <Trash2 size={16} />
-                                </IconButton>
-                              </Tooltip>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <Divider sx={{ my: 2 }} />
-            <Stack
-              direction="row"
-              sx={{ alignItems: "center", justifyContent: "space-between" }}
-            >
-              <Typography variant="body2" sx={{ color: "grey.500" }}>
-                共 {data.total} 条记录
-              </Typography>
-              <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
-                <Button
-                  variant="outlined"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                >
-                  上一页
-                </Button>
-                <Typography variant="body2" sx={{ px: 1, color: "grey.600" }}>
-                  第 {currentPage} 页
-                </Typography>
-                <Button
-                  variant="outlined"
-                  disabled={currentPage * data.page_size >= data.total}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                >
-                  下一页
-                </Button>
-              </Stack>
-            </Stack>
-          </CardContent>
         </Card>
       </Box>
 
@@ -1082,11 +1051,11 @@ export default function ContractManagementPage() {
               </Stack>
 
               <Box>
-                <FormLabel sx={{ mb: 1, display: 'block' }}>合同附件</FormLabel>
+                <FormLabel sx={{ mb: 1, display: "block" }}>合同附件</FormLabel>
                 <FileUpload
                   value={contractAttachments}
                   onChange={setContractAttachments}
-                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
+                  accept={[".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"]}
                   maxCount={5}
                   maxSize={20}
                   maxTotalSize={50}
