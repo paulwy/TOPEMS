@@ -18,7 +18,7 @@ use topems_shared::{
 };
 
 mod plugin;
-use crate::plugin::{get_plugin_info, plugin_health_check};
+use crate::plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 
@@ -121,12 +121,18 @@ async fn main() -> anyhow::Result<()> {
         .layer(CookieManagerLayer::new())
         .layer(prometheus_layer);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8066".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8063".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PORTAL 统一门户系统启动中...");
     tracing::info!("📦 端口: {}", port);
     tracing::info!("🔒 认证保护已启用");
+
+    // 启动时自动注册到统一核心
+    let core_url = env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        auto_register_to_core(core_url.as_deref()).await;
+    });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

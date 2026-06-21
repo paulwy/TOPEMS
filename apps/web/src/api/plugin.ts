@@ -60,6 +60,32 @@ export interface TenantPlugin {
   usage_count: number;
 }
 
+// Tenant installed plugin with runtime status
+export interface TenantInstalledPlugin {
+  id: string;
+  tenant_id: string;
+  plugin_id: string;
+  installed_version: string;
+  is_active: boolean;
+  license_type: string;
+  license_expires_at?: string;
+  activated_at?: string;
+  last_used_at?: string;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+  // Plugin info
+  plugin_code: string;
+  plugin_name: string;
+  plugin_description?: string;
+  plugin_version: string;
+  plugin_category?: string;
+  // Runtime status
+  runtime_status?: string;
+  runtime_url?: string;
+  last_heartbeat?: string;
+}
+
 export interface PluginWithStatus {
   plugin: Plugin;
   is_owned: boolean;
@@ -89,22 +115,23 @@ export interface PluginRuntimeConfig {
 export const PLUGIN_REGISTRY: Record<string, { url: string; port: number }> = {
   workflow: { url: "http://localhost:8000", port: 8000 },
   erp: { url: "http://localhost:8010", port: 8010 },
-  hrm: { url: "http://localhost:8011", port: 8011 },
-  crm: { url: "http://localhost:8012", port: 8012 },
+  hrm: { url: "http://localhost:8020", port: 8020 },
+  crm: { url: "http://localhost:8029", port: 8029 },
   mes: { url: "http://localhost:8030", port: 8030 },
-  qa: { url: "http://localhost:8032", port: 8032 },
+  qms: { url: "http://localhost:8050", port: 8050 },
+  lims: { url: "http://localhost:8051", port: 8051 },
+  ehs: { url: "http://localhost:8052", port: 8052 },
+  rs: { url: "http://localhost:8053", port: 8053 },
   scm: { url: "http://localhost:8040", port: 8040 },
-  wms: { url: "http://localhost:8042", port: 8042 },
-  bi: { url: "http://localhost:8044", port: 8044 },
-  pm: { url: "http://localhost:8046", port: 8046 },
-  ai: { url: "http://localhost:8062", port: 8062 },
-  gis: { url: "http://localhost:8054", port: 8054 },
-  mobile: { url: "http://localhost:8056", port: 8056 },
-  rs: { url: "http://localhost:8058", port: 8058 },
-  srm: { url: "http://localhost:8060", port: 8060 },
-  monitor: { url: "http://localhost:8064", port: 8064 },
-  portal: { url: "http://localhost:8066", port: 8066 },
-  integration: { url: "http://localhost:8068", port: 8068 },
+  wms: { url: "http://localhost:8041", port: 8041 },
+  srm: { url: "http://localhost:8042", port: 8042 },
+  bi: { url: "http://localhost:8060", port: 8060 },
+  report: { url: "http://localhost:8061", port: 8061 },
+  monitor: { url: "http://localhost:8062", port: 8062 },
+  portal: { url: "http://localhost:8063", port: 8063 },
+  mobile: { url: "http://localhost:8070", port: 8070 },
+  gis: { url: "http://localhost:8071", port: 8071 },
+  integration: { url: "http://localhost:8072", port: 8072 },
 };
 
 // Axios instance for plugin runtime API
@@ -306,11 +333,20 @@ export const getPluginReviews = async (
 // Plugin API
 export const pluginApi = {
   /**
-   * Get list of installed plugins
+   * Get list of all plugins in marketplace
    * GET /api/core/plugins
    */
-  listInstalled: async (): Promise<ApiResponse<Plugin[]>> => {
+  listMarketplace: async (): Promise<ApiResponse<Plugin[]>> => {
     const response = await pluginAxios.get(API_BASE);
+    return response.data;
+  },
+
+  /**
+   * Get list of installed plugins for current tenant
+   * GET /api/core/plugins/my
+   */
+  listInstalled: async (): Promise<ApiResponse<TenantInstalledPlugin[]>> => {
+    const response = await pluginAxios.get(`${API_BASE}/my`);
     return response.data;
   },
 

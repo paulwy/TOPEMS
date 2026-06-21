@@ -2357,12 +2357,18 @@ async fn main() -> Result<()> {
         .layer(cors);
 
     let port = env::var("SERVER_PORT")
-        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8054".to_string()));
+        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8071".to_string()));
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-GIS 厂区空间数字化系统启动中...");
     tracing::info!("📦 端口: {}", port);
     tracing::info!("🔒 认证保护已启用");
+
+    // 启动时自动注册到统一核心
+    let core_url = env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
