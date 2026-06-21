@@ -331,7 +331,7 @@ async fn calculate_payroll_run(
     let now = Utc::now();
 
     let result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM public.employees WHERE status = 'active'",
+        "SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'",
     )
     .fetch_one(&state.db)
     .await;

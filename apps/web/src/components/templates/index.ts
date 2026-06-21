@@ -10,6 +10,7 @@ export type {
   FilterConfig,
   FilterOption,
   RowAction,
+  BatchAction,
   ListPageTemplateProps,
   ExpandedRowRenderProps,
   ColumnConfig,

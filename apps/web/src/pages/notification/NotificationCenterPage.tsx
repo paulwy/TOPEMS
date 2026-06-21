@@ -227,7 +227,7 @@ export default function NotificationCenterPage() {
   }, []);
 
   // 删除消息
-  const handleDelete = useCallback((ids: string[]) => {
+  const handleDelete = useCallback((ids: (string | number)[]) => {
     setMessages((prev) => prev.filter((msg) => !ids.includes(msg.id)));
     setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
   }, []);

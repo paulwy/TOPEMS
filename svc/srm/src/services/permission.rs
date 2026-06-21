@@ -1,8 +1,5 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
-use topems_shared::permission::{
-    check_module_permission, ModulePermission as SharedModulePermission,
-};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -23,35 +20,46 @@ pub enum ModulePermission {
 impl std::fmt::Display for ModulePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModulePermission::SupplierRead => write!(f, "supplier_read"),
-            ModulePermission::SupplierWrite => write!(f, "supplier_write"),
-            ModulePermission::ContractRead => write!(f, "contract_read"),
-            ModulePermission::ContractWrite => write!(f, "contract_write"),
-            ModulePermission::PaymentRead => write!(f, "payment_read"),
-            ModulePermission::PaymentWrite => write!(f, "payment_write"),
-            ModulePermission::SourcingRead => write!(f, "sourcing_read"),
-            ModulePermission::SourcingWrite => write!(f, "sourcing_write"),
-            ModulePermission::VendorAssessmentRead => write!(f, "vendor_assessment_read"),
-            ModulePermission::VendorAssessmentWrite => write!(f, "vendor_assessment_write"),
-            ModulePermission::All => write!(f, "all"),
+            ModulePermission::SupplierRead => write!(f, "srm:read"),
+            ModulePermission::SupplierWrite => write!(f, "srm:write"),
+            ModulePermission::ContractRead => write!(f, "srm:read"),
+            ModulePermission::ContractWrite => write!(f, "srm:write"),
+            ModulePermission::PaymentRead => write!(f, "srm:read"),
+            ModulePermission::PaymentWrite => write!(f, "srm:write"),
+            ModulePermission::SourcingRead => write!(f, "srm:read"),
+            ModulePermission::SourcingWrite => write!(f, "srm:write"),
+            ModulePermission::VendorAssessmentRead => write!(f, "srm:read"),
+            ModulePermission::VendorAssessmentWrite => write!(f, "srm:write"),
+            ModulePermission::All => write!(f, "srm:admin"),
         }
     }
 }
 
-impl SharedModulePermission for ModulePermission {
-    fn module_name() -> &'static str {
-        "srm"
-    }
-
-    fn all_permission() -> Self {
-        ModulePermission::All
-    }
-}
-
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &PgPool,
     claims: &Claims,
     permission: &ModulePermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_module_permission(db, claims, permission).await
+    if claims.is_superuser {
+        return Ok(());
+    }
+
+    let permission_str = permission.to_string();
+
+    if claims.has_permission(&permission_str) {
+        return Ok(());
+    }
+
+    if claims.has_permission("srm:admin") {
+        return Ok(());
+    }
+
+    if claims.has_permission("all") {
+        return Ok(());
+    }
+
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }

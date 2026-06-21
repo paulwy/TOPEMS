@@ -175,7 +175,7 @@ async fn get_employee_details(
         return e;
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         SELECT 
             e.id, e.company_id, e.department_id, e.position_id,
@@ -185,36 +185,37 @@ async fn get_employee_details(
             d.name as department_name,
             c.name as company_name,
             p.name as position_name
-        FROM public.employees e
-        LEFT JOIN public.departments d ON e.department_id = d.id
-        LEFT JOIN public.companies c ON e.company_id = c.id
-        LEFT JOIN plugin_hrm.positions p ON e.position_id = p.id
+        FROM hrm.employees e
+        LEFT JOIN hrm.departments d ON e.department_id = d.id
+        LEFT JOIN hrm.companies c ON e.company_id = c.id
+        LEFT JOIN hrm.positions p ON e.position_id = p.id
         WHERE e.id = $1
         "#,
-        id
     )
+    .bind(id)
     .fetch_optional(&state.db)
     .await;
 
     match result {
         Ok(Some(row)) => {
+            use sqlx::Row;
             let details = serde_json::json!({
-                "id": row.id,
-                "company_id": row.company_id,
-                "company_name": row.company_name,
-                "department_id": row.department_id,
-                "department_name": row.department_name,
-                "position_id": row.position_id,
-                "position_name": row.position_name,
-                "employee_number": row.employee_number,
-                "name": row.name,
-                "gender": row.gender,
-                "hire_date": row.hire_date,
-                "email": row.email,
-                "phone": row.phone,
-                "status": row.status,
-                "created_at": row.created_at,
-                "updated_at": row.updated_at,
+                "id": row.get::<uuid::Uuid, _>("id"),
+                "company_id": row.get::<Option<uuid::Uuid>, _>("company_id"),
+                "company_name": row.get::<Option<String>, _>("company_name"),
+                "department_id": row.get::<Option<uuid::Uuid>, _>("department_id"),
+                "department_name": row.get::<Option<String>, _>("department_name"),
+                "position_id": row.get::<Option<uuid::Uuid>, _>("position_id"),
+                "position_name": row.get::<Option<String>, _>("position_name"),
+                "employee_number": row.get::<String, _>("employee_number"),
+                "name": row.get::<String, _>("name"),
+                "gender": row.get::<Option<String>, _>("gender"),
+                "hire_date": row.get::<Option<chrono::NaiveDate>, _>("hire_date"),
+                "email": row.get::<Option<String>, _>("email"),
+                "phone": row.get::<Option<String>, _>("phone"),
+                "status": row.get::<String, _>("status"),
+                "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                "updated_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
             });
             Json(ApiResponse::success(details, "获取员工详细信息成功"))
         }
@@ -443,7 +444,7 @@ async fn export_employees(
                        employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
-                FROM public.employees
+                FROM hrm.employees
                 WHERE id = ANY($1)
                 "#,
             )
@@ -458,7 +459,7 @@ async fn export_employees(
                        employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
-                FROM public.employees
+                FROM hrm.employees
                 "#,
             )
             .fetch_all(&state.db)

@@ -97,7 +97,7 @@ export const PLUGIN_REGISTRY: Record<string, { url: string; port: number }> = {
   wms: { url: "http://localhost:8042", port: 8042 },
   bi: { url: "http://localhost:8044", port: 8044 },
   pm: { url: "http://localhost:8046", port: 8046 },
-  ai: { url: "http://localhost:8050", port: 8050 },
+  ai: { url: "http://localhost:8062", port: 8062 },
   gis: { url: "http://localhost:8054", port: 8054 },
   mobile: { url: "http://localhost:8056", port: 8056 },
   rs: { url: "http://localhost:8058", port: 8058 },

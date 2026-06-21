@@ -298,6 +298,7 @@ export const getTemplates = async (
   page = 1,
   pageSize = 20,
   status?: TemplateStatusEnum,
+  search?: string,
 ): Promise<ApiResponse<NotificationTemplateListResponse>> => {
   const params: Record<string, any> = {
     page,
@@ -305,6 +306,9 @@ export const getTemplates = async (
   };
   if (status) {
     params.status = status;
+  }
+  if (search) {
+    params.search = search;
   }
   const response =
     await apiClient.notification.get<NotificationTemplateListResponse>(

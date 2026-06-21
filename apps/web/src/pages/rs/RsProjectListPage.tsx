@@ -252,7 +252,7 @@ const RsProjectListPage: React.FC = () => {
     {
       label: "删除",
       icon: <Trash2 size={16} />,
-      color: "error",
+      color: "error" as const,
       divider: true,
       onClick: handleDeleteClick,
     },
@@ -295,8 +295,7 @@ const RsProjectListPage: React.FC = () => {
             label: "新建项目",
             variant: "contained",
             icon: <Plus size={18} />,
-            component: Link,
-            href: "/rs/projects/create",
+            onClick: () => navigate("/rs/projects/create"),
           },
         ]}
         rowActions={rowActions}

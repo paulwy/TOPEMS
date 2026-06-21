@@ -307,6 +307,73 @@ maxmemory-policy allkeys-lru
 
 ---
 
+## 部署模式配置
+
+### 模式选择
+
+TOPEMS 支持两种部署模式：
+
+| 模式 | 说明 | 适用场景 |
+|------|------|---------|
+| **SaaS** | 多租户云服务 | 公有云、SaaS 平台 |
+| **On-Premise** | 单租户私有化 | 私有云、本地部署 |
+
+### 环境变量配置
+
+```bash
+# .env
+
+# 部署模式
+DEPLOYMENT_MODE=on-premise
+
+# 多租户开关
+MULTI_TENANT_ENABLED=false
+
+# 默认租户ID（线下部署使用）
+DEFAULT_TENANT_ID=00000000-0000-0000-0000-000000000001
+
+# 功能开关
+QUOTA_ENABLED=false
+BILLING_ENABLED=false
+TENANT_MANAGEMENT=false
+```
+
+### SaaS 模式配置
+
+```bash
+DEPLOYMENT_MODE=saas
+MULTI_TENANT_ENABLED=true
+QUOTA_ENABLED=true
+BILLING_ENABLED=true
+TENANT_MANAGEMENT=true
+```
+
+### On-Premise 模式配置
+
+```bash
+DEPLOYMENT_MODE=on-premise
+MULTI_TENANT_ENABLED=false
+QUOTA_ENABLED=false
+BILLING_ENABLED=false
+TENANT_MANAGEMENT=false
+```
+
+### 配置文件
+
+详细配置请参考 [config/deployment.yaml](/config/deployment.yaml)
+
+### 部署脚本
+
+```bash
+# SaaS 模式部署
+DEPLOYMENT_MODE=saas ./scripts/deploy.sh
+
+# On-Premise 模式部署（默认）
+./scripts/deploy.sh
+```
+
+---
+
 ## 安全配置
 
 ### 1. HTTPS 配置

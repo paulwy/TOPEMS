@@ -21,14 +21,67 @@ struct UserResponse {
 }
 
 pub async fn list_users(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user list_users called");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "list_users success",
-        "data": []
-    }))
+
+    let result = sqlx::query_as::<_, UserRow>(
+        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users ORDER BY created_at DESC"
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(users) => {
+            let user_responses: Vec<UserResponse> = users.into_iter().map(|u| {
+                let roles = if u.is_superuser {
+                    vec!["admin".to_string(), "user".to_string()]
+                } else {
+                    vec!["user".to_string()]
+                };
+
+                let permissions = if u.is_superuser {
+                    topems_shared::auth::get_permissions()
+                        .iter()
+                        .map(|p| p.id.clone())
+                        .collect()
+                } else {
+                    vec!["iam:users_read".to_string()]
+                };
+
+                UserResponse {
+                    id: u.id.to_string(),
+                    username: u.username,
+                    email: u.email,
+                    full_name: u.full_name,
+                    role: if u.is_superuser { "admin".to_string() } else { "user".to_string() },
+                    roles,
+                    permissions,
+                    is_active: u.status == "active",
+                    is_superuser: u.is_superuser,
+                    created_at: u.created_at.map(|t| t.to_string()),
+                }
+            }).collect();
+
+            Json(serde_json::json!({
+                "success": true,
+                "message": "获取用户列表成功",
+                "data": {
+                    "users": user_responses,
+                    "total": user_responses.len()
+                }
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch users: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("获取用户列表失败: {}", e),
+                "data": null,
+                "code": 500
+            }))
+        }
+    }
 }
 
 pub async fn create_user(

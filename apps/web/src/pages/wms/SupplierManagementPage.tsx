@@ -295,7 +295,7 @@ const SupplierManagementPage: React.FC = () => {
         filters={filters}
         selectable
         selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
             label: "新增供应商",

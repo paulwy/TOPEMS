@@ -339,7 +339,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
         columns={columns}
         data={filteredDepartments}
         loading={loading}
-        error={error}
+        error={error || undefined}
         rowActions={rowActions}
         searchable
         searchPlaceholder="搜索部门名称、编码、描述..."

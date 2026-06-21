@@ -28,7 +28,7 @@ export interface FilterOption {
 export interface FilterConfig {
   id: string;
   label: string;
-  type:
+  type?:
     | "select"
     | "multiselect"
     | "date"
@@ -84,7 +84,9 @@ const FilterControl: React.FC<{
     fullWidth: true,
   };
 
-  switch (filter.type) {
+  const filterType = filter.type || "text";
+
+  switch (filterType) {
     case "select":
       return (
         <FormControl

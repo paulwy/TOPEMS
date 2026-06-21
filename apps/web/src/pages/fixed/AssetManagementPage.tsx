@@ -501,7 +501,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         columns={columns}
         data={paginatedAssets}
         loading={loading}
-        error={error}
+        error={error || undefined}
         pagination={{
           page,
           pageSize,
@@ -515,7 +515,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         filters={filters}
         selectable
         selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
             label: "新增资产",

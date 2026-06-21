@@ -186,14 +186,14 @@ const RsReleasePage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
-  const handleRollback = (releaseId: string) => {
+  const handleRollback = (release: Release) => {
     const newRollback: Release = {
       id: String(Date.now()),
       version: "上一版本",
       release_time: new Date().toLocaleString(),
       release_note: "回滚操作",
       environment:
-        releases.find((r) => r.id === releaseId)?.environment || "staging",
+        releases.find((r) => r.id === release.id)?.environment || "staging",
       status: "planning",
       release_by: "当前用户",
     };

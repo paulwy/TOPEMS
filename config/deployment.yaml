@@ -1,0 +1,127 @@
+# TOPEMS 部署配置
+# 此文件定义系统的部署模式和功能开关
+
+deployment:
+  # 部署模式: saas | on-premise
+  # saas: 多租户云服务模式
+  # on-premise: 单租户私有化部署模式
+  mode: on-premise
+  
+  # 多租户开关
+  # true: 启用多租户功能（SaaS 模式）
+  # false: 禁用多租户功能（On-Premise 模式）
+  multi_tenant_enabled: false
+  
+  # 默认租户ID（线下部署使用）
+  # 所有用户和资源都归属于此租户
+  default_tenant_id: "00000000-0000-0000-0000-000000000001"
+
+# 功能开关
+features:
+  # 配额限制
+  # true: 启用用户数、存储空间、API调用次数限制
+  # false: 无限制
+  quota_enabled: false
+  
+  # 计费功能
+  # true: 启用租户计费、订阅管理
+  # false: 禁用计费功能
+  billing_enabled: false
+  
+  # 租户管理UI
+  # true: 显示租户管理页面
+  # false: 隐藏租户管理页面
+  tenant_management: false
+  
+  # SSO 单点登录
+  # true: 启用 SSO 登录
+  # false: 仅支持用户名密码登录
+  sso_enabled: false
+  
+  # 双因素认证
+  # true: 强制启用双因素认证
+  # false: 可选启用
+  two_factor_required: false
+  
+  # IP 白名单
+  # true: 启用 IP 访问限制
+  # false: 不限制 IP
+  ip_whitelist_enabled: false
+
+# 安全设置
+security:
+  # 会话超时时间（分钟）
+  session_timeout_minutes: 60
+  
+  # 密码最小长度
+  password_min_length: 8
+  
+  # 密码是否需要特殊字符
+  password_require_special: true
+  
+  # 登录失败锁定次数
+  login_failure_lockout: 5
+  
+  # 锁定时间（分钟）
+  lockout_duration_minutes: 30
+
+# 品牌设置
+branding:
+  # 系统名称
+  system_name: "TOPEMS 企业管理系统"
+  
+  # 公司名称
+  company_name: "示例公司"
+  
+  # 主题色
+  primary_color: "#3B82F6"
+  secondary_color: "#6B7280"
+  
+  # Logo URL
+  logo_url: ""
+  
+  # 自定义域名
+  custom_domain: ""
+
+# 日志设置
+logging:
+  # 日志级别: trace, debug, info, warn, error
+  level: info
+  
+  # 日志保留天数
+  retention_days: 30
+  
+  # 是否记录访问日志
+  access_log_enabled: true
+  
+  # 是否记录操作日志
+  operation_log_enabled: true
+  
+  # 是否记录安全日志
+  security_log_enabled: true
+
+# 通知设置
+notification:
+  # 邮件通知
+  email:
+    enabled: false
+    smtp_host: ""
+    smtp_port: 465
+    smtp_username: ""
+    smtp_password: ""
+    use_tls: true
+    from_email: ""
+    from_name: ""
+  
+  # 短信通知
+  sms:
+    enabled: false
+    provider: "aliyun"
+    access_key_id: ""
+    access_key_secret: ""
+    sign_name: ""
+  
+  # 系统通知
+  system:
+    enabled: true
+    retention_days: 7

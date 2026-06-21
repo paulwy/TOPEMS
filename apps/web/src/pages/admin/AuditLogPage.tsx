@@ -296,13 +296,15 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     [uniqueActions, uniqueEntityTypes],
   );
 
-  const handleFilterChange = (filterId: string, value: string) => {
-    if (filterId === "status") {
-      setFilterStatus(value);
-    } else if (filterId === "action") {
-      setFilterAction(value);
-    } else if (filterId === "entity_type") {
-      setFilterEntityType(value);
+  const handleFilterChange = (filters: Record<string, any>) => {
+    if (filters.status !== undefined) {
+      setFilterStatus(filters.status);
+    }
+    if (filters.action !== undefined) {
+      setFilterAction(filters.action);
+    }
+    if (filters.entity_type !== undefined) {
+      setFilterEntityType(filters.entity_type);
     }
     setCurrentPage(1);
   };
@@ -397,9 +399,9 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
               loading={loading}
               searchPlaceholder="搜索用户名、操作、实体类型、IP..."
               searchValue={searchQuery}
-              onSearchChange={setSearchQuery}
+              onSearch={setSearchQuery}
               filters={filters}
-              filterValues={{
+              filtersValue={{
                 status: filterStatus,
                 action: filterAction,
                 entity_type: filterEntityType,
@@ -420,3 +422,5 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     </Box>
   );
 };
+
+export default AuditLogPage;

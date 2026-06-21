@@ -57,7 +57,34 @@ setup_env() {
         REFRESH_SECRET=$(openssl rand -base64 32)
         DB_PASSWORD="topems_$(openssl rand -hex 16)"
 
+        # 部署模式配置
+        DEPLOYMENT_MODE="${DEPLOYMENT_MODE:-on-premise}"
+        MULTI_TENANT_ENABLED="${MULTI_TENANT_ENABLED:-false}"
+        DEFAULT_TENANT_ID="${DEFAULT_TENANT_ID:-00000000-0000-0000-0000-000000000001}"
+
+        if [ "$DEPLOYMENT_MODE" == "saas" ]; then
+            log "部署模式: SaaS (多租户)"
+            MULTI_TENANT_ENABLED="true"
+            QUOTA_ENABLED="true"
+            BILLING_ENABLED="true"
+            TENANT_MANAGEMENT="true"
+        else
+            log "部署模式: On-Premise (私有化)"
+            MULTI_TENANT_ENABLED="false"
+            QUOTA_ENABLED="false"
+            BILLING_ENABLED="false"
+            TENANT_MANAGEMENT="false"
+        fi
+
         cat > ${DATA_DIR}/.env << EOF
+# ==================== 部署模式配置 ====================
+DEPLOYMENT_MODE=${DEPLOYMENT_MODE}
+MULTI_TENANT_ENABLED=${MULTI_TENANT_ENABLED}
+DEFAULT_TENANT_ID=${DEFAULT_TENANT_ID}
+QUOTA_ENABLED=${QUOTA_ENABLED}
+BILLING_ENABLED=${BILLING_ENABLED}
+TENANT_MANAGEMENT=${TENANT_MANAGEMENT}
+
 # ==================== 数据库配置 ====================
 POSTGRES_USER=topems
 POSTGRES_PASSWORD=${DB_PASSWORD}

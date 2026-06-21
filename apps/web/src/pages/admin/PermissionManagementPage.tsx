@@ -144,8 +144,6 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
     try {
       const res = await authApi.updatePermission(editingPermission.id, {
         name: editingPermission.name,
-        code: editingPermission.code,
-        category: editingPermission.category,
         description: editingPermission.description,
       });
 
@@ -464,7 +462,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
         columns={columns}
         data={paginatedPermissions}
         loading={loading}
-        error={error}
+        error={error || undefined}
         pagination={{
           page,
           pageSize,

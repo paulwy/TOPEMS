@@ -2,9 +2,6 @@
 
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
-use topems_shared::permission::{
-    check_module_permission, ModulePermission as SharedModulePermission,
-};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,35 +22,46 @@ pub enum GisPermission {
 impl std::fmt::Display for GisPermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            GisPermission::FactoryMapRead => write!(f, "gis.factory_map_read"),
-            GisPermission::FactoryMapWrite => write!(f, "gis.factory_map_write"),
-            GisPermission::DeviceLocationRead => write!(f, "gis.device_location_read"),
-            GisPermission::DeviceLocationWrite => write!(f, "gis.device_location_write"),
-            GisPermission::PipelineRead => write!(f, "gis.pipeline_read"),
-            GisPermission::PipelineWrite => write!(f, "gis.pipeline_write"),
-            GisPermission::WarehouseLocationRead => write!(f, "gis.warehouse_location_read"),
-            GisPermission::WarehouseLocationWrite => write!(f, "gis.warehouse_location_write"),
-            GisPermission::LocationPhotoRead => write!(f, "gis.location_photo_read"),
-            GisPermission::LocationPhotoWrite => write!(f, "gis.location_photo_write"),
-            GisPermission::All => write!(f, "all"),
+            GisPermission::FactoryMapRead => write!(f, "gis:read"),
+            GisPermission::FactoryMapWrite => write!(f, "gis:write"),
+            GisPermission::DeviceLocationRead => write!(f, "gis:read"),
+            GisPermission::DeviceLocationWrite => write!(f, "gis:write"),
+            GisPermission::PipelineRead => write!(f, "gis:read"),
+            GisPermission::PipelineWrite => write!(f, "gis:write"),
+            GisPermission::WarehouseLocationRead => write!(f, "gis:read"),
+            GisPermission::WarehouseLocationWrite => write!(f, "gis:write"),
+            GisPermission::LocationPhotoRead => write!(f, "gis:read"),
+            GisPermission::LocationPhotoWrite => write!(f, "gis:write"),
+            GisPermission::All => write!(f, "gis:admin"),
         }
     }
 }
 
-impl SharedModulePermission for GisPermission {
-    fn module_name() -> &'static str {
-        "gis"
-    }
-
-    fn all_permission() -> Self {
-        GisPermission::All
-    }
-}
-
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &PgPool,
     claims: &Claims,
     permission: &GisPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_module_permission(db, claims, permission).await
+    if claims.is_superuser {
+        return Ok(());
+    }
+
+    let permission_str = permission.to_string();
+
+    if claims.has_permission(&permission_str) {
+        return Ok(());
+    }
+
+    if claims.has_permission("gis:admin") {
+        return Ok(());
+    }
+
+    if claims.has_permission("all") {
+        return Ok(());
+    }
+
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }

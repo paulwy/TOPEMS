@@ -152,17 +152,17 @@ const PmProjectListPage: React.FC = () => {
         id: "project_type",
         label: "类型",
         width: 100,
-        render: (value) => PROJECT_TYPES_MAP[value] || value,
+        render: (row) => PROJECT_TYPES_MAP[row.project_type] || row.project_type,
       },
       {
         id: "status",
         label: "状态",
         width: 100,
-        render: (value) => (
+        render: (row) => (
           <Chip
             size="small"
-            label={STATUS_OPTIONS_MAP[value] || value}
-            color={STATUS_COLOR_MAP[value]}
+            label={STATUS_OPTIONS_MAP[row.status] || row.status}
+            color={STATUS_COLOR_MAP[row.status]}
           />
         ),
       },
@@ -170,17 +170,17 @@ const PmProjectListPage: React.FC = () => {
         id: "progress",
         label: "进度",
         width: 180,
-        render: (value) => (
+        render: (row) => (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Box sx={{ width: 96 }}>
               <LinearProgress
                 variant="determinate"
-                value={value || 0}
+                value={row.progress || 0}
                 sx={{ height: 8, borderRadius: 4 }}
               />
             </Box>
             <Box sx={{ fontSize: "0.875rem", color: "grey.600" }}>
-              {value || 0}%
+              {row.progress || 0}%
             </Box>
           </Box>
         ),
@@ -189,26 +189,26 @@ const PmProjectListPage: React.FC = () => {
         id: "budget",
         label: "预算",
         width: 120,
-        render: (value) => formatCurrency(value),
+        render: (row) => formatCurrency(row.budget),
       },
       {
         id: "start_date",
         label: "开始日期",
         width: 150,
-        render: (value) => formatDate(value),
+        render: (row) => formatDate(row.start_date),
       },
       {
         id: "end_date",
         label: "结束日期",
         width: 150,
-        render: (value) => formatDate(value),
+        render: (row) => formatDate(row.end_date),
       },
       {
         id: "actions",
         label: "操作",
         width: 120,
         align: "center",
-        render: (_, __, row) => (
+        render: (row) => (
           <Box sx={{ display: "flex", gap: 0.5 }}>
             <Tooltip title="查看详情">
               <IconButton

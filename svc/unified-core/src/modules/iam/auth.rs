@@ -122,13 +122,29 @@ pub async fn login(
             .collect()
     } else {
         vec![
-            "iam:users_read".to_string(),
-            "iam:roles_read".to_string(),
-            "iam:permissions_read".to_string(),
-            "iam:audit_read".to_string(),
-            "iam:system_read".to_string(),
-            "iam:dictionaries_read".to_string(),
-            "iam:plugins_read".to_string(),
+            // IAM 权限（包含对 Doc、File、Notification、Integration 的联动权限）
+            "iam:read".to_string(),
+            "iam:write".to_string(),
+            // HRM 权限
+            "hrm:read".to_string(),
+            "hrm:write".to_string(),
+            // ERP 权限
+            "erp:read".to_string(),
+            // PM 权限
+            "pm:read".to_string(),
+            // RS 权限
+            "rs:read".to_string(),
+            // SCM 权限
+            "scm:read".to_string(),
+            // CRM 权限
+            "crm:read".to_string(),
+            // AI 权限
+            "ai:read".to_string(),
+            // Workflow 权限
+            "workflow:read".to_string(),
+            "workflow:approve".to_string(),
+            // GIS 权限
+            "gis:read".to_string(),
         ]
     };
 

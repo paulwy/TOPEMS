@@ -4,11 +4,12 @@
 
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import type { TreeNode } from "./TreePageTemplate";
-import { TreePageTemplate } from "./TreePageTemplate";
+import { vi } from "vitest";
+import type { TreeNode } from "../TreePageTemplate";
+import { TreePageTemplate } from "../TreePageTemplate";
 
 // Mock MUI components
-jest.mock("@mui/material", () => ({
+vi.mock("@mui/material", () => ({
   Box: ({ children, ...props }: any) => (
     <div data-testid="box" {...props}>
       {children}

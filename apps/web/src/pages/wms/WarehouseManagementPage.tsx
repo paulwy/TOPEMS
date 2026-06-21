@@ -282,7 +282,7 @@ const WarehouseManagementPage: React.FC = () => {
         }}
         selectable
         selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
         actions={[
           {
             label: "新增仓库",

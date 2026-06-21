@@ -282,11 +282,12 @@ export default function BankAccountManagementPage() {
   );
 
   // 处理筛选变化
-  const handleFilterChange = (filterId: string, value: string) => {
-    if (filterId === "type") {
-      setTypeFilter(value);
-    } else if (filterId === "status") {
-      setStatusFilter(value);
+  const handleFilterChange = (filters: Record<string, any>) => {
+    if (filters.type !== undefined) {
+      setTypeFilter(filters.type);
+    }
+    if (filters.status !== undefined) {
+      setStatusFilter(filters.status);
     }
   };
 
@@ -393,21 +394,25 @@ export default function BankAccountManagementPage() {
         <ListPageTemplate
           title="银行账户管理"
           subtitle="管理企业银行账户信息"
-          titleIcon={<Building2 size={24} />}
           data={filteredAccounts}
           columns={columns}
           rowActions={rowActions}
           searchPlaceholder="搜索账户名称、账号或银行..."
           searchValue={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearch={setSearchQuery}
           filters={filters}
-          filterValues={{ type: typeFilter, status: statusFilter }}
+          filtersValue={{ type: typeFilter, status: statusFilter }}
           onFilterChange={handleFilterChange}
-          onCreateNew={() => {
-            setSelectedAccount(null);
-            setIsCreating(true);
-          }}
-          createButtonLabel="新增账户"
+          actions={[
+            {
+              label: "新增账户",
+              icon: <Plus size={16} />,
+              onClick: () => {
+                setSelectedAccount(null);
+                setIsCreating(true);
+              },
+            },
+          ]}
           emptyIcon={<CreditCard size={48} color="#9e9e9e" />}
           emptyMessage="暂无银行账户"
         />

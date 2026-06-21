@@ -333,7 +333,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
         columns={columns}
         data={filteredRoles}
         loading={loading}
-        error={error}
+        error={error || undefined}
         rowActions={rowActions}
         searchable
         searchPlaceholder="搜索角色名称或描述..."

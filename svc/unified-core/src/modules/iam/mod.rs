@@ -110,41 +110,111 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
-    // Insert default permissions
+    // Insert default permissions (模块级权限)
     let permissions = vec![
-        ("iam:users_read", "读取用户", "用户管理", "users", "read"),
-        ("iam:users_create", "创建用户", "用户管理", "users", "create"),
-        ("iam:users_update", "更新用户", "用户管理", "users", "update"),
-        ("iam:users_delete", "删除用户", "用户管理", "users", "delete"),
-        ("iam:roles_read", "读取角色", "角色管理", "roles", "read"),
-        ("iam:roles_create", "创建角色", "角色管理", "roles", "create"),
-        ("iam:roles_update", "更新角色", "角色管理", "roles", "update"),
-        ("iam:roles_delete", "删除角色", "角色管理", "roles", "delete"),
-        ("iam:permissions_read", "读取权限", "权限管理", "permissions", "read"),
-        ("iam:permissions_update", "更新权限", "权限管理", "permissions", "update"),
-        ("iam:audit_read", "读取审计日志", "系统管理", "audit", "read"),
-        ("iam:system_read", "系统设置读取", "系统管理", "system", "read"),
-        ("iam:system_update", "系统设置更新", "系统管理", "system", "update"),
-        ("iam:system_settings", "系统设置", "系统管理", "system", "settings"),
-        ("iam:system_logs", "查看日志", "系统管理", "system", "logs"),
-        ("iam:system_monitor", "系统监控", "系统管理", "system", "monitor"),
-        ("iam:system_export", "数据导出", "系统管理", "system", "export"),
-        ("iam:dictionaries_read", "字典读取", "系统管理", "dictionaries", "read"),
-        ("iam:dictionaries_update", "字典更新", "系统管理", "dictionaries", "update"),
-        ("iam:plugins_read", "插件读取", "系统管理", "plugins", "read"),
-        ("iam:plugins_update", "插件更新", "系统管理", "plugins", "update"),
-        ("pm:projects_read", "读取项目", "项目管理", "projects", "read"),
-        ("pm:projects_create", "创建项目", "项目管理", "projects", "create"),
-        ("pm:projects_update", "更新项目", "项目管理", "projects", "update"),
-        ("pm:projects_delete", "删除项目", "项目管理", "projects", "delete"),
-        ("doc:documents_read", "读取文档", "文档管理", "documents", "read"),
-        ("doc:documents_create", "创建文档", "文档管理", "documents", "create"),
-        ("doc:documents_update", "更新文档", "文档管理", "documents", "update"),
-        ("doc:documents_delete", "删除文档", "文档管理", "documents", "delete"),
-        ("workflow:workflows_read", "读取工作流", "工作流管理", "workflows", "read"),
-        ("workflow:workflows_create", "创建工作流", "工作流管理", "workflows", "create"),
-        ("workflow:workflows_update", "更新工作流", "工作流管理", "workflows", "update"),
-        ("workflow:workflows_delete", "删除工作流", "工作流管理", "workflows", "delete"),
+        // IAM 权限
+        ("iam:read", "身份管理-只读", "身份管理", "iam", "read"),
+        ("iam:write", "身份管理-写入", "身份管理", "iam", "write"),
+        ("iam:delete", "身份管理-删除", "身份管理", "iam", "delete"),
+        ("iam:admin", "身份管理-管理", "身份管理", "iam", "admin"),
+        // HRM 权限
+        ("hrm:read", "人力资源-只读", "人力资源", "hrm", "read"),
+        ("hrm:write", "人力资源-写入", "人力资源", "hrm", "write"),
+        ("hrm:delete", "人力资源-删除", "人力资源", "hrm", "delete"),
+        ("hrm:admin", "人力资源-管理", "人力资源", "hrm", "admin"),
+        // ERP 权限
+        ("erp:read", "企业资源-只读", "企业资源", "erp", "read"),
+        ("erp:write", "企业资源-写入", "企业资源", "erp", "write"),
+        ("erp:delete", "企业资源-删除", "企业资源", "erp", "delete"),
+        ("erp:admin", "企业资源-管理", "企业资源", "erp", "admin"),
+        // PM 权限
+        ("pm:read", "项目管理-只读", "项目管理", "pm", "read"),
+        ("pm:write", "项目管理-写入", "项目管理", "pm", "write"),
+        ("pm:delete", "项目管理-删除", "项目管理", "pm", "delete"),
+        ("pm:admin", "项目管理-管理", "项目管理", "pm", "admin"),
+        // RS 权限
+        ("rs:read", "研发管理-只读", "研发管理", "rs", "read"),
+        ("rs:write", "研发管理-写入", "研发管理", "rs", "write"),
+        ("rs:delete", "研发管理-删除", "研发管理", "rs", "delete"),
+        ("rs:admin", "研发管理-管理", "研发管理", "rs", "admin"),
+        // SCM 权限
+        ("scm:read", "供应链-只读", "供应链", "scm", "read"),
+        ("scm:write", "供应链-写入", "供应链", "scm", "write"),
+        ("scm:delete", "供应链-删除", "供应链", "scm", "delete"),
+        ("scm:admin", "供应链-管理", "供应链", "scm", "admin"),
+        // CRM 权限
+        ("crm:read", "客户关系-只读", "客户关系", "crm", "read"),
+        ("crm:write", "客户关系-写入", "客户关系", "crm", "write"),
+        ("crm:delete", "客户关系-删除", "客户关系", "crm", "delete"),
+        ("crm:admin", "客户关系-管理", "客户关系", "crm", "admin"),
+        // AI 权限
+        ("ai:read", "AI助手-只读", "AI助手", "ai", "read"),
+        ("ai:write", "AI助手-写入", "AI助手", "ai", "write"),
+        ("ai:delete", "AI助手-删除", "AI助手", "ai", "delete"),
+        ("ai:admin", "AI助手-管理", "AI助手", "ai", "admin"),
+        // GIS 权限
+        ("gis:read", "地理信息-只读", "地理信息", "gis", "read"),
+        ("gis:write", "地理信息-写入", "地理信息", "gis", "write"),
+        ("gis:delete", "地理信息-删除", "地理信息", "gis", "delete"),
+        ("gis:admin", "地理信息-管理", "地理信息", "gis", "admin"),
+        // QMS 权限 (质量管理)
+        ("qms:read", "质量管理-只读", "质量管理", "qms", "read"),
+        ("qms:write", "质量管理-写入", "质量管理", "qms", "write"),
+        ("qms:delete", "质量管理-删除", "质量管理", "qms", "delete"),
+        ("qms:admin", "质量管理-管理", "质量管理", "qms", "admin"),
+        // EHS 权限 (环境健康安全)
+        ("ehs:read", "环境健康安全-只读", "环境健康安全", "ehs", "read"),
+        ("ehs:write", "环境健康安全-写入", "环境健康安全", "ehs", "write"),
+        ("ehs:delete", "环境健康安全-删除", "环境健康安全", "ehs", "delete"),
+        ("ehs:admin", "环境健康安全-管理", "环境健康安全", "ehs", "admin"),
+        // MES 权限 (制造执行)
+        ("mes:read", "制造执行-只读", "制造执行", "mes", "read"),
+        ("mes:write", "制造执行-写入", "制造执行", "mes", "write"),
+        ("mes:delete", "制造执行-删除", "制造执行", "mes", "delete"),
+        ("mes:admin", "制造执行-管理", "制造执行", "mes", "admin"),
+        // WMS 权限 (仓储管理)
+        ("wms:read", "仓储管理-只读", "仓储管理", "wms", "read"),
+        ("wms:write", "仓储管理-写入", "仓储管理", "wms", "write"),
+        ("wms:delete", "仓储管理-删除", "仓储管理", "wms", "delete"),
+        ("wms:admin", "仓储管理-管理", "仓储管理", "wms", "admin"),
+        // Workflow 权限
+        ("workflow:read", "工作流-只读", "工作流", "workflow", "read"),
+        ("workflow:write", "工作流-写入", "工作流", "workflow", "write"),
+        ("workflow:delete", "工作流-删除", "工作流", "workflow", "delete"),
+        ("workflow:approve", "工作流-审批", "工作流", "workflow", "approve"),
+        ("workflow:admin", "工作流-管理", "工作流", "workflow", "admin"),
+        // Doc 权限 (基础设施，与 IAM 联动)
+        ("doc:read", "文档管理-只读", "文档管理", "doc", "read"),
+        ("doc:write", "文档管理-写入", "文档管理", "doc", "write"),
+        ("doc:delete", "文档管理-删除", "文档管理", "doc", "delete"),
+        ("doc:admin", "文档管理-管理", "文档管理", "doc", "admin"),
+        // File 权限 (基础设施，与 IAM 联动)
+        ("file:read", "文件服务-只读", "文件服务", "file", "read"),
+        ("file:write", "文件服务-写入", "文件服务", "file", "write"),
+        ("file:delete", "文件服务-删除", "文件服务", "file", "delete"),
+        ("file:admin", "文件服务-管理", "文件服务", "file", "admin"),
+        // Notification 权限 (基础设施，与 IAM 联动)
+        ("notification:read", "通知服务-只读", "通知服务", "notification", "read"),
+        ("notification:write", "通知服务-写入", "通知服务", "notification", "write"),
+        ("notification:delete", "通知服务-删除", "通知服务", "notification", "delete"),
+        ("notification:admin", "通知服务-管理", "通知服务", "notification", "admin"),
+        // IM 权限 (基础设施，与 IAM 联动)
+        ("im:read", "即时通讯-只读", "即时通讯", "im", "read"),
+        ("im:write", "即时通讯-写入", "即时通讯", "im", "write"),
+        ("im:delete", "即时通讯-删除", "即时通讯", "im", "delete"),
+        ("im:admin", "即时通讯-管理", "即时通讯", "im", "admin"),
+        // Integration 权限 (基础设施，与 IAM 联动)
+        ("integration:read", "系统集成-只读", "系统集成", "integration", "read"),
+        ("integration:write", "系统集成-写入", "系统集成", "integration", "write"),
+        ("integration:delete", "系统集成-删除", "系统集成", "integration", "delete"),
+        ("integration:admin", "系统集成-管理", "系统集成", "integration", "admin"),
+        // System 权限 (系统设置)
+        ("system:settings", "系统设置", "系统设置", "system", "settings"),
+        ("system:monitor", "系统监控", "系统设置", "system", "monitor"),
+        ("system:audit", "审计日志", "系统设置", "system", "audit"),
+        ("system:dictionary", "字典管理", "系统设置", "system", "dictionary"),
+        ("system:plugin", "插件管理", "系统设置", "system", "plugin"),
+        ("system:migration", "数据迁移", "系统设置", "system", "migration"),
     ];
 
     for (code, name, desc, resource, action) in permissions {

@@ -309,7 +309,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
   // 渲染树节点
   const renderTreeItem = useCallback(
     (node: TreeNode, level: number = 0): React.ReactNode => {
-      const hasChildren = node.children && node.children.length > 0;
+      const hasChildren = !!(node.children && node.children.length > 0);
       const isExpanded = expandedIds.has(node.id);
       const isSelected = activeSelectedId === node.id;
 
