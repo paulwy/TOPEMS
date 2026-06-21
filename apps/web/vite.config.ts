@@ -155,18 +155,25 @@ export default defineConfig({
     },
     proxy: {
       // ================================================================================
-      // API 代理命名规则
+      // API 代理配置说明
       // --------------------------------------------------------------------------------
-      // 前端 API 调用: apiClient.{service}.get('/api/{service}/{resource}')
-      // 请求 URL:       /{service}/api/{service}/{resource}
-      // 代理转换:       /{service}/api/{service}/ -> /api/{service}/
-      // 后端路由:       /api/{service}/{resource}
+      // Vite 开发服务器代理配置，将前端请求转发到后端服务
       //
-      // 示例 (CRM):
-      //   前端调用: apiClient.crm.get('/api/crm/customers')
-      //   请求 URL: /crm/api/crm/customers
-      //   代理转换: /crm/api/crm/customers -> /api/crm/customers
-      //   后端路由: /api/crm/customers
+      // 【模式一：标准服务模式】适用于独立服务（CRM、ERP、HRM、Flow、BI、MES等）
+      //   前端调用: apiClient.{service}.get('/api/{service}/{resource}')
+      //   服务 baseURL: /{service} (来自 runtime.ts services.{service})
+      //   请求 URL:     /{service}/api/{service}/{resource}
+      //   rewrite 规则: 简单去除 /{service} 前缀
+      //   示例: /flow/api/flow/approvals -> /api/flow/approvals
+      //
+      // 【模式二：核心平台模式】适用于集成在核心平台的服务（Doc、File、Mail等）
+      //   前端调用: apiClient.{service}.get('/api/{path}')
+      //   服务 baseURL: /{service} (来自 runtime.ts services.{service})
+      //   请求 URL:     /{service}/api/{path}
+      //   rewrite 规则: 添加核心平台前缀 /api/core/{service}/
+      //   示例: /doc/api/documents -> /api/core/doc/documents
+      //
+      // 【代理顺序重要】特定路径必须放在通用路径之前！
       // ================================================================================
 
       // ========== [核心平台] 统一核心服务代理 ==========
@@ -231,7 +238,7 @@ export default defineConfig({
       '/flow': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/flow(\/.*)$/, '/api/flow$1'),
+        rewrite: (path: string) => path.replace(/^\/flow/, ''),
       },
       '/file': {
         target: 'http://localhost:8000',
@@ -259,6 +266,10 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1'),
       },
       
+      // ========== BI 服务代理 (需要放在 /api 通用代理之前) ==========
+      '/bi/api': createServiceProxyConfig('bi', 'http://localhost:8060'),
+      '/bi/health': createServiceProxyConfig('bi', 'http://localhost:8060'),
+
       // 通用路由
       '/health': { target: 'http://localhost:8000', changeOrigin: true },
       '/api': { target: 'http://localhost:8000', changeOrigin: true },
@@ -296,12 +307,12 @@ export default defineConfig({
       '/mes': {
         target: 'http://localhost:8023',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mes(\/.*)$/, '/api/mfg$1'),
+        rewrite: (path: string) => path.replace(/^\/mes/, ''),
       },
       '/pdm': {
         target: 'http://localhost:8023',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/pdm(\/.*)$/, '/api/mfg/pdm$1'),
+        rewrite: (path: string) => path.replace(/^\/pdm/, ''),
       },
       
       // ========== [已整合] 质量管控服务代理 ==========
@@ -313,17 +324,17 @@ export default defineConfig({
       '/qms': {
         target: 'http://localhost:8032',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/qms(\/.*)$/, '/api/qa/quality$1'),
+        rewrite: (path: string) => path.replace(/^\/qms/, ''),
       },
       '/lims': {
         target: 'http://localhost:8032',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/lims(\/.*)$/, '/api/qa/lab$1'),
+        rewrite: (path: string) => path.replace(/^\/lims/, ''),
       },
       '/ehs': {
         target: 'http://localhost:8032',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/ehs(\/.*)$/, '/api/qa/ehs$1'),
+        rewrite: (path: string) => path.replace(/^\/ehs/, ''),
       },
       
       '/scm/api': createServiceProxyConfig('scm', 'http://localhost:8040'),
@@ -343,7 +354,7 @@ export default defineConfig({
       '/report': {
         target: 'http://localhost:8060',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/report(\/.*)$/, '/api/analytics/report$1'),
+        rewrite: (path: string) => path.replace(/^\/report/, ''),
       },
       '/mobile/api': createServiceProxyConfig('mobile', 'http://localhost:8070'),
       '/mobile/health': createServiceProxyConfig('mobile', 'http://localhost:8070'),

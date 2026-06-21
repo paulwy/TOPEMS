@@ -338,7 +338,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: "工作流",
           icon: GitBranch,
           description: "流程审批、任务管理",
-          path: "/workflows",
+          path: "/flow/definitions",
           color: "bg-green-500",
           status: "online" as const,
           permission: "workflow:read",

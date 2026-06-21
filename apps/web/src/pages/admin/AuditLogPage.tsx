@@ -32,7 +32,11 @@ import type { AuditLog as RsAuditLog } from "@/api/rs";
 import { auditRsApi } from "@/api/rs";
 import { useAppStore } from "../../store";
 import { apiLogger } from "@/utils/logger";
-import { ListPageTemplate, type ColumnDef, type FilterConfig } from "@/components/templates";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+} from "@/components/templates";
 
 import { ModeToggle } from "@/components/ModeToggle";
 

@@ -1,8 +1,11 @@
 use axum::{extract::State, Json};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use uuid::Uuid;
 
-use topems_shared::{generate_jwt_token, generate_refresh_token};
+use topems_shared::auth::Claims;
+use topems_shared::generate_refresh_token;
 
 #[derive(Debug, Clone, Deserialize)]
 struct LoginRequest {
@@ -101,52 +104,90 @@ pub async fn login(
     }
 
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
-    let access_token = generate_jwt_token(
-        &user.id.to_string(),
-        &state.auth_state.jwt_secret,
-        jwt_expire_minutes,
-    );
+    
+    // 创建完整的 Claims，包含用户的真实 is_superuser 状态
+    let now = chrono::Utc::now();
+    let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
+    let claims = Claims {
+        sub: user.id.to_string(),
+        username: user.username.clone(),
+        role: if user.is_superuser { "admin".to_string() } else { "user".to_string() },
+        roles: if user.is_superuser {
+            vec!["superadmin".to_string(), "admin".to_string(), "user".to_string()]
+        } else {
+            vec!["user".to_string()]
+        },
+        permissions: if user.is_superuser {
+            topems_shared::auth::get_permissions()
+                .iter()
+                .map(|p| p.id.clone())
+                .collect()
+        } else {
+            vec![
+                // IAM 权限（包含对 Doc、File、Notification、Integration 的联动权限）
+                "iam:read".to_string(),
+                "iam:write".to_string(),
+                // HRM 权限
+                "hrm:read".to_string(),
+                "hrm:write".to_string(),
+                // ERP 权限
+                "erp:read".to_string(),
+                // PM 权限
+                "pm:read".to_string(),
+                // RS 权限
+                "rs:read".to_string(),
+                // SCM 权限
+                "scm:read".to_string(),
+                // CRM 权限
+                "crm:read".to_string(),
+                // AI 权限
+                "ai:read".to_string(),
+                // Workflow 权限
+                "workflow:read".to_string(),
+                "workflow:approve".to_string(),
+                // GIS 权限
+                "gis:read".to_string(),
+            ]
+        },
+        is_superuser: user.is_superuser,  // ✅ 正确设置超级用户状态
+        exp,
+        iat: now.timestamp() as usize,
+        email: Some(user.email.clone()),
+        department: None,
+        tenant_id: None,
+    };
+    
+    let access_token = match claims.encode(&state.auth_state.jwt_secret) {
+        Ok(token) => token,
+        Err(e) => {
+            tracing::error!("JWT 编码失败: {:?}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "Token 生成失败",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+    
     let refresh_token = generate_refresh_token();
     let expires_in = jwt_expire_minutes * 60;
-
-    let roles = if user.is_superuser {
-        vec!["admin".to_string(), "user".to_string()]
-    } else {
-        vec!["user".to_string()]
-    };
-
-    let permissions = if user.is_superuser {
-        topems_shared::auth::get_permissions()
-            .iter()
-            .map(|p| p.id.clone())
-            .collect()
-    } else {
-        vec![
-            // IAM 权限（包含对 Doc、File、Notification、Integration 的联动权限）
-            "iam:read".to_string(),
-            "iam:write".to_string(),
-            // HRM 权限
-            "hrm:read".to_string(),
-            "hrm:write".to_string(),
-            // ERP 权限
-            "erp:read".to_string(),
-            // PM 权限
-            "pm:read".to_string(),
-            // RS 权限
-            "rs:read".to_string(),
-            // SCM 权限
-            "scm:read".to_string(),
-            // CRM 权限
-            "crm:read".to_string(),
-            // AI 权限
-            "ai:read".to_string(),
-            // Workflow 权限
-            "workflow:read".to_string(),
-            "workflow:approve".to_string(),
-            // GIS 权限
-            "gis:read".to_string(),
-        ]
-    };
+    
+    // 保存会话到数据库
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
+    match sqlx::query(
+        "INSERT INTO unified_core.sessions (user_id, token, refresh_token, expires_at) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id) DO UPDATE SET token = $2, refresh_token = $3, expires_at = $4",
+    )
+    .bind(&user.id)
+    .bind(&access_token)
+    .bind(&refresh_token)
+    .bind(&expires_at)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(_) => tracing::debug!("会话保存成功"),
+        Err(e) => tracing::warn!("会话保存失败: {}", e),
+    }
 
     let response_data = LoginResponseData {
         access_token,
@@ -161,8 +202,8 @@ pub async fn login(
             is_active: user.status == "active",
             is_superuser: user.is_superuser,
             created_at: None,
-            roles,
-            permissions,
+            roles: claims.roles.clone(),  // 复用 Claims 中的 roles
+            permissions: claims.permissions.clone(),  // 复用 Claims 中的 permissions
         },
     };
 
@@ -315,14 +356,149 @@ pub async fn register(
 }
 
 pub async fn refresh_token(
-    State(_state): State<crate::AppState>,
+    State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM auth refresh_token called with: {:?}", payload);
+    let refresh_token = payload.get("refresh_token").and_then(|v| v.as_str()).unwrap_or("");
+    
+    tracing::info!("IAM auth refresh_token called with: {}", refresh_token);
+    
+    if refresh_token.is_empty() {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "refresh_token 不能为空",
+            "data": null,
+            "code": 400
+        }));
+    }
+    
+    // 查询会话获取用户信息
+    let row = match sqlx::query(
+        "SELECT s.user_id, u.username, u.is_superuser, u.email, u.status 
+         FROM unified_core.sessions s
+         JOIN core_users u ON s.user_id = u.id
+         WHERE s.refresh_token = $1 AND s.expires_at > NOW()",
+    )
+    .bind(refresh_token)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            tracing::warn!("Refresh token 无效或已过期");
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "Refresh token 无效或已过期",
+                "data": null,
+                "code": 401
+            }));
+        }
+        Err(e) => {
+            tracing::error!("查询会话失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+    
+    let user_id: Uuid = row.get("user_id");
+    let username: String = row.get("username");
+    let is_superuser: bool = row.get("is_superuser");
+    let email: String = row.get("email");
+    let status: String = row.get("status");
+    
+    if status != "active" {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "用户账号已被禁用",
+            "data": null,
+            "code": 401
+        }));
+    }
+    
+    // 生成新的 access_token
+    let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
+    let now = chrono::Utc::now();
+    let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
+    
+    let claims = Claims {
+        sub: user_id.to_string(),
+        username,
+        role: if is_superuser { "admin".to_string() } else { "user".to_string() },
+        roles: if is_superuser {
+            vec!["superadmin".to_string(), "admin".to_string(), "user".to_string()]
+        } else {
+            vec!["user".to_string()]
+        },
+        permissions: if is_superuser {
+            topems_shared::auth::get_permissions()
+                .iter()
+                .map(|p| p.id.clone())
+                .collect()
+        } else {
+            vec![
+                "iam:read".to_string(),
+                "iam:write".to_string(),
+                "hrm:read".to_string(),
+                "hrm:write".to_string(),
+                "erp:read".to_string(),
+                "pm:read".to_string(),
+                "rs:read".to_string(),
+                "scm:read".to_string(),
+                "crm:read".to_string(),
+                "ai:read".to_string(),
+                "workflow:read".to_string(),
+                "workflow:approve".to_string(),
+                "gis:read".to_string(),
+            ]
+        },
+        is_superuser,
+        exp,
+        iat: now.timestamp() as usize,
+        email: Some(email),
+        department: None,
+        tenant_id: None,
+    };
+    
+    let access_token = match claims.encode(&state.auth_state.jwt_secret) {
+        Ok(token) => token,
+        Err(e) => {
+            tracing::error!("JWT 编码失败: {:?}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "Token 生成失败",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+    
+    // 更新会话中的 access_token 和过期时间
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
+    match sqlx::query(
+        "UPDATE unified_core.sessions SET token = $1, expires_at = $2 WHERE refresh_token = $3",
+    )
+    .bind(&access_token)
+    .bind(&expires_at)
+    .bind(&refresh_token)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(_) => tracing::debug!("会话更新成功"),
+        Err(e) => tracing::warn!("会话更新失败: {}", e),
+    }
+    
     Json(serde_json::json!({
         "success": true,
         "message": "refresh_token success",
-        "data": null
+        "data": {
+            "access_token": access_token,
+            "expires_in": jwt_expire_minutes * 60
+        },
+        "code": 0
     }))
 }
 

@@ -58,7 +58,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         addressbook: "/addressbook",
         documents: "/documents",
         ai: "/ai",
-        workflows: "/workflows",
+        workflows: "/flow/definitions",
         system: "/system",
         companies: "/hrm/companies",
         departments: "/hrm/departments",

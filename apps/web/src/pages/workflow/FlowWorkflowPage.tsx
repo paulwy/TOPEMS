@@ -127,7 +127,7 @@ const FlowWorkflowPage: React.FC = () => {
         setShowCreateDialog(false);
         setFormData({ name: "", description: "", is_active: true });
         loadWorkflows();
-        navigate(`/workflow-designer?id=${response.data.id}`);
+        navigate(`/flow/designer?id=${response.data.id}`);
       } else {
         addNotification({
           title: "失败",
@@ -268,7 +268,7 @@ const FlowWorkflowPage: React.FC = () => {
               <IconButton
                 size="small"
                 onClick={() =>
-                  navigate(`/workflow-designer?id=${row.original.id}`)
+                  navigate(`/flow/designer?id=${row.original.id}`)
                 }
               >
                 <Edit sx={{ width: 16, height: 16 }} />

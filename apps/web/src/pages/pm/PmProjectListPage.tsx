@@ -17,7 +17,7 @@ import { apiLogger } from "@/utils/logger";
 import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 const PROJECT_TYPES = [
-  { value: "__ALL__", label: "全部类型" },
+  { value: "", label: "全部类型" },
   { value: "research", label: "科研项目" },
   { value: "production", label: "生产项目" },
   { value: "construction", label: "施工项目" },
@@ -26,7 +26,7 @@ const PROJECT_TYPES = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: "__ALL__", label: "全部状态" },
+  { value: "", label: "全部状态" },
   { value: "draft", label: "草稿" },
   { value: "pending", label: "待审批" },
   { value: "approved", label: "已批准" },
@@ -69,8 +69,8 @@ const PmProjectListPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState("__ALL__");
-  const [selectedStatus, setSelectedStatus] = useState("__ALL__");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -86,8 +86,8 @@ const PmProjectListPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await pmApi.projects.list({
-        project_type: selectedType === "__ALL__" ? undefined : selectedType,
-        status: selectedStatus === "__ALL__" ? undefined : selectedStatus,
+        project_type: selectedType || undefined,
+        status: selectedStatus || undefined,
         page,
         page_size: pageSize,
       });
@@ -152,7 +152,8 @@ const PmProjectListPage: React.FC = () => {
         id: "project_type",
         label: "类型",
         width: 100,
-        render: (row) => PROJECT_TYPES_MAP[row.project_type] || row.project_type,
+        render: (row) =>
+          PROJECT_TYPES_MAP[row.project_type] || row.project_type,
       },
       {
         id: "status",
@@ -249,7 +250,7 @@ const PmProjectListPage: React.FC = () => {
         id: "project_type",
         label: "类型",
         type: "select" as const,
-        options: PROJECT_TYPES.filter((t) => t.value !== "__ALL__"),
+        options: PROJECT_TYPES,
         value: selectedType,
         onChange: setSelectedType,
       },
@@ -257,7 +258,7 @@ const PmProjectListPage: React.FC = () => {
         id: "status",
         label: "状态",
         type: "select" as const,
-        options: STATUS_OPTIONS.filter((s) => s.value !== "__ALL__"),
+        options: STATUS_OPTIONS,
         value: selectedStatus,
         onChange: setSelectedStatus,
       },

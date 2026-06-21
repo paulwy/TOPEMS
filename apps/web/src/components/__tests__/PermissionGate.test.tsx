@@ -112,8 +112,9 @@ describe("PermissionGate Component", () => {
 
     const button = screen.getByTestId("button");
     expect(button).toBeInTheDocument();
-    expect(button).toHaveStyle({ opacity: 0.5 });
-    expect(button).toHaveStyle({ cursor: "not-allowed" });
+    const wrapper = button.parentElement;
+    expect(wrapper).toHaveStyle({ opacity: 0.5 });
+    expect(wrapper).toHaveStyle({ cursor: "not-allowed" });
   });
 
   it("should render loading state when loading is true", () => {
@@ -130,7 +131,9 @@ describe("PermissionGate Component", () => {
     );
 
     expect(screen.queryByTestId("content")).not.toBeInTheDocument();
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    // Loading state renders a Loader2 icon, check for loader
+    const loader = screen.getByTestId("loader");
+    expect(loader).toBeInTheDocument();
   });
 });
 

@@ -25,6 +25,7 @@ import {
   dashboardRoutes,
   hrmRoutes,
   crmRoutes,
+  financeRoutes,
   erpRoutes,
   iamRoutes,
   workflowRoutes,
@@ -203,6 +204,7 @@ const AppContent: React.FC = () => {
 
         {renderRoutes(hrmRoutes)}
         {renderRoutes(crmRoutes)}
+        {renderRoutes(financeRoutes)}
         {renderRoutes(erpRoutes)}
         {renderRoutes(iamRoutes)}
         {renderRoutes(workflowRoutes)}

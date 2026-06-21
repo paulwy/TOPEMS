@@ -45,14 +45,14 @@ export const workflowRoutes: RouteConfig[] = [
     action: "read",
   },
   {
-    path: "/workflows",
+    path: "/flow/definitions",
     element: FlowWorkflowPage,
     requiredPermissions: ["workflow:read"],
     module: "workflow",
     action: "read",
   },
   {
-    path: "/workflow-designer",
+    path: "/flow/designer",
     element: WorkflowDesignerPage,
     requiredPermissions: ["workflow:write"],
     module: "workflow",

@@ -16,8 +16,17 @@ const HrmEmployeePage = lazy(() => import("../pages/hrm/HrmEmployeePage"));
 const HrmEmployeeDetailPage = lazy(
   () => import("../pages/hrm/HrmEmployeeDetailPage"),
 );
+const HrmEmployeeCreatePage = lazy(
+  () => import("../pages/hrm/HrmEmployeeCreatePage"),
+);
+const HrmEmployeeEditPage = lazy(
+  () => import("../pages/hrm/HrmEmployeeEditPage"),
+);
 const HrmLeavePage = lazy(() => import("../pages/hrm/HrmLeavePage"));
 const HrmContractPage = lazy(() => import("../pages/hrm/HrmContractPage"));
+const HrmContractDetailPage = lazy(
+  () => import("../pages/hrm/HrmContractDetailPage"),
+);
 const HrmRecruitmentPage = lazy(
   () => import("../pages/hrm/HrmRecruitmentPage"),
 );
@@ -80,6 +89,20 @@ export const hrmRoutes: RouteConfig[] = [
     action: "read",
   },
   {
+    path: "/hrm/employee/create",
+    element: HrmEmployeeCreatePage,
+    requiredPermissions: ["hrm:write"],
+    module: "hrm",
+    action: "write",
+  },
+  {
+    path: "/hrm/employee/:id/edit",
+    element: HrmEmployeeEditPage,
+    requiredPermissions: ["hrm:write"],
+    module: "hrm",
+    action: "write",
+  },
+  {
     path: "/hrm/leave",
     element: HrmLeavePage,
     requiredPermissions: ["hrm:read"],
@@ -89,6 +112,13 @@ export const hrmRoutes: RouteConfig[] = [
   {
     path: "/hrm/contracts",
     element: HrmContractPage,
+    requiredPermissions: ["hrm:read"],
+    module: "hrm",
+    action: "read",
+  },
+  {
+    path: "/hrm/contract/:id",
+    element: HrmContractDetailPage,
     requiredPermissions: ["hrm:read"],
     module: "hrm",
     action: "read",

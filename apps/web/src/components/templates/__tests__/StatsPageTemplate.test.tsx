@@ -34,8 +34,9 @@ vi.mock("@mui/material", () => ({
       {...props}
     />
   ),
-  Button: ({ children, onClick, ...props }: any) => (
+  Button: ({ children, onClick, startIcon, ...props }: any) => (
     <button data-testid="button" onClick={onClick} {...props}>
+      {startIcon}
       {children}
     </button>
   ),
@@ -88,7 +89,7 @@ vi.mock("@mui/material", () => ({
 }));
 
 // Mock lucide-react icons
-jest.mock("lucide-react", () => ({
+vi.mock("lucide-react", () => ({
   Search: () => <span data-testid="icon-search">Search</span>,
   RefreshCw: () => <span data-testid="icon-refresh">RefreshCw</span>,
   Download: () => <span data-testid="icon-download">Download</span>,
@@ -97,7 +98,7 @@ jest.mock("lucide-react", () => ({
 }));
 
 // Mock EmptyState
-jest.mock("./EmptyState", () => ({
+vi.mock("./EmptyState", () => ({
   EmptyState: ({ title }: { title: string }) => (
     <div data-testid="empty-state">{title}</div>
   ),
@@ -190,14 +191,14 @@ describe("StatsPageTemplate", () => {
     statCards: mockStatCards,
     charts: mockCharts,
     tables: mockTables,
-    onRefresh: jest.fn(),
-    onExport: jest.fn(),
-    onSearch: jest.fn(),
-    onTimeRangeChange: jest.fn(),
+    onRefresh: vi.fn(),
+    onExport: vi.fn(),
+    onSearch: vi.fn(),
+    onTimeRangeChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("基本渲染", () => {
@@ -294,7 +295,7 @@ describe("StatsPageTemplate", () => {
     });
 
     it("点击标签应该触发onTabChange回调", () => {
-      const onTabChange = jest.fn();
+      const onTabChange = vi.fn();
       const tabs = [
         { label: "概览", value: "overview" },
         { label: "明细", value: "detail" },
@@ -334,7 +335,7 @@ describe("StatsPageTemplate", () => {
       render(
         <StatsPageTemplate
           {...defaultProps}
-          search={{ value: "", onChange: jest.fn(), placeholder: "搜索..." }}
+          search={{ value: "", onChange: vi.fn(), placeholder: "搜索..." }}
         />,
       );
       expect(screen.getByPlaceholderText("搜索...")).toBeInTheDocument();
@@ -351,14 +352,23 @@ describe("StatsPageTemplate", () => {
           tables={[]}
         />,
       );
-      expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+      expect(screen.getByText("暂无数据")).toBeInTheDocument();
     });
   });
 
   describe("加载状态", () => {
     it("加载中应该显示骨架屏", () => {
-      render(<StatsPageTemplate {...defaultProps} loading={true} />);
-      expect(screen.getByTestId("skeleton")).toBeInTheDocument();
+      render(
+        <StatsPageTemplate
+          {...defaultProps}
+          statCards={[]}
+          charts={[]}
+          tables={[]}
+          loading={true}
+        />,
+      );
+      const skeletons = screen.getAllByTestId("skeleton");
+      expect(skeletons.length).toBeGreaterThan(0);
     });
   });
 

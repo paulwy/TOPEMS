@@ -7,6 +7,66 @@ import type { NavGroup, TabItem, ModuleTabsConfig } from "@/types/navigation";
 export const topNavItems: NavGroup[] = [
   { label: "首页", path: "/dashboard" }, // 唯一入口，不展开
   {
+    label: "财务",
+    path: "/finance",
+    isGroup: true,
+    children: [
+      { label: "概览", path: "/finance" },
+      {
+        label: "总账管理",
+        children: [
+          { label: "凭证管理", path: "/finance/vouchers" },
+          { label: "账簿查询", path: "/finance/ledger" },
+          { label: "科目管理", path: "/finance/accounts" },
+        ],
+      },
+      {
+        label: "应收应付",
+        children: [
+          { label: "应收管理", path: "/finance/receivable" },
+          { label: "应付管理", path: "/finance/payable" },
+          { label: "收款管理", path: "/finance/receipts" },
+          { label: "付款管理", path: "/finance/payments" },
+        ],
+      },
+      {
+        label: "发票税务",
+        children: [
+          { label: "发票管理", path: "/finance/invoices" },
+          { label: "税务管理", path: "/finance/tax" },
+        ],
+      },
+      {
+        label: "资产管理",
+        children: [
+          { label: "资产卡片", path: "/finance/assets" },
+          { label: "折旧管理", path: "/finance/depreciation" },
+        ],
+      },
+      {
+        label: "成本费用",
+        children: [
+          { label: "费用报销", path: "/finance/expense" },
+          { label: "成本核算", path: "/finance/cost" },
+        ],
+      },
+      {
+        label: "预算管理",
+        children: [
+          { label: "预算编制", path: "/finance/budget" },
+          { label: "预算执行", path: "/finance/budget-execution" },
+        ],
+      },
+      {
+        label: "财务报表",
+        children: [
+          { label: "报表中心", path: "/finance/reports" },
+          { label: "合并报表", path: "/finance/consolidation" },
+        ],
+      },
+    ],
+  },
+  {
     label: "人力",
     path: "/hrm",
     isGroup: true,
@@ -159,7 +219,7 @@ export const topNavItems: NavGroup[] = [
       {
         label: "流程统计",
         children: [
-          { label: "流程设计器", path: "/workflow-designer" },
+          { label: "流程设计器", path: "/flow/designer" },
           { label: "流程统计", path: "/flow/statistics" },
         ],
       },
@@ -249,6 +309,26 @@ export const topNavItems: NavGroup[] = [
  */
 export const moduleTabsConfig: ModuleTabsConfig[] = [
   {
+    module: "finance",
+    tabs: [
+      { label: "概览", path: "/finance", pinned: true },
+      { label: "凭证", path: "/finance/vouchers" },
+      { label: "账簿", path: "/finance/ledger" },
+      { label: "应收", path: "/finance/receivable" },
+      { label: "应付", path: "/finance/payable" },
+      { label: "收款", path: "/finance/receipts" },
+      { label: "付款", path: "/finance/payments" },
+      { label: "发票", path: "/finance/invoices" },
+      { label: "税务", path: "/finance/tax" },
+      { label: "资产", path: "/finance/assets" },
+      { label: "费用", path: "/finance/expense" },
+      { label: "成本", path: "/finance/cost" },
+      { label: "预算", path: "/finance/budget" },
+      { label: "报表", path: "/finance/reports" },
+      { label: "合并报表", path: "/finance/consolidation" },
+    ],
+  },
+  {
     module: "hrm",
     tabs: [
       { label: "概览", path: "/hrm", pinned: true },
@@ -316,7 +396,8 @@ export const moduleTabsConfig: ModuleTabsConfig[] = [
       { label: "审批中心", path: "/flow/approvals" },
       { label: "实例管理", path: "/flow/instances" },
       { label: "版本历史", path: "/flow/history" },
-      { label: "流程设计器", path: "/workflow-designer" },
+      { label: "流程定义", path: "/flow/definitions" },
+      { label: "流程设计器", path: "/flow/designer" },
       { label: "流程统计", path: "/flow/statistics" },
     ],
   },

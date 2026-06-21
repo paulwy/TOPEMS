@@ -43,6 +43,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
         }}
       >
         <Loader2
+          data-testid="loader"
           sx={{
             width: 16,
             height: 16,
@@ -115,6 +116,7 @@ export const RoleGate: React.FC<RoleGateProps> = ({
         }}
       >
         <Loader2
+          data-testid="loader"
           sx={{
             width: 16,
             height: 16,
@@ -186,6 +188,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
         }}
       >
         <Loader2
+          data-testid="loader"
           sx={{
             width: 16,
             height: 16,
@@ -258,6 +261,7 @@ export const AdminGate: React.FC<AdminGateProps> = ({
         }}
       >
         <Loader2
+          data-testid="loader"
           sx={{
             width: 16,
             height: 16,
@@ -313,6 +317,7 @@ export const SuperuserGate: React.FC<SuperuserGateProps> = ({
         }}
       >
         <Loader2
+          data-testid="loader"
           sx={{
             width: 16,
             height: 16,

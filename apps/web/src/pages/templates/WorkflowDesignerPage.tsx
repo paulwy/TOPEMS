@@ -252,7 +252,7 @@ const WorkflowDesignerPage: React.FC = () => {
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Button
                 variant="text"
-                onClick={() => navigate("/workflows")}
+                onClick={() => navigate("/flow/definitions")}
                 startIcon={<ArrowLeft size={20} />}
               >
                 返回

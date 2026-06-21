@@ -399,6 +399,7 @@ export function ListPageTemplate<T>({
   filtersValue,
   onFilterChange,
   actions,
+  renderRowActions,
   rowActions,
   onRefresh,
   batchActions = [],
@@ -417,6 +418,7 @@ export function ListPageTemplate<T>({
   persistColumnConfig = false,
   columnConfigStorageKey = "default",
   showRowNumber = false,
+  // 排除自定义属性的剩余props
   ...props
 }: ListPageTemplateProps<T>) {
   const theme = useTheme();

@@ -358,7 +358,8 @@ const HrmDepartmentPage: React.FC = () => {
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {selectedDept.company_id
-                  ? companies.find((c) => c.id === selectedDept.company_id)?.name || "-"
+                  ? companies.find((c) => c.id === selectedDept.company_id)
+                      ?.name || "-"
                   : "无"}
               </Typography>
             </Box>
@@ -368,7 +369,8 @@ const HrmDepartmentPage: React.FC = () => {
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {selectedDept.parent_id
-                  ? departments.find((d) => d.id === selectedDept.parent_id)?.name || "-"
+                  ? departments.find((d) => d.id === selectedDept.parent_id)
+                      ?.name || "-"
                   : "无"}
               </Typography>
             </Box>
@@ -387,10 +389,16 @@ const HrmDepartmentPage: React.FC = () => {
           {/* 描述 */}
           {selectedDept.description && (
             <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 0.5 }}
+              >
                 部门描述
               </Typography>
-              <Typography variant="body2">{selectedDept.description}</Typography>
+              <Typography variant="body2">
+                {selectedDept.description}
+              </Typography>
             </Box>
           )}
 
@@ -439,13 +447,17 @@ const HrmDepartmentPage: React.FC = () => {
                       <User sx={{ width: 20, height: 20 }} />
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {emp.name}
                         </Typography>
                         <Chip
                           size="small"
-                          color={emp.status === "active" ? "success" : "default"}
+                          color={
+                            emp.status === "active" ? "success" : "default"
+                          }
                           label={emp.status === "active" ? "在职" : "离职"}
                           sx={{ height: 20, fontSize: "0.7rem" }}
                         />
@@ -455,17 +467,51 @@ const HrmDepartmentPage: React.FC = () => {
                       </Typography>
                     </Box>
                     {!isMobile && (
-                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-end",
+                        }}
+                      >
                         {emp.email && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <Mail sx={{ width: 14, height: 14, color: "text.secondary" }} />
-                            <Typography variant="caption">{emp.email}</Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <Mail
+                              sx={{
+                                width: 14,
+                                height: 14,
+                                color: "text.secondary",
+                              }}
+                            />
+                            <Typography variant="caption">
+                              {emp.email}
+                            </Typography>
                           </Box>
                         )}
                         {emp.phone && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <Phone sx={{ width: 14, height: 14, color: "text.secondary" }} />
-                            <Typography variant="caption">{emp.phone}</Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <Phone
+                              sx={{
+                                width: 14,
+                                height: 14,
+                                color: "text.secondary",
+                              }}
+                            />
+                            <Typography variant="caption">
+                              {emp.phone}
+                            </Typography>
                           </Box>
                         )}
                       </Box>
@@ -700,138 +746,141 @@ const HrmDepartmentPage: React.FC = () => {
           onAction: handleAdd,
         }}
       />
-
-    // 新增/编辑模态框
-    <DepartmentFormDialog
-      open={showCreateModal || showEditModal}
-      onClose={() => {
-        setShowCreateModal(false);
-        setShowEditModal(false);
-      }}
-      mode={showCreateModal ? "create" : "edit"}
-      department={selectedDepartment}
-      formData={formData}
-      onChange={handleInputChange}
-      onSubmit={showCreateModal ? handleCreate : handleUpdate}
-      companies={companies}
-      departments={availableParentDepts}
-      onOpenAICodeGenerator={handleOpenAICodeGenerator}
-      onOpenAITextOptimizer={handleOpenAITextOptimizer}
-      onOpenAIFormValidator={handleOpenAIFormValidator}
-    />
-
-    // 查看详情模态框
-    <Dialog
-      open={showViewModal}
-      onClose={() => setShowViewModal(false)}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle>部门详情</DialogTitle>
-      <DialogContent>
-        {selectedDepartment && (
-          <Box sx={{ display: "grid", gap: 2, pt: 1 }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                部门名称
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {selectedDepartment.name}
-              </Typography>
-            </Box>
-            {selectedDepartment.code && (
+      // 新增/编辑模态框
+      <DepartmentFormDialog
+        open={showCreateModal || showEditModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setShowEditModal(false);
+        }}
+        mode={showCreateModal ? "create" : "edit"}
+        department={selectedDepartment}
+        formData={formData}
+        onChange={handleInputChange}
+        onSubmit={showCreateModal ? handleCreate : handleUpdate}
+        companies={companies}
+        departments={availableParentDepts}
+        onOpenAICodeGenerator={handleOpenAICodeGenerator}
+        onOpenAITextOptimizer={handleOpenAITextOptimizer}
+        onOpenAIFormValidator={handleOpenAIFormValidator}
+      />
+      // 查看详情模态框
+      <Dialog
+        open={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>部门详情</DialogTitle>
+        <DialogContent>
+          {selectedDepartment && (
+            <Box sx={{ display: "grid", gap: 2, pt: 1 }}>
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  部门编码
+                  部门名称
                 </Typography>
-                <Typography variant="body1">
-                  {selectedDepartment.code}
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {selectedDepartment.name}
                 </Typography>
               </Box>
-            )}
-            {selectedDepartment.parent_id && (
+              {selectedDepartment.code && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    部门编码
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedDepartment.code}
+                  </Typography>
+                </Box>
+              )}
+              {selectedDepartment.parent_id && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    上级部门
+                  </Typography>
+                  <Typography variant="body1">
+                    {departments.find(
+                      (d) => d.id === selectedDepartment.parent_id,
+                    )?.name || "-"}
+                  </Typography>
+                </Box>
+              )}
+              {selectedDepartment.description && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    部门描述
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedDepartment.description}
+                  </Typography>
+                </Box>
+              )}
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  上级部门
+                  状态
                 </Typography>
-                <Typography variant="body1">
-                  {departments.find(
-                    (d) => d.id === selectedDepartment.parent_id,
-                  )?.name || "-"}
-                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  <Chip
+                    size="small"
+                    color={
+                      selectedDepartment.status === "active"
+                        ? "success"
+                        : "default"
+                    }
+                    label={
+                      selectedDepartment.status === "active" ? "启用" : "禁用"
+                    }
+                    variant="outlined"
+                  />
+                </Box>
               </Box>
-            )}
-            {selectedDepartment.description && (
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  部门描述
+                  创建时间
                 </Typography>
                 <Typography variant="body1">
-                  {selectedDepartment.description}
+                  {selectedDepartment.created_at
+                    ? new Date(selectedDepartment.created_at).toLocaleString()
+                    : "-"}
                 </Typography>
               </Box>
-            )}
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                状态
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>
-                <Chip
-                  size="small"
-                  color={selectedDepartment.status === "active" ? "success" : "default"}
-                  label={selectedDepartment.status === "active" ? "启用" : "禁用"}
-                  variant="outlined"
-                />
-              </Box>
             </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                创建时间
-              </Typography>
-              <Typography variant="body1">
-                {selectedDepartment.created_at
-                  ? new Date(selectedDepartment.created_at).toLocaleString()
-                  : "-"}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setShowViewModal(false)}>关闭</Button>
-      </DialogActions>
-    </Dialog>
-
-    // AI 组件
-    <AICodeGenerator
-      isOpen={showAICodeGenerator}
-      onClose={() => setShowAICodeGenerator(false)}
-      context={{
-        entityType: "department",
-        name: (formData as Department)?.name,
-      }}
-      onSelect={handleSelectAICode}
-      existingCodes={
-        departments.map((d) => d.code).filter(Boolean) as string[]
-      }
-    />
-    <AITextOptimizer
-      isOpen={showAITextOptimizer}
-      onClose={() => setShowAITextOptimizer(false)}
-      context={{ textType: "duty", name: (formData as Department)?.name }}
-      originalText={(formData as Department)?.description || ""}
-      onOptimized={handleOptimizedText}
-    />
-    <AIFormValidator
-      isOpen={showAIFormValidator}
-      onClose={() => setShowAIFormValidator(false)}
-      validateRequest={{
-        data: formData,
-        context: { module: "hrm", entityType: "department" },
-      }}
-      onApplySuggestions={handleApplySuggestions}
-      onFixIssue={handleFixIssue}
-    />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowViewModal(false)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
+      // AI 组件
+      <AICodeGenerator
+        isOpen={showAICodeGenerator}
+        onClose={() => setShowAICodeGenerator(false)}
+        context={{
+          entityType: "department",
+          name: (formData as Department)?.name,
+        }}
+        onSelect={handleSelectAICode}
+        existingCodes={
+          departments.map((d) => d.code).filter(Boolean) as string[]
+        }
+      />
+      <AITextOptimizer
+        isOpen={showAITextOptimizer}
+        onClose={() => setShowAITextOptimizer(false)}
+        context={{ textType: "duty", name: (formData as Department)?.name }}
+        originalText={(formData as Department)?.description || ""}
+        onOptimized={handleOptimizedText}
+      />
+      <AIFormValidator
+        isOpen={showAIFormValidator}
+        onClose={() => setShowAIFormValidator(false)}
+        validateRequest={{
+          data: formData,
+          context: { module: "hrm", entityType: "department" },
+        }}
+        onApplySuggestions={handleApplySuggestions}
+        onFixIssue={handleFixIssue}
+      />
     </>
   );
 };

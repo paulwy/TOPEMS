@@ -15,6 +15,9 @@ const TemplateManagementPage = lazy(
   () => import("../pages/templates/TemplateManagementPage"),
 );
 const HelpCenterPage = lazy(() => import("../pages/shared/HelpCenterPage"));
+const DocsFileDetailPage = lazy(
+  () => import("../pages/docs/DocsFileDetailPage"),
+);
 
 export const docsRoutes: RouteConfig[] = [
   {
@@ -27,6 +30,13 @@ export const docsRoutes: RouteConfig[] = [
   {
     path: "/document-center",
     element: DocumentCenterPage,
+    requiredPermissions: ["doc:read"],
+    module: "doc",
+    action: "read",
+  },
+  {
+    path: "/documents/:id",
+    element: DocsFileDetailPage,
     requiredPermissions: ["doc:read"],
     module: "doc",
     action: "read",

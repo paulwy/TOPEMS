@@ -128,7 +128,7 @@ export const defaultQuickActions: QuickAction[] = [
   {
     label: "发起流程",
     icon: GitBranch,
-    path: "/workflows",
+    path: "/flow/definitions",
     color: "#16a34a",
     bgColor: "#f0fdf4",
     hoverColor: "#16a34a",

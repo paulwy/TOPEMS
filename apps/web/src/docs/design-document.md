@@ -643,14 +643,124 @@
 
 ---
 
-## 4. 总结
+## 4. Vite 开发服务器代理配置
 
-### 4.1 已完成对应
+### 4.1 代理模式说明
+
+Vite 开发服务器通过代理将前端请求转发到后端服务。由于不同服务使用不同的 API 路径模式，代理配置分为两种模式：
+
+#### 模式一：标准服务模式
+
+适用于大多数独立服务（CRM、ERP、HRM、Flow、BI、MES、PDM、QMS、LIMS、EHS 等）。
+
+**路径模式：**
+- 前端调用: `apiClient.{service}.get('/api/{service}/{resource}')`
+- 服务 baseURL: `/{service}` (来自 runtime.ts)
+- 请求 URL: `/{service}/api/{service}/{resource}`
+- 代理 rewrite: 简单去除 `/{service}` 前缀 → `/api/{service}/{resource}`
+- 后端路由: `/api/{service}/{resource}`
+
+**示例 (Flow 服务)：**
+```
+前端调用: apiClient.flow.get('/api/flow/approvals')
+服务 baseURL: /flow
+请求 URL: /flow/api/flow/approvals
+代理 rewrite: /flow/api/flow/approvals -> /api/flow/approvals
+后端路由: /api/flow/approvals
+```
+
+#### 模式二：核心平台模式
+
+适用于集成在核心平台中的服务（Doc、File、Mail、Notification、IM）。
+
+**路径模式：**
+- 前端调用: `apiClient.doc.get('/api/{path}')`
+- 服务 baseURL: `/{service}` (来自 runtime.ts)
+- 请求 URL: `/{service}/api/{path}`
+- 代理 rewrite: 添加核心平台前缀 → `/api/core/{service}/{path}`
+- 后端路由: `/api/core/{service}/{path}`
+
+**示例 (Doc 服务)：**
+```
+前端调用: apiClient.doc.get('/api/documents')
+服务 baseURL: /doc
+请求 URL: /doc/api/documents
+代理 rewrite: /doc/api/documents -> /api/core/doc/documents
+后端路由: /api/core/doc/documents
+```
+
+### 4.2 代理配置清单
+
+| 服务 | 代理路径 | 目标地址 | rewrite 规则 | 适用模式 |
+|------|----------|----------|--------------|----------|
+| core | `/core/api` | localhost:8000 | `/^\/core/` → `/api/core` | 核心平台 |
+| comm | `/comm/api` | localhost:8000 | `/^\/comm/` → `/api/core/comm` | 核心平台 |
+| iam | `/iam/api` | localhost:8000 | `/^\/iam\/api\/iam\//` → `/api/core/iam/` | 核心平台 |
+| doc | `/doc` | localhost:8000 | `/^\/doc(\/.*)$/` → `/api/core/doc$1` | 核心平台 |
+| file | `/file` | localhost:8000 | `/^\/file(\/.*)$/` → `/api/core/file$1` | 核心平台 |
+| mail | `/mail` | localhost:8000 | `/^\/mail(\/.*)$/` → `/api/core/comm/mail$1` | 核心平台 |
+| notification | `/notification` | localhost:8000 | `/^\/notification(\/.*)$/` → `/api/core/comm/notify$1` | 核心平台 |
+| im | `/im` | localhost:8000 | `/^\/im(\/.*)$/` → `/api/core/comm/im$1` | 核心平台 |
+| flow | `/flow` | localhost:8000 | `/^\/flow/` → `''` | 标准服务 |
+| bi | `/bi/api` | localhost:8060 | `/^\/bi/` → `''` | 标准服务 |
+| hrm | `/hrm/api/hrm/` | localhost:8011 | `/^\/hrm\/api\/hrm\//` → `/api/hrm/` | 标准服务 |
+| erp | `/erp/api` | localhost:8010 | `/^\/erp/` → `''` | 标准服务 |
+| crm | `/crm/api` | localhost:8012 | `/^\/crm/` → `''` | 标准服务 |
+| ai | `/ai/api` | localhost:8062 | `/^\/ai/` → `''` | 标准服务 |
+| rs | `/rs/api` | localhost:8020 | `/^\/rs/` → `''` | 标准服务 |
+| mes | `/mes` | localhost:8023 | `/^\/mes/` → `''` | 标准服务 |
+| pdm | `/pdm` | localhost:8023 | `/^\/pdm/` → `''` | 标准服务 |
+| qms | `/qms` | localhost:8032 | `/^\/qms/` → `''` | 标准服务 |
+| lims | `/lims` | localhost:8032 | `/^\/lims/` → `''` | 标准服务 |
+| ehs | `/ehs` | localhost:8032 | `/^\/ehs/` → `''` | 标准服务 |
+| srm | `/srm/api` | localhost:8041 | `/^\/srm/` → `''` | 标准服务 |
+| wms | `/wms/api` | localhost:8042 | `/^\/wms/` → `''` | 标准服务 |
+| pm | `/pm/api` | localhost:8001 | `/^\/pm/` → `''` | 标准服务 |
+| scm | `/scm/api` | localhost:8040 | `/^\/scm/` → `''` | 标准服务 |
+| gis | `/gis/api` | localhost:8053 | `/^\/gis/` → `''` | 标准服务 |
+| report | `/report` | localhost:8060 | `/^\/report/` → `''` | 标准服务 |
+| master | `/master/api` | localhost:8000 | `/^\/master/` → `''` | 标准服务 |
+| integration | `/integration/api` | localhost:8005 | `/^\/integration/` → `''` | 标准服务 |
+| mobile | `/mobile/api` | localhost:8070 | `/^\/mobile/` → `''` | 标准服务 |
+| migration | `/migration/api` | localhost:8787 | `/^\/migration/` → `''` | 标准服务 |
+
+### 4.3 代理顺序重要性
+
+Vite 代理按照定义的顺序匹配，**先定义的路径会先匹配**。因此：
+
+1. **特定路径应放在通用路径之前**：如 `/bi/api` 必须放在 `/api` 通用代理之前
+2. **带具体路径的代理应放在泛型路径之前**：如 `/flow/api` 应放在 `/flow` 之前
+
+**错误示例（导致 404）：**
+```javascript
+// 通用 /api 放在前面，导致 /bi/api 被错误匹配
+'/api': { target: 'http://localhost:8000' },  // 先匹配
+'/bi/api': createServiceProxyConfig('bi', 'http://localhost:8060'), // 永远不会匹配
+```
+
+**正确示例：**
+```javascript
+// 特定路径放在前面
+'/bi/api': createServiceProxyConfig('bi', 'http://localhost:8060'),
+'/api': { target: 'http://localhost:8000' },  // 通用代理放后面
+```
+
+### 4.4 常见问题排查
+
+1. **404 Not Found**：检查代理顺序，确保特定路径在通用路径之前
+2. **请求被转发到错误服务**：检查 rewrite 规则是否正确
+3. **后端服务不可用**：确认目标服务端口是否启动
+
+---
+
+## 5. 总结
+
+### 5.1 已完成对应
 
 - **核心业务模块**：HRM、ERP、IAM、Workflow、PM、LIMS、QMS、EHS、SRM、PDM 模块已实现前端页面与后端API的完整对应
 - **分析模块**：BI模块已实现各业务模块的数据分析API
 
-### 4.2 需要完善
+### 5.2 需要完善
 
 | 模块 | 需要新增API数量 | 优先级 |
 |------|----------------|--------|
@@ -665,7 +775,7 @@
 | Mobile | 1 | 低 |
 | Performance | 1 | 低 |
 
-### 4.3 下一步行动建议
+### 5.3 下一步行动建议
 
 1. **立即执行**：完善CRM评分/预测API、RS物料API、通知服务API
 2. **近期规划**：完善文档服务和AI服务

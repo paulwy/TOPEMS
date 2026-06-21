@@ -1,6 +1,7 @@
 //! BI module - Business Intelligence
 
 pub mod analysis;
+pub mod analytics;
 pub mod dashboard;
 pub mod datasource;
 pub mod plugin;
