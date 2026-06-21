@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { authApi, type User as UserType, type AccessLog } from "@/api/iam";
 import { useAppStore } from "../../store";
+import { useAuth } from "../../hooks/useAuth";
 
 import {
   Box,
@@ -88,6 +89,7 @@ const ProfilePage: React.FC = () => {
   const setNotificationSettings = useAppStore(
     (state) => state.setNotificationSettings,
   );
+  const { logout } = useAuth();
 
   const [user, setUserState] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -315,7 +317,7 @@ const ProfilePage: React.FC = () => {
           setShowPasswordDialog(false);
           passwordForm.reset();
           setTimeout(() => {
-            authApi.logout();
+            logout();
             navigate("/login");
           }, 2000);
         } else {
@@ -331,7 +333,7 @@ const ProfilePage: React.FC = () => {
         addNotification({ title: "失败", message: errorMsg, type: "error" });
       }
     },
-    [addNotification, navigate, passwordForm],
+    [addNotification, navigate, passwordForm, logout],
   );
 
   const handleNotificationSettingChange = useCallback(
@@ -784,7 +786,13 @@ const ProfilePage: React.FC = () => {
                           </Typography>
                         </Box>
                       </Box>
-                      <Button variant="outlined" onClick={authApi.logout}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          logout();
+                          navigate("/login");
+                        }}
+                      >
                         退出登录
                       </Button>
                     </Box>
@@ -1047,7 +1055,7 @@ const ProfilePage: React.FC = () => {
                           id: "3",
                           title: "工作流",
                           icon: Activity,
-                          path: "/workflows",
+                          path: "/flow/definitions",
                           color: "#a855f7",
                         },
                         {

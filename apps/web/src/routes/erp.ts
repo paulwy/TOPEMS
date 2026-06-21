@@ -16,6 +16,9 @@ const EquipmentInspectionPage = lazy(
 const EquipmentMaintenancePage = lazy(
   () => import("../pages/fixed/EquipmentMaintenancePage"),
 );
+const EquipmentDetailPage = lazy(
+  () => import("../pages/equipment/EquipmentDetailPage"),
+);
 const FinanceExpensePage = lazy(
   () => import("../pages/finance/FinanceExpensePage"),
 );
@@ -110,6 +113,13 @@ export const erpRoutes: RouteConfig[] = [
   {
     path: "/equipment/maintenances",
     element: EquipmentMaintenancePage,
+    requiredPermissions: ["erp:admin"],
+    module: "erp",
+    action: "admin",
+  },
+  {
+    path: "/equipment/:id",
+    element: EquipmentDetailPage,
     requiredPermissions: ["erp:admin"],
     module: "erp",
     action: "admin",

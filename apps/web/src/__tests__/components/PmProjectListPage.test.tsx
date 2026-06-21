@@ -59,13 +59,13 @@ describe("PmProjectListPage 项目列表页面", () => {
     });
 
     it("应该正确初始化类型过滤器", () => {
-      const initialSelectedType = "__ALL__";
-      expect(initialSelectedType).toBe("__ALL__");
+      const initialSelectedType = "";
+      expect(initialSelectedType).toBe("");
     });
 
     it("应该正确初始化状态过滤器", () => {
-      const initialSelectedStatus = "__ALL__";
-      expect(initialSelectedStatus).toBe("__ALL__");
+      const initialSelectedStatus = "";
+      expect(initialSelectedStatus).toBe("");
     });
 
     it("应该正确初始化分页状态", () => {
@@ -109,7 +109,7 @@ describe("PmProjectListPage 项目列表页面", () => {
 
     it("应该定义正确的项目类型选项", () => {
       const projectTypes = [
-        { value: "__ALL__", label: "全部类型" },
+        { value: "", label: "全部类型" },
         { value: "research", label: "科研项目" },
         { value: "production", label: "生产项目" },
         { value: "construction", label: "施工项目" },
@@ -118,13 +118,13 @@ describe("PmProjectListPage 项目列表页面", () => {
       ];
 
       expect(projectTypes).toHaveLength(6);
-      expect(projectTypes[0].value).toBe("__ALL__");
+      expect(projectTypes[0].value).toBe("");
       expect(projectTypes[1].value).toBe("research");
     });
 
     it("应该定义正确的项目状态选项", () => {
       const statusOptions = [
-        { value: "__ALL__", label: "全部状态" },
+        { value: "", label: "全部状态" },
         { value: "draft", label: "草稿" },
         { value: "pending", label: "待审批" },
         { value: "approved", label: "已批准" },
@@ -134,7 +134,7 @@ describe("PmProjectListPage 项目列表页面", () => {
       ];
 
       expect(statusOptions).toHaveLength(7);
-      expect(statusOptions[0].value).toBe("__ALL__");
+      expect(statusOptions[0].value).toBe("");
       expect(statusOptions[4].value).toBe("active");
       expect(statusOptions[4].label).toBe("进行中");
     });
@@ -179,8 +179,8 @@ describe("PmProjectListPage 项目列表页面", () => {
 
   describe("类型过滤功能", () => {
     it("应该支持全部类型选项", () => {
-      const selectedType = "__ALL__";
-      expect(selectedType).toBe("__ALL__");
+      const selectedType = "";
+      expect(selectedType).toBe("");
     });
 
     it("应该支持科研项目类型过滤", () => {
@@ -208,11 +208,11 @@ describe("PmProjectListPage 项目列表页面", () => {
 
     it("切换类型时应重置页码", () => {
       let currentPage = 3;
-      let selectedType = "__ALL__";
+      let selectedType = "";
 
       const handleTypeChange = (newType: string) => {
         selectedType = newType;
-        if (newType !== "__ALL__") {
+        if (newType) {
           currentPage = 1;
         }
       };
@@ -224,8 +224,8 @@ describe("PmProjectListPage 项目列表页面", () => {
 
   describe("状态过滤功能", () => {
     it("应该支持全部状态选项", () => {
-      const selectedStatus = "__ALL__";
-      expect(selectedStatus).toBe("__ALL__");
+      const selectedStatus = "";
+      expect(selectedStatus).toBe("");
     });
 
     it("应该支持进行中状态过滤", () => {
@@ -315,10 +315,10 @@ describe("PmProjectListPage 项目列表页面", () => {
           page: params.page,
           page_size: params.page_size,
         };
-        if (params.project_type && params.project_type !== "__ALL__") {
+        if (params.project_type) {
           requestParams.project_type = params.project_type;
         }
-        if (params.status && params.status !== "__ALL__") {
+        if (params.status) {
           requestParams.status = params.status;
         }
         return requestParams;
@@ -350,18 +350,18 @@ describe("PmProjectListPage 项目列表页面", () => {
           page: params.page,
           page_size: params.page_size,
         };
-        if (params.project_type && params.project_type !== "__ALL__") {
+        if (params.project_type) {
           requestParams.project_type = params.project_type;
         }
-        if (params.status && params.status !== "__ALL__") {
+        if (params.status) {
           requestParams.status = params.status;
         }
         return requestParams;
       };
 
       const params = buildParams({
-        project_type: "__ALL__",
-        status: "__ALL__",
+        project_type: "",
+        status: "",
         page: 1,
         page_size: 10,
       });

@@ -142,7 +142,7 @@ export const DashboardPage: React.FC = () => {
       id: "start-process",
       label: "发起流程",
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate("/workflow-designer"),
+      onClick: () => navigate("/flow/designer"),
     },
     {
       id: "my-applications",

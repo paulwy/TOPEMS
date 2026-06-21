@@ -18,7 +18,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,md}\"",
-    "topems": "bash $(cd ../../ && pwd)/scripts/topems.sh"
+    "topems": "bash $(cd ../../ && pwd)/scripts/topems.sh",
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

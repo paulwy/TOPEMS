@@ -14,6 +14,8 @@ import {
   useTheme,
   useMediaQuery,
   Fade,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import {
   Home,
@@ -28,8 +30,11 @@ import {
   Menu as MenuIcon,
   X,
   Sparkles,
+  User,
+  LogOut,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import {
   topNavItems,
   getModuleFromPath,
@@ -61,11 +66,28 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
+  const { logout } = useAuth();
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const userMenuOpen = Boolean(userMenuAnchorEl);
+
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setUserMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+    handleUserMenuClose();
+  };
 
   // 获取当前模块和Tab
   const currentModule = getModuleFromPath(location.pathname);
@@ -410,8 +432,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               </IconButton>
             </Tooltip>
             <ModeToggle />
-            <Tooltip title="用户">
-              <IconButton size="small">
+            <Tooltip title="用户菜单">
+              <IconButton size="small" onClick={handleUserMenuOpen}>
                 <Avatar
                   sx={{
                     width: 32,
@@ -424,6 +446,28 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 </Avatar>
               </IconButton>
             </Tooltip>
+            <Menu
+              anchorEl={userMenuAnchorEl}
+              open={userMenuOpen}
+              onClose={handleUserMenuClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              sx={{ mt: 1.5 }}
+            >
+              <MenuItem
+                onClick={() => {
+                  navigate("/profile");
+                  handleUserMenuClose();
+                }}
+              >
+                <User style={{ width: 18, height: 18, marginRight: 12 }} />
+                个人中心
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <LogOut style={{ width: 18, height: 18, marginRight: 12 }} />
+                退出登录
+              </MenuItem>
+            </Menu>
             {/* 移动端汉堡菜单 */}
             <MobileNav
               navItems={topNavItems}

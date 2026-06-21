@@ -28,6 +28,14 @@ const CRMBillingPage = lazy(() => import("../pages/crm/CRMBillingPage"));
 const CustomerDetailPage = lazy(
   () => import("../pages/crm/CustomerDetailPage"),
 );
+const OpportunityDetailPage = lazy(
+  () => import("../pages/crm/OpportunityDetailPage"),
+);
+const ContactDetailPage = lazy(() => import("../pages/crm/ContactDetailPage"));
+const CustomerCreatePage = lazy(
+  () => import("../pages/crm/CustomerCreatePage"),
+);
+const CustomerEditPage = lazy(() => import("../pages/crm/CustomerEditPage"));
 
 export const crmRoutes: RouteConfig[] = [
   {
@@ -99,6 +107,34 @@ export const crmRoutes: RouteConfig[] = [
   {
     path: "/crm/customers/:id",
     element: CustomerDetailPage,
+    requiredPermissions: ["crm:read"],
+    module: "crm",
+    action: "read",
+  },
+  {
+    path: "/crm/customers/create",
+    element: CustomerCreatePage,
+    requiredPermissions: ["crm:write"],
+    module: "crm",
+    action: "write",
+  },
+  {
+    path: "/crm/customers/:id/edit",
+    element: CustomerEditPage,
+    requiredPermissions: ["crm:write"],
+    module: "crm",
+    action: "write",
+  },
+  {
+    path: "/crm/opportunities/:id",
+    element: OpportunityDetailPage,
+    requiredPermissions: ["crm:read"],
+    module: "crm",
+    action: "read",
+  },
+  {
+    path: "/crm/contacts/:id",
+    element: ContactDetailPage,
     requiredPermissions: ["crm:read"],
     module: "crm",
     action: "read",

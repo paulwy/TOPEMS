@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use topems_shared::{AuthState, HrmServiceClient, NotificationServiceClient, SystemMetrics};
 
+pub mod addressbook;
 pub mod announcement;
 pub mod asset;
 pub mod audit;
@@ -51,6 +52,7 @@ impl FromRef<ApiState> for PgPool {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .merge(health::create_routes())
+        .merge(addressbook::create_routes())
         .merge(asset::create_routes())
         .merge(audit::create_routes())
         .merge(bank::create_routes())

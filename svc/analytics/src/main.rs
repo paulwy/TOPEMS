@@ -140,6 +140,14 @@ async fn main() {
         .route("/api/bi/analysis/{id}", get(modules::bi::analysis::get_analysis))
         .route("/api/bi/analysis/{id}/execute", post(modules::bi::analysis::execute_analysis))
 
+        // Analytics Summary
+        .route("/api/bi/analytics/summary", get(modules::bi::analytics::get_summary_analytics))
+        .route("/api/bi/analytics/development", get(modules::bi::analytics::get_development_analytics))
+        .route("/api/bi/analytics/quality", get(modules::bi::analytics::get_quality_analytics))
+        .route("/api/bi/analytics/production", get(modules::bi::analytics::get_production_analytics))
+        .route("/api/bi/analytics/laboratory", get(modules::bi::analytics::get_laboratory_analytics))
+        .route("/api/bi/analytics/overview", get(modules::bi::analytics::get_analytics_overview))
+
         // ===== Report routes (prefix: /api/analytics/report) =====
         // Report
         .route("/api/analytics/report", get(modules::report::report::list_reports))

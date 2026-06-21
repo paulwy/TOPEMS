@@ -122,43 +122,43 @@ export interface ModuleAnalytics {
 }
 
 export async function fetchDashboards() {
-  return await apiClient.bi.get("/api/bi/dashboards");
+  return await apiClient.bi.get("/api/bi/dashboard");
 }
 
 export async function fetchDashboard(id: string) {
-  return await apiClient.bi.get(`/api/bi/dashboards/${id}`);
+  return await apiClient.bi.get(`/api/bi/dashboard/${id}`);
 }
 
 export async function createDashboard(data: Partial<Dashboard>) {
-  return await apiClient.bi.post("/api/bi/dashboards", data);
+  return await apiClient.bi.post("/api/bi/dashboard", data);
 }
 
 export async function updateDashboard(id: string, data: Partial<Dashboard>) {
-  return await apiClient.bi.put(`/api/bi/dashboards/${id}`, data);
+  return await apiClient.bi.put(`/api/bi/dashboard/${id}`, data);
 }
 
 export async function deleteDashboard(id: string) {
-  return await apiClient.bi.delete(`/api/bi/dashboards/${id}`);
+  return await apiClient.bi.delete(`/api/bi/dashboard/${id}`);
 }
 
 export async function fetchReports() {
-  return await apiClient.bi.get("/api/bi/reports");
+  return await apiClient.bi.get("/api/analytics/report");
 }
 
 export async function fetchReport(id: string) {
-  return await apiClient.bi.get(`/api/bi/reports/${id}`);
+  return await apiClient.bi.get(`/api/analytics/report/${id}`);
 }
 
 export async function createReport(data: Partial<Report>) {
-  return await apiClient.bi.post("/api/bi/reports", data);
+  return await apiClient.bi.post("/api/analytics/report", data);
 }
 
 export async function updateReport(id: string, data: Partial<Report>) {
-  return await apiClient.bi.put(`/api/bi/reports/${id}`, data);
+  return await apiClient.bi.put(`/api/analytics/report/${id}`, data);
 }
 
 export async function deleteReport(id: string) {
-  return await apiClient.bi.delete(`/api/bi/reports/${id}`);
+  return await apiClient.bi.delete(`/api/analytics/report/${id}`);
 }
 
 export async function fetchSummaryDashboard() {

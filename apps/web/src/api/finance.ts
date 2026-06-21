@@ -366,28 +366,28 @@ export const receivablePayableApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<SalesInvoice>>> => {
-    return createApiClient().get("/api/finance/ar/invoices", { params });
+    return createApiClient().get("/api/erp/receivables", { params });
   },
 
   getSalesInvoice: (id: string): Promise<ApiResponse<SalesInvoice>> => {
-    return createApiClient().get(`/api/finance/ar/invoices/${id}`);
+    return createApiClient().get(`/api/erp/receivables/${id}`);
   },
 
   createSalesInvoice: (
     data: Partial<SalesInvoice>,
   ): Promise<ApiResponse<SalesInvoice>> => {
-    return createApiClient().post("/api/finance/ar/invoices", data);
+    return createApiClient().post("/api/erp/receivables", data);
   },
 
   updateSalesInvoice: (
     id: string,
     data: Partial<SalesInvoice>,
   ): Promise<ApiResponse<SalesInvoice>> => {
-    return createApiClient().put(`/api/finance/ar/invoices/${id}`, data);
+    return createApiClient().put(`/api/erp/receivables/${id}`, data);
   },
 
   deleteSalesInvoice: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().delete(`/api/finance/ar/invoices/${id}`);
+    return createApiClient().delete(`/api/erp/receivables/${id}`);
   },
 
   // -------- 采购发票（应付）--------
@@ -399,28 +399,28 @@ export const receivablePayableApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<PurchaseInvoice>>> => {
-    return createApiClient().get("/api/finance/ap/invoices", { params });
+    return createApiClient().get("/api/erp/payables", { params });
   },
 
   getPurchaseInvoice: (id: string): Promise<ApiResponse<PurchaseInvoice>> => {
-    return createApiClient().get(`/api/finance/ap/invoices/${id}`);
+    return createApiClient().get(`/api/erp/payables/${id}`);
   },
 
   createPurchaseInvoice: (
     data: Partial<PurchaseInvoice>,
   ): Promise<ApiResponse<PurchaseInvoice>> => {
-    return createApiClient().post("/api/finance/ap/invoices", data);
+    return createApiClient().post("/api/erp/payables", data);
   },
 
   updatePurchaseInvoice: (
     id: string,
     data: Partial<PurchaseInvoice>,
   ): Promise<ApiResponse<PurchaseInvoice>> => {
-    return createApiClient().put(`/api/finance/ap/invoices/${id}`, data);
+    return createApiClient().put(`/api/erp/payables/${id}`, data);
   },
 
   deletePurchaseInvoice: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().delete(`/api/finance/ap/invoices/${id}`);
+    return createApiClient().delete(`/api/erp/payables/${id}`);
   },
 
   // -------- 收款记录 --------

@@ -86,7 +86,7 @@ pub async fn create_geofence(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO gis.geofences (
+        INSERT INTO plugin_gis.geofences (
             id, map_id, name, description, geometry, fence_type, 
             enabled, alert_on_enter, alert_on_exit, alert_on_dwell, dwell_time_seconds
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -117,7 +117,7 @@ pub async fn get_geofence(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Geofence>> {
-    let geofence = sqlx::query_as::<_, Geofence>("SELECT * FROM gis.geofences WHERE id = $1")
+    let geofence = sqlx::query_as::<_, Geofence>("SELECT * FROM plugin_gis.geofences WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await;
@@ -132,7 +132,7 @@ pub async fn get_geofence(
 pub async fn list_geofences(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<Geofence>>> {
-    let geofences = sqlx::query_as::<_, Geofence>("SELECT * FROM gis.geofences ORDER BY created_at DESC")
+    let geofences = sqlx::query_as::<_, Geofence>("SELECT * FROM plugin_gis.geofences ORDER BY created_at DESC")
         .fetch_all(&state.pool)
         .await;
 
@@ -149,7 +149,7 @@ pub async fn update_geofence(
 ) -> Json<ApiResponse<Geofence>> {
     let result = sqlx::query(
         r#"
-        UPDATE gis.geofences SET 
+        UPDATE plugin_gis.geofences SET 
             name = COALESCE($1, name),
             description = COALESCE($2, description),
             geometry = COALESCE($3, geometry),
@@ -176,7 +176,7 @@ pub async fn update_geofence(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            match sqlx::query_as::<_, Geofence>("SELECT * FROM gis.geofences WHERE id = $1")
+            match sqlx::query_as::<_, Geofence>("SELECT * FROM plugin_gis.geofences WHERE id = $1")
                 .bind(id)
                 .fetch_one(&state.pool)
                 .await
@@ -194,7 +194,7 @@ pub async fn delete_geofence(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM gis.geofences WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_gis.geofences WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -210,7 +210,7 @@ pub async fn list_alerts(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<GeofenceAlert>>> {
     let alerts = sqlx::query_as::<_, GeofenceAlert>(
-        "SELECT * FROM gis.geofence_alerts ORDER BY triggered_at DESC",
+        "SELECT * FROM plugin_gis.geofence_alerts ORDER BY triggered_at DESC",
     )
     .fetch_all(&state.pool)
     .await;
@@ -225,7 +225,7 @@ pub async fn acknowledge_alert(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("UPDATE gis.geofence_alerts SET acknowledged = true WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_gis.geofence_alerts SET acknowledged = true WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -245,7 +245,7 @@ pub async fn check_geofence_violation(
     let mut alerts: Vec<GeofenceAlert> = Vec::new();
 
     let geofences: Vec<Geofence> = match sqlx::query_as::<_, Geofence>(
-        "SELECT * FROM gis.geofences WHERE enabled = true",
+        "SELECT * FROM plugin_gis.geofences WHERE enabled = true",
     )
     .fetch_all(pool)
     .await
@@ -285,7 +285,7 @@ pub async fn check_geofence_violation(
     for alert in &alerts {
         let _ = sqlx::query(
             r#"
-            INSERT INTO gis.geofence_alerts (
+            INSERT INTO plugin_gis.geofence_alerts (
                 id, geofence_id, device_code, alert_type, position
             ) VALUES ($1, $2, $3, $4, $5)
             "#,

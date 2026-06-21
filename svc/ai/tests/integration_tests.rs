@@ -104,11 +104,12 @@ mod tests {
 
         let document_id = Uuid::new_v4();
         let title = format!("测试文档-{}", &document_id.to_string()[..8]);
+        let tenant_id = Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap();
 
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_ai.documents (id, organization_id, title, file_path, file_name, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+            INSERT INTO plugin_ai.documents (id, tenant_id, organization_id, title, file_path, file_name, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title,
                 updated_at = NOW()
@@ -116,7 +117,8 @@ mod tests {
             "#,
         )
         .bind(document_id)
-        .bind(Uuid::parse_str(TEST_ORGANIZATION_ID).unwrap())
+        .bind(tenant_id)
+        .bind(tenant_id)
         .bind(&title)
         .bind("/test/path/document.pdf")
         .bind("document.pdf")
