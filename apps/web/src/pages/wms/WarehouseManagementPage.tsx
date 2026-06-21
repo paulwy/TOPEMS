@@ -1,30 +1,14 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
-  Typography,
-  Box,
-} from "@mui/material";
-import React, { useState, useEffect } from "react";
-import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Checkbox,
   TextField,
+  Box,
 } from "@mui/material";
+import React, { useState, useEffect, useMemo } from "react";
 import type {
   Warehouse,
   CreateWarehouseRequest,
@@ -36,6 +20,12 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from "@/components/templates";
 
 const WarehouseManagementPage: React.FC = () => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -175,20 +165,6 @@ const WarehouseManagementPage: React.FC = () => {
     });
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === warehouses.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(warehouses.map((w) => w.id));
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, "success" | "info" | "warning" | "error"> =
       {
@@ -211,236 +187,113 @@ const WarehouseManagementPage: React.FC = () => {
     );
   };
 
+  const columns: ColumnDef<Warehouse>[] = useMemo(
+    () => [
+      { id: "name", label: "仓库名称", sortable: true },
+      { id: "code", label: "仓库编码" },
+      { id: "address", label: "地址" },
+      { id: "manager", label: "负责人" },
+      { id: "phone", label: "联系电话" },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { label: "全部状态", value: "all" },
+          { label: "活跃", value: "active" },
+          { label: "非活跃", value: "inactive" },
+          { label: "维护中", value: "maintenance" },
+        ],
+        value: statusFilter,
+        onChange: (value) => {
+          setStatusFilter(value);
+          setCurrentPage(1);
+        },
+      },
+    ],
+    [statusFilter],
+  );
+
+  const rowActions: RowAction<Warehouse>[] = useMemo(
+    () => [
+      {
+        label: "查看详情",
+        icon: <Eye size={16} />,
+        onClick: handleViewDetail,
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: handleEdit,
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个仓库吗?",
+      },
+    ],
+    [],
+  );
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setShowDialog(true);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            仓库管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理仓库信息,包括仓库名称、编码、地址、负责人等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ flex: 1 }}>
-              <TextField
-                placeholder="搜索仓库名称或编码..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                fullWidth
-                size="small"
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        sx={{
-                          mr: 1,
-                          width: 16,
-                          height: 16,
-                          color: "text.secondary",
-                        }}
-                      />
-                    ),
-                  },
-                }}
-              />
-            </Box>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>状态筛选</InputLabel>
-              <Select
-                value={statusFilter}
-                label="状态筛选"
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              >
-                <MenuItem value="all">全部状态</MenuItem>
-                <MenuItem value="active">活跃</MenuItem>
-                <MenuItem value="inactive">非活跃</MenuItem>
-                <MenuItem value="maintenance">维护中</MenuItem>
-              </Select>
-            </FormControl>
-            <Button
-              variant="contained"
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-            >
-              <Plus sx={{ mr: 1, width: 16, height: 16 }} />
-              新增仓库
-            </Button>
-          </Box>
-
-          {selectedIds.length > 0 && (
-            <Box
-              sx={{
-                mb: 2,
-                p: 1.5,
-                bgcolor: "grey.100",
-                borderRadius: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography variant="body2">
-                已选择 {selectedIds.length} 个仓库
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setSelectedIds([])}
-              >
-                清除选择
-              </Button>
-            </Box>
-          )}
-
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={
-                      selectedIds.length === warehouses.length &&
-                      warehouses.length > 0
-                    }
-                    onChange={toggleSelectAll}
-                  />
-                </TableCell>
-                <TableHead>仓库名称</TableHead>
-                <TableHead>仓库编码</TableHead>
-                <TableHead>地址</TableHead>
-                <TableHead>负责人</TableHead>
-                <TableHead>联系电话</TableHead>
-                <TableHead>状态</TableHead>
-                <TableCell align="right">操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {warehouses.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    <EmptyState
-                      title="暂无仓库数据"
-                      description="点击上方按钮添加第一个仓库"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                warehouses.map((warehouse) => (
-                  <TableRow key={warehouse.id}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={selectedIds.includes(warehouse.id)}
-                        onChange={() => toggleSelect(warehouse.id)}
-                      />
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {warehouse.name}
-                    </TableCell>
-                    <TableCell>{warehouse.code || "-"}</TableCell>
-                    <TableCell>{warehouse.address || "-"}</TableCell>
-                    <TableCell>{warehouse.manager || "-"}</TableCell>
-                    <TableCell>{warehouse.phone || "-"}</TableCell>
-                    <TableCell>{getStatusBadge(warehouse.status)}</TableCell>
-                    <TableCell align="right">
-                      <Button
-                        variant="text"
-                        size="small"
-                        onClick={() => handleViewDetail(warehouse)}
-                      >
-                        <Eye sx={{ width: 16, height: 16 }} />
-                      </Button>
-                      <Button
-                        variant="text"
-                        size="small"
-                        onClick={() => handleEdit(warehouse)}
-                      >
-                        <Edit sx={{ width: 16, height: 16 }} />
-                      </Button>
-                      <Button
-                        variant="text"
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(warehouse.id)}
-                      >
-                        <Trash2 sx={{ width: 16, height: 16 }} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "grey.500" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                size="small"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              >
-                上一页
-              </Button>
-              {Array.from(
-                { length: Math.min(5, Math.ceil(total / pageSize)) },
-                (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <Button
-                      key={page}
-                      size="small"
-                      variant={currentPage === page ? "contained" : "outlined"}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  );
-                },
-              )}
-              <Button
-                size="small"
-                disabled={currentPage >= Math.ceil(total / pageSize)}
-                onClick={() =>
-                  setCurrentPage(
-                    Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                  )
-                }
-              >
-                下一页
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="仓库管理"
+        subtitle="管理仓库信息,包括仓库名称、编码、地址、负责人等"
+        columns={columns}
+        data={warehouses}
+        loading={loading}
+        filters={filters}
+        searchable
+        searchPlaceholder="搜索仓库名称或编码..."
+        onSearch={handleSearch}
+        searchValue={searchTerm}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total,
+          onPageChange: setCurrentPage,
+        }}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        actions={[
+          {
+            label: "新增仓库",
+            icon: <Plus size={16} />,
+            onClick: handleOpenCreate,
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage="暂无仓库数据"
+        getRowId={(row) => row.id}
+      />
 
       {/* 新增/编辑对话框 */}
       <Dialog
@@ -539,69 +392,125 @@ const WarehouseManagementPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     仓库名称
-                  </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>
+                  </Box>
+                  <Box component="span" sx={{ fontWeight: 500 }}>
                     {selectedWarehouse.name}
-                  </Typography>
+                  </Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     仓库编码
-                  </Typography>
-                  <Typography>{selectedWarehouse.code || "-"}</Typography>
+                  </Box>
+                  <Box component="span">{selectedWarehouse.code || "-"}</Box>
                 </Box>
                 <Box sx={{ gridColumn: { xs: 1, md: 2 } }}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     地址
-                  </Typography>
-                  <Typography>{selectedWarehouse.address || "-"}</Typography>
+                  </Box>
+                  <Box component="span">{selectedWarehouse.address || "-"}</Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     负责人
-                  </Typography>
-                  <Typography>{selectedWarehouse.manager || "-"}</Typography>
+                  </Box>
+                  <Box component="span">{selectedWarehouse.manager || "-"}</Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     联系电话
-                  </Typography>
-                  <Typography>{selectedWarehouse.phone || "-"}</Typography>
+                  </Box>
+                  <Box component="span">{selectedWarehouse.phone || "-"}</Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     状态
-                  </Typography>
+                  </Box>
                   <Box>{getStatusBadge(selectedWarehouse.status)}</Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     创建时间
-                  </Typography>
-                  <Typography>
+                  </Box>
+                  <Box>
                     {new Date(selectedWarehouse.created_at).toLocaleString(
                       "zh-CN",
                     )}
-                  </Typography>
+                  </Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "block",
+                      fontSize: 12,
+                      color: "text.secondary",
+                    }}
+                  >
                     更新时间
-                  </Typography>
-                  <Typography>
+                  </Box>
+                  <Box>
                     {new Date(selectedWarehouse.updated_at).toLocaleString(
                       "zh-CN",
                     )}
-                  </Typography>
+                  </Box>
                 </Box>
               </Box>
             </Box>
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

@@ -1,26 +1,12 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Box,
-  TablePagination,
+  Chip,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import type {
@@ -31,7 +17,7 @@ import type {
 import { mesApi } from "@/api/professional/mes/mes";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { Plus, Edit } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
 
@@ -142,108 +128,70 @@ const ProductionProcessPage: React.FC = () => {
     });
   };
 
+  const columns: ColumnDef<ProductionProcess>[] = [
+    {
+      id: "name",
+      label: "工序名称",
+      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.name}</Box>,
+    },
+    { id: "code", label: "工序编码", render: (row) => row.code || "-" },
+    { id: "sequence", label: "顺序" },
+    {
+      id: "standard_time",
+      label: "标准工时(小时)",
+      render: (row) => (row.standard_time ? `${row.standard_time}` : "-"),
+    },
+    {
+      id: "work_station_id",
+      label: "工作站",
+      render: (row) => row.work_station_id || "-",
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip size="small" label={row.status || "active"} variant="outlined" />
+      ),
+    },
+  ];
+
+  const rowActions = [
+    {
+      label: "编辑",
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: handleEdit,
+    },
+  ];
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            生产工序管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理生产工序,包括工序名称、编码、顺序、标准工时等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-            >
-              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
-              新增工序
-            </Button>
-          </Box>
-
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>工序名称</TableCell>
-                <TableCell>工序编码</TableCell>
-                <TableCell>顺序</TableCell>
-                <TableCell>标准工时(小时)</TableCell>
-                <TableCell>工作站</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell sx={{ textAlign: "right" }}>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {processes.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} sx={{ textAlign: "center" }}>
-                    <EmptyState
-                      title="暂无工序数据"
-                      description="点击上方按钮添加第一个工序"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                processes.map((process) => (
-                  <TableRow key={process.id}>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {process.name}
-                    </TableCell>
-                    <TableCell>{process.code || "-"}</TableCell>
-                    <TableCell>{process.sequence}</TableCell>
-                    <TableCell>
-                      {process.standard_time ? `${process.standard_time}` : "-"}
-                    </TableCell>
-                    <TableCell>{process.work_station_id || "-"}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={process.status || "active"}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell sx={{ textAlign: "right" }}>
-                      <Button size="small" onClick={() => handleEdit(process)}>
-                        <Edit style={{ width: 16, height: 16 }} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <TablePagination
-              component="div"
-              count={total}
-              page={currentPage - 1}
-              rowsPerPage={pageSize}
-              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-              rowsPerPageOptions={[]}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="生产工序管理"
+        subtitle="管理生产工序,包括工序名称、编码、顺序、标准工时等"
+        columns={columns}
+        data={processes}
+        loading={loading}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: (page) => setCurrentPage(page + 1),
+        }}
+        actions={[
+          {
+            label: "新增工序",
+            icon: <Plus style={{ width: 16, height: 16 }} />,
+            onClick: () => {
+              resetForm();
+              setShowDialog(true);
+            },
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage="暂无工序数据"
+      />
 
       <Dialog
         open={showDialog}
@@ -336,7 +284,7 @@ const ProductionProcessPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

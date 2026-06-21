@@ -25,10 +25,12 @@ import { useNavigate } from "react-router-dom";
 import { assetApi, type Asset } from "@/api/erp";
 import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../../store";
-import ListPageTemplate, {
+import {
+  ListPageTemplate,
   type ColumnDef,
   type RowAction,
-} from "@/components/templates/ListPageTemplate";
+  type FilterConfig,
+} from "@/components/templates";
 
 const EquipmentManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +40,12 @@ const EquipmentManagementPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [totalAssets, setTotalAssets] = useState(0);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -56,22 +64,43 @@ const EquipmentManagementPage: React.FC = () => {
     status: "idle",
   });
 
+  // 防抖搜索
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentPage, debouncedSearch, filterStatus]);
 
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
+      const params: any = {
+        page: currentPage,
+        page_size: pageSize,
+      };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+      if (filterStatus !== "all") {
+        params.status = filterStatus;
+      }
+
       const [assetRes, employeeRes] = await Promise.all([
-        assetApi.list(),
+        assetApi.list(params),
         employeeApi.list(),
       ]);
 
       if (assetRes.success && assetRes.data) {
         setAssets(assetRes.data.items || []);
+        setTotalAssets(assetRes.data.total || 0);
       }
 
       if (employeeRes.success && employeeRes.data) {
@@ -209,6 +238,32 @@ const EquipmentManagementPage: React.FC = () => {
     );
   };
 
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "all", label: "全部状态" },
+          { value: "idle", label: "闲置" },
+          { value: "in_use", label: "使用中" },
+          { value: "maintenance", label: "维护中" },
+          { value: "scrapped", label: "报废" },
+        ],
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const handleFilterChange = (filters: Record<string, any>) => {
+    if (filters.status !== undefined) {
+      setFilterStatus(filters.status);
+      setCurrentPage(1);
+    }
+  };
+
   const columns = useMemo<ColumnDef<Asset>[]>(
     () => [
       {
@@ -324,6 +379,17 @@ const EquipmentManagementPage: React.FC = () => {
         getRowId={(row) => row.id}
         searchable
         searchPlaceholder="搜索设备名称、编号、品牌、型号..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        filtersValue={{ status: filterStatus }}
+        onFilterChange={handleFilterChange}
+        pagination={{
+          page: currentPage,
+          pageSize: pageSize,
+          total: totalAssets,
+          onPageChange: setCurrentPage,
+        }}
         rowActions={rowActions}
         onRefresh={loadData}
         actions={[

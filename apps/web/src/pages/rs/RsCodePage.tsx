@@ -1,47 +1,32 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Container,
   Typography,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  IconButton,
   Button,
   TextField,
-  InputAdornment,
-  Menu,
-  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
   Stack,
-  FormControl,
-  InputLabel,
-  Select,
+  Paper,
 } from "@mui/material";
 import {
   Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
+  Download,
   GitBranch,
   GitCommit,
   History,
   GitPullRequest,
   Code,
-  Filter,
+  Eye,
 } from "lucide-react";
-import { DataExport } from "@/components/common";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+} from "@/components/templates";
 
 interface CodeRepo {
   id: string;
@@ -62,9 +47,6 @@ const RsCodePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [repoFilter, setRepoFilter] = useState<string | null>(null);
   const [branchTypeFilter, setBranchTypeFilter] = useState<string | null>(null);
-  const [filterMenuAnchor, setFilterMenuAnchor] = useState<null | HTMLElement>(
-    null,
-  );
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<CodeRepo | null>(null);
@@ -154,19 +136,13 @@ const RsCodePage: React.FC = () => {
     return matchesSearch && matchesRepo && matchesBranchType;
   });
 
+  const paginatedRepos = filteredRepos.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   const uniqueRepos = [...new Set(repos.map((r) => r.repo_name))];
   const uniqueBranchTypes = [...new Set(repos.map((r) => r.branch_type))];
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
 
   const handleViewDetail = (repo: CodeRepo) => {
     setSelectedRepo(repo);
@@ -178,237 +154,193 @@ const RsCodePage: React.FC = () => {
     setHistoryDialogOpen(true);
   };
 
+  const columns: ColumnDef<CodeRepo>[] = [
+    {
+      id: "repo_name",
+      label: "仓库名称",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Code size={16} color="#3b82f6" />
+          {row.repo_name}
+        </Box>
+      ),
+    },
+    {
+      id: "branch_name",
+      label: "分支名称",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <GitBranch size={16} />
+          {row.branch_name}
+          <Chip
+            label={row.branch_type}
+            size="small"
+            color={getBranchTypeColor(row.branch_type)}
+          />
+        </Box>
+      ),
+    },
+    {
+      id: "last_commit",
+      label: "最近提交",
+      render: (row) => (
+        <Typography
+          variant="body2"
+          sx={{
+            maxWidth: 200,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          title={row.last_commit}
+        >
+          <GitCommit
+            size={14}
+            style={{ marginRight: 4, verticalAlign: "middle" }}
+          />
+          {row.last_commit}
+        </Typography>
+      ),
+    },
+    {
+      id: "committer",
+      label: "提交者",
+    },
+    {
+      id: "lines_of_code",
+      label: "代码行数",
+      render: (row) => row.lines_of_code.toLocaleString(),
+    },
+    {
+      id: "last_update",
+      label: "最后更新时间",
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "repo",
+      label: "仓库",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        ...uniqueRepos.map((repo) => ({ label: repo, value: repo })),
+      ],
+      value: repoFilter || "",
+      onChange: (value) => setRepoFilter(value || null),
+    },
+    {
+      id: "branch_type",
+      label: "分支类型",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        ...uniqueBranchTypes.map((type) => ({ label: type, value: type })),
+      ],
+      value: branchTypeFilter || "",
+      onChange: (value) => setBranchTypeFilter(value || null),
+    },
+  ];
+
+  const rowActions = [
+    {
+      label: "代码浏览",
+      icon: <Eye size={16} />,
+      onClick: handleViewDetail,
+    },
+    {
+      label: "提交历史",
+      icon: <History size={16} />,
+      onClick: handleViewHistory,
+    },
+    {
+      label: "合并请求",
+      icon: <GitPullRequest size={16} />,
+      onClick: () => {},
+    },
+  ];
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
-          >
-            代码管理
-          </Typography>
-          <DataExport
-            data={filteredRepos as unknown as Record<string, unknown>[]}
-            fields={[
-              { key: "repo_name", title: "仓库名称" },
-              { key: "branch_name", title: "分支名称" },
-              { key: "branch_type", title: "分支类型" },
-              { key: "last_commit", title: "最近提交" },
-              { key: "committer", title: "提交者" },
-              { key: "lines_of_code", title: "代码行数" },
-              { key: "last_update", title: "最后更新时间" },
-            ]}
-            defaultFileName="代码仓库数据"
-            buttonText="导出"
-          />
-          <Button
-            variant="contained"
-            startIcon={<Plus size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-          >
-            新建仓库
-          </Button>
-        </Box>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <TextField
-              size="small"
-              placeholder="搜索仓库、分支或提交者..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 300 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<Filter size={18} />}
-              onClick={(e) => setFilterMenuAnchor(e.currentTarget)}
-            >
-              筛选
-            </Button>
-            <Menu
-              anchorEl={filterMenuAnchor}
-              open={Boolean(filterMenuAnchor)}
-              onClose={() => setFilterMenuAnchor(null)}
-            >
-              <MenuItem>
-                <FormControl size="small" sx={{ minWidth: 150 }}>
-                  <InputLabel>仓库</InputLabel>
-                  <Select
-                    value={repoFilter || ""}
-                    label="仓库"
-                    onChange={(e) => setRepoFilter(e.target.value || null)}
-                  >
-                    <MenuItem value="">全部</MenuItem>
-                    {uniqueRepos.map((repo) => (
-                      <MenuItem key={repo} value={repo}>
-                        {repo}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </MenuItem>
-              <MenuItem>
-                <FormControl size="small" sx={{ minWidth: 150 }}>
-                  <InputLabel>分支类型</InputLabel>
-                  <Select
-                    value={branchTypeFilter || ""}
-                    label="分支类型"
-                    onChange={(e) =>
-                      setBranchTypeFilter(e.target.value || null)
-                    }
-                  >
-                    <MenuItem value="">全部</MenuItem>
-                    {uniqueBranchTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </MenuItem>
-            </Menu>
-          </Stack>
-        </Paper>
-
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    仓库名称
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    分支名称
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    最近提交
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    提交者
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    代码行数
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    最后更新时间
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredRepos
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((repo) => (
-                    <TableRow key={repo.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Code size={16} color="#3b82f6" />
-                          {repo.repo_name}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <GitBranch size={16} />
-                          {repo.branch_name}
-                          <Chip
-                            label={repo.branch_type}
-                            size="small"
-                            color={getBranchTypeColor(repo.branch_type)}
-                          />
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title={repo.last_commit}>
-                          <Box
-                            sx={{
-                              maxWidth: 200,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            <GitCommit
-                              size={14}
-                              style={{
-                                marginRight: 4,
-                                verticalAlign: "middle",
-                              }}
-                            />
-                            {repo.last_commit}
-                          </Box>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>{repo.committer}</TableCell>
-                      <TableCell>
-                        {repo.lines_of_code.toLocaleString()}
-                      </TableCell>
-                      <TableCell>{repo.last_update}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="代码浏览">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewDetail(repo)}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="提交历史">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewHistory(repo)}
-                            >
-                              <History size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="合并请求">
-                            <IconButton size="small">
-                              <GitPullRequest size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredRepos.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+      <ListPageTemplate
+        title="代码管理"
+        columns={columns}
+        data={paginatedRepos}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索仓库、分支或提交者..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{
+          repo: repoFilter || "",
+          branch_type: branchTypeFilter || "",
+        }}
+        onFilterChange={(filters) => {
+          if (filters.repo !== undefined) {
+            setRepoFilter(filters.repo || null);
+          }
+          if (filters.branch_type !== undefined) {
+            setBranchTypeFilter(filters.branch_type || null);
+          }
+        }}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total: filteredRepos.length,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
+        actions={[
+          {
+            label: "导出",
+            variant: "outlined",
+            icon: <Download size={18} />,
+            onClick: () => {
+              // 导出功能
+              const headers = [
+                "仓库名称",
+                "分支名称",
+                "分支类型",
+                "最近提交",
+                "提交者",
+                "代码行数",
+                "最后更新时间",
+              ];
+              const csvData = filteredRepos.map((r) => [
+                r.repo_name,
+                r.branch_name,
+                r.branch_type,
+                r.last_commit,
+                r.committer,
+                r.lines_of_code,
+                r.last_update,
+              ]);
+              const csvContent = [headers, ...csvData]
+                .map((row) => row.join(","))
+                .join("\n");
+              const blob = new Blob(["\ufeff" + csvContent], {
+                type: "text/csv;charset=utf-8;",
+              });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = "代码仓库数据.csv";
+              link.click();
+              URL.revokeObjectURL(url);
+            },
+          },
+          {
+            label: "新建仓库",
+            variant: "contained",
+            icon: <Plus size={18} />,
+            onClick: () => {},
+          },
+        ]}
+        rowActions={rowActions}
+        showRowNumber
+        emptyMessage="暂无代码仓库数据"
+      />
 
       <Dialog
         open={detailDialogOpen}

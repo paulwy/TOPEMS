@@ -1,22 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Box,
-  Tabs,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Paper,
-  Stack,
-} from "@mui/material";
-import React, { useState, useEffect } from "react";
+import { Button, Chip, Typography, Box, InputLabel } from "@mui/material";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -30,9 +13,7 @@ import {
   TrendingUp,
   Clock,
 } from "lucide-react";
-import { InputLabel } from "@mui/material";
 import { crmApi } from "@/api/modules/crm/crm";
-import { crmFinanceApi } from "@/api/modules/crm/crm-finance";
 import {
   useCustomerFinanceInfo,
   useSalesInvoices,
@@ -41,26 +22,11 @@ import {
 import { useNotification } from "@/hooks/useNotification";
 import type { Customer } from "@/api/modules/crm/crm";
 import { apiLogger } from "@/utils/logger";
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`tabpanel-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import {
+  DetailPageTemplate,
+  type TabConfig,
+  type SectionConfig,
+} from "@/components/templates";
 
 const CustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -69,11 +35,9 @@ const CustomerDetailPage: React.FC = () => {
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tabValue, setTabValue] = useState(0);
 
   // 财务数据
-  const { data: financeInfo, isLoading: financeLoading } =
-    useCustomerFinanceInfo(id || "");
+  const { data: financeInfo } = useCustomerFinanceInfo(id || "");
   const { data: invoicesData } = useSalesInvoices({
     customer_id: id,
     page_size: 10,
@@ -143,892 +107,587 @@ const CustomerDetailPage: React.FC = () => {
     return <Chip size="small" color={s.color} label={s.label} />;
   };
 
-  const getInvoiceStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      {
-        label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
-      }
-    > = {
-      draft: { label: "草稿", color: "default" },
-      approved: { label: "已审批", color: "info" },
-      issued: { label: "已开具", color: "success" },
-      partially_received: { label: "部分收款", color: "warning" },
-      received: { label: "已收款", color: "success" },
-      cancelled: { label: "已作废", color: "error" },
-    };
-    const s = statusMap[status] || { label: status, color: "default" };
-    return <Chip size="small" color={s.color} label={s.label} />;
-  };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-        }}
-      >
-        <Typography>加载中...</Typography>
-      </Box>
-    );
-  }
-
-  if (!customer) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Typography variant="h6" color="text.secondary">
-            客户不存在
-          </Typography>
-          <Button onClick={() => navigate("/crm/customers")} sx={{ mt: 2 }}>
-            返回列表
-          </Button>
-        </Box>
-      </Box>
-    );
-  }
-
   const finInfo = financeInfo?.data;
   const invoices = invoicesData?.data?.items || [];
   const collections = collectionsData?.data?.items || [];
 
-  return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
-      {/* 顶部导航 */}
+  // 基本信息 Tab
+  const basicInfoContent = useMemo(() => {
+    if (!customer) return null;
+    return (
       <Box
         sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+          gap: 2,
         }}
       >
-        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Button variant="text" onClick={() => navigate("/crm/customers")}>
-              <Box sx={{ display: "inline-flex", mr: 1 }}>
-                <ArrowLeft />
-              </Box>
-              返回
-            </Button>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                客户详情
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                查看和编辑客户档案信息
-              </Typography>
-            </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            客户名称
+          </InputLabel>
+          <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+            {customer.name}
+          </Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            客户代码
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{customer.code || "-"}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            行业
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{customer.industry || "-"}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            网站
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{customer.website || "-"}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            邮箱
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{customer.email || "-"}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            电话
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{customer.phone || "-"}</Typography>
+        </Box>
+        <Box sx={{ gridColumn: "span 2" }}>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            地址
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{customer.address || "-"}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+            状态
+          </InputLabel>
+          <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
+        </Box>
+        {customer.notes && (
+          <Box sx={{ gridColumn: "span 3", mt: 2 }}>
+            <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+              备注
+            </InputLabel>
+            <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
+              {customer.notes}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    );
+  }, [customer]);
+
+  // 财务信息 Tab
+  const financeInfoContent = useMemo(() => {
+    if (!finInfo) return null;
+    return (
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+          gap: 3,
+        }}
+      >
+        {/* 信用管理 */}
+        <Box sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+            信用管理
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">信用额度</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {formatCurrency(finInfo?.credit_limit)}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">信用期限（天）</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {finInfo?.credit_term_days || 0}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">付款条款</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {finInfo?.payment_terms || "-"}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+            <Typography color="text.secondary">客户状态</Typography>
+            <Chip
+              size="small"
+              color={finInfo?.status === "normal" ? "success" : "default"}
+              label={
+                finInfo?.status === "normal" ? "正常" : finInfo?.status || "-"
+              }
+            />
+          </Box>
+        </Box>
+
+        {/* 应收款概览 */}
+        <Box sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+            应收款概览
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">应收账款</Typography>
+            <Typography sx={{ fontWeight: "medium", color: "warning.main" }}>
+              {formatCurrency(finInfo?.accounts_receivable)}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">逾期应收</Typography>
+            <Typography sx={{ fontWeight: "medium", color: "error.main" }}>
+              {formatCurrency(finInfo?.overdue_receivable)}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">平均回款天数</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {finInfo?.avg_collection_days || 0} 天
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+            <Typography color="text.secondary">最后交易日期</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {formatDate(finInfo?.last_transaction_date)}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* 交易统计 */}
+        <Box sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+            交易统计
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">累计销售额</Typography>
+            <Typography sx={{ fontWeight: "medium", color: "success.main" }}>
+              {formatCurrency(finInfo?.total_sales)}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">累计收款</Typography>
+            <Typography sx={{ fontWeight: "medium", color: "primary.main" }}>
+              {formatCurrency(finInfo?.total_received)}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+            <Typography color="text.secondary">应收余额</Typography>
+            <Typography sx={{ fontWeight: "medium", color: "warning.main" }}>
+              {formatCurrency(
+                (finInfo?.accounts_receivable || 0) -
+                  (finInfo?.total_received || 0),
+              )}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* 银行账户信息 */}
+        <Box sx={{ p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+            银行账户信息
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">开户银行</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {finInfo?.bank_name || "-"}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">银行账号</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {finInfo?.bank_account || "-"}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              py: 1,
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary">账户名称</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {finInfo?.account_name || "-"}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+            <Typography color="text.secondary">税号</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {finInfo?.tax_number || "-"}
+            </Typography>
           </Box>
         </Box>
       </Box>
+    );
+  }, [finInfo]);
 
-      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
-        {/* 客户概览卡片 */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent
-            sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}
+  // 销售发票 Tab
+  const invoicesContent = useMemo(() => {
+    return (
+      <Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            销售发票列表
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Receipt size={16} />}
           >
-            <Box
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                bgcolor: "primary.light",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Building2 size={32} color="#1976d2" />
-            </Box>
-            <Box sx={{ flex: 1 }}>
+            新建发票
+          </Button>
+        </Box>
+        {invoices.length === 0 ? (
+          <Typography
+            color="text.secondary"
+            sx={{ py: 8, textAlign: "center" }}
+          >
+            暂无发票数据
+          </Typography>
+        ) : (
+          <Box sx={{ display: "grid", gap: 1 }}>
+            {invoices.map((invoice: any) => (
               <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
-                <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                  {customer.name}
-                </Typography>
-                {getStatusBadge(customer.status)}
-              </Box>
-              <Box
+                key={invoice.id}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 100px 100px 100px 100px 100px 80px",
                   gap: 2,
-                  color: "text.secondary",
+                  p: 1.5,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  alignItems: "center",
                 }}
               >
-                <Typography
-                  variant="body2"
-                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                >
-                  <FileText size={14} />
-                  {customer.code || "-"}
+                <Typography sx={{ fontWeight: "medium" }}>
+                  {invoice.invoice_no}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                >
-                  <Building2 size={14} />
-                  {customer.industry || "-"}
+                <Typography align="right">
+                  {formatCurrency(invoice.amount)}
                 </Typography>
-                {customer.email && (
-                  <Typography
-                    variant="body2"
-                    sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                  >
-                    <Mail size={14} />
-                    {customer.email}
-                  </Typography>
-                )}
-                {customer.phone && (
-                  <Typography
-                    variant="body2"
-                    sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                  >
-                    <Phone size={14} />
-                    {customer.phone}
-                  </Typography>
-                )}
+                <Typography align="right">
+                  {formatCurrency(invoice.tax_amount)}
+                </Typography>
+                <Typography align="right">
+                  {formatCurrency(invoice.total_amount)}
+                </Typography>
+                <Typography>{formatDate(invoice.invoice_date)}</Typography>
+                <Typography>{formatDate(invoice.due_date)}</Typography>
+                <Chip
+                  size="small"
+                  color={
+                    invoice.status === "issued"
+                      ? "success"
+                      : invoice.status === "draft"
+                        ? "default"
+                        : invoice.status === "cancelled"
+                          ? "error"
+                          : "info"
+                  }
+                  label={
+                    invoice.status === "draft"
+                      ? "草稿"
+                      : invoice.status === "approved"
+                        ? "已审批"
+                        : invoice.status === "issued"
+                          ? "已开具"
+                          : invoice.status === "cancelled"
+                            ? "已作废"
+                            : invoice.status
+                  }
+                />
               </Box>
-            </Box>
-            <Button variant="contained" onClick={() => {}}>
-              编辑
-            </Button>
-          </CardContent>
-        </Card>
+            ))}
+          </Box>
+        )}
+      </Box>
+    );
+  }, [invoices]);
 
-        {/* 财务概览 */}
+  // 收款记录 Tab
+  const collectionsContent = useMemo(() => {
+    return (
+      <Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            收款记录列表
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Wallet size={16} />}
+          >
+            新建收款
+          </Button>
+        </Box>
+        {collections.length === 0 ? (
+          <Typography
+            color="text.secondary"
+            sx={{ py: 8, textAlign: "center" }}
+          >
+            暂无收款记录数据
+          </Typography>
+        ) : (
+          <Box sx={{ display: "grid", gap: 1 }}>
+            {collections.map((record: any) => (
+              <Box
+                key={record.id}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 100px 100px 100px 80px",
+                  gap: 2,
+                  p: 1.5,
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  alignItems: "center",
+                }}
+              >
+                <Typography sx={{ fontWeight: "medium" }}>
+                  {record.collection_no}
+                </Typography>
+                <Typography align="right">
+                  {formatCurrency(record.amount)}
+                </Typography>
+                <Typography>
+                  {record.payment_method === "bank_transfer"
+                    ? "银行转账"
+                    : record.payment_method === "cash"
+                      ? "现金"
+                      : record.payment_method === "credit"
+                        ? "信用"
+                        : "其他"}
+                </Typography>
+                <Typography>{formatDate(record.collection_date)}</Typography>
+                <Chip
+                  size="small"
+                  color={
+                    record.status === "matched"
+                      ? "success"
+                      : record.status === "recorded"
+                        ? "info"
+                        : "default"
+                  }
+                  label={
+                    record.status === "matched"
+                      ? "已核销"
+                      : record.status === "recorded"
+                        ? "已记录"
+                        : "已取消"
+                  }
+                />
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
+    );
+  }, [collections]);
+
+  // 底部信息 Section
+  const footerSection = useMemo<SectionConfig>(() => {
+    if (!customer) return { id: "footer", content: null };
+    return {
+      id: "footer",
+      title: "其他信息",
+      content: (
         <Box
           sx={{
             display: "grid",
             gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
             gap: 2,
-            mb: 3,
           }}
         >
-          <Card
-            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
-          >
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "primary.light" }}>
-                <CreditCard size={20} color="#1976d2" />
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  信用额度
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                  {formatCurrency(finInfo?.credit_limit)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
-          >
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "warning.light" }}>
-                <Wallet size={20} color="#ed6c02" />
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  应收账款
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: "bold", color: "warning.main" }}
-                >
-                  {formatCurrency(finInfo?.accounts_receivable)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
-          >
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "error.light" }}>
-                <Clock size={20} color="#d32f2f" />
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  逾期应收
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: "bold", color: "error.main" }}
-                >
-                  {formatCurrency(finInfo?.overdue_receivable)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
-          >
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "success.light" }}>
-                <TrendingUp size={20} color="#2e7d32" />
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  累计销售额
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: "bold", color: "success.main" }}
-                >
-                  {formatCurrency(finInfo?.total_sales)}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        {/* 标签页 */}
-        <Card>
-          <Box
-            sx={{
-              borderBottom: 1,
-              borderColor: "divider",
-              bgcolor: "grey.100",
-            }}
-          >
-            <Tabs
-              value={tabValue}
-              onChange={(_, newValue) => setTabValue(newValue)}
-              sx={{ px: 2 }}
-            >
-              <Tab label="基本信息" />
-              <Tab label="财务信息" />
-              <Tab label="销售发票" />
-              <Tab label="收款记录" />
-            </Tabs>
+          <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              创建时间
+            </Typography>
+            <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+              {new Date(customer.created_at).toLocaleString()}
+            </Typography>
           </Box>
-
-          {/* 基本信息 */}
-          <TabPanel value={tabValue} index={0}>
-            <Card>
-              <CardHeader>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  基本信息
-                </Typography>
-              </CardHeader>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      客户名称
-                    </InputLabel>
-                    <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
-                      {customer.name}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      客户代码
-                    </InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>
-                      {customer.code || "-"}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      行业
-                    </InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>
-                      {customer.industry || "-"}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      网站
-                    </InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>
-                      {customer.website || "-"}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      邮箱
-                    </InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>
-                      {customer.email || "-"}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      电话
-                    </InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>
-                      {customer.phone || "-"}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ gridColumn: "span 2" }}>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      地址
-                    </InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>
-                      {customer.address || "-"}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      状态
-                    </InputLabel>
-                    <Box sx={{ mt: 0.5 }}>
-                      {getStatusBadge(customer.status)}
-                    </Box>
-                  </Box>
-                </Box>
-                {customer.notes && (
-                  <Box sx={{ mt: 3 }}>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
-                      备注
-                    </InputLabel>
-                    <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
-                      {customer.notes}
-                    </Typography>
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          </TabPanel>
-
-          {/* 财务信息 */}
-          <TabPanel value={tabValue} index={1}>
-            <Box
+          <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              更新时间
+            </Typography>
+            <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+              {new Date(customer.updated_at).toLocaleString()}
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              客户ID
+            </Typography>
+            <Typography
               sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "repeat(1, 1fr)",
-                  lg: "repeat(2, 1fr)",
-                },
-                gap: 3,
+                fontWeight: "medium",
+                mt: 0.5,
+                fontFamily: "monospace",
+                fontSize: "0.875rem",
               }}
             >
-              {/* 信用管理 */}
-              <Card>
-                <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    信用管理
-                  </Typography>
-                </CardHeader>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">信用额度</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {formatCurrency(finInfo?.credit_limit)}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">
-                      信用期限（天）
-                    </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {finInfo?.credit_term_days || 0}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">付款条款</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {finInfo?.payment_terms || "-"}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                    }}
-                  >
-                    <Typography color="text.secondary">客户状态</Typography>
-                    <Chip
-                      size="small"
-                      color={
-                        finInfo?.status === "normal" ? "success" : "default"
-                      }
-                      label={
-                        finInfo?.status === "normal"
-                          ? "正常"
-                          : finInfo?.status || "-"
-                      }
-                    />
-                  </Box>
-                </CardContent>
-              </Card>
+              {customer.id.substring(0, 8)}...
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              状态
+            </Typography>
+            <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
+          </Box>
+        </Box>
+      ),
+    };
+  }, [customer]);
 
-              {/* 应收款概览 */}
-              <Card>
-                <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    应收款概览
-                  </Typography>
-                </CardHeader>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">应收账款</Typography>
-                    <Typography
-                      sx={{ fontWeight: "medium", color: "warning.main" }}
-                    >
-                      {formatCurrency(finInfo?.accounts_receivable)}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">逾期应收</Typography>
-                    <Typography
-                      sx={{ fontWeight: "medium", color: "error.main" }}
-                    >
-                      {formatCurrency(finInfo?.overdue_receivable)}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">平均回款天数</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {finInfo?.avg_collection_days || 0} 天
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                    }}
-                  >
-                    <Typography color="text.secondary">最后交易日期</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {formatDate(finInfo?.last_transaction_date)}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
+  // tabs 配置
+  const tabs = useMemo<TabConfig[]>(
+    () => [
+      { id: "basic", label: "基本信息", content: basicInfoContent || <></> },
+      {
+        id: "finance",
+        label: "财务信息",
+        content: financeInfoContent || <></>,
+      },
+      { id: "invoices", label: "销售发票", content: invoicesContent },
+      { id: "collections", label: "收款记录", content: collectionsContent },
+    ],
+    [basicInfoContent, financeInfoContent, invoicesContent, collectionsContent],
+  );
 
-              {/* 交易统计 */}
-              <Card>
-                <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    交易统计
-                  </Typography>
-                </CardHeader>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">累计销售额</Typography>
-                    <Typography
-                      sx={{ fontWeight: "medium", color: "success.main" }}
-                    >
-                      {formatCurrency(finInfo?.total_sales)}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">累计收款</Typography>
-                    <Typography
-                      sx={{ fontWeight: "medium", color: "primary.main" }}
-                    >
-                      {formatCurrency(finInfo?.total_received)}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                    }}
-                  >
-                    <Typography color="text.secondary">应收余额</Typography>
-                    <Typography
-                      sx={{ fontWeight: "medium", color: "warning.main" }}
-                    >
-                      {formatCurrency(
-                        (finInfo?.accounts_receivable || 0) -
-                          (finInfo?.total_received || 0),
-                      )}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
+  // infoCard 配置
+  const infoCard = useMemo(
+    () => ({
+      avatar: <Building2 size={32} color="#1976d2" />,
+      title: customer?.name,
+      subtitle: customer?.code || undefined,
+      tags: customer?.industry ? [customer.industry] : [],
+      stats: [
+        { label: "信用额度", value: formatCurrency(finInfo?.credit_limit) },
+        {
+          label: "应收账款",
+          value: formatCurrency(finInfo?.accounts_receivable),
+        },
+        {
+          label: "逾期应收",
+          value: formatCurrency(finInfo?.overdue_receivable),
+        },
+        { label: "累计销售额", value: formatCurrency(finInfo?.total_sales) },
+      ],
+    }),
+    [customer, finInfo],
+  );
 
-              {/* 银行账户信息 */}
-              <Card>
-                <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    银行账户信息
-                  </Typography>
-                </CardHeader>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">开户银行</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {finInfo?.bank_name || "-"}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">银行账号</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {finInfo?.bank_account || "-"}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography color="text.secondary">账户名称</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {finInfo?.account_name || "-"}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      py: 1,
-                    }}
-                  >
-                    <Typography color="text.secondary">税号</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {finInfo?.tax_number || "-"}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-          </TabPanel>
+  // sections 配置
+  const sections = useMemo<SectionConfig[]>(
+    () => [footerSection],
+    [footerSection],
+  );
 
-          {/* 销售发票 */}
-          <TabPanel value={tabValue} index={2}>
-            <Card>
-              <CardHeader
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  pb: 2,
-                }}
-              >
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  销售发票列表
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<Receipt size={16} />}
-                >
-                  新建发票
-                </Button>
-              </CardHeader>
-              <CardContent sx={{ p: 0 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>发票号</TableCell>
-                      <TableCell align="right">金额</TableCell>
-                      <TableCell align="right">税额</TableCell>
-                      <TableCell align="right">价税合计</TableCell>
-                      <TableCell>发票日期</TableCell>
-                      <TableCell>到期日</TableCell>
-                      <TableCell>状态</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {invoices.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={7}
-                          align="center"
-                          sx={{ py: 8, color: "text.secondary" }}
-                        >
-                          暂无发票数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      invoices.map((invoice: any) => (
-                        <TableRow key={invoice.id} hover>
-                          <TableCell sx={{ fontWeight: "medium" }}>
-                            {invoice.invoice_no}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(invoice.amount)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(invoice.tax_amount)}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(invoice.total_amount)}
-                          </TableCell>
-                          <TableCell>
-                            {formatDate(invoice.invoice_date)}
-                          </TableCell>
-                          <TableCell>{formatDate(invoice.due_date)}</TableCell>
-                          <TableCell>
-                            {getInvoiceStatusBadge(invoice.status)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabPanel>
-
-          {/* 收款记录 */}
-          <TabPanel value={tabValue} index={3}>
-            <Card>
-              <CardHeader
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  pb: 2,
-                }}
-              >
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  收款记录列表
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<Wallet size={16} />}
-                >
-                  新建收款
-                </Button>
-              </CardHeader>
-              <CardContent sx={{ p: 0 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>收款单号</TableCell>
-                      <TableCell align="right">收款金额</TableCell>
-                      <TableCell>收款方式</TableCell>
-                      <TableCell>收款日期</TableCell>
-                      <TableCell>状态</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {collections.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          align="center"
-                          sx={{ py: 8, color: "text.secondary" }}
-                        >
-                          暂无收款记录数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      collections.map((record: any) => (
-                        <TableRow key={record.id} hover>
-                          <TableCell sx={{ fontWeight: "medium" }}>
-                            {record.collection_no}
-                          </TableCell>
-                          <TableCell align="right">
-                            {formatCurrency(record.amount)}
-                          </TableCell>
-                          <TableCell>
-                            {record.payment_method === "bank_transfer"
-                              ? "银行转账"
-                              : record.payment_method === "cash"
-                                ? "现金"
-                                : record.payment_method === "credit"
-                                  ? "信用"
-                                  : "其他"}
-                          </TableCell>
-                          <TableCell>
-                            {formatDate(record.collection_date)}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              color={
-                                record.status === "matched"
-                                  ? "success"
-                                  : record.status === "recorded"
-                                    ? "info"
-                                    : "default"
-                              }
-                              label={
-                                record.status === "matched"
-                                  ? "已核销"
-                                  : record.status === "recorded"
-                                    ? "已记录"
-                                    : "已取消"
-                              }
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabPanel>
-        </Card>
-
-        {/* 底部信息 */}
-        <Card sx={{ mt: 3 }}>
-          <CardContent
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
-              gap: 2,
-            }}
-          >
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                创建时间
-              </Typography>
-              <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
-                {new Date(customer.created_at).toLocaleString()}
-              </Typography>
-            </Box>
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                更新时间
-              </Typography>
-              <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
-                {new Date(customer.updated_at).toLocaleString()}
-              </Typography>
-            </Box>
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                客户ID
-              </Typography>
-              <Typography
-                sx={{
-                  fontWeight: "medium",
-                  mt: 0.5,
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
-                }}
-              >
-                {customer.id.substring(0, 8)}...
-              </Typography>
-            </Box>
-            <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                状态
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-    </Box>
+  return (
+    <DetailPageTemplate
+      title="客户详情"
+      subtitle="查看和编辑客户档案信息"
+      backHref="/crm/customers"
+      loading={loading}
+      onEdit={() => {}}
+      infoCard={infoCard}
+      tabs={tabs}
+      sections={sections}
+    />
   );
 };
 

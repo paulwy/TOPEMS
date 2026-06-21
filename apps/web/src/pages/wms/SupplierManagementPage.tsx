@@ -1,28 +1,20 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
+  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Box,
+  Chip,
+  Checkbox,
+  Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Checkbox,
-  Box,
-  TextField,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type {
   Supplier,
   CreateSupplierRequest,
@@ -31,7 +23,11 @@ import type {
 import { scmApi } from "@/api/modules/scm/scm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+} from "@/components/templates";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 import { ImageUpload } from "@/components/common";
 import { apiLogger } from "@/utils/logger";
@@ -40,7 +36,7 @@ const SupplierManagementPage: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -76,7 +72,7 @@ const SupplierManagementPage: React.FC = () => {
         page_size: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== "all") params.status = statusFilter;
+      if (statusFilter) params.status = statusFilter;
 
       const response = await scmApi.suppliers.list(params);
       if (response.success && response.data) {
@@ -183,20 +179,6 @@ const SupplierManagementPage: React.FC = () => {
     });
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === suppliers.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(suppliers.map((s) => s.id));
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const statusMap: Record<
       string,
@@ -219,234 +201,114 @@ const SupplierManagementPage: React.FC = () => {
     );
   };
 
+  const columns: ColumnDef<Supplier>[] = [
+    {
+      id: "name",
+      label: "供应商名称",
+      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.name}</Box>,
+    },
+    { id: "short_name", label: "简称", render: (row) => row.short_name || "-" },
+    {
+      id: "contact_name",
+      label: "联系人",
+      render: (row) => row.contact_name || "-",
+    },
+    {
+      id: "contact_phone",
+      label: "联系电话",
+      render: (row) => row.contact_phone || "-",
+    },
+    { id: "email", label: "邮箱", render: (row) => row.email || "-" },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
+    },
+  ];
+
+  const rowActions = [
+    {
+      label: "查看详情",
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: handleViewDetail,
+    },
+    {
+      label: "编辑",
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: handleEdit,
+    },
+    {
+      label: "删除",
+      icon: <Trash2 style={{ width: 16, height: 16 }} />,
+      onClick: (row: Supplier) => handleDelete(row.id),
+      color: "error" as const,
+      divider: true,
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "status",
+      label: "状态筛选",
+      type: "select",
+      value: statusFilter,
+      options: [
+        { label: "全部状态", value: "" },
+        { label: "活跃", value: "active" },
+        { label: "非活跃", value: "inactive" },
+        { label: "已冻结", value: "blocked" },
+      ],
+      onChange: (value) => {
+        setStatusFilter(value as string);
+        setCurrentPage(1);
+      },
+    },
+  ];
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  }, []);
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            供应商管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理供应商信息,包括基本信息、联系方式、银行账户等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ flex: 1, position: "relative" }}>
-              <Box
-                sx={{
-                  position: "absolute",
-                  left: 1,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  zIndex: 1,
-                }}
-              >
-                <Search sx={{ width: 16, height: 16 }} />
-              </Box>
-              <TextField
-                placeholder="搜索供应商名称或联系人..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                size="small"
-                fullWidth
-                sx={{ pl: 4 }}
-              />
-            </Box>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>状态筛选</InputLabel>
-              <Select
-                value={statusFilter}
-                label="状态筛选"
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              >
-                <MenuItem value="all">全部状态</MenuItem>
-                <MenuItem value="active">活跃</MenuItem>
-                <MenuItem value="inactive">非活跃</MenuItem>
-                <MenuItem value="blocked">已冻结</MenuItem>
-              </Select>
-            </FormControl>
-            <Button
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-            >
-              <Plus sx={{ mr: 1, width: 16, height: 16 }} />
-              新增供应商
-            </Button>
-          </Box>
-
-          {selectedIds.length > 0 && (
-            <Box
-              sx={{
-                mb: 2,
-                p: 1.5,
-                bgcolor: "action.hover",
-                borderRadius: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography variant="body2">
-                已选择 {selectedIds.length} 个供应商
-              </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => setSelectedIds([])}
-              >
-                清除选择
-              </Button>
-            </Box>
-          )}
-
-          <Box sx={{ borderRadius: 1, border: 1, borderColor: "divider" }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHead sx={{ width: 50 }}>
-                    <Checkbox
-                      checked={
-                        selectedIds.length === suppliers.length &&
-                        suppliers.length > 0
-                      }
-                      onChange={toggleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>供应商名称</TableHead>
-                  <TableHead>简称</TableHead>
-                  <TableHead>联系人</TableHead>
-                  <TableHead>联系电话</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead sx={{ textAlign: "right" }}>操作</TableHead>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {suppliers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} sx={{ textAlign: "center" }}>
-                      <EmptyState
-                        title="暂无供应商数据"
-                        description="点击上方按钮添加第一个供应商"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  suppliers.map((supplier) => (
-                    <TableRow key={supplier.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.includes(supplier.id)}
-                          onChange={() => toggleSelect(supplier.id)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {supplier.name}
-                      </TableCell>
-                      <TableCell>{supplier.short_name || "-"}</TableCell>
-                      <TableCell>{supplier.contact_name || "-"}</TableCell>
-                      <TableCell>{supplier.contact_phone || "-"}</TableCell>
-                      <TableCell>{supplier.email || "-"}</TableCell>
-                      <TableCell>{getStatusBadge(supplier.status)}</TableCell>
-                      <TableCell sx={{ textAlign: "right" }}>
-                        <Button
-                          variant="text"
-                          size="small"
-                          onClick={() => handleViewDetail(supplier)}
-                        >
-                          <Eye sx={{ width: 16, height: 16 }} />
-                        </Button>
-                        <Button
-                          variant="text"
-                          size="small"
-                          onClick={() => handleEdit(supplier)}
-                        >
-                          <Edit sx={{ width: 16, height: 16 }} />
-                        </Button>
-                        <Button
-                          variant="text"
-                          size="small"
-                          onClick={() => handleDelete(supplier.id)}
-                        >
-                          <Trash2 sx={{ width: 16, height: 16 }} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Box>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Button
-                size="small"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                上一页
-              </Button>
-              {Array.from(
-                { length: Math.min(5, Math.ceil(total / pageSize)) },
-                (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <Button
-                      key={page}
-                      size="small"
-                      variant={currentPage === page ? "contained" : "outlined"}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  );
-                },
-              )}
-              <Button
-                size="small"
-                onClick={() =>
-                  setCurrentPage(
-                    Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                  )
-                }
-                disabled={currentPage >= Math.ceil(total / pageSize)}
-              >
-                下一页
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="供应商管理"
+        subtitle="管理供应商信息,包括基本信息、联系方式、银行账户等"
+        columns={columns}
+        data={suppliers}
+        loading={loading}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: (page) => setCurrentPage(page + 1),
+        }}
+        globalSearch={{
+          fields: ["name", "contact_name"],
+          placeholder: "搜索供应商名称或联系人...",
+        }}
+        searchValue={searchTerm}
+        onSearch={handleSearchChange}
+        filters={filters}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        actions={[
+          {
+            label: "新增供应商",
+            icon: <Plus style={{ width: 16, height: 16 }} />,
+            onClick: () => {
+              resetForm();
+              setShowDialog(true);
+            },
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage="暂无供应商数据"
+      />
 
       {/* 新增/编辑对话框 */}
       <Dialog
@@ -713,7 +575,7 @@ const SupplierManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

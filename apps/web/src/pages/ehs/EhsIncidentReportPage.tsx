@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { apiLogger } from "@/utils/logger";
-import { logger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -27,7 +26,6 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Box,
   Typography,
   FormControl,
@@ -36,8 +34,7 @@ import {
   MenuItem,
 } from "@mui/material";
 
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { ehsApi } from "@/api/ehs";
 import type { Incident, IncidentAction } from "@/api/ehs";
 import { toast } from "react-toastify";
@@ -235,57 +232,57 @@ const EhsIncidentReportPage: React.FC = () => {
     return typeMap[type] || type;
   };
 
-  const incidentColumns: ColumnDef<Incident>[] = [
+  const columns: ColumnDef<Incident>[] = [
     {
-      accessorKey: "title",
-      header: "事件标题",
-      cell: ({ row }) => (
+      id: "title",
+      label: "事件标题",
+      render: (row) => (
         <Typography sx={{ fontWeight: 500, color: "slate.900" }}>
-          {row.original.title}
+          {row.title}
         </Typography>
       ),
     },
     {
-      accessorKey: "incident_type",
-      header: "类型",
-      cell: ({ row }) => (
+      id: "incident_type",
+      label: "类型",
+      render: (row) => (
         <Chip
-          label={getTypeLabel(row.original.incident_type)}
+          label={getTypeLabel(row.incident_type)}
           size="small"
           sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
         />
       ),
     },
     {
-      accessorKey: "severity",
-      header: "严重程度",
-      cell: ({ row }) => getSeverityBadge(row.original.severity),
+      id: "severity",
+      label: "严重程度",
+      render: (row) => getSeverityBadge(row.severity),
     },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
     },
     {
-      accessorKey: "reported_at",
-      header: "报告时间",
-      cell: ({ row }) => (
+      id: "reported_at",
+      label: "报告时间",
+      render: (row) => (
         <span>
-          {row.original.reported_at
-            ? new Date(row.original.reported_at).toLocaleString("zh-CN")
+          {row.reported_at
+            ? new Date(row.reported_at).toLocaleString("zh-CN")
             : "-"}
         </span>
       ),
     },
     {
       id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
+      label: "操作",
+      render: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="text"
             size="small"
-            onClick={() => handleSelectIncident(row.original)}
+            onClick={() => handleSelectIncident(row)}
             startIcon={<Box component={Eye} sx={{ fontSize: 16 }} />}
           >
             查看
@@ -293,7 +290,7 @@ const EhsIncidentReportPage: React.FC = () => {
           <Button
             variant="text"
             size="small"
-            onClick={() => handleDeleteIncident(row.original.id)}
+            onClick={() => handleDeleteIncident(row.id)}
             sx={{ color: "#dc2626", "&:hover": { backgroundColor: "#fef2f2" } }}
             startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
           />
@@ -304,51 +301,55 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const actionColumns: ColumnDef<IncidentAction>[] = [
     {
-      accessorKey: "action_type",
-      header: "行动类型",
-      cell: ({ row }) => (
+      id: "action_type",
+      label: "行动类型",
+      render: (row) => (
         <Chip
           size="small"
           sx={{ backgroundColor: "#dbeafe", color: "#2563eb" }}
           label={
-            row.original.action_type === "investigation"
+            row.action_type === "investigation"
               ? "调查"
-              : row.original.action_type === "correction"
+              : row.action_type === "correction"
                 ? "纠正"
-                : row.original.action_type === "prevention"
+                : row.action_type === "prevention"
                   ? "预防"
-                  : row.original.action_type
+                  : row.action_type
           }
         />
       ),
     },
-    { accessorKey: "description", header: "行动描述" },
     {
-      accessorKey: "responsible",
-      header: "负责人",
-      cell: ({ row }) => (
+      id: "description",
+      label: "行动描述",
+      render: (row) => row.description,
+    },
+    {
+      id: "responsible",
+      label: "负责人",
+      render: (row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Box component={Users} sx={{ fontSize: 16 }} />
-          <span>{row.original.responsible || "-"}</span>
+          <Users sx={{ fontSize: 16 }} />
+          <span>{row.responsible || "-"}</span>
         </Box>
       ),
     },
     {
-      accessorKey: "due_date",
-      header: "截止日期",
-      cell: ({ row }) => (
+      id: "due_date",
+      label: "截止日期",
+      render: (row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Box component={Calendar} sx={{ fontSize: 16 }} />
-          {row.original.due_date
-            ? new Date(row.original.due_date).toLocaleDateString("zh-CN")
+          <Calendar sx={{ fontSize: 16 }} />
+          {row.due_date
+            ? new Date(row.due_date).toLocaleDateString("zh-CN")
             : "-"}
         </Box>
       ),
     },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
     },
   ];
 
@@ -361,285 +362,154 @@ const EhsIncidentReportPage: React.FC = () => {
     ).length,
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#fed7aa",
-              borderTopColor: "#ea580c",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
-      }}
-    >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+    <>
+      <ListPageTemplate
+        title="事件报告"
+        subtitle="Incident Reporting"
+        backButton={{
+          href: "/ehs",
+          onClick: () => navigate("/ehs"),
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+        columns={columns}
+        data={incidents}
+        loading={loading}
+        actions={[
+          {
+            label: "上报事件",
+            icon: <Plus sx={{ fontSize: 16, mr: 1 }} />,
+            onClick: () => setShowAddModal(true),
+            variant: "contained",
+          },
+        ]}
+        headerContent={
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 3,
+              mb: 4,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-              <Button
-                variant="text"
-                onClick={() => navigate("/ehs")}
-                sx={{ minWidth: 32, height: 32 }}
-              >
-                <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
-              </Button>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "slate.900" }}
-                >
-                  事件报告
-                </Typography>
-                <Typography variant="caption" sx={{ color: "slate.500" }}>
-                  Incident Reporting
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              onClick={() => setShowAddModal(true)}
+            <Card
               sx={{
-                backgroundColor: "#ea580c",
+                background:
+                  "linear-gradient(to bottom right, #f97316, #ef4444)",
                 color: "white",
-                "&:hover": { backgroundColor: "#c2410c" },
               }}
             >
-              <Plus sx={{ fontSize: 16, mr: 1 }} />
-              上报事件
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 3,
-            mb: 4,
-          }}
-        >
-          <Card
-            sx={{
-              background: "linear-gradient(to bottom right, #f97316, #ef4444)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: "#fed7aa", fontSize: 14 }}>
-                    事件总数
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {stats.total}
-                  </Typography>
-                </Box>
+              <CardContent sx={{ p: 3 }}>
                 <Box
-                  component={AlertCircle}
-                  sx={{ fontSize: 48, color: "#fed7aa" }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(to bottom right, #eab308, #f97316)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: "#fef9c3", fontSize: 14 }}>
-                    待处理
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {stats.pending}
-                  </Typography>
-                </Box>
-                <Box
-                  component={Clock}
-                  sx={{ fontSize: 48, color: "#fef9c3" }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(to bottom right, #22c55e, #10b981)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: "#dcfce7", fontSize: 14 }}>
-                    已解决
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {stats.resolved}
-                  </Typography>
-                </Box>
-                <Box
-                  component={CheckCircle}
-                  sx={{ fontSize: 48, color: "#dcfce7" }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(to bottom right, #ef4444, #ec4899)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: "#fee2e2", fontSize: 14 }}>
-                    严重事件
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {stats.serious}
-                  </Typography>
-                </Box>
-                <Box
-                  component={AlertTriangle}
-                  sx={{ fontSize: 48, color: "#fee2e2" }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 2,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <Box
-                component={FileText}
-                sx={{ fontSize: 20, color: "#ea580c" }}
-              />
-              事件列表
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {incidents.length} 条记录
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            {incidents.length > 0 ? (
-              <DataTable
-                columns={incidentColumns}
-                data={incidents}
-                enablePagination={false}
-              />
-            ) : (
-              <Box sx={{ textAlign: "center", py: 6, color: "slate.500" }}>
-                <Box
-                  component={FileText}
-                  sx={{ fontSize: 64, color: "slate.400", mx: "auto", mb: 2 }}
-                />
-                <Typography>暂无事件报告</Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  sx={{ mt: 2 }}
-                  onClick={() => setShowAddModal(true)}
-                  startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
                 >
-                  上报第一个事件
-                </Button>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+                  <Box>
+                    <Typography sx={{ color: "#fed7aa", fontSize: 14 }}>
+                      事件总数
+                    </Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {stats.total}
+                    </Typography>
+                  </Box>
+                  <AlertCircle sx={{ fontSize: 48, color: "#fed7aa" }} />
+                </Box>
+              </CardContent>
+            </Card>
+
+            <Card
+              sx={{
+                background:
+                  "linear-gradient(to bottom right, #eab308, #f97316)",
+                color: "white",
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ color: "#fef9c3", fontSize: 14 }}>
+                      待处理
+                    </Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {stats.pending}
+                    </Typography>
+                  </Box>
+                  <Clock sx={{ fontSize: 48, color: "#fef9c3" }} />
+                </Box>
+              </CardContent>
+            </Card>
+
+            <Card
+              sx={{
+                background:
+                  "linear-gradient(to bottom right, #22c55e, #10b981)",
+                color: "white",
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ color: "#dcfce7", fontSize: 14 }}>
+                      已解决
+                    </Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {stats.resolved}
+                    </Typography>
+                  </Box>
+                  <CheckCircle sx={{ fontSize: 48, color: "#dcfce7" }} />
+                </Box>
+              </CardContent>
+            </Card>
+
+            <Card
+              sx={{
+                background:
+                  "linear-gradient(to bottom right, #ef4444, #ec4899)",
+                color: "white",
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ color: "#fee2e2", fontSize: 14 }}>
+                      严重事件
+                    </Typography>
+                    <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {stats.serious}
+                    </Typography>
+                  </Box>
+                  <AlertTriangle sx={{ fontSize: 48, color: "#fee2e2" }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        }
+        emptyMessage="暂无事件报告"
+        onRefresh={loadIncidents}
+      />
 
       <Dialog
         open={showAddModal}
@@ -880,7 +750,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       mt: 0.5,
                     }}
                   >
-                    <Box component={Users} sx={{ fontSize: 16 }} />
+                    <Users sx={{ fontSize: 16 }} />
                     <Typography
                       variant="body1"
                       sx={{ fontWeight: 500, color: "#1e40af" }}
@@ -906,7 +776,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       mt: 0.5,
                     }}
                   >
-                    <Box component={MapPin} sx={{ fontSize: 16 }} />
+                    <MapPin sx={{ fontSize: 16 }} />
                     <Typography variant="body1" sx={{ color: "text.primary" }}>
                       {selectedIncident.location || "-"}
                     </Typography>
@@ -924,7 +794,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       mt: 0.5,
                     }}
                   >
-                    <Box component={Calendar} sx={{ fontSize: 16 }} />
+                    <Calendar sx={{ fontSize: 16 }} />
                     <Typography variant="body1" sx={{ color: "text.primary" }}>
                       {selectedIncident.reported_at
                         ? new Date(selectedIncident.reported_at).toLocaleString(
@@ -952,18 +822,21 @@ const EhsIncidentReportPage: React.FC = () => {
                 <Box
                   sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
                 >
-                  <Box
-                    component={FileCheck}
-                    sx={{ fontSize: 20, color: "#ea580c" }}
-                  />
+                  <FileCheck sx={{ fontSize: 20, color: "#ea580c" }} />
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     处理措施 ({actions.length})
                   </Typography>
                 </Box>
-                <DataTable
+                <ListPageTemplate
                   columns={actionColumns}
                   data={actions}
-                  enablePagination={false}
+                  loading={loading}
+                  pagination={{
+                    page: 0,
+                    pageSize: 10,
+                    total: actions.length,
+                    onPageChange: () => {},
+                  }}
                 />
               </Box>
             </Box>
@@ -975,7 +848,7 @@ const EhsIncidentReportPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

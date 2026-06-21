@@ -21,8 +21,8 @@ import { logger } from "@/utils/logger";
 import { DataExport } from "@/components/common";
 import { Plus, Edit, Trash2, Eye, Download, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import type { RowAction, FilterConfig } from "@/components/templates";
 
 const customerColumns = [
   { key: "name", title: "客户名称" },
@@ -57,24 +57,36 @@ const CustomerManagementPage: React.FC = () => {
     address: "",
     notes: "",
   });
+  const [pagination, setPagination] = useState({
+    page: 0,
+    pageSize: 20,
+    total: 0,
+  });
 
   const { addNotification } = useAppStore();
 
   useEffect(() => {
     loadCustomers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, pagination.page, pagination.pageSize]);
 
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: any = {
+        page: pagination.page + 1,
+        page_size: pagination.pageSize,
+      };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
 
       const response = await crmApi.customers.list(params);
       if (response.success && response.data) {
         setCustomers(response.data.items || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: response.data.total || 0,
+        }));
       }
     } catch (error) {
       logger.error("加载客户列表失败:", error);
@@ -303,6 +315,17 @@ const CustomerManagementPage: React.FC = () => {
         }}
         filters={filters}
         rowActions={rowActions}
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: (_, page) => {
+            setPagination((prev) => ({ ...prev, page }));
+          },
+          onPageSizeChange: (_, pageSize) => {
+            setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+          },
+        }}
         actions={[
           {
             label: "导入",

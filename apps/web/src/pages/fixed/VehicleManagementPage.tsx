@@ -22,10 +22,12 @@ import {
   type VehicleRequest,
 } from "@/api/erp";
 import { useAppStore } from "../../store";
-import ListPageTemplate, {
+import {
+  ListPageTemplate,
   type ColumnDef,
   type RowAction,
-} from "@/components/templates/ListPageTemplate";
+  type FilterConfig,
+} from "@/components/templates";
 
 interface VehicleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -41,6 +43,12 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
   const [requests, setRequests] = useState<VehicleRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [totalVehicles, setTotalVehicles] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -67,22 +75,43 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
     status: "pending",
   });
 
+  // 防抖搜索
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentPage, debouncedSearch, filterStatus]);
 
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
+      const params: any = {
+        page: currentPage,
+        page_size: pageSize,
+      };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+      if (filterStatus !== "all") {
+        params.status = filterStatus;
+      }
+
       const [vehicleRes, requestRes] = await Promise.all([
-        vehicleApi.list(),
+        vehicleApi.list(params),
         vehicleRequestApi.list(),
       ]);
 
       if (vehicleRes.success && vehicleRes.data) {
         setVehicles(vehicleRes.data.items || []);
+        setTotalVehicles(vehicleRes.data.total || 0);
       }
 
       if (requestRes.success && requestRes.data) {
@@ -256,6 +285,32 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
     );
   };
 
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "all", label: "全部状态" },
+          { value: "available", label: "可用" },
+          { value: "in_use", label: "使用中" },
+          { value: "maintenance", label: "维护中" },
+          { value: "out_of_service", label: "停用" },
+        ],
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const handleFilterChange = (filters: Record<string, any>) => {
+    if (filters.status !== undefined) {
+      setFilterStatus(filters.status);
+      setCurrentPage(1);
+    }
+  };
+
   const columns = useMemo<ColumnDef<Vehicle>[]>(
     () => [
       {
@@ -387,6 +442,17 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
         getRowId={(row) => row.id}
         searchable
         searchPlaceholder="搜索车牌号、品牌、型号..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        filtersValue={{ status: filterStatus }}
+        onFilterChange={handleFilterChange}
+        pagination={{
+          page: currentPage,
+          pageSize: pageSize,
+          total: totalVehicles,
+          onPageChange: setCurrentPage,
+        }}
         rowActions={rowActions}
         onRefresh={loadData}
         actions={[

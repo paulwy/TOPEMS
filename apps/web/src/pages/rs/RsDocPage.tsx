@@ -2,47 +2,35 @@ import React, { useState, useEffect } from "react";
 import { apiLogger } from "@/utils/logger";
 import {
   Box,
-  Container,
   Typography,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  IconButton,
   Button,
   TextField,
-  InputAdornment,
-  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Stack,
+  Paper,
 } from "@mui/material";
 import { FileUpload } from "@/components/common";
 import {
   Plus,
-  Search,
   Upload,
   FileText,
   Edit,
   Trash2,
   History,
   Shield,
-  Filter,
   BookOpen,
   File,
   Folder,
 } from "lucide-react";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+} from "@/components/templates";
 
 interface Document {
   id: string;
@@ -180,18 +168,12 @@ const RsDocPage: React.FC = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
+  const paginatedDocs = filteredDocs.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   const uniqueDocTypes = [...new Set(docs.map((d) => d.doc_type))];
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
 
   const handleCreateDoc = () => {
     const newDoc: Document = {
@@ -217,194 +199,148 @@ const RsDocPage: React.FC = () => {
     setDocs(docs.filter((d) => d.id !== docId));
   };
 
+  const columns: ColumnDef<Document>[] = [
+    {
+      id: "doc_name",
+      label: "文档名称",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {getDocTypeIcon(row.doc_type)}
+          {row.doc_name}
+        </Box>
+      ),
+    },
+    {
+      id: "doc_type",
+      label: "文档类型",
+    },
+    {
+      id: "version",
+      label: "版本",
+      render: (row) => (
+        <Chip label={row.version} size="small" variant="outlined" />
+      ),
+    },
+    {
+      id: "author",
+      label: "作者",
+    },
+    {
+      id: "update_time",
+      label: "更新时间",
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip
+          label={getStatusLabel(row.status)}
+          size="small"
+          color={getStatusColor(row.status)}
+        />
+      ),
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "doc_type",
+      label: "文档类型",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        ...uniqueDocTypes.map((type) => ({ label: type, value: type })),
+      ],
+      value: docTypeFilter || "",
+      onChange: (value) => setDocTypeFilter(value || null),
+    },
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "已发布", value: "published" },
+        { label: "草稿", value: "draft" },
+      ],
+      value: statusFilter || "",
+      onChange: (value) => setStatusFilter(value || null),
+    },
+  ];
+
+  const rowActions = [
+    {
+      label: "编辑",
+      icon: <Edit size={16} />,
+      onClick: () => {},
+    },
+    {
+      label: "版本管理",
+      icon: <History size={16} />,
+      onClick: handleViewVersion,
+    },
+    {
+      label: "权限设置",
+      icon: <Shield size={16} />,
+      onClick: () => {},
+    },
+    {
+      label: "删除",
+      icon: <Trash2 size={16} />,
+      color: "error",
+      onClick: (row) => handleDelete(row.id),
+    },
+  ];
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
-          >
-            文档管理
-          </Typography>
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              startIcon={<Upload size={18} />}
-              onClick={() => setUploadDialogOpen(true)}
-            >
-              上传
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Plus size={18} />}
-              sx={{ bgcolor: "#3b82f6" }}
-              onClick={() => setNewDocDialogOpen(true)}
-            >
-              新建文档
-            </Button>
-          </Stack>
-        </Box>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <TextField
-              size="small"
-              placeholder="搜索文档名称、作者..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>文档类型</InputLabel>
-              <Select
-                value={docTypeFilter || ""}
-                label="文档类型"
-                onChange={(e) => setDocTypeFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                {uniqueDocTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={statusFilter || ""}
-                label="状态"
-                onChange={(e) => setStatusFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="published">已发布</MenuItem>
-                <MenuItem value="draft">草稿</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Paper>
-
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    文档名称
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    文档类型
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    版本
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    作者
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    更新时间
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    状态
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredDocs
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((doc) => (
-                    <TableRow key={doc.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          {getDocTypeIcon(doc.doc_type)}
-                          {doc.doc_name}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{doc.doc_type}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={doc.version}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>{doc.author}</TableCell>
-                      <TableCell>{doc.update_time}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getStatusLabel(doc.status)}
-                          size="small"
-                          color={getStatusColor(doc.status)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="编辑">
-                            <IconButton size="small">
-                              <Edit size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="版本管理">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewVersion(doc)}
-                            >
-                              <History size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="权限设置">
-                            <IconButton size="small">
-                              <Shield size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="删除">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDelete(doc.id)}
-                            >
-                              <Trash2 size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredDocs.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+      <ListPageTemplate
+        title="文档管理"
+        columns={columns}
+        data={paginatedDocs}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索文档名称、作者..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{
+          doc_type: docTypeFilter || "",
+          status: statusFilter || "",
+        }}
+        onFilterChange={(filters) => {
+          if (filters.doc_type !== undefined) {
+            setDocTypeFilter(filters.doc_type || null);
+          }
+          if (filters.status !== undefined) {
+            setStatusFilter(filters.status || null);
+          }
+        }}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total: filteredDocs.length,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
+        actions={[
+          {
+            label: "上传",
+            variant: "outlined",
+            icon: <Upload size={18} />,
+            onClick: () => setUploadDialogOpen(true),
+          },
+          {
+            label: "新建文档",
+            variant: "contained",
+            icon: <Plus size={18} />,
+            onClick: () => setNewDocDialogOpen(true),
+          },
+        ]}
+        rowActions={rowActions}
+        showRowNumber
+        emptyMessage="暂无文档数据"
+      />
 
       <Dialog
         open={newDocDialogOpen}
@@ -423,22 +359,21 @@ const RsDocPage: React.FC = () => {
                 setNewDocForm({ ...newDocForm, doc_name: e.target.value })
               }
             />
-            <FormControl fullWidth>
-              <InputLabel>文档类型</InputLabel>
-              <Select
-                value={newDocForm.doc_type}
-                label="文档类型"
-                onChange={(e) =>
-                  setNewDocForm({ ...newDocForm, doc_type: e.target.value })
-                }
-              >
-                <MenuItem value="设计文档">设计文档</MenuItem>
-                <MenuItem value="接口文档">接口文档</MenuItem>
-                <MenuItem value="用户文档">用户文档</MenuItem>
-                <MenuItem value="测试文档">测试文档</MenuItem>
-                <MenuItem value="运维文档">运维文档</MenuItem>
-              </Select>
-            </FormControl>
+            <TextField
+              select
+              label="文档类型"
+              fullWidth
+              value={newDocForm.doc_type}
+              onChange={(e) =>
+                setNewDocForm({ ...newDocForm, doc_type: e.target.value })
+              }
+            >
+              <option value="设计文档">设计文档</option>
+              <option value="接口文档">接口文档</option>
+              <option value="用户文档">用户文档</option>
+              <option value="测试文档">测试文档</option>
+              <option value="运维文档">运维文档</option>
+            </TextField>
             <TextField
               label="描述"
               fullWidth

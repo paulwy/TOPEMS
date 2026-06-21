@@ -11,23 +11,23 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
 import {
   Plus,
   Edit,
-  Trash2,
   Eye,
   Download,
   Upload,
   FlaskConical,
-  Search,
   Filter,
 } from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
-import { PageHeader } from "@/components/templates";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Sample {
   id: string;
@@ -101,6 +101,8 @@ const LimsSamplePage: React.FC = () => {
     test_items: "",
     status: "待接收",
   });
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     loadSamples();
@@ -136,37 +138,45 @@ const LimsSamplePage: React.FC = () => {
   };
 
   const columns: ColumnDef<Sample>[] = [
-    { accessorKey: "sample_no", header: "样品编号" },
-    { accessorKey: "name", header: "样品名称" },
-    { accessorKey: "test_items", header: "检测项目" },
+    { id: "sample_no", label: "样品编号" },
+    { id: "name", label: "样品名称" },
+    { id: "test_items", label: "检测项目" },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
     },
-    { accessorKey: "received_date", header: "接收日期" },
-    { accessorKey: "test_result", header: "检测结果" },
+    { id: "received_date", label: "接收日期" },
+    { id: "test_result", label: "检测结果" },
+  ];
+
+  const rowActions: RowAction<Sample>[] = [
     {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            查看
-          </Button>
-          <Button
-            size="small"
-            onClick={() => handleEdit(row.original)}
-            startIcon={<Edit style={{ width: 16, height: 16 }} />}
-          >
-            编辑
-          </Button>
-        </Box>
-      ),
+      label: "查看",
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: (row) => handleView(row),
+    },
+    {
+      label: "编辑",
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: (row) => handleEdit(row),
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "all" },
+        { label: "待接收", value: "待接收" },
+        { label: "待检测", value: "待检测" },
+        { label: "检测中", value: "检测中" },
+        { label: "已完成", value: "已完成" },
+      ],
+      value: statusFilter,
+      onChange: (value) => setStatusFilter(value),
     },
   ];
 
@@ -178,6 +188,11 @@ const LimsSamplePage: React.FC = () => {
       statusFilter === "all" || sample.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const paginatedData = filteredSamples.slice(
+    page * pageSize,
+    page * pageSize + pageSize,
+  );
 
   const handleView = (sample: Sample) => {
     setSelectedSample(sample);
@@ -238,6 +253,150 @@ const LimsSamplePage: React.FC = () => {
     completed: samples.filter((s) => s.status === "已完成").length,
   };
 
+  const statsCards = (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Card sx={{ bgcolor: "#f0fdfa" }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#d1fae5",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FlaskConical sx={{ width: 20, height: 20, color: "#06b6d4" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                样品总数
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.total}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#fef3c7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                待处理
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.pending}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dbeafe",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FlaskConical sx={{ width: 20, height: 20, color: "#2563eb" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                检测中
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.inProgress}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dcfce7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FlaskConical sx={{ width: 20, height: 20, color: "#16a34a" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                已完成
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.completed}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
   if (loading) {
     return (
       <Box
@@ -276,7 +435,7 @@ const LimsSamplePage: React.FC = () => {
         background: "linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)",
       }}
     >
-      <PageHeader
+      <ListPageTemplate
         title="样品管理"
         subtitle="Sample Management"
         breadcrumbs={[
@@ -285,6 +444,22 @@ const LimsSamplePage: React.FC = () => {
           { label: "样品管理" },
         ]}
         backButton={{ onClick: () => navigate("/dashboard") }}
+        columns={columns}
+        data={paginatedData}
+        loading={loading}
+        getRowId={(row) => row.id}
+        filters={filters}
+        searchable
+        searchPlaceholder="搜索样品编号或名称..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        pagination={{
+          page,
+          pageSize,
+          total: filteredSamples.length,
+          onPageChange: setPage,
+          onPageSizeChange: setPageSize,
+        }}
         actions={[
           {
             label: "导入",
@@ -303,228 +478,9 @@ const LimsSamplePage: React.FC = () => {
             variant: "contained",
           },
         ]}
+        rowActions={rowActions}
+        headerContent={statsCards}
       />
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#f0fdfa" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#d1fae5",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FlaskConical
-                    sx={{ width: 20, height: 20, color: "#06b6d4" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    样品总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef3c7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    待处理
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.pending}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dbeafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Search sx={{ width: 20, height: 20, color: "#2563eb" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    检测中
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.inProgress}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FlaskConical
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已完成
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.completed}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <FlaskConical
-                style={{ width: 20, height: 20, color: "#06b6d4" }}
-              />
-              样品列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索样品编号或名称..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-              <TextField
-                size="small"
-                select
-                label="状态"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Filter
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              >
-                <option value="all">全部</option>
-                <option value="待接收">待接收</option>
-                <option value="待检测">待检测</option>
-                <option value="检测中">检测中</option>
-                <option value="已完成">已完成</option>
-              </TextField>
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredSamples}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
-      </Box>
 
       <Dialog
         open={showCreateModal}

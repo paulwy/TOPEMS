@@ -1,15 +1,10 @@
-import { Grid } from "@/components/Grid";
 import React from "react";
 import {
   Box,
-  Container,
   Typography,
-  Card,
-  CardContent,
   Chip,
   Paper,
   Button,
-  Divider,
   Table,
   TableBody,
   TableCell,
@@ -17,11 +12,39 @@ import {
   TableHead,
   TableRow,
   Stack,
+  Divider,
 } from "@mui/material";
 import { Edit, History } from "lucide-react";
+import { DetailPageTemplate, type SectionConfig } from "@/components/templates";
+
+interface Formula {
+  id: string;
+  name: string;
+  code: string;
+  version: string;
+  project_name: string;
+  status: string;
+  description: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Component {
+  name: string;
+  percentage: number;
+  unit: string;
+  notes: string;
+}
+
+interface Version {
+  version: string;
+  date: string;
+  changes: string;
+}
 
 const RsFormulaDetailPage: React.FC = () => {
-  const formula = {
+  const formula: Formula = {
     id: "1",
     name: "配方A-001",
     code: "FM-2024-001",
@@ -34,7 +57,7 @@ const RsFormulaDetailPage: React.FC = () => {
     updated_at: "2024-05-20",
   };
 
-  const components = [
+  const components: Component[] = [
     { name: "活性成分A", percentage: 15, unit: "%", notes: "主要催化成分" },
     { name: "载体材料B", percentage: 60, unit: "%", notes: "提供结构支撑" },
     { name: "助剂C", percentage: 5, unit: "%", notes: "提高稳定性" },
@@ -42,7 +65,7 @@ const RsFormulaDetailPage: React.FC = () => {
     { name: "其他", percentage: 10, unit: "%", notes: "其他添加剂" },
   ];
 
-  const versions = [
+  const versions: Version[] = [
     {
       version: "v2.0",
       date: "2024-05-20",
@@ -52,104 +75,105 @@ const RsFormulaDetailPage: React.FC = () => {
     { version: "v1.0", date: "2024-03-15", changes: "初始配方版本" },
   ];
 
-  return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
-        >
-          <div>
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                {formula.name}
-              </Typography>
-              <Chip label={formula.version} color="primary" />
-              <Chip label={formula.status} color="warning" />
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              编码: {formula.code} | 项目: {formula.project_name}
-            </Typography>
-          </div>
-          <Stack direction="row" spacing={2}>
-            <Button variant="outlined" startIcon={<History />}>
-              版本历史
-            </Button>
-            <Button variant="contained" startIcon={<Edit />}>
-              编辑
-            </Button>
+  // 区块配置
+  const sections: SectionConfig[] = [
+    {
+      id: "description",
+      title: "配方描述",
+      content: (
+        <Typography variant="body2" color="text.secondary">
+          {formula.description}
+        </Typography>
+      ),
+    },
+    {
+      id: "components",
+      title: "配方组成",
+      content: (
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>组分名称</TableCell>
+                <TableCell>占比</TableCell>
+                <TableCell>备注</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {components.map((comp, index) => (
+                <TableRow key={index}>
+                  <TableCell>{comp.name}</TableCell>
+                  <TableCell>
+                    {comp.percentage}
+                    {comp.unit}
+                  </TableCell>
+                  <TableCell>{comp.notes}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ),
+    },
+  ];
+
+  // 侧边栏内容
+  const sidebar = (
+    <Stack spacing={2}>
+      <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+        版本历史
+      </Typography>
+      {versions.map((v, index) => (
+        <Paper key={index} variant="outlined" sx={{ p: 2 }}>
+          <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+            <Chip label={v.version} size="small" />
+            <Typography variant="caption">{v.date}</Typography>
           </Stack>
-        </Stack>
-      </div>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            {v.changes}
+          </Typography>
+        </Paper>
+      ))}
+    </Stack>
+  );
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                配方描述
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {formula.description}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                配方组成
-              </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>组分名称</TableCell>
-                      <TableCell>占比</TableCell>
-                      <TableCell>备注</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {components.map((comp, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{comp.name}</TableCell>
-                        <TableCell>
-                          {comp.percentage}
-                          {comp.unit}
-                        </TableCell>
-                        <TableCell>{comp.notes}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+  // 信息卡片数据
+  const infoCard = {
+    title: formula.name,
+    subtitle: `编码: ${formula.code} | 项目: ${formula.project_name}`,
+    tags: [formula.version, formula.status],
+    stats: [
+      { label: "创建人", value: formula.created_by },
+      { label: "创建时间", value: formula.created_at },
+      { label: "更新时间", value: formula.updated_at },
+    ],
+  };
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                版本历史
-              </Typography>
-              <Stack spacing={2}>
-                {versions.map((v, index) => (
-                  <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                    <Stack
-                      direction="row"
-                      sx={{ justifyContent: "space-between" }}
-                    >
-                      <Chip label={v.version} size="small" />
-                      <Typography variant="caption">{v.date}</Typography>
-                    </Stack>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {v.changes}
-                    </Typography>
-                  </Paper>
-                ))}
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Container>
+  // 操作按钮
+  const actions = [
+    {
+      label: "版本历史",
+      icon: <History size={18} />,
+      onClick: () => {},
+      variant: "outlined" as const,
+    },
+    {
+      label: "编辑",
+      icon: <Edit size={18} />,
+      onClick: () => {},
+      variant: "contained" as const,
+    },
+  ];
+
+  return (
+    <DetailPageTemplate
+      title={formula.name}
+      subtitle={`编码: ${formula.code} | 项目: ${formula.project_name}`}
+      infoCard={infoCard}
+      sections={sections}
+      sidebar={sidebar}
+      actions={actions}
+    />
   );
 };
 

@@ -1,33 +1,7 @@
 import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Box,
-} from "@mui/material";
-import React, { useState, useEffect, useMemo } from "react";
-import {
-  Package,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  ChevronLeft,
-  AlertCircle,
-  DollarSign,
-  MapPin,
-  Settings,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { officeSupplyApi, type OfficeSupply } from "@/api/erp";
-import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
-
-import {
   Button as MuiButton,
+  Box,
+  Typography,
   TextField,
   Dialog,
   DialogTitle,
@@ -37,9 +11,24 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
-  Checkbox,
+  Chip,
+  IconButton,
 } from "@mui/material";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  Package,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  AlertCircle,
+  DollarSign,
+  MapPin,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { officeSupplyApi, type OfficeSupply } from "@/api/erp";
+import { useAppStore } from "../../store";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { ModeToggle } from "@/components/ModeToggle";
 
 interface OfficeSuppliesManagementPageProps {
@@ -61,6 +50,13 @@ const OfficeSuppliesManagementPage: React.FC<
     null,
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // 分页状态
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // 搜索状态
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleBatchDelete = async () => {
     if (selectedIds.length === 0) return;
@@ -99,7 +95,6 @@ const OfficeSuppliesManagementPage: React.FC<
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -245,39 +240,67 @@ const OfficeSuppliesManagementPage: React.FC<
     );
   };
 
-  const columns = useMemo<ColumnDef<OfficeSupply>[]>(
+  // 过滤后的数据
+  const filteredSupplies = useMemo(() => {
+    return supplies.filter(
+      (supply) =>
+        supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (supply.category &&
+          supply.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (supply.location &&
+          supply.location.toLowerCase().includes(searchQuery.toLowerCase())),
+    );
+  }, [supplies, searchQuery]);
+
+  // 分页数据
+  const paginatedSupplies = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredSupplies.slice(start, end);
+  }, [filteredSupplies, page, pageSize]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  // 列定义
+  const columns: ColumnDef<OfficeSupply>[] = useMemo(
     () => [
       {
-        accessorKey: "name",
-        header: "物品名称",
-        cell: ({ row }) => (
+        id: "name",
+        label: "物品名称",
+        sortable: true,
+        render: (supply) => (
           <Typography sx={{ fontWeight: 500, color: "text.primary" }}>
-            {row.original.name}
+            {supply.name}
           </Typography>
         ),
       },
       {
-        accessorKey: "category",
-        header: "类别",
-        cell: ({ row }) => (
+        id: "category",
+        label: "类别",
+        sortable: true,
+        render: (supply) => (
           <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
-            {row.original.category || "-"}
+            {supply.category || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "quantity",
-        header: "数量",
-        cell: ({ row }) => (
+        id: "quantity",
+        label: "数量",
+        sortable: true,
+        render: (supply) => (
           <Typography sx={{ fontSize: "0.875rem", color: "text.primary" }}>
-            {row.original.quantity} {row.original.unit || ""}
+            {supply.quantity} {supply.unit || ""}
           </Typography>
         ),
       },
       {
-        accessorKey: "price",
-        header: "单价",
-        cell: ({ row }) => (
+        id: "price",
+        label: "单价",
+        sortable: true,
+        render: (supply) => (
           <Box
             sx={{
               display: "flex",
@@ -289,14 +312,15 @@ const OfficeSuppliesManagementPage: React.FC<
             <span style={{ marginRight: 4 }}>
               <DollarSign size={12} style={{ color: "green" }} />
             </span>
-            {row.original.price ? `¥${row.original.price.toFixed(2)}` : "-"}
+            {supply.price ? `¥${supply.price.toFixed(2)}` : "-"}
           </Box>
         ),
       },
       {
-        accessorKey: "location",
-        header: "存放位置",
-        cell: ({ row }) => (
+        id: "location",
+        label: "存放位置",
+        sortable: true,
+        render: (supply) => (
           <Box
             sx={{
               display: "flex",
@@ -308,253 +332,137 @@ const OfficeSuppliesManagementPage: React.FC<
             <span style={{ marginRight: 4 }}>
               <MapPin size={12} style={{ color: "blue" }} />
             </span>
-            {row.original.location || "-"}
+            {supply.location || "-"}
           </Box>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
+        id: "status",
+        label: "状态",
+        sortable: true,
+        render: (supply) => getStatusBadge(supply.status),
       },
       {
         id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const supply = row.original;
-          return (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 1,
+        label: "操作",
+        align: "right",
+        render: (supply) => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 1,
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedSupply(supply);
+                setShowEditModal(true);
               }}
             >
-              <Tooltip title="编辑">
-                <MuiButton
-                  variant="text"
-                  size="small"
-                  onClick={() => {
-                    setSelectedSupply(supply);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <Edit size={16} />
-                </MuiButton>
-              </Tooltip>
-
-              <Tooltip title="删除">
-                <MuiButton
-                  variant="text"
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteSupply(supply.id)}
-                >
-                  <Trash2 size={16} />
-                </MuiButton>
-              </Tooltip>
-            </Box>
-          );
-        },
+              <Edit size={16} />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteSupply(supply.id);
+              }}
+            >
+              <Trash2 size={16} />
+            </IconButton>
+          </Box>
+        ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleDeleteSupply],
+  );
+
+  // 筛选器定义
+  const filters = useMemo(
+    () => [
+      {
+        id: "category",
+        label: "类别",
+        type: "select" as const,
+        options: [
+          { label: "全部", value: "" },
+          { label: "文具", value: "stationery" },
+          { label: "电子设备", value: "electronics" },
+          { label: "家具", value: "furniture" },
+          { label: "清洁用品", value: "cleaning" },
+          { label: "其他", value: "other" },
+        ],
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select" as const,
+        options: [
+          { label: "全部", value: "" },
+          { label: "正常", value: "active" },
+          { label: "停用", value: "inactive" },
+          { label: "库存不足", value: "low_stock" },
+          { label: "缺货", value: "out_of_stock" },
+        ],
+      },
+    ],
     [],
   );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
+      <ListPageTemplate
+        title="办公用品管理"
+        subtitle="管理办公用品的库存、领用、归还等"
+        backButton={{
+          href: "/dashboard",
+          onClick: () => navigate("/dashboard"),
         }}
-      >
-        <Box
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <MuiButton variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft size={20} />
-              </MuiButton>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "text.primary" }}
-                >
-                  办公用品管理
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  管理办公用品的库存、领用、归还等
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ModeToggle />
-              <MuiButton
-                variant="contained"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus size={20} sx={{ mr: 1 }} />
-                新增物品
-              </MuiButton>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    animation: "spin 1s linear infinite",
-                    borderRadius: "50%",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "success.main",
-                    borderTopColor: "transparent",
-                  }}
-                />
-                <Typography sx={{ mt: 1, color: "text.secondary" }}>
-                  加载中...
-                </Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle
-                  size={48}
-                  style={{ color: "red", margin: "0 auto 12px" }}
-                />
-                <Typography sx={{ color: "error.main" }}>{error}</Typography>
-                <MuiButton sx={{ mt: 2 }} onClick={loadData}>
-                  重试
-                </MuiButton>
-              </Box>
-            ) : (
-              <>
-                {selectedIds.length > 0 && (
-                  <Box
-                    sx={{
-                      bgcolor: "grey.100",
-                      borderBottom: 1,
-                      borderColor: "divider",
-                      px: 3,
-                      py: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Checkbox
-                          checked={selectedIds.length === supplies.length}
-                          onChange={(
-                            event: React.ChangeEvent<HTMLInputElement>,
-                            checked: boolean,
-                          ) => {
-                            if (checked) {
-                              setSelectedIds(supplies.map((s) => s.id));
-                            } else {
-                              setSelectedIds([]);
-                            }
-                          }}
-                        />
-                        <Typography
-                          sx={{ fontSize: "0.875rem", color: "text.secondary" }}
-                        >
-                          已选择 {selectedIds.length} 项
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <MuiButton
-                        variant="outlined"
-                        size="small"
-                        color="error"
-                        onClick={handleBatchDelete}
-                      >
-                        <Trash2 size={16} sx={{ mr: 0.5 }} />
-                        批量删除
-                      </MuiButton>
-                    </Box>
-                  </Box>
-                )}
-                <EnhancedDataTable
-                  columns={columns}
-                  data={supplies}
-                  searchPlaceholder="搜索物品名称、类别、存放位置..."
-                  searchKey="name"
-                  loading={loading}
-                  enableSelection={true}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                  selectionKey="id"
-                  enableAdvancedFilter={true}
-                  advancedFilters={[
-                    {
-                      key: "category",
-                      label: "类别",
-                      type: "select",
-                      options: [
-                        { value: "", label: "全部" },
-                        { value: "stationery", label: "文具" },
-                        { value: "electronics", label: "电子设备" },
-                        { value: "furniture", label: "家具" },
-                        { value: "cleaning", label: "清洁用品" },
-                        { value: "other", label: "其他" },
-                      ],
-                    },
-                    {
-                      key: "status",
-                      label: "状态",
-                      type: "select",
-                      options: [
-                        { value: "", label: "全部" },
-                        { value: "active", label: "可用" },
-                        { value: "low_stock", label: "低库存" },
-                        { value: "out_of_stock", label: "缺货" },
-                      ],
-                    },
-                  ]}
-                  exportFileName="office-supplies-report"
-                  onRefresh={loadData}
-                />
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+        columns={columns}
+        data={paginatedSupplies}
+        loading={loading}
+        error={error}
+        pagination={{
+          page,
+          pageSize,
+          total: filteredSupplies.length,
+          onPageChange: handlePageChange,
+        }}
+        searchable
+        searchPlaceholder="搜索物品名称、类别、存放位置..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        actions={[
+          {
+            label: "新增物品",
+            icon: <Plus size={16} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ]}
+        batchActions={[
+          {
+            label: "批量删除",
+            icon: <Trash2 size={16} />,
+            color: "error",
+            confirm: true,
+            confirmMessage: `确定要删除选中的 ${selectedIds.length} 个办公用品吗？`,
+            onClick: handleBatchDelete,
+          },
+        ]}
+        onRefresh={loadData}
+        emptyMessage="暂无办公用品"
+      />
 
       <Dialog
         open={showCreateModal}

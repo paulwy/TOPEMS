@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
   Wrench,
   Calendar,
   User,
@@ -26,13 +25,13 @@ import {
   CardHeader,
   Box,
   Typography,
+  MenuItem,
 } from "@mui/material";
 
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
 import { limsApi } from "@/api/lims";
 import type { Instrument, MaintenanceRecord } from "@/api/lims";
 import { PageHeader } from "@/components/templates/PageHeader";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { logger } from "@/utils/logger";
 
 const LimsInstrumentMaintenancePage: React.FC = () => {
@@ -208,53 +207,53 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
 
   const maintenanceColumns: ColumnDef<MaintenanceRecord>[] = [
     {
-      accessorKey: "maintenance_type",
-      header: "维护类型",
-      cell: ({ row }) => (
+      id: "maintenance_type",
+      label: "维护类型",
+      render: (row) => (
         <Chip
-          label={row.original.maintenance_type || "-"}
+          label={row.maintenance_type || "-"}
           size="small"
           sx={{ backgroundColor: "#dbeafe", color: "#2563eb" }}
         />
       ),
     },
-    { accessorKey: "performed_by", header: "维护人员" },
+    { id: "performed_by", label: "维护人员" },
     {
-      accessorKey: "performed_at",
-      header: "维护日期",
-      cell: ({ row }) => (
+      id: "performed_at",
+      label: "维护日期",
+      render: (row) => (
         <span>
-          {row.original.performed_at
-            ? new Date(row.original.performed_at).toLocaleDateString("zh-CN")
+          {row.performed_at
+            ? new Date(row.performed_at).toLocaleDateString("zh-CN")
             : "-"}
         </span>
       ),
     },
     {
-      accessorKey: "cost",
-      header: "费用 (元)",
-      cell: ({ row }) => (
+      id: "cost",
+      label: "费用 (元)",
+      render: (row) => (
         <span style={{ fontWeight: 500, color: "#0f172a" }}>
-          {row.original.cost?.toFixed(2) || "0.00"}
+          {row.cost?.toFixed(2) || "0.00"}
         </span>
       ),
     },
     {
       id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
+      label: "操作",
+      render: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="text"
             size="small"
-            onClick={() => openEditModal(row.original)}
+            onClick={() => openEditModal(row)}
             startIcon={<Box component={Edit3} sx={{ fontSize: 16 }} />}
           />
           <Button
             variant="text"
             size="small"
             sx={{ color: "#dc2626", "&:hover": { backgroundColor: "#fef2f2" } }}
-            onClick={() => handleDeleteMaintenance(row.original.id)}
+            onClick={() => handleDeleteMaintenance(row.id)}
             startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
           />
         </Box>
@@ -632,45 +631,15 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   />
                   维护记录列表
                 </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  共 {maintenanceRecords.length} 条记录
-                </Typography>
               </CardHeader>
               <CardContent>
-                {maintenanceRecords.length > 0 ? (
-                  <DataTable
-                    columns={maintenanceColumns}
-                    data={maintenanceRecords}
-                    enablePagination={false}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "48px 0",
-                      color: "#64748b",
-                    }}
-                  >
-                    <FileText
-                      sx={{
-                        width: 64,
-                        height: 64,
-                        margin: "0 auto 16px auto",
-                        opacity: 0.5,
-                      }}
-                    />
-                    <p>暂无维护记录</p>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      sx={{ mt: 2 }}
-                      onClick={() => setShowAddModal(true)}
-                      startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
-                    >
-                      添加第一条记录
-                    </Button>
-                  </div>
-                )}
+                <ListPageTemplate
+                  columns={maintenanceColumns}
+                  data={maintenanceRecords}
+                  getRowId={(row) => row.id}
+                  emptyMessage="暂无维护记录"
+                  emptyIcon={<FileText size={64} color="#cbd5e1" />}
+                />
               </CardContent>
             </Card>
           </Box>
@@ -689,202 +658,107 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             <Box
               sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
             >
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  维护类型 *
-                </Box>
-                <select
-                  value={formData.maintenance_type}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      maintenance_type: e.target.value,
-                    }))
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                  }}
-                >
-                  <option value="">请选择类型</option>
-                  <option value="定期维护">定期维护</option>
-                  <option value="故障维修">故障维修</option>
-                  <option value="校准">校准</option>
-                  <option value="升级改造">升级改造</option>
-                </select>
-              </Box>
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  维护人员 *
-                </Box>
-                <TextField
-                  size="small"
-                  fullWidth
-                  value={formData.performed_by}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      performed_by: e.target.value,
-                    }))
-                  }
-                  placeholder="请输入维护人员"
-                />
-              </Box>
+              <TextField
+                select
+                label="维护类型 *"
+                value={formData.maintenance_type}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    maintenance_type: e.target.value,
+                  }))
+                }
+                fullWidth
+                size="small"
+              >
+                <MenuItem value="">请选择类型</MenuItem>
+                <MenuItem value="定期维护">定期维护</MenuItem>
+                <MenuItem value="故障维修">故障维修</MenuItem>
+                <MenuItem value="校准">校准</MenuItem>
+                <MenuItem value="升级改造">升级改造</MenuItem>
+              </TextField>
+              <TextField
+                label="维护人员 *"
+                value={formData.performed_by}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    performed_by: e.target.value,
+                  }))
+                }
+                fullWidth
+                size="small"
+                placeholder="请输入维护人员"
+              />
             </Box>
             <Box
               sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
             >
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  维护日期 *
-                </Box>
-                <TextField
-                  type="date"
-                  size="small"
-                  fullWidth
-                  value={formData.performed_at}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      performed_at: e.target.value,
-                    }))
-                  }
-                />
-              </Box>
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  下次维护日期
-                </Box>
-                <TextField
-                  type="date"
-                  size="small"
-                  fullWidth
-                  value={formData.next_maintenance_date}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      next_maintenance_date: e.target.value,
-                    }))
-                  }
-                />
-              </Box>
-            </Box>
-            <Box>
-              <Box
-                component="label"
-                sx={{
-                  display: "block",
-                  mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
-                }}
-              >
-                费用 (元)
-              </Box>
               <TextField
-                type="number"
-                size="small"
-                fullWidth
-                value={formData.cost}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, cost: e.target.value }))
-                }
-                placeholder="0.00"
-              />
-            </Box>
-            <Box>
-              <Box
-                component="label"
-                sx={{
-                  display: "block",
-                  mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
-                }}
-              >
-                维护描述
-              </Box>
-              <textarea
-                value={formData.description}
+                type="date"
+                label="维护日期 *"
+                value={formData.performed_at}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    description: e.target.value,
+                    performed_at: e.target.value,
                   }))
                 }
-                placeholder="请描述维护内容..."
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                  resize: "none",
-                  height: "96px",
-                }}
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
               />
-            </Box>
-            <Box>
-              <Box
-                component="label"
-                sx={{
-                  display: "block",
-                  mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
-                }}
-              >
-                备注
-              </Box>
-              <textarea
-                value={formData.notes}
+              <TextField
+                type="date"
+                label="下次维护日期"
+                value={formData.next_maintenance_date}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    next_maintenance_date: e.target.value,
+                  }))
                 }
-                placeholder="其他备注信息..."
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                  resize: "none",
-                  height: "64px",
-                }}
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Box>
+            <TextField
+              type="number"
+              label="费用 (元)"
+              value={formData.cost}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, cost: e.target.value }))
+              }
+              fullWidth
+              size="small"
+              placeholder="0.00"
+            />
+            <TextField
+              label="维护描述"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
+              fullWidth
+              multiline
+              rows={3}
+              placeholder="请描述维护内容..."
+            />
+            <TextField
+              label="备注"
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="其他备注信息..."
+            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -909,202 +783,107 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             <Box
               sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
             >
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  维护类型 *
-                </Box>
-                <select
-                  value={formData.maintenance_type}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      maintenance_type: e.target.value,
-                    }))
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                  }}
-                >
-                  <option value="">请选择类型</option>
-                  <option value="定期维护">定期维护</option>
-                  <option value="故障维修">故障维修</option>
-                  <option value="校准">校准</option>
-                  <option value="升级改造">升级改造</option>
-                </select>
-              </Box>
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  维护人员 *
-                </Box>
-                <TextField
-                  size="small"
-                  fullWidth
-                  value={formData.performed_by}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      performed_by: e.target.value,
-                    }))
-                  }
-                  placeholder="请输入维护人员"
-                />
-              </Box>
+              <TextField
+                select
+                label="维护类型 *"
+                value={formData.maintenance_type}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    maintenance_type: e.target.value,
+                  }))
+                }
+                fullWidth
+                size="small"
+              >
+                <MenuItem value="">请选择类型</MenuItem>
+                <MenuItem value="定期维护">定期维护</MenuItem>
+                <MenuItem value="故障维修">故障维修</MenuItem>
+                <MenuItem value="校准">校准</MenuItem>
+                <MenuItem value="升级改造">升级改造</MenuItem>
+              </TextField>
+              <TextField
+                label="维护人员 *"
+                value={formData.performed_by}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    performed_by: e.target.value,
+                  }))
+                }
+                fullWidth
+                size="small"
+                placeholder="请输入维护人员"
+              />
             </Box>
             <Box
               sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
             >
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  维护日期 *
-                </Box>
-                <TextField
-                  type="date"
-                  size="small"
-                  fullWidth
-                  value={formData.performed_at}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      performed_at: e.target.value,
-                    }))
-                  }
-                />
-              </Box>
-              <Box>
-                <Box
-                  component="label"
-                  sx={{
-                    display: "block",
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  下次维护日期
-                </Box>
-                <TextField
-                  type="date"
-                  size="small"
-                  fullWidth
-                  value={formData.next_maintenance_date}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      next_maintenance_date: e.target.value,
-                    }))
-                  }
-                />
-              </Box>
-            </Box>
-            <Box>
-              <Box
-                component="label"
-                sx={{
-                  display: "block",
-                  mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
-                }}
-              >
-                费用 (元)
-              </Box>
               <TextField
-                type="number"
-                size="small"
-                fullWidth
-                value={formData.cost}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, cost: e.target.value }))
-                }
-                placeholder="0.00"
-              />
-            </Box>
-            <Box>
-              <Box
-                component="label"
-                sx={{
-                  display: "block",
-                  mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
-                }}
-              >
-                维护描述
-              </Box>
-              <textarea
-                value={formData.description}
+                type="date"
+                label="维护日期 *"
+                value={formData.performed_at}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    description: e.target.value,
+                    performed_at: e.target.value,
                   }))
                 }
-                placeholder="请描述维护内容..."
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                  resize: "none",
-                  height: "96px",
-                }}
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
               />
-            </Box>
-            <Box>
-              <Box
-                component="label"
-                sx={{
-                  display: "block",
-                  mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
-                }}
-              >
-                备注
-              </Box>
-              <textarea
-                value={formData.notes}
+              <TextField
+                type="date"
+                label="下次维护日期"
+                value={formData.next_maintenance_date}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                  setFormData((prev) => ({
+                    ...prev,
+                    next_maintenance_date: e.target.value,
+                  }))
                 }
-                placeholder="其他备注信息..."
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                  resize: "none",
-                  height: "64px",
-                }}
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Box>
+            <TextField
+              type="number"
+              label="费用 (元)"
+              value={formData.cost}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, cost: e.target.value }))
+              }
+              fullWidth
+              size="small"
+              placeholder="0.00"
+            />
+            <TextField
+              label="维护描述"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
+              fullWidth
+              multiline
+              rows={3}
+              placeholder="请描述维护内容..."
+            />
+            <TextField
+              label="备注"
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="其他备注信息..."
+            />
           </Box>
         </DialogContent>
         <DialogActions>

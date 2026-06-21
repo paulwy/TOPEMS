@@ -1,28 +1,14 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
-  Typography,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
+  TextField,
   Box,
-  TablePagination,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type {
   InventoryItem,
   CreateInventoryItemRequest,
@@ -31,7 +17,11 @@ import type {
 import { wmsApi } from "@/api/shared/wms";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/templates";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
 
@@ -170,115 +160,77 @@ const InventoryPage: React.FC = () => {
     });
   };
 
+  const columns: ColumnDef<InventoryItem>[] = useMemo(
+    () => [
+      { id: "sku", label: "SKU", sortable: true },
+      { id: "name", label: "名称", sortable: true },
+      { id: "specification", label: "规格" },
+      { id: "unit", label: "单位" },
+      { id: "quantity", label: "数量", sortable: true },
+      { id: "min_quantity", label: "最小数量" },
+      { id: "max_quantity", label: "最大数量" },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => (
+          <Chip size="small" label={row.status} variant="outlined" />
+        ),
+      },
+    ],
+    [],
+  );
+
+  const rowActions: RowAction<InventoryItem>[] = useMemo(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: handleEdit,
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个库存项吗?",
+      },
+    ],
+    [],
+  );
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setShowDialog(true);
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            库存管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理库存信息,包括SKU、名称、规格、数量等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-            >
-              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
-              新增库存
-            </Button>
-          </Box>
-
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>SKU</TableCell>
-                <TableCell>名称</TableCell>
-                <TableCell>规格</TableCell>
-                <TableCell>单位</TableCell>
-                <TableCell>数量</TableCell>
-                <TableCell>最小数量</TableCell>
-                <TableCell>最大数量</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell sx={{ textAlign: "right" }}>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} sx={{ textAlign: "center" }}>
-                    <EmptyState
-                      title="暂无库存数据"
-                      description="点击上方按钮添加第一个库存项"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell sx={{ fontWeight: 500 }}>{item.sku}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.specification || "-"}</TableCell>
-                    <TableCell>{item.unit || "-"}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{item.min_quantity || "-"}</TableCell>
-                    <TableCell>{item.max_quantity || "-"}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={item.status}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell sx={{ textAlign: "right" }}>
-                      <Button size="small" onClick={() => handleEdit(item)}>
-                        <Edit style={{ width: 16, height: 16 }} />
-                      </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 style={{ width: 16, height: 16 }} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <TablePagination
-              component="div"
-              count={total}
-              page={currentPage - 1}
-              rowsPerPage={pageSize}
-              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-              rowsPerPageOptions={[]}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="库存管理"
+        subtitle="管理库存信息,包括SKU、名称、规格、数量等"
+        columns={columns}
+        data={items}
+        loading={loading}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total,
+          onPageChange: setCurrentPage,
+        }}
+        actions={[
+          {
+            label: "新增库存",
+            icon: <Plus size={16} />,
+            onClick: handleOpenCreate,
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage="暂无库存数据"
+        getRowId={(row) => row.id}
+      />
 
       <Dialog
         open={showDialog}
@@ -388,7 +340,7 @@ const InventoryPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

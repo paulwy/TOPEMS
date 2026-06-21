@@ -60,6 +60,12 @@ import {
   type ColumnDef,
   type RowAction,
 } from "@/components/mui";
+import {
+  CardListTemplate,
+  type CardAction,
+  type CardRenderConfig,
+  type MetricStatCard,
+} from "@/components/templates";
 import { FilterBar, type FilterConfig } from "@/components/mui/FilterBar";
 import {
   AIHelperButton,
@@ -495,6 +501,128 @@ const HrmEmployeePage: React.FC = () => {
     };
   }, [data.items]);
 
+  // 统计卡片 - CardListTemplate格式
+  const metricStats = useMemo<MetricStatCard[]>(
+    () => [
+      {
+        id: "total",
+        title: "员工总数",
+        value: employeeStats.total,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "primary" as const,
+      },
+      {
+        id: "active",
+        title: "在职员工",
+        value: employeeStats.active,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "success" as const,
+      },
+      {
+        id: "inactive",
+        title: "离职员工",
+        value: employeeStats.inactive,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "error" as const,
+      },
+      {
+        id: "rate",
+        title: "在职率",
+        value: `${employeeStats.activeRate}%`,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "info" as const,
+      },
+    ],
+    [employeeStats],
+  );
+
+  // 卡片配置
+  const cardConfig = useMemo<CardRenderConfig>(
+    () => ({
+      title: (item: Employee) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Avatar
+            sx={{
+              width: 40,
+              height: 40,
+              bgcolor: "primary.light",
+              color: "primary.main",
+              fontSize: "0.875rem",
+            }}
+          >
+            {item.name?.charAt(0) || "?"}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {item.name}
+            </Typography>
+            {item.employee_no && (
+              <Typography variant="caption" color="text.secondary">
+                {item.employee_no}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      ),
+      description: (item: Employee) => item.position || "未设置职位",
+      status: {
+        field: "status",
+        options: {
+          active: { label: "在职", color: "success" },
+          inactive: { label: "离职", color: "default" },
+        },
+      },
+      meta: [
+        {
+          field: "department_id",
+          label: "部门",
+          icon: <Building2 sx={{ width: 14, height: 14 }} />,
+          format: (value: string) => {
+            const dept = departments.find((d) => d.id === value);
+            return dept?.name || "-";
+          },
+        },
+        {
+          field: "email",
+          label: "邮箱",
+          icon: <Mail sx={{ width: 14, height: 14 }} />,
+        },
+        {
+          field: "phone",
+          label: "电话",
+          icon: <Phone sx={{ width: 14, height: 14 }} />,
+        },
+      ],
+    }),
+    [departments],
+  );
+
+  // 卡片操作
+  const cardActions = useMemo<CardAction[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye style={{ width: 14, height: 14 }} />,
+        onClick: handleView,
+        color: "primary",
+      },
+      {
+        label: "编辑",
+        icon: <Edit style={{ width: 14, height: 14 }} />,
+        onClick: handleEdit,
+        color: "secondary",
+      },
+      {
+        label: "删除",
+        icon: <Trash2 style={{ width: 14, height: 14 }} />,
+        onClick: (item: Employee) => handleDelete(item.id),
+        color: "error",
+        divider: true,
+      },
+    ],
+    [handleView, handleEdit, handleDelete],
+  );
+
   // 表格列定义
   const columns = useMemo<ColumnDef<Employee>[]>(
     () => [
@@ -688,7 +816,7 @@ const HrmEmployeePage: React.FC = () => {
         title: "在职率",
         value: `${employeeStats.activeRate}%`,
         icon: <Users style={{ width: 24, height: 24 }} />,
-        color: "secondary" as const,
+        color: "info" as const,
       },
     ],
     [employeeStats],
@@ -826,27 +954,124 @@ const HrmEmployeePage: React.FC = () => {
         </Box>
       </Paper>
 
-      {/* 列表/树形视图 */}
-      {viewMode === "list" ? (
-        <Paper sx={{ borderRadius: 2 }}>
-          <ListPageTemplate
-            columns={columns}
-            data={data.items}
-            loading={loading}
-            pagination={{
-              page: data.page - 1,
-              pageSize: data.page_size,
-              total: data.total,
-              onPageChange: (page) => fetchEmployees({ page: page + 1 }),
-              onPageSizeChange: (pageSize) =>
-                fetchEmployees({ page_size: pageSize }),
-            }}
-            rowActions={rowActions}
-            onRowClick={handleView}
-            emptyMessage="暂无员工数据"
-          />
-        </Paper>
-      ) : (
+      {/* 列表视图 - CardListTemplate */}
+      {viewMode === "list" && (
+        <CardListTemplate
+          title="员工列表"
+          subtitle="管理企业员工信息"
+          metricStats={metricStats}
+          metricColumns={4}
+          data={data.items}
+          cardConfig={cardConfig}
+          loading={loading}
+          emptyState={{
+            emoji: "👥",
+            title: "暂无员工数据",
+            description: "点击上方按钮添加第一位员工",
+            actionLabel: "新增员工",
+            onAction: handleAdd,
+          }}
+          search={{
+            value: searchText,
+            onChange: setSearchText,
+            placeholder: "搜索姓名、工号、邮箱...",
+          }}
+          filters={[
+            {
+              id: "department",
+              label: "部门",
+              type: "select" as const,
+              options: [
+                { label: "全部部门", value: "all" },
+                ...departments.map((d) => ({ label: d.name, value: d.id })),
+              ],
+            },
+            {
+              id: "status",
+              label: "状态",
+              type: "select" as const,
+              options: [
+                { label: "全部状态", value: "all" },
+                { label: "在职", value: "active" },
+                { label: "离职", value: "inactive" },
+              ],
+            },
+          ]}
+          filterValues={{
+            department: departmentFilter,
+            status: statusFilter,
+          }}
+          onFilterChange={(filters) => {
+            if (filters.department !== undefined)
+              setDepartmentFilter(filters.department as string);
+            if (filters.status !== undefined)
+              setStatusFilter(filters.status as string);
+          }}
+          onFilterReset={handleReset}
+          onSearch={handleSearch}
+          addButton={{
+            text: "新增员工",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleAdd,
+          }}
+          onRefresh={() => fetchEmployees()}
+          pagination={{
+            page: data.page,
+            pageSize: data.page_size,
+            total: data.total,
+            onPageChange: (page) => fetchEmployees({ page }),
+          }}
+          cardActions={cardActions}
+          onCardClick={handleView}
+          showStatsOverview={false}
+          gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
+          customToolbar={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  bgcolor: "grey.100",
+                  borderRadius: 1,
+                  p: 0.5,
+                }}
+              >
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => setViewMode("list")}
+                  startIcon={<List style={{ width: 16, height: 16 }} />}
+                >
+                  列表
+                </Button>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => setViewMode("tree")}
+                  startIcon={<LayoutGrid style={{ width: 16, height: 16 }} />}
+                >
+                  树形
+                </Button>
+              </Box>
+              <DataExport
+                data={data.items as unknown as Record<string, unknown>[]}
+                fields={exportFields}
+                defaultFileName="员工数据"
+                buttonText="导出"
+              />
+            </Box>
+          }
+        />
+      )}
+
+      {/* 树形视图 */}
+      {viewMode === "tree" && (
         <Box
           sx={{
             display: "grid",

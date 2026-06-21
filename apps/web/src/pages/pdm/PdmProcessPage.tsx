@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -8,15 +8,12 @@ import {
   DialogActions,
   TextField,
   Chip,
-  Card,
-  CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
 import { apiLogger } from "@/utils/logger";
-import { Plus, Eye, Factory, Search, Clock } from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Plus, Eye, Clock } from "lucide-react";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import type { RowAction, FilterConfig } from "@/components/templates";
 import { pdmApi } from "@/api/pdm";
 import type { ProductionProcess } from "@/api/pdm";
 import { toast } from "react-toastify";
@@ -25,6 +22,7 @@ const PdmProcessPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedProcess, setSelectedProcess] =
@@ -85,43 +83,61 @@ const PdmProcessPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<ProductionProcess>[] = [
-    { accessorKey: "process_no", header: "工艺编号" },
-    { accessorKey: "name", header: "工艺名称" },
-    { accessorKey: "version", header: "版本" },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+  const filteredProcesses = useMemo(() => {
+    return processes.filter((process) => {
+      const matchesSearch =
+        process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        process.process_no.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || process.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [processes, searchTerm, statusFilter]);
 
-  const filteredProcesses = processes.filter((process) => {
-    return (
-      process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      process.process_no.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const columns = useMemo<ColumnDef<ProductionProcess>[]>(
+    () => [
+      { id: "process_no", label: "工艺编号" },
+      { id: "name", label: "工艺名称" },
+      { id: "version", label: "版本" },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
 
-  const handleView = (process: ProductionProcess) => {
-    setSelectedProcess(process);
-    setShowDetailModal(true);
-  };
+  const rowActions = useMemo<RowAction<ProductionProcess>[]>(
+    () => [
+      {
+        label: "详情",
+        icon: <Eye size={16} />,
+        onClick: (row) => {
+          setSelectedProcess(row);
+          setShowDetailModal(true);
+        },
+      },
+    ],
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "启用", label: "启用" },
+          { value: "禁用", label: "禁用" },
+        ],
+        value: statusFilter,
+        onChange: (value) => setStatusFilter(value as string),
+      },
+    ],
+    [statusFilter],
+  );
 
   const handleCreate = () => {
     setFormData({
@@ -157,269 +173,68 @@ const PdmProcessPage: React.FC = () => {
     inactive: processes.filter((p) => p.status === "禁用").length,
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #ecfeff 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#06b6d4",
-              borderTopColor: "#0891b2",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  return (
+  const statsContent = (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #ecfeff 0%, #f8fafc 100%)",
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+        gap: 2,
+        mb: 3,
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Factory sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  生产工艺
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Production Process
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" } }}
-            >
-              新增工艺
-            </Button>
-          </Box>
-        </Box>
+      <Box sx={{ p: 2, bgcolor: "#ecfeff", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          工艺总数
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.total}
+        </Typography>
       </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#ecfeff" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#cffafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Factory sx={{ width: 20, height: 20, color: "#06b6d4" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    工艺总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Factory sx={{ width: 20, height: 20, color: "#16a34a" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已启用
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.active}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fee2e2",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Factory sx={{ width: 20, height: 20, color: "#dc2626" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已禁用
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.inactive}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <Factory style={{ width: 20, height: 20, color: "#06b6d4" }} />
-              生产工艺列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索工艺名称或编号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredProcesses}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
+      <Box sx={{ p: 2, bgcolor: "#dcfce7", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          已启用
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.active}
+        </Typography>
       </Box>
+      <Box sx={{ p: 2, bgcolor: "#fee2e2", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          已禁用
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.inactive}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <>
+      <ListPageTemplate<ProductionProcess>
+        title="生产工艺"
+        subtitle="Production Process"
+        backButton={{ href: "/dashboard" }}
+        columns={columns}
+        data={filteredProcesses}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索工艺名称或编号..."
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "新增工艺",
+            icon: <Plus size={18} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        headerContent={statsContent}
+        emptyMessage="暂无生产工艺数据"
+      />
 
       <Dialog
         open={showCreateModal}
@@ -579,7 +394,7 @@ const PdmProcessPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

@@ -37,7 +37,7 @@ import {
   StatCardGroup,
   type ColumnDef,
   type RowAction,
-} from "@/components/mui";
+} from "@/components/templates";
 import { ModeToggle } from "@/components/theme/ModeToggle";
 import { DataExport } from "@/components/common";
 

@@ -27,8 +27,8 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import type { RowAction, FilterConfig } from "@/components/templates";
 
 interface TestCase {
   id: string;

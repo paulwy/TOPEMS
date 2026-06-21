@@ -85,9 +85,17 @@ const HrmCompanyPage: React.FC = () => {
         const data = response.data as PaginatedResult<Company>;
         setCompanies(data.items || []);
         setTotal(data.total || 0);
-      } else {
+      } else if (response.code === 200) {
+        // API 返回成功但无数据
         setCompanies([]);
         setTotal(0);
+      } else {
+        // API 返回错误码，不清空现有列表
+        addNotification({
+          title: "加载失败",
+          message: response.message || "获取公司列表失败",
+          type: "error",
+        });
       }
     } catch (error: any) {
       addNotification({
@@ -255,7 +263,11 @@ const HrmCompanyPage: React.FC = () => {
       });
       setShowCreateModal(false);
       setFormData({ status: "active" });
-      fetchCompanies({ page: currentPage, page_size: pageSize });
+      // 重置分页和搜索条件，确保新创建的公司显示在列表中
+      setCurrentPage(1);
+      setSearchText("");
+      setStatusFilter("");
+      fetchCompanies({ page: 1, page_size: pageSize });
     } catch (error: any) {
       addNotification({
         title: "失败",

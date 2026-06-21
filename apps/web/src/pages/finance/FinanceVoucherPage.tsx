@@ -44,7 +44,13 @@ import {
   type AccountingSubject,
 } from "@/api/erp";
 import { useAppStore } from "../../store";
-import { ListPageTemplate, StatCardGroup } from "@/components/mui";
+import { ListPageTemplate } from "@/components/templates";
+import type {
+  ColumnDef,
+  RowAction,
+  FilterConfig,
+} from "@/components/templates";
+import { StatCardGroup } from "@/components/mui";
 import { apiLogger } from "@/utils/logger";
 
 const FinanceVoucherPage: React.FC = () => {

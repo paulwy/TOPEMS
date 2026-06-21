@@ -12,8 +12,12 @@ import {
 } from "@mui/material";
 import { FileUpload } from "@/components/common";
 import { Eye, Plus, Edit, Send, Ban, Upload, GitBranch } from "lucide-react";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
+import { ListPageTemplate } from "@/components/templates";
+import type {
+  ColumnDef,
+  RowAction,
+  FilterConfig,
+} from "@/components/templates";
 
 interface FlowDefinition {
   id: string;

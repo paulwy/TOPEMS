@@ -23,8 +23,12 @@ import { useAppStore } from "@/store";
 import { logger } from "@/utils/logger";
 import { DataExport } from "@/components/common";
 import { Plus, Edit, Trash2, Eye, TrendingUp } from "lucide-react";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
+import { ListPageTemplate } from "@/components/templates";
+import type {
+  ColumnDef,
+  RowAction,
+  FilterConfig,
+} from "@/components/templates";
 
 const OpportunityManagementPage: React.FC = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -44,24 +48,36 @@ const OpportunityManagementPage: React.FC = () => {
     close_date: "",
     notes: "",
   });
+  const [pagination, setPagination] = useState({
+    page: 0,
+    pageSize: 20,
+    total: 0,
+  });
 
   const { addNotification } = useAppStore();
 
   useEffect(() => {
     loadOpportunities();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, stageFilter]);
+  }, [searchTerm, stageFilter, pagination.page, pagination.pageSize]);
 
   const loadOpportunities = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: any = {
+        page: pagination.page + 1,
+        page_size: pagination.pageSize,
+      };
       if (searchTerm) params.search = searchTerm;
       if (stageFilter) params.stage = stageFilter;
 
       const response = await crmApi.opportunities.list(params);
       if (response.success && response.data) {
         setOpportunities(response.data.items || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: response.data.total || 0,
+        }));
       }
     } catch (error) {
       logger.error("加载商机列表失败:", error);
@@ -404,6 +420,17 @@ const OpportunityManagementPage: React.FC = () => {
         }}
         filters={filters}
         rowActions={rowActions}
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: (_, page) => {
+            setPagination((prev) => ({ ...prev, page }));
+          },
+          onPageSizeChange: (_, pageSize) => {
+            setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+          },
+        }}
         actions={[
           {
             label: "导出",

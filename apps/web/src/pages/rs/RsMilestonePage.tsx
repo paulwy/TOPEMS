@@ -1,44 +1,23 @@
 import React, { useState, useEffect } from "react";
 import {
   Box,
-  Container,
   Typography,
   Chip,
   LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  IconButton,
   Button,
   TextField,
-  InputAdornment,
-  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Stack,
 } from "@mui/material";
+import { Plus, Flag, Calendar, Link2, Eye, Edit } from "lucide-react";
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Flag,
-  Calendar,
-  Link2,
-  Eye,
-  Filter,
-} from "lucide-react";
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+} from "@/components/templates";
 
 interface Milestone {
   id: string;
@@ -164,16 +143,10 @@ const RsMilestonePage: React.FC = () => {
     return matchesSearch && matchesStatus && matchesDateRange;
   });
 
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const paginatedMilestones = filteredMilestones.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   const handleCreateMilestone = () => {
     const newMs: Milestone = {
@@ -200,229 +173,177 @@ const RsMilestonePage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
+  const columns: ColumnDef<Milestone>[] = [
+    {
+      id: "name",
+      label: "里程碑名称",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Flag size={16} color="#3b82f6" />
+          {row.name}
+        </Box>
+      ),
+    },
+    {
+      id: "start_date",
+      label: "开始日期",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Calendar size={14} />
+          {row.start_date}
+        </Box>
+      ),
+    },
+    {
+      id: "end_date",
+      label: "结束日期",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Calendar size={14} />
+          {row.end_date}
+        </Box>
+      ),
+    },
+    {
+      id: "progress",
+      label: "进度",
+      render: (row) => (
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 150 }}
+        >
+          <LinearProgress
+            variant="determinate"
+            value={row.progress}
+            sx={{ flex: 1, height: 8, borderRadius: 4 }}
+          />
+          <Typography variant="caption">{row.progress}%</Typography>
+        </Box>
+      ),
+    },
+    {
+      id: "related_project",
+      label: "关联项目",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Link2 size={14} />
+          {row.related_project}
+        </Box>
+      ),
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip
+          label={getStatusLabel(row.status)}
+          size="small"
+          color={getStatusColor(row.status)}
+        />
+      ),
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "进行中", value: "active" },
+        { label: "已完成", value: "completed" },
+        { label: "规划中", value: "planning" },
+      ],
+      value: statusFilter || "",
+      onChange: (value) => setStatusFilter(value || null),
+    },
+    {
+      id: "start_date",
+      label: "开始日期",
+      type: "date",
+      value: dateRange.start,
+      onChange: (value) => setDateRange((prev) => ({ ...prev, start: value })),
+    },
+    {
+      id: "end_date",
+      label: "结束日期",
+      type: "date",
+      value: dateRange.end,
+      onChange: (value) => setDateRange((prev) => ({ ...prev, end: value })),
+    },
+  ];
+
+  const rowActions = [
+    {
+      label: "查看进度",
+      icon: <Eye size={16} />,
+      onClick: handleViewDetail,
+    },
+    {
+      label: "编辑",
+      icon: <Edit size={16} />,
+      onClick: () => {},
+    },
+    {
+      label: "关联项目",
+      icon: <Link2 size={16} />,
+      onClick: () => {},
+    },
+  ];
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
-          >
-            里程碑
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Plus size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-            onClick={() => setNewMilestoneDialogOpen(true)}
-          >
-            新建里程碑
-          </Button>
-        </Box>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: "center", flexWrap: "wrap" }}
-          >
-            <TextField
-              size="small"
-              placeholder="搜索里程碑名称、项目..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={statusFilter || ""}
-                label="状态"
-                onChange={(e) => setStatusFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="active">进行中</MenuItem>
-                <MenuItem value="completed">已完成</MenuItem>
-                <MenuItem value="planning">规划中</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              size="small"
-              type="date"
-              label="开始日期"
-              value={dateRange.start}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, start: e.target.value })
-              }
-              sx={{ width: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              size="small"
-              type="date"
-              label="结束日期"
-              value={dateRange.end}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, end: e.target.value })
-              }
-              sx={{ width: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Stack>
-        </Paper>
-
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    里程碑名称
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    开始日期
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    结束日期
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    进度
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    关联项目
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    状态
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredMilestones
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((ms) => (
-                    <TableRow key={ms.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Flag size={16} color="#3b82f6" />
-                          {ms.name}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Calendar size={14} />
-                          {ms.start_date}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Calendar size={14} />
-                          {ms.end_date}
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={{ minWidth: 150 }}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <LinearProgress
-                            variant="determinate"
-                            value={ms.progress}
-                            sx={{ flex: 1, height: 8, borderRadius: 4 }}
-                          />
-                          <Typography variant="caption">
-                            {ms.progress}%
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Link2 size={14} />
-                          {ms.related_project}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getStatusLabel(ms.status)}
-                          size="small"
-                          color={getStatusColor(ms.status)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="查看进度">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewDetail(ms)}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="编辑">
-                            <IconButton size="small">
-                              <Edit size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="关联项目">
-                            <IconButton size="small">
-                              <Link2 size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredMilestones.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+      <ListPageTemplate
+        title="里程碑"
+        columns={columns}
+        data={paginatedMilestones}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索里程碑名称、项目..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{
+          status: statusFilter || "",
+          start_date: dateRange.start,
+          end_date: dateRange.end,
+        }}
+        onFilterChange={(filters) => {
+          if (filters.status !== undefined) {
+            setStatusFilter(filters.status || null);
+          }
+          if (filters.start_date !== undefined) {
+            setDateRange((prev) => ({
+              ...prev,
+              start: filters.start_date as string,
+            }));
+          }
+          if (filters.end_date !== undefined) {
+            setDateRange((prev) => ({
+              ...prev,
+              end: filters.end_date as string,
+            }));
+          }
+        }}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total: filteredMilestones.length,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
+        actions={[
+          {
+            label: "新建里程碑",
+            variant: "contained",
+            icon: <Plus size={18} />,
+            onClick: () => setNewMilestoneDialogOpen(true),
+          },
+        ]}
+        rowActions={rowActions}
+        showRowNumber
+        emptyMessage="暂无里程碑数据"
+      />
 
       <Dialog
         open={newMilestoneDialogOpen}

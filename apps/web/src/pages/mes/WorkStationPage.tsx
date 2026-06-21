@@ -1,28 +1,14 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
-  Typography,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
+  TextField,
   Box,
-  TablePagination,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type {
   WorkStation,
   CreateWorkStationRequest,
@@ -31,7 +17,11 @@ import type {
 import { mesApi } from "@/api/professional/mes/mes";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/templates";
 import { Plus, Edit } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
 
@@ -139,106 +129,67 @@ const WorkStationPage: React.FC = () => {
     });
   };
 
+  const columns: ColumnDef<WorkStation>[] = useMemo(
+    () => [
+      { id: "name", label: "工作站名称", sortable: true },
+      { id: "code", label: "编码", sortable: true },
+      { id: "location", label: "位置" },
+      { id: "capacity", label: "容量" },
+      { id: "supervisor", label: "负责人" },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => (
+          <Chip size="small" label={row.status} variant="outlined" />
+        ),
+      },
+    ],
+    [],
+  );
+
+  const rowActions: RowAction<WorkStation>[] = useMemo(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: handleEdit,
+      },
+    ],
+    [],
+  );
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setShowDialog(true);
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            工作站管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理生产工作站,包括工作站名称、编码、位置、容量等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            <Button
-              variant="contained"
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-            >
-              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
-              新增工作站
-            </Button>
-          </Box>
-
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>工作站名称</TableCell>
-                <TableCell>编码</TableCell>
-                <TableCell>位置</TableCell>
-                <TableCell>容量</TableCell>
-                <TableCell>负责人</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell sx={{ textAlign: "right" }}>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {workstations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} sx={{ textAlign: "center" }}>
-                    <EmptyState
-                      title="暂无工作站数据"
-                      description="点击上方按钮添加第一个工作站"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                workstations.map((station) => (
-                  <TableRow key={station.id}>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {station.name}
-                    </TableCell>
-                    <TableCell>{station.code || "-"}</TableCell>
-                    <TableCell>{station.location || "-"}</TableCell>
-                    <TableCell>{station.capacity || "-"}</TableCell>
-                    <TableCell>{station.supervisor || "-"}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={station.status}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell sx={{ textAlign: "right" }}>
-                      <Button size="small" onClick={() => handleEdit(station)}>
-                        <Edit style={{ width: 16, height: 16 }} />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <TablePagination
-              component="div"
-              count={total}
-              page={currentPage - 1}
-              rowsPerPage={pageSize}
-              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-              rowsPerPageOptions={[]}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="工作站管理"
+        subtitle="管理生产工作站,包括工作站名称、编码、位置、容量等"
+        columns={columns}
+        data={workstations}
+        loading={loading}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total,
+          onPageChange: setCurrentPage,
+        }}
+        actions={[
+          {
+            label: "新增工作站",
+            icon: <Plus size={16} />,
+            onClick: handleOpenCreate,
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage="暂无工作站数据"
+        getRowId={(row) => row.id}
+      />
 
       <Dialog
         open={showDialog}
@@ -317,7 +268,7 @@ const WorkStationPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

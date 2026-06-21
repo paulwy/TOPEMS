@@ -1,9 +1,8 @@
 import { Grid } from "@/components/Grid";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import {
   LinearProgress,
   Paper,
   Button,
-  IconButton,
   Tabs,
   Tab,
   Table,
@@ -22,10 +20,9 @@ import {
   TableRow,
   Divider,
   List,
-  ListItem,
   ListItemButton,
-  ListItemText,
   ListItemIcon,
+  ListItemText,
   Avatar,
   Stack,
 } from "@mui/material";
@@ -39,35 +36,15 @@ import {
 } from "@mui/lab";
 import {
   Edit as EditIcon,
-  Trash2 as DeleteIcon,
   FlaskConical as FlaskConical,
   FileText as DescriptionIcon,
   Users as PeopleIcon,
   Clock as Clock,
   DollarSign as MoneyIcon,
-  TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
   AlertTriangle as AlertTriangle,
-  XCircle as ErrorIcon,
-  Folder as FolderIcon,
-  ClipboardList as AssignmentIcon,
 } from "lucide-react";
-
-interface ProjectDetail {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  project_type: string;
-  status: string;
-  leader: string;
-  team_members: string[];
-  progress: number;
-  start_date: string;
-  end_date: string | null;
-  budget: number;
-  risk_level: string;
-}
+import { DetailPageTemplate, type TabConfig } from "@/components/templates";
 
 interface Phase {
   id: string;
@@ -100,7 +77,7 @@ const RsProjectDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   // 模拟项目详情数据
-  const [project] = useState<ProjectDetail>({
+  const project = {
     id: id || "1",
     name: "新型催化剂研发项目",
     code: "RS-2024-001",
@@ -115,9 +92,9 @@ const RsProjectDetailPage: React.FC = () => {
     end_date: "2024-12-31",
     budget: 500000,
     risk_level: "中",
-  });
+  };
 
-  const [phases] = useState<Phase[]>([
+  const phases: Phase[] = [
     {
       id: "1",
       name: "立项调研",
@@ -166,9 +143,9 @@ const RsProjectDetailPage: React.FC = () => {
       start_date: "2024-12-01",
       end_date: "2024-12-31",
     },
-  ]);
+  ];
 
-  const [milestones] = useState<Milestone[]>([
+  const milestones: Milestone[] = [
     {
       id: "1",
       name: "完成调研报告",
@@ -204,9 +181,9 @@ const RsProjectDetailPage: React.FC = () => {
       target_date: "2024-11-15",
       actual_date: null,
     },
-  ]);
+  ];
 
-  const [experiments] = useState<Experiment[]>([
+  const experiments: Experiment[] = [
     {
       id: "1",
       name: "催化剂活性测试-第1轮",
@@ -242,7 +219,7 @@ const RsProjectDetailPage: React.FC = () => {
       status: "进行中",
       experimenter: "李四",
     },
-  ]);
+  ];
 
   const getStatusColor = (
     status: string,
@@ -291,423 +268,265 @@ const RsProjectDetailPage: React.FC = () => {
     }
   };
 
-  return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      {/* 页面头部 */}
-      <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
-        >
-          <div>
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                {project.name}
-              </Typography>
-              <Chip
-                label={project.status}
-                color={getStatusColor(project.status)}
-              />
-              <Chip
-                label={`风险: ${project.risk_level}`}
-                color={getRiskColor(project.risk_level)}
-                size="small"
-              />
-            </Stack>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              编码: {project.code} | 类型: {project.project_type} | 负责人:{" "}
-              {project.leader}
-            </Typography>
-          </div>
-          <Stack direction="row" spacing={2}>
-            <Button
-              variant="outlined"
-              startIcon={<EditIcon />}
-              onClick={() => navigate(`/rs/projects/${id}/edit`)}
-            >
-              编辑
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<FlaskConical />}
-              component={Link}
-              to="/rs/experiments/create"
-            >
-              新建试验
-            </Button>
-          </Stack>
-        </Stack>
-      </div>
-
-      {/* 项目概览卡片 */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                项目描述
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {project.description}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 6 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <Clock color="action" />
-                    <Typography variant="body2">
-                      开始日期: {project.start_date}
-                    </Typography>
-                  </div>
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <Clock color="action" />
-                    <Typography variant="body2">
-                      结束日期: {project.end_date || "未设定"}
-                    </Typography>
-                  </div>
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <MoneyIcon color="action" />
-                    <Typography variant="body2">
-                      预算: {(project.budget / 10000).toFixed(1)} 万元
-                    </Typography>
-                  </div>
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <PeopleIcon color="action" />
-                    <Typography variant="body2">
-                      团队成员: {project.team_members.length} 人
-                    </Typography>
-                  </div>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                项目进度
-              </Typography>
-              <div
-                style={{ textAlign: "center", paddingTop: 8, paddingBottom: 8 }}
-              >
-                <Typography
-                  variant="h3"
-                  sx={{ fontWeight: "bold" }}
-                  color="primary"
-                >
-                  {project.progress}%
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={project.progress}
-                  sx={{ mt: 2, height: 10, borderRadius: 5 }}
-                />
-              </div>
-              <Divider sx={{ my: 2 }} />
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="body2">已完成阶段</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                    {phases.filter((p) => p.status === "已完成").length}/
-                    {phases.length}
-                  </Typography>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="body2">已完成里程碑</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                    {milestones.filter((m) => m.status === "已完成").length}/
-                    {milestones.length}
-                  </Typography>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="body2">试验记录</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                    {experiments.length}
-                  </Typography>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* 详细信息标签页 */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-          <Tab label="项目阶段" icon={<Clock />} iconPosition="start" />
-          <Tab label="里程碑" icon={<CheckCircleIcon />} iconPosition="start" />
-          <Tab label="试验记录" icon={<FlaskConical />} iconPosition="start" />
-          <Tab label="团队成员" icon={<PeopleIcon />} iconPosition="start" />
-          <Tab
-            label="文档资料"
-            icon={<DescriptionIcon />}
-            iconPosition="start"
-          />
-        </Tabs>
-
-        <div style={{ padding: 12 }}>
-          {/* 项目阶段 */}
-          {activeTab === 0 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>阶段名称</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell>进度</TableCell>
-                    <TableCell>开始日期</TableCell>
-                    <TableCell>结束日期</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {phases.map((phase) => (
-                    <TableRow key={phase.id} hover>
-                      <TableCell>{phase.name}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={phase.status}
-                          size="small"
-                          color={getStatusColor(phase.status)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <LinearProgress
-                            variant="determinate"
-                            value={phase.progress}
-                            sx={{ width: 80 }}
-                          />
-                          <Typography variant="body2">
-                            {phase.progress}%
-                          </Typography>
-                        </div>
-                      </TableCell>
-                      <TableCell>{phase.start_date}</TableCell>
-                      <TableCell>{phase.end_date || "-"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* 里程碑 */}
-          {activeTab === 1 && (
-            <Timeline position="alternate">
-              {milestones.map((milestone) => (
-                <TimelineItem key={milestone.id}>
-                  <TimelineSeparator>
-                    <TimelineDot
-                      color={
-                        milestone.status === "已完成" ? "success" : "primary"
-                      }
+  // Tab内容
+  const tabContents: TabConfig[] = [
+    {
+      id: "phases",
+      label: "项目阶段",
+      icon: <Clock size={16} />,
+      content: (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>阶段名称</TableCell>
+                <TableCell>状态</TableCell>
+                <TableCell>进度</TableCell>
+                <TableCell>开始日期</TableCell>
+                <TableCell>结束日期</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {phases.map((phase) => (
+                <TableRow key={phase.id} hover>
+                  <TableCell>{phase.name}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={phase.status}
+                      size="small"
+                      color={getStatusColor(phase.status)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                      }}
                     >
-                      {milestone.status === "已完成" ? (
-                        <CheckCircleIcon />
-                      ) : (
-                        <AlertTriangle />
-                      )}
-                    </TimelineDot>
-                    <TimelineConnector />
-                  </TimelineSeparator>
-                  <TimelineContent>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        {milestone.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        目标日期: {milestone.target_date}
-                      </Typography>
-                      {milestone.actual_date && (
-                        <Typography variant="body2" color="success.main">
-                          完成日期: {milestone.actual_date}
-                        </Typography>
-                      )}
-                      <Chip
-                        label={milestone.status}
-                        size="small"
-                        color={getStatusColor(milestone.status)}
-                        sx={{ mt: 1 }}
+                      <LinearProgress
+                        variant="determinate"
+                        value={phase.progress}
+                        sx={{ width: 80 }}
                       />
-                    </Paper>
-                  </TimelineContent>
-                </TimelineItem>
+                      <Typography variant="body2">{phase.progress}%</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{phase.start_date}</TableCell>
+                  <TableCell>{phase.end_date || "-"}</TableCell>
+                </TableRow>
               ))}
-            </Timeline>
-          )}
-
-          {/* 试验记录 */}
-          {activeTab === 2 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>试验名称</TableCell>
-                    <TableCell>阶段</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell>实验员</TableCell>
-                    <TableCell align="center">操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {experiments.map((exp) => (
-                    <TableRow key={exp.id} hover>
-                      <TableCell>{exp.name}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={exp.phase}
-                          size="small"
-                          color={getPhaseColor(exp.phase)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={exp.status}
-                          size="small"
-                          color={getStatusColor(exp.status)}
-                        />
-                      </TableCell>
-                      <TableCell>{exp.experimenter}</TableCell>
-                      <TableCell align="center">
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          component={Link}
-                          to={`/rs/experiments/${exp.id}`}
-                        >
-                          查看
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* 团队成员 */}
-          {activeTab === 3 && (
-            <List>
-              <ListItemButton>
-                <ListItemIcon>
-                  <Avatar>{project.leader[0]}</Avatar>
-                </ListItemIcon>
-                <ListItemText primary={project.leader} secondary="项目负责人" />
-                <Chip label="负责人" color="primary" size="small" />
-              </ListItemButton>
-              {project.team_members.map((member, index) => (
-                <ListItemButton key={index}>
-                  <ListItemIcon>
-                    <Avatar>{member[0]}</Avatar>
-                  </ListItemIcon>
-                  <ListItemText primary={member} secondary="团队成员" />
-                  <Chip label="成员" variant="outlined" size="small" />
-                </ListItemButton>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ),
+    },
+    {
+      id: "milestones",
+      label: "里程碑",
+      icon: <CheckCircleIcon size={16} />,
+      content: (
+        <Timeline position="alternate">
+          {milestones.map((milestone) => (
+            <TimelineItem key={milestone.id}>
+              <TimelineSeparator>
+                <TimelineDot
+                  color={milestone.status === "已完成" ? "success" : "primary"}
+                >
+                  {milestone.status === "已完成" ? (
+                    <CheckCircleIcon />
+                  ) : (
+                    <AlertTriangle />
+                  )}
+                </TimelineDot>
+                <TimelineConnector />
+              </TimelineSeparator>
+              <TimelineContent>
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                    {milestone.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    目标日期: {milestone.target_date}
+                  </Typography>
+                  {milestone.actual_date && (
+                    <Typography variant="body2" color="success.main">
+                      完成日期: {milestone.actual_date}
+                    </Typography>
+                  )}
+                  <Chip
+                    label={milestone.status}
+                    size="small"
+                    color={getStatusColor(milestone.status)}
+                    sx={{ mt: 1 }}
+                  />
+                </Paper>
+              </TimelineContent>
+            </TimelineItem>
+          ))}
+        </Timeline>
+      ),
+    },
+    {
+      id: "experiments",
+      label: "试验记录",
+      icon: <FlaskConical size={16} />,
+      content: (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>试验名称</TableCell>
+                <TableCell>阶段</TableCell>
+                <TableCell>状态</TableCell>
+                <TableCell>实验员</TableCell>
+                <TableCell align="center">操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {experiments.map((exp) => (
+                <TableRow key={exp.id} hover>
+                  <TableCell>{exp.name}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={exp.phase}
+                      size="small"
+                      color={getPhaseColor(exp.phase)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={exp.status}
+                      size="small"
+                      color={getStatusColor(exp.status)}
+                    />
+                  </TableCell>
+                  <TableCell>{exp.experimenter}</TableCell>
+                  <TableCell align="center">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      component={Link}
+                      to={`/rs/experiments/${exp.id}`}
+                    >
+                      查看
+                    </Button>
+                  </TableCell>
+                </TableRow>
               ))}
-            </List>
-          )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ),
+    },
+    {
+      id: "team",
+      label: "团队成员",
+      icon: <PeopleIcon size={16} />,
+      content: (
+        <List>
+          <ListItemButton>
+            <ListItemIcon>
+              <Avatar>{project.leader[0]}</Avatar>
+            </ListItemIcon>
+            <ListItemText primary={project.leader} secondary="项目负责人" />
+            <Chip label="负责人" color="primary" size="small" />
+          </ListItemButton>
+          {project.team_members.map((member, index) => (
+            <ListItemButton key={index}>
+              <ListItemIcon>
+                <Avatar>{member[0]}</Avatar>
+              </ListItemIcon>
+              <ListItemText primary={member} secondary="团队成员" />
+              <Chip label="成员" variant="outlined" size="small" />
+            </ListItemButton>
+          ))}
+        </List>
+      ),
+    },
+    {
+      id: "documents",
+      label: "文档资料",
+      icon: <DescriptionIcon size={16} />,
+      content: (
+        <List>
+          <ListItemButton>
+            <ListItemIcon>
+              <DescriptionIcon />
+            </ListItemIcon>
+            <ListItemText primary="项目立项报告" secondary="2024-01-20" />
+          </ListItemButton>
+          <ListItemButton>
+            <ListItemIcon>
+              <DescriptionIcon />
+            </ListItemIcon>
+            <ListItemText primary="技术方案设计书" secondary="2024-03-15" />
+          </ListItemButton>
+          <ListItemButton>
+            <ListItemIcon>
+              <DescriptionIcon />
+            </ListItemIcon>
+            <ListItemText primary="小试阶段总结报告" secondary="2024-06-30" />
+          </ListItemButton>
+          <ListItemButton>
+            <ListItemIcon>
+              <DescriptionIcon />
+            </ListItemIcon>
+            <ListItemText primary="中试阶段进度报告" secondary="2024-08-15" />
+          </ListItemButton>
+        </List>
+      ),
+    },
+  ];
 
-          {/* 文档资料 */}
-          {activeTab === 4 && (
-            <List>
-              <ListItemButton>
-                <ListItemIcon>
-                  <DescriptionIcon />
-                </ListItemIcon>
-                <ListItemText primary="项目立项报告" secondary="2024-01-20" />
-              </ListItemButton>
-              <ListItemButton>
-                <ListItemIcon>
-                  <DescriptionIcon />
-                </ListItemIcon>
-                <ListItemText primary="技术方案设计书" secondary="2024-03-15" />
-              </ListItemButton>
-              <ListItemButton>
-                <ListItemIcon>
-                  <DescriptionIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="小试阶段总结报告"
-                  secondary="2024-06-30"
-                />
-              </ListItemButton>
-              <ListItemButton>
-                <ListItemIcon>
-                  <DescriptionIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="中试阶段进度报告"
-                  secondary="2024-08-15"
-                />
-              </ListItemButton>
-            </List>
-          )}
-        </div>
-      </Paper>
-    </Container>
+  // 信息卡片数据
+  const infoCard = {
+    title: project.name,
+    subtitle: `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`,
+    tags: [
+      project.status,
+      `风险: ${project.risk_level}`,
+      `预算: ${(project.budget / 10000).toFixed(1)}万元`,
+    ],
+    stats: [
+      { label: "项目进度", value: `${project.progress}%` },
+      {
+        label: "已完成阶段",
+        value: `${phases.filter((p) => p.status === "已完成").length}/${phases.length}`,
+      },
+      {
+        label: "里程碑",
+        value: `${milestones.filter((m) => m.status === "已完成").length}/${milestones.length}`,
+      },
+    ],
+  };
+
+  // 操作按钮
+  const actions = [
+    {
+      label: "编辑",
+      icon: <EditIcon size={18} />,
+      onClick: () => navigate(`/rs/projects/${id}/edit`),
+      variant: "outlined" as const,
+    },
+    {
+      label: "新建试验",
+      icon: <FlaskConical size={18} />,
+      onClick: () => {},
+      variant: "contained" as const,
+    },
+  ];
+
+  return (
+    <DetailPageTemplate
+      title={project.name}
+      subtitle={`编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`}
+      infoCard={infoCard}
+      tabs={tabContents}
+      defaultTab="phases"
+      actions={actions}
+    />
   );
 };
 

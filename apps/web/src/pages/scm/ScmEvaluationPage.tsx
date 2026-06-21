@@ -1,21 +1,11 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Box,
-  TablePagination,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import type {
@@ -24,10 +14,9 @@ import type {
 } from "@/api/scm";
 import { scmApi } from "@/api/scm";
 import { useAppStore } from "@/store";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
 import { Plus } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 const ScmEvaluationPage: React.FC = () => {
   const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
@@ -110,94 +99,80 @@ const ScmEvaluationPage: React.FC = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner />;
+  // 表格列定义
+  const columns: ColumnDef<SupplierEvaluation>[] = [
+    {
+      id: "supplier_id",
+      label: "供应商ID",
+    },
+    {
+      id: "evaluation_date",
+      label: "评估日期",
+      render: (row) => (
+        <Box sx={{ fontSize: "0.875rem" }}>
+          {new Date(row.evaluation_date).toLocaleDateString("zh-CN")}
+        </Box>
+      ),
+    },
+    {
+      id: "quality_score",
+      label: "质量",
+      render: (row) => <Box>{row.quality_score || "-"}</Box>,
+    },
+    {
+      id: "delivery_score",
+      label: "交期",
+      render: (row) => <Box>{row.delivery_score || "-"}</Box>,
+    },
+    {
+      id: "service_score",
+      label: "服务",
+      render: (row) => <Box>{row.service_score || "-"}</Box>,
+    },
+    {
+      id: "price_score",
+      label: "价格",
+      render: (row) => <Box>{row.price_score || "-"}</Box>,
+    },
+    {
+      id: "overall_score",
+      label: "综合",
+      render: (row) => (
+        <Box sx={{ fontWeight: 500 }}>{row.overall_score || "-"}</Box>
+      ),
+    },
+    {
+      id: "evaluator",
+      label: "评估人",
+      render: (row) => <Box>{row.evaluator || "-"}</Box>,
+    },
+  ];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            供应商评估管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            供应商评估记录,包括质量、交期、服务、价格评分
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            <Button variant="contained" onClick={() => setShowDialog(true)}>
-              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
-              新增评估
-            </Button>
-          </Box>
-
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>供应商ID</TableCell>
-                <TableCell>评估日期</TableCell>
-                <TableCell>质量</TableCell>
-                <TableCell>交期</TableCell>
-                <TableCell>服务</TableCell>
-                <TableCell>价格</TableCell>
-                <TableCell>综合</TableCell>
-                <TableCell>评估人</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {evaluations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: "center" }}>
-                    <EmptyState
-                      title="暂无评估数据"
-                      description="点击上方按钮添加第一个评估记录"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                evaluations.map((ev) => (
-                  <TableRow key={ev.id}>
-                    <TableCell>{ev.supplier_id}</TableCell>
-                    <TableCell>
-                      {new Date(ev.evaluation_date).toLocaleDateString("zh-CN")}
-                    </TableCell>
-                    <TableCell>{ev.quality_score || "-"}</TableCell>
-                    <TableCell>{ev.delivery_score || "-"}</TableCell>
-                    <TableCell>{ev.service_score || "-"}</TableCell>
-                    <TableCell>{ev.price_score || "-"}</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {ev.overall_score || "-"}
-                    </TableCell>
-                    <TableCell>{ev.evaluator || "-"}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <TablePagination
-              component="div"
-              count={total}
-              page={currentPage - 1}
-              rowsPerPage={pageSize}
-              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-              rowsPerPageOptions={[]}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="供应商评估管理"
+        subtitle="供应商评估记录,包括质量、交期、服务、价格评分"
+        columns={columns}
+        data={evaluations}
+        loading={loading}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: (page) => setCurrentPage(page + 1),
+        }}
+        actions={[
+          {
+            label: "新增评估",
+            icon: <Plus size={16} />,
+            onClick: () => setShowDialog(true),
+            variant: "contained",
+          },
+        ]}
+        onRefresh={loadEvaluations}
+        emptyMessage="暂无评估数据"
+      />
 
       <Dialog
         open={showDialog}
@@ -328,7 +303,7 @@ const ScmEvaluationPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

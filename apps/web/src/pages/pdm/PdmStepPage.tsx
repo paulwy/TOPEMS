@@ -12,18 +12,11 @@ import {
   CardContent,
   CardHeader,
   Typography,
+  Stack,
 } from "@mui/material";
 import { apiLogger } from "@/utils/logger";
-import {
-  Plus,
-  Eye,
-  ClipboardList,
-  Search,
-  Clock,
-  ListOrdered,
-} from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Plus, Eye, ClipboardList, Clock, ListOrdered } from "lucide-react";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { pdmApi } from "@/api/pdm";
 import type { ProductionStep } from "@/api/pdm";
 import { toast } from "react-toastify";
@@ -44,6 +37,10 @@ const PdmStepPage: React.FC = () => {
     duration_hours: "",
     equipment_required: "",
   });
+
+  // 分页状态
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     loadSteps();
@@ -99,55 +96,68 @@ const PdmStepPage: React.FC = () => {
 
   const columns: ColumnDef<ProductionStep>[] = [
     {
-      accessorKey: "sort_order",
-      header: "序号",
-      cell: ({ row }) => (
+      id: "sort_order",
+      label: "序号",
+      width: 80,
+      render: (row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <ListOrdered sx={{ width: 14, height: 14 }} />
-          {row.original.sort_order}
+          {row.sort_order}
         </Box>
       ),
     },
-    { accessorKey: "step_no", header: "步骤编号" },
-    { accessorKey: "name", header: "步骤名称" },
     {
-      accessorKey: "duration",
-      header: "耗时(小时)",
-      cell: ({ row }) => (
+      id: "step_no",
+      label: "步骤编号",
+    },
+    {
+      id: "name",
+      label: "步骤名称",
+    },
+    {
+      id: "duration",
+      label: "耗时(小时)",
+      render: (row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Clock sx={{ width: 14, height: 14 }} />
-          {row.original.duration || "-"}
+          {row.duration || "-"}
         </Box>
       ),
     },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status || ""),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status || ""),
     },
     {
       id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-        </Box>
+      label: "操作",
+      align: "right",
+      render: (row) => (
+        <Button
+          size="small"
+          onClick={() => handleView(row)}
+          startIcon={<Eye style={{ width: 16, height: 16 }} />}
+        >
+          详情
+        </Button>
       ),
     },
   ];
 
+  // 搜索过滤
   const filteredSteps = steps.filter((step) => {
     return (
       step.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       step.step_no.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  // 分页数据
+  const paginatedSteps = filteredSteps.slice(
+    page * pageSize,
+    page * pageSize + pageSize,
+  );
 
   const handleView = (step: ProductionStep) => {
     setSelectedStep(step);
@@ -195,37 +205,6 @@ const PdmStepPage: React.FC = () => {
       .length,
     inactive: steps.filter((s) => s.status === "禁用").length,
   };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#22c55e",
-              borderTopColor: "#16a34a",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
 
   return (
     <Box
@@ -441,28 +420,23 @@ const PdmStepPage: React.FC = () => {
             </Typography>
           </CardHeader>
           <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索步骤名称或编号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-            </Box>
-            <DataTable
+            <ListPageTemplate
               columns={columns}
-              data={filteredSteps}
-              enablePagination
+              data={paginatedSteps}
+              loading={loading}
+              searchable
+              searchPlaceholder="搜索步骤名称或编号..."
+              searchValue={searchTerm}
+              onSearch={setSearchTerm}
+              pagination={{
+                page,
+                pageSize,
+                total: filteredSteps.length,
+                onPageChange: setPage,
+                onPageSizeChange: setPageSize,
+              }}
+              showRowNumber
+              onRowClick={handleView}
             />
           </CardContent>
         </Card>

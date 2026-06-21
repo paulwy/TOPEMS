@@ -1,44 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { logger } from "@/utils/logger";
-import { Link } from "react-router-dom";
 import {
   Plus,
-  Search,
-  Filter,
-  Download,
   Edit,
   Trash2,
   Eye,
-  MoreVertical,
+  Download,
   FileText,
   Calendar,
   User,
-  Clock,
 } from "lucide-react";
 import {
   Button,
-  Card,
-  CardContent,
-  TextField,
-  Box,
-  Skeleton,
-  Typography,
-  Menu,
-  MenuItem,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TablePagination,
   Chip,
+  Box,
+  Typography,
   Tooltip,
+  IconButton,
 } from "@mui/material";
-import { EmptyState } from "@/components/EmptyState";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from "@/components/templates";
 
 interface Report {
   id: string;
@@ -170,8 +155,8 @@ const BIReportPage = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -192,15 +177,16 @@ const BIReportPage = () => {
     }
   };
 
-  const filteredReports = reports.filter((report) => {
-    const matchesSearch =
-      report.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.creator.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "all" || report.type === filterType;
-    const matchesStatus =
-      filterStatus === "all" || report.status === filterStatus;
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const filteredReports = useMemo(() => {
+    return reports.filter((report) => {
+      const matchesSearch =
+        report.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        report.creator.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = !filterType || report.type === filterType;
+      const matchesStatus = !filterStatus || report.status === filterStatus;
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [reports, searchTerm, filterType, filterStatus]);
 
   const handleChangePage = (_: any, newPage: number) => {
     setPage(newPage);
@@ -211,285 +197,183 @@ const BIReportPage = () => {
     setPage(0);
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          bgcolor: "grey.50",
-          p: 3,
-          display: "flex",
-          flexDirection: "column",
-          gap: 3,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            <Skeleton variant="text" width={128} height={32} sx={{ mb: 1 }} />
-            <Skeleton variant="text" width={96} height={16} />
-          </Box>
+  const columns = useMemo<ColumnDef<Report>[]>(
+    () => [
+      {
+        id: "name",
+        label: "报表名称",
+        render: (row) => (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Skeleton variant="rounded" width={96} height={40} />
-            <Skeleton variant="rounded" width={112} height={40} />
+            <FileText size={18} color="#64748b" />
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {row.description || "暂无描述"}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-        <Skeleton variant="rounded" width="100%" height={80} />
-        <Skeleton variant="rounded" width="100%" height={400} />
-      </Box>
-    );
-  }
+        ),
+      },
+      {
+        id: "type",
+        label: "类型",
+        render: (row) => {
+          const typeConfig = getTypeConfig(row.type);
+          return (
+            <Chip
+              label={typeConfig.label}
+              size="small"
+              color={typeConfig.color}
+              variant="outlined"
+            />
+          );
+        },
+      },
+      {
+        id: "creator",
+        label: "创建人",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <User size={14} color="#64748b" />
+            <Typography variant="body2">{row.creator}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "created_at",
+        label: "创建时间",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Calendar size={14} color="#64748b" />
+            <Typography variant="body2" color="text.secondary">
+              {new Date(row.created_at).toLocaleDateString("zh-CN")}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => {
+          const statusConfig = getStatusConfig(row.status);
+          return (
+            <Chip
+              label={statusConfig.label}
+              size="small"
+              color={statusConfig.color}
+            />
+          );
+        },
+      },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo<RowAction<Report>[]>(
+    () => [
+      {
+        label: "预览",
+        icon: <Eye size={16} />,
+        onClick: (row) => logger.info("View:", row.id),
+      },
+      {
+        label: "下载",
+        icon: <Download size={16} />,
+        onClick: (row) => logger.info("Download:", row.id),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => logger.info("Edit:", row.id),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => logger.info("Delete:", row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个报表吗?",
+      },
+    ],
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "type",
+        label: "报表类型",
+        type: "select",
+        options: [
+          { value: "", label: "全部类型" },
+          { value: "daily", label: "日报" },
+          { value: "weekly", label: "周报" },
+          { value: "monthly", label: "月报" },
+          { value: "quarterly", label: "季报" },
+          { value: "annual", label: "年报" },
+          { value: "custom", label: "自定义" },
+        ],
+        value: filterType,
+        onChange: (value) => setFilterType(value as string),
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "active", label: "启用" },
+          { value: "draft", label: "草稿" },
+          { value: "archived", label: "归档" },
+        ],
+        value: filterStatus,
+        onChange: (value) => setFilterStatus(value as string),
+      },
+    ],
+    [filterType, filterStatus],
+  );
+
+  const pagination = useMemo(
+    () => ({
+      page,
+      pageSize: rowsPerPage,
+      total: filteredReports.length,
+      onPageChange: handleChangePage,
+      onPageSizeChange: handleChangeRowsPerPage,
+    }),
+    [page, rowsPerPage, filteredReports.length],
+  );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "grey.900" }}
-            >
-              报表管理
-            </Typography>
-            <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
-              创建、管理和生成业务报表
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Link to="/bi/dashboard">
-              <Button variant="outlined">返回数据大屏</Button>
-            </Link>
-            <Button variant="contained">
-              <Plus size={16} sx={{ mr: 1 }} />
-              新建报表
-            </Button>
-          </Box>
-        </Box>
-
-        <Card>
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <TextField
-                placeholder="搜索报表名称或创建人..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ flex: 1 }}
-                size="small"
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />
-                    ),
-                  },
-                }}
-              />
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Filter size={16} color="#94a3b8" />
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>报表类型</InputLabel>
-                  <Select
-                    value={filterType}
-                    label="报表类型"
-                    onChange={(e) => setFilterType(e.target.value)}
-                  >
-                    <MenuItem value="all">全部类型</MenuItem>
-                    <MenuItem value="daily">日报</MenuItem>
-                    <MenuItem value="weekly">周报</MenuItem>
-                    <MenuItem value="monthly">月报</MenuItem>
-                    <MenuItem value="quarterly">季报</MenuItem>
-                    <MenuItem value="annual">年报</MenuItem>
-                    <MenuItem value="custom">自定义</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl size="small" sx={{ minWidth: 100 }}>
-                  <InputLabel>状态</InputLabel>
-                  <Select
-                    value={filterStatus}
-                    label="状态"
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                  >
-                    <MenuItem value="all">全部</MenuItem>
-                    <MenuItem value="active">启用</MenuItem>
-                    <MenuItem value="draft">草稿</MenuItem>
-                    <MenuItem value="archived">归档</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        {filteredReports.length === 0 ? (
-          <EmptyState
-            icon="file"
-            title="暂无报表数据"
-            description="还没有创建任何报表，点击下方按钮创建第一个报表"
-            action={{
-              label: "创建报表",
-              onClick: () => logger.info("Create report"),
-            }}
-          />
-        ) : (
-          <Card>
-            <Box sx={{ overflow: "auto" }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>报表名称</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>创建人</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>创建时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">
-                      操作
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredReports
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((report) => {
-                      const typeConfig = getTypeConfig(report.type);
-                      const statusConfig = getStatusConfig(report.status);
-                      return (
-                        <TableRow key={report.id} hover>
-                          <TableCell>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
-                              }}
-                            >
-                              <FileText size={18} color="#64748b" />
-                              <Box>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 500 }}
-                                >
-                                  {report.name}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {report.description || "暂无描述"}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={typeConfig.label}
-                              size="small"
-                              color={typeConfig.color}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                              }}
-                            >
-                              <User size={14} color="#64748b" />
-                              <Typography variant="body2">
-                                {report.creator}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                              }}
-                            >
-                              <Calendar size={14} color="#64748b" />
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {new Date(report.created_at).toLocaleDateString(
-                                  "zh-CN",
-                                )}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={statusConfig.label}
-                              size="small"
-                              color={statusConfig.color}
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                gap: 0.5,
-                              }}
-                            >
-                              <Tooltip title="预览">
-                                <IconButton size="small">
-                                  <Eye size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="下载">
-                                <IconButton size="small">
-                                  <Download size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="编辑">
-                                <IconButton size="small">
-                                  <Edit size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="删除">
-                                <IconButton
-                                  size="small"
-                                  sx={{ color: "error.main" }}
-                                >
-                                  <Trash2 size={16} />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
-            </Box>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 20, 50]}
-              component="div"
-              count={filteredReports.length}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              labelRowsPerPage="每页行数"
-            />
-          </Card>
-        )}
-      </Box>
-    </Box>
+    <ListPageTemplate<Report>
+      title="报表管理"
+      subtitle="创建、管理和生成业务报表"
+      columns={columns}
+      data={filteredReports}
+      loading={loading}
+      searchable
+      searchPlaceholder="搜索报表名称或创建人..."
+      searchValue={searchTerm}
+      onSearch={(value) => setSearchTerm(value)}
+      filters={filters}
+      pagination={pagination}
+      rowActions={rowActions}
+      actions={[
+        {
+          label: "返回数据大屏",
+          variant: "outlined",
+          onClick: () => logger.info("Back to dashboard"),
+        },
+        {
+          label: "新建报表",
+          icon: <Plus size={16} />,
+          variant: "contained",
+          onClick: () => logger.info("Create report"),
+        },
+      ]}
+    />
   );
 };
 

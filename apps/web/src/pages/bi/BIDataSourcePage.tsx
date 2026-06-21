@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { logger } from "@/utils/logger";
-import { Link } from "react-router-dom";
 import {
   Plus,
   RefreshCw,
@@ -13,33 +12,21 @@ import {
   Clock,
   Database,
   Server,
-  Search,
-  Filter,
 } from "lucide-react";
 import {
   Button,
-  Card,
-  CardContent,
-  TextField,
-  Box,
-  Skeleton,
-  Typography,
-  Menu,
-  MenuItem,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TablePagination,
   Chip,
+  Box,
+  Typography,
   Tooltip,
+  IconButton,
 } from "@mui/material";
-import { EmptyState } from "@/components/EmptyState";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from "@/components/templates";
 
 interface DataSource {
   id: string;
@@ -106,8 +93,8 @@ const BIDataSourcePage = () => {
   const [datasources, setDatasources] = useState<DataSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -205,14 +192,16 @@ const BIDataSourcePage = () => {
     }
   };
 
-  const filteredDatasources = datasources.filter((ds) => {
-    const matchesSearch =
-      ds.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ds.database.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "all" || ds.type === filterType;
-    const matchesStatus = filterStatus === "all" || ds.status === filterStatus;
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const filteredDatasources = useMemo(() => {
+    return datasources.filter((ds) => {
+      const matchesSearch =
+        ds.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ds.database.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = !filterType || ds.type === filterType;
+      const matchesStatus = !filterStatus || ds.status === filterStatus;
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [datasources, searchTerm, filterType, filterStatus]);
 
   const handleChangePage = (_: any, newPage: number) => {
     setPage(newPage);
@@ -231,294 +220,192 @@ const BIDataSourcePage = () => {
     logger.info("Test connection:", ds.id);
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          bgcolor: "grey.50",
-          p: 3,
-          display: "flex",
-          flexDirection: "column",
-          gap: 3,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            <Skeleton variant="text" width={128} height={32} sx={{ mb: 1 }} />
-            <Skeleton variant="text" width={96} height={16} />
-          </Box>
+  const columns = useMemo<ColumnDef<DataSource>[]>(
+    () => [
+      {
+        id: "name",
+        label: "数据源名称",
+        render: (row) => (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Skeleton variant="rounded" width={96} height={40} />
-            <Skeleton variant="rounded" width={112} height={40} />
+            <Database size={18} color="#64748b" />
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                <Server size={12} /> {row.host}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-        <Skeleton variant="rounded" width="100%" height={80} />
-        <Skeleton variant="rounded" width="100%" height={400} />
-      </Box>
-    );
-  }
+        ),
+      },
+      {
+        id: "type",
+        label: "类型",
+        render: (row) => {
+          const typeConfig = getTypeConfig(row.type);
+          return (
+            <Chip
+              icon={<Typography component="span">{typeConfig.icon}</Typography>}
+              label={typeConfig.label}
+              size="small"
+              variant="outlined"
+            />
+          );
+        },
+      },
+      {
+        id: "status",
+        label: "连接状态",
+        render: (row) => {
+          const statusConfig = getStatusConfig(row.status);
+          return (
+            <Chip
+              icon={statusConfig.icon}
+              label={statusConfig.label}
+              size="small"
+              color={statusConfig.color}
+            />
+          );
+        },
+      },
+      {
+        id: "last_sync",
+        label: "最后同步时间",
+        render: (row) =>
+          row.last_sync ? (
+            <Typography variant="body2" color="text.secondary">
+              <Clock size={12} />{" "}
+              {new Date(row.last_sync).toLocaleString("zh-CN")}
+            </Typography>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              未同步
+            </Typography>
+          ),
+      },
+      {
+        id: "dataVolume",
+        label: "数据量",
+        render: (row) => (
+          <Typography variant="body2">
+            {row.dataVolume ? `${(row.dataVolume / 1000).toFixed(1)}K` : "-"}
+          </Typography>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo<RowAction<DataSource>[]>(
+    () => [
+      {
+        label: "同步",
+        icon: <RefreshCw size={16} />,
+        onClick: (row) => handleSync(row),
+      },
+      {
+        label: "测试连接",
+        icon: <TestTube size={16} />,
+        onClick: (row) => handleTestConnection(row),
+      },
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: (row) => logger.info("View:", row.id),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => logger.info("Edit:", row.id),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => logger.info("Delete:", row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个数据源吗?",
+      },
+    ],
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "type",
+        label: "数据源类型",
+        type: "select",
+        options: [
+          { value: "", label: "全部类型" },
+          { value: "postgresql", label: "PostgreSQL" },
+          { value: "mysql", label: "MySQL" },
+          { value: "mongodb", label: "MongoDB" },
+          { value: "redis", label: "Redis" },
+          { value: "elasticsearch", label: "Elasticsearch" },
+          { value: "api", label: "API" },
+          { value: "file", label: "文件" },
+        ],
+        value: filterType,
+        onChange: (value) => setFilterType(value as string),
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "active", label: "已连接" },
+          { value: "inactive", label: "未激活" },
+          { value: "error", label: "异常" },
+        ],
+        value: filterStatus,
+        onChange: (value) => setFilterStatus(value as string),
+      },
+    ],
+    [filterType, filterStatus],
+  );
+
+  const pagination = useMemo(
+    () => ({
+      page,
+      pageSize: rowsPerPage,
+      total: filteredDatasources.length,
+      onPageChange: handleChangePage,
+      onPageSizeChange: handleChangeRowsPerPage,
+    }),
+    [page, rowsPerPage, filteredDatasources.length],
+  );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "grey.900" }}
-            >
-              数据源管理
-            </Typography>
-            <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
-              配置和管理BI数据源连接
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Link to="/bi/dashboard">
-              <Button variant="outlined">返回数据大屏</Button>
-            </Link>
-            <Button variant="contained">
-              <Plus size={16} sx={{ mr: 1 }} />
-              新增数据源
-            </Button>
-          </Box>
-        </Box>
-
-        <Card>
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <TextField
-                placeholder="搜索数据源名称..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ flex: 1 }}
-                size="small"
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />
-                    ),
-                  },
-                }}
-              />
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Filter size={16} color="#94a3b8" />
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>数据源类型</InputLabel>
-                  <Select
-                    value={filterType}
-                    label="数据源类型"
-                    onChange={(e) => setFilterType(e.target.value)}
-                  >
-                    <MenuItem value="all">全部类型</MenuItem>
-                    <MenuItem value="postgresql">PostgreSQL</MenuItem>
-                    <MenuItem value="mysql">MySQL</MenuItem>
-                    <MenuItem value="mongodb">MongoDB</MenuItem>
-                    <MenuItem value="redis">Redis</MenuItem>
-                    <MenuItem value="elasticsearch">Elasticsearch</MenuItem>
-                    <MenuItem value="api">API</MenuItem>
-                    <MenuItem value="file">文件</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl size="small" sx={{ minWidth: 100 }}>
-                  <InputLabel>状态</InputLabel>
-                  <Select
-                    value={filterStatus}
-                    label="状态"
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                  >
-                    <MenuItem value="all">全部</MenuItem>
-                    <MenuItem value="active">已连接</MenuItem>
-                    <MenuItem value="inactive">未激活</MenuItem>
-                    <MenuItem value="error">异常</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        {filteredDatasources.length === 0 ? (
-          <EmptyState
-            icon="folder"
-            title="暂无数据源"
-            description="还没有配置任何数据源，点击下方按钮添加第一个数据源"
-            action={{
-              label: "添加数据源",
-              onClick: () => logger.info("Add datasource"),
-            }}
-          />
-        ) : (
-          <Card>
-            <Box sx={{ overflow: "auto" }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600 }}>数据源名称</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>连接状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>最后同步时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>数据量</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">
-                      操作
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredDatasources
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((ds) => {
-                      const statusConfig = getStatusConfig(ds.status);
-                      const typeConfig = getTypeConfig(ds.type);
-                      return (
-                        <TableRow key={ds.id} hover>
-                          <TableCell>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
-                              }}
-                            >
-                              <Database size={18} color="#64748b" />
-                              <Box>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 500 }}
-                                >
-                                  {ds.name}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  <Server size={12} /> {ds.host}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={
-                                <Typography component="span">
-                                  {typeConfig.icon}
-                                </Typography>
-                              }
-                              label={typeConfig.label}
-                              size="small"
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={statusConfig.icon}
-                              label={statusConfig.label}
-                              size="small"
-                              color={statusConfig.color}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {ds.last_sync ? (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                <Clock size={12} />{" "}
-                                {new Date(ds.last_sync).toLocaleString("zh-CN")}
-                              </Typography>
-                            ) : (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                未同步
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {ds.dataVolume
-                                ? `${(ds.dataVolume / 1000).toFixed(1)}K`
-                                : "-"}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                gap: 0.5,
-                              }}
-                            >
-                              <Tooltip title="同步">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleSync(ds)}
-                                >
-                                  <RefreshCw size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="测试连接">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleTestConnection(ds)}
-                                >
-                                  <TestTube size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="查看">
-                                <IconButton size="small">
-                                  <Eye size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="编辑">
-                                <IconButton size="small">
-                                  <Edit size={16} />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="删除">
-                                <IconButton
-                                  size="small"
-                                  sx={{ color: "error.main" }}
-                                >
-                                  <Trash2 size={16} />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
-            </Box>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 20, 50]}
-              component="div"
-              count={filteredDatasources.length}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              labelRowsPerPage="每页行数"
-            />
-          </Card>
-        )}
-      </Box>
-    </Box>
+    <ListPageTemplate<DataSource>
+      title="数据源管理"
+      subtitle="配置和管理BI数据源连接"
+      columns={columns}
+      data={filteredDatasources}
+      loading={loading}
+      searchable
+      searchPlaceholder="搜索数据源名称..."
+      searchValue={searchTerm}
+      onSearch={(value) => setSearchTerm(value)}
+      filters={filters}
+      pagination={pagination}
+      rowActions={rowActions}
+      actions={[
+        {
+          label: "返回数据大屏",
+          variant: "outlined",
+          onClick: () => logger.info("Back to dashboard"),
+        },
+        {
+          label: "新增数据源",
+          icon: <Plus size={16} />,
+          variant: "contained",
+          onClick: () => logger.info("Add datasource"),
+        },
+      ]}
+    />
   );
 };
 

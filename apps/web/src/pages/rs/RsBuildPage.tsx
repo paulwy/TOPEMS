@@ -1,35 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Container,
   Typography,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   Paper,
   IconButton,
   Button,
-  TextField,
-  InputAdornment,
-  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Tooltip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from "@mui/material";
 import {
   Plus,
-  Search,
   Play,
   FileText,
   Package,
@@ -37,8 +21,13 @@ import {
   CheckCircle,
   XCircle,
   Loader,
-  Filter,
 } from "lucide-react";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Build {
   id: string;
@@ -52,7 +41,7 @@ interface Build {
 
 const RsBuildPage: React.FC = () => {
   const [builds, setBuilds] = useState<Build[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,7 +99,6 @@ const RsBuildPage: React.FC = () => {
       },
     ];
     setBuilds(mockBuilds);
-    setLoading(false);
   }, []);
 
   const getStatusColor = (
@@ -180,17 +168,22 @@ const RsBuildPage: React.FC = () => {
     return `${mins}分${secs}秒`;
   };
 
-  const filteredBuilds = builds.filter((build) => {
-    const matchesSearch =
-      build.build_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      build.build_task.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || build.status === statusFilter;
-    const matchesTaskType =
-      !taskTypeFilter || build.build_task.includes(taskTypeFilter);
-    return matchesSearch && matchesStatus && matchesTaskType;
-  });
+  const uniqueTaskTypes = useMemo(
+    () => [...new Set(builds.map((b) => b.build_task))],
+    [builds],
+  );
 
-  const uniqueTaskTypes = [...new Set(builds.map((b) => b.build_task))];
+  const filteredBuilds = useMemo(() => {
+    return builds.filter((build) => {
+      const matchesSearch =
+        build.build_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        build.build_task.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || build.status === statusFilter;
+      const matchesTaskType =
+        !taskTypeFilter || build.build_task.includes(taskTypeFilter);
+      return matchesSearch && matchesStatus && matchesTaskType;
+    });
+  }, [builds, searchTerm, statusFilter, taskTypeFilter]);
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -221,182 +214,132 @@ const RsBuildPage: React.FC = () => {
     setLogDialogOpen(true);
   };
 
+  // 表格列定义
+  const columns: ColumnDef<Build>[] = [
+    {
+      id: "build_no",
+      label: "构建编号",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Package size={16} color="#3b82f6" />
+          {row.build_no}
+        </Box>
+      ),
+    },
+    { id: "build_task", label: "构建任务" },
+    {
+      id: "trigger_type",
+      label: "触发方式",
+      render: (row) => (
+        <Chip
+          label={getTriggerTypeLabel(row.trigger_type)}
+          size="small"
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip
+          icon={getStatusIcon(row.status)}
+          label={getStatusLabel(row.status)}
+          size="small"
+          color={getStatusColor(row.status)}
+        />
+      ),
+    },
+    {
+      id: "duration",
+      label: "耗时",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Clock size={14} />
+          {formatDuration(row.duration)}
+        </Box>
+      ),
+    },
+    { id: "build_time", label: "构建时间" },
+  ];
+
+  // 筛选器定义
+  const filters: FilterConfig[] = [
+    {
+      id: "status",
+      label: "构建状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "成功", value: "success" },
+        { label: "失败", value: "failed" },
+        { label: "运行中", value: "running" },
+        { label: "等待中", value: "pending" },
+      ],
+      value: statusFilter || "",
+      onChange: (value) => setStatusFilter(value || null),
+    },
+    {
+      id: "taskType",
+      label: "任务类型",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        ...uniqueTaskTypes.map((task) => ({ label: task, value: task })),
+      ],
+      value: taskTypeFilter || "",
+      onChange: (value) => setTaskTypeFilter(value || null),
+    },
+  ];
+
+  // 行操作定义
+  const rowActions: RowAction<Build>[] = [
+    {
+      label: "查看日志",
+      icon: <FileText size={16} />,
+      onClick: handleViewLog,
+    },
+    {
+      label: "制品管理",
+      icon: <Package size={16} />,
+    },
+  ];
+
+  // 分页配置
+  const pagination = {
+    page,
+    pageSize: rowsPerPage,
+    total: filteredBuilds.length,
+    onPageChange: setPage,
+    onPageSizeChange: setRowsPerPage,
+  };
+
+  // 操作按钮
+  const actions = [
+    {
+      label: "触发构建",
+      icon: <Play size={18} />,
+      onClick: handleTriggerBuild,
+    },
+  ];
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
-          >
-            构建管理
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Play size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-            onClick={handleTriggerBuild}
-          >
-            触发构建
-          </Button>
-        </Box>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <TextField
-              size="small"
-              placeholder="搜索构建编号、任务..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>构建状态</InputLabel>
-              <Select
-                value={statusFilter || ""}
-                label="构建状态"
-                onChange={(e) => setStatusFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="success">成功</MenuItem>
-                <MenuItem value="failed">失败</MenuItem>
-                <MenuItem value="running">运行中</MenuItem>
-                <MenuItem value="pending">等待中</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>任务类型</InputLabel>
-              <Select
-                value={taskTypeFilter || ""}
-                label="任务类型"
-                onChange={(e) => setTaskTypeFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                {uniqueTaskTypes.map((task) => (
-                  <MenuItem key={task} value={task}>
-                    {task}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-        </Paper>
-
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    构建编号
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    构建任务
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    触发方式
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    状态
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    耗时
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    构建时间
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredBuilds
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((build) => (
-                    <TableRow key={build.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Package size={16} color="#3b82f6" />
-                          {build.build_no}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{build.build_task}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getTriggerTypeLabel(build.trigger_type)}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          icon={getStatusIcon(build.status)}
-                          label={getStatusLabel(build.status)}
-                          size="small"
-                          color={getStatusColor(build.status)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Clock size={14} />
-                          {formatDuration(build.duration)}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{build.build_time}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="查看日志">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewLog(build)}
-                            >
-                              <FileText size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="制品管理">
-                            <IconButton size="small">
-                              <Package size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredBuilds.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+      <ListPageTemplate
+        title="构建管理"
+        columns={columns}
+        data={filteredBuilds}
+        loading={loading}
+        filters={filters}
+        globalSearch={{
+          fields: ["build_no", "build_task"],
+          placeholder: "搜索构建编号、任务...",
+        }}
+        pagination={pagination}
+        actions={actions}
+        rowActions={rowActions}
+        onSearch={setSearchTerm}
+      />
 
       <Dialog
         open={logDialogOpen}

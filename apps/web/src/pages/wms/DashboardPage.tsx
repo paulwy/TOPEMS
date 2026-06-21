@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Card, CardContent, Button } from "@mui/material";
-import { Grid } from "@/components/Grid";
+import { Box, Button } from "@mui/material";
 import { QuickSearch } from "@/components/common";
 import {
   Warehouse,
@@ -13,16 +12,12 @@ import {
 import BarChartComponent from "../../components/charts/BarChart";
 import PieChartComponent from "../../components/charts/PieChart";
 import LineChartComponent from "../../components/charts/LineChart";
-
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; size?: number }>
-> = {
-  Warehouse,
-  Package,
-  AlertCircle,
-  Truck,
-};
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard,
+  type QuickAction,
+} from "@/components/templates";
 
 const barData = [
   { name: "A区", value: 1200 },
@@ -46,6 +41,16 @@ const lineData = [
   { name: "周六", value: 45 },
 ];
 
+const iconMap: Record<
+  string,
+  React.ComponentType<{ className?: string; size?: number }>
+> = {
+  Warehouse,
+  Package,
+  AlertCircle,
+  Truck,
+};
+
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -55,37 +60,6 @@ export const DashboardPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography sx={{ fontSize: "1.125rem", color: "grey.600" }}>
-          加载中...
-        </Typography>
-      </Box>
-    );
-  }
-
-  const stats = [
-    { label: "仓库数量", value: "6", icon: "Warehouse", trend: "+1" },
-    { label: "库存总量", value: "6,150", icon: "Package", trend: "+320" },
-    { label: "今日入库", value: "128", icon: "Truck", trend: "+25" },
-    { label: "库存预警", value: "5", icon: "AlertCircle", trend: "-3" },
-  ];
-
-  const quickActions = [
-    { label: "入库登记", path: "/wms/inbound-orders/create" },
-    { label: "出库登记", path: "/wms/outbound-orders/create" },
-    { label: "库存查询", path: "/wms/inventory" },
-    { label: "仓库设置", path: "/wms/warehouses" },
-  ];
-
   const getGreeting = (): string => {
     const hour = new Date().getHours();
     if (hour < 12) return "上午好";
@@ -93,196 +67,130 @@ export const DashboardPage: React.FC = () => {
     return "晚上好";
   };
 
-  return (
-    <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box
-        sx={{
-          padding: "24px 32px",
-          background: "white",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+  const stats: StatCard[] = useMemo(
+    () => [
+      {
+        id: "warehouses",
+        title: "仓库数量",
+        value: "6",
+        icon: <Warehouse size={24} />,
+        change: 1,
+        changeLabel: "较上周期",
+        color: "primary",
+      },
+      {
+        id: "inventory",
+        title: "库存总量",
+        value: "6,150",
+        icon: <Package size={24} />,
+        change: 320,
+        changeLabel: "较上周期",
+        color: "success",
+      },
+      {
+        id: "inbound",
+        title: "今日入库",
+        value: "128",
+        icon: <Truck size={24} />,
+        change: 25,
+        changeLabel: "较上周期",
+        color: "info",
+      },
+      {
+        id: "alerts",
+        title: "库存预警",
+        value: "5",
+        icon: <AlertCircle size={24} />,
+        change: -3,
+        changeLabel: "较上周期",
+        color: "warning",
+      },
+    ],
+    [],
+  );
+
+  const charts: ChartCard[] = useMemo(
+    () => [
+      {
+        id: "inventory-distribution",
+        title: "各仓库库存分布",
+        chart: <BarChartComponent data={barData} xKey="name" yKey="value" />,
+        height: 300,
+        type: "bar",
+      },
+      {
+        id: "inventory-type",
+        title: "库存类型分布",
+        chart: <PieChartComponent data={pieData} />,
+        height: 300,
+        type: "pie",
+      },
+      {
+        id: "daily-trend",
+        title: "每日出入库趋势",
+        chart: <LineChartComponent data={lineData} xKey="name" yKey="value" />,
+        height: 300,
+        type: "line",
+      },
+    ],
+    [],
+  );
+
+  const quickActions: QuickAction[] = useMemo(
+    () => [
+      {
+        id: "inbound",
+        label: "入库登记",
+        icon: <ArrowRight size={16} />,
+        onClick: () => navigate("/wms/inbound-orders/create"),
+      },
+      {
+        id: "outbound",
+        label: "出库登记",
+        icon: <ArrowRight size={16} />,
+        onClick: () => navigate("/wms/outbound-orders/create"),
+      },
+      {
+        id: "inventory",
+        label: "库存查询",
+        icon: <ArrowRight size={16} />,
+        onClick: () => navigate("/wms/inventory"),
+      },
+      {
+        id: "warehouse-settings",
+        label: "仓库设置",
+        icon: <ArrowRight size={16} />,
+        onClick: () => navigate("/wms/warehouses"),
+      },
+    ],
+    [navigate],
+  );
+
+  const headerContent = useMemo(
+    () => (
+      <QuickSearch
+        placeholder="搜索仓储内容..."
+        onSearch={(query) => {
+          navigate(`/wms/inventory?search=${encodeURIComponent(query)}`);
         }}
-      >
-        <Box>
-          <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
-            仓储管理
-          </Typography>
-          <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
-            {getGreeting()}，仓库库存与物流概览
-          </Typography>
-        </Box>
-        <QuickSearch
-          placeholder="搜索仓储内容..."
-          onSearch={(query) => {
-            navigate(`/wms/inventory?search=${encodeURIComponent(query)}`);
-          }}
-          width={320}
-        />
-      </Box>
+        width={320}
+      />
+    ),
+    [navigate],
+  );
 
-      <Box sx={{ padding: "24px 32px" }}>
-        <Grid container spacing={{ xs: 2, sm: 3 }}>
-          {stats.map((stat, index) => {
-            const IconComponent = iconMap[stat.icon] || Package;
-            return (
-              <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card
-                  sx={{
-                    borderRadius: "12px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                      transform: "translateY(-2px)",
-                    },
-                  }}
-                >
-                  <CardContent sx={{ padding: "20px" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "#64748b", mb: 1 }}
-                        >
-                          {stat.label}
-                        </Typography>
-                        <Typography
-                          variant="h4"
-                          sx={{ color: "#1e293b", fontWeight: 600 }}
-                        >
-                          {stat.value}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: "12px",
-                          background:
-                            "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "white",
-                        }}
-                      >
-                        <IconComponent size={24} />
-                      </Box>
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: stat.trend.startsWith("-")
-                          ? "#ef4444"
-                          : "#10b981",
-                        mt: 1,
-                      }}
-                    >
-                      {stat.trend} vs 上周期
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Card
-              sx={{
-                borderRadius: "12px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                height: "100%",
-              }}
-            >
-              <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  各仓库库存分布
-                </Typography>
-                <BarChartComponent data={barData} xKey="name" yKey="value" />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card
-              sx={{
-                borderRadius: "12px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                height: "100%",
-              }}
-            >
-              <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  库存类型分布
-                </Typography>
-                <PieChartComponent data={pieData} />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid size={12}>
-            <Card
-              sx={{
-                borderRadius: "12px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              }}
-            >
-              <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  每日出入库趋势
-                </Typography>
-                <LineChartComponent data={lineData} xKey="name" yKey="value" />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Typography
-          variant="h6"
-          sx={{ mt: 4, mb: 2, color: "#1e293b", fontWeight: 600 }}
-        >
-          快速操作
-        </Typography>
-        <Grid container spacing={2}>
-          {quickActions.map((action, index) => (
-            <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                endIcon={<ArrowRight size={16} />}
-                onClick={() => navigate(action.path)}
-                sx={{
-                  padding: "16px",
-                  borderRadius: "12px",
-                  borderColor: "#e2e8f0",
-                  color: "#475569",
-                  textTransform: "none",
-                  justifyContent: "space-between",
-                  "&:hover": {
-                    borderColor: "#10b981",
-                    backgroundColor: "#f8fafc",
-                  },
-                }}
-              >
-                {action.label}
-              </Button>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </Box>
+  return (
+    <DashboardTemplate
+      title="仓储管理"
+      subtitle={`${getGreeting()}，仓库库存与物流概览`}
+      breadcrumbs={[{ label: "首页", href: "/dashboard" }, { label: "仓储" }]}
+      stats={stats}
+      charts={charts}
+      quickActions={quickActions}
+      quickActionsTitle="快速操作"
+      loading={loading}
+      headerContent={headerContent}
+    />
   );
 };
 

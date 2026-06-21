@@ -3,7 +3,7 @@
  * 管理企业固定资产信息，包括折旧跟踪和会计集成
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Plus,
   Edit,
@@ -18,7 +18,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
   TextField,
   Chip,
   FormControl,
@@ -35,10 +34,10 @@ import {
   Typography,
   Stack,
 } from "@mui/material";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { apiLogger } from "@/utils/logger";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { ImageUpload } from "@/components/common";
 
-import { apiLogger } from "@/utils/logger";
 /** 资产状态配置 */
 const STATUS_CONFIG: Record<string, { label: string; sx: object }> = {
   normal: { label: "正常", sx: { bgcolor: "success.main", color: "white" } },
@@ -246,158 +245,41 @@ export default function FixedAssetManagementPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [fixedAssets] = useState<FixedAsset[]>(mockFixedAssets);
 
+  // 分页状态
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
   // 过滤后的数据
-  const filteredAssets = fixedAssets.filter((asset) => {
-    const matchesSearch =
-      !searchQuery ||
-      asset.asset_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.asset_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (asset.department_name
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) ??
-        false);
+  const filteredAssets = useMemo(() => {
+    return fixedAssets.filter((asset) => {
+      const matchesSearch =
+        !searchQuery ||
+        asset.asset_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        asset.asset_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (asset.department_name
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ??
+          false);
 
-    const matchesCategory =
-      categoryFilter === "all" || asset.category === categoryFilter;
-    const matchesStatus =
-      statusFilter === "all" || asset.status === statusFilter;
+      const matchesCategory =
+        categoryFilter === "all" || asset.category === categoryFilter;
+      const matchesStatus =
+        statusFilter === "all" || asset.status === statusFilter;
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [fixedAssets, searchQuery, categoryFilter, statusFilter]);
 
-  // 表格列定义 - 使用 any 类型简化
-  const columns: any[] = [
-    {
-      id: "asset_code",
-      header: "资产编号",
-      accessorKey: "asset_code",
-      cell: ({ row }: { row: FixedAsset }) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Building size={16} style={{ color: "grey" }} />
-          <Typography sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
-            {row.asset_code}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: "asset_name",
-      header: "资产名称",
-      accessorKey: "asset_name",
-    },
-    {
-      id: "category",
-      header: "资产类别",
-      accessorKey: "category",
-      cell: ({ row }: { row: FixedAsset }) => {
-        const config = ASSET_CATEGORY_CONFIG[row.category] || {
-          label: row.category,
-          sx: { bgcolor: "grey.100", color: "grey.800" },
-        };
-        return <Chip label={config.label} size="small" sx={config.sx} />;
-      },
-    },
-    {
-      id: "original_value",
-      header: "原值",
-      accessorKey: "original_value",
-      cell: ({ row }: { row: FixedAsset }) => (
-        <Typography sx={{ fontFamily: "monospace", textAlign: "right" }}>
-          ¥
-          {row.original_value.toLocaleString("zh-CN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </Typography>
-      ),
-    },
-    {
-      id: "accumulated_depreciation",
-      header: "累计折旧",
-      accessorKey: "accumulated_depreciation",
-      cell: ({ row }: { row: FixedAsset }) => (
-        <Typography
-          sx={{
-            fontFamily: "monospace",
-            textAlign: "right",
-            color: "warning.main",
-          }}
-        >
-          ¥
-          {row.accumulated_depreciation.toLocaleString("zh-CN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </Typography>
-      ),
-    },
-    {
-      id: "net_value",
-      header: "净值",
-      accessorKey: "net_value",
-      cell: ({ row }: { row: FixedAsset }) => (
-        <Typography
-          sx={{ fontFamily: "monospace", textAlign: "right", fontWeight: 500 }}
-        >
-          ¥
-          {row.net_value.toLocaleString("zh-CN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </Typography>
-      ),
-    },
-    {
-      id: "depreciation_method",
-      header: "折旧方法",
-      accessorKey: "depreciation_method",
-      cell: ({ row }: { row: FixedAsset }) => {
-        const config = DEPRECIATION_METHOD_CONFIG[row.depreciation_method] || {
-          label: row.depreciation_method,
-          sx: { bgcolor: "grey.100", color: "grey.800" },
-        };
-        return <Chip label={config.label} size="small" sx={config.sx} />;
-      },
-    },
-    {
-      id: "status",
-      header: "状态",
-      accessorKey: "status",
-      cell: ({ row }: { row: FixedAsset }) => {
-        const config = STATUS_CONFIG[row.status] || {
-          label: row.status,
-          sx: { bgcolor: "grey.100", color: "grey.800" },
-        };
-        return <Chip label={config.label} size="small" sx={config.sx} />;
-      },
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }: { row: FixedAsset }) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => {
-              setSelectedAsset(row);
-              setIsEditing(true);
-            }}
-          >
-            <Edit size={16} />
-          </Button>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => setDeletingId(row.id)}
-            color="error"
-          >
-            <Trash2 size={16} />
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+  // 分页数据
+  const paginatedAssets = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredAssets.slice(start, end);
+  }, [filteredAssets, page, pageSize]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
 
   // 计算统计数据
   const totalOriginalValue = fixedAssets.reduce(
@@ -431,8 +313,211 @@ export default function FixedAssetManagementPage() {
     setDeletingId(null);
   };
 
+  // 列定义
+  const columns: ColumnDef<FixedAsset>[] = useMemo(
+    () => [
+      {
+        id: "asset_code",
+        label: "资产编号",
+        sortable: true,
+        render: (asset) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Building size={16} style={{ color: "grey" }} />
+            <Typography sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
+              {asset.asset_code}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "asset_name",
+        label: "资产名称",
+        sortable: true,
+        render: (asset) => (
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {asset.asset_name}
+            </Typography>
+            {asset.specification && (
+              <Typography variant="caption" color="text.secondary">
+                {asset.specification}
+              </Typography>
+            )}
+          </Box>
+        ),
+      },
+      {
+        id: "category",
+        label: "资产类别",
+        sortable: true,
+        render: (asset) => {
+          const config = ASSET_CATEGORY_CONFIG[asset.category] || {
+            label: asset.category,
+            sx: { bgcolor: "grey.100", color: "grey.800" },
+          };
+          return <Chip label={config.label} size="small" sx={config.sx} />;
+        },
+      },
+      {
+        id: "original_value",
+        label: "原值",
+        sortable: true,
+        align: "right",
+        render: (asset) => (
+          <Typography sx={{ fontFamily: "monospace", textAlign: "right" }}>
+            ¥
+            {asset.original_value.toLocaleString("zh-CN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Typography>
+        ),
+      },
+      {
+        id: "accumulated_depreciation",
+        label: "累计折旧",
+        sortable: true,
+        align: "right",
+        render: (asset) => (
+          <Typography
+            sx={{
+              fontFamily: "monospace",
+              textAlign: "right",
+              color: "warning.main",
+            }}
+          >
+            ¥
+            {asset.accumulated_depreciation.toLocaleString("zh-CN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Typography>
+        ),
+      },
+      {
+        id: "net_value",
+        label: "净值",
+        sortable: true,
+        align: "right",
+        render: (asset) => (
+          <Typography
+            sx={{
+              fontFamily: "monospace",
+              textAlign: "right",
+              fontWeight: 500,
+            }}
+          >
+            ¥
+            {asset.net_value.toLocaleString("zh-CN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Typography>
+        ),
+      },
+      {
+        id: "depreciation_method",
+        label: "折旧方法",
+        sortable: true,
+        render: (asset) => {
+          const config = DEPRECIATION_METHOD_CONFIG[
+            asset.depreciation_method
+          ] || {
+            label: asset.depreciation_method,
+            sx: { bgcolor: "grey.100", color: "grey.800" },
+          };
+          return <Chip label={config.label} size="small" sx={config.sx} />;
+        },
+      },
+      {
+        id: "status",
+        label: "状态",
+        sortable: true,
+        render: (asset) => {
+          const config = STATUS_CONFIG[asset.status] || {
+            label: asset.status,
+            sx: { bgcolor: "grey.100", color: "grey.800" },
+          };
+          return <Chip label={config.label} size="small" sx={config.sx} />;
+        },
+      },
+      {
+        id: "actions",
+        label: "操作",
+        align: "right",
+        render: (asset) => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button
+              variant="text"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedAsset(asset);
+                setIsEditing(true);
+              }}
+            >
+              <Edit size={16} />
+            </Button>
+            <Button
+              variant="text"
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeletingId(asset.id);
+              }}
+            >
+              <Trash2 size={16} />
+            </Button>
+          </Box>
+        ),
+      },
+    ],
+    [],
+  );
+
+  // 筛选器定义
+  const filters = useMemo(
+    () => [
+      {
+        id: "category",
+        label: "资产类别",
+        type: "select" as const,
+        options: [
+          { label: "全部类别", value: "all" },
+          { label: "房屋建筑物", value: "building" },
+          { label: "运输设备", value: "vehicle" },
+          { label: "生产设备", value: "equipment" },
+          { label: "办公设备", value: "office" },
+          { label: "电子设备", value: "electronic" },
+          { label: "其他", value: "other" },
+        ],
+      },
+      {
+        id: "status",
+        label: "资产状态",
+        type: "select" as const,
+        options: [
+          { label: "全部状态", value: "all" },
+          { label: "正常", value: "normal" },
+          { label: "已处置", value: "disposed" },
+          { label: "减值", value: "impaired" },
+          { label: "报废", value: "scrapped" },
+        ],
+      },
+    ],
+    [],
+  );
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", p: 3 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <Box
         sx={{
           maxWidth: 1280,
@@ -440,6 +525,7 @@ export default function FixedAssetManagementPage() {
           display: "flex",
           flexDirection: "column",
           gap: 3,
+          p: 3,
         }}
       >
         {/* 头部 */}
@@ -478,6 +564,7 @@ export default function FixedAssetManagementPage() {
           </Box>
           <Button
             size="small"
+            variant="contained"
             onClick={() => {
               setSelectedAsset(null);
               setIsCreating(true);
@@ -630,84 +717,37 @@ export default function FixedAssetManagementPage() {
           </Card>
         </Box>
 
-        {/* 筛选和搜索 */}
-        <Card>
-          <CardContent sx={{ pt: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Box sx={{ flex: 1, minWidth: 200 }}>
-                <TextField
-                  placeholder="搜索资产名称、编号或部门..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  size="small"
-                  fullWidth
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Search
-                          size={16}
-                          style={{ color: "grey", marginRight: 8 }}
-                        />
-                      ),
-                    },
-                  }}
-                />
-              </Box>
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel>资产类别</InputLabel>
-                <Select
-                  value={categoryFilter}
-                  label="资产类别"
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                >
-                  <MenuItem value="all">全部类别</MenuItem>
-                  <MenuItem value="building">房屋建筑物</MenuItem>
-                  <MenuItem value="vehicle">运输设备</MenuItem>
-                  <MenuItem value="equipment">生产设备</MenuItem>
-                  <MenuItem value="office">办公设备</MenuItem>
-                  <MenuItem value="electronic">电子设备</MenuItem>
-                  <MenuItem value="other">其他</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>资产状态</InputLabel>
-                <Select
-                  value={statusFilter}
-                  label="资产状态"
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <MenuItem value="all">全部状态</MenuItem>
-                  <MenuItem value="normal">正常</MenuItem>
-                  <MenuItem value="disposed">已处置</MenuItem>
-                  <MenuItem value="impaired">减值</MenuItem>
-                  <MenuItem value="scrapped">报废</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </CardContent>
-        </Card>
-
         {/* 资产列表 */}
-        <Card>
-          <CardHeader
-            title="固定资产列表"
-            subheader={`共 ${filteredAssets.length} 项资产`}
-          />
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredAssets}
-              searchPlaceholder="搜索资产..."
-            />
-          </CardContent>
-        </Card>
+        <ListPageTemplate
+          title="固定资产列表"
+          subtitle={`共 ${filteredAssets.length} 项资产`}
+          columns={columns}
+          data={paginatedAssets}
+          pagination={{
+            page,
+            pageSize,
+            total: filteredAssets.length,
+            onPageChange: handlePageChange,
+          }}
+          searchable
+          searchPlaceholder="搜索资产名称、编号或部门..."
+          searchValue={searchQuery}
+          onSearch={setSearchQuery}
+          filters={filters}
+          actions={[
+            {
+              label: "新增资产",
+              icon: <Plus size={16} />,
+              onClick: () => {
+                setSelectedAsset(null);
+                setIsCreating(true);
+              },
+              variant: "contained",
+            },
+          ]}
+          onRefresh={() => {}}
+          emptyMessage="暂无固定资产"
+        />
       </Box>
 
       {/* 创建/编辑侧边栏 */}

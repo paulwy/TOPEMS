@@ -3,51 +3,16 @@
  * 管理系统基础配置、邮件设置、短信设置、日志设置
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { apiLogger } from "@/utils/logger";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  CardHeader,
-  TextField,
-  Button,
-  Switch,
-  FormControlLabel,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemSecondaryAction,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
-import {
-  Settings,
-  Mail,
-  MessageSquare,
-  FileText,
-  ChevronLeft,
-  Save,
-  RotateCcw,
-  Bell,
-  Shield,
-  Database,
-  Globe,
-  Key,
-} from "lucide-react";
+import { Box, Typography, Tabs, Tab, Paper } from "@mui/material";
+import { Settings, Mail, MessageSquare, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import FormPageTemplate from "@/components/templates/FormPageTemplate";
+import type {
+  FormSection,
+  FormField,
+} from "@/components/templates/FormPageTemplate";
 
 // ============ Mock 数据 ============
 const mockSettings = {
@@ -85,325 +50,294 @@ const mockSettings = {
   },
 };
 
-const settingGroups = [
+interface TabConfig {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+const tabsConfig: TabConfig[] = [
   { id: "basic", label: "基础配置", icon: Settings },
   { id: "mail", label: "邮件设置", icon: Mail },
   { id: "sms", label: "短信设置", icon: MessageSquare },
   { id: "log", label: "日志设置", icon: FileText },
 ];
 
+// ============ 表单字段定义 ============
+
+const getBasicFields = (): FormField[] => [
+  {
+    name: "systemName",
+    label: "系统名称",
+    type: "text",
+    defaultValue: mockSettings.basic.systemName,
+  },
+  {
+    name: "companyName",
+    label: "公司名称",
+    type: "text",
+    defaultValue: mockSettings.basic.companyName,
+  },
+  {
+    name: "contactEmail",
+    label: "联系邮箱",
+    type: "email",
+    defaultValue: mockSettings.basic.contactEmail,
+  },
+  {
+    name: "contactPhone",
+    label: "联系电话",
+    type: "text",
+    defaultValue: mockSettings.basic.contactPhone,
+  },
+  {
+    name: "address",
+    label: "公司地址",
+    type: "textarea",
+    rows: 2,
+    defaultValue: mockSettings.basic.address,
+  },
+];
+
+const getMailFields = (): FormField[] => [
+  {
+    name: "enabled",
+    label: "启用邮件服务",
+    type: "switch",
+    defaultValue: mockSettings.mail.enabled,
+  },
+  {
+    name: "smtpHost",
+    label: "SMTP 服务器",
+    type: "text",
+    defaultValue: mockSettings.mail.smtpHost,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "smtpPort",
+    label: "SMTP 端口",
+    type: "number",
+    defaultValue: mockSettings.mail.smtpPort,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "smtpUsername",
+    label: "用户名",
+    type: "text",
+    defaultValue: mockSettings.mail.smtpUsername,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "smtpPassword",
+    label: "密码",
+    type: "password",
+    defaultValue: mockSettings.mail.smtpPassword,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "useTLS",
+    label: "使用 TLS",
+    type: "switch",
+    defaultValue: mockSettings.mail.useTLS,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "fromEmail",
+    label: "发件人邮箱",
+    type: "email",
+    defaultValue: mockSettings.mail.fromEmail,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "fromName",
+    label: "发件人名称",
+    type: "text",
+    defaultValue: mockSettings.mail.fromName,
+    dependsOn: ["enabled"],
+  },
+];
+
+const getSmsFields = (): FormField[] => [
+  {
+    name: "enabled",
+    label: "启用短信服务",
+    type: "switch",
+    defaultValue: mockSettings.sms.enabled,
+  },
+  {
+    name: "provider",
+    label: "短信服务商",
+    type: "select",
+    options: [
+      { label: "阿里云", value: "aliyun" },
+      { label: "腾讯云", value: "tencent" },
+      { label: "华为云", value: "huawei" },
+    ],
+    defaultValue: mockSettings.sms.provider,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "accessKeyId",
+    label: "AccessKey ID",
+    type: "text",
+    defaultValue: mockSettings.sms.accessKeyId,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "accessKeySecret",
+    label: "AccessKey Secret",
+    type: "password",
+    defaultValue: mockSettings.sms.accessKeySecret,
+    dependsOn: ["enabled"],
+  },
+  {
+    name: "signName",
+    label: "签名名称",
+    type: "text",
+    defaultValue: mockSettings.sms.signName,
+    dependsOn: ["enabled"],
+  },
+];
+
+const getLogFields = (): FormField[] => [
+  {
+    name: "level",
+    label: "日志级别",
+    type: "select",
+    options: [
+      { label: "Debug", value: "debug" },
+      { label: "Info", value: "info" },
+      { label: "Warning", value: "warn" },
+      { label: "Error", value: "error" },
+    ],
+    defaultValue: mockSettings.log.level,
+  },
+  {
+    name: "retentionDays",
+    label: "日志保留天数",
+    type: "number",
+    defaultValue: mockSettings.log.retentionDays,
+  },
+  {
+    name: "enableAccessLog",
+    label: "启用访问日志",
+    type: "switch",
+    defaultValue: mockSettings.log.enableAccessLog,
+  },
+  {
+    name: "enableOperationLog",
+    label: "启用操作日志",
+    type: "switch",
+    defaultValue: mockSettings.log.enableOperationLog,
+  },
+  {
+    name: "enableSecurityLog",
+    label: "启用安全日志",
+    type: "switch",
+    defaultValue: mockSettings.log.enableSecurityLog,
+  },
+];
+
+const getSections = (tabId: string): FormSection[] => {
+  switch (tabId) {
+    case "basic":
+      return [{ id: "basic", title: "基础配置", fields: getBasicFields() }];
+    case "mail":
+      return [{ id: "mail", title: "邮件设置", fields: getMailFields() }];
+    case "sms":
+      return [{ id: "sms", title: "短信设置", fields: getSmsFields() }];
+    case "log":
+      return [{ id: "log", title: "日志设置", fields: getLogFields() }];
+    default:
+      return [];
+  }
+};
+
 export default function SystemSettingsPage() {
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  const [activeGroup, setActiveGroup] = useState("basic");
+  const [activeTab, setActiveTab] = useState("basic");
   const [settings, setSettings] = useState(mockSettings);
-  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleSettingChange = (group: string, key: string, value: any) => {
+  // 计算字段依赖：enabled 字段控制其他字段的禁用状态
+  const dependencies = useMemo(() => {
+    const deps: any[] = [];
+
+    // 邮件设置依赖
+    if (activeTab === "mail") {
+      [
+        "smtpHost",
+        "smtpPort",
+        "smtpUsername",
+        "smtpPassword",
+        "useTLS",
+        "fromEmail",
+        "fromName",
+      ].forEach((field) => {
+        deps.push({
+          sourceField: "enabled",
+          targetField: field,
+          type: "disabled" as const,
+          condition: { type: "equals" as const, value: false },
+          effect: { disabled: true },
+        });
+      });
+    }
+
+    // 短信设置依赖
+    if (activeTab === "sms") {
+      ["provider", "accessKeyId", "accessKeySecret", "signName"].forEach(
+        (field) => {
+          deps.push({
+            sourceField: "enabled",
+            targetField: field,
+            type: "disabled" as const,
+            condition: { type: "equals" as const, value: false },
+            effect: { disabled: true },
+          });
+        },
+      );
+    }
+
+    return deps;
+  }, [activeTab]);
+
+  // 当前 tab 的默认值
+  const defaultValues = useMemo(() => {
+    return settings[activeTab as keyof typeof settings];
+  }, [activeTab, settings]);
+
+  // 当前 tab 的 sections
+  const sections = useMemo(() => getSections(activeTab), [activeTab]);
+
+  const handleSubmit = useCallback(
+    async (data: any) => {
+      setSettings((prev) => ({
+        ...prev,
+        [activeTab]: {
+          ...prev[activeTab as keyof typeof prev],
+          ...data,
+        },
+      }));
+      apiLogger.info("保存设置:", { tab: activeTab, data });
+    },
+    [activeTab],
+  );
+
+  const handleReset = useCallback(() => {
     setSettings((prev) => ({
       ...prev,
-      [group]: {
-        ...prev[group as keyof typeof prev],
-        [key]: value,
-      },
+      [activeTab]: mockSettings[activeTab as keyof typeof mockSettings],
     }));
-    setHasChanges(true);
-  };
+  }, [activeTab]);
 
-  const handleSave = () => {
-    // 保存设置
-    apiLogger.info("保存设置:", settings);
-    setHasChanges(false);
-  };
-
-  const handleReset = () => {
-    setSettings(mockSettings);
-    setHasChanges(false);
-  };
-
-  const renderBasicSettings = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <TextField
-        label="系统名称"
-        value={settings.basic.systemName}
-        onChange={(e) =>
-          handleSettingChange("basic", "systemName", e.target.value)
-        }
-        fullWidth
-        size="small"
-      />
-      <TextField
-        label="公司名称"
-        value={settings.basic.companyName}
-        onChange={(e) =>
-          handleSettingChange("basic", "companyName", e.target.value)
-        }
-        fullWidth
-        size="small"
-      />
-      <TextField
-        label="联系邮箱"
-        value={settings.basic.contactEmail}
-        onChange={(e) =>
-          handleSettingChange("basic", "contactEmail", e.target.value)
-        }
-        fullWidth
-        size="small"
-      />
-      <TextField
-        label="联系电话"
-        value={settings.basic.contactPhone}
-        onChange={(e) =>
-          handleSettingChange("basic", "contactPhone", e.target.value)
-        }
-        fullWidth
-        size="small"
-      />
-      <TextField
-        label="公司地址"
-        value={settings.basic.address}
-        onChange={(e) =>
-          handleSettingChange("basic", "address", e.target.value)
-        }
-        fullWidth
-        size="small"
-        multiline
-        rows={2}
-      />
-    </Box>
-  );
-
-  const renderMailSettings = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.mail.enabled}
-            onChange={(e) =>
-              handleSettingChange("mail", "enabled", e.target.checked)
-            }
-          />
-        }
-        label="启用邮件服务"
-      />
-      <TextField
-        label="SMTP 服务器"
-        value={settings.mail.smtpHost}
-        onChange={(e) =>
-          handleSettingChange("mail", "smtpHost", e.target.value)
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.mail.enabled}
-      />
-      <TextField
-        label="SMTP 端口"
-        type="number"
-        value={settings.mail.smtpPort}
-        onChange={(e) =>
-          handleSettingChange("mail", "smtpPort", parseInt(e.target.value))
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.mail.enabled}
-      />
-      <TextField
-        label="用户名"
-        value={settings.mail.smtpUsername}
-        onChange={(e) =>
-          handleSettingChange("mail", "smtpUsername", e.target.value)
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.mail.enabled}
-      />
-      <TextField
-        label="密码"
-        type="password"
-        value={settings.mail.smtpPassword}
-        onChange={(e) =>
-          handleSettingChange("mail", "smtpPassword", e.target.value)
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.mail.enabled}
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.mail.useTLS}
-            onChange={(e) =>
-              handleSettingChange("mail", "useTLS", e.target.checked)
-            }
-          />
-        }
-        label="使用 TLS"
-        disabled={!settings.mail.enabled}
-      />
-      <TextField
-        label="发件人邮箱"
-        value={settings.mail.fromEmail}
-        onChange={(e) =>
-          handleSettingChange("mail", "fromEmail", e.target.value)
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.mail.enabled}
-      />
-      <TextField
-        label="发件人名称"
-        value={settings.mail.fromName}
-        onChange={(e) =>
-          handleSettingChange("mail", "fromName", e.target.value)
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.mail.enabled}
-      />
-    </Box>
-  );
-
-  const renderSmsSettings = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.sms.enabled}
-            onChange={(e) =>
-              handleSettingChange("sms", "enabled", e.target.checked)
-            }
-          />
-        }
-        label="启用短信服务"
-      />
-      <FormControl size="small" fullWidth disabled={!settings.sms.enabled}>
-        <InputLabel>短信服务商</InputLabel>
-        <Select
-          value={settings.sms.provider}
-          label="短信服务商"
-          onChange={(e) =>
-            handleSettingChange("sms", "provider", e.target.value)
-          }
-        >
-          <MenuItem value="aliyun">阿里云</MenuItem>
-          <MenuItem value="tencent">腾讯云</MenuItem>
-          <MenuItem value="huawei">华为云</MenuItem>
-        </Select>
-      </FormControl>
-      <TextField
-        label="AccessKey ID"
-        value={settings.sms.accessKeyId}
-        onChange={(e) =>
-          handleSettingChange("sms", "accessKeyId", e.target.value)
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.sms.enabled}
-      />
-      <TextField
-        label="AccessKey Secret"
-        type="password"
-        value={settings.sms.accessKeySecret}
-        onChange={(e) =>
-          handleSettingChange("sms", "accessKeySecret", e.target.value)
-        }
-        fullWidth
-        size="small"
-        disabled={!settings.sms.enabled}
-      />
-      <TextField
-        label="签名名称"
-        value={settings.sms.signName}
-        onChange={(e) => handleSettingChange("sms", "signName", e.target.value)}
-        fullWidth
-        size="small"
-        disabled={!settings.sms.enabled}
-      />
-    </Box>
-  );
-
-  const renderLogSettings = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <FormControl size="small" fullWidth>
-        <InputLabel>日志级别</InputLabel>
-        <Select
-          value={settings.log.level}
-          label="日志级别"
-          onChange={(e) => handleSettingChange("log", "level", e.target.value)}
-        >
-          <MenuItem value="debug">Debug</MenuItem>
-          <MenuItem value="info">Info</MenuItem>
-          <MenuItem value="warn">Warning</MenuItem>
-          <MenuItem value="error">Error</MenuItem>
-        </Select>
-      </FormControl>
-      <TextField
-        label="日志保留天数"
-        type="number"
-        value={settings.log.retentionDays}
-        onChange={(e) =>
-          handleSettingChange("log", "retentionDays", parseInt(e.target.value))
-        }
-        fullWidth
-        size="small"
-        slotProps={{ htmlInput: { min: 1, max: 365 } }}
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.log.enableAccessLog}
-            onChange={(e) =>
-              handleSettingChange("log", "enableAccessLog", e.target.checked)
-            }
-          />
-        }
-        label="启用访问日志"
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.log.enableOperationLog}
-            onChange={(e) =>
-              handleSettingChange("log", "enableOperationLog", e.target.checked)
-            }
-          />
-        }
-        label="启用操作日志"
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            checked={settings.log.enableSecurityLog}
-            onChange={(e) =>
-              handleSettingChange("log", "enableSecurityLog", e.target.checked)
-            }
-          />
-        }
-        label="启用安全日志"
-      />
-    </Box>
-  );
-
-  const renderSettingsContent = () => {
-    switch (activeGroup) {
-      case "basic":
-        return renderBasicSettings();
-      case "mail":
-        return renderMailSettings();
-      case "sms":
-        return renderSmsSettings();
-      case "log":
-        return renderLogSettings();
-      default:
-        return null;
-    }
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
-      <Box sx={{ maxWidth: 1280, mx: "auto" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <Box sx={{ maxWidth: 1280, mx: "auto", p: 3 }}>
         {/* 页面头部 */}
         <Box
           sx={{
@@ -413,111 +347,68 @@ export default function SystemSettingsPage() {
             mb: 3,
           }}
         >
-          <IconButton onClick={() => navigate("/dashboard")}>
-            <ChevronLeft />
-          </IconButton>
-          <Box>
+          <Box
+            onClick={() => navigate("/dashboard")}
+            sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+          >
             <Typography variant="h4" sx={{ fontWeight: "bold" }}>
               系统设置
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              管理系统基础配置、邮件设置、短信设置、日志设置
-            </Typography>
           </Box>
         </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          管理系统基础配置、邮件设置、短信设置、日志设置
+        </Typography>
 
-        <Box sx={{ display: "flex", gap: 3 }}>
-          {/* 左侧导航 */}
-          <Card sx={{ width: 240, flexShrink: 0 }}>
-            <CardContent sx={{ p: 0 }}>
-              <List>
-                {settingGroups.map((group) => {
-                  const Icon = group.icon;
-                  return (
-                    <ListItem
-                      key={group.id}
-                      component="div"
-                      onClick={() => setActiveGroup(group.id)}
-                      sx={{
-                        cursor: "pointer",
-                        bgcolor:
-                          activeGroup === group.id
-                            ? "primary.light"
-                            : "transparent",
-                        borderLeft: 3,
-                        borderColor:
-                          activeGroup === group.id
-                            ? "primary.main"
-                            : "transparent",
-                        "&:hover": {
-                          bgcolor:
-                            activeGroup === group.id
-                              ? "primary.light"
-                              : "action.hover",
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <Icon
-                          style={{
-                            width: 20,
-                            height: 20,
-                            color:
-                              activeGroup === group.id ? "#3b82f6" : "inherit",
-                          }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={group.label}
-                        sx={{
-                          "& .MuiListItemText-primary": {
-                            fontWeight: activeGroup === group.id ? 600 : 400,
-                            color:
-                              activeGroup === group.id
-                                ? "primary.main"
-                                : "text.primary",
-                          },
-                        }}
-                      />
-                    </ListItem>
-                  );
-                })}
-              </List>
-            </CardContent>
-          </Card>
+        {/* Tab 导航 */}
+        <Paper sx={{ borderRadius: 2, mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              "& .MuiTab-root": {
+                minHeight: 56,
+              },
+            }}
+          >
+            {tabsConfig.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <Tab
+                  key={tab.id}
+                  value={tab.id}
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Icon style={{ width: 18, height: 18 }} />
+                      <span>{tab.label}</span>
+                    </Box>
+                  }
+                />
+              );
+            })}
+          </Tabs>
 
-          {/* 右侧设置内容 */}
-          <Card sx={{ flex: 1 }}>
-            <CardHeader
-              title={
-                settingGroups.find((g) => g.id === activeGroup)?.label || ""
-              }
-              action={
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<RotateCcw style={{ width: 16, height: 16 }} />}
-                    onClick={handleReset}
-                    disabled={!hasChanges}
-                  >
-                    重置
-                  </Button>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<Save style={{ width: 16, height: 16 }} />}
-                    onClick={handleSave}
-                    disabled={!hasChanges}
-                  >
-                    保存
-                  </Button>
-                </Box>
-              }
+          {/* 表单内容 */}
+          <Box sx={{ p: 3 }}>
+            <FormPageTemplate
+              title=""
+              subtitle=""
+              sections={sections}
+              defaultValues={defaultValues}
+              dependencies={dependencies}
+              onSubmit={handleSubmit}
+              onReset={handleReset}
+              submitText="保存"
+              resetText="重置"
+              columns={2}
+              stickyFooter={true}
+              showGroupTabs={false}
+              showProgress={false}
             />
-            <CardContent>{renderSettingsContent()}</CardContent>
-          </Card>
-        </Box>
+          </Box>
+        </Paper>
       </Box>
     </Box>
   );

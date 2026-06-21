@@ -7,13 +7,11 @@ import {
   Users,
   Calendar,
   CheckCircle,
-  AlertCircle,
   Clock,
   FileText,
   Plus,
   Eye,
   Check,
-  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -25,7 +23,6 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Box,
   Typography,
   FormControl,
@@ -34,8 +31,7 @@ import {
   MenuItem,
 } from "@mui/material";
 
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { qmsApi } from "@/api/qms";
 import type { AuditPlan, AuditTask, AuditFinding } from "@/api/qms";
 
@@ -219,64 +215,62 @@ const QmsAuditManagementPage: React.FC = () => {
     );
   };
 
-  const planColumns: ColumnDef<AuditPlan>[] = [
+  const columns: ColumnDef<AuditPlan>[] = [
     {
-      accessorKey: "title",
-      header: "审核计划",
-      cell: ({ row }) => (
+      id: "title",
+      label: "审核计划",
+      render: (row) => (
         <Typography sx={{ fontWeight: 500, color: "slate.900" }}>
-          {row.original.title}
+          {row.title}
         </Typography>
       ),
     },
     {
-      accessorKey: "audit_type",
-      header: "类型",
-      cell: ({ row }) => (
+      id: "audit_type",
+      label: "类型",
+      render: (row) => (
         <Chip
-          label={
-            row.original.audit_type === "internal" ? "内部审核" : "外部审核"
-          }
+          label={row.audit_type === "internal" ? "内部审核" : "外部审核"}
           size="small"
           sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
         />
       ),
     },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
     },
     {
-      accessorKey: "start_date",
-      header: "开始日期",
-      cell: ({ row }) => (
+      id: "start_date",
+      label: "开始日期",
+      render: (row) => (
         <span>
-          {row.original.start_date
-            ? new Date(row.original.start_date).toLocaleDateString("zh-CN")
+          {row.start_date
+            ? new Date(row.start_date).toLocaleDateString("zh-CN")
             : "-"}
         </span>
       ),
     },
     {
-      accessorKey: "end_date",
-      header: "结束日期",
-      cell: ({ row }) => (
+      id: "end_date",
+      label: "结束日期",
+      render: (row) => (
         <span>
-          {row.original.end_date
-            ? new Date(row.original.end_date).toLocaleDateString("zh-CN")
+          {row.end_date
+            ? new Date(row.end_date).toLocaleDateString("zh-CN")
             : "-"}
         </span>
       ),
     },
     {
       id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
+      label: "操作",
+      render: (row) => (
         <Button
           variant="text"
           size="small"
-          onClick={() => handleSelectPlan(row.original)}
+          onClick={() => handleSelectPlan(row)}
           startIcon={<Box component={Eye} sx={{ fontSize: 16 }} />}
         >
           查看
@@ -286,38 +280,38 @@ const QmsAuditManagementPage: React.FC = () => {
   ];
 
   const taskColumns: ColumnDef<AuditTask>[] = [
-    { accessorKey: "title", header: "任务名称" },
+    { id: "title", label: "任务名称", render: (row) => row.title },
     {
-      accessorKey: "priority",
-      header: "优先级",
-      cell: ({ row }) => getPriorityBadge(row.original.priority),
+      id: "priority",
+      label: "优先级",
+      render: (row) => getPriorityBadge(row.priority),
     },
     {
-      accessorKey: "assignee",
-      header: "负责人",
-      cell: ({ row }) => (
+      id: "assignee",
+      label: "负责人",
+      render: (row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box component={Users} sx={{ fontSize: 16 }} />
-          <Typography>{row.original.assignee || "-"}</Typography>
+          <Typography>{row.assignee || "-"}</Typography>
         </Box>
       ),
     },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
     },
     {
       id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
+      label: "操作",
+      render: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
-          {row.original.status !== "completed" && (
+          {row.status !== "completed" && (
             <Button
               variant="text"
               size="small"
               sx={{ color: "#16a34a" }}
-              onClick={() => handleCompleteTask(row.original.id)}
+              onClick={() => handleCompleteTask(row.id)}
               startIcon={<Box component={Check} sx={{ fontSize: 16 }} />}
             />
           )}
@@ -328,271 +322,154 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const findingColumns: ColumnDef<AuditFinding>[] = [
     {
-      accessorKey: "severity",
-      header: "严重程度",
-      cell: ({ row }) => getPriorityBadge(row.original.severity),
+      id: "severity",
+      label: "严重程度",
+      render: (row) => getPriorityBadge(row.severity),
     },
-    { accessorKey: "description", header: "问题描述" },
-    { accessorKey: "recommendation", header: "改进建议" },
+    { id: "description", label: "问题描述", render: (row) => row.description },
     {
-      accessorKey: "status",
-      header: "处理状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "recommendation",
+      label: "改进建议",
+      render: (row) => row.recommendation,
+    },
+    {
+      id: "status",
+      label: "处理状态",
+      render: (row) => getStatusBadge(row.status),
     },
   ];
+
+  const stats = {
+    total: plans.length,
+    inProgress: plans.filter((p) => p.status === "in_progress").length,
+    completed: plans.filter((p) => p.status === "completed").length,
+  };
 
   const completedTasks = tasks.filter((t) => t.status === "completed").length;
   const totalTasks = tasks.length;
   const openFindings = findings.filter((f) => f.status !== "resolved").length;
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "primary.light",
-              borderTopColor: "primary.main",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%)",
-      }}
-    >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+    <>
+      <ListPageTemplate
+        title="审核管理"
+        subtitle="Audit Management"
+        backButton={{
+          href: "/qms",
+          onClick: () => navigate("/qms"),
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+        columns={columns}
+        data={plans}
+        loading={loading}
+        actions={[
+          {
+            label: "创建审核计划",
+            icon: <Plus sx={{ width: 16, height: 16, mr: 1 }} />,
+            onClick: () => setShowAddModal(true),
+            variant: "contained",
+          },
+        ]}
+        headerContent={
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(3, 1fr)",
+              },
+              gap: 3,
+              mb: 4,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Button
-                variant="text"
-                onClick={() => navigate("/qms")}
-                sx={{ minWidth: 32, height: 32 }}
-              >
-                <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
-              </Button>
-              <Box>
-                <Typography
-                  variant="h6"
+            <Card
+              sx={{
+                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                color: "white",
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
                   sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                   }}
                 >
-                  审核管理
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Audit Management
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              variant="contained"
-              sx={{ bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
+                  <Box>
+                    <Typography sx={{ color: "#93c5fd", fontSize: "0.875rem" }}>
+                      审核计划总数
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {stats.total}
+                    </Typography>
+                  </Box>
+                  <ClipboardCheck
+                    sx={{ width: 48, height: 48, color: "#93c5fd" }}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+
+            <Card
+              sx={{
+                background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
+                color: "white",
+              }}
             >
-              <Plus sx={{ width: 16, height: 16, mr: 1 }} />
-              创建审核计划
-            </Button>
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ color: "#fde68a", fontSize: "0.875rem" }}>
+                      进行中审核
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {stats.inProgress}
+                    </Typography>
+                  </Box>
+                  <Clock sx={{ width: 48, height: 48, color: "#fde68a" }} />
+                </Box>
+              </CardContent>
+            </Card>
+
+            <Card
+              sx={{
+                background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)",
+                color: "white",
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ color: "#bbf7d0", fontSize: "0.875rem" }}>
+                      已完成审核
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      {stats.completed}
+                    </Typography>
+                  </Box>
+                  <CheckCircle
+                    sx={{ width: 48, height: 48, color: "#bbf7d0" }}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
           </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
-            gap: 3,
-            mb: 4,
-          }}
-        >
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: "#93c5fd", fontSize: "0.875rem" }}>
-                    审核计划总数
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {plans.length}
-                  </Typography>
-                </Box>
-                <ClipboardCheck
-                  sx={{ width: 48, height: 48, color: "#93c5fd" }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: "#fde68a", fontSize: "0.875rem" }}>
-                    进行中审核
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {plans.filter((p) => p.status === "in_progress").length}
-                  </Typography>
-                </Box>
-                <Clock sx={{ width: 48, height: 48, color: "#fde68a" }} />
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card
-            sx={{
-              background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)",
-              color: "white",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ color: "#bbf7d0", fontSize: "0.875rem" }}>
-                    已完成审核
-                  </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
-                    {plans.filter((p) => p.status === "completed").length}
-                  </Typography>
-                </Box>
-                <CheckCircle sx={{ width: 48, height: 48, color: "#bbf7d0" }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 1,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <Box
-                component={ClipboardCheck}
-                sx={{ fontSize: 20, color: "#2563eb" }}
-              />
-              审核计划列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            {plans.length > 0 ? (
-              <DataTable
-                columns={planColumns}
-                data={plans}
-                enablePagination={false}
-              />
-            ) : (
-              <Box sx={{ textAlign: "center", py: 6, color: "slate.500" }}>
-                <ClipboardCheck
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    mx: "auto",
-                    mb: 2,
-                    opacity: 0.5,
-                  }}
-                />
-                <Typography>暂无审核计划</Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  sx={{ mt: 2 }}
-                  onClick={() => setShowAddModal(true)}
-                  startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
-                >
-                  创建第一个计划
-                </Button>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+        }
+        emptyMessage="暂无审核计划"
+        onRefresh={loadAuditPlans}
+      />
 
       <Dialog
         open={showAddModal}
@@ -898,10 +775,16 @@ const QmsAuditManagementPage: React.FC = () => {
                     审核任务 ({completedTasks}/{totalTasks})
                   </Typography>
                 </Box>
-                <DataTable
+                <ListPageTemplate
                   columns={taskColumns}
                   data={tasks}
-                  enablePagination={false}
+                  loading={loading}
+                  pagination={{
+                    page: 0,
+                    pageSize: 10,
+                    total: tasks.length,
+                    onPageChange: () => {},
+                  }}
                 />
               </Box>
 
@@ -915,15 +798,21 @@ const QmsAuditManagementPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <Box component={AlertCircle} sx={{ fontSize: 20 }} />
+                    <Box component={FileText} sx={{ fontSize: 20 }} />
                     <Typography variant="body1" sx={{ fontWeight: 500 }}>
                       审核发现 ({openFindings} 项待处理)
                     </Typography>
                   </Box>
-                  <DataTable
+                  <ListPageTemplate
                     columns={findingColumns}
                     data={findings}
-                    enablePagination={false}
+                    loading={loading}
+                    pagination={{
+                      page: 0,
+                      pageSize: 10,
+                      total: findings.length,
+                      onPageChange: () => {},
+                    }}
                   />
                 </Box>
               )}
@@ -936,7 +825,7 @@ const QmsAuditManagementPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

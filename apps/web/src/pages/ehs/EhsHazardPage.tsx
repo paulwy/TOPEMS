@@ -11,20 +11,10 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  AlertTriangle,
-  Shield,
-  MapPin,
-  Search,
-  Filter,
-} from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Plus, Eye, AlertTriangle, Shield, MapPin } from "lucide-react";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 interface Hazard {
   id: string;
@@ -162,29 +152,29 @@ const EhsHazardPage: React.FC = () => {
   };
 
   const columns: ColumnDef<Hazard>[] = [
-    { accessorKey: "hazard_no", header: "危险源编号" },
-    { accessorKey: "name", header: "名称" },
+    { id: "hazard_no", label: "危险源编号" },
+    { id: "name", label: "名称" },
     {
-      accessorKey: "risk_level",
-      header: "风险等级",
-      cell: ({ row }) => getRiskLevelBadge(row.original.risk_level),
+      id: "risk_level",
+      label: "风险等级",
+      render: (row) => getRiskLevelBadge(row.risk_level),
     },
-    { accessorKey: "category", header: "类别" },
-    { accessorKey: "location", header: "位置" },
-    { accessorKey: "control_measures", header: "管控措施" },
+    { id: "category", label: "类别" },
+    { id: "location", label: "位置" },
+    { id: "control_measures", label: "管控措施" },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
     },
     {
       id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
+      label: "操作",
+      render: (row) => (
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             size="small"
-            onClick={() => handleView(row.original)}
+            onClick={() => handleView(row)}
             startIcon={<Eye style={{ width: 16, height: 16 }} />}
           >
             详情
@@ -245,347 +235,222 @@ const EhsHazardPage: React.FC = () => {
     eliminated: hazards.filter((h) => h.status === "已消除").length,
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #fef2f2 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#ef4444",
-              borderTopColor: "#dc2626",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
+  const filters = [
+    {
+      id: "level",
+      label: "风险等级",
+      type: "select" as const,
+      options: [
+        { label: "全部", value: "all" },
+        { label: "高风险", value: "高风险" },
+        { label: "中风险", value: "中风险" },
+        { label: "低风险", value: "低风险" },
+      ],
+      value: levelFilter,
+      onChange: (value: string) => setLevelFilter(value),
+    },
+    {
+      id: "category",
+      label: "类别",
+      type: "select" as const,
+      options: [
+        { label: "全部", value: "all" },
+        { label: "化学品", value: "化学品" },
+        { label: "物理危害", value: "物理危害" },
+        { label: "电气", value: "电气" },
+        { label: "机械", value: "机械" },
+        { label: "高处作业", value: "高处作业" },
+      ],
+      value: categoryFilter,
+      onChange: (value: string) => setCategoryFilter(value),
+    },
+    {
+      id: "status",
+      label: "状态",
+      type: "select" as const,
+      options: [
+        { label: "全部", value: "all" },
+        { label: "活动中", value: "活动中" },
+        { label: "已控制", value: "已控制" },
+        { label: "已消除", value: "已消除" },
+      ],
+      value: statusFilter,
+      onChange: (value: string) => setStatusFilter(value),
+    },
+  ];
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #fef2f2 0%, #f8fafc 100%)",
-      }}
-    >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+    <>
+      <ListPageTemplate
+        title="危险源管理"
+        subtitle="Hazard Source Management"
+        columns={columns}
+        data={filteredHazards}
+        loading={loading}
+        filters={filters}
+        searchable
+        searchPlaceholder="搜索危险源名称或编号..."
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        actions={[
+          {
+            label: "新增危险源",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        headerContent={
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 2,
+              mb: 4,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <AlertTriangle sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  危险源管理
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Hazard Source Management
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#ef4444", "&:hover": { bgcolor: "#dc2626" } }}
-            >
-              新增危险源
-            </Button>
+            <Card sx={{ bgcolor: "#fef2f2" }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#fee2e2",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <AlertTriangle
+                      sx={{ width: 20, height: 20, color: "#ef4444" }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    >
+                      危险源总数
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: "slate.900" }}
+                    >
+                      {stats.total}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#fee2e2",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Shield sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    >
+                      高风险
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: "slate.900" }}
+                    >
+                      {stats.highRisk}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#fef3c7",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Shield sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    >
+                      已控制
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: "slate.900" }}
+                    >
+                      {stats.controlled}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#dcfce7",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Shield sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    >
+                      已消除
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: "slate.900" }}
+                    >
+                      {stats.eliminated}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#fef2f2" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fee2e2",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <AlertTriangle
-                    sx={{ width: 20, height: 20, color: "#ef4444" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    危险源总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fee2e2",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Shield sx={{ width: 20, height: 20, color: "#dc2626" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    高风险
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.highRisk}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef3c7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Shield sx={{ width: 20, height: 20, color: "#ca8a04" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已控制
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.controlled}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Shield sx={{ width: 20, height: 20, color: "#16a34a" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已消除
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.eliminated}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <AlertTriangle
-                style={{ width: 20, height: 20, color: "#ef4444" }}
-              />
-              危险源列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索危险源名称或编号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-              <TextField
-                size="small"
-                select
-                label="风险等级"
-                value={levelFilter}
-                onChange={(e) => setLevelFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="高风险">高风险</option>
-                <option value="中风险">中风险</option>
-                <option value="低风险">低风险</option>
-              </TextField>
-              <TextField
-                size="small"
-                select
-                label="类别"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="化学品">化学品</option>
-                <option value="物理危害">物理危害</option>
-                <option value="电气">电气</option>
-                <option value="机械">机械</option>
-                <option value="高处作业">高处作业</option>
-              </TextField>
-              <TextField
-                size="small"
-                select
-                label="状态"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="活动中">活动中</option>
-                <option value="已控制">已控制</option>
-                <option value="已消除">已消除</option>
-              </TextField>
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredHazards}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
-      </Box>
+        }
+        emptyMessage="暂无危险源"
+        onRefresh={loadHazards}
+      />
 
       <Dialog
         open={showCreateModal}
@@ -763,7 +628,7 @@ const EhsHazardPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

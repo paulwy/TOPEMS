@@ -1,19 +1,17 @@
-import { Grid } from "@/components/Grid";
 import React, { useEffect, useState } from "react";
 import {
   ClipboardList,
   Plus,
   Clock,
-  ChevronRight,
   ClipboardCheck,
   Play,
   CheckCircle,
   X,
+  Eye,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Container,
   Paper,
   Typography,
   Button,
@@ -47,11 +45,9 @@ import type {
   LimsStatistics,
 } from "@/api/lims";
 import { limsApi } from "@/api/lims";
-import { MetricCard } from "@/components/MetricCard";
-import { STATUS_COLORS, getStatusColorConfig } from "@/constants/colors";
 import { GRADIENTS } from "@/constants/colors";
-import { StatsChart } from "@/components/StatsChart";
 import { PageHeader } from "@/components/templates/PageHeader";
+import { CardListTemplate } from "@/components/templates/CardListTemplate";
 import { apiLogger } from "@/utils/logger";
 
 const LimsTaskPage: React.FC = () => {
@@ -418,16 +414,6 @@ const LimsTaskPage: React.FC = () => {
     return step ? step.name : "已完成";
   };
 
-  const filteredTasks = safeTasks.filter(
-    (t) =>
-      getSampleName(t.sample_id)
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      getProcessName(t.process_id)
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()),
-  );
-
   const getStatusColor = (
     status: string,
   ): { bgcolor: string; color: string } => {
@@ -447,6 +433,107 @@ const LimsTaskPage: React.FC = () => {
         return { bgcolor: "#f1f5f9", color: "#475569" };
     }
   };
+
+  const filteredTasks = safeTasks.filter(
+    (t) =>
+      getSampleName(t.sample_id)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      getProcessName(t.process_id)
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
+  );
+
+  // 统计概览配置
+  const metricStats = [
+    {
+      id: "total",
+      title: "任务总数",
+      value: safeTasks.length,
+      icon: <ClipboardCheck size={24} />,
+      gradient: ["#6366F1", "#4F46E5"] as [string, string],
+    },
+    {
+      id: "in_progress",
+      title: "进行中",
+      value: safeTasks.filter((t) => t.status === "进行中").length,
+      icon: <Clock size={24} />,
+      color: "primary" as const,
+    },
+    {
+      id: "completed",
+      title: "已完成",
+      value: safeTasks.filter((t) => t.status === "已完成").length,
+      icon: <CheckCircle size={24} />,
+      color: "success" as const,
+    },
+    {
+      id: "pending",
+      title: "待测试",
+      value: safeTasks.filter((t) => t.status === "待测试").length,
+      icon: <Clock size={24} />,
+      color: "warning" as const,
+    },
+  ];
+
+  // 卡片配置
+  const cardConfig = {
+    title: (item: InspectionTask) => getSampleName(item.sample_id),
+    description: (item: InspectionTask) =>
+      `检验流程: ${getProcessName(item.process_id)}`,
+    status: {
+      field: "status",
+      options: {
+        进行中: { label: "进行中", color: "primary" },
+        已完成: { label: "已完成", color: "success" },
+        已终止: { label: "已终止", color: "error" },
+        待测试: { label: "待测试", color: "warning" },
+      },
+    },
+    meta: [
+      {
+        field: "process_id",
+        label: "检验流程",
+        format: (_: any, item: InspectionTask) =>
+          getProcessName(item.process_id),
+      },
+      {
+        field: "current_step",
+        label: "当前步骤",
+        format: (_: any, item: InspectionTask) => getCurrentStepName(item),
+      },
+      {
+        field: "inspector",
+        label: "检验员",
+      },
+      {
+        field: "started_at",
+        label: "开始时间",
+        format: (value: string) => new Date(value).toLocaleDateString("zh-CN"),
+      },
+    ],
+    icon: <ClipboardCheck size={24} />,
+    iconBgColor: "#e0e7ff",
+  };
+
+  // 卡片操作
+  const cardActions = [
+    {
+      label: "查看详情",
+      icon: <Eye size={16} />,
+      onClick: (item: InspectionTask) => openTaskDetailModal(item),
+      color: "primary" as const,
+      variant: "text" as const,
+    },
+    {
+      label: "完成步骤",
+      icon: <CheckCircle size={16} />,
+      onClick: (item: InspectionTask) => openRecordModal(item),
+      color: "success" as const,
+      variant: "text" as const,
+      disabled: (item: InspectionTask) => item.status !== "进行中",
+    },
+  ];
 
   if (loading) {
     return (
@@ -544,392 +631,34 @@ const LimsTaskPage: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
-        <PageHeader
-          title="检验任务"
-          subtitle="Inspection Tasks"
-          pageIcon={<ClipboardCheck style={{ width: 20, height: 20 }} />}
-          pageColor="linear-gradient(135deg, #6366F1, #4F46E5)"
-          breadcrumbs={[
-            { label: "首页", href: "/dashboard" },
-            { label: "LIMS" },
-            { label: "检验任务" },
-          ]}
-          backButton={{ onClick: () => navigate("/dashboard") }}
-          actions={[
-            {
-              label: "新建任务",
-              icon: <Play style={{ width: 18, height: 18 }} />,
-              variant: "contained",
-              color: "secondary",
-              onClick: () => setShowTaskModal(true),
-            },
-          ]}
-          search={{
-            value: searchTerm,
-            onChange: setSearchTerm,
-            placeholder: "搜索样品...",
-          }}
-          loading={loading}
-        />
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="样品总数"
-              value={stats.total_samples}
-              icon={<ClipboardList size={24} />}
-              gradient={["#8B5CF6", "#7C3AED"]}
-              subtitle={`待测试: ${stats.pending_samples}`}
-              trend={stats.pending_samples > 0 ? "up" : "neutral"}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="检验任务"
-              value={stats.total_tasks}
-              icon={<ClipboardCheck size={24} />}
-              gradient={["#6366F1", "#4F46E5"]}
-              subtitle={`进行中: ${stats.in_progress_tasks}`}
-              trend={stats.in_progress_tasks > 0 ? "up" : "neutral"}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="检验流程"
-              value={stats.total_processes}
-              icon={<ClipboardList size={24} />}
-              gradient={["#F59E0B", "#D97706"]}
-              trend="neutral"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="已完成样品"
-              value={stats.completed_samples}
-              icon={<CheckCircle size={24} />}
-              gradient={["#00C897", "#00A878"]}
-              trend="up"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="测试中样品"
-              value={stats.testing_samples}
-              icon={<Clock size={24} />}
-              gradient={["#EC4899", "#DB2777"]}
-              trend="neutral"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="仪器设备"
-              value={stats.total_instruments}
-              icon={<ClipboardList size={24} />}
-              gradient={["#14B8A6", "#0D9488"]}
-              subtitle={`正常: ${stats.normal_instruments}`}
-              trend="neutral"
-            />
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}
-                    >
-                      任务总数
-                    </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                      {safeTasks.length}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "secondary.light",
-                    }}
-                  >
-                    <ClipboardCheck size={24} color="#7c3aed" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}
-                    >
-                      进行中
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: "bold" }}
-                      color="primary"
-                    >
-                      {safeTasks.filter((t) => t.status === "进行中").length}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "primary.light",
-                    }}
-                  >
-                    <Clock size={24} color="#2563eb" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}
-                    >
-                      已完成
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: "bold" }}
-                      color="success.main"
-                    >
-                      {safeTasks.filter((t) => t.status === "已完成").length}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "success.light",
-                    }}
-                  >
-                    <CheckCircle size={24} color="#15803d" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}
-                    >
-                      待测试
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{ ...{ color: "#b45309" }, fontWeight: "bold" }}
-                    >
-                      {safeTasks.filter((t) => t.status === "待测试").length}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "#fef3c7",
-                    }}
-                  >
-                    <Clock size={24} color="#b45309" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Paper sx={{ borderRadius: 2 }} variant="outlined">
-          <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
-              检验任务
-            </Typography>
-          </Box>
-          <Box>
-            {filteredTasks.length === 0 ? (
-              <Box sx={{ p: 6, textAlign: "center" }}>
-                <ClipboardCheck
-                  size={64}
-                  color="#cbd5e1"
-                  style={{ marginBottom: 16 }}
-                />
-                <Typography color="text.secondary">暂无检验任务</Typography>
-              </Box>
-            ) : (
-              filteredTasks.map((task) => {
-                const statusColor = getStatusColor(task.status);
-                return (
-                  <Box
-                    key={task.id}
-                    sx={{
-                      p: 3,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                      transition: "background 0.2s",
-                      "&:hover": { bgcolor: "grey.50" },
-                      "&:last-of-type": { borderBottom: 0 },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box sx={{ flex: 1 }}>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                            mb: 1,
-                          }}
-                        >
-                          <Typography
-                            variant="h6"
-                            sx={{ fontWeight: "semibold" }}
-                          >
-                            {getSampleName(task.sample_id)}
-                          </Typography>
-                          <Chip
-                            size="small"
-                            label={task.status}
-                            sx={{
-                              bgcolor: statusColor.bgcolor,
-                              color: statusColor.color,
-                              fontWeight: 500,
-                            }}
-                          />
-                        </Box>
-                        <Typography color="text.secondary" sx={{ mb: 1 }}>
-                          检验流程: {getProcessName(task.process_id)}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="secondary.main"
-                          sx={{ mb: 1.5 }}
-                        >
-                          当前步骤: {getCurrentStepName(task)}
-                        </Typography>
-                        <Stack
-                          direction="row"
-                          spacing={3}
-                          sx={{ fontSize: 14 }}
-                          color="text.secondary"
-                        >
-                          <span>检验员: {task.inspector}</span>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                            }}
-                          >
-                            <Clock size={16} />
-                            开始:{" "}
-                            {new Date(task.started_at).toLocaleDateString(
-                              "zh-CN",
-                            )}
-                          </Box>
-                        </Stack>
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          color="primary"
-                          onClick={() => openTaskDetailModal(task)}
-                        >
-                          查看详情
-                        </Button>
-                        {task.status === "进行中" && (
-                          <Button
-                            size="small"
-                            color="success"
-                            startIcon={<CheckCircle size={16} />}
-                            onClick={() => openRecordModal(task)}
-                          >
-                            完成步骤
-                          </Button>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                );
-              })
-            )}
-          </Box>
-        </Paper>
-      </Container>
+      <CardListTemplate
+        title="检验任务"
+        subtitle="Inspection Tasks"
+        data={filteredTasks}
+        cardConfig={cardConfig}
+        cardActions={cardActions}
+        metricStats={metricStats}
+        metricColumns={4}
+        loading={loading}
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: "搜索样品...",
+        }}
+        addButton={{
+          text: "新建任务",
+          icon: <Play style={{ width: 18, height: 18 }} />,
+          onClick: () => setShowTaskModal(true),
+        }}
+        onRefresh={loadAllData}
+        onCardClick={openTaskDetailModal}
+        emptyState={{
+          emoji: "📋",
+          title: "暂无检验任务",
+          description: "点击上方按钮创建新的检验任务",
+        }}
+        gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
+      />
 
       <Dialog
         open={showTaskModal}
@@ -1175,12 +904,17 @@ const LimsTaskPage: React.FC = () => {
                   </Typography>
                 </Box>
 
-                <Grid
-                  container
-                  spacing={2}
-                  sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr 1fr" },
+                    gap: 2,
+                    p: 2,
+                    bgcolor: "grey.50",
+                    borderRadius: 1.5,
+                  }}
                 >
-                  <Grid size={6}>
+                  <Box>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1196,8 +930,8 @@ const LimsTaskPage: React.FC = () => {
                     >
                       {selectedTask.id}
                     </Typography>
-                  </Grid>
-                  <Grid size={6}>
+                  </Box>
+                  <Box>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1208,8 +942,8 @@ const LimsTaskPage: React.FC = () => {
                     <Typography sx={{ fontWeight: "medium" }}>
                       {selectedTask.inspector}
                     </Typography>
-                  </Grid>
-                  <Grid size={6}>
+                  </Box>
+                  <Box>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1222,8 +956,8 @@ const LimsTaskPage: React.FC = () => {
                         "zh-CN",
                       )}
                     </Typography>
-                  </Grid>
-                  <Grid size={6}>
+                  </Box>
+                  <Box>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1238,8 +972,8 @@ const LimsTaskPage: React.FC = () => {
                           )
                         : "-"}
                     </Typography>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
 
                 <Box>
                   <Typography sx={{ ...{ mb: 1.5 }, fontWeight: "semibold" }}>
