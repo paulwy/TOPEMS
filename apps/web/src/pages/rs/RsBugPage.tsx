@@ -19,8 +19,8 @@ import {
   Paper,
 } from "@mui/material";
 import { Plus, Eye, Edit, Bug, User, CheckCircle } from "lucide-react";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import type { RowAction, FilterConfig } from "@/components/templates";
 
 interface Bug {
   id: string;

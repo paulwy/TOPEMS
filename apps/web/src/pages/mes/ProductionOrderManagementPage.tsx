@@ -1,29 +1,15 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
-  Typography,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Checkbox,
-  TablePagination,
+  TextField,
   Box,
+  InputLabel,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type {
   ProductionOrder,
   CreateProductionOrderRequest,
@@ -32,7 +18,12 @@ import type {
 import { mesApi } from "@/api/professional/mes/mes";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from "@/components/templates";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
 
@@ -174,20 +165,6 @@ const ProductionOrderManagementPage: React.FC = () => {
     });
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === orders.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(orders.map((o) => o.id));
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const statusMap: Record<
       string,
@@ -211,217 +188,128 @@ const ProductionOrderManagementPage: React.FC = () => {
     );
   };
 
+  const columns: ColumnDef<ProductionOrder>[] = useMemo(
+    () => [
+      { id: "order_number", label: "订单号", sortable: true },
+      { id: "product_name", label: "产品名称", sortable: true },
+      { id: "quantity", label: "数量", sortable: true },
+      {
+        id: "scheduled_start_date",
+        label: "计划开始时间",
+        render: (row) =>
+          row.scheduled_start_date
+            ? new Date(row.scheduled_start_date).toLocaleDateString("zh-CN")
+            : "-",
+      },
+      {
+        id: "scheduled_end_date",
+        label: "计划结束时间",
+        render: (row) =>
+          row.scheduled_end_date
+            ? new Date(row.scheduled_end_date).toLocaleDateString("zh-CN")
+            : "-",
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { label: "全部状态", value: "all" },
+          { label: "待处理", value: "pending" },
+          { label: "进行中", value: "in_progress" },
+          { label: "已完成", value: "completed" },
+          { label: "已取消", value: "cancelled" },
+        ],
+        value: statusFilter,
+        onChange: (value) => {
+          setStatusFilter(value);
+          setCurrentPage(1);
+        },
+      },
+    ],
+    [statusFilter],
+  );
+
+  const rowActions: RowAction<ProductionOrder>[] = useMemo(
+    () => [
+      {
+        label: "查看详情",
+        icon: <Eye size={16} />,
+        onClick: handleViewDetail,
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: handleEdit,
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个生产订单吗?",
+      },
+    ],
+    [],
+  );
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setShowDialog(true);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            生产订单管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理生产订单信息,包括订单号、产品名称、数量、计划时间等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ position: "relative" }}>
-                <Search
-                  style={{
-                    position: "absolute",
-                    left: 8,
-                    top: 12,
-                    width: 16,
-                    height: 16,
-                    color: "text.secondary",
-                  }}
-                />
-                <TextField
-                  placeholder="搜索订单号或产品名称..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  size="small"
-                  sx={{ pl: 4, width: "100%" }}
-                />
-              </Box>
-            </Box>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>状态筛选</InputLabel>
-              <Select
-                value={statusFilter}
-                label="状态筛选"
-                onChange={(e) => {
-                  setStatusFilter(e.target.value as string);
-                  setCurrentPage(1);
-                }}
-              >
-                <MenuItem value="all">全部状态</MenuItem>
-                <MenuItem value="pending">待处理</MenuItem>
-                <MenuItem value="in_progress">进行中</MenuItem>
-                <MenuItem value="completed">已完成</MenuItem>
-                <MenuItem value="cancelled">已取消</MenuItem>
-              </Select>
-            </FormControl>
-            <Button
-              variant="contained"
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-            >
-              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
-              新增订单
-            </Button>
-          </Box>
-
-          {selectedIds.length > 0 && (
-            <Box
-              sx={{
-                mb: 2,
-                p: 2,
-                bgcolor: "action.hover",
-                borderRadius: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Typography variant="body2">
-                已选择 {selectedIds.length} 个订单
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setSelectedIds([])}
-              >
-                清除选择
-              </Button>
-            </Box>
-          )}
-
-          <Box
-            sx={{
-              borderRadius: 1,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ width: 50 }}>
-                    <Checkbox
-                      checked={
-                        selectedIds.length === orders.length &&
-                        orders.length > 0
-                      }
-                      onChange={toggleSelectAll}
-                    />
-                  </TableCell>
-                  <TableCell>订单号</TableCell>
-                  <TableCell>产品名称</TableCell>
-                  <TableCell>数量</TableCell>
-                  <TableCell>计划开始时间</TableCell>
-                  <TableCell>计划结束时间</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell sx={{ textAlign: "right" }}>操作</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {orders.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} sx={{ textAlign: "center" }}>
-                      <EmptyState
-                        title="暂无生产订单数据"
-                        description="点击上方按钮添加第一个生产订单"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.includes(order.id)}
-                          onChange={() => toggleSelect(order.id)}
-                        />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {order.order_number}
-                      </TableCell>
-                      <TableCell>{order.product_name}</TableCell>
-                      <TableCell>{order.quantity}</TableCell>
-                      <TableCell>
-                        {new Date(
-                          order.scheduled_start_date || "",
-                        ).toLocaleDateString("zh-CN")}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(
-                          order.scheduled_end_date || "",
-                        ).toLocaleDateString("zh-CN")}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell sx={{ textAlign: "right" }}>
-                        <Button
-                          size="small"
-                          onClick={() => handleViewDetail(order)}
-                        >
-                          <Eye style={{ width: 16, height: 16 }} />
-                        </Button>
-                        <Button size="small" onClick={() => handleEdit(order)}>
-                          <Edit style={{ width: 16, height: 16 }} />
-                        </Button>
-                        <Button
-                          size="small"
-                          onClick={() => handleDelete(order.id)}
-                        >
-                          <Trash2 style={{ width: 16, height: 16 }} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Box>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <TablePagination
-              component="div"
-              count={total}
-              page={currentPage - 1}
-              rowsPerPage={pageSize}
-              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-              rowsPerPageOptions={[]}
-              sx={{ ".MuiTablePagination-toolbar": { minHeight: 0 } }}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="生产订单管理"
+        subtitle="管理生产订单信息,包括订单号、产品名称、数量、计划时间等"
+        columns={columns}
+        data={orders}
+        loading={loading}
+        filters={filters}
+        searchable
+        searchPlaceholder="搜索订单号或产品名称..."
+        onSearch={handleSearch}
+        searchValue={searchTerm}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total,
+          onPageChange: setCurrentPage,
+        }}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        actions={[
+          {
+            label: "新增订单",
+            icon: <Plus size={16} />,
+            onClick: handleOpenCreate,
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage="暂无生产订单数据"
+        getRowId={(row) => row.id}
+      />
 
       {/* 新增/编辑对话框 */}
       <Dialog
@@ -433,9 +321,17 @@ const ProductionOrderManagementPage: React.FC = () => {
           {selectedOrder ? "编辑生产订单" : "新增生产订单"}
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          <Box
+            component="span"
+            sx={{
+              display: "block",
+              color: "text.secondary",
+              mb: 2,
+              fontSize: 14,
+            }}
+          >
             {selectedOrder ? "修改生产订单信息" : "填写新生产订单信息"}
-          </Typography>
+          </Box>
           <form onSubmit={handleSubmit}>
             <Box
               sx={{
@@ -559,21 +455,21 @@ const ProductionOrderManagementPage: React.FC = () => {
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
                     订单号
                   </InputLabel>
-                  <Typography sx={{ fontWeight: 500 }}>
+                  <Box component="span" sx={{ fontWeight: 500 }}>
                     {selectedOrder.order_number}
-                  </Typography>
+                  </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
                     产品名称
                   </InputLabel>
-                  <Typography>{selectedOrder.product_name}</Typography>
+                  <Box component="span">{selectedOrder.product_name}</Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
                     数量
                   </InputLabel>
-                  <Typography>{selectedOrder.quantity}</Typography>
+                  <Box component="span">{selectedOrder.quantity}</Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
@@ -585,44 +481,48 @@ const ProductionOrderManagementPage: React.FC = () => {
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
                     计划开始时间
                   </InputLabel>
-                  <Typography>
-                    {new Date(
-                      selectedOrder.scheduled_start_date || "",
-                    ).toLocaleString("zh-CN")}
-                  </Typography>
+                  <Box component="span">
+                    {selectedOrder.scheduled_start_date
+                      ? new Date(
+                          selectedOrder.scheduled_start_date,
+                        ).toLocaleString("zh-CN")
+                      : "-"}
+                  </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
                     计划结束时间
                   </InputLabel>
-                  <Typography>
-                    {new Date(
-                      selectedOrder.scheduled_end_date || "",
-                    ).toLocaleString("zh-CN")}
-                  </Typography>
+                  <Box component="span">
+                    {selectedOrder.scheduled_end_date
+                      ? new Date(
+                          selectedOrder.scheduled_end_date,
+                        ).toLocaleString("zh-CN")
+                      : "-"}
+                  </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
                     创建时间
                   </InputLabel>
-                  <Typography>
+                  <Box component="span">
                     {new Date(selectedOrder.created_at).toLocaleString("zh-CN")}
-                  </Typography>
+                  </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
                     更新时间
                   </InputLabel>
-                  <Typography>
+                  <Box component="span">
                     {new Date(selectedOrder.updated_at).toLocaleString("zh-CN")}
-                  </Typography>
+                  </Box>
                 </Box>
               </Box>
             </Box>
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

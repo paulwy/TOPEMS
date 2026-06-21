@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Bell,
   Plus,
@@ -7,13 +7,12 @@ import {
   Eye,
   ChevronLeft,
   Search,
-  Loader2,
   Archive,
   FileText,
   RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button, Chip } from "@mui/material";
 import type {
   NotificationTemplate,
   CreateTemplateRequest,
@@ -30,6 +29,12 @@ import {
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
 import { apiLogger } from "@/utils/logger";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from "@/components/templates";
 
 const NotificationTemplatesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +43,7 @@ const NotificationTemplatesPage: React.FC = () => {
   const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TemplateStatusEnum | "">(
     "",
   );
@@ -49,16 +55,25 @@ const NotificationTemplatesPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
+  // 防抖搜索
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     loadTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, selectedStatus]);
+  }, [page, selectedStatus, debouncedSearch]);
 
   const loadTemplates = async () => {
     setLoading(true);
     try {
       const statusParam = selectedStatus || undefined;
-      const response = await getTemplates(page, 20, statusParam || undefined);
+      const searchParam = debouncedSearch || undefined;
+      const response = await getTemplates(page, 20, statusParam, searchParam);
       if (response.success && response.data) {
         setTemplates(response.data.templates);
         setTotal(response.data.total);
@@ -144,12 +159,16 @@ const NotificationTemplatesPage: React.FC = () => {
     }
   };
 
-  const filteredTemplates = templates.filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.title_template.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredTemplates = useMemo(() => {
+    if (!debouncedSearch) return templates;
+    const query = debouncedSearch.toLowerCase();
+    return templates.filter(
+      (t) =>
+        t.name.toLowerCase().includes(query) ||
+        t.description?.toLowerCase().includes(query) ||
+        t.title_template.toLowerCase().includes(query),
+    );
+  }, [templates, debouncedSearch]);
 
   const getStatusBadge = (status: TemplateStatusEnum) => {
     switch (status) {
@@ -236,7 +255,186 @@ const NotificationTemplatesPage: React.FC = () => {
     return colors[type] || { bg: "grey.100", text: "grey.700" };
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / 20));
+  const columns: ColumnDef<NotificationTemplate>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        label: "模板名称",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "primary.100",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mr: 1.5,
+              }}
+            >
+              <Bell size={20} color="#1976d2" />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "grey.900" }}
+              >
+                {row.name}
+              </Typography>
+              {row.description && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "grey.500",
+                    maxWidth: 200,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {row.description}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: "notification_type",
+        label: "类型",
+        render: (row) => {
+          const typeColor = getTypeColor(row.notification_type);
+          return (
+            <Box
+              component="span"
+              sx={{
+                px: 1,
+                py: 0.5,
+                fontSize: "0.75rem",
+                borderRadius: 4,
+                ...typeColor,
+              }}
+            >
+              {getTypeLabel(row.notification_type)}
+            </Box>
+          );
+        },
+      },
+      {
+        id: "title_template",
+        label: "标题模板",
+        render: (row) => (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "grey.900",
+              maxWidth: 200,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {row.title_template}
+          </Typography>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: "default_priority",
+        label: "优先级",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {(row.default_priority ?? 0) >= 4
+              ? "紧急"
+              : (row.default_priority ?? 0) >= 3
+                ? "高"
+                : (row.default_priority ?? 0) >= 2
+                  ? "中"
+                  : "低"}
+          </Typography>
+        ),
+      },
+      {
+        id: "created_at",
+        label: "创建时间",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {new Date(row.created_at).toLocaleDateString("zh-CN")}
+          </Typography>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const rowActions: RowAction<NotificationTemplate>[] = useMemo(
+    () => [
+      {
+        label: "预览",
+        icon: <Eye size={16} />,
+        onClick: (row) => {
+          setSelectedTemplate(row);
+          setShowPreviewModal(true);
+        },
+      },
+      {
+        label: "启用/禁用",
+        icon: <Archive size={16} />,
+        onClick: (row) => handleToggleArchive(row.id),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => {
+          setSelectedTemplate(row);
+          setShowEditModal(true);
+        },
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => handleDeleteTemplate(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个模板吗？",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部状态" },
+          { value: "active", label: "启用" },
+          { value: "inactive", label: "禁用" },
+          { value: "deprecated", label: "废弃" },
+        ],
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    if (filters.status !== undefined) {
+      setSelectedStatus(filters.status);
+      setPage(1);
+    }
+  }, []);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
@@ -245,633 +443,44 @@ const NotificationTemplatesPage: React.FC = () => {
         onClose={hideNotification}
       />
 
-      {/* Header */}
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
+      <ListPageTemplate
+        title="通知模板管理"
+        subtitle="管理和配置通知消息模板"
+        backButton={{
+          onClick: () => navigate("/notifications"),
         }}
-      >
-        <Box
-          sx={{
-            maxWidth: 1400,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                component="button"
-                onClick={() => navigate("/notifications")}
-                sx={{
-                  p: 1,
-                  borderRadius: 2,
-                  "&:hover": { bgcolor: "grey.100" },
-                  transition: "background-color 0.2s",
-                }}
-              >
-                <ChevronLeft size={20} color="#666" />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "grey.900",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <FileText
-                    size={28}
-                    style={{ marginRight: 12 }}
-                    color="#1976d2"
-                  />
-                  通知模板管理
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
-                  管理和配置通知消息模板
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                component="button"
-                onClick={loadTemplates}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  px: 2,
-                  py: 1,
-                  color: "grey.700",
-                  bgcolor: "grey.200",
-                  borderRadius: 2,
-                  "&:hover": { bgcolor: "grey.300" },
-                  transition: "background-color 0.2s",
-                }}
-              >
-                <RefreshCw size={20} style={{ marginRight: 8 }} />
-                刷新
-              </Box>
-              <Box
-                component="button"
-                onClick={() => setShowCreateModal(true)}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  px: 2,
-                  py: 1,
-                  bgcolor: "primary.main",
-                  color: "white",
-                  borderRadius: 2,
-                  "&:hover": { bgcolor: "primary.dark" },
-                  transition: "background-color 0.2s",
-                }}
-              >
-                <Plus size={20} style={{ marginRight: 8 }} />
-                新增模板
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Filters */}
-      <Box
-        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
-      >
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 2,
-            mb: 3,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box sx={{ flex: 1, position: "relative" }}>
-              <Box
-                sx={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-              >
-                <Search size={20} color="#666" />
-              </Box>
-              <Box
-                component="input"
-                type="text"
-                placeholder="搜索模板名称、描述..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                sx={{
-                  width: "100%",
-                  pl: 5,
-                  pr: 2,
-                  py: 1,
-                  border: 1,
-                  borderColor: "grey.300",
-                  borderRadius: 2,
-                  "&:focus": {
-                    outline: "none",
-                    borderColor: "primary.main",
-                    boxShadow: 2,
-                  },
-                }}
-              />
-            </Box>
-
-            <Box
-              component="select"
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value as TemplateStatusEnum | "");
-                setPage(1);
-              }}
-              sx={{
-                px: 2,
-                py: 1,
-                border: 1,
-                borderColor: "grey.300",
-                borderRadius: 2,
-                "&:focus": {
-                  outline: "none",
-                  borderColor: "primary.main",
-                  boxShadow: 2,
-                },
-              }}
-            >
-              <option value="">全部状态</option>
-              <option value="active">启用</option>
-              <option value="inactive">禁用</option>
-              <option value="deprecated">废弃</option>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Content */}
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            overflow: "hidden",
-          }}
-        >
-          {loading ? (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <Loader2
-                size={48}
-                color="#1976d2"
-                style={{
-                  margin: "0 auto",
-                  animation: "spin 1s linear infinite",
-                }}
-              />
-              <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>
-                加载中...
-              </Typography>
-            </Box>
-          ) : filteredTemplates.length === 0 ? (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <FileText
-                size={48}
-                color="#666"
-                style={{ margin: "0 auto 12px" }}
-              />
-              <Typography variant="body2" sx={{ color: "grey.500" }}>
-                暂无模板数据
-              </Typography>
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ overflowX: "auto" }}>
-                <Box
-                  component="table"
-                  sx={{
-                    minWidth: "100%",
-                    "& > * + *": { borderTop: 1, borderColor: "grey.200" },
-                  }}
-                >
-                  <Box component="thead" sx={{ bgcolor: "grey.50" }}>
-                    <Box component="tr">
-                      <Box
-                        component="th"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        模板名称
-                      </Box>
-                      <Box
-                        component="th"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        类型
-                      </Box>
-                      <Box
-                        component="th"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        标题模板
-                      </Box>
-                      <Box
-                        component="th"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        状态
-                      </Box>
-                      <Box
-                        component="th"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        优先级
-                      </Box>
-                      <Box
-                        component="th"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        创建时间
-                      </Box>
-                      <Box
-                        component="th"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          textAlign: "right",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: 1,
-                        }}
-                      >
-                        操作
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box
-                    component="tbody"
-                    sx={{
-                      bgcolor: "background.paper",
-                      "& > * + *": { borderTop: 1, borderColor: "grey.200" },
-                    }}
-                  >
-                    {filteredTemplates.map((template) => {
-                      const typeColor = getTypeColor(
-                        template.notification_type,
-                      );
-                      return (
-                        <Box
-                          component="tr"
-                          key={template.id}
-                          sx={{
-                            "&:hover": { bgcolor: "grey.50" },
-                            transition: "background-color 0.2s",
-                          }}
-                        >
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
-                          >
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <Box
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  bgcolor: "primary.100",
-                                  borderRadius: 2,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  mr: 1.5,
-                                }}
-                              >
-                                <Bell size={20} color="#1976d2" />
-                              </Box>
-                              <Box>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 500, color: "grey.900" }}
-                                >
-                                  {template.name}
-                                </Typography>
-                                {template.description && (
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontSize: "0.75rem",
-                                      color: "grey.500",
-                                      maxWidth: 200,
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                    }}
-                                  >
-                                    {template.description}
-                                  </Typography>
-                                )}
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
-                          >
-                            <Box
-                              component="span"
-                              sx={{
-                                px: 1,
-                                py: 0.5,
-                                fontSize: "0.75rem",
-                                borderRadius: 4,
-                                bgcolor: typeColor.bg,
-                                color: typeColor.text,
-                              }}
-                            >
-                              {getTypeLabel(template.notification_type)}
-                            </Box>
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                color: "grey.900",
-                                maxWidth: 200,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {template.title_template}
-                            </Typography>
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
-                          >
-                            {getStatusBadge(template.status)}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2.5,
-                              whiteSpace: "nowrap",
-                              fontSize: "0.875rem",
-                              color: "grey.500",
-                            }}
-                          >
-                            {(template.default_priority ?? 0) >= 4
-                              ? "紧急"
-                              : (template.default_priority ?? 0) >= 3
-                                ? "高"
-                                : (template.default_priority ?? 0) >= 2
-                                  ? "中"
-                                  : "低"}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2.5,
-                              whiteSpace: "nowrap",
-                              fontSize: "0.875rem",
-                              color: "grey.500",
-                            }}
-                          >
-                            {new Date(template.created_at).toLocaleDateString(
-                              "zh-CN",
-                            )}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2.5,
-                              whiteSpace: "nowrap",
-                              textAlign: "right",
-                              fontSize: "0.875rem",
-                              fontWeight: 500,
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "flex-end",
-                                gap: 0.5,
-                              }}
-                            >
-                              <Box
-                                component="button"
-                                onClick={() => {
-                                  setSelectedTemplate(template);
-                                  setShowPreviewModal(true);
-                                }}
-                                sx={{
-                                  p: 0.5,
-                                  color: "primary.main",
-                                  "&:hover": { bgcolor: "primary.100" },
-                                  borderRadius: 1,
-                                  transition: "all 0.2s",
-                                }}
-                                title="预览"
-                              >
-                                <Eye size={16} />
-                              </Box>
-                              <Box
-                                component="button"
-                                onClick={() => handleToggleArchive(template.id)}
-                                sx={{
-                                  p: 0.5,
-                                  color: "warning.main",
-                                  "&:hover": { bgcolor: "warning.100" },
-                                  borderRadius: 1,
-                                  transition: "all 0.2s",
-                                }}
-                                title={
-                                  template.status === "active" ? "禁用" : "启用"
-                                }
-                              >
-                                <Archive size={16} />
-                              </Box>
-                              <Box
-                                component="button"
-                                onClick={() => {
-                                  setSelectedTemplate(template);
-                                  setShowEditModal(true);
-                                }}
-                                sx={{
-                                  p: 0.5,
-                                  color: "primary.main",
-                                  "&:hover": { bgcolor: "primary.100" },
-                                  borderRadius: 1,
-                                  transition: "all 0.2s",
-                                }}
-                                title="编辑"
-                              >
-                                <Edit size={16} />
-                              </Box>
-                              <Box
-                                component="button"
-                                onClick={() =>
-                                  handleDeleteTemplate(template.id)
-                                }
-                                sx={{
-                                  p: 0.5,
-                                  color: "error.main",
-                                  "&:hover": { bgcolor: "error.100" },
-                                  borderRadius: 1,
-                                  transition: "all 0.2s",
-                                }}
-                                title="删除"
-                              >
-                                <Trash2 size={16} />
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Pagination */}
-              {total > 20 && (
-                <Box
-                  sx={{
-                    px: 3,
-                    py: 2,
-                    borderTop: 1,
-                    borderColor: "divider",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="body2" sx={{ color: "grey.600" }}>
-                    第 {page} 页，共 {totalPages} 页
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Box
-                      component="button"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      sx={{
-                        px: 1.5,
-                        py: 0.75,
-                        fontSize: "0.875rem",
-                        fontWeight: 500,
-                        color: "grey.700",
-                        bgcolor: "background.paper",
-                        border: 1,
-                        borderColor: "grey.300",
-                        borderRadius: 2,
-                        "&:hover": { bgcolor: "grey.50" },
-                        disabled: { opacity: 0.5, cursor: "not-allowed" },
-                      }}
-                    >
-                      上一页
-                    </Box>
-                    <Box
-                      component="button"
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={page >= totalPages}
-                      sx={{
-                        px: 1.5,
-                        py: 0.75,
-                        fontSize: "0.875rem",
-                        fontWeight: 500,
-                        color: "grey.700",
-                        bgcolor: "background.paper",
-                        border: 1,
-                        borderColor: "grey.300",
-                        borderRadius: 2,
-                        "&:hover": { bgcolor: "grey.50" },
-                        disabled: { opacity: 0.5, cursor: "not-allowed" },
-                      }}
-                    >
-                      下一页
-                    </Box>
-                  </Box>
-                </Box>
-              )}
-            </>
-          )}
-        </Box>
-      </Box>
+        columns={columns}
+        data={filteredTemplates}
+        loading={loading}
+        getRowId={(row) => row.id}
+        searchable
+        searchPlaceholder="搜索模板名称、描述..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        filtersValue={{ status: selectedStatus }}
+        onFilterChange={handleFilterChange}
+        pagination={{
+          page: page - 1,
+          pageSize: 20,
+          total: total,
+          onPageChange: (p) => setPage(p + 1),
+        }}
+        rowActions={rowActions}
+        onRefresh={loadTemplates}
+        actions={[
+          {
+            label: "新增模板",
+            icon: <Plus size={16} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ]}
+        emptyIcon={
+          <FileText style={{ width: 48, height: 48, color: "#9e9e9e" }} />
+        }
+        emptyMessage="暂无模板数据"
+      />
 
       {/* Create/Edit Modal */}
       {showCreateModal && (
@@ -1252,6 +861,21 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   template,
   onClose,
 }) => {
+  const getTypeLabel = (type: NotificationTypeEnum) => {
+    const labels: Record<NotificationTypeEnum, string> = {
+      system: "系统通知",
+      workflow: "审批通知",
+      reminder: "提醒通知",
+      alert: "告警通知",
+      message: "消息通知",
+      info: "信息通知",
+      success: "成功通知",
+      warning: "警告通知",
+      error: "错误通知",
+    };
+    return labels[type] || type;
+  };
+
   return (
     <Box
       sx={{

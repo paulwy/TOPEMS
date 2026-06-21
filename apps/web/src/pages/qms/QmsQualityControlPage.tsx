@@ -5,8 +5,6 @@ import {
   AlertCircle,
   CheckCircle,
   FileText,
-  Search,
-  Filter,
   Plus,
   Edit,
   Trash2,
@@ -22,7 +20,6 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Box,
   Typography,
   FormControl,
@@ -30,12 +27,15 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "react-toastify";
 import * as z from "zod";
-import { PageHeader } from "@/components/templates/PageHeader";
+import {
+  ListPageTemplate,
+  PageHeader,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Nonconformance {
   id: string;
@@ -240,70 +240,69 @@ const QmsQualityControlPage: React.FC = () => {
     );
   };
 
+  // Nonconformance columns and row actions
   const nonconformanceColumns: ColumnDef<Nonconformance>[] = [
-    { accessorKey: "code", header: "编号" },
-    { accessorKey: "title", header: "问题标题" },
-    { accessorKey: "category", header: "类别" },
+    { id: "code", label: "编号" },
+    { id: "title", label: "问题标题" },
+    { id: "category", label: "类别" },
     {
-      accessorKey: "severity",
-      header: "严重程度",
-      cell: ({ row }) => getSeverityBadge(row.original.severity),
+      id: "severity",
+      label: "严重程度",
+      render: (row) => getSeverityBadge(row.severity),
     },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status, "nc"),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status, "nc"),
     },
-    { accessorKey: "reported_by", header: "报告人" },
-    { accessorKey: "reported_at", header: "报告日期" },
+    { id: "reported_by", label: "报告人" },
+    { id: "reported_at", label: "报告日期" },
+  ];
+
+  const nonconformanceRowActions: RowAction<Nonconformance>[] = [
     {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button size="small" onClick={() => viewItem(row.original)}>
-            <Eye sx={{ width: 16, height: 16 }} />
-          </Button>
-          <Button size="small" onClick={() => editItem(row.original)}>
-            <Edit sx={{ width: 16, height: 16 }} />
-          </Button>
-          <Button
-            size="small"
-            onClick={() => deleteItem(row.original.id)}
-            sx={{ color: "error.main" }}
-          >
-            <Trash2 sx={{ width: 16, height: 16 }} />
-          </Button>
-        </Box>
-      ),
+      label: "查看",
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: (row) => viewItem(row),
+    },
+    {
+      label: "编辑",
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: (row) => editItem(row),
+    },
+    {
+      label: "删除",
+      icon: <Trash2 style={{ width: 16, height: 16 }} />,
+      color: "error",
+      onClick: (row) => deleteItem(row.id),
     },
   ];
 
+  // Audit columns and row actions
   const auditColumns: ColumnDef<Audit>[] = [
-    { accessorKey: "code", header: "审核编号" },
-    { accessorKey: "title", header: "审核标题" },
-    { accessorKey: "type", header: "审核类型" },
+    { id: "code", label: "审核编号" },
+    { id: "title", label: "审核标题" },
+    { id: "type", label: "审核类型" },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status, "audit"),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status, "audit"),
     },
-    { accessorKey: "auditor", header: "审核人" },
-    { accessorKey: "audit_date", header: "审核日期" },
-    { accessorKey: "findings_count", header: "发现问题数" },
+    { id: "auditor", label: "审核人" },
+    { id: "audit_date", label: "审核日期" },
+    { id: "findings_count", label: "发现问题数" },
+  ];
+
+  const auditRowActions: RowAction<Audit>[] = [
     {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button size="small" onClick={() => viewItem(row.original)}>
-            <Eye sx={{ width: 16, height: 16 }} />
-          </Button>
-          <Button size="small" onClick={() => editItem(row.original)}>
-            <Edit sx={{ width: 16, height: 16 }} />
-          </Button>
-        </Box>
-      ),
+      label: "查看",
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: (row) => viewItem(row),
+    },
+    {
+      label: "编辑",
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: (row) => editItem(row),
     },
   ];
 
@@ -368,18 +367,21 @@ const QmsQualityControlPage: React.FC = () => {
     setErrors({});
   };
 
-  const filteredData =
-    activeTab === "nonconformance"
-      ? nonconformances.filter(
-          (item) =>
-            item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.code.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
-      : audits.filter(
-          (item) =>
-            item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.code.toLowerCase().includes(searchTerm.toLowerCase()),
-        );
+  const filteredNonconformances = useMemo(() => {
+    return nonconformances.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.code.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [nonconformances, searchTerm]);
+
+  const filteredAudits = useMemo(() => {
+    return audits.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.code.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [audits, searchTerm]);
 
   const stats = {
     totalNonconformances: nonconformances.length,
@@ -391,6 +393,227 @@ const QmsQualityControlPage: React.FC = () => {
     completedAudits: audits.filter((a) => a.status === "completed").length,
     inProgressAudits: audits.filter((a) => a.status === "in_progress").length,
   };
+
+  const statsCards = (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "repeat(1, 1fr)",
+          md: "repeat(3, 1fr)",
+          lg: "repeat(6, 1fr)",
+        },
+        gap: 2,
+        mb: 4,
+      }}
+    >
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#fee2e2",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AlertCircle sx={{ width: 20, height: 20, color: "#dc2626" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                不合格品总数
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.totalNonconformances}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#fef9c3",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AlertCircle sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                待处理
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.openNonconformances}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dcfce7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                已关闭
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.closedNonconformances}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dbeafe",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FileText sx={{ width: 20, height: 20, color: "#2563eb" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                审核总数
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.totalAudits}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#f3e8ff",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FileText sx={{ width: 20, height: 20, color: "#7c3aed" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                进行中审核
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.inProgressAudits}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dcfce7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                已完成审核
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.completedAudits}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
+  const currentData =
+    activeTab === "nonconformance" ? filteredNonconformances : filteredAudits;
+  const currentColumns =
+    activeTab === "nonconformance" ? nonconformanceColumns : auditColumns;
+  const currentRowActions =
+    activeTab === "nonconformance" ? nonconformanceRowActions : auditRowActions;
 
   return (
     <Box
@@ -440,241 +663,19 @@ const QmsQualityControlPage: React.FC = () => {
         component="main"
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
       >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(1, 1fr)",
-              md: "repeat(3, 1fr)",
-              lg: "repeat(6, 1fr)",
-            },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fee2e2",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <AlertCircle
-                    sx={{ width: 20, height: 20, color: "#dc2626" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    不合格品总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.totalNonconformances}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef9c3",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <AlertCircle
-                    sx={{ width: 20, height: 20, color: "#ca8a04" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    待处理
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.openNonconformances}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <CheckCircle
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已关闭
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.closedNonconformances}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dbeafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20, color: "#2563eb" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    审核总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.totalAudits}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#f3e8ff",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20, color: "#7c3aed" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    进行中审核
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.inProgressAudits}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <CheckCircle
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已完成审核
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.completedAudits}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
+        {statsCards}
 
         <Card>
           <CardContent sx={{ p: 0 }}>
-            {activeTab === "nonconformance" ? (
-              <DataTable
-                columns={nonconformanceColumns}
-                data={filteredData as Nonconformance[]}
-                enablePagination={false}
-              />
-            ) : (
-              <DataTable
-                columns={auditColumns}
-                data={filteredData as Audit[]}
-                enablePagination={false}
-              />
-            )}
+            <ListPageTemplate
+              columns={currentColumns}
+              data={currentData as any[]}
+              getRowId={(row: any) => row.id}
+              rowActions={currentRowActions as any}
+              searchable={false}
+              filters={[]}
+              actions={[]}
+            />
           </CardContent>
         </Card>
       </Box>

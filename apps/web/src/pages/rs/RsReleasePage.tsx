@@ -1,44 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Container,
   Typography,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   Paper,
   IconButton,
   Button,
-  TextField,
-  InputAdornment,
-  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Tooltip,
+  Stack,
+  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from "@mui/material";
 import { FileUpload } from "@/components/common";
+import { Plus, Eye, RotateCcw, Tag, Calendar, User } from "lucide-react";
 import {
-  Plus,
-  Search,
-  Eye,
-  RotateCcw,
-  Package,
-  Calendar,
-  User,
-  Filter,
-  Tag,
-} from "lucide-react";
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Release {
   id: string;
@@ -52,7 +39,7 @@ interface Release {
 
 const RsReleasePage: React.FC = () => {
   const [releases, setReleases] = useState<Release[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -123,7 +110,6 @@ const RsReleasePage: React.FC = () => {
       },
     ];
     setReleases(mockReleases);
-    setLoading(false);
   }, []);
 
   const getEnvColor = (env: string): "error" | "warning" | "success" => {
@@ -180,29 +166,20 @@ const RsReleasePage: React.FC = () => {
     }
   };
 
-  const filteredReleases = releases.filter((release) => {
-    const matchesSearch =
-      release.version.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      release.release_note.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      release.release_by.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesEnv = !envFilter || release.environment === envFilter;
-    const matchesStatus = !statusFilter || release.status === statusFilter;
-    const matchesDateRange =
-      (!dateRange.start || release.release_time >= dateRange.start) &&
-      (!dateRange.end || release.release_time <= dateRange.end);
-    return matchesSearch && matchesEnv && matchesStatus && matchesDateRange;
-  });
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const filteredReleases = useMemo(() => {
+    return releases.filter((release) => {
+      const matchesSearch =
+        release.version.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        release.release_note.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        release.release_by.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesEnv = !envFilter || release.environment === envFilter;
+      const matchesStatus = !statusFilter || release.status === statusFilter;
+      const matchesDateRange =
+        (!dateRange.start || release.release_time >= dateRange.start) &&
+        (!dateRange.end || release.release_time <= dateRange.end);
+      return matchesSearch && matchesEnv && matchesStatus && matchesDateRange;
+    });
+  }, [releases, searchTerm, envFilter, statusFilter, dateRange]);
 
   const handleViewDetail = (release: Release) => {
     setSelectedRelease(release);
@@ -242,240 +219,170 @@ const RsReleasePage: React.FC = () => {
     });
   };
 
-  return (
-    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
-          >
-            发布管理
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Plus size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-            onClick={() => {
-              setReleasePackageAttachments([]);
-              setNewReleaseDialogOpen(true);
+  // 表格列定义
+  const columns: ColumnDef<Release>[] = [
+    {
+      id: "version",
+      label: "版本号",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Tag size={16} color="#3b82f6" />
+          {row.version}
+        </Box>
+      ),
+    },
+    {
+      id: "release_time",
+      label: "发布时间",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Calendar size={14} />
+          {row.release_time}
+        </Box>
+      ),
+    },
+    {
+      id: "release_note",
+      label: "发布说明",
+      render: (row) => (
+        <Tooltip title={row.release_note}>
+          <Box
+            sx={{
+              maxWidth: 250,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
-            新建发布
-          </Button>
+            {row.release_note}
+          </Box>
+        </Tooltip>
+      ),
+    },
+    {
+      id: "environment",
+      label: "发布环境",
+      render: (row) => (
+        <Chip
+          label={getEnvLabel(row.environment)}
+          size="small"
+          color={getEnvColor(row.environment)}
+        />
+      ),
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip
+          label={getStatusLabel(row.status)}
+          size="small"
+          color={getStatusColor(row.status)}
+        />
+      ),
+    },
+    {
+      id: "release_by",
+      label: "发布人",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <User size={14} />
+          {row.release_by}
         </Box>
+      ),
+    },
+  ];
 
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: "center", flexWrap: "wrap" }}
-          >
-            <TextField
-              size="small"
-              placeholder="搜索版本、说明..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>环境</InputLabel>
-              <Select
-                value={envFilter || ""}
-                label="环境"
-                onChange={(e) => setEnvFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="production">生产环境</MenuItem>
-                <MenuItem value="staging">预发布环境</MenuItem>
-                <MenuItem value="development">开发环境</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={statusFilter || ""}
-                label="状态"
-                onChange={(e) => setStatusFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="released">已发布</MenuItem>
-                <MenuItem value="planning">规划中</MenuItem>
-                <MenuItem value="rolled_back">已回滚</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              size="small"
-              type="date"
-              label="开始日期"
-              value={dateRange.start}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, start: e.target.value })
-              }
-              sx={{ width: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              size="small"
-              type="date"
-              label="结束日期"
-              value={dateRange.end}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, end: e.target.value })
-              }
-              sx={{ width: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Stack>
-        </Paper>
+  // 筛选器定义
+  const filters: FilterConfig[] = [
+    {
+      id: "env",
+      label: "环境",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "生产环境", value: "production" },
+        { label: "预发布环境", value: "staging" },
+        { label: "开发环境", value: "development" },
+      ],
+      value: envFilter || "",
+      onChange: (value) => setEnvFilter(value || null),
+    },
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "已发布", value: "released" },
+        { label: "规划中", value: "planning" },
+        { label: "已回滚", value: "rolled_back" },
+      ],
+      value: statusFilter || "",
+      onChange: (value) => setStatusFilter(value || null),
+    },
+    {
+      id: "dateRange",
+      label: "日期范围",
+      type: "dateRange",
+      value: dateRange,
+      onChange: (value) => setDateRange(value || { start: "", end: "" }),
+    },
+  ];
 
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    版本号
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    发布时间
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    发布说明
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    发布环境
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    状态
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    发布人
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredReleases
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((release) => (
-                    <TableRow key={release.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Tag size={16} color="#3b82f6" />
-                          {release.version}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Calendar size={14} />
-                          {release.release_time}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip title={release.release_note}>
-                          <Box
-                            sx={{
-                              maxWidth: 250,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {release.release_note}
-                          </Box>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getEnvLabel(release.environment)}
-                          size="small"
-                          color={getEnvColor(release.environment)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getStatusLabel(release.status)}
-                          size="small"
-                          color={getStatusColor(release.status)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <User size={14} />
-                          {release.release_by}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="查看详情">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewDetail(release)}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          {release.status === "released" && (
-                            <Tooltip title="回滚">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleRollback(release.id)}
-                              >
-                                <RotateCcw size={16} />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredReleases.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+  // 行操作定义
+  const rowActions: RowAction<Release>[] = [
+    {
+      label: "查看详情",
+      icon: <Eye size={16} />,
+      onClick: handleViewDetail,
+    },
+    {
+      label: "回滚",
+      icon: <RotateCcw size={16} />,
+      onClick: handleRollback,
+      show: (row) => row.status === "released",
+    },
+  ];
+
+  // 分页配置
+  const pagination = {
+    page,
+    pageSize: rowsPerPage,
+    total: filteredReleases.length,
+    onPageChange: setPage,
+    onPageSizeChange: setRowsPerPage,
+  };
+
+  // 操作按钮
+  const actions = [
+    {
+      label: "新建发布",
+      icon: <Plus size={18} />,
+      onClick: () => {
+        setReleasePackageAttachments([]);
+        setNewReleaseDialogOpen(true);
+      },
+    },
+  ];
+
+  return (
+    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
+      <ListPageTemplate
+        title="发布管理"
+        columns={columns}
+        data={filteredReleases}
+        loading={loading}
+        filters={filters}
+        globalSearch={{
+          fields: ["version", "release_note", "release_by"],
+          placeholder: "搜索版本、说明...",
+        }}
+        pagination={pagination}
+        actions={actions}
+        rowActions={rowActions}
+        onSearch={setSearchTerm}
+      />
 
       <Dialog
         open={detailDialogOpen}

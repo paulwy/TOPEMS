@@ -14,11 +14,11 @@ import {
 } from "@mui/material";
 import { Plus, Eye, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ListPageTemplate } from "@/components/templates/ListPageTemplate";
-import type {
-  ColumnDef,
-  RowAction,
-} from "@/components/templates/ListPageTemplate";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/templates";
 import { srmApi } from "@/api/srm";
 import type { Supplier } from "@/api/srm";
 import { toast } from "react-toastify";

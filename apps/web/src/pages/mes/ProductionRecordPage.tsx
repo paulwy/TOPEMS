@@ -1,37 +1,22 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Box,
-  TablePagination,
+  Chip,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import type {
   ProductionRecord,
   CreateProductionRecordRequest,
-  UpdateProductionRecordRequest,
 } from "@/api/professional/mes/mes";
 import { mesApi } from "@/api/professional/mes/mes";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { Plus } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
 
@@ -110,98 +95,60 @@ const ProductionRecordPage: React.FC = () => {
     }
   };
 
+  const columns: ColumnDef<ProductionRecord>[] = [
+    { id: "order_id", label: "订单ID" },
+    { id: "process_id", label: "工序", render: (row) => row.process_id || "-" },
+    {
+      id: "work_station_id",
+      label: "工作站",
+      render: (row) => row.work_station_id || "-",
+    },
+    { id: "operator", label: "操作员" },
+    { id: "quantity_completed", label: "完成数量" },
+    {
+      id: "quantity_rejected",
+      label: "不良数量",
+      render: (row) => row.quantity_rejected || 0,
+    },
+    {
+      id: "start_time",
+      label: "开始时间",
+      render: (row) => new Date(row.start_time).toLocaleString("zh-CN"),
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip size="small" label={row.status} variant="outlined" />
+      ),
+    },
+  ];
+
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            生产记录管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理生产记录,包括订单ID、工序、操作员、完成数量等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            <Button variant="contained" onClick={() => setShowDialog(true)}>
-              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
-              新增生产记录
-            </Button>
-          </Box>
-
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>订单ID</TableCell>
-                <TableCell>工序</TableCell>
-                <TableCell>工作站</TableCell>
-                <TableCell>操作员</TableCell>
-                <TableCell>完成数量</TableCell>
-                <TableCell>不良数量</TableCell>
-                <TableCell>开始时间</TableCell>
-                <TableCell>状态</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {records.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: "center" }}>
-                    <EmptyState
-                      title="暂无生产记录数据"
-                      description="点击上方按钮添加第一个生产记录"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                records.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{record.order_id}</TableCell>
-                    <TableCell>{record.process_id || "-"}</TableCell>
-                    <TableCell>{record.work_station_id || "-"}</TableCell>
-                    <TableCell>{record.operator}</TableCell>
-                    <TableCell>{record.quantity_completed}</TableCell>
-                    <TableCell>{record.quantity_rejected || 0}</TableCell>
-                    <TableCell>
-                      {new Date(record.start_time).toLocaleString("zh-CN")}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={record.status}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <TablePagination
-              component="div"
-              count={total}
-              page={currentPage - 1}
-              rowsPerPage={pageSize}
-              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-              rowsPerPageOptions={[]}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="生产记录管理"
+        subtitle="管理生产记录,包括订单ID、工序、操作员、完成数量等"
+        columns={columns}
+        data={records}
+        loading={loading}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: (page) => setCurrentPage(page + 1),
+        }}
+        actions={[
+          {
+            label: "新增生产记录",
+            icon: <Plus style={{ width: 16, height: 16 }} />,
+            onClick: () => setShowDialog(true),
+          },
+        ]}
+        emptyMessage="暂无生产记录数据"
+      />
 
       <Dialog
         open={showDialog}
@@ -290,7 +237,7 @@ const ProductionRecordPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

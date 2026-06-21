@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Archive,
   ChevronLeft,
@@ -6,11 +6,11 @@ import {
   Loader2,
   RefreshCw,
   Settings,
-  Trash2,
   RotateCcw,
   Eye,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography, Button } from "@mui/material";
 import type {
   ArchiveConfig,
   ArchivedNotification,
@@ -24,8 +24,13 @@ import {
 } from "@/api/notification";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
-import { Box, Typography } from "@mui/material";
 import { apiLogger } from "@/utils/logger";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from "@/components/templates";
 
 const NotificationArchivePage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,16 +44,25 @@ const NotificationArchivePage: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [selectedNotification, setSelectedNotification] =
     useState<ArchivedNotification | null>(null);
 
+  // 防抖搜索
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch]);
 
   const loadData = async () => {
     setLoading(true);
@@ -103,11 +117,15 @@ const NotificationArchivePage: React.FC = () => {
     }
   };
 
-  const filteredNotifications = archivedNotifications.filter(
-    (n) =>
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.content.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredNotifications = useMemo(() => {
+    if (!debouncedSearch) return archivedNotifications;
+    const query = debouncedSearch.toLowerCase();
+    return archivedNotifications.filter(
+      (n) =>
+        n.title.toLowerCase().includes(query) ||
+        n.content.toLowerCase().includes(query),
+    );
+  }, [archivedNotifications, debouncedSearch]);
 
   const getTypeLabel = (type: NotificationTypeEnum) => {
     const labels: Record<NotificationTypeEnum, string> = {
@@ -142,6 +160,90 @@ const NotificationArchivePage: React.FC = () => {
     return colors[type] || { bgcolor: "#f3f4f6", color: "#374151" };
   };
 
+  const columns: ColumnDef<ArchivedNotification>[] = useMemo(
+    () => [
+      {
+        id: "title",
+        label: "通知标题",
+        render: (row) => (
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 500, color: "grey.900" }}
+            >
+              {row.title}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: "grey.500",
+                maxWidth: 400,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                display: "block",
+              }}
+            >
+              {row.content}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "notification_type",
+        label: "类型",
+        render: (row) => {
+          const typeColor = getTypeColor(row.notification_type);
+          return (
+            <Box
+              component="span"
+              sx={{
+                px: 1,
+                py: 0.5,
+                fontSize: "0.75rem",
+                borderRadius: "9999px",
+                ...typeColor,
+              }}
+            >
+              {getTypeLabel(row.notification_type)}
+            </Box>
+          );
+        },
+      },
+      {
+        id: "created_at",
+        label: "原创建时间",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {new Date(row.created_at).toLocaleString("zh-CN")}
+          </Typography>
+        ),
+      },
+      {
+        id: "archived_at",
+        label: "归档时间",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {new Date(row.archived_at).toLocaleString("zh-CN")}
+          </Typography>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const rowActions: RowAction<ArchivedNotification>[] = useMemo(
+    () => [
+      {
+        label: "查看详情",
+        icon: <Eye size={16} />,
+        onClick: (row) => setSelectedNotification(row),
+      },
+    ],
+    [],
+  );
+
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
@@ -151,498 +253,105 @@ const NotificationArchivePage: React.FC = () => {
         onClose={hideNotification}
       />
 
-      {/* Header */}
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
+      <ListPageTemplate
+        title="通知归档管理"
+        subtitle="查看和管理已归档的通知"
+        backButton={{
+          onClick: () => navigate("/notifications"),
         }}
-      >
-        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-              <Box
-                onClick={() => navigate("/notifications")}
-                sx={{
-                  p: 1,
-                  "&:hover": { bgcolor: "grey.100" },
-                  borderRadius: 1,
-                  cursor: "pointer",
-                }}
-              >
-                <ChevronLeft
-                  sx={{ width: 20, height: 20, color: "grey.600" }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "grey.900",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                  }}
-                >
-                  <Archive
-                    sx={{ width: 28, height: 28, color: "warning.main" }}
-                  />
-                  通知归档管理
-                </Typography>
-                <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
-                  查看和管理已归档的通知
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                onClick={loadData}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  px: 2,
-                  py: 1,
-                  color: "grey.700",
-                  bgcolor: "grey.200",
-                  borderRadius: 2,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "grey.300" },
-                }}
-              >
-                <RefreshCw sx={{ width: 20, height: 20, mr: 1 }} />
-                刷新
-              </Box>
-              <Box
-                onClick={handleRunAutoArchive}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  px: 2,
-                  py: 1,
-                  color: "warning.700",
-                  bgcolor: "warning.100",
-                  borderRadius: 2,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "warning.200" },
-                }}
-              >
-                <RotateCcw sx={{ width: 20, height: 20, mr: 1 }} />
-                执行自动归档
-              </Box>
-              <Box
-                onClick={() => setShowConfigModal(true)}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  px: 2,
-                  py: 1,
-                  color: "grey.700",
-                  bgcolor: "grey.200",
-                  borderRadius: 2,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "grey.300" },
-                }}
-              >
-                <Settings sx={{ width: 20, height: 20, mr: 1 }} />
-                归档设置
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Archive Config Summary */}
-      {archiveConfig && (
-        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 2 }}>
-          <Box
-            sx={{
-              bgcolor: "warning.50",
-              borderRadius: 2,
-              p: 2,
-              border: 1,
-              borderColor: "warning.200",
-            }}
-          >
+        columns={columns}
+        data={filteredNotifications}
+        loading={loading}
+        getRowId={(row) => row.id}
+        searchable
+        searchPlaceholder="搜索归档通知标题、内容..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        pagination={{
+          page: page - 1,
+          pageSize: 20,
+          total: total,
+          onPageChange: (p) => setPage(p + 1),
+        }}
+        rowActions={rowActions}
+        onRefresh={loadData}
+        actions={[
+          {
+            label: "执行自动归档",
+            icon: <RotateCcw style={{ width: 16, height: 16 }} />,
+            onClick: handleRunAutoArchive,
+            variant: "outlined",
+          },
+          {
+            label: "归档设置",
+            icon: <Settings style={{ width: 16, height: 16 }} />,
+            onClick: () => setShowConfigModal(true),
+            variant: "outlined",
+          },
+        ]}
+        headerContent={
+          archiveConfig ? (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                bgcolor: "warning.50",
+                borderRadius: 2,
+                p: 2,
+                mb: 2,
+                border: 1,
+                borderColor: "warning.200",
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Settings
-                  sx={{ width: 20, height: 20, color: "warning.main", mr: 1 }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 500, color: "warning.900" }}
-                >
-                  归档配置
-                </Typography>
-              </Box>
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 3,
-                  fontSize: "0.875rem",
-                  color: "warning.800",
+                  justifyContent: "space-between",
                 }}
               >
-                <span>自动归档天数：{archiveConfig.auto_archive_days} 天</span>
-                <span>保留天数：{archiveConfig.retention_days} 天</span>
-                <Typography
-                  component="span"
-                  sx={{
-                    color: archiveConfig.enabled
-                      ? "success.main"
-                      : "error.main",
-                  }}
-                >
-                  {archiveConfig.enabled ? "已启用" : "已禁用"}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      )}
-
-      {/* Filters */}
-      <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 3 }}>
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 2,
-            mb: 3,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box sx={{ flex: 1, position: "relative" }}>
-              <Search
-                sx={{
-                  position: "absolute",
-                  left: 2,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 20,
-                  height: 20,
-                  color: "grey.400",
-                }}
-              />
-              <input
-                type="text"
-                placeholder="搜索归档通知标题、内容..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  paddingLeft: 40,
-                  paddingRight: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                  border: "1px solid",
-                  borderColor: "grey.300",
-                  borderRadius: 8,
-                  outline: "none",
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Content */}
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            overflow: "hidden",
-          }}
-        >
-          {loading ? (
-            <Box sx={{ p: 8, textAlign: "center" }}>
-              <Loader2
-                sx={{
-                  width: 48,
-                  height: 48,
-                  color: "primary.main",
-                  mx: "auto",
-                  animation: "spin 1s linear infinite",
-                }}
-              />
-              <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
-                加载中...
-              </Typography>
-            </Box>
-          ) : filteredNotifications.length === 0 ? (
-            <Box sx={{ p: 8, textAlign: "center" }}>
-              <Archive
-                sx={{
-                  width: 48,
-                  height: 48,
-                  color: "grey.400",
-                  mx: "auto",
-                  mb: 1.5,
-                }}
-              />
-              <Typography sx={{ color: "grey.500" }}>暂无归档通知</Typography>
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ overflowX: "auto" }}>
-                <Box component="table" sx={{ minWidth: 720 }}>
-                  <Box component="thead" sx={{ bgcolor: "grey.50" }}>
-                    <tr>
-                      <th
-                        style={{
-                          padding: "12px 24px",
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        通知标题
-                      </th>
-                      <th
-                        style={{
-                          padding: "12px 24px",
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        类型
-                      </th>
-                      <th
-                        style={{
-                          padding: "12px 24px",
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        原创建时间
-                      </th>
-                      <th
-                        style={{
-                          padding: "12px 24px",
-                          textAlign: "left",
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        归档时间
-                      </th>
-                      <th
-                        style={{
-                          padding: "12px 24px",
-                          textAlign: "right",
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        操作
-                      </th>
-                    </tr>
-                  </Box>
-                  <Box
-                    component="tbody"
-                    sx={{
-                      "& > tr": { borderTop: 1, borderColor: "divider" },
-                      "& > tr:hover": { bgcolor: "grey.50" },
-                    }}
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Settings
+                    sx={{ width: 20, height: 20, color: "warning.main", mr: 1 }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 500, color: "warning.900" }}
                   >
-                    {filteredNotifications.map((notification) => (
-                      <tr key={notification.id}>
-                        <td style={{ padding: "16px 24px" }}>
-                          <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 500, color: "grey.900" }}
-                          >
-                            {notification.title}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: "grey.500",
-                              maxWidth: 400,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              display: "block",
-                            }}
-                          >
-                            {notification.content}
-                          </Typography>
-                        </td>
-                        <td
-                          style={{ padding: "16px 24px", whiteSpace: "nowrap" }}
-                        >
-                          <Box
-                            component="span"
-                            sx={{
-                              px: 1,
-                              py: 0.5,
-                              fontSize: "0.75rem",
-                              borderRadius: "9999px",
-                              ...getTypeColor(notification.notification_type),
-                            }}
-                          >
-                            {getTypeLabel(notification.notification_type)}
-                          </Box>
-                        </td>
-                        <td
-                          style={{
-                            padding: "16px 24px",
-                            whiteSpace: "nowrap",
-                            fontSize: "0.875rem",
-                            color: "grey.500",
-                          }}
-                        >
-                          {new Date(notification.created_at).toLocaleString(
-                            "zh-CN",
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: "16px 24px",
-                            whiteSpace: "nowrap",
-                            fontSize: "0.875rem",
-                            color: "grey.500",
-                          }}
-                        >
-                          {new Date(notification.archived_at).toLocaleString(
-                            "zh-CN",
-                          )}
-                        </td>
-                        <td
-                          style={{
-                            padding: "16px 24px",
-                            whiteSpace: "nowrap",
-                            textAlign: "right",
-                            fontSize: "0.875rem",
-                            fontWeight: 500,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "flex-end",
-                              gap: 1,
-                            }}
-                          >
-                            <Box
-                              onClick={() =>
-                                setSelectedNotification(notification)
-                              }
-                              sx={{
-                                p: 1,
-                                color: "primary.main",
-                                "&:hover": { bgcolor: "primary.100" },
-                                borderRadius: 1,
-                                cursor: "pointer",
-                              }}
-                              title="查看详情"
-                            >
-                              <Eye sx={{ width: 16, height: 16 }} />
-                            </Box>
-                          </Box>
-                        </td>
-                      </tr>
-                    ))}
-                  </Box>
+                    归档配置
+                  </Typography>
                 </Box>
-              </Box>
-
-              {/* Pagination */}
-              {total > 20 && (
                 <Box
                   sx={{
-                    px: 3,
-                    py: 2,
-                    borderTop: 1,
-                    borderColor: "divider",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
+                    gap: 3,
+                    fontSize: "0.875rem",
+                    color: "warning.800",
                   }}
                 >
-                  <Typography variant="body2" sx={{ color: "grey.600" }}>
-                    第 {page} 页，共 {totalPages} 页
+                  <span>
+                    自动归档天数：{archiveConfig.auto_archive_days} 天
+                  </span>
+                  <span>保留天数：{archiveConfig.retention_days} 天</span>
+                  <Typography
+                    component="span"
+                    sx={{
+                      color: archiveConfig.enabled
+                        ? "success.main"
+                        : "error.main",
+                    }}
+                  >
+                    {archiveConfig.enabled ? "已启用" : "已禁用"}
                   </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Box
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      sx={{
-                        px: 1.5,
-                        py: 0.75,
-                        fontSize: "0.875rem",
-                        fontWeight: 500,
-                        color: "grey.700",
-                        bgcolor: "background.paper",
-                        border: 1,
-                        borderColor: "grey.300",
-                        borderRadius: 2,
-                        cursor: page === 1 ? "not-allowed" : "pointer",
-                        opacity: page === 1 ? 0.5 : 1,
-                      }}
-                    >
-                      上一页
-                    </Box>
-                    <Box
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      sx={{
-                        px: 1.5,
-                        py: 0.75,
-                        fontSize: "0.875rem",
-                        fontWeight: 500,
-                        color: "grey.700",
-                        bgcolor: "background.paper",
-                        border: 1,
-                        borderColor: "grey.300",
-                        borderRadius: 2,
-                        cursor: page >= totalPages ? "not-allowed" : "pointer",
-                        opacity: page >= totalPages ? 0.5 : 1,
-                      }}
-                    >
-                      下一页
-                    </Box>
-                  </Box>
                 </Box>
-              )}
-            </>
-          )}
-        </Box>
-      </Box>
+              </Box>
+            </Box>
+          ) : null
+        }
+        emptyIcon={
+          <Archive style={{ width: 48, height: 48, color: "#9e9e9e" }} />
+        }
+        emptyMessage="暂无归档通知"
+      />
 
       {/* Config Modal */}
       {showConfigModal && archiveConfig && (

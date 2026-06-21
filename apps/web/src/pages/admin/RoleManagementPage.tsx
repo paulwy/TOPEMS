@@ -1,36 +1,20 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Box,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
+  TextField,
+  Box,
+  Typography,
   IconButton,
+  Chip,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
-import {
-  Shield,
-  Search,
-  Plus,
-  Trash2,
-  ChevronLeft,
-  Key,
-  AlertCircle,
-  CheckCircle,
-  Edit,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from "lucide-react";
 import { authApi, type Role, type Permission } from "@/api/iam";
 import { useAppStore } from "../../store";
-
-import { ModeToggle } from "@/components/ModeToggle";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 interface RoleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -39,7 +23,6 @@ interface RoleManagementPageProps {
 const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
   onNavigate: _onNavigate,
 }) => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [roles, setRoles] = useState<Role[]>([]);
@@ -256,245 +239,118 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
     setShowPermissionsModal(true);
   };
 
-  const filteredRoles = roles.filter(
-    (role) =>
-      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      role.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+  const columns: ColumnDef<Role>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        label: "角色名称",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+                bgcolor: "primary.light",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Shield size={20} color="#6366f1" />
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.name}
+              </Typography>
+              {row.description && (
+                <Typography variant="caption" color="text.secondary">
+                  {row.description}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: "created_at",
+        label: "创建时间",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {new Date(row.created_at).toLocaleString("zh-CN")}
+          </Typography>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
+
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row: Role) => {
+          setSelectedRole(row);
+          setShowEditModal(true);
+        },
+      },
+      {
+        label: "管理权限",
+        icon: <Key size={16} />,
+        onClick: (row: Role) => openPermissionsModal(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error" as const,
+        onClick: (row: Role) => handleDeleteRole(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个角色吗？删除后无法恢复。",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // Filter roles based on search
+  const filteredRoles = useMemo(() => {
+    if (!searchQuery) return roles;
+    const query = searchQuery.toLowerCase();
+    return roles.filter(
+      (role) =>
+        role.name.toLowerCase().includes(query) ||
+        role.description?.toLowerCase().includes(query),
+    );
+  }, [roles, searchQuery]);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
-      {/* 顶部导航 */}
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
+      <ListPageTemplate
+        title="角色管理"
+        subtitle="管理用户角色、权限配置"
+        columns={columns}
+        data={filteredRoles}
+        loading={loading}
+        error={error}
+        rowActions={rowActions}
+        searchable
+        searchPlaceholder="搜索角色名称或描述..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        actions={[
+          {
+            label: "创建角色",
+            icon: <Plus size={20} />,
+            onClick: () => setShowCreateModal(true),
+          },
+        ]}
+        onRefresh={loadData}
+        backButton={{
+          href: "/dashboard",
         }}
-      >
-        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft />
-              </IconButton>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  <Shield size={28} color="#6366f1" />
-                  角色管理
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  管理用户角色、权限配置
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ModeToggle />
-              <Button
-                variant="contained"
-                onClick={() => setShowCreateModal(true)}
-                startIcon={<Plus size={20} />}
-              >
-                创建角色
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
-        {/* 搜索栏 */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-          <Box sx={{ flex: 1, position: "relative" }}>
-            <Search
-              style={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 20,
-                height: 20,
-                color: "#9e9e9e",
-              }}
-            />
-            <TextField
-              size="small"
-              placeholder="搜索角色名称或描述..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ width: "100%", pl: 5 }}
-            />
-          </Box>
-          <Button variant="outlined" onClick={loadData}>
-            刷新
-          </Button>
-        </Box>
-
-        {/* 角色列表 */}
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "primary.main",
-                    borderTop: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                  }}
-                />
-                <Typography sx={{ mt: 2, color: "text.secondary" }}>
-                  加载中...
-                </Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle size={48} color="#d32f2f" />
-                <Typography sx={{ color: "error.main", mt: 2 }}>
-                  {error}
-                </Typography>
-                <Button sx={{ mt: 2 }} onClick={loadData}>
-                  重试
-                </Button>
-              </Box>
-            ) : filteredRoles.length === 0 ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Shield size={48} color="#9e9e9e" />
-                <Typography sx={{ color: "text.secondary", mt: 2 }}>
-                  暂无角色
-                </Typography>
-              </Box>
-            ) : (
-              <Box>
-                {filteredRoles.map((role) => (
-                  <Box
-                    key={role.id}
-                    sx={{
-                      p: 3,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                      "&:hover": { bgcolor: "grey.50" },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 2,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 2,
-                            bgcolor: "primary.light",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Shield size={24} color="#6366f1" />
-                        </Box>
-                        <Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Typography
-                              variant="subtitle1"
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {role.name}
-                            </Typography>
-                          </Box>
-                          {role.description && (
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ mt: 0.5 }}
-                            >
-                              {role.description}
-                            </Typography>
-                          )}
-                          <Typography
-                            variant="caption"
-                            color="text.disabled"
-                            sx={{ mt: 1, display: "block" }}
-                          >
-                            创建时间:{" "}
-                            {new Date(role.created_at).toLocaleString("zh-CN")}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <Tooltip title="编辑角色">
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              setSelectedRole(role);
-                              setShowEditModal(true);
-                            }}
-                          >
-                            <Edit size={20} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="管理权限">
-                          <IconButton
-                            size="small"
-                            onClick={() => openPermissionsModal(role)}
-                          >
-                            <Key size={20} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="删除角色">
-                          <IconButton
-                            size="small"
-                            sx={{ color: "error.main" }}
-                            onClick={() => handleDeleteRole(role.id)}
-                          >
-                            <Trash2 size={20} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+      />
 
       {/* 创建角色对话框 */}
       <Dialog

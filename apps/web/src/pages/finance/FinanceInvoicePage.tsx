@@ -13,7 +13,13 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataExport } from "@/components/common";
-import { ListPageTemplate, StatCard, StatCardGroup } from "@/components/mui";
+import { ListPageTemplate } from "@/components/templates";
+import type {
+  ColumnDef,
+  RowAction,
+  FilterConfig,
+} from "@/components/templates";
+import { StatCard, StatCardGroup } from "@/components/mui";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
 import { receivablePayableApi } from "@/api/finance";

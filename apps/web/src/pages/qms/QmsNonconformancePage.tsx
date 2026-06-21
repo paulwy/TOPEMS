@@ -11,20 +11,15 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
+import { Plus, Eye, AlertTriangle } from "lucide-react";
 import {
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
-  AlertTriangle,
-  Search,
-  Filter,
-} from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Nonconformance {
   id: string;
@@ -108,6 +103,8 @@ const QmsNonconformancePage: React.FC = () => {
     severity: "一般",
     handling_method: "退货处理",
   });
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     loadNonconformances();
@@ -162,44 +159,79 @@ const QmsNonconformancePage: React.FC = () => {
   };
 
   const columns: ColumnDef<Nonconformance>[] = [
-    { accessorKey: "nonconformance_no", header: "不合格单号" },
-    { accessorKey: "product_name", header: "产品名称" },
-    { accessorKey: "nonconformance_quantity", header: "不合格数量" },
-    { accessorKey: "nonconformance_type", header: "不合格类型" },
+    { id: "nonconformance_no", label: "不合格单号" },
+    { id: "product_name", label: "产品名称" },
+    { id: "nonconformance_quantity", label: "不合格数量" },
+    { id: "nonconformance_type", label: "不合格类型" },
     {
-      accessorKey: "severity",
-      header: "严重程度",
-      cell: ({ row }) => getSeverityBadge(row.original.severity),
+      id: "severity",
+      label: "严重程度",
+      render: (row) => getSeverityBadge(row.severity),
     },
-    { accessorKey: "handling_method", header: "处理方式" },
+    { id: "handling_method", label: "处理方式" },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
+    },
+  ];
+
+  const rowActions: RowAction<Nonconformance>[] = [
+    {
+      label: "详情",
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: (row) => handleView(row),
     },
     {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-          {row.original.status !== "已关闭" && (
-            <Button
-              size="small"
-              onClick={() => handleClose(row.original)}
-              sx={{ color: "#16a34a" }}
-            >
-              关闭
-            </Button>
-          )}
-        </Box>
-      ),
+      label: "关闭",
+      icon: <AlertTriangle style={{ width: 16, height: 16 }} />,
+      color: "success",
+      show: (row) => row.status !== "已关闭",
+      onClick: (row) => handleClose(row),
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "type",
+      label: "不合格类型",
+      type: "select",
+      options: [
+        { label: "全部", value: "all" },
+        { label: "外观缺陷", value: "外观缺陷" },
+        { label: "尺寸偏差", value: "尺寸偏差" },
+        { label: "性能不达标", value: "性能不达标" },
+        { label: "包装破损", value: "包装破损" },
+        { label: "材料混用", value: "材料混用" },
+      ],
+      value: typeFilter,
+      onChange: (value) => setTypeFilter(value),
+    },
+    {
+      id: "severity",
+      label: "严重程度",
+      type: "select",
+      options: [
+        { label: "全部", value: "all" },
+        { label: "严重", value: "严重" },
+        { label: "一般", value: "一般" },
+        { label: "轻微", value: "轻微" },
+      ],
+      value: severityFilter,
+      onChange: (value) => setSeverityFilter(value),
+    },
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "all" },
+        { label: "待评审", value: "待评审" },
+        { label: "处理中", value: "处理中" },
+        { label: "已关闭", value: "已关闭" },
+      ],
+      value: statusFilter,
+      onChange: (value) => setStatusFilter(value),
     },
   ];
 
@@ -214,6 +246,11 @@ const QmsNonconformancePage: React.FC = () => {
     const matchesStatus = statusFilter === "all" || nc.status === statusFilter;
     return matchesSearch && matchesType && matchesSeverity && matchesStatus;
   });
+
+  const paginatedData = filteredNCs.slice(
+    page * pageSize,
+    page * pageSize + pageSize,
+  );
 
   const handleView = (nc: Nonconformance) => {
     setSelectedNC(nc);
@@ -259,6 +296,150 @@ const QmsNonconformancePage: React.FC = () => {
     closed: nonconformances.filter((n) => n.status === "已关闭").length,
   };
 
+  const statsCards = (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Card sx={{ bgcolor: "#eff6ff" }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#fee2e2",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AlertTriangle sx={{ width: 20, height: 20, color: "#dc2626" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                不合格品总数
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.total}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#fef3c7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AlertTriangle sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                待评审
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.pending}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dbeafe",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AlertTriangle sx={{ width: 20, height: 20, color: "#2563eb" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                处理中
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.inProgress}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dcfce7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AlertTriangle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                已关闭
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.closed}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
   if (loading) {
     return (
       <Box
@@ -297,309 +478,41 @@ const QmsNonconformancePage: React.FC = () => {
         background: "linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)",
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+      <ListPageTemplate
+        title="不合格品管理"
+        subtitle="Nonconformance Management"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "QMS" },
+          { label: "不合格品管理" },
+        ]}
+        columns={columns}
+        data={paginatedData}
+        loading={loading}
+        getRowId={(row) => row.id}
+        filters={filters}
+        searchable
+        searchPlaceholder="搜索产品名称或单号..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        pagination={{
+          page,
+          pageSize,
+          total: filteredNCs.length,
+          onPageChange: setPage,
+          onPageSizeChange: setPageSize,
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <AlertTriangle sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  不合格品管理
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Nonconformance Management
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" } }}
-            >
-              新建不合格单
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#eff6ff" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fee2e2",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <AlertTriangle
-                    sx={{ width: 20, height: 20, color: "#dc2626" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    不合格品总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef3c7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    待评审
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.pending}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dbeafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <AlertTriangle
-                    sx={{ width: 20, height: 20, color: "#2563eb" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    处理中
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.inProgress}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <AlertTriangle
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已关闭
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.closed}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <AlertTriangle
-                style={{ width: 20, height: 20, color: "#3b82f6" }}
-              />
-              不合格品列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索产品名称或单号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-              <TextField
-                size="small"
-                select
-                label="不合格类型"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="外观缺陷">外观缺陷</option>
-                <option value="尺寸偏差">尺寸偏差</option>
-                <option value="性能不达标">性能不达标</option>
-                <option value="包装破损">包装破损</option>
-                <option value="材料混用">材料混用</option>
-              </TextField>
-              <TextField
-                size="small"
-                select
-                label="严重程度"
-                value={severityFilter}
-                onChange={(e) => setSeverityFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="严重">严重</option>
-                <option value="一般">一般</option>
-                <option value="轻微">轻微</option>
-              </TextField>
-              <TextField
-                size="small"
-                select
-                label="状态"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="待评审">待评审</option>
-                <option value="处理中">处理中</option>
-                <option value="已关闭">已关闭</option>
-              </TextField>
-            </Box>
-            <DataTable columns={columns} data={filteredNCs} enablePagination />
-          </CardContent>
-        </Card>
-      </Box>
+        actions={[
+          {
+            label: "新建不合格单",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        rowActions={rowActions}
+        headerContent={statsCards}
+      />
 
       <Dialog
         open={showCreateModal}

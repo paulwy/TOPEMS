@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -8,15 +8,12 @@ import {
   DialogActions,
   TextField,
   Chip,
-  Card,
-  CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
 import { apiLogger } from "@/utils/logger";
-import { Plus, Eye, Activity, Search, Clock } from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Plus, Eye, Clock } from "lucide-react";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import type { RowAction, FilterConfig } from "@/components/templates";
 import { pdmApi } from "@/api/pdm";
 import type { ProductionBatch } from "@/api/pdm";
 import { toast } from "react-toastify";
@@ -25,6 +22,7 @@ const PdmBatchPage: React.FC = () => {
   const [batches, setBatches] = useState<ProductionBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<ProductionBatch | null>(
@@ -93,43 +91,67 @@ const PdmBatchPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<ProductionBatch>[] = [
-    { accessorKey: "batch_no", header: "批次号" },
-    { accessorKey: "product_name", header: "产品名称" },
-    {
-      accessorKey: "planned_quantity",
-      header: "计划数量",
-      cell: ({ row }) =>
-        `${row.original.planned_quantity || 0} ${row.original.unit || ""}`,
-    },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+  const filteredBatches = useMemo(() => {
+    return batches.filter((batch) => {
+      const matchesSearch =
+        batch.batch_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        batch.product_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || batch.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [batches, searchTerm, statusFilter]);
 
-  const filteredBatches = batches.filter((batch) => {
-    return (
-      batch.batch_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      batch.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const columns = useMemo<ColumnDef<ProductionBatch>[]>(
+    () => [
+      { id: "batch_no", label: "批次号" },
+      { id: "product_name", label: "产品名称" },
+      {
+        id: "planned_quantity",
+        label: "计划数量",
+        render: (row) => `${row.planned_quantity || 0} ${row.unit || ""}`,
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo<RowAction<ProductionBatch>[]>(
+    () => [
+      {
+        label: "详情",
+        icon: <Eye size={16} />,
+        onClick: (row) => {
+          setSelectedBatch(row);
+          setShowDetailModal(true);
+        },
+      },
+    ],
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "规划中", label: "规划中" },
+          { value: "进行中", label: "进行中" },
+          { value: "已完成", label: "已完成" },
+          { value: "已取消", label: "已取消" },
+        ],
+        value: statusFilter,
+        onChange: (value) => setStatusFilter(value as string),
+      },
+    ],
+    [statusFilter],
+  );
 
   const handleView = (batch: ProductionBatch) => {
     setSelectedBatch(batch);
@@ -171,302 +193,76 @@ const PdmBatchPage: React.FC = () => {
     completed: batches.filter((b) => b.status === "已完成").length,
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #ecfeff 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#06b6d4",
-              borderTopColor: "#0891b2",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  return (
+  const statsContent = (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #ecfeff 0%, #f8fafc 100%)",
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+        gap: 2,
+        mb: 3,
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Activity sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  生产批次
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Production Batch
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" } }}
-            >
-              新增批次
-            </Button>
-          </Box>
-        </Box>
+      <Box sx={{ p: 2, bgcolor: "#ecfeff", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          批次总数
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.total}
+        </Typography>
       </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#ecfeff" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#cffafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Activity sx={{ width: 20, height: 20, color: "#06b6d4" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    批次总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef9c3",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Activity sx={{ width: 20, height: 20, color: "#ca8a04" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    规划中
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.planning}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dbeafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Activity sx={{ width: 20, height: 20, color: "#1d4ed8" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    进行中
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.inProgress}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Activity sx={{ width: 20, height: 20, color: "#16a34a" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已完成
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.completed}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <Activity style={{ width: 20, height: 20, color: "#06b6d4" }} />
-              生产批次列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索批次号或产品名称..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredBatches}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
+      <Box sx={{ p: 2, bgcolor: "#fef9c3", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          规划中
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.planning}
+        </Typography>
       </Box>
+      <Box sx={{ p: 2, bgcolor: "#dbeafe", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          进行中
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.inProgress}
+        </Typography>
+      </Box>
+      <Box sx={{ p: 2, bgcolor: "#dcfce7", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          已完成
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.completed}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <>
+      <ListPageTemplate<ProductionBatch>
+        title="生产批次"
+        subtitle="Production Batch"
+        backButton={{ href: "/dashboard" }}
+        columns={columns}
+        data={filteredBatches}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索批次号或产品名称..."
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "新增批次",
+            icon: <Plus size={18} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        headerContent={statsContent}
+        emptyMessage="暂无生产批次数据"
+      />
 
       <Dialog
         open={showCreateModal}
@@ -625,7 +421,7 @@ const PdmBatchPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

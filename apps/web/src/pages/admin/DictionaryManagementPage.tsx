@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Book,
@@ -12,9 +12,8 @@ import {
   Tag,
   Download,
   Upload,
-  Eye,
-  EyeOff,
   RefreshCw,
+  Switch,
 } from "lucide-react";
 import {
   dictTypeApi,
@@ -24,7 +23,6 @@ import {
 } from "@/api/system";
 import { useAppStore } from "../../store";
 import { apiLogger } from "@/utils/logger";
-
 import {
   Box,
   Button,
@@ -43,17 +41,11 @@ import {
   MenuItem,
   Chip,
   IconButton,
-  Switch,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Checkbox,
+  Paper,
 } from "@mui/material";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 interface DictionaryManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -95,6 +87,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
+  // 分页状态
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
   const [newType, setNewType] = useState<Partial<DictType>>({
     code: "",
     name: "",
@@ -113,7 +109,6 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
 
   useEffect(() => {
     loadDictTypes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -493,22 +488,6 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
     }
   };
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedItems(dictItems.map((item) => item.id));
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
-  const handleSelectItem = (id: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(id)
-        ? prev.filter((itemId) => itemId !== id)
-        : [...prev, id],
-    );
-  };
-
   const filteredTypes = dictTypes.filter(
     (type) =>
       type.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -530,6 +509,157 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
   const parentItems = useMemo(() => {
     return dictItems.filter((item) => !item.parent_id);
   }, [dictItems]);
+
+  // 过滤后的字典项
+  const filteredDictItems = useMemo(() => {
+    return dictItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.code.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [dictItems, searchQuery]);
+
+  // 分页数据
+  const paginatedDictItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredDictItems.slice(start, end);
+  }, [filteredDictItems, page, pageSize]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  // 字典项列定义
+  const columns: ColumnDef<DictItem>[] = useMemo(
+    () => [
+      {
+        id: "sort_order",
+        label: "排序",
+        width: 64,
+        render: (item) => (
+          <Typography variant="body2" color="text.secondary">
+            {item.sort_order}
+          </Typography>
+        ),
+      },
+      {
+        id: "code",
+        label: "编码",
+        render: (item) => (
+          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+            {item.code}
+          </Typography>
+        ),
+      },
+      {
+        id: "name",
+        label: "名称",
+        sortable: true,
+        render: (item) => (
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            {item.parent_id && (
+              <Box component="span" sx={{ color: "text.disabled", mr: 0.5 }}>
+                └─
+              </Box>
+            )}
+            <Typography variant="body2">{item.name}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "value",
+        label: "值",
+        render: (item) => (
+          <Typography variant="body2" color="text.secondary">
+            {item.value || "-"}
+          </Typography>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        width: 96,
+        render: (item) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Switch
+              checked={item.status === "active"}
+              onChange={() => handleToggleItemStatus(item)}
+              size="small"
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 500,
+                color:
+                  item.status === "active" ? "success.main" : "text.disabled",
+              }}
+            >
+              {statusLabels[item.status]}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "actions",
+        label: "操作",
+        align: "right",
+        width: 100,
+        render: (item) => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              justifyContent: "flex-end",
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingItem(item);
+                setShowItemModal(true);
+              }}
+            >
+              <Edit size={16} />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirm("确定要删除这个字典项吗？")) {
+                  handleDeleteItem(item.id);
+                }
+              }}
+            >
+              <Trash2 size={16} />
+            </IconButton>
+          </Box>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleToggleItemStatus, handleDeleteItem],
+  );
+
+  // 筛选器定义
+  const filters = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select" as const,
+        options: [
+          { label: "全部", value: "" },
+          { label: "启用", value: "active" },
+          { label: "禁用", value: "inactive" },
+        ],
+      },
+    ],
+    [],
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
@@ -609,6 +739,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
 
       <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
         <Box sx={{ display: "flex", gap: 3 }}>
+          {/* 左侧字典类型列表 */}
           <Box sx={{ width: 320, flexShrink: 0 }}>
             <Card>
               <CardContent sx={{ p: 2 }}>
@@ -762,274 +893,104 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
             </Card>
           </Box>
 
+          {/* 右侧字典项表格 */}
           <Box sx={{ flex: 1 }}>
             {selectedType ? (
-              <Card>
-                <CardHeader
-                  sx={{ pb: 1 }}
-                  title={
-                    <Typography variant="h6">{selectedType.name}</Typography>
-                  }
-                  subheader={
-                    <Typography variant="body2" color="text.secondary">
-                      编码: {selectedType.code} | 分类:{" "}
-                      {categoryLabels[selectedType.category] ||
-                        selectedType.category}
-                    </Typography>
-                  }
-                  action={
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Edit size={16} />}
-                        onClick={() => {
-                          setEditingType(selectedType);
-                          setShowTypeModal(true);
-                        }}
-                      >
-                        编辑类型
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="error"
-                        startIcon={<Trash2 size={16} />}
-                        onClick={() => {
-                          if (
-                            confirm(
-                              "确定要删除这个字典类型吗？所有字典项也会被删除！",
-                            )
-                          ) {
-                            handleDeleteType(selectedType.id);
-                          }
-                        }}
-                      >
-                        删除
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Download size={16} />}
-                        onClick={() => setShowExportModal(true)}
-                      >
-                        导出
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Upload size={16} />}
-                        onClick={() => setShowImportModal(true)}
-                      >
-                        导入
-                      </Button>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<Plus size={16} />}
-                        onClick={() => {
-                          setEditingItem(null);
-                          setNewItem({
-                            code: "",
-                            name: "",
-                            value: "",
-                            sort_order: dictItems.length,
-                            parent_id: undefined,
-                          });
-                          setShowItemModal(true);
-                        }}
-                      >
-                        新增字典项
-                      </Button>
-                    </Box>
-                  }
-                />
-
-                <CardContent sx={{ p: 2 }}>
-                  {itemsLoading ? (
-                    <Box sx={{ textAlign: "center", py: 4 }}>
-                      <CircularProgress size={24} />
-                    </Box>
-                  ) : dictItems.length === 0 ? (
-                    <Box sx={{ textAlign: "center", py: 6 }}>
-                      <Tag
-                        size={48}
-                        style={{ color: "#9ca3af", marginBottom: 12 }}
-                      />
-                      <Typography color="text.secondary">暂无字典项</Typography>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          mb: 2,
-                        }}
-                      >
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Checkbox
-                            checked={
-                              selectedItems.length === dictItems.length &&
-                              dictItems.length > 0
-                            }
-                            indeterminate={
-                              selectedItems.length > 0 &&
-                              selectedItems.length < dictItems.length
-                            }
-                            onChange={handleSelectAll}
-                            size="small"
-                          />
-                          <Typography variant="body2" color="text.secondary">
-                            全选
-                          </Typography>
-                        </Box>
-                        {selectedItems.length > 0 && (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            color="error"
-                            startIcon={<Trash2 size={16} />}
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `确定要删除选中的 ${selectedItems.length} 个字典项吗？`,
-                                )
-                              ) {
-                                handleBatchDelete();
-                              }
-                            }}
-                          >
-                            批量删除 ({selectedItems.length})
-                          </Button>
-                        )}
-                      </Box>
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell padding="checkbox" sx={{ width: 48 }}>
-                                选择
-                              </TableCell>
-                              <TableCell sx={{ width: 64 }}>排序</TableCell>
-                              <TableCell>编码</TableCell>
-                              <TableCell>名称</TableCell>
-                              <TableCell>值</TableCell>
-                              <TableCell sx={{ width: 96 }}>状态</TableCell>
-                              <TableCell align="right" sx={{ width: 128 }}>
-                                操作
-                              </TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {dictItems.map((item) => (
-                              <TableRow key={item.id} hover>
-                                <TableCell padding="checkbox">
-                                  <Checkbox
-                                    checked={selectedItems.includes(item.id)}
-                                    onChange={() => handleSelectItem(item.id)}
-                                    size="small"
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    {item.sort_order}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontFamily: "monospace" }}
-                                  >
-                                    {item.code}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography variant="body2">
-                                    {item.parent_id && (
-                                      <Box
-                                        component="span"
-                                        sx={{ color: "text.disabled", mr: 0.5 }}
-                                      >
-                                        └─
-                                      </Box>
-                                    )}
-                                    {item.name}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    {item.value || "-"}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 1,
-                                    }}
-                                  >
-                                    <Switch
-                                      checked={item.status === "active"}
-                                      onChange={() =>
-                                        handleToggleItemStatus(item)
-                                      }
-                                      size="small"
-                                    />
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        fontWeight: 500,
-                                        color:
-                                          item.status === "active"
-                                            ? "success.main"
-                                            : "text.disabled",
-                                      }}
-                                    >
-                                      {statusLabels[item.status]}
-                                    </Typography>
-                                  </Box>
-                                </TableCell>
-                                <TableCell align="right">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => {
-                                      setEditingItem(item);
-                                      setShowItemModal(true);
-                                    }}
-                                  >
-                                    <Edit size={16} />
-                                  </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => {
-                                      if (confirm("确定要删除这个字典项吗？"))
-                                        handleDeleteItem(item.id);
-                                    }}
-                                  >
-                                    <Trash2 size={16} />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
+              <ListPageTemplate
+                title={selectedType.name}
+                subtitle={`编码: ${selectedType.code} | 分类: ${categoryLabels[selectedType.category] || selectedType.category}`}
+                columns={columns}
+                data={paginatedDictItems}
+                loading={itemsLoading}
+                pagination={{
+                  page,
+                  pageSize,
+                  total: filteredDictItems.length,
+                  onPageChange: handlePageChange,
+                }}
+                searchable
+                searchPlaceholder="搜索字典项..."
+                searchValue={searchQuery}
+                onSearch={setSearchQuery}
+                filters={filters}
+                selectable
+                selectedIds={selectedItems}
+                onSelectionChange={setSelectedItems}
+                actions={[
+                  {
+                    label: "导出",
+                    icon: <Download size={16} />,
+                    onClick: () => setShowExportModal(true),
+                    variant: "outlined",
+                  },
+                  {
+                    label: "导入",
+                    icon: <Upload size={16} />,
+                    onClick: () => setShowImportModal(true),
+                    variant: "outlined",
+                  },
+                  {
+                    label: "新增字典项",
+                    icon: <Plus size={16} />,
+                    onClick: () => {
+                      setEditingItem(null);
+                      setNewItem({
+                        code: "",
+                        name: "",
+                        value: "",
+                        sort_order: dictItems.length,
+                        parent_id: undefined,
+                      });
+                      setShowItemModal(true);
+                    },
+                    variant: "contained",
+                  },
+                ]}
+                batchActions={[
+                  {
+                    label: "批量删除",
+                    icon: <Trash2 size={16} />,
+                    color: "error",
+                    confirm: true,
+                    confirmMessage: `确定要删除选中的 ${selectedItems.length} 个字典项吗？`,
+                    onClick: handleBatchDelete,
+                  },
+                ]}
+                onRefresh={() => selectedType && loadDictItems(selectedType.id)}
+                emptyMessage="暂无字典项"
+                headerContent={
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Edit size={16} />}
+                      onClick={() => {
+                        setEditingType(selectedType);
+                        setShowTypeModal(true);
+                      }}
+                    >
+                      编辑类型
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="error"
+                      startIcon={<Trash2 size={16} />}
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "确定要删除这个字典类型吗？所有字典项也会被删除！",
+                          )
+                        ) {
+                          handleDeleteType(selectedType.id);
+                        }
+                      }}
+                    >
+                      删除
+                    </Button>
+                  </Box>
+                }
+              />
             ) : (
               <Card>
                 <CardContent sx={{ p: 6, textAlign: "center" }}>

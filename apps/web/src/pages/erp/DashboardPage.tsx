@@ -1,103 +1,56 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box,
-  Typography,
-  Paper,
-  Card,
-  CardContent,
-  Button,
-} from "@mui/material";
-import { Grid } from "@/components/Grid";
-import {
   TrendingUp,
-  Users,
   FileText,
-  Clock,
-  ArrowRight,
-  BarChart3,
-  Activity,
   Wallet,
   Package,
-  FolderKanban,
-  CheckSquare,
-  Trophy,
-  AlertTriangle,
-  FlaskConical,
-  CheckCircle,
-  Rocket,
-  ShoppingCart,
-  RefreshCw,
-  Truck,
-  Target,
-  MessageCircle,
-  ThumbsUp,
-  Repeat,
-  Layers,
-  MapPin,
-  Globe,
-  UserPlus,
-  GraduationCap,
-  Award,
+  BarChart3,
+  Activity,
+  ArrowRight,
 } from "lucide-react";
+import { DashboardTemplate } from "@/components/templates";
+import type { StatCard, ChartCard, QuickAction } from "@/components/templates";
 import BarChartComponent from "../../components/charts/BarChart";
 import LineChartComponent from "../../components/charts/LineChart";
 import PieChartComponent from "../../components/charts/PieChart";
 
-const iconMap: Record<
-  string,
-  React.ComponentType<{ className?: string; size?: number }>
-> = {
-  TrendingUp,
-  Users,
-  FileText,
-  Clock,
-  Wallet,
-  Package,
-  FolderKanban,
-  CheckSquare,
-  Trophy,
-  AlertTriangle,
-  FlaskConical,
-  CheckCircle,
-  Rocket,
-  ShoppingCart,
-  RefreshCw,
-  Truck,
-  Target,
-  MessageCircle,
-  ThumbsUp,
-  Repeat,
-  Layers,
-  MapPin,
-  Globe,
-  UserPlus,
-  GraduationCap,
-  Award,
+const iconMap: Record<string, React.ReactNode> = {
+  TrendingUp: <TrendingUp size={24} />,
+  FileText: <FileText size={24} />,
+  Wallet: <Wallet size={24} />,
+  Package: <Package size={24} />,
 };
 
 const barData = [
-  { name: "1\u6708", value: 4000 },
-  { name: "2\u6708", value: 3000 },
-  { name: "3\u6708", value: 5000 },
-  { name: "4\u6708", value: 4500 },
-  { name: "5\u6708", value: 6000 },
-  { name: "6\u6708", value: 5500 },
+  { name: "1月", value: 4000 },
+  { name: "2月", value: 3000 },
+  { name: "3月", value: 5000 },
+  { name: "4月", value: 4500 },
+  { name: "5月", value: 6000 },
+  { name: "6月", value: 5500 },
 ];
 const pieData = [
-  { name: "\u539f\u6750\u6599", value: 45 },
-  { name: "\u6210\u54c1", value: 35 },
-  { name: "\u534a\u6210\u54c1", value: 20 },
+  { name: "原材料", value: 45 },
+  { name: "成品", value: 35 },
+  { name: "半成品", value: 20 },
 ];
 const lineData = [
-  { name: "\u5468\u4e00", value: 120 },
-  { name: "\u5468\u4e8c", value: 130 },
-  { name: "\u5468\u4e09", value: 110 },
-  { name: "\u5468\u56db", value: 140 },
-  { name: "\u5468\u4e94", value: 160 },
-  { name: "\u5468\u516d", value: 90 },
-  { name: "\u5468\u65e5", value: 80 },
+  { name: "周一", value: 120 },
+  { name: "周二", value: 130 },
+  { name: "周三", value: 110 },
+  { name: "周四", value: 140 },
+  { name: "周五", value: 160 },
+  { name: "周六", value: 90 },
+  { name: "周日", value: 80 },
 ];
+
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "上午好";
+  if (hour < 18) return "下午好";
+  return "晚上好";
+};
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -108,282 +61,97 @@ export const DashboardPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography sx={{ fontSize: "1.125rem", color: "grey.600" }}>
-          加载中...
-        </Typography>
-      </Box>
-    );
-  }
-
-  const stats = [
+  const stats: StatCard[] = [
     {
-      label: "\u603b\u8d44\u4ea7",
-      value: "\u00a512,580,000",
-      icon: "TrendingUp",
-      trend: "+8.5%",
+      id: "total-assets",
+      title: "总资产",
+      value: "¥12,580,000",
+      icon: iconMap.TrendingUp,
+      change: 8.5,
+      changeLabel: "% vs 上周期",
+      color: "success",
     },
     {
-      label: "\u672c\u6708\u6536\u5165",
-      value: "\u00a52,340,000",
-      icon: "Wallet",
-      trend: "+12%",
+      id: "monthly-income",
+      title: "本月收入",
+      value: "¥2,340,000",
+      icon: iconMap.Wallet,
+      change: 12,
+      changeLabel: "% vs 上周期",
+      color: "info",
     },
     {
-      label: "\u5e93\u5b58\u603b\u91cf",
+      id: "inventory-total",
+      title: "库存总量",
       value: "15,680",
-      icon: "Package",
-      trend: "-3%",
+      icon: iconMap.Package,
+      change: -3,
+      changeLabel: "% vs 上周期",
+      color: "warning",
     },
     {
-      label: "\u5f85\u5ba1\u6279\u5355\u636e",
+      id: "pending-orders",
+      title: "待审批订单",
       value: "23",
-      icon: "FileText",
-      trend: "+5",
-    },
-  ];
-  const quickActions = [
-    {
-      label: "\u65b0\u5efa\u91c7\u8d2d\u8ba2\u5355",
-      path: "/erp/purchasing/create",
-    },
-    {
-      label: "\u67e5\u770b\u8d22\u52a1\u62a5\u8868",
-      path: "/erp/finance/reports",
-    },
-    { label: "\u5e93\u5b58\u76d8\u70b9", path: "/erp/inventory/stocktake" },
-    {
-      label: "\u9500\u552e\u6570\u636e\u5206\u6790",
-      path: "/erp/sales/analysis",
+      icon: iconMap.FileText,
+      change: 5,
+      changeLabel: "vs 上周期",
+      color: "primary",
     },
   ];
 
-  const getGreeting = (): string => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "上午好";
-    if (hour < 18) return "下午好";
-    return "晚上好";
-  };
+  const charts: ChartCard[] = [
+    {
+      id: "data-overview",
+      title: "数据概览",
+      chart: <BarChartComponent data={barData} xKey="name" yKey="value" />,
+      height: 300,
+    },
+    {
+      id: "trend-analysis",
+      title: "趋势分析",
+      chart: <LineChartComponent data={lineData} xKey="name" yKey="value" />,
+      height: 300,
+    },
+  ];
+
+  const quickActions: QuickAction[] = [
+    {
+      id: "create-purchase-order",
+      label: "新建采购订单",
+      icon: <ArrowRight size={18} />,
+      onClick: () => navigate("/erp/purchasing/create"),
+    },
+    {
+      id: "view-financial-reports",
+      label: "查看财务报表",
+      icon: <ArrowRight size={18} />,
+      onClick: () => navigate("/erp/finance/reports"),
+    },
+    {
+      id: "inventory-stocktake",
+      label: "库存盘点",
+      icon: <ArrowRight size={18} />,
+      onClick: () => navigate("/erp/inventory/stocktake"),
+    },
+    {
+      id: "sales-data-analysis",
+      label: "销售数据分析",
+      icon: <ArrowRight size={18} />,
+      onClick: () => navigate("/erp/sales/analysis"),
+    },
+  ];
 
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box
-        sx={{
-          padding: "24px 32px",
-          background: "white",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        }}
-      >
-        <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
-          企业资源管理
-        </Typography>
-        <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
-          {getGreeting()}，财务管理与库存概览
-        </Typography>
-      </Box>
-
-      <Box sx={{ padding: "24px 32px" }}>
-        <Grid container spacing={{ xs: 2, sm: 3 }}>
-          {stats.map((stat, index) => {
-            const IconComponent = iconMap[stat.icon] || FileText;
-            return (
-              <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card
-                  sx={{
-                    borderRadius: "12px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  <CardContent sx={{ padding: "20px" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "#64748b", mb: 1 }}
-                        >
-                          {stat.label}
-                        </Typography>
-                        <Typography
-                          variant="h4"
-                          sx={{ color: "#1e293b", fontWeight: 600 }}
-                        >
-                          {stat.value}
-                        </Typography>
-                        {stat.trend && (
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "#22c55e", mt: 1, display: "block" }}
-                          >
-                            {stat.trend}
-                          </Typography>
-                        )}
-                      </Box>
-                      <Box
-                        sx={{
-                          width: "48px",
-                          height: "48px",
-                          borderRadius: "12px",
-                          background: "#f1f5f9",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#64748b",
-                        }}
-                      >
-                        <IconComponent size={24} />
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        <Box
-          sx={{
-            mt: 6,
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-            gap: "24px",
-          }}
-        >
-          <Paper
-            sx={{
-              padding: "24px",
-              borderRadius: "12px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ mb: 3, color: "#1e293b", fontWeight: 600 }}
-            >
-              <BarChart3 size={20} sx={{ mr: 1 }} />
-              数据概览
-            </Typography>
-            <BarChartComponent data={barData} xKey="name" yKey="value" />
-          </Paper>
-
-          <Paper
-            sx={{
-              padding: "24px",
-              borderRadius: "12px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ mb: 3, color: "#1e293b", fontWeight: 600 }}
-            >
-              <Activity size={20} sx={{ mr: 1 }} />
-              趋势分析
-            </Typography>
-            <LineChartComponent data={lineData} xKey="name" yKey="value" />
-          </Paper>
-        </Box>
-
-        <Box
-          sx={{
-            mt: 6,
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "1fr 2fr" },
-            gap: "24px",
-          }}
-        >
-          <Paper
-            sx={{
-              padding: "24px",
-              borderRadius: "12px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ mb: 3, color: "#1e293b", fontWeight: 600 }}
-            >
-              分类占比
-            </Typography>
-            <PieChartComponent data={pieData} />
-          </Paper>
-
-          <Paper
-            sx={{
-              padding: "24px",
-              borderRadius: "12px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ mb: 3, color: "#1e293b", fontWeight: 600 }}
-            >
-              快捷操作
-            </Typography>
-            <Grid container spacing={3}>
-              {quickActions.map((action, index) => (
-                <Grid key={index} size={{ xs: 12, sm: 6 }}>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    sx={{
-                      padding: "16px",
-                      borderRadius: "12px",
-                      borderColor: "#e2e8f0",
-                      "&:hover": {
-                        borderColor: "#3b82f6",
-                        background: "#eff6ff",
-                      },
-                      justifyContent: "flex-start",
-                      gap: "12px",
-                    }}
-                    onClick={() => navigate(action.path)}
-                  >
-                    <Box
-                      sx={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "8px",
-                        background: "#f1f5f9",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#64748b",
-                      }}
-                    >
-                      <ArrowRight size={18} />
-                    </Box>
-                    <Box sx={{ flex: 1, textAlign: "left" }}>
-                      <Typography
-                        variant="body1"
-                        sx={{ color: "#1e293b", fontWeight: 500 }}
-                      >
-                        {action.label}
-                      </Typography>
-                    </Box>
-                  </Button>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Box>
-      </Box>
-    </Box>
+    <DashboardTemplate
+      title="企业资源管理"
+      subtitle={`${getGreeting()}，财务管理与库存概览`}
+      stats={stats}
+      charts={charts}
+      quickActions={quickActions}
+      quickActionsTitle="快捷操作"
+      loading={loading}
+    />
   );
 };
 

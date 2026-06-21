@@ -1,9 +1,8 @@
 import { Grid } from "@/components/Grid";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   ClipboardList,
   Plus,
-  ChevronRight,
   Settings,
   Wrench,
   Edit,
@@ -49,9 +48,8 @@ import type {
   LimsStatistics,
 } from "@/api/lims";
 import { limsApi } from "@/api/lims";
-import { MetricCard } from "@/components/MetricCard";
-import { StatsChart } from "@/components/StatsChart";
 import { PageHeader } from "@/components/templates/PageHeader";
+import { CardListTemplate } from "@/components/templates/CardListTemplate";
 import { apiLogger } from "@/utils/logger";
 
 const LimsInstrumentPage: React.FC = () => {
@@ -159,6 +157,11 @@ const LimsInstrumentPage: React.FC = () => {
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  // 搜索和筛选状态
+  const [searchValue, setSearchValue] = useState("");
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [statusFilter, setStatusFilter] = useState("");
 
   useEffect(() => {
     if (isServiceUp("lims")) {
@@ -406,6 +409,183 @@ const LimsInstrumentPage: React.FC = () => {
 
   const safeInstruments = Array.isArray(instruments) ? instruments : [];
 
+  // 过滤后的仪器数据
+  const filteredInstruments = useMemo(() => {
+    return safeInstruments.filter((instrument) => {
+      // 搜索过滤
+      if (searchValue) {
+        const searchLower = searchValue.toLowerCase();
+        const matchSearch =
+          instrument.name?.toLowerCase().includes(searchLower) ||
+          instrument.code?.toLowerCase().includes(searchLower) ||
+          instrument.manufacturer?.toLowerCase().includes(searchLower) ||
+          instrument.model?.toLowerCase().includes(searchLower);
+        if (!matchSearch) return false;
+      }
+      // 状态筛选
+      if (statusFilter && instrument.status !== statusFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [safeInstruments, searchValue, statusFilter]);
+
+  // metricStats 配置
+  const metricStats = useMemo(
+    () => [
+      {
+        id: "total-samples",
+        title: "样品总数",
+        value: stats.total_samples,
+        icon: <ClipboardList size={24} />,
+        gradient: ["#8B5CF6", "#7C3AED"] as [string, string],
+        subtitle: `待测试: ${stats.pending_samples}`,
+      },
+      {
+        id: "total-tasks",
+        title: "检验任务",
+        value: stats.total_tasks,
+        icon: <ClipboardList size={24} />,
+        gradient: ["#6366F1", "#4F46E5"] as [string, string],
+        subtitle: `进行中: ${stats.in_progress_tasks}`,
+      },
+      {
+        id: "total-processes",
+        title: "检验流程",
+        value: stats.total_processes,
+        icon: <ClipboardList size={24} />,
+        gradient: ["#F59E0B", "#D97706"] as [string, string],
+      },
+      {
+        id: "total-instruments",
+        title: "仪器设备",
+        value: stats.total_instruments,
+        icon: <Settings size={24} />,
+        gradient: ["#14B8A6", "#0D9488"] as [string, string],
+        subtitle: `正常: ${stats.normal_instruments}`,
+      },
+      {
+        id: "completed-samples",
+        title: "已完成样品",
+        value: stats.completed_samples,
+        icon: <CheckCircle2 size={24} />,
+        gradient: ["#00C897", "#00A878"] as [string, string],
+      },
+      {
+        id: "testing-samples",
+        title: "测试中样品",
+        value: stats.testing_samples,
+        icon: <ClipboardList size={24} />,
+        gradient: ["#EC4899", "#DB2777"] as [string, string],
+      },
+    ],
+    [stats],
+  );
+
+  // cardConfig 配置
+  const cardConfig = useMemo(
+    () => ({
+      title: "name" as const,
+      description: (item: Instrument) => {
+        if (item.manufacturer && item.model) {
+          return `${item.manufacturer} - ${item.model}`;
+        }
+        return item.manufacturer || item.model || "暂无型号信息";
+      },
+      status: {
+        field: "status",
+        options: {
+          正常: { label: "正常", color: "#15803d" },
+          校准中: { label: "校准中", color: "#b45309" },
+          维修中: { label: "维修中", color: "#b91c1c" },
+          停用: { label: "停用", color: "#475569" },
+          报废: { label: "报废", color: "#475569" },
+        },
+      },
+      icon: (item: Instrument) => {
+        const TypeIcon = getInstrumentTypeIcon(item.type);
+        return <TypeIcon size={24} />;
+      },
+      iconBgColor: "#ccfbf1",
+      meta: [
+        { field: "code" as const, label: "编号" },
+        { field: "location" as const, label: "位置" },
+        { field: "responsible_person" as const, label: "负责人" },
+      ],
+      tags: [{ field: "type" as const }],
+    }),
+    [],
+  );
+
+  // cardActions 配置
+  const cardActions = useMemo(
+    () => [
+      {
+        label: "查看详情",
+        onClick: openInstrumentDetailModal,
+        color: "primary" as const,
+      },
+      {
+        label: "维护记录",
+        icon: <Wrench size={16} />,
+        onClick: openMaintenanceModal,
+        color: "info" as const,
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: openInstrumentModal,
+        color: "primary" as const,
+        variant: "outlined" as const,
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        onClick: (item: Instrument) => handleDeleteInstrument(item.id),
+        color: "error" as const,
+      },
+    ],
+    [],
+  );
+
+  // 筛选配置
+  const filters = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "仪器状态",
+        type: "select" as const,
+        options: [
+          { label: "全部状态", value: "" },
+          { label: "正常", value: "正常" },
+          { label: "校准中", value: "校准中" },
+          { label: "维修中", value: "维修中" },
+          { label: "停用", value: "停用" },
+          { label: "报废", value: "报废" },
+        ],
+      },
+    ],
+    [],
+  );
+
+  // 搜索和筛选处理
+  const handleSearch = useCallback(() => {
+    // 搜索和筛选已经在 filteredInstruments 中自动处理
+  }, []);
+
+  const handleFilterChange = useCallback((newFilters: Record<string, any>) => {
+    setFilterValues(newFilters);
+    if (newFilters.status !== undefined) {
+      setStatusFilter(newFilters.status);
+    }
+  }, []);
+
+  const handleFilterReset = useCallback(() => {
+    setFilterValues({});
+    setStatusFilter("");
+    setSearchValue("");
+  }, []);
+
   if (loading) {
     return (
       <Box
@@ -514,501 +694,43 @@ const LimsInstrumentPage: React.FC = () => {
             { label: "仪器管理" },
           ]}
           backButton={{ onClick: () => navigate("/dashboard") }}
-          actions={[
-            {
-              label: "添加仪器",
-              icon: <Plus style={{ width: 18, height: 18 }} />,
-              variant: "contained",
-              color: "primary",
-              onClick: () => openInstrumentModal(),
-            },
-          ]}
+          actions={[]}
           loading={loading}
         />
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="样品总数"
-              value={stats.total_samples}
-              icon={<ClipboardList size={24} />}
-              gradient={["#8B5CF6", "#7C3AED"]}
-              subtitle={`待测试: ${stats.pending_samples}`}
-              trend={stats.pending_samples > 0 ? "up" : "neutral"}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="检验任务"
-              value={stats.total_tasks}
-              icon={<ClipboardList size={24} />}
-              gradient={["#6366F1", "#4F46E5"]}
-              subtitle={`进行中: ${stats.in_progress_tasks}`}
-              trend={stats.in_progress_tasks > 0 ? "up" : "neutral"}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="检验流程"
-              value={stats.total_processes}
-              icon={<ClipboardList size={24} />}
-              gradient={["#F59E0B", "#D97706"]}
-              trend="neutral"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="仪器设备"
-              value={stats.total_instruments}
-              icon={<Settings size={24} />}
-              gradient={["#14B8A6", "#0D9488"]}
-              subtitle={`正常: ${stats.normal_instruments}`}
-              trend="neutral"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="已完成样品"
-              value={stats.completed_samples}
-              icon={<CheckCircle2 size={24} />}
-              gradient={["#00C897", "#00A878"]}
-              trend="up"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="测试中样品"
-              value={stats.testing_samples}
-              icon={<ClipboardList size={24} />}
-              gradient={["#EC4899", "#DB2777"]}
-              trend="neutral"
-            />
-          </Grid>
-        </Grid>
 
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
-            <StatsChart
-              title="仪器状态分布"
-              type="pie"
-              data={[
-                {
-                  name: "正常",
-                  value: stats.normal_instruments,
-                  color: "#00C897",
-                },
-                {
-                  name: "校准中",
-                  value: stats.calibration_instruments,
-                  color: "#F59E0B",
-                },
-                {
-                  name: "维修中",
-                  value: stats.maintenance_instruments,
-                  color: "#EF4444",
-                },
-                {
-                  name: "停用",
-                  value: stats.disabled_instruments,
-                  color: "#6B7280",
-                },
-              ].filter((d) => d.value > 0)}
-              dataKey="value"
-              nameKey="name"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 3 }}
-                >
-                  仪器概览
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid size={6}>
-                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                      {safeInstruments.length}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      仪器总数
-                    </Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: "bold" }}
-                      color="success.main"
-                    >
-                      {
-                        safeInstruments.filter((i) => i.status === "正常")
-                          .length
-                      }
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      正常运行
-                    </Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography
-                      variant="h4"
-                      sx={{ ...{ color: "#ea580c" }, fontWeight: "bold" }}
-                    >
-                      {
-                        safeInstruments.filter((i) => i.status === "校准中")
-                          .length
-                      }
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      校准中
-                    </Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: "bold" }}
-                      color="error.main"
-                    >
-                      {
-                        safeInstruments.filter((i) => i.status === "维修中")
-                          .length
-                      }
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      维修中
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}
-                    >
-                      仪器总数
-                    </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                      {safeInstruments.length}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "#ccfbf1",
-                    }}
-                  >
-                    <Settings size={24} color="#0d9488" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}
-                    >
-                      正常
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: "bold" }}
-                      color="success.main"
-                    >
-                      {
-                        safeInstruments.filter((i) => i.status === "正常")
-                          .length
-                      }
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "success.light",
-                    }}
-                  >
-                    <CheckCircle2 size={24} color="#15803d" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ borderRadius: 2 }} variant="outlined">
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 1 }}
-                    >
-                      需维护
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{ ...{ color: "#ea580c" }, fontWeight: "bold" }}
-                    >
-                      {
-                        safeInstruments.filter((i) => i.status === "维修中")
-                          .length
-                      }
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      bgcolor: "#fed7aa",
-                    }}
-                  >
-                    <Wrench size={24} color="#ea580c" />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Paper sx={{ borderRadius: 2 }} variant="outlined">
-          <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
-              仪器设备
-            </Typography>
-          </Box>
-          <Box>
-            {safeInstruments.length === 0 ? (
-              <Box sx={{ p: 6, textAlign: "center" }}>
-                <Settings
-                  size={64}
-                  color="#cbd5e1"
-                  style={{ marginBottom: 16 }}
-                />
-                <Typography color="text.secondary">暂无仪器设备</Typography>
-              </Box>
-            ) : (
-              safeInstruments.map((instrument) => {
-                const statusColor = getInstrumentStatusColor(instrument.status);
-                const TypeIcon = getInstrumentTypeIcon(instrument.type);
-                return (
-                  <Box
-                    key={instrument.id}
-                    sx={{
-                      p: 3,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                      transition: "background 0.2s",
-                      "&:hover": { bgcolor: "grey.50" },
-                      "&:last-of-type": { borderBottom: 0 },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 2,
-                          flex: 1,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 1.5,
-                            bgcolor: "#ccfbf1",
-                            color: "#0d9488",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <TypeIcon size={24} />
-                        </Box>
-                        <Box sx={{ flex: 1 }}>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1.5,
-                              mb: 1,
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <Typography
-                              variant="h6"
-                              sx={{ fontWeight: "semibold" }}
-                            >
-                              {instrument.name}
-                            </Typography>
-                            <Chip
-                              size="small"
-                              label={instrument.status}
-                              sx={{
-                                bgcolor: statusColor.bgcolor,
-                                color: statusColor.color,
-                                fontWeight: 500,
-                              }}
-                            />
-                            <Chip
-                              size="small"
-                              label={instrument.type}
-                              sx={{
-                                bgcolor: "grey.100",
-                                color: "text.secondary",
-                              }}
-                            />
-                          </Box>
-                          <Typography color="text.secondary" sx={{ mb: 1.5 }}>
-                            {instrument.manufacturer && instrument.model
-                              ? `${instrument.manufacturer} - ${instrument.model}`
-                              : instrument.manufacturer ||
-                                instrument.model ||
-                                "暂无型号信息"}
-                          </Typography>
-                          <Stack
-                            direction="row"
-                            spacing={2}
-                            useFlexGap
-                            sx={{ fontSize: 14, flexWrap: "wrap" }}
-                            color="text.secondary"
-                          >
-                            <span>
-                              编号:{" "}
-                              <span style={{ fontFamily: "monospace" }}>
-                                {instrument.code}
-                              </span>
-                            </span>
-                            {instrument.location && (
-                              <span>位置: {instrument.location}</span>
-                            )}
-                            {instrument.responsible_person && (
-                              <span>
-                                负责人: {instrument.responsible_person}
-                              </span>
-                            )}
-                            {instrument.next_calibration_date && (
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 0.5,
-                                  color: "#ea580c",
-                                }}
-                              >
-                                <AlertCircle size={16} />
-                                下次校准:{" "}
-                                {new Date(
-                                  instrument.next_calibration_date,
-                                ).toLocaleDateString("zh-CN")}
-                              </Box>
-                            )}
-                          </Stack>
-                        </Box>
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          color="primary"
-                          onClick={() => openInstrumentDetailModal(instrument)}
-                        >
-                          查看详情
-                        </Button>
-                        <Button
-                          size="small"
-                          sx={{ color: "#0d9488" }}
-                          startIcon={<Wrench size={16} />}
-                          onClick={() => openMaintenanceModal(instrument)}
-                        >
-                          维护记录
-                        </Button>
-                        <Tooltip title="编辑">
-                          <IconButton
-                            size="small"
-                            onClick={() => openInstrumentModal(instrument)}
-                          >
-                            <Edit size={20} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="删除">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() =>
-                              handleDeleteInstrument(instrument.id)
-                            }
-                          >
-                            <Trash2 size={20} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                  </Box>
-                );
-              })
-            )}
-          </Box>
-        </Paper>
+        <CardListTemplate
+          title=""
+          data={filteredInstruments}
+          cardConfig={cardConfig}
+          metricStats={metricStats}
+          metricColumns={6}
+          loading={loading}
+          emptyState={{
+            emoji: "🔬",
+            title: "暂无仪器设备",
+            description: "点击上方按钮添加仪器设备",
+          }}
+          search={{
+            value: searchValue,
+            onChange: setSearchValue,
+            placeholder: "搜索仪器名称、编号、制造商...",
+          }}
+          filters={filters}
+          filterValues={filterValues}
+          onFilterChange={handleFilterChange}
+          onFilterReset={handleFilterReset}
+          onSearch={handleSearch}
+          addButton={{
+            text: "添加仪器",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: () => openInstrumentModal(),
+          }}
+          onRefresh={loadAllData}
+          cardActions={cardActions}
+          onCardClick={openInstrumentDetailModal}
+          showStatsOverview={true}
+          gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
+        />
       </Container>
 
       <Dialog

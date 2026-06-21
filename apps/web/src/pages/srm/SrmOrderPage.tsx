@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -10,12 +10,14 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
-import { Plus, ClipboardList, Search, ShoppingCart } from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Plus, ClipboardList, ShoppingCart, Eye } from "lucide-react";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/templates";
 import { srmApi } from "@/api/srm";
 import type { PurchaseOrder } from "@/api/srm";
 import { toast } from "react-toastify";
@@ -93,36 +95,56 @@ const SrmOrderPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<PurchaseOrder>[] = [
-    { accessorKey: "po_no", header: "订单编号" },
-    { accessorKey: "supplier_id", header: "供应商ID" },
-    {
-      accessorKey: "total_amount",
-      header: "订单金额",
-      cell: ({ row }) => (
-        <Typography sx={{ fontWeight: 600, color: "#1f2937" }}>
-          ¥{(row.original.total_amount || 0).toLocaleString()}
-        </Typography>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      accessorKey: "order_date",
-      header: "下单日期",
-      cell: ({ row }) => {
-        const date = row.original.order_date;
-        return date ? new Date(date).toLocaleDateString("zh-CN") : "";
+  const columns: ColumnDef<PurchaseOrder>[] = useMemo(
+    () => [
+      { id: "po_no", label: "订单编号" },
+      { id: "supplier_id", label: "供应商ID" },
+      {
+        id: "total_amount",
+        label: "订单金额",
+        render: (row) => (
+          <Typography sx={{ fontWeight: 600, color: "#1f2937" }}>
+            ¥{(row.total_amount || 0).toLocaleString()}
+          </Typography>
+        ),
       },
-    },
-  ];
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: "order_date",
+        label: "下单日期",
+        render: (row) => {
+          const date = row.order_date;
+          return date ? new Date(date).toLocaleDateString("zh-CN") : "";
+        },
+      },
+    ],
+    [],
+  );
 
-  const filteredOrders = orders.filter((o) => {
-    return o.po_no?.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const rowActions: RowAction<PurchaseOrder>[] = useMemo(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: () => {},
+      },
+    ],
+    [],
+  );
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o) => {
+      return (
+        o.po_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (o.supplier_id &&
+          o.supplier_id.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    });
+  }, [orders, searchTerm]);
 
   const handleCreate = () => {
     setFormData({
@@ -154,359 +176,245 @@ const SrmOrderPage: React.FC = () => {
     }
   };
 
-  const stats = {
-    total: orders.length,
-    pending: orders.filter((o) => o.status === "pending").length,
-    processing: orders.filter((o) => o.status === "processing").length,
-    completed: orders.filter((o) => o.status === "completed").length,
-    totalAmount: orders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-  };
+  const stats = useMemo(() => {
+    return {
+      total: orders.length,
+      pending: orders.filter((o) => o.status === "待处理").length,
+      processing: orders.filter((o) => o.status === "处理中").length,
+      completed: orders.filter((o) => o.status === "已完成").length,
+      totalAmount: orders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
+    };
+  }, [orders]);
 
-  if (loading) {
-    return (
+  const headerContent = useMemo(
+    () => (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #dbeafe 0%, #f8fafc 100%)",
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(1, 1fr)",
+            md: "repeat(2, 1fr)",
+            lg: "repeat(5, 1fr)",
+          },
+          gap: 2,
+          mb: 3,
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#3b82f6",
-              borderTopColor: "#1d4ed8",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #dbeafe 0%, #f8fafc 100%)",
-      }}
-    >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Card sx={{ bgcolor: "#dbeafe" }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  background:
-                    "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                  bgcolor: "#bfdbfe",
                   borderRadius: 2,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <ShoppingCart sx={{ width: 24, height: 24, color: "white" }} />
+                <ClipboardList
+                  sx={{ width: 20, height: 20, color: "#1d4ed8" }}
+                />
               </Box>
               <Box>
                 <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
                 >
-                  采购订单
+                  订单总数
                 </Typography>
                 <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
                 >
-                  Purchase Orders
+                  {stats.total}
                 </Typography>
               </Box>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#1d4ed8" } }}
-            >
-              新增订单
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(1, 1fr)",
-              md: "repeat(2, 1fr)",
-              lg: "repeat(5, 1fr)",
-            },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#dbeafe" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#bfdbfe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ClipboardList
-                    sx={{ width: 20, height: 20, color: "#1d4ed8" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    订单总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef3c7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ClipboardList
-                    sx={{ width: 20, height: 20, color: "#d97706" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    待处理
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.pending}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dbeafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ClipboardList
-                    sx={{ width: 20, height: 20, color: "#2563eb" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    处理中
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.processing}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ClipboardList
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已完成
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.completed}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#e0e7ff",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ShoppingCart
-                    sx={{ width: 20, height: 20, color: "#6366f1" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    订单总额
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    ¥{stats.totalAmount.toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
+          </CardContent>
+        </Card>
         <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <ClipboardList
-                style={{ width: 20, height: 20, color: "#3b82f6" }}
-              />
-              订单列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索订单编号或供应商..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#fef3c7",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-              />
+              >
+                <ClipboardList
+                  sx={{ width: 20, height: 20, color: "#d97706" }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  待处理
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.pending}
+                </Typography>
+              </Box>
             </Box>
-            <DataTable
-              columns={columns}
-              data={filteredOrders}
-              enablePagination
-            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#dbeafe",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ClipboardList
+                  sx={{ width: 20, height: 20, color: "#2563eb" }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  处理中
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.processing}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#dcfce7",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ClipboardList
+                  sx={{ width: 20, height: 20, color: "#16a34a" }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  已完成
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.completed}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#e0e7ff",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ShoppingCart
+                  sx={{ width: 20, height: 20, color: "#6366f1" }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  订单总额
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  ¥{stats.totalAmount.toLocaleString()}
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
       </Box>
+    ),
+    [stats],
+  );
+
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #dbeafe 0%, #f8fafc 100%)",
+        p: { xs: 2, md: 3 },
+      }}
+    >
+      <ListPageTemplate
+        title="采购订单"
+        subtitle="Purchase Orders"
+        columns={columns}
+        data={filteredOrders}
+        loading={loading}
+        rowActions={rowActions}
+        searchable
+        searchPlaceholder="搜索订单编号或供应商..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        actions={[
+          {
+            label: "新增订单",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        onRefresh={loadOrders}
+        emptyMessage="暂无订单数据"
+        emptyIcon={
+          <ClipboardList style={{ width: 48, height: 48, color: "#9ca3af" }} />
+        }
+        headerContent={headerContent}
+        getRowId={(row) => row.id || row.po_no || Math.random().toString()}
+      />
 
       <Dialog
         open={showCreateModal}

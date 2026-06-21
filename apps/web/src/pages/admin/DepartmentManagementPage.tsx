@@ -1,52 +1,31 @@
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
   Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
   Box,
-  Stack,
-  Tooltip,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  Building2,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  ChevronLeft,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Folder,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Building2, Plus, Edit, Trash2, Folder } from "lucide-react";
 import { departmentApi, type Department } from "@/api/hrm";
 import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/DataTable";
-
-import { ModeToggle } from "@/components/ModeToggle";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 interface DepartmentManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
 const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
-  onNavigate,
+  onNavigate: _onNavigate,
 }) => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -214,48 +193,76 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
     );
   };
 
-  const filteredDepartments = departments.filter(
-    (dept) =>
-      dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dept.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dept.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  // Build department tree and flatten for table display
+  const flattenedDepartments = useMemo(() => {
+    const buildTree = (
+      depts: Department[],
+    ): (Department & { level: number })[] => {
+      const result: (Department & { level: number })[] = [];
 
-  const buildDepartmentTree = (depts: Department[]): Department[] => {
-    const deptMap = new Map<string, Department & { children?: Department[] }>();
+      const deptMap = new Map<
+        string,
+        Department & { children?: Department[] }
+      >();
+      depts.forEach((dept) => {
+        deptMap.set(dept.id, { ...dept, children: [] });
+      });
 
-    depts.forEach((dept) => {
-      deptMap.set(dept.id, { ...dept, children: [] });
-    });
+      const rootDepts: (Department & { children?: Department[] })[] = [];
+      depts.forEach((dept) => {
+        const deptWithChildren = deptMap.get(dept.id)!;
+        if (dept.parent_id && deptMap.has(dept.parent_id)) {
+          deptMap.get(dept.parent_id)!.children!.push(deptWithChildren);
+        } else {
+          rootDepts.push(deptWithChildren);
+        }
+      });
 
-    const rootDepts: (Department & { children?: Department[] })[] = [];
+      const flatten = (
+        depts: (Department & { children?: Department[] })[],
+        level: number,
+      ) => {
+        depts.forEach((dept) => {
+          result.push({ ...dept, level });
+          if (dept.children && dept.children.length > 0) {
+            flatten(dept.children, level + 1);
+          }
+        });
+      };
 
-    depts.forEach((dept) => {
-      const deptWithChildren = deptMap.get(dept.id)!;
-      if (dept.parent_id && deptMap.has(dept.parent_id)) {
-        deptMap.get(dept.parent_id)!.children!.push(deptWithChildren);
-      } else {
-        rootDepts.push(deptWithChildren);
-      }
-    });
+      flatten(rootDepts, 0);
+      return result;
+    };
 
-    return rootDepts;
-  };
+    return buildTree(departments);
+  }, [departments]);
 
-  const renderDepartmentTree = (depts: Department[], level: number = 0) => {
-    return depts.map((dept) => (
-      <Box key={dept.id} sx={{ "&:hover .action-buttons": { opacity: 1 } }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            p: 2,
-            borderRadius: 1,
-            ...(level > 0 && { ml: 4, borderLeft: 2, borderColor: "divider" }),
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+  // Filter based on search
+  const filteredDepartments = useMemo(() => {
+    if (!searchQuery) return flattenedDepartments;
+    const query = searchQuery.toLowerCase();
+    return flattenedDepartments.filter(
+      (dept) =>
+        dept.name.toLowerCase().includes(query) ||
+        dept.code?.toLowerCase().includes(query) ||
+        dept.description?.toLowerCase().includes(query),
+    );
+  }, [flattenedDepartments, searchQuery]);
+
+  const columns: ColumnDef<Department & { level: number }>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        label: "部门名称",
+        render: (row) => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              pl: row.level * 3,
+            }}
+          >
             <Box
               sx={{
                 width: 40,
@@ -267,146 +274,57 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                 justifyContent: "center",
               }}
             >
-              <Folder
-                style={{
-                  color: "var(--mui-palette-primary-main)",
-                  fontSize: 20,
-                }}
-              />
+              <Folder size={20} color="#1976d2" />
             </Box>
             <Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {dept.name}
-                </Typography>
-                {dept.code && (
-                  <Typography variant="body2" color="text.secondary">
-                    ({dept.code})
-                  </Typography>
-                )}
-                {getStatusBadge(dept.status)}
-              </Box>
-              {dept.description && (
-                <Typography variant="body2" color="text.secondary">
-                  {dept.description}
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.name}
+              </Typography>
+              {row.code && (
+                <Typography variant="caption" color="text.secondary">
+                  {row.code}
                 </Typography>
               )}
             </Box>
           </Box>
-
-          <Box sx={{ opacity: 0, transition: "opacity 0.2s" }}>
-            <Tooltip title="编辑">
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => {
-                  setSelectedDepartment(dept);
-                  setShowEditModal(true);
-                }}
-              >
-                <Edit sx={{ width: 16, height: 16 }} />
-              </Button>
-            </Tooltip>
-
-            <Tooltip title="删除">
-              <Button
-                variant="text"
-                size="small"
-                color="error"
-                onClick={() => handleDeleteDepartment(dept.id)}
-              >
-                <Trash2 sx={{ width: 16, height: 16 }} />
-              </Button>
-            </Tooltip>
-          </Box>
-        </Box>
-
-        {(dept as any).children?.length > 0 &&
-          renderDepartmentTree((dept as any).children, level + 1)}
-      </Box>
-    ));
-  };
-
-  const columns = useMemo<ColumnDef<Department>[]>(
-    () => [
-      {
-        accessorKey: "name",
-        header: "部门名称",
-        cell: ({ row }) => {
-          const dept = row.original;
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: "primary.light",
-                  borderRadius: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Box sx={{ color: "primary.main" }}>
-                  <Folder size={20} />
-                </Box>
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {dept.name}
-                </Typography>
-                {dept.code && (
-                  <Typography variant="caption" color="text.secondary">
-                    {dept.code}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-          );
-        },
-      },
-      {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-      {
-        accessorKey: "description",
-        header: "描述",
-        cell: ({ row }) => (
-          <Typography variant="body2" color="text.secondary">
-            {row.original.description || "-"}
-          </Typography>
         ),
       },
       {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const dept = row.original;
-          return (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => {
-                  setSelectedDepartment(dept);
-                  setShowEditModal(true);
-                }}
-              >
-                <Edit sx={{ width: 16, height: 16 }} />
-              </Button>
-              <Button
-                variant="text"
-                size="small"
-                color="error"
-                onClick={() => handleDeleteDepartment(dept.id)}
-              >
-                <Trash2 sx={{ width: 16, height: 16 }} />
-              </Button>
-            </Box>
-          );
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: "description",
+        label: "描述",
+        render: (row) => (
+          <Typography variant="body2" color="text.secondary">
+            {row.description || "-"}
+          </Typography>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row: Department) => {
+          setSelectedDepartment(row);
+          setShowEditModal(true);
         },
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error" as const,
+        onClick: (row: Department) => handleDeleteDepartment(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个部门吗？",
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -415,130 +333,30 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
+      <ListPageTemplate
+        title="部门管理"
+        subtitle="管理组织架构、层级关系"
+        columns={columns}
+        data={filteredDepartments}
+        loading={loading}
+        error={error}
+        rowActions={rowActions}
+        searchable
+        searchPlaceholder="搜索部门名称、编码、描述..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        actions={[
+          {
+            label: "新增部门",
+            icon: <Plus size={20} />,
+            onClick: () => setShowCreateModal(true),
+          },
+        ]}
+        onRefresh={loadDepartments}
+        backButton={{
+          href: "/dashboard",
         }}
-      >
-        <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </Button>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Building2 sx={{ width: 28, height: 28, mr: 1 }} />
-                  部门管理
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  管理组织架构、层级关系
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ModeToggle />
-              <Button
-                variant="contained"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus sx={{ width: 20, height: 20, mr: 0.5 }} />
-                新增部门
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 4 }}>
-        <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
-          <TextField
-            placeholder="搜索部门名称、编码、描述..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            size="small"
-            sx={{ flex: 1 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <Search sx={{ width: 20, height: 20, mr: 0.5 }} />
-                ),
-              },
-            }}
-          />
-          <Button variant="outlined" onClick={loadDepartments}>
-            刷新
-          </Button>
-        </Box>
-
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "primary.main",
-                    borderTopColor: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                  }}
-                />
-                <Typography sx={{ mt: 2 }} color="text.secondary">
-                  加载中...
-                </Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle
-                  style={{
-                    fontSize: 48,
-                    color: "var(--mui-palette-error-main)",
-                    marginBottom: 8,
-                  }}
-                />
-                <Typography color="error.main">{error}</Typography>
-                <Button sx={{ mt: 2 }} onClick={loadDepartments}>
-                  重试
-                </Button>
-              </Box>
-            ) : filteredDepartments.length === 0 ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Building2
-                  style={{
-                    fontSize: 48,
-                    color: "var(--mui-palette-text-disabled)",
-                    marginBottom: 8,
-                  }}
-                />
-                <Typography color="text.secondary">暂无部门数据</Typography>
-              </Box>
-            ) : (
-              <Box sx={{ p: 3 }}>
-                {renderDepartmentTree(buildDepartmentTree(filteredDepartments))}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+      />
 
       <Dialog
         open={showCreateModal}

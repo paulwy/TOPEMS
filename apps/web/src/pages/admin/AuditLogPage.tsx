@@ -32,8 +32,7 @@ import type { AuditLog as RsAuditLog } from "@/api/rs";
 import { auditRsApi } from "@/api/rs";
 import { useAppStore } from "../../store";
 import { apiLogger } from "@/utils/logger";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, FilterConfig } from "@/components/mui";
+import { ListPageTemplate, type ColumnDef, type FilterConfig } from "@/components/templates";
 
 import { ModeToggle } from "@/components/ModeToggle";
 
@@ -416,3 +415,8 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
               emptyMessage="暂无审计日志"
             />
           </CardContent>
+        </Card>
+      </Box>
+    </Box>
+  );
+};

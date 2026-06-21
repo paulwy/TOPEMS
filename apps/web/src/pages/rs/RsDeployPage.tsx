@@ -1,42 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Container,
   Typography,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   Paper,
-  IconButton,
   Button,
-  TextField,
-  InputAdornment,
-  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Stack,
 } from "@mui/material";
+import { Play, Rocket, RotateCcw, Eye, Server } from "lucide-react";
 import {
-  Plus,
-  Search,
-  Rocket,
-  RotateCcw,
-  Eye,
-  Play,
-  Filter,
-  Server,
-} from "lucide-react";
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Deploy {
   id: string;
@@ -51,7 +32,7 @@ interface Deploy {
 
 const RsDeployPage: React.FC = () => {
   const [deploys, setDeploys] = useState<Deploy[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -115,7 +96,6 @@ const RsDeployPage: React.FC = () => {
       },
     ];
     setDeploys(mockDeploys);
-    setLoading(false);
   }, []);
 
   const getEnvColor = (
@@ -176,28 +156,22 @@ const RsDeployPage: React.FC = () => {
     }
   };
 
-  const filteredDeploys = deploys.filter((deploy) => {
-    const matchesSearch =
-      deploy.deploy_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deploy.app_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesEnv = !envFilter || deploy.environment === envFilter;
-    const matchesApp = !appFilter || deploy.app_name === appFilter;
-    const matchesStatus = !statusFilter || deploy.status === statusFilter;
-    return matchesSearch && matchesEnv && matchesApp && matchesStatus;
-  });
+  const uniqueApps = useMemo(
+    () => [...new Set(deploys.map((d) => d.app_name))],
+    [deploys],
+  );
 
-  const uniqueApps = [...new Set(deploys.map((d) => d.app_name))];
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const filteredDeploys = useMemo(() => {
+    return deploys.filter((deploy) => {
+      const matchesSearch =
+        deploy.deploy_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        deploy.app_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesEnv = !envFilter || deploy.environment === envFilter;
+      const matchesApp = !appFilter || deploy.app_name === appFilter;
+      const matchesStatus = !statusFilter || deploy.status === statusFilter;
+      return matchesSearch && matchesEnv && matchesApp && matchesStatus;
+    });
+  }, [deploys, searchTerm, envFilter, appFilter, statusFilter]);
 
   const handleViewDetail = (deploy: Deploy) => {
     setSelectedDeploy(deploy);
@@ -235,205 +209,146 @@ const RsDeployPage: React.FC = () => {
     setDeploys([newDeploy, ...deploys]);
   };
 
+  // 表格列定义
+  const columns: ColumnDef<Deploy>[] = [
+    {
+      id: "deploy_no",
+      label: "部署编号",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Rocket size={16} color="#3b82f6" />
+          {row.deploy_no}
+        </Box>
+      ),
+    },
+    {
+      id: "environment",
+      label: "环境",
+      render: (row) => (
+        <Chip
+          label={getEnvLabel(row.environment)}
+          size="small"
+          color={getEnvColor(row.environment)}
+        />
+      ),
+    },
+    {
+      id: "app_name",
+      label: "应用名称",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Server size={14} />
+          {row.app_name}
+        </Box>
+      ),
+    },
+    { id: "version", label: "版本" },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip
+          label={getStatusLabel(row.status)}
+          size="small"
+          color={getStatusColor(row.status)}
+        />
+      ),
+    },
+    { id: "deploy_time", label: "部署时间" },
+    { id: "operator", label: "操作人" },
+  ];
+
+  // 筛选器定义
+  const filters: FilterConfig[] = [
+    {
+      id: "env",
+      label: "环境",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "生产环境", value: "production" },
+        { label: "预发布环境", value: "staging" },
+        { label: "开发环境", value: "development" },
+      ],
+      value: envFilter || "",
+      onChange: (value) => setEnvFilter(value || null),
+    },
+    {
+      id: "app",
+      label: "应用",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        ...uniqueApps.map((app) => ({ label: app, value: app })),
+      ],
+      value: appFilter || "",
+      onChange: (value) => setAppFilter(value || null),
+    },
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "成功", value: "success" },
+        { label: "失败", value: "failed" },
+        { label: "部署中", value: "running" },
+        { label: "等待中", value: "pending" },
+      ],
+      value: statusFilter || "",
+      onChange: (value) => setStatusFilter(value || null),
+    },
+  ];
+
+  // 行操作定义
+  const rowActions: RowAction<Deploy>[] = [
+    {
+      label: "查看详情",
+      icon: <Eye size={16} />,
+      onClick: handleViewDetail,
+    },
+    {
+      label: "回滚",
+      icon: <RotateCcw size={16} />,
+      onClick: handleRollback,
+    },
+  ];
+
+  // 分页配置
+  const pagination = {
+    page,
+    pageSize: rowsPerPage,
+    total: filteredDeploys.length,
+    onPageChange: setPage,
+    onPageSizeChange: setRowsPerPage,
+  };
+
+  // 操作按钮
+  const actions = [
+    {
+      label: "发起部署",
+      icon: <Play size={18} />,
+      onClick: handleNewDeploy,
+    },
+  ];
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
-          >
-            部署管理
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Play size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-            onClick={handleNewDeploy}
-          >
-            发起部署
-          </Button>
-        </Box>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: "center", flexWrap: "wrap" }}
-          >
-            <TextField
-              size="small"
-              placeholder="搜索部署编号、应用..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>环境</InputLabel>
-              <Select
-                value={envFilter || ""}
-                label="环境"
-                onChange={(e) => setEnvFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="production">生产环境</MenuItem>
-                <MenuItem value="staging">预发布环境</MenuItem>
-                <MenuItem value="development">开发环境</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>应用</InputLabel>
-              <Select
-                value={appFilter || ""}
-                label="应用"
-                onChange={(e) => setAppFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                {uniqueApps.map((app) => (
-                  <MenuItem key={app} value={app}>
-                    {app}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={statusFilter || ""}
-                label="状态"
-                onChange={(e) => setStatusFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="success">成功</MenuItem>
-                <MenuItem value="failed">失败</MenuItem>
-                <MenuItem value="running">部署中</MenuItem>
-                <MenuItem value="pending">等待中</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Paper>
-
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    部署编号
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    环境
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    应用名称
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    版本
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    状态
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    部署时间
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作人
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredDeploys
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((deploy) => (
-                    <TableRow key={deploy.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Rocket size={16} color="#3b82f6" />
-                          {deploy.deploy_no}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getEnvLabel(deploy.environment)}
-                          size="small"
-                          color={getEnvColor(deploy.environment)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Server size={14} />
-                          {deploy.app_name}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{deploy.version}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getStatusLabel(deploy.status)}
-                          size="small"
-                          color={getStatusColor(deploy.status)}
-                        />
-                      </TableCell>
-                      <TableCell>{deploy.deploy_time}</TableCell>
-                      <TableCell>{deploy.operator}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="查看详情">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewDetail(deploy)}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="回滚">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleRollback(deploy.id)}
-                            >
-                              <RotateCcw size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredDeploys.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+      <ListPageTemplate
+        title="部署管理"
+        columns={columns}
+        data={filteredDeploys}
+        loading={loading}
+        filters={filters}
+        globalSearch={{
+          fields: ["deploy_no", "app_name"],
+          placeholder: "搜索部署编号、应用...",
+        }}
+        pagination={pagination}
+        actions={actions}
+        rowActions={rowActions}
+        onSearch={setSearchTerm}
+      />
 
       <Dialog
         open={detailDialogOpen}

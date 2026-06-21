@@ -3,40 +3,22 @@ import { logger } from "@/utils/logger";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Box,
-  Container,
-  Typography,
   Chip,
   LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  IconButton,
   Button,
-  TextField,
-  InputAdornment,
-  Menu,
-  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
+  Typography,
   Stack,
 } from "@mui/material";
+import { Plus, Download, Eye, Edit, Trash2 } from "lucide-react";
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  Filter,
-  Download,
-} from "lucide-react";
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+} from "@/components/templates";
 
 interface Project {
   id: string;
@@ -59,7 +41,6 @@ const RsProjectListPage: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
@@ -156,16 +137,10 @@ const RsProjectListPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const paginatedProjects = filteredProjects.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   const handleDeleteClick = (project: Project) => {
     setSelectedProject(project);
@@ -181,252 +156,153 @@ const RsProjectListPage: React.FC = () => {
   };
 
   const handleExport = () => {
-    // 导出功能
     logger.info("导出项目列表");
   };
 
-  return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      {/* 页面标题和操作栏 */}
-      <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          sx={{ alignItems: "center", justifyContent: "space-between" }}
-        >
-          <div>
-            <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
-              研发项目管理
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              管理研发项目、跟踪进度、分配资源
-            </Typography>
-          </div>
-          <Stack direction="row" spacing={2}>
-            <Button
-              variant="outlined"
-              startIcon={<Download />}
-              onClick={handleExport}
-            >
-              导出
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Plus />}
-              component={Link}
-              to="/rs/projects/create"
-            >
-              新建项目
-            </Button>
-          </Stack>
-        </Stack>
-      </div>
-
-      {/* 搜索和筛选 */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-          <TextField
-            placeholder="搜索项目名称或编码..."
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ width: 300 }}
-          />
-          <Button
-            variant="outlined"
-            startIcon={<Filter />}
-            onClick={(e) => setFilterMenuOpen(true)}
-          >
-            状态筛选
-            {statusFilter && `: ${statusFilter}`}
-          </Button>
-          <Menu
-            open={filterMenuOpen}
-            onClose={() => setFilterMenuOpen(false)}
-            anchorEl={null}
-          >
-            <MenuItem
-              onClick={() => {
-                setStatusFilter(null);
-                setFilterMenuOpen(false);
-              }}
-            >
-              全部
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setStatusFilter("进行中");
-                setFilterMenuOpen(false);
-              }}
-            >
-              进行中
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setStatusFilter("已完成");
-                setFilterMenuOpen(false);
-              }}
-            >
-              已完成
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setStatusFilter("暂停");
-                setFilterMenuOpen(false);
-              }}
-            >
-              暂停
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setStatusFilter("取消");
-                setFilterMenuOpen(false);
-              }}
-            >
-              已取消
-            </MenuItem>
-          </Menu>
-        </Stack>
-      </Paper>
-
-      {/* 项目列表表格 */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>项目编码</TableCell>
-              <TableCell>项目名称</TableCell>
-              <TableCell>项目类型</TableCell>
-              <TableCell>负责人</TableCell>
-              <TableCell>状态</TableCell>
-              <TableCell>进度</TableCell>
-              <TableCell>开始日期</TableCell>
-              <TableCell>预算(万元)</TableCell>
-              <TableCell align="center">操作</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredProjects
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((project) => (
-                <TableRow key={project.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: "medium" }}>
-                      {project.code}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2">{project.name}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={project.project_type}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>{project.leader}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={project.status}
-                      size="small"
-                      color={getStatusColor(project.status)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{ alignItems: "center" }}
-                    >
-                      <LinearProgress
-                        variant="determinate"
-                        value={project.progress}
-                        sx={{ width: 80 }}
-                      />
-                      <Typography variant="body2">
-                        {project.progress}%
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>{project.start_date}</TableCell>
-                  <TableCell>
-                    {project.budget ? (project.budget / 10000).toFixed(1) : "-"}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{ justifyContent: "center" }}
-                    >
-                      <Tooltip title="查看详情">
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(`/rs/projects/${project.id}`)}
-                        >
-                          <Eye />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="编辑">
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            navigate(`/rs/projects/${project.id}/edit`)
-                          }
-                        >
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="删除">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteClick(project)}
-                        >
-                          <Trash2 />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            {filteredProjects.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={9} align="center">
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ py: 4 }}
-                  >
-                    暂无项目数据
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={filteredProjects.length}
-          page={page}
-          onPageChange={handlePageChange}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          labelRowsPerPage="每页行数"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} 共 ${count !== -1 ? count : `超过 ${to}`} 条`
-          }
+  const columns: ColumnDef<Project>[] = [
+    {
+      id: "code",
+      label: "项目编码",
+      render: (row) => (
+        <Typography variant="body2" sx={{ fontWeight: "medium" }}>
+          {row.code}
+        </Typography>
+      ),
+    },
+    {
+      id: "name",
+      label: "项目名称",
+      render: (row) => <Typography variant="body2">{row.name}</Typography>,
+    },
+    {
+      id: "project_type",
+      label: "项目类型",
+      render: (row) => (
+        <Chip label={row.project_type} size="small" variant="outlined" />
+      ),
+    },
+    {
+      id: "leader",
+      label: "负责人",
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip
+          label={row.status}
+          size="small"
+          color={getStatusColor(row.status)}
         />
-      </TableContainer>
+      ),
+    },
+    {
+      id: "progress",
+      label: "进度",
+      render: (row) => (
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <LinearProgress
+            variant="determinate"
+            value={row.progress}
+            sx={{ width: 80 }}
+          />
+          <Typography variant="body2">{row.progress}%</Typography>
+        </Stack>
+      ),
+    },
+    {
+      id: "start_date",
+      label: "开始日期",
+    },
+    {
+      id: "budget",
+      label: "预算(万元)",
+      render: (row) => (row.budget ? (row.budget / 10000).toFixed(1) : "-"),
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "进行中", value: "进行中" },
+        { label: "已完成", value: "已完成" },
+        { label: "暂停", value: "暂停" },
+        { label: "取消", value: "取消" },
+      ],
+      value: statusFilter || "",
+      onChange: (value) => setStatusFilter(value || null),
+    },
+  ];
+
+  const rowActions = [
+    {
+      label: "查看详情",
+      icon: <Eye size={16} />,
+      onClick: (row: Project) => navigate(`/rs/projects/${row.id}`),
+    },
+    {
+      label: "编辑",
+      icon: <Edit size={16} />,
+      onClick: (row: Project) => navigate(`/rs/projects/${row.id}/edit`),
+    },
+    {
+      label: "删除",
+      icon: <Trash2 size={16} />,
+      color: "error",
+      divider: true,
+      onClick: handleDeleteClick,
+    },
+  ];
+
+  return (
+    <Box sx={{ bgcolor: "#fff", minHeight: "100vh", py: 3 }}>
+      <ListPageTemplate
+        title="研发项目管理"
+        subtitle="管理研发项目、跟踪进度、分配资源"
+        columns={columns}
+        data={paginatedProjects}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索项目名称或编码..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{ status: statusFilter || "" }}
+        onFilterChange={(filters) => {
+          if (filters.status !== undefined) {
+            setStatusFilter(filters.status || null);
+          }
+        }}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total: filteredProjects.length,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
+        actions={[
+          {
+            label: "导出",
+            variant: "outlined",
+            icon: <Download size={18} />,
+            onClick: handleExport,
+          },
+          {
+            label: "新建项目",
+            variant: "contained",
+            icon: <Plus size={18} />,
+            component: Link,
+            href: "/rs/projects/create",
+          },
+        ]}
+        rowActions={rowActions}
+        showRowNumber
+        emptyMessage="暂无项目数据"
+      />
 
       {/* 删除确认对话框 */}
       <Dialog
@@ -450,7 +326,7 @@ const RsProjectListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

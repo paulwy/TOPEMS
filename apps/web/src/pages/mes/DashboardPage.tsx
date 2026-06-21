@@ -1,21 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Card, CardContent, Button } from "@mui/material";
-import { Grid } from "@/components/Grid";
+import { Box, Typography, Button } from "@mui/material";
 import {
   Package,
   ClipboardList,
   AlertCircle,
-  ArrowRight,
   Factory,
+  ArrowRight,
 } from "lucide-react";
 import BarChartComponent from "../../components/charts/BarChart";
 import PieChartComponent from "../../components/charts/PieChart";
 import LineChartComponent from "../../components/charts/LineChart";
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard,
+  type QuickAction,
+} from "@/components/templates";
 
 const iconMap: Record<
   string,
-  React.ComponentType<{ className?: string; size?: number }>
+  React.ComponentType<{ size?: number; className?: string }>
 > = {
   Package,
   ClipboardList,
@@ -54,6 +59,104 @@ export const DashboardPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const getGreeting = (): string => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "上午好";
+    if (hour < 18) return "下午好";
+    return "晚上好";
+  };
+
+  const stats: StatCard[] = [
+    {
+      id: "production-orders",
+      title: "生产工单",
+      value: "128",
+      change: 12,
+      changeLabel: "vs 上周期",
+      icon: <ClipboardList size={24} />,
+      color: "primary",
+    },
+    {
+      id: "in-production",
+      title: "生产中",
+      value: "24",
+      change: 5,
+      changeLabel: "vs 上周期",
+      icon: <Factory size={24} />,
+      color: "info",
+    },
+    {
+      id: "daily-output",
+      title: "今日产出",
+      value: "1,580",
+      change: 8,
+      changeLabel: "vs 上周期",
+      icon: <Package size={24} />,
+      color: "success",
+    },
+    {
+      id: "abnormal-orders",
+      title: "异常工单",
+      value: "3",
+      change: -2,
+      changeLabel: "vs 上周期",
+      icon: <AlertCircle size={24} />,
+      color: "error",
+    },
+  ];
+
+  const charts: ChartCard[] = [
+    {
+      id: "weekly-output-trend",
+      title: "每周产量趋势",
+      height: 300,
+      chart: <BarChartComponent data={barData} xKey="name" yKey="value" />,
+    },
+    {
+      id: "order-status-distribution",
+      title: "工单状态分布",
+      height: 300,
+      chart: <PieChartComponent data={pieData} />,
+    },
+    {
+      id: "daily-output-trend",
+      title: "每日产出趋势",
+      height: 300,
+      chart: <LineChartComponent data={lineData} xKey="name" yKey="value" />,
+    },
+  ];
+
+  const quickActions: QuickAction[] = [
+    {
+      id: "create-order",
+      label: "创建工单",
+      icon: <ArrowRight size={20} />,
+      href: "/mes/orders/create",
+      color: "#3b82f6",
+    },
+    {
+      id: "order-list",
+      label: "工单列表",
+      icon: <ArrowRight size={20} />,
+      href: "/mes/orders",
+      color: "#3b82f6",
+    },
+    {
+      id: "process-config",
+      label: "工艺配置",
+      icon: <ArrowRight size={20} />,
+      href: "/mes/processes",
+      color: "#3b82f6",
+    },
+    {
+      id: "workstation-management",
+      label: "工位管理",
+      icon: <ArrowRight size={20} />,
+      href: "/mes/workstations",
+      color: "#3b82f6",
+    },
+  ];
+
   if (loading) {
     return (
       <Box
@@ -71,205 +174,19 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const stats = [
-    { label: "生产工单", value: "128", icon: "ClipboardList", trend: "+12" },
-    { label: "生产中", value: "24", icon: "Factory", trend: "+5" },
-    { label: "今日产出", value: "1,580", icon: "Package", trend: "+8%" },
-    { label: "异常工单", value: "3", icon: "AlertCircle", trend: "-2" },
-  ];
-
-  const quickActions = [
-    { label: "创建工单", path: "/mes/orders/create" },
-    { label: "工单列表", path: "/mes/orders" },
-    { label: "工艺配置", path: "/mes/processes" },
-    { label: "工位管理", path: "/mes/workstations" },
-  ];
-
-  const getGreeting = (): string => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "上午好";
-    if (hour < 18) return "下午好";
-    return "晚上好";
-  };
-
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box
-        sx={{
-          padding: "24px 32px",
-          background: "white",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        }}
-      >
-        <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
-          生产执行管理
-        </Typography>
-        <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
-          {getGreeting()}，生产进度与工单追踪
-        </Typography>
-      </Box>
-
-      <Box sx={{ padding: "24px 32px" }}>
-        <Grid container spacing={{ xs: 2, sm: 3 }}>
-          {stats.map((stat, index) => {
-            const IconComponent = iconMap[stat.icon] || Package;
-            return (
-              <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card
-                  sx={{
-                    borderRadius: "12px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                      transform: "translateY(-2px)",
-                    },
-                  }}
-                >
-                  <CardContent sx={{ padding: "20px" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "#64748b", mb: 1 }}
-                        >
-                          {stat.label}
-                        </Typography>
-                        <Typography
-                          variant="h4"
-                          sx={{ color: "#1e293b", fontWeight: 600 }}
-                        >
-                          {stat.value}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: "12px",
-                          background:
-                            "linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "white",
-                        }}
-                      >
-                        <IconComponent size={24} />
-                      </Box>
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: stat.trend.startsWith("-")
-                          ? "#ef4444"
-                          : "#10b981",
-                        mt: 1,
-                      }}
-                    >
-                      {stat.trend} vs 上周期
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Card
-              sx={{
-                borderRadius: "12px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                height: "100%",
-              }}
-            >
-              <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  每周产量趋势
-                </Typography>
-                <BarChartComponent data={barData} xKey="name" yKey="value" />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card
-              sx={{
-                borderRadius: "12px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                height: "100%",
-              }}
-            >
-              <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  工单状态分布
-                </Typography>
-                <PieChartComponent data={pieData} />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid size={12}>
-            <Card
-              sx={{
-                borderRadius: "12px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              }}
-            >
-              <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                  每日产出趋势
-                </Typography>
-                <LineChartComponent data={lineData} xKey="name" yKey="value" />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Typography
-          variant="h6"
-          sx={{ mt: 4, mb: 2, color: "#1e293b", fontWeight: 600 }}
-        >
-          快速操作
-        </Typography>
-        <Grid container spacing={2}>
-          {quickActions.map((action, index) => (
-            <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                endIcon={<ArrowRight size={16} />}
-                onClick={() => navigate(action.path)}
-                sx={{
-                  padding: "16px",
-                  borderRadius: "12px",
-                  borderColor: "#e2e8f0",
-                  color: "#475569",
-                  textTransform: "none",
-                  justifyContent: "space-between",
-                  "&:hover": {
-                    borderColor: "#3b82f6",
-                    backgroundColor: "#f8fafc",
-                  },
-                }}
-              >
-                {action.label}
-              </Button>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </Box>
+    <DashboardTemplate
+      title="生产执行管理"
+      subtitle={`${getGreeting()}，生产进度与工单追踪`}
+      breadcrumbs={[
+        { label: "首页", href: "/dashboard" },
+        { label: "生产执行" },
+      ]}
+      stats={stats}
+      charts={charts}
+      quickActions={quickActions}
+      quickActionsTitle="快速操作"
+    />
   );
 };
 

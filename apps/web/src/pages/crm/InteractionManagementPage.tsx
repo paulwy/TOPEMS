@@ -19,8 +19,8 @@ import { crmApi } from "@/api/modules/crm/crm";
 import { useAppStore } from "@/store";
 import { logger } from "@/utils/logger";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import type { RowAction, FilterConfig } from "@/components/mui";
 
 const InteractionManagementPage: React.FC = () => {
   const [interactions, setInteractions] = useState<Interaction[]>([]);

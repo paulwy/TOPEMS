@@ -1,39 +1,20 @@
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Box,
-  TablePagination,
+  Chip,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import type {
-  PurchaseOrder,
-  CreatePurchaseOrderRequest,
-  UpdatePurchaseOrderRequest,
-} from "@/api/scm";
+import type { PurchaseOrder, CreatePurchaseOrderRequest } from "@/api/scm";
 import { scmApi } from "@/api/scm";
 import { useAppStore } from "@/store";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { EmptyState } from "@/components/EmptyState";
 import { Plus } from "lucide-react";
 import { apiLogger } from "@/utils/logger";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 const ScmPurchaseOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
@@ -110,104 +91,83 @@ const ScmPurchaseOrderPage: React.FC = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner />;
+  // 表格列定义
+  const columns: ColumnDef<PurchaseOrder>[] = [
+    {
+      id: "order_number",
+      label: "订单号",
+      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.order_number}</Box>,
+    },
+    {
+      id: "supplier_id",
+      label: "供应商",
+    },
+    {
+      id: "order_date",
+      label: "订单日期",
+      render: (row) => (
+        <Box sx={{ fontSize: "0.875rem" }}>
+          {new Date(row.order_date).toLocaleDateString("zh-CN")}
+        </Box>
+      ),
+    },
+    {
+      id: "delivery_date",
+      label: "交付日期",
+      render: (row) => (
+        <Box sx={{ fontSize: "0.875rem" }}>
+          {row.delivery_date
+            ? new Date(row.delivery_date).toLocaleDateString("zh-CN")
+            : "-"}
+        </Box>
+      ),
+    },
+    {
+      id: "total_amount",
+      label: "总金额",
+      render: (row) => <Box>{row.total_amount || 0}</Box>,
+    },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip size="small" label={row.status} variant="outlined" />
+      ),
+    },
+    {
+      id: "remarks",
+      label: "备注",
+      render: (row) => (
+        <Box sx={{ fontSize: "0.875rem" }}>{row.remarks || "-"}</Box>
+      ),
+    },
+  ];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            采购订单管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
-            管理采购订单,包括订单号、供应商、订单日期、交付日期等
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            <Button variant="contained" onClick={() => setShowDialog(true)}>
-              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
-              新增采购订单
-            </Button>
-          </Box>
-
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>订单号</TableCell>
-                <TableCell>供应商</TableCell>
-                <TableCell>订单日期</TableCell>
-                <TableCell>交付日期</TableCell>
-                <TableCell>总金额</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>备注</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} sx={{ textAlign: "center" }}>
-                    <EmptyState
-                      title="暂无采购订单数据"
-                      description="点击上方按钮添加第一个采购订单"
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {order.order_number}
-                    </TableCell>
-                    <TableCell>{order.supplier_id || "-"}</TableCell>
-                    <TableCell>
-                      {new Date(order.order_date).toLocaleDateString("zh-CN")}
-                    </TableCell>
-                    <TableCell>
-                      {order.delivery_date
-                        ? new Date(order.delivery_date).toLocaleDateString(
-                            "zh-CN",
-                          )
-                        : "-"}
-                    </TableCell>
-                    <TableCell>{order.total_amount || 0}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={order.status}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{order.remarks || "-"}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <Box
-            sx={{
-              mt: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </Typography>
-            <TablePagination
-              component="div"
-              count={total}
-              page={currentPage - 1}
-              rowsPerPage={pageSize}
-              onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
-              rowsPerPageOptions={[]}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="采购订单管理"
+        subtitle="管理采购订单,包括订单号、供应商、订单日期、交付日期等"
+        columns={columns}
+        data={orders}
+        loading={loading}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: (page) => setCurrentPage(page + 1),
+        }}
+        actions={[
+          {
+            label: "新增采购订单",
+            icon: <Plus size={16} />,
+            onClick: () => setShowDialog(true),
+            variant: "contained",
+          },
+        ]}
+        onRefresh={loadOrders}
+        emptyMessage="暂无采购订单数据"
+      />
 
       <Dialog
         open={showDialog}
@@ -300,7 +260,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

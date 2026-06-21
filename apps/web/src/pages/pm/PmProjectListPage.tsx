@@ -1,43 +1,20 @@
-import React, { useState, useEffect } from "react";
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  FolderKanban,
-  TrendingUp,
-  Calendar,
-  Users,
-  MoreVertical,
-} from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Plus, Search, Edit, Trash2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
-  TextField,
   LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
+  Button,
   IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Tooltip,
+  MenuItem,
 } from "@mui/material";
 import type { Project } from "@/api/pm";
 import { pmApi } from "@/api/pm";
 import { DataExport } from "@/components/common";
 import { apiLogger } from "@/utils/logger";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 const PROJECT_TYPES = [
   { value: "__ALL__", label: "全部类型" },
@@ -57,6 +34,35 @@ const STATUS_OPTIONS = [
   { value: "completed", label: "已完成" },
   { value: "cancelled", label: "已取消" },
 ];
+
+const STATUS_OPTIONS_MAP: Record<string, string> = {
+  active: "进行中",
+  completed: "已完成",
+  pending: "待审批",
+  approved: "已批准",
+  cancelled: "已取消",
+  draft: "草稿",
+};
+
+const STATUS_COLOR_MAP: Record<
+  string,
+  "success" | "primary" | "warning" | "default" | "error"
+> = {
+  active: "success",
+  completed: "primary",
+  pending: "warning",
+  approved: "primary",
+  cancelled: "default",
+  draft: "default",
+};
+
+const PROJECT_TYPES_MAP: Record<string, string> = {
+  research: "科研项目",
+  production: "生产项目",
+  construction: "施工项目",
+  design: "设计项目",
+  service: "服务项目",
+};
 
 const PmProjectListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -128,57 +134,148 @@ const PmProjectListPage: React.FC = () => {
     }).format(amount);
   };
 
-  const getStatusColor = (
-    status: string,
-  ): "success" | "primary" | "warning" | "default" | "error" => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return "success";
-      case "completed":
-        return "primary";
-      case "pending":
-        return "warning";
-      case "approved":
-        return "primary";
-      case "cancelled":
-        return "default";
-      case "draft":
-        return "default";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return "进行中";
-      case "completed":
-        return "已完成";
-      case "pending":
-        return "待审批";
-      case "approved":
-        return "已批准";
-      case "cancelled":
-        return "已取消";
-      case "draft":
-        return "草稿";
-      default:
-        return status;
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    const found = PROJECT_TYPES.find((t) => t.value === type);
-    return found ? found.label : type;
-  };
-
-  const filteredProjects = projects.filter(
-    (project) =>
-      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.code.toLowerCase().includes(searchTerm.toLowerCase()),
+  // 列定义
+  const columns: ColumnDef<Project>[] = useMemo(
+    () => [
+      {
+        id: "name",
+        label: "项目名称",
+        width: 200,
+        sortable: true,
+      },
+      {
+        id: "code",
+        label: "项目编码",
+        width: 120,
+      },
+      {
+        id: "project_type",
+        label: "类型",
+        width: 100,
+        render: (value) => PROJECT_TYPES_MAP[value] || value,
+      },
+      {
+        id: "status",
+        label: "状态",
+        width: 100,
+        render: (value) => (
+          <Chip
+            size="small"
+            label={STATUS_OPTIONS_MAP[value] || value}
+            color={STATUS_COLOR_MAP[value]}
+          />
+        ),
+      },
+      {
+        id: "progress",
+        label: "进度",
+        width: 180,
+        render: (value) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 96 }}>
+              <LinearProgress
+                variant="determinate"
+                value={value || 0}
+                sx={{ height: 8, borderRadius: 4 }}
+              />
+            </Box>
+            <Box sx={{ fontSize: "0.875rem", color: "grey.600" }}>
+              {value || 0}%
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: "budget",
+        label: "预算",
+        width: 120,
+        render: (value) => formatCurrency(value),
+      },
+      {
+        id: "start_date",
+        label: "开始日期",
+        width: 150,
+        render: (value) => formatDate(value),
+      },
+      {
+        id: "end_date",
+        label: "结束日期",
+        width: 150,
+        render: (value) => formatDate(value),
+      },
+      {
+        id: "actions",
+        label: "操作",
+        width: 120,
+        align: "center",
+        render: (_, __, row) => (
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Tooltip title="查看详情">
+              <IconButton
+                size="small"
+                onClick={() => navigate(`/pm/projects/${row.id}`)}
+              >
+                <Eye size={16} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="编辑">
+              <IconButton
+                size="small"
+                onClick={() => navigate(`/pm/projects/${row.id}/edit`)}
+              >
+                <Edit size={16} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="删除">
+              <IconButton
+                size="small"
+                onClick={() => handleDelete(row.id)}
+                sx={{ color: "error.main" }}
+              >
+                <Trash2 size={16} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [currentPage, navigate],
   );
 
+  // 筛选配置
+  const filters = useMemo(
+    () => [
+      {
+        id: "project_type",
+        label: "类型",
+        type: "select" as const,
+        options: PROJECT_TYPES.filter((t) => t.value !== "__ALL__"),
+        value: selectedType,
+        onChange: setSelectedType,
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select" as const,
+        options: STATUS_OPTIONS.filter((s) => s.value !== "__ALL__"),
+        value: selectedStatus,
+        onChange: setSelectedStatus,
+      },
+    ],
+    [selectedType, selectedStatus],
+  );
+
+  // 过滤后的数据
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return projects;
+    return projects.filter(
+      (project) =>
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.code.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [projects, searchTerm]);
+
+  // 统计卡片数据
   const activeCount = projects.filter((p) => p.status === "active").length;
   const pendingCount = projects.filter((p) => p.status === "pending").length;
   const completedCount = projects.filter(
@@ -186,472 +283,61 @@ const PmProjectListPage: React.FC = () => {
   ).length;
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.50" }}>
-      <Box sx={{ flex: 1, p: 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 3,
-          }}
-        >
-          <Box>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "grey.900" }}
-            >
-              项目管理
-            </Typography>
-            <Typography sx={{ color: "grey.500", mt: 0.5 }}>
-              管理所有类型的项目，跟踪进度和状态
-            </Typography>
-          </Box>
-          <DataExport
-            data={projects as unknown as Record<string, unknown>[]}
-            fields={[
-              { key: "name", title: "项目名称" },
-              { key: "code", title: "项目编码" },
-              { key: "project_type", title: "项目类型" },
-              { key: "status", title: "状态" },
-              { key: "progress", title: "进度" },
-              { key: "budget", title: "预算" },
-              { key: "start_date", title: "开始日期" },
-              { key: "end_date", title: "结束日期" },
-            ]}
-            defaultFileName="项目数据"
-            buttonText="导出"
-          />
-          <Button
-            variant="contained"
-            onClick={() => navigate("/pm/projects/create")}
-            startIcon={<Plus size={16} />}
-          >
-            创建项目
-          </Button>
-        </Box>
-
-        <Card sx={{ mb: 3 }}>
-          <CardContent sx={{ p: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { xs: "stretch", md: "center" },
-                justifyContent: "space-between",
-                gap: 2,
-              }}
-            >
-              <TextField
-                type="text"
-                placeholder="搜索项目名称或编号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                size="small"
-                sx={{ flex: 1, minWidth: 200 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        size={20}
-                        style={{ color: "#9ca3af", marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-              <Box sx={{ display: "flex", gap: 1.5 }}>
-                <FormControl size="small" sx={{ minWidth: 144 }}>
-                  <InputLabel>类型</InputLabel>
-                  <Select
-                    value={selectedType}
-                    label="类型"
-                    onChange={(e) => setSelectedType(e.target.value)}
-                  >
-                    {PROJECT_TYPES.map((type) => (
-                      <MenuItem key={type.value} value={type.value}>
-                        {type.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl size="small" sx={{ minWidth: 144 }}>
-                  <InputLabel>状态</InputLabel>
-                  <Select
-                    value={selectedStatus}
-                    label="状态"
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                  >
-                    {STATUS_OPTIONS.map((status) => (
-                      <MenuItem key={status.value} value={status.value}>
-                        {status.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
-            gap: 2,
-            my: 3,
-          }}
-        >
-          <Card>
-            <CardContent
-              sx={{
-                p: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "#dbeafe",
-                }}
-              >
-                <FolderKanban size={24} style={{ color: "#2563eb" }} />
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  总项目数
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "grey.900" }}
-                >
-                  {projects.length}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent
-              sx={{
-                p: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "#dcfce7",
-                }}
-              >
-                <TrendingUp size={24} style={{ color: "#16a34a" }} />
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  进行中
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "#16a34a" }}
-                >
-                  {activeCount}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent
-              sx={{
-                p: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "#fef9c3",
-                }}
-              >
-                <Calendar size={24} style={{ color: "#ca8a04" }} />
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  待审批
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "#ca8a04" }}
-                >
-                  {pendingCount}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent
-              sx={{
-                p: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: "50%",
-                  bgcolor: "#dbeafe",
-                }}
-              >
-                <Users size={24} style={{ color: "#2563eb" }} />
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  已完成
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "#2563eb" }}
-                >
-                  {completedCount}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{ px: 3 }}
-            title={
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography sx={{ fontSize: "1.125rem", fontWeight: 600 }}>
-                  项目列表
-                </Typography>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  共 {totalCount} 个项目
-                </Typography>
-              </Box>
-            }
-          />
-          <CardContent sx={{ p: 0 }}>
-            <Box sx={{ overflowX: "auto" }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: 200 }}>项目名称</TableCell>
-                    <TableCell>类型</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell sx={{ width: 180 }}>进度</TableCell>
-                    <TableCell>预算</TableCell>
-                    <TableCell sx={{ width: 150 }}>时间</TableCell>
-                    <TableCell sx={{ width: 120 }}>操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        sx={{ textAlign: "center", py: 6 }}
-                      >
-                        <Box
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            border: "2px solid",
-                            borderColor: "#2563eb",
-                            borderTopColor: "transparent",
-                            borderRadius: "50%",
-                            mx: "auto",
-                            animation: "spin 1s linear infinite",
-                            "@keyframes spin": {
-                              "0%": { transform: "rotate(0deg)" },
-                              "100%": { transform: "rotate(360deg)" },
-                            },
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredProjects.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        sx={{ textAlign: "center", py: 6, color: "grey.500" }}
-                      >
-                        暂无项目数据
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredProjects.map((project) => (
-                      <TableRow
-                        key={project.id}
-                        sx={{ "&:hover": { bgcolor: "grey.50" } }}
-                      >
-                        <TableCell>
-                          <Box>
-                            <Typography
-                              sx={{ fontWeight: 500, color: "grey.900" }}
-                            >
-                              {project.name}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: "grey.500" }}
-                            >
-                              {project.code}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: "grey.600" }}
-                          >
-                            {getTypeLabel(project.project_type)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={getStatusLabel(project.status)}
-                            color={getStatusColor(project.status)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1.5,
-                            }}
-                          >
-                            <Box sx={{ width: 96 }}>
-                              <LinearProgress
-                                variant="determinate"
-                                value={project.progress || 0}
-                                sx={{ height: 8, borderRadius: 4 }}
-                              />
-                            </Box>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: "grey.600" }}
-                            >
-                              {project.progress || 0}%
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "0.875rem", color: "grey.600" }}
-                        >
-                          {formatCurrency(project.budget)}
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "0.875rem", color: "grey.600" }}
-                        >
-                          <Box>
-                            <Typography variant="body2">
-                              {formatDate(project.start_date)}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: "grey.400", fontSize: "0.75rem" }}
-                            >
-                              至 {formatDate(project.end_date)}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: "flex", gap: 0.5 }}>
-                            <Tooltip title="查看详情">
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  navigate(`/pm/projects/${project.id}`)
-                                }
-                              >
-                                <Eye size={16} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="编辑">
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  navigate(`/pm/projects/${project.id}/edit`)
-                                }
-                              >
-                                <Edit size={16} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="删除">
-                              <IconButton
-                                size="small"
-                                onClick={() => handleDelete(project.id)}
-                                sx={{ color: "error.main" }}
-                              >
-                                <Trash2 size={16} />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </Box>
-            {!loading && totalPages > 1 && (
-              <Box
-                sx={{
-                  p: 2,
-                  borderTop: "1px solid",
-                  borderColor: "grey.200",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 2,
-                }}
-              >
-                <Button
-                  variant="outlined"
-                  disabled={currentPage === 1}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                >
-                  上一页
-                </Button>
-                <Typography variant="body2" sx={{ color: "grey.600" }}>
-                  第 {currentPage} / {totalPages} 页
-                </Typography>
-                <Button
-                  variant="outlined"
-                  disabled={currentPage === totalPages}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                >
-                  下一页
-                </Button>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
-    </Box>
+    <ListPageTemplate
+      title="项目管理"
+      subtitle="管理所有类型的项目，跟踪进度和状态"
+      breadcrumbs={[{ label: "首页", href: "/dashboard" }, { label: "项目" }]}
+      columns={columns}
+      data={filteredData}
+      loading={loading}
+      selectable
+      pagination={{
+        page: currentPage,
+        pageSize,
+        total: totalCount,
+        onPageChange: handlePageChange,
+      }}
+      searchable
+      searchPlaceholder="搜索项目名称或编号..."
+      searchValue={searchTerm}
+      onSearch={setSearchTerm}
+      filters={filters}
+      filtersValue={{ project_type: selectedType, status: selectedStatus }}
+      onFilterChange={(f) => {
+        if (f.project_type !== undefined) setSelectedType(f.project_type);
+        if (f.status !== undefined) setSelectedStatus(f.status);
+      }}
+      actions={[
+        {
+          label: "创建项目",
+          icon: <Plus size={16} />,
+          onClick: () => navigate("/pm/projects/create"),
+          variant: "contained",
+        },
+      ]}
+      headerContent={
+        <DataExport
+          data={projects as unknown as Record<string, unknown>[]}
+          fields={[
+            { key: "name", title: "项目名称" },
+            { key: "code", title: "项目编码" },
+            { key: "project_type", title: "项目类型" },
+            { key: "status", title: "状态" },
+            { key: "progress", title: "进度" },
+            { key: "budget", title: "预算" },
+            { key: "start_date", title: "开始日期" },
+            { key: "end_date", title: "结束日期" },
+          ]}
+          defaultFileName="项目数据"
+          buttonText="导出"
+        />
+      }
+      showRowNumber
+      columnConfigurable
+      persistColumnConfig
+      columnConfigStorageKey="pm-projects-columns"
+      onRefresh={() => loadProjects(currentPage)}
+    />
   );
 };
 

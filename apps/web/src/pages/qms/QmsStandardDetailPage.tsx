@@ -7,9 +7,7 @@ import {
   Calendar,
   User,
   FileCheck,
-  AlertCircle,
   Edit3,
-  Trash2,
   Plus,
   Download,
   Upload,
@@ -22,15 +20,15 @@ import {
   Button,
   TextField,
   Chip,
-  Card,
-  CardContent,
-  CardHeader,
   Box,
   Typography,
 } from "@mui/material";
 
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import {
+  DetailPageTemplate,
+  ListPageTemplate,
+  type ColumnDef,
+} from "@/components/templates";
 import { qmsApi } from "@/api/qms";
 import type { QualityStandard, StandardRevision } from "@/api/qms";
 
@@ -164,7 +162,6 @@ const QmsStandardDetailPage: React.FC = () => {
       const [major, minor] = newVersion.split(".").map(Number);
       const nextVersion = `${major}.${minor + 1}`;
 
-      // Create a new standard as a revision
       const response = await qmsApi.createStandard({
         name: standard.name,
         code: `${standard.code}-v${nextVersion}`,
@@ -186,44 +183,48 @@ const QmsStandardDetailPage: React.FC = () => {
 
   const revisionColumns: ColumnDef<StandardRevision>[] = [
     {
-      accessorKey: "version",
-      header: "版本号",
-      cell: ({ row }) => (
+      id: "version",
+      label: "版本号",
+      render: (row) => (
         <Chip
-          label={`v${row.original.version}`}
+          label={`v${row.version}`}
           size="small"
           sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
         />
       ),
     },
-    { accessorKey: "description", header: "变更说明" },
     {
-      accessorKey: "created_at",
-      header: "创建时间",
-      cell: ({ row }) => (
+      id: "description",
+      label: "变更说明",
+      render: (row) => row.description,
+    },
+    {
+      id: "created_at",
+      label: "创建时间",
+      render: (row) => (
         <span>
-          {row.original.created_at
-            ? new Date(row.original.created_at).toLocaleString("zh-CN")
+          {row.created_at
+            ? new Date(row.created_at).toLocaleString("zh-CN")
             : "-"}
         </span>
       ),
     },
     {
-      accessorKey: "created_by",
-      header: "创建人",
-      cell: ({ row }) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      id: "created_by",
+      label: "创建人",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <User sx={{ width: 16, height: 16 }} />
-          <span>{row.original.created_by || "-"}</span>
-        </div>
+          <span>{row.created_by || "-"}</span>
+        </Box>
       ),
     },
   ];
 
-  if (loading) {
+  if (!loading && !standard) {
     return (
-      <div
-        style={{
+      <Box
+        sx={{
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
@@ -231,372 +232,221 @@ const QmsStandardDetailPage: React.FC = () => {
           background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
         }}
       >
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              border: "4px solid #bfdbfe",
-              borderTop: "4px solid #2563eb",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 16px auto",
-            }}
-          ></div>
-          <p style={{ color: "#475569" }}>加载中...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!standard) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <AlertCircle
-            style={{
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            sx={{
               width: 64,
               height: 64,
               color: "#ef4444",
-              margin: "0 auto 16px auto",
+              mx: "auto",
+              mb: 2,
             }}
-          />
-          <p style={{ color: "#475569" }}>质量标准不存在或已被删除</p>
-          <Button onClick={() => navigate("/qms")} sx={{ mt: 2 }}>
-            返回列表
-          </Button>
-        </div>
-      </div>
+            component="svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <circle cx={12} cy={12} r={10} />
+            <line x1={12} y1={8} x2={12} y2={12} />
+            <line x1={12} y1={16} x2={12.01} y2={16} />
+          </Box>
+          <Typography sx={{ color: "#475569", mb: 2 }}>
+            质量标准不存在或已被删除
+          </Typography>
+          <Button onClick={() => navigate("/qms")}>返回列表</Button>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-      }}
-    >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+    <>
+      <DetailPageTemplate
+        title="质量标准详情"
+        subtitle="Quality Standard Detail"
+        backHref="/qms"
+        onBack={() => navigate("/qms")}
+        onEdit={() => setShowEditModal(true)}
+        loading={loading}
+        infoCard={{
+          title: standard?.name,
+          subtitle: standard?.code || standard?.id,
+          tags: [
+            standard?.status === "active" ? "有效" : standard?.status || "",
+            `v${standard?.version || "1.0"}`,
+          ].filter(Boolean),
+          stats: [
+            { label: "版本", value: `v${standard?.version || "1.0"}` },
+            { label: "分类", value: standard?.category || "-" },
+          ],
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <Button
-                variant="outlined"
-                onClick={() => navigate("/qms")}
-                sx={{ minWidth: "auto", padding: "4px 8px" }}
-              >
-                <ArrowLeft sx={{ width: 16, height: 16 }} />
-              </Button>
-              <div>
-                <h1
-                  style={{
-                    fontSize: "1.25rem",
-                    fontWeight: 700,
-                    color: "#0f172a",
-                  }}
-                >
-                  质量标准详情
-                </h1>
-                <p style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                  Quality Standard Detail
-                </p>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Button
-                variant="outlined"
-                onClick={() => setShowRevisionModal(true)}
-                startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-              >
-                新建版本
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => setShowEditModal(true)}
-                startIcon={<Edit3 sx={{ width: 16, height: 16 }} />}
-              >
-                编辑
-              </Button>
-            </div>
-          </div>
-        </Box>
-      </Box>
-
-      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" },
-            gap: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-              gridColumn: { lg: "span 1" },
-            }}
-          >
-            <Card>
-              <CardHeader sx={{ pb: 1 }}>
-                <Typography
-                  variant="h6"
-                  component="div"
+        sidebar={
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              操作
+            </Typography>
+            <Button
+              fullWidth
+              sx={{ justifyContent: "flex-start" }}
+              variant="outlined"
+              startIcon={<Download sx={{ width: 16, height: 16 }} />}
+            >
+              下载标准文档
+            </Button>
+            <Button
+              fullWidth
+              sx={{ justifyContent: "flex-start" }}
+              variant="outlined"
+              startIcon={<Upload sx={{ width: 16, height: 16 }} />}
+            >
+              上传新版本文件
+            </Button>
+          </Box>
+        }
+        tabs={[
+          {
+            id: "info",
+            label: "标准信息",
+            icon: <FileText style={{ width: 16, height: 16 }} />,
+            content: (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    color: "primary.main",
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20 }} />
-                  标准信息
-                </Typography>
-              </CardHeader>
-              <CardContent
-                sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-                      标准编号
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "1.125rem",
-                        fontWeight: 600,
-                        color: "#0f172a",
-                        marginTop: 4,
-                      }}
-                    >
-                      {standard.code || standard.id}
-                    </p>
-                  </div>
-                  {getStatusBadge(standard.status)}
-                </div>
-                <div>
-                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-                    标准名称
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "1.125rem",
-                      fontWeight: 500,
-                      color: "#0f172a",
-                      marginTop: 4,
-                    }}
-                  >
-                    {standard.name}
-                  </p>
-                </div>
-                <div
-                  style={{
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr",
-                    gap: 16,
+                    gap: 2,
                   }}
                 >
-                  <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-                      版本
-                    </p>
-                    <p style={{ color: "#0f172a", marginTop: 4 }}>
-                      <Chip
-                        label={`v${standard.version}`}
-                        size="small"
-                        sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
-                      />
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-                      分类
-                    </p>
-                    <p style={{ color: "#0f172a", marginTop: 4 }}>
-                      {standard.category || "-"}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      标准编号
+                    </Typography>
+                    <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                      {standard?.code || standard?.id}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      状态
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>
+                      {getStatusBadge(standard?.status || "")}
+                    </Box>
+                  </Box>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    标准名称
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {standard?.name}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    分类
+                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>
+                    {standard?.category || "-"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     生效日期
-                  </p>
-                  <p
-                    style={{
-                      color: "#0f172a",
-                      marginTop: 4,
+                  </Typography>
+                  <Box
+                    sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 4,
+                      gap: 0.5,
+                      mt: 0.5,
                     }}
                   >
                     <Calendar sx={{ width: 16, height: 16 }} />
-                    {standard.effective_date
+                    {standard?.effective_date
                       ? new Date(standard.effective_date).toLocaleDateString(
                           "zh-CN",
                         )
                       : "-"}
-                  </p>
-                </div>
-                <div style={{ paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
-                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                  </Box>
+                </Box>
+                <Box sx={{ borderTop: 1, borderColor: "divider", pt: 3 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     标准描述
-                  </p>
-                  <p
-                    style={{
-                      color: "#0f172a",
-                      marginTop: 4,
+                  </Typography>
+                  <Typography
+                    sx={{
+                      mt: 1,
                       fontSize: "0.875rem",
                       lineHeight: 1.6,
                     }}
                   >
-                    {standard.description || "暂无描述"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader sx={{ pb: 1 }}>
-                <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    color: "success.main",
+                    {standard?.description || "暂无描述"}
+                  </Typography>
+                </Box>
+              </Box>
+            ),
+          },
+          {
+            id: "history",
+            label: "版本历史",
+            icon: <FileCheck style={{ width: 16, height: 16 }} />,
+            badge: revisions.length,
+            content:
+              revisions.length > 0 ? (
+                <ListPageTemplate
+                  columns={revisionColumns}
+                  data={revisions}
+                  loading={loading}
+                  pagination={{
+                    page: 0,
+                    pageSize: 10,
+                    total: revisions.length,
+                    onPageChange: () => {},
                   }}
+                />
+              ) : (
+                <Box
+                  sx={{ textAlign: "center", py: 6, color: "text.secondary" }}
                 >
-                  <FileCheck sx={{ width: 20, height: 20 }} />
-                  操作
-                </Typography>
-              </CardHeader>
-              <CardContent
-                sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
-              >
-                <Button
-                  fullWidth
-                  sx={{ justifyContent: "flex-start" }}
-                  variant="outlined"
-                  startIcon={<Download sx={{ width: 16, height: 16 }} />}
-                >
-                  下载标准文档
-                </Button>
-                <Button
-                  fullWidth
-                  sx={{ justifyContent: "flex-start" }}
-                  variant="outlined"
-                  startIcon={<Upload sx={{ width: 16, height: 16 }} />}
-                >
-                  上传新版本文件
-                </Button>
-              </CardContent>
-            </Card>
-          </Box>
-
-          <Box sx={{ gridColumn: { lg: "span 2" } }}>
-            <Card>
-              <CardHeader
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  pb: 1,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    color: "primary.main",
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20 }} />
-                  版本历史
-                </Typography>
-                <span style={{ fontSize: "0.875rem", color: "#64748b" }}>
-                  共 {revisions.length} 个版本
-                </span>
-              </CardHeader>
-              <CardContent>
-                {revisions.length > 0 ? (
-                  <DataTable
-                    columns={revisionColumns}
-                    data={revisions}
-                    enablePagination={false}
-                  />
-                ) : (
-                  <div
+                  <FileText
                     style={{
-                      textAlign: "center",
-                      padding: "48px 0",
-                      color: "#64748b",
+                      width: 64,
+                      height: 64,
+                      margin: "0 auto 16px auto",
+                      opacity: 0.5,
                     }}
+                  />
+                  <Typography>暂无版本记录</Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    sx={{ mt: 2 }}
+                    onClick={() => setShowRevisionModal(true)}
+                    startIcon={<Plus style={{ width: 12, height: 12 }} />}
                   >
-                    <FileText
-                      style={{
-                        width: 64,
-                        height: 64,
-                        margin: "0 auto 16px auto",
-                        opacity: 0.5,
-                      }}
-                    />
-                    <p>暂无版本记录</p>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      sx={{ mt: 2 }}
-                      onClick={() => setShowRevisionModal(true)}
-                      startIcon={<Plus sx={{ width: 12, height: 12 }} />}
-                    >
-                      创建第一个版本
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
-      </main>
+                    创建第一个版本
+                  </Button>
+                </Box>
+              ),
+          },
+        ]}
+        actions={[
+          {
+            label: "新建版本",
+            icon: <Plus style={{ width: 16, height: 16 }} />,
+            onClick: () => setShowRevisionModal(true),
+            variant: "outlined",
+          },
+        ]}
+      />
 
       <Dialog
         open={showEditModal}
@@ -821,7 +671,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 当前版本:
               </Box>
               <Box component="span" sx={{ fontWeight: 500 }}>
-                {standard.version}
+                {standard?.version}
               </Box>
             </Box>
             <Box sx={{ color: "text.secondary", mt: 2 }}>
@@ -872,7 +722,7 @@ const QmsStandardDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </>
   );
 };
 

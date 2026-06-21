@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Box, Card, CardContent, Typography } from "@mui/material";
+import React, { useState, useEffect, useMemo } from "react";
+import { Box } from "@mui/material";
 import {
   Users,
   Award,
@@ -8,11 +8,15 @@ import {
   ScrollText,
   Building2,
 } from "lucide-react";
-import { MetricCard } from "@/components/MetricCard";
 import { StatsChart } from "@/components/StatsChart";
 import { srmApi } from "@/api/srm";
 import type { SrmDetailedStatistics } from "@/api/srm";
 import { apiLogger } from "@/utils/logger";
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard,
+} from "@/components/templates";
 
 const SrmDashboardPage: React.FC = () => {
   const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(
@@ -53,267 +57,173 @@ const SrmDashboardPage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  if (loading || !statistics) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#a855f7",
-              borderTopColor: "#6366f1",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
+  const stats: StatCard[] = useMemo(() => {
+    if (!statistics) return [];
+    return [
+      {
+        id: "suppliers",
+        title: "供应商总数",
+        value: statistics.basic.total_suppliers ?? 0,
+        icon: <Users size={24} />,
+        subtitle: `${statistics.basic.active_suppliers ?? 0} 个启用中`,
+        color: "primary",
+      },
+      {
+        id: "avg-score",
+        title: "平均评分",
+        value: (statistics.basic.avg_score ?? 0).toFixed(1),
+        icon: <Award size={24} />,
+        subtitle: `${statistics.basic.total_evaluations ?? 0} 次评估`,
+        color: "warning",
+      },
+      {
+        id: "orders",
+        title: "采购订单",
+        value: statistics.basic.total_orders ?? 0,
+        icon: <ClipboardList size={24} />,
+        subtitle: `${statistics.basic.pending_orders ?? 0} 个待处理`,
+        color: "success",
+      },
+      {
+        id: "order-amount",
+        title: "订单总额",
+        value: `¥${(statistics.basic.total_order_amount ?? 0).toLocaleString()}`,
+        icon: <DollarSign size={24} />,
+        subtitle: `${statistics.basic.completed_orders ?? 0} 个已完成`,
+        color: "info",
+      },
+      {
+        id: "contracts",
+        title: "合同总数",
+        value: statistics.basic.total_contracts ?? 0,
+        icon: <ScrollText size={24} />,
+        subtitle: `${statistics.basic.active_contracts ?? 0} 个有效`,
+        color: "secondary",
+      },
+      {
+        id: "categories",
+        title: "供应商分类",
+        value: statistics.supplier_by_category?.length ?? 0,
+        icon: <Building2 size={24} />,
+        subtitle: "类别数量",
+        color: "primary",
+      },
+    ];
+  }, [statistics]);
+
+  const charts: ChartCard[] = useMemo(() => {
+    if (!statistics) return [];
+    const chartList: ChartCard[] = [
+      {
+        id: "supplier-status",
+        title: "供应商状态分布",
+        chart: (
+          <StatsChart
+            title="供应商状态分布"
+            type="pie"
+            data={(statistics.supplier_by_status ?? []).map((s) => ({
+              name: mapStatusToChinese(s.status),
+              value: s.count,
+              color: s.status === "active" ? "#10B981" : "#6B7280",
+            }))}
+            yKey="value"
+            xKey="name"
           />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
+        ),
+        height: 300,
+        type: "pie",
+      },
+      {
+        id: "order-status",
+        title: "订单状态分布",
+        chart: (
+          <StatsChart
+            title="订单状态分布"
+            type="pie"
+            data={(statistics.order_by_status ?? []).map((s) => ({
+              name: mapStatusToChinese(s.status),
+              value: s.count,
+            }))}
+            yKey="value"
+            xKey="name"
+          />
+        ),
+        height: 300,
+        type: "pie",
+      },
+      {
+        id: "evaluation-score",
+        title: "评估分数分布",
+        chart: (
+          <StatsChart
+            title="评估分数分布"
+            type="bar"
+            data={(statistics.evaluation_score_distribution ?? []).map((s) => ({
+              name: s.range,
+              value: s.count,
+            }))}
+            yKey="value"
+            xKey="name"
+          />
+        ),
+        height: 300,
+        type: "bar",
+      },
+      {
+        id: "monthly-trend",
+        title: "月度订单趋势",
+        chart: (
+          <StatsChart
+            title="月度订单趋势"
+            type="line"
+            data={(statistics.monthly_order_trend ?? []).map((t) => ({
+              name: t.month,
+              value: t.order_count,
+              amount: t.total_amount,
+            }))}
+            yKey="value"
+            xKey="name"
+          />
+        ),
+        height: 300,
+        type: "line",
+      },
+    ];
+
+    if ((statistics.contract_by_status ?? []).length > 0) {
+      chartList.push({
+        id: "contract-status",
+        title: "合同状态分布",
+        chart: (
+          <StatsChart
+            title="合同状态分布"
+            type="pie"
+            data={statistics.contract_by_status.map((s) => ({
+              name: mapStatusToChinese(s.status),
+              value: s.count,
+            }))}
+            yKey="value"
+            xKey="name"
+          />
+        ),
+        height: 300,
+        type: "pie",
+      });
+    }
+
+    return chartList;
+  }, [statistics]);
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)",
-      }}
-    >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Users sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  供应商关系管理
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Supplier Relationship Management
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(1, 1fr)",
-              md: "repeat(2, 1fr)",
-              lg: "repeat(3, 1fr)",
-              xl: "repeat(6, 1fr)",
-            },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <MetricCard
-            title="供应商总数"
-            value={statistics.basic.total_suppliers ?? 0}
-            icon={<Users sx={{ width: 24, height: 24 }} />}
-            gradient={["#6366F1", "#8B5CF6"]}
-            subtitle={`${statistics.basic.active_suppliers ?? 0} 个启用中`}
-            trend="neutral"
-          />
-          <MetricCard
-            title="平均评分"
-            value={(statistics.basic.avg_score ?? 0).toFixed(1)}
-            icon={<Award sx={{ width: 24, height: 24 }} />}
-            gradient={["#F59E0B", "#D97706"]}
-            subtitle={`${statistics.basic.total_evaluations ?? 0} 次评估`}
-            trend="neutral"
-          />
-          <MetricCard
-            title="采购订单"
-            value={statistics.basic.total_orders ?? 0}
-            icon={<ClipboardList sx={{ width: 24, height: 24 }} />}
-            gradient={["#10B981", "#059669"]}
-            subtitle={`${statistics.basic.pending_orders ?? 0} 个待处理`}
-            trend="neutral"
-          />
-          <MetricCard
-            title="订单总额"
-            value={`¥${(statistics.basic.total_order_amount ?? 0).toLocaleString()}`}
-            icon={<DollarSign sx={{ width: 24, height: 24 }} />}
-            gradient={["#14B8A6", "#0D9488"]}
-            subtitle={`${statistics.basic.completed_orders ?? 0} 个已完成`}
-            trend="neutral"
-          />
-          <MetricCard
-            title="合同总数"
-            value={statistics.basic.total_contracts ?? 0}
-            icon={<ScrollText sx={{ width: 24, height: 24 }} />}
-            gradient={["#EC4899", "#DB2777"]}
-            subtitle={`${statistics.basic.active_contracts ?? 0} 个有效`}
-            trend="neutral"
-          />
-          <MetricCard
-            title="供应商分类"
-            value={statistics.supplier_by_category?.length ?? 0}
-            icon={<Building2 sx={{ width: 24, height: 24 }} />}
-            gradient={["#8B5CF6", "#7C3AED"]}
-            subtitle="类别数量"
-            trend="neutral"
-          />
-        </Box>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
-            gap: 4,
-            mb: 4,
-          }}
-        >
-          <Card>
-            <CardContent>
-              <StatsChart
-                title="供应商状态分布"
-                type="pie"
-                data={(statistics.supplier_by_status ?? []).map((s) => ({
-                  name: mapStatusToChinese(s.status),
-                  value: s.count,
-                  color: s.status === "active" ? "#10B981" : "#6B7280",
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <StatsChart
-                title="订单状态分布"
-                type="pie"
-                data={(statistics.order_by_status ?? []).map((s) => ({
-                  name: mapStatusToChinese(s.status),
-                  value: s.count,
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
-            gap: 4,
-            mb: 4,
-          }}
-        >
-          <Card>
-            <CardContent>
-              <StatsChart
-                title="评估分数分布"
-                type="bar"
-                data={(statistics.evaluation_score_distribution ?? []).map(
-                  (s) => ({
-                    name: s.range,
-                    value: s.count,
-                  }),
-                )}
-                yKey="value"
-                xKey="name"
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <StatsChart
-                title="月度订单趋势"
-                type="line"
-                data={(statistics.monthly_order_trend ?? []).map((t) => ({
-                  name: t.month,
-                  value: t.order_count,
-                  amount: t.total_amount,
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-            </CardContent>
-          </Card>
-        </Box>
-
-        {(statistics.contract_by_status ?? []).length > 0 && (
-          <Card>
-            <CardContent>
-              <StatsChart
-                title="合同状态分布"
-                type="pie"
-                data={statistics.contract_by_status.map((s) => ({
-                  name: mapStatusToChinese(s.status),
-                  value: s.count,
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-            </CardContent>
-          </Card>
-        )}
-      </Box>
-    </Box>
+    <DashboardTemplate
+      title="供应商关系管理"
+      subtitle="Supplier Relationship Management"
+      breadcrumbs={[{ label: "首页", href: "/dashboard" }, { label: "SRM" }]}
+      stats={stats}
+      charts={charts}
+      loading={loading}
+      onRefresh={loadStatistics}
+    />
   );
 };
 

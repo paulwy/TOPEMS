@@ -1,44 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Container,
   Typography,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
   Paper,
   IconButton,
   Button,
-  TextField,
-  InputAdornment,
-  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Tooltip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Stack,
+  TextField,
 } from "@mui/material";
+import { Plus, Eye, Check, X, GitPullRequest, Clock, User } from "lucide-react";
 import {
-  Plus,
-  Search,
-  Eye,
-  MessageSquare,
-  Check,
-  X,
-  GitPullRequest,
-  Clock,
-  User,
-  Filter,
-} from "lucide-react";
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Review {
   id: string;
@@ -52,7 +34,7 @@ interface Review {
 
 const RsReviewPage: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -120,7 +102,6 @@ const RsReviewPage: React.FC = () => {
       },
     ];
     setReviews(mockReviews);
-    setLoading(false);
   }, []);
 
   const getStatusColor = (
@@ -155,34 +136,28 @@ const RsReviewPage: React.FC = () => {
     }
   };
 
-  const filteredReviews = reviews.filter((review) => {
-    const matchesSearch =
-      review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.reviewer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || review.status === statusFilter;
-    const matchesReviewer =
-      !reviewerFilter || review.reviewer === reviewerFilter;
-    const matchesDateRange =
-      (!dateRange.start || review.create_time >= dateRange.start) &&
-      (!dateRange.end || review.create_time <= dateRange.end);
-    return (
-      matchesSearch && matchesStatus && matchesReviewer && matchesDateRange
-    );
-  });
+  const uniqueReviewers = useMemo(
+    () => [...new Set(reviews.map((r) => r.reviewer))],
+    [reviews],
+  );
 
-  const uniqueReviewers = [...new Set(reviews.map((r) => r.reviewer))];
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const filteredReviews = useMemo(() => {
+    return reviews.filter((review) => {
+      const matchesSearch =
+        review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        review.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        review.reviewer.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || review.status === statusFilter;
+      const matchesReviewer =
+        !reviewerFilter || review.reviewer === reviewerFilter;
+      const matchesDateRange =
+        (!dateRange.start || review.create_time >= dateRange.start) &&
+        (!dateRange.end || review.create_time <= dateRange.end);
+      return (
+        matchesSearch && matchesStatus && matchesReviewer && matchesDateRange
+      );
+    });
+  }, [reviews, searchTerm, statusFilter, reviewerFilter, dateRange]);
 
   const handleViewDetail = (review: Review) => {
     setSelectedReview(review);
@@ -220,230 +195,156 @@ const RsReviewPage: React.FC = () => {
     setNewReviewForm({ title: "", description: "", author: "" });
   };
 
+  // 表格列定义
+  const columns: ColumnDef<Review>[] = [
+    {
+      id: "title",
+      label: "评审标题",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <GitPullRequest size={16} color="#3b82f6" />
+          {row.title}
+        </Box>
+      ),
+    },
+    {
+      id: "reviewer",
+      label: "评审人",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <User size={14} />
+          {row.reviewer}
+        </Box>
+      ),
+    },
+    { id: "author", label: "作者" },
+    {
+      id: "status",
+      label: "状态",
+      render: (row) => (
+        <Chip
+          label={getStatusLabel(row.status)}
+          size="small"
+          color={getStatusColor(row.status)}
+        />
+      ),
+    },
+    {
+      id: "create_time",
+      label: "创建时间",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Clock size={14} />
+          {row.create_time}
+        </Box>
+      ),
+    },
+    {
+      id: "comment_count",
+      label: "评论数",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {row.comment_count}
+        </Box>
+      ),
+    },
+  ];
+
+  // 筛选器定义
+  const filters: FilterConfig[] = [
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        { label: "待评审", value: "pending" },
+        { label: "评审中", value: "in_progress" },
+        { label: "已通过", value: "approved" },
+        { label: "已拒绝", value: "rejected" },
+      ],
+      value: statusFilter || "",
+      onChange: (value) => setStatusFilter(value || null),
+    },
+    {
+      id: "reviewer",
+      label: "评审人",
+      type: "select",
+      options: [
+        { label: "全部", value: "" },
+        ...uniqueReviewers.map((reviewer) => ({
+          label: reviewer,
+          value: reviewer,
+        })),
+      ],
+      value: reviewerFilter || "",
+      onChange: (value) => setReviewerFilter(value || null),
+    },
+    {
+      id: "dateRange",
+      label: "日期范围",
+      type: "dateRange",
+      value: dateRange,
+      onChange: (value) => setDateRange(value || { start: "", end: "" }),
+    },
+  ];
+
+  // 行操作定义
+  const rowActions: RowAction<Review>[] = [
+    {
+      label: "查看评审",
+      icon: <Eye size={16} />,
+      onClick: handleViewDetail,
+    },
+    {
+      label: "通过",
+      icon: <Check size={16} color="green" />,
+      onClick: handleApprove,
+      show: (row) => row.status === "pending",
+    },
+    {
+      label: "拒绝",
+      icon: <X size={16} color="red" />,
+      onClick: handleReject,
+      show: (row) => row.status === "pending",
+    },
+  ];
+
+  // 分页配置
+  const pagination = {
+    page,
+    pageSize: rowsPerPage,
+    total: filteredReviews.length,
+    onPageChange: setPage,
+    onPageSizeChange: setRowsPerPage,
+  };
+
+  // 操作按钮
+  const actions = [
+    {
+      label: "新建评审",
+      icon: <Plus size={18} />,
+      onClick: () => setNewReviewDialogOpen(true),
+    },
+  ];
+
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
-          >
-            代码评审
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Plus size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-            onClick={() => setNewReviewDialogOpen(true)}
-          >
-            新建评审
-          </Button>
-        </Box>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: "center", flexWrap: "wrap" }}
-          >
-            <TextField
-              size="small"
-              placeholder="搜索评审标题、作者..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={statusFilter || ""}
-                label="状态"
-                onChange={(e) => setStatusFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="pending">待评审</MenuItem>
-                <MenuItem value="in_progress">评审中</MenuItem>
-                <MenuItem value="approved">已通过</MenuItem>
-                <MenuItem value="rejected">已拒绝</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>评审人</InputLabel>
-              <Select
-                value={reviewerFilter || ""}
-                label="评审人"
-                onChange={(e) => setReviewerFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                {uniqueReviewers.map((reviewer) => (
-                  <MenuItem key={reviewer} value={reviewer}>
-                    {reviewer}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              size="small"
-              type="date"
-              label="开始日期"
-              value={dateRange.start}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, start: e.target.value })
-              }
-              sx={{ width: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-            <TextField
-              size="small"
-              type="date"
-              label="结束日期"
-              value={dateRange.end}
-              onChange={(e) =>
-                setDateRange({ ...dateRange, end: e.target.value })
-              }
-              sx={{ width: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Stack>
-        </Paper>
-
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    评审标题
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    评审人
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    作者
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    状态
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    创建时间
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    评论数
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredReviews
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((review) => (
-                    <TableRow key={review.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <GitPullRequest size={16} color="#3b82f6" />
-                          {review.title}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <User size={14} />
-                          {review.reviewer}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{review.author}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getStatusLabel(review.status)}
-                          size="small"
-                          color={getStatusColor(review.status)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Clock size={14} />
-                          {review.create_time}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <MessageSquare size={14} />
-                          {review.comment_count}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="查看评审">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewDetail(review)}
-                            >
-                              <Eye size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          {review.status === "pending" && (
-                            <>
-                              <Tooltip title="通过">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleApprove(review.id)}
-                                >
-                                  <Check size={16} color="green" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="拒绝">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleReject(review.id)}
-                                >
-                                  <X size={16} color="red" />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredReviews.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+      <ListPageTemplate
+        title="代码评审"
+        columns={columns}
+        data={filteredReviews}
+        loading={loading}
+        filters={filters}
+        globalSearch={{
+          fields: ["title", "author", "reviewer"],
+          placeholder: "搜索评审标题、作者...",
+        }}
+        pagination={pagination}
+        actions={actions}
+        rowActions={rowActions}
+        onSearch={setSearchTerm}
+      />
 
       <Dialog
         open={detailDialogOpen}

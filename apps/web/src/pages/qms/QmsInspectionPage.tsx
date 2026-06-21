@@ -11,20 +11,15 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
+import { Plus, Eye, CheckCircle, XCircle, ClipboardCheck } from "lucide-react";
 import {
-  Plus,
-  Eye,
-  CheckCircle,
-  XCircle,
-  ClipboardCheck,
-  Search,
-  Filter,
-} from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "@/components/templates";
 
 interface Inspection {
   id: string;
@@ -120,6 +115,8 @@ const QmsInspectionPage: React.FC = () => {
     qualified_quantity: "",
     inspector: "",
   });
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     loadInspections();
@@ -154,71 +151,87 @@ const QmsInspectionPage: React.FC = () => {
   };
 
   const columns: ColumnDef<Inspection>[] = [
-    { accessorKey: "inspection_no", header: "检验单号" },
-    { accessorKey: "inspection_type", header: "检验类型" },
-    { accessorKey: "product_name", header: "产品名称" },
-    { accessorKey: "inspection_quantity", header: "检验数量" },
-    { accessorKey: "qualified_quantity", header: "合格数量" },
+    { id: "inspection_no", label: "检验单号" },
+    { id: "inspection_type", label: "检验类型" },
+    { id: "product_name", label: "产品名称" },
+    { id: "inspection_quantity", label: "检验数量" },
+    { id: "qualified_quantity", label: "合格数量" },
     {
-      accessorKey: "qualification_rate",
-      header: "合格率",
-      cell: ({ row }) => (
+      id: "qualification_rate",
+      label: "合格率",
+      render: (row) => (
         <Box
           sx={{
             color:
-              parseFloat(row.original.qualification_rate) >= 95
+              parseFloat(row.qualification_rate) >= 95
                 ? "#16a34a"
-                : parseFloat(row.original.qualification_rate) >= 90
+                : parseFloat(row.qualification_rate) >= 90
                   ? "#ca8a04"
                   : "#dc2626",
             fontWeight: 500,
           }}
         >
-          {row.original.qualification_rate}
+          {row.qualification_rate}
         </Box>
       ),
     },
-    { accessorKey: "inspector", header: "检验员" },
-    { accessorKey: "inspection_date", header: "检验日期" },
+    { id: "inspector", label: "检验员" },
+    { id: "inspection_date", label: "检验日期" },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      id: "status",
+      label: "状态",
+      render: (row) => getStatusBadge(row.status),
+    },
+  ];
+
+  const rowActions: RowAction<Inspection>[] = [
+    {
+      label: "详情",
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: (row) => handleView(row),
     },
     {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-          {row.original.status === "待判定" && (
-            <>
-              <Button
-                size="small"
-                onClick={() => handleQualify(row.original, true)}
-                startIcon={<CheckCircle style={{ width: 16, height: 16 }} />}
-                sx={{ color: "#16a34a" }}
-              >
-                合格
-              </Button>
-              <Button
-                size="small"
-                onClick={() => handleQualify(row.original, false)}
-                startIcon={<XCircle style={{ width: 16, height: 16 }} />}
-                sx={{ color: "#dc2626" }}
-              >
-                不合格
-              </Button>
-            </>
-          )}
-        </Box>
-      ),
+      label: "合格",
+      icon: <CheckCircle style={{ width: 16, height: 16 }} />,
+      color: "success",
+      show: (row) => row.status === "待判定",
+      onClick: (row) => handleQualify(row, true),
+    },
+    {
+      label: "不合格",
+      icon: <XCircle style={{ width: 16, height: 16 }} />,
+      color: "error",
+      show: (row) => row.status === "待判定",
+      onClick: (row) => handleQualify(row, false),
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: "type",
+      label: "检验类型",
+      type: "select",
+      options: [
+        { label: "全部", value: "all" },
+        { label: "来料检验", value: "来料检验" },
+        { label: "过程检验", value: "过程检验" },
+        { label: "成品检验", value: "成品检验" },
+      ],
+      value: typeFilter,
+      onChange: (value) => setTypeFilter(value),
+    },
+    {
+      id: "status",
+      label: "状态",
+      type: "select",
+      options: [
+        { label: "全部", value: "all" },
+        { label: "合格", value: "合格" },
+        { label: "不合格", value: "不合格" },
+        { label: "待判定", value: "待判定" },
+      ],
+      value: statusFilter,
+      onChange: (value) => setStatusFilter(value),
     },
   ];
 
@@ -234,6 +247,11 @@ const QmsInspectionPage: React.FC = () => {
       statusFilter === "all" || inspection.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
   });
+
+  const paginatedData = filteredInspections.slice(
+    page * pageSize,
+    page * pageSize + pageSize,
+  );
 
   const handleView = (inspection: Inspection) => {
     setSelectedInspection(inspection);
@@ -290,6 +308,154 @@ const QmsInspectionPage: React.FC = () => {
     pending: inspections.filter((i) => i.status === "待判定").length,
   };
 
+  const statsCards = (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Card sx={{ bgcolor: "#eff6ff" }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#bfdbfe",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ClipboardCheck
+                sx={{ width: 20, height: 20, color: "#3b82f6" }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                检验总数
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.total}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#dcfce7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                合格
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.qualified}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#fee2e2",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <XCircle sx={{ width: 20, height: 20, color: "#dc2626" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                不合格
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.unqualified}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "#fef3c7",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ClipboardCheck
+                sx={{ width: 20, height: 20, color: "#ca8a04" }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+              >
+                待判定
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "slate.900" }}
+              >
+                {stats.pending}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
   if (loading) {
     return (
       <Box
@@ -328,298 +494,41 @@ const QmsInspectionPage: React.FC = () => {
         background: "linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)",
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+      <ListPageTemplate
+        title="质量检验"
+        subtitle="Quality Inspection"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "QMS" },
+          { label: "质量检验" },
+        ]}
+        columns={columns}
+        data={paginatedData}
+        loading={loading}
+        getRowId={(row) => row.id}
+        filters={filters}
+        searchable
+        searchPlaceholder="搜索产品名称或检验单号..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        pagination={{
+          page,
+          pageSize,
+          total: filteredInspections.length,
+          onPageChange: setPage,
+          onPageSizeChange: setPageSize,
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <ClipboardCheck
-                  sx={{ width: 24, height: 24, color: "white" }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  质量检验
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Quality Inspection
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" } }}
-            >
-              新建检验
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#eff6ff" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#bfdbfe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ClipboardCheck
-                    sx={{ width: 20, height: 20, color: "#3b82f6" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    检验总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <CheckCircle
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    合格
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.qualified}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fee2e2",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <XCircle sx={{ width: 20, height: 20, color: "#dc2626" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    不合格
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.unqualified}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef3c7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    待判定
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.pending}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <ClipboardCheck
-                style={{ width: 20, height: 20, color: "#3b82f6" }}
-              />
-              检验列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索产品名称或检验单号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-              <TextField
-                size="small"
-                select
-                label="检验类型"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="来料检验">来料检验</option>
-                <option value="过程检验">过程检验</option>
-                <option value="成品检验">成品检验</option>
-              </TextField>
-              <TextField
-                size="small"
-                select
-                label="状态"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="合格">合格</option>
-                <option value="不合格">不合格</option>
-                <option value="待判定">待判定</option>
-              </TextField>
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredInspections}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
-      </Box>
+        actions={[
+          {
+            label: "新建检验",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        rowActions={rowActions}
+        headerContent={statsCards}
+      />
 
       <Dialog
         open={showCreateModal}

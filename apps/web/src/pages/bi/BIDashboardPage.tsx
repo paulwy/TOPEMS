@@ -37,76 +37,16 @@ import {
   type ProductionAnalytics,
   type LaboratoryAnalytics,
 } from "@/api/bi";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MetricCard from "@/components/MetricCard";
 import { ChartCard } from "@/components/ChartCard";
 import { BIChartColors } from "@/components/charts/chartTheme";
-import { Button, Skeleton, Box, Typography } from "@mui/material";
-import { PageHeader } from "@/components/templates/PageHeader";
-
-const MetricCardSkeleton = () => (
-  <Box
-    sx={{
-      bgcolor: "background.paper",
-      borderRadius: 3,
-      boxShadow: 1,
-      p: 3,
-      border: "1px solid",
-      borderColor: "divider",
-    }}
-  >
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        mb: 2,
-      }}
-    >
-      <Box sx={{ flex: 1 }}>
-        <Skeleton sx={{ height: 16, width: 96, mb: 1 }} />
-        <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
-        <Skeleton sx={{ height: 16, width: 80 }} />
-      </Box>
-      <Skeleton sx={{ width: 48, height: 48, borderRadius: 2 }} />
-    </Box>
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-    >
-      <Skeleton sx={{ height: 16, width: 64 }} />
-      <Skeleton sx={{ height: 32, width: 80 }} />
-    </Box>
-  </Box>
-);
-
-const ChartCardSkeleton = ({ height = 300 }: { height?: number }) => (
-  <Box
-    sx={{
-      bgcolor: "background.paper",
-      borderRadius: 3,
-      boxShadow: 1,
-      border: "1px solid",
-      borderColor: "divider",
-      overflow: "hidden",
-    }}
-  >
-    <Box
-      sx={{ px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider" }}
-    >
-      <Skeleton sx={{ height: 20, width: 128 }} />
-    </Box>
-    <Box sx={{ p: 3 }}>
-      <Skeleton
-        sx={{ height: 240, width: "100%", borderRadius: 1 }}
-        style={{ height }}
-      />
-    </Box>
-  </Box>
-);
+import { Box, Typography, Chip } from "@mui/material";
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard as ChartCardType,
+  type RecentItem,
+} from "@/components/templates";
 
 const ActivityItem = ({
   activity,
@@ -262,68 +202,6 @@ const BIDashboardPage = () => {
     loadData(true);
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
-        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* Header skeleton */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box>
-              <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
-              <Skeleton sx={{ height: 16, width: 96 }} />
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Skeleton sx={{ height: 40, width: 128 }} />
-              <Skeleton sx={{ height: 40, width: 96 }} />
-            </Box>
-          </Box>
-
-          {/* Metrics skeleton */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(1, 1fr)",
-                md: "repeat(2, 1fr)",
-                lg: "repeat(4, 1fr)",
-              },
-              gap: 2,
-            }}
-          >
-            {[1, 2, 3, 4].map((i) => (
-              <MetricCardSkeleton key={i} />
-            ))}
-          </Box>
-
-          {/* Charts skeleton */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(1, 1fr)",
-                lg: "repeat(3, 1fr)",
-              },
-              gap: 3,
-            }}
-          >
-            <Box sx={{ lgColumnSpan: 2 }}>
-              <ChartCardSkeleton height={280} />
-            </Box>
-            <Box>
-              <ChartCardSkeleton height={280} />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-    );
-  }
-
   const defaultMetrics = [
     {
       title: "生产效率",
@@ -418,273 +296,272 @@ const BIDashboardPage = () => {
     }),
   );
 
-  return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
-      <PageHeader
-        title="数据大屏"
-        subtitle="实时业务数据总览"
-        pageIcon={<BarChart3 style={{ width: 20, height: 20 }} />}
-        pageColor="linear-gradient(135deg, #10B981, #059669)"
-        breadcrumbs={[
-          { label: "首页", href: "/dashboard" },
-          { label: "BI" },
-          { label: "数据大屏" },
-        ]}
-        onRefresh={handleRefresh}
-        loading={loading}
-      />
+  // Stats area - 保留原有的 MetricCard 渲染
+  const statsArea = (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "repeat(1, 1fr)",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(4, 1fr)",
+        },
+        gap: 2,
+      }}
+    >
+      {metrics.map((metric, index) => (
+        <MetricCard
+          key={index}
+          title={metric.title}
+          value={metric.value}
+          unit={metric.unit}
+          change={metric.change}
+          trend={(metric as any).trend}
+          icon={metric.icon}
+          color={metric.color}
+          sparklineData={(metric as any).sparklineData}
+        />
+      ))}
+    </Box>
+  );
 
-      <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-        {/* Metrics Grid */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(1, 1fr)",
-              md: "repeat(2, 1fr)",
-              lg: "repeat(4, 1fr)",
-            },
-            gap: 2,
-          }}
-        >
-          {metrics.map((metric, index) => (
-            <MetricCard
-              key={index}
-              title={metric.title}
-              value={metric.value}
-              unit={metric.unit}
-              change={metric.change}
-              trend={(metric as any).trend}
-              icon={metric.icon}
-              color={metric.color}
-              sparklineData={(metric as any).sparklineData}
-            />
-          ))}
+  // Charts area - 保留原有的 ChartCard 渲染
+  const chartsArea = (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {/* Charts Row 1 */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
+          gap: 3,
+        }}
+      >
+        <Box sx={{ gridColumn: { lg: "span 2" } }}>
+          <ChartCard
+            title="月度新增项目"
+            subtitle="研发项目月度趋势"
+            height={280}
+            showChartType
+            activeChartType="bar"
+            onChartTypeChange={(type) =>
+              logger.debug("Chart type changed:", type)
+            }
+          >
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={0}
+            >
+              <BarChart
+                data={
+                  development?.monthly_new_projects || [
+                    { month: "1月", count: 25 },
+                    { month: "2月", count: 30 },
+                    { month: "3月", count: 28 },
+                    { month: "4月", count: 35 },
+                    { month: "5月", count: 42 },
+                    { month: "6月", count: 38 },
+                  ]
+                }
+                xKey="month"
+                yKeys={[
+                  {
+                    key: "count",
+                    name: "项目数",
+                    color: BIChartColors.series[0],
+                  },
+                ]}
+                height={240}
+                barRadius={6}
+                animate
+              />
+            </ResponsiveContainer>
+          </ChartCard>
         </Box>
-
-        {/* Charts Row 1 */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
-            gap: 3,
-          }}
-        >
-          <Box sx={{ gridColumn: { lg: "span 2" } }}>
-            <ChartCard
-              title="月度新增项目"
-              subtitle="研发项目月度趋势"
-              height={280}
-              showChartType
-              activeChartType="bar"
-              onChartTypeChange={(type) =>
-                logger.debug("Chart type changed:", type)
-              }
+        <Box>
+          <ChartCard
+            title="检验类型分布"
+            subtitle="实验室检验构成"
+            height={280}
+            showChartType
+            activeChartType="pie"
+            onChartTypeChange={(type) =>
+              logger.debug("Chart type changed:", type)
+            }
+          >
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={0}
             >
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-                minWidth={0}
-                minHeight={0}
-              >
-                <BarChart
-                  data={
-                    development?.monthly_new_projects || [
-                      { month: "1月", count: 25 },
-                      { month: "2月", count: 30 },
-                      { month: "3月", count: 28 },
-                      { month: "4月", count: 35 },
-                      { month: "5月", count: 42 },
-                      { month: "6月", count: 38 },
-                    ]
+              <RechartsPieChart>
+                <Pie
+                  data={testTypeData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) =>
+                    `${name} ${((percent || 0) * 100).toFixed(0)}%`
                   }
-                  xKey="month"
-                  yKeys={[
-                    {
-                      key: "count",
-                      name: "项目数",
-                      color: BIChartColors.series[0],
-                    },
-                  ]}
-                  height={240}
-                  barRadius={6}
-                  animate
-                />
-              </ResponsiveContainer>
-            </ChartCard>
-          </Box>
-          <Box>
-            <ChartCard
-              title="检验类型分布"
-              subtitle="实验室检验构成"
-              height={280}
-              showChartType
-              activeChartType="pie"
-              onChartTypeChange={(type) =>
-                logger.debug("Chart type changed:", type)
-              }
-            >
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-                minWidth={0}
-                minHeight={0}
-              >
-                <RechartsPieChart>
-                  <Pie
-                    data={testTypeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                    }
-                    outerRadius={80}
-                    innerRadius={50}
-                    dataKey="value"
-                  >
-                    {testTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </Box>
-        </Box>
-
-        {/* Charts Row 2 */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
-            gap: 3,
-          }}
-        >
-          <Box>
-            <ChartCard
-              title="质量合格率趋势"
-              subtitle="月度质量走势"
-              height={260}
-              trend="up"
-              trendValue="+0.8%"
-            >
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-                minWidth={0}
-                minHeight={0}
-              >
-                <RechartsLineChart
-                  data={
-                    quality?.quality_trend || [
-                      { month: "1月", pass_rate: 96.5 },
-                      { month: "2月", pass_rate: 97.2 },
-                      { month: "3月", pass_rate: 97.8 },
-                      { month: "4月", pass_rate: 98.1 },
-                      { month: "5月", pass_rate: 97.6 },
-                      { month: "6月", pass_rate: 97.8 },
-                    ]
-                  }
+                  outerRadius={80}
+                  innerRadius={50}
+                  dataKey="value"
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: "#64748B", fontSize: 12 }}
-                  />
-                  <YAxis
-                    domain={[90, 100]}
-                    tick={{ fill: "#64748B", fontSize: 12 }}
-                  />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="pass_rate"
-                    stroke={BIChartColors.semantic.success}
-                    strokeWidth={2.5}
-                    dot={{
-                      fill: BIChartColors.semantic.success,
-                      strokeWidth: 0,
-                      r: 4,
-                    }}
-                    activeDot={{ r: 6, fill: BIChartColors.semantic.success }}
-                  />
-                </RechartsLineChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </Box>
-          <Box>
-            <ChartCard
-              title="日产量统计"
-              subtitle="生产批次日趋势"
-              height={260}
+                  {testTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </RechartsPieChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </Box>
+      </Box>
+
+      {/* Charts Row 2 */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
+          gap: 3,
+        }}
+      >
+        <Box>
+          <ChartCard
+            title="质量合格率趋势"
+            subtitle="月度质量走势"
+            height={260}
+            trend="up"
+            trendValue="+0.8%"
+          >
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={0}
             >
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-                minWidth={0}
-                minHeight={0}
+              <RechartsLineChart
+                data={
+                  quality?.quality_trend || [
+                    { month: "1月", pass_rate: 96.5 },
+                    { month: "2月", pass_rate: 97.2 },
+                    { month: "3月", pass_rate: 97.8 },
+                    { month: "4月", pass_rate: 98.1 },
+                    { month: "5月", pass_rate: 97.6 },
+                    { month: "6月", pass_rate: 97.8 },
+                  ]
+                }
               >
-                <BarChart
-                  data={
-                    production?.daily_output || [
-                      { date: "1日", output: 1850 },
-                      { date: "2日", output: 2100 },
-                      { date: "3日", output: 1980 },
-                      { date: "4日", output: 2350 },
-                      { date: "5日", output: 2200 },
-                      { date: "6日", output: 2420 },
-                    ]
-                  }
-                  xKey="date"
-                  yKeys={[
-                    {
-                      key: "output",
-                      name: "产量",
-                      color: BIChartColors.semantic.warning,
-                    },
-                  ]}
-                  height={220}
-                  barRadius={[4, 4, 0, 0]}
-                  animate
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: "#64748B", fontSize: 12 }}
                 />
-              </ResponsiveContainer>
-            </ChartCard>
-          </Box>
-          <Box>
-            <ChartCard
-              title="最近活动"
-              subtitle="系统动态"
-              height={260}
-              showExport={false}
-              showRefresh={false}
+                <YAxis
+                  domain={[90, 100]}
+                  tick={{ fill: "#64748B", fontSize: 12 }}
+                />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="pass_rate"
+                  stroke={BIChartColors.semantic.success}
+                  strokeWidth={2.5}
+                  dot={{
+                    fill: BIChartColors.semantic.success,
+                    strokeWidth: 0,
+                    r: 4,
+                  }}
+                  activeDot={{ r: 6, fill: BIChartColors.semantic.success }}
+                />
+              </RechartsLineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </Box>
+        <Box>
+          <ChartCard title="日产量统计" subtitle="生产批次日趋势" height={260}>
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              minHeight={0}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 1.5,
-                  overflowY: "auto",
-                  maxHeight: 220,
-                  pr: 1,
-                }}
-              >
-                {(summary?.recent_activities || defaultActivities).map(
-                  (activity, index) => (
-                    <ActivityItem
-                      key={activity.id}
-                      activity={activity}
-                      index={index}
-                    />
-                  ),
-                )}
-              </Box>
-            </ChartCard>
-          </Box>
+              <BarChart
+                data={
+                  production?.daily_output || [
+                    { date: "1日", output: 1850 },
+                    { date: "2日", output: 2100 },
+                    { date: "3日", output: 1980 },
+                    { date: "4日", output: 2350 },
+                    { date: "5日", output: 2200 },
+                    { date: "6日", output: 2420 },
+                  ]
+                }
+                xKey="date"
+                yKeys={[
+                  {
+                    key: "output",
+                    name: "产量",
+                    color: BIChartColors.semantic.warning,
+                  },
+                ]}
+                height={220}
+                barRadius={[4, 4, 0, 0]}
+                animate
+              />
+            </ResponsiveContainer>
+          </ChartCard>
+        </Box>
+        <Box>
+          <ChartCard
+            title="最近活动"
+            subtitle="系统动态"
+            height={260}
+            showExport={false}
+            showRefresh={false}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 1.5,
+                overflowY: "auto",
+                maxHeight: 220,
+                pr: 1,
+              }}
+            >
+              {(summary?.recent_activities || defaultActivities).map(
+                (activity, index) => (
+                  <ActivityItem
+                    key={activity.id}
+                    activity={activity}
+                    index={index}
+                  />
+                ),
+              )}
+            </Box>
+          </ChartCard>
         </Box>
       </Box>
     </Box>
+  );
+
+  return (
+    <DashboardTemplate
+      title="数据大屏"
+      subtitle="实时业务数据总览"
+      breadcrumbs={[
+        { label: "首页", href: "/dashboard" },
+        { label: "BI" },
+        { label: "数据大屏" },
+      ]}
+      onRefresh={handleRefresh}
+      loading={loading}
+      statsArea={statsArea}
+      chartsArea={chartsArea}
+    />
   );
 };
 

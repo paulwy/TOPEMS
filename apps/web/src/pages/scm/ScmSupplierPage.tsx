@@ -1,23 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Button,
+  TextField,
+  Chip,
+  Typography,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  CircularProgress,
 } from "@mui/material";
-import { Plus, Eye, Users, Search } from "lucide-react";
+import { Plus, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { scmApi } from "@/api/scm";
 import type { Supplier } from "@/api/scm";
 import { toast } from "react-toastify";
@@ -76,7 +71,8 @@ const ScmSupplierPage: React.FC = () => {
       if (response.success) {
         toast.success("创建成功");
         setShowCreateModal(false);
-        loadSuppliers();
+        // 重置分页到第一页，确保新数据显示在列表中
+        setCurrentPage(1);
       }
     } catch (error) {
       toast.error("创建失败");
@@ -88,104 +84,93 @@ const ScmSupplierPage: React.FC = () => {
     setShowDetailModal(true);
   };
 
+  // 表格列定义
   const columns: ColumnDef<Supplier>[] = [
     {
-      accessorKey: "id",
-      header: "ID",
+      id: "id",
+      label: "ID",
     },
     {
-      accessorKey: "name",
-      header: "供应商名称",
+      id: "name",
+      label: "供应商名称",
     },
     {
-      accessorKey: "short_name",
-      header: "简称",
+      id: "short_name",
+      label: "简称",
     },
     {
-      accessorKey: "contact_name",
-      header: "联系人",
+      id: "contact_name",
+      label: "联系人",
     },
     {
-      accessorKey: "contact_phone",
-      header: "联系电话",
+      id: "contact_phone",
+      label: "联系电话",
     },
     {
-      accessorKey: "email",
-      header: "邮箱",
+      id: "email",
+      label: "邮箱",
     },
     {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ getValue }) => (
+      id: "status",
+      label: "状态",
+      render: (row) => (
         <Chip
-          label={getValue<string>() === "active" ? "活跃" : "禁用"}
-          color={getValue<string>() === "active" ? "success" : "error"}
+          label={row.status === "active" ? "活跃" : "禁用"}
+          color={row.status === "active" ? "success" : "error"}
           size="small"
         />
       ),
     },
+  ];
+
+  // 行操作
+  const rowActions = [
     {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleViewDetail(row.original)}
-            startIcon={<Eye size={14} />}
-          >
-            查看
-          </Button>
-          <Button
-            size="small"
-            onClick={() => navigate(`/scm/suppliers/${row.original.id}`)}
-          >
-            详情
-          </Button>
-        </Box>
-      ),
+      label: "查看",
+      icon: <Eye size={14} />,
+      onClick: (row: Supplier) => handleViewDetail(row),
+    },
+    {
+      label: "详情",
+      onClick: (row: Supplier) => navigate(`/scm/suppliers/${row.id}`),
     },
   ];
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Card>
-        <CardHeader
-          title={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Users sx={{ width: 24, height: 24 }} />
-              <Typography variant="h5">供应商管理</Typography>
-            </Box>
-          }
-          action={
-            <Button
-              variant="contained"
-              onClick={() => setShowCreateModal(true)}
-              startIcon={<Plus size={18} />}
-            >
-              新增供应商
-            </Button>
-          }
-        />
-        <CardContent>
-          {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={suppliers}
-              totalItems={total}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={setPageSize}
-            />
-          )}
-        </CardContent>
-      </Card>
+    <>
+      <ListPageTemplate
+        title="供应商管理"
+        columns={columns}
+        data={suppliers}
+        loading={loading}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: (page) => setCurrentPage(page + 1),
+          onPageSizeChange: (size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          },
+        }}
+        searchable
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        searchPlaceholder="搜索供应商..."
+        actions={[
+          {
+            label: "新增供应商",
+            icon: <Plus size={16} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={loadSuppliers}
+        emptyMessage="暂无供应商数据"
+      />
 
+      {/* 创建模态框 */}
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -281,6 +266,7 @@ const ScmSupplierPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* 详情模态框 */}
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
@@ -322,7 +308,7 @@ const ScmSupplierPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

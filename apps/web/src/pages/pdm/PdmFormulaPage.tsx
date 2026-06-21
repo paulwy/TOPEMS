@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -8,15 +8,12 @@ import {
   DialogActions,
   TextField,
   Chip,
-  Card,
-  CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
 import { apiLogger } from "@/utils/logger";
-import { Plus, Eye, FlaskConical, Search, Clock } from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Plus, Eye, Clock } from "lucide-react";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import type { RowAction, FilterConfig } from "@/components/templates";
 import { pdmApi } from "@/api/pdm";
 import type { ProductionFormula } from "@/api/pdm";
 import { toast } from "react-toastify";
@@ -25,6 +22,7 @@ const PdmFormulaPage: React.FC = () => {
   const [formulas, setFormulas] = useState<ProductionFormula[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedFormula, setSelectedFormula] =
@@ -93,43 +91,63 @@ const PdmFormulaPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<ProductionFormula>[] = [
-    { accessorKey: "formula_no", header: "配方编号" },
-    { accessorKey: "name", header: "产品名称" },
-    { accessorKey: "version", header: "版本" },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+  const filteredFormulas = useMemo(() => {
+    return formulas.filter((formula) => {
+      const matchesSearch =
+        formula.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        formula.formula_no.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || formula.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [formulas, searchTerm, statusFilter]);
 
-  const filteredFormulas = formulas.filter((formula) => {
-    return (
-      formula.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      formula.formula_no.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const columns = useMemo<ColumnDef<ProductionFormula>[]>(
+    () => [
+      { id: "formula_no", label: "配方编号" },
+      { id: "name", label: "产品名称" },
+      { id: "version", label: "版本" },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
 
-  const handleView = (formula: ProductionFormula) => {
-    setSelectedFormula(formula);
-    setShowDetailModal(true);
-  };
+  const rowActions = useMemo<RowAction<ProductionFormula>[]>(
+    () => [
+      {
+        label: "详情",
+        icon: <Eye size={16} />,
+        onClick: (row) => {
+          setSelectedFormula(row);
+          setShowDetailModal(true);
+        },
+      },
+    ],
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "启用", label: "启用" },
+          { value: "禁用", label: "禁用" },
+          { value: "草稿", label: "草稿" },
+          { value: "已批准", label: "已批准" },
+        ],
+        value: statusFilter,
+        onChange: (value) => setStatusFilter(value as string),
+      },
+    ],
+    [statusFilter],
+  );
 
   const handleCreate = () => {
     setFormData({
@@ -168,312 +186,76 @@ const PdmFormulaPage: React.FC = () => {
     approved: formulas.filter((f) => f.status === "已批准").length,
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #fdf4ff 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#d946ef",
-              borderTopColor: "#c026d3",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  return (
+  const statsContent = (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #fdf4ff 0%, #f8fafc 100%)",
+        display: "grid",
+        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+        gap: 2,
+        mb: 3,
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #d946ef 0%, #c026d3 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FlaskConical sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  配方管理
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Production Formula
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#d946ef", "&:hover": { bgcolor: "#c026d3" } }}
-            >
-              新增配方
-            </Button>
-          </Box>
-        </Box>
+      <Box sx={{ p: 2, bgcolor: "#fdf4ff", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          配方总数
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.total}
+        </Typography>
       </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#fdf4ff" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fae8ff",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FlaskConical
-                    sx={{ width: 20, height: 20, color: "#d946ef" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    配方总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FlaskConical
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已启用
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.active}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fef3c7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FlaskConical
-                    sx={{ width: 20, height: 20, color: "#ca8a04" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    草稿
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.draft}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dbeafe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FlaskConical
-                    sx={{ width: 20, height: 20, color: "#3b82f6" }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已批准
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.approved}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <FlaskConical
-                style={{ width: 20, height: 20, color: "#d946ef" }}
-              />
-              配方列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索产品名称或配方编号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredFormulas}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
+      <Box sx={{ p: 2, bgcolor: "#dcfce7", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          已启用
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.active}
+        </Typography>
       </Box>
+      <Box sx={{ p: 2, bgcolor: "#fef3c7", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          草稿
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.draft}
+        </Typography>
+      </Box>
+      <Box sx={{ p: 2, bgcolor: "#dbeafe", borderRadius: 2 }}>
+        <Typography variant="body2" sx={{ color: "slate.600" }}>
+          已批准
+        </Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {stats.approved}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  return (
+    <>
+      <ListPageTemplate<ProductionFormula>
+        title="配方管理"
+        subtitle="Production Formula"
+        backButton={{ href: "/dashboard" }}
+        columns={columns}
+        data={filteredFormulas}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索产品名称或配方编号..."
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "新增配方",
+            icon: <Plus size={18} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        headerContent={statsContent}
+        emptyMessage="暂无配方数据"
+      />
 
       <Dialog
         open={showCreateModal}
@@ -642,7 +424,7 @@ const PdmFormulaPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

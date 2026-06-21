@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box as LucideBox,
-  Search,
   Plus,
   Edit,
   Trash2,
@@ -10,24 +9,19 @@ import {
   DollarSign,
   User,
   Settings,
-  RefreshCw,
-  Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { assetApi, type Asset } from "@/api/erp";
 import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import { ModeToggle } from "@/components/ModeToggle";
 
 import {
   Button,
-  Card,
-  CardContent,
-  Chip,
+  Box,
   Typography,
   TextField,
-  InputAdornment,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -36,29 +30,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
-  Checkbox,
-  TableCell,
-  tableCellClasses,
-  styled,
-  Box,
+  Chip,
+  IconButton,
 } from "@mui/material";
-import { ModeToggle } from "@/components/ModeToggle";
 
 interface AssetManagementPageProps {
   onNavigate?: (page: string) => void;
 }
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.grey[100],
-    color: theme.palette.text.primary,
-    fontWeight: 600,
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
 
 const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
   onNavigate,
@@ -76,6 +54,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBatchStatusModal, setShowBatchStatusModal] = useState(false);
   const [batchStatus, setBatchStatus] = useState<string>("");
+
+  // 分页状态
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+
+  // 搜索状态
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleBatchUpdateStatus = () => {
     setShowBatchStatusModal(true);
@@ -156,7 +141,6 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -319,57 +303,89 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
     return emp ? emp.name : "-";
   };
 
-  const columns = useMemo<ColumnDef<Asset>[]>(
+  // 过滤后的数据
+  const filteredAssets = useMemo(() => {
+    return assets.filter(
+      (asset) =>
+        asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (asset.asset_number &&
+          asset.asset_number
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
+        (asset.brand &&
+          asset.brand.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (asset.model &&
+          asset.model.toLowerCase().includes(searchQuery.toLowerCase())),
+    );
+  }, [assets, searchQuery]);
+
+  // 分页数据
+  const paginatedAssets = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredAssets.slice(start, end);
+  }, [filteredAssets, page, pageSize]);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  // 列定义
+  const columns: ColumnDef<Asset>[] = useMemo(
     () => [
       {
-        accessorKey: "asset_number",
-        header: "资产编号",
-        cell: ({ row }) => (
+        id: "asset_number",
+        label: "资产编号",
+        sortable: true,
+        render: (asset) => (
           <Typography sx={{ fontWeight: 500, color: "text.primary" }}>
-            {row.original.asset_number}
+            {asset.asset_number}
           </Typography>
         ),
       },
       {
-        accessorKey: "name",
-        header: "资产名称",
-        cell: ({ row }) => (
-          <Typography sx={{ color: "text.primary" }}>
-            {row.original.name}
-          </Typography>
+        id: "name",
+        label: "资产名称",
+        sortable: true,
+        render: (asset) => (
+          <Typography sx={{ color: "text.primary" }}>{asset.name}</Typography>
         ),
       },
       {
-        accessorKey: "category",
-        header: "类别",
-        cell: ({ row }) => (
+        id: "category",
+        label: "类别",
+        sortable: true,
+        render: (asset) => (
           <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
-            {row.original.category || "-"}
+            {asset.category || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "brand",
-        header: "品牌",
-        cell: ({ row }) => (
+        id: "brand",
+        label: "品牌",
+        sortable: true,
+        render: (asset) => (
           <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
-            {row.original.brand || "-"}
+            {asset.brand || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "model",
-        header: "型号",
-        cell: ({ row }) => (
+        id: "model",
+        label: "型号",
+        sortable: true,
+        render: (asset) => (
           <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
-            {row.original.model || "-"}
+            {asset.model || "-"}
           </Typography>
         ),
       },
       {
-        accessorKey: "purchase_amount",
-        header: "采购金额",
-        cell: ({ row }) => (
+        id: "purchase_amount",
+        label: "采购金额",
+        sortable: true,
+        render: (asset) => (
           <Box
             sx={{
               display: "flex",
@@ -381,16 +397,17 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
             <span style={{ marginRight: 4 }}>
               <DollarSign size={12} style={{ color: "green" }} />
             </span>
-            {row.original.purchase_amount
-              ? `¥${row.original.purchase_amount.toLocaleString()}`
+            {asset.purchase_amount
+              ? `¥${asset.purchase_amount.toLocaleString()}`
               : "-"}
           </Box>
         ),
       },
       {
-        accessorKey: "responsible_id",
-        header: "负责人",
-        cell: ({ row }) => (
+        id: "responsible_id",
+        label: "负责人",
+        sortable: true,
+        render: (asset) => (
           <Box
             sx={{
               display: "flex",
@@ -402,249 +419,129 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
             <span style={{ marginRight: 4 }}>
               <User size={12} style={{ color: "blue" }} />
             </span>
-            {getEmployeeName(row.original.responsible_id || "")}
+            {getEmployeeName(asset.responsible_id || "")}
           </Box>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
+        id: "status",
+        label: "状态",
+        sortable: true,
+        render: (asset) => getStatusBadge(asset.status),
       },
       {
         id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const asset = row.original;
-          return (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 1,
+        label: "操作",
+        align: "right",
+        render: (asset) => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 1,
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedAsset(asset);
+                setShowEditModal(true);
               }}
             >
-              <Tooltip title="编辑">
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => {
-                    setSelectedAsset(asset);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <Edit size={16} />
-                </Button>
-              </Tooltip>
-
-              <Tooltip title="删除">
-                <Button
-                  variant="text"
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteAsset(asset.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </Tooltip>
-            </Box>
-          );
-        },
+              <Edit size={16} />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteAsset(asset.id);
+              }}
+            >
+              <Trash2 size={16} />
+            </IconButton>
+          </Box>
+        ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [employees],
   );
 
+  // 筛选器定义
+  const filters = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select" as const,
+        options: [
+          { label: "全部", value: "" },
+          { label: "使用中", value: "in_use" },
+          { label: "闲置", value: "idle" },
+          { label: "维护中", value: "maintenance" },
+          { label: "报废", value: "scrapped" },
+        ],
+      },
+    ],
+    [],
+  );
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
+      <ListPageTemplate
+        title="资产管理"
+        subtitle="管理企业资产、设备台账"
+        backButton={{
+          href: "/dashboard",
+          onClick: () => navigate("/dashboard"),
         }}
-      >
-        <Box
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft size={20} />
-              </Button>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "text.primary" }}
-                >
-                  资产管理
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  管理企业资产、设备台账
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ModeToggle />
-              <Button
-                variant="contained"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus size={20} sx={{ mr: 1 }} />
-                新增资产
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    animation: "spin 1s linear infinite",
-                    borderRadius: "50%",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "primary.main",
-                    borderTopColor: "transparent",
-                  }}
-                />
-                <Typography sx={{ mt: 1, color: "text.secondary" }}>
-                  加载中...
-                </Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <LucideBox
-                  size={48}
-                  style={{ color: "red", margin: "0 auto 12px" }}
-                />
-                <Typography sx={{ color: "error.main" }}>{error}</Typography>
-                <Button sx={{ mt: 2 }} onClick={loadData}>
-                  重试
-                </Button>
-              </Box>
-            ) : (
-              <>
-                {selectedIds.length > 0 && (
-                  <Box
-                    sx={{
-                      bgcolor: "grey.100",
-                      borderBottom: 1,
-                      borderColor: "divider",
-                      px: 3,
-                      py: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Checkbox
-                          checked={selectedIds.length === assets.length}
-                          onChange={(
-                            event: React.ChangeEvent<HTMLInputElement>,
-                            checked: boolean,
-                          ) => {
-                            if (checked) {
-                              setSelectedIds(assets.map((a) => a.id));
-                            } else {
-                              setSelectedIds([]);
-                            }
-                          }}
-                        />
-                        <Typography
-                          sx={{ fontSize: "0.875rem", color: "text.secondary" }}
-                        >
-                          已选择 {selectedIds.length} 项
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={handleBatchUpdateStatus}
-                      >
-                        <Settings size={16} sx={{ mr: 0.5 }} />
-                        批量更新状态
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="error"
-                        onClick={handleBatchDelete}
-                      >
-                        <Trash2 size={16} sx={{ mr: 0.5 }} />
-                        批量删除
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-                <EnhancedDataTable
-                  columns={columns}
-                  data={assets}
-                  searchPlaceholder="搜索资产名称、编号、品牌、型号..."
-                  searchKey="name"
-                  loading={loading}
-                  enableSelection={true}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                  selectionKey="id"
-                  enableAdvancedFilter={true}
-                  advancedFilters={[
-                    {
-                      key: "status",
-                      label: "状态",
-                      type: "select",
-                      options: [
-                        { value: "", label: "全部" },
-                        { value: "in_use", label: "使用中" },
-                        { value: "idle", label: "闲置" },
-                        { value: "maintenance", label: "维护中" },
-                        { value: "scrapped", label: "报废" },
-                      ],
-                    },
-                  ]}
-                  exportFileName="asset-report"
-                  onRefresh={loadData}
-                />
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+        columns={columns}
+        data={paginatedAssets}
+        loading={loading}
+        error={error}
+        pagination={{
+          page,
+          pageSize,
+          total: filteredAssets.length,
+          onPageChange: handlePageChange,
+        }}
+        searchable
+        searchPlaceholder="搜索资产名称、编号、品牌、型号..."
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        actions={[
+          {
+            label: "新增资产",
+            icon: <Plus size={16} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ]}
+        batchActions={[
+          {
+            label: "批量更新状态",
+            icon: <Settings size={16} />,
+            onClick: handleBatchUpdateStatus,
+          },
+          {
+            label: "批量删除",
+            icon: <Trash2 size={16} />,
+            color: "error",
+            confirm: true,
+            confirmMessage: `确定要删除选中的 ${selectedIds.length} 个资产吗？`,
+            onClick: handleBatchDelete,
+          },
+        ]}
+        onRefresh={loadData}
+        emptyMessage="暂无资产"
+      />
 
       <Dialog
         open={showCreateModal}

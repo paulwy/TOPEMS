@@ -174,13 +174,15 @@ export default function BankAccountManagementPage() {
             label: row.account_type,
             color: "default" as const,
           };
-          return <Chip size="small" color={config.color} label={config.label} />;
+          return (
+            <Chip size="small" color={config.color} label={config.label} />
+          );
         },
       },
       {
         id: "currency",
         label: "币种",
-        render: (row) => row.currency === "CNY" ? "人民币" : row.currency,
+        render: (row) => (row.currency === "CNY" ? "人民币" : row.currency),
       },
       {
         id: "balance",
@@ -205,7 +207,9 @@ export default function BankAccountManagementPage() {
             label: row.status,
             color: "default" as const,
           };
-          return <Chip size="small" color={config.color} label={config.label} />;
+          return (
+            <Chip size="small" color={config.color} label={config.label} />
+          );
         },
       },
       {
@@ -215,7 +219,9 @@ export default function BankAccountManagementPage() {
           row.is_primary ? (
             <Chip size="small" color="warning" label="主账户" />
           ) : (
-            <Typography variant="body2" color="text.disabled">-</Typography>
+            <Typography variant="body2" color="text.disabled">
+              -
+            </Typography>
           ),
       },
     ],

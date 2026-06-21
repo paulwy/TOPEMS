@@ -20,8 +20,12 @@ import { useAppStore } from "@/store";
 import { logger } from "@/utils/logger";
 import { DataExport } from "@/components/common";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
+import { ListPageTemplate } from "@/components/templates";
+import type {
+  ColumnDef,
+  RowAction,
+  FilterConfig,
+} from "@/components/templates";
 
 const ContactManagementPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -41,24 +45,36 @@ const ContactManagementPage: React.FC = () => {
     position: "",
     notes: "",
   });
+  const [pagination, setPagination] = useState({
+    page: 0,
+    pageSize: 20,
+    total: 0,
+  });
 
   const { addNotification } = useAppStore();
 
   useEffect(() => {
     loadContacts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, pagination.page, pagination.pageSize]);
 
   const loadContacts = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: any = {
+        page: pagination.page + 1,
+        page_size: pagination.pageSize,
+      };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
 
       const response = await crmApi.contacts.list(params);
       if (response.success && response.data) {
         setContacts(response.data.items || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: response.data.total || 0,
+        }));
       }
     } catch (error) {
       logger.error("加载联系人列表失败:", error);
@@ -290,6 +306,17 @@ const ContactManagementPage: React.FC = () => {
         }}
         filters={filters}
         rowActions={rowActions}
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: (_, page) => {
+            setPagination((prev) => ({ ...prev, page }));
+          },
+          onPageSizeChange: (_, pageSize) => {
+            setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+          },
+        }}
         actions={[
           {
             label: "导出",
