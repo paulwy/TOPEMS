@@ -11,6 +11,7 @@ pub struct PluginInfo {
     pub name: String,
     pub version: String,
     pub description: String,
+    pub runtime_url: String,
     pub permissions: Vec<PermissionDef>,
 }
 
@@ -25,11 +26,13 @@ pub struct PermissionDef {
 
 /// 获取插件信息
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let runtime_url = std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8041".to_string());
     let info = PluginInfo {
         code: "wms".to_string(),
         name: "仓储管理".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "WMS 仓储管理系统，包含仓库管理、库存管理、入库管理、出库管理、库位管理、库存盘点、库存调拨等模块".to_string(),
+        runtime_url,
         permissions: vec![
             PermissionDef {
                 code: "wms:warehouse:read".to_string(),
@@ -149,4 +152,35 @@ pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiRespo
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
+}
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+    let runtime_url = std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8041".to_string());
+
+    let info = PluginInfo {
+        code: "wms".to_string(),
+        name: "仓储管理".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "WMS 仓储管理系统".to_string(),
+        runtime_url,
+        permissions: vec![],
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/wms/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[WMS Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[WMS Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[WMS Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
 }

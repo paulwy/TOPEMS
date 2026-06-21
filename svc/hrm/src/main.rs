@@ -11,6 +11,7 @@
 
 mod api;
 mod models;
+mod plugin;
 mod services;
 mod utils;
 
@@ -118,12 +119,18 @@ async fn main() -> Result<()> {
     let port = env::var("HRM_PORT")
         .or_else(|_| env::var("SERVER_PORT"))
         .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8011".to_string());
+        .unwrap_or_else(|_| "8020".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-HRM 人力资源管理系统启动中...");
     tracing::info!("📦 端口: {}", port);
     tracing::info!("🔒 认证保护已启用");
+
+    // 启动时自动注册到统一核心
+    let core_url = env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

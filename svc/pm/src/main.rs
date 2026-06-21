@@ -78,12 +78,18 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = std::env::var("PM_PORT").unwrap_or_else(|_| "8001".to_string());
+    let port = std::env::var("PM_PORT").unwrap_or_else(|_| "8022".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动中...");
     tracing::info!("📦 Port: {}", port);
     tracing::info!("🔒 认证保护已启用");
+
+    // 启动时自动注册到统一核心
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

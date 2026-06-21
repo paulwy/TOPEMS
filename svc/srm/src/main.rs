@@ -141,12 +141,18 @@ async fn main() -> Result<()> {
         .layer(cors)
         .layer(prometheus_layer);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8060".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8042".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("📦 端口: {}", port);
     tracing::info!("✅ TOPEMS-SRM 已就绪");
     tracing::info!("🔒 认证保护已启用");
+
+    // 启动时自动注册到统一核心
+    let core_url = env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;

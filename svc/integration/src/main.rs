@@ -249,9 +249,9 @@ async fn main() {
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8068".to_string())
+        .unwrap_or_else(|_| "8072".to_string())
         .parse()
-        .unwrap_or(8068);
+        .unwrap_or(8072);
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     tracing::info!(
@@ -259,6 +259,12 @@ async fn main() {
         addr
     );
     tracing::info!("🔒 Authentication protection enabled");
+
+    // 启动时自动注册到统一核心
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
 
     axum::serve(listener, app.into_make_service())
         .await
