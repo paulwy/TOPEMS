@@ -1,5 +1,14 @@
 # DOC-File-AI 整合实施计划
 
+> **⚠️ 注意：此文档已过时**
+>
+> DOC 和 FILE 服务已整合到 `unified-core` 服务中，运行在端口 8000。
+> - DOC_PORT: 8000 (unified-core)
+> - FILE_PORT: 8000 (unified-core)
+> - AI_PORT: 8062 (独立服务)
+>
+> 请参考 `config/services.yaml` 获取最新的服务配置。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **目标:** 整合 DOC、AI 和 File 服务，建立统一的文件存储和向量化处理流程

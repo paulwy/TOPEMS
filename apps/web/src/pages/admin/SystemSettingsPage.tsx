@@ -374,7 +374,7 @@ export default function SystemSettingsPage() {
             }}
           >
             {tabsConfig.map((tab) => {
-              const Icon = tab.icon;
+              const Icon = tab.icon as React.ComponentType<{ style?: React.CSSProperties }>;
               return (
                 <Tab
                   key={tab.id}

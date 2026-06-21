@@ -139,7 +139,7 @@ async fn get_init_progress(
                 .unwrap_or(5);
 
             let company_result = sqlx::query_scalar::<_, Uuid>(
-                "SELECT id FROM public.companies WHERE organization_id = $1 AND name != '我的公司' LIMIT 1"
+                "SELECT id FROM hrm.companies WHERE organization_id = $1 AND name != '我的公司' LIMIT 1"
             )
             .bind(org_id)
             .fetch_optional(&state.db)
@@ -191,7 +191,7 @@ async fn setup_company_info(
     // 更新公司信息
     let result = sqlx::query_as::<_, Company>(
         r#"
-        UPDATE public.companies SET
+        UPDATE hrm.companies SET
             name = $2,
             short_name = COALESCE($3, short_name),
             registration_number = COALESCE($4, registration_number),
@@ -311,7 +311,7 @@ async fn setup_departments(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Department>(
             r#"
-            INSERT INTO public.departments (id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
+            INSERT INTO hrm.departments (id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
             "#,
@@ -413,7 +413,7 @@ async fn setup_positions(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Position>(
             r#"
-            INSERT INTO plugin_hrm.positions (id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at)
+            INSERT INTO hrm.positions (id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at
             "#,
@@ -520,7 +520,7 @@ async fn setup_admin_user(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        INSERT INTO public.employees (
+        INSERT INTO hrm.employees (
             id, organization_id, company_id, department_id, position_id,
             employee_number, name, gender, birth_date, hire_date,
             id_card_number, email, phone,

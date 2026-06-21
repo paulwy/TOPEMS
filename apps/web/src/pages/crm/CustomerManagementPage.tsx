@@ -85,7 +85,7 @@ const CustomerManagementPage: React.FC = () => {
         setCustomers(response.data.items || []);
         setPagination((prev) => ({
           ...prev,
-          total: response.data.total || 0,
+          total: response.data?.total || 0,
         }));
       }
     } catch (error) {
@@ -319,10 +319,10 @@ const CustomerManagementPage: React.FC = () => {
           page: pagination.page,
           pageSize: pagination.pageSize,
           total: pagination.total,
-          onPageChange: (_, page) => {
+          onPageChange: (page) => {
             setPagination((prev) => ({ ...prev, page }));
           },
-          onPageSizeChange: (_, pageSize) => {
+          onPageSizeChange: (pageSize) => {
             setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
           },
         }}

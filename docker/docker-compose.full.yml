@@ -11,6 +11,13 @@ x-common-env: &common-env
   JWT_SECRET: ${JWT_SECRET:-topems-production-jwt-secret-change-in-production}
   IAM_SERVICE_URL: http://topems-iam:8000
   SEARCH_PATH: ${SEARCH_PATH:-public}
+  # 部署模式配置
+  DEPLOYMENT_MODE: ${DEPLOYMENT_MODE:-on-premise}
+  MULTI_TENANT_ENABLED: ${MULTI_TENANT_ENABLED:-false}
+  DEFAULT_TENANT_ID: ${DEFAULT_TENANT_ID:-00000000-0000-0000-0000-000000000001}
+  QUOTA_ENABLED: ${QUOTA_ENABLED:-false}
+  BILLING_ENABLED: ${BILLING_ENABLED:-false}
+  TENANT_MANAGEMENT: ${TENANT_MANAGEMENT:-false}
 
 volumes:
   postgres_data:
@@ -242,7 +249,7 @@ services:
       <<: *common-env
       SEARCH_PATH: pm, shared, public
     ports:
-      - "8024:8024"
+      - "8001:8001"
     networks:
       - topems-network
     depends_on:
@@ -385,7 +392,7 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b-instruct}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
     ports:
-      - "8050:8050"
+      - "8062:8062"
     volumes:
       - ./docs:/app/docs:ro
     networks:

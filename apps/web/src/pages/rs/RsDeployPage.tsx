@@ -178,8 +178,8 @@ const RsDeployPage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
-  const handleRollback = (deployId: string) => {
-    const deploy = deploys.find((d) => d.id === deployId);
+  const handleRollback = (deployData: Deploy) => {
+    const deploy = deploys.find((d) => d.id === deployData.id);
     if (deploy) {
       const rollbackDeploy: Deploy = {
         id: String(Date.now()),

@@ -1,8 +1,5 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
-use topems_shared::permission::{
-    check_module_permission, ModulePermission as SharedModulePermission,
-};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -21,33 +18,44 @@ pub enum ModulePermission {
 impl std::fmt::Display for ModulePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModulePermission::CustomerRead => write!(f, "customer_read"),
-            ModulePermission::CustomerWrite => write!(f, "customer_write"),
-            ModulePermission::ContactRead => write!(f, "contact_read"),
-            ModulePermission::ContactWrite => write!(f, "contact_write"),
-            ModulePermission::OpportunityRead => write!(f, "opportunity_read"),
-            ModulePermission::OpportunityWrite => write!(f, "opportunity_write"),
-            ModulePermission::InteractionRead => write!(f, "interaction_read"),
-            ModulePermission::InteractionWrite => write!(f, "interaction_write"),
-            ModulePermission::All => write!(f, "all"),
+            ModulePermission::CustomerRead => write!(f, "crm:read"),
+            ModulePermission::CustomerWrite => write!(f, "crm:write"),
+            ModulePermission::ContactRead => write!(f, "crm:read"),
+            ModulePermission::ContactWrite => write!(f, "crm:write"),
+            ModulePermission::OpportunityRead => write!(f, "crm:read"),
+            ModulePermission::OpportunityWrite => write!(f, "crm:write"),
+            ModulePermission::InteractionRead => write!(f, "crm:read"),
+            ModulePermission::InteractionWrite => write!(f, "crm:write"),
+            ModulePermission::All => write!(f, "crm:admin"),
         }
     }
 }
 
-impl SharedModulePermission for ModulePermission {
-    fn module_name() -> &'static str {
-        "crm"
-    }
-
-    fn all_permission() -> Self {
-        ModulePermission::All
-    }
-}
-
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &PgPool,
     claims: &Claims,
     permission: &ModulePermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_module_permission(db, claims, permission).await
+    if claims.is_superuser {
+        return Ok(());
+    }
+
+    let permission_str = permission.to_string();
+
+    if claims.has_permission(&permission_str) {
+        return Ok(());
+    }
+
+    if claims.has_permission("crm:admin") {
+        return Ok(());
+    }
+
+    if claims.has_permission("all") {
+        return Ok(());
+    }
+
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }

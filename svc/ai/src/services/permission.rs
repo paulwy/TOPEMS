@@ -1,7 +1,6 @@
 // AI 服务权限定义
 use axum::{extract::Request, http::header::AUTHORIZATION, http::StatusCode};
 use topems_shared::auth::{verify_jwt_token, Claims};
-use topems_shared::permission::ModulePermission;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -55,16 +54,6 @@ impl std::fmt::Display for AiPermission {
     }
 }
 
-impl ModulePermission for AiPermission {
-    fn module_name() -> &'static str {
-        "ai"
-    }
-
-    fn all_permission() -> Self {
-        AiPermission::Manage
-    }
-}
-
 /// 从请求中解析 JWT 并检查权限
 #[allow(dead_code)]
 pub async fn check_request_permission(
@@ -103,26 +92,23 @@ pub async fn check_request_permission(
 
 /// 检查 AI 权限
 #[allow(dead_code)]
-pub fn check_ai_permission<P>(
+pub fn check_ai_permission(
     claims: &Claims,
-) -> Result<(), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)>
-where
-    P: ModulePermission + std::fmt::Display,
-{
+    permission: &AiPermission,
+) -> Result<(), (StatusCode, axum::Json<topems_shared::ApiResponse<()>>)> {
     // 超级用户拥有所有权限
     if claims.is_superuser {
         return Ok(());
     }
 
     // 检查模块管理权限
-    let module_manage = format!("{}.manage", P::module_name());
-    if claims.has_permission(&module_manage) {
+    if claims.has_permission("ai.manage") {
         return Ok(());
     }
 
     // 检查具体权限
-    let perm_str = P::module_name();
-    if claims.has_permission(perm_str) {
+    let perm_str = permission.to_string();
+    if claims.has_permission(&perm_str) {
         return Ok(());
     }
 

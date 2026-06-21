@@ -164,18 +164,18 @@ const RsReviewPage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
-  const handleApprove = (reviewId: string) => {
+  const handleApprove = (review: Review) => {
     setReviews(
       reviews.map((r) =>
-        r.id === reviewId ? { ...r, status: "approved" } : r,
+        r.id === review.id ? { ...r, status: "approved" } : r,
       ),
     );
   };
 
-  const handleReject = (reviewId: string) => {
+  const handleReject = (review: Review) => {
     setReviews(
       reviews.map((r) =>
-        r.id === reviewId ? { ...r, status: "rejected" } : r,
+        r.id === review.id ? { ...r, status: "rejected" } : r,
       ),
     );
   };

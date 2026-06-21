@@ -578,35 +578,23 @@ curl -X GET "http://localhost:8020/api/v1/projects" \
 
 ## 附录：服务端口汇总
 
-| 服务类别 | 服务名称 | 端口 | 状态 |
-|---------|---------|------|------|
-| **核心平台** | topems-iam | 8000 | ✅ |
-| | topems-pm | 8001 | ✅ |
-| | topems-notification | 8002 | ✅ |
-| | topems-portal | 8003 | ✅ |
-| | topems-flow | 8004 | ✅ |
-| | topems-integration | 8005 | ✅ |
-| **业务服务** | topems-erp | 8010 | ✅ |
-| | topems-hrm | 8011 | ✅ |
-| | topems-crm | 8012 | ✅ |
-| **研发创新** | topems-rs | 8020 | ✅ |
-| | topems-lims | 8022 | ✅ |
-| | topems-pdm | 8023 | ✅ |
-| | topems-doc | 8024 | ✅ |
-| **制造质量** | topems-mes | 8030 | ✅ |
-| | topems-qms | 8031 | 🔄 |
-| | topems-ehs | 8032 | 🔄 |
-| **供应链** | topems-scm | 8040 | ✅ |
-| | topems-srm | 8041 | ✅ |
-| | topems-wms | 8042 | ✅ |
-| **基础设施** | topems-file | 8050 | ✅ |
-| | topems-mail | 8051 | ✅ |
-| | topems-im | 8052 | ✅ |
-| | topems-gis | 8053 | ✅ |
-| **数据分析** | topems-bi | 8060 | 🔄 |
-| | topems-report | 8061 | ✅ |
-| | topems-ai | 8062 | 🔄 |
-| **扩展服务** | topems-mobile | 8070 | ✅ |
+| 服务类别 | 服务名称 | 端口 | 状态 | 说明 |
+|---------|---------|------|------|------|
+| **核心平台** | unified-core | 8000 | ✅ | 包含 IAM, Doc, Flow, File, Communication, Notification |
+| | topems-pm | 8001 | ✅ | 项目管理 |
+| | topems-integration | 8005 | ✅ | 集成服务 |
+| **业务服务** | topems-erp | 8010 | ✅ | 企业资源计划 |
+| | topems-hrm | 8011 | ✅ | 人力资源管理 |
+| | topems-crm | 8012 | ✅ | 客户关系管理 |
+| **研发创新** | topems-rs | 8020 | ✅ | 研发管理 |
+| | manufacturing | 8023 | ✅ | 制造服务 (PDM + MES) |
+| **制造质量** | quality-assurance | 8032 | ✅ | 质量保证 (QMS + LIMS + EHS) |
+| **供应链** | topems-scm | 8040 | ✅ | 供应链管理 |
+| | topems-srm | 8041 | ✅ | 供应商管理 |
+| | topems-wms | 8042 | ✅ | 仓储管理 |
+| **基础设施** | topems-gis | 8053 | ✅ | 地理信息服务 |
+| **数据分析** | topems-ai | 8062 | ✅ | AI 服务 |
+| **扩展服务** | topems-mobile | 8070 | ✅ | 移动服务 |
 
 **状态说明**: ✅ 已实现 | 🔄 开发中 | 📋 规划中
 

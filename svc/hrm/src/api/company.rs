@@ -144,7 +144,7 @@ async fn create_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        INSERT INTO public.companies (
+        INSERT INTO hrm.companies (
             id, organization_id, name, short_name, registration_number, tax_number, address,
             contact_phone, contact_email, website, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
@@ -222,7 +222,7 @@ async fn get_company(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
-        FROM public.companies WHERE id = $1
+        FROM hrm.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -255,7 +255,7 @@ async fn update_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM public.companies WHERE id = $1
+               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -284,7 +284,7 @@ async fn update_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        UPDATE public.companies SET
+        UPDATE hrm.companies SET
             name = $2, short_name = $3, registration_number = $4, tax_number = $5,
             address = $6, contact_phone = $7, contact_email = $8, website = $9,
             description = $10, status = $11, updated_at = $12
@@ -363,7 +363,7 @@ async fn delete_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM public.companies WHERE id = $1
+               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM hrm.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -372,7 +372,7 @@ async fn delete_company(
 
     match existing {
         Ok(Some(company)) => {
-            let result = sqlx::query("DELETE FROM public.companies WHERE id = $1")
+            let result = sqlx::query("DELETE FROM hrm.companies WHERE id = $1")
                 .bind(id)
                 .execute(&state.db)
                 .await;

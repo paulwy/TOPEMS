@@ -4,11 +4,12 @@
 
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import type { StatCard } from "./StatsPageTemplate";
-import { StatsPageTemplate } from "./StatsPageTemplate";
+import { vi } from "vitest";
+import type { StatCard } from "../StatsPageTemplate";
+import { StatsPageTemplate } from "../StatsPageTemplate";
 
 // Mock MUI components
-jest.mock("@mui/material", () => ({
+vi.mock("@mui/material", () => ({
   Box: ({ children, ...props }: any) => (
     <div data-testid="box" {...props}>
       {children}
@@ -348,7 +349,6 @@ describe("StatsPageTemplate", () => {
           statCards={[]}
           charts={[]}
           tables={[]}
-          data={[]}
         />,
       );
       expect(screen.getByTestId("empty-state")).toBeInTheDocument();

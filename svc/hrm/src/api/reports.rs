@@ -54,30 +54,30 @@ async fn employee_summary(
     let _start_date = params.start_date.clone();
     let _end_date = params.end_date.clone();
 
-    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM public.employees"#)
+    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.employees"#)
         .fetch_one(&state.db)
         .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM public.employees WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let inactive_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM public.employees WHERE status = 'inactive'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'inactive'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let male_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM public.employees WHERE gender = 'male'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'male'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let female_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM public.employees WHERE gender = 'female'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'female'"#,
     )
     .fetch_one(&state.db)
     .await;
@@ -85,7 +85,7 @@ async fn employee_summary(
     let tenure_result = sqlx::query_scalar::<_, f64>(
         r#"
         SELECT AVG(EXTRACT(DAY FROM CURRENT_DATE - hire_date)) 
-        FROM public.employees 
+        FROM hrm.employees 
         WHERE hire_date IS NOT NULL AND status = 'active'
         "#,
     )
@@ -97,7 +97,7 @@ async fn employee_summary(
 
     let new_hires_result = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM public.employees 
+        SELECT COUNT(*) FROM hrm.employees 
         WHERE TO_CHAR(hire_date, 'YYYY-MM') = $1
         "#,
     )
@@ -107,7 +107,7 @@ async fn employee_summary(
 
     let terminations_result = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM public.employees 
+        SELECT COUNT(*) FROM hrm.employees 
         WHERE status = 'inactive' 
         AND TO_CHAR(updated_at, 'YYYY-MM') = $1
         "#,
@@ -180,8 +180,8 @@ async fn department_summary(State(state): State<ApiState>) -> Json<ApiResponse<s
             d.name as department_name,
             COUNT(e.id) as employee_count,
             SUM(CASE WHEN e.status = 'active' THEN 1 ELSE 0 END) as active_count
-        FROM public.departments d
-        LEFT JOIN public.employees e ON d.id = e.department_id
+        FROM hrm.departments d
+        LEFT JOIN hrm.employees e ON d.id = e.department_id
         GROUP BY d.id, d.name
         ORDER BY d.name
         "#,
@@ -519,7 +519,7 @@ async fn payroll_summary(
     .await;
 
     let employee_count_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM public.employees WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;

@@ -287,8 +287,8 @@ const RsDocPage: React.FC = () => {
     {
       label: "删除",
       icon: <Trash2 size={16} />,
-      color: "error",
-      onClick: (row) => handleDelete(row.id),
+      color: "error" as const,
+      onClick: (row: Document) => handleDelete(row.id),
     },
   ];
 

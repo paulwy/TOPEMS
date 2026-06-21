@@ -159,6 +159,12 @@ async fn main() {
         .route("/api/core/iam/users/{id}", put(modules::iam::user::update_user))
         .route("/api/core/iam/users/{id}", delete(modules::iam::user::delete_user))
         .route("/api/core/iam/users/me", get(modules::iam::user::get_current_user))
+        // IAM API v1 compatibility routes (for frontend)
+        .route("/api/iam/users", get(modules::iam::user::list_users))
+        .route("/api/iam/users", post(modules::iam::user::create_user))
+        .route("/api/iam/users/{id}", get(modules::iam::user::get_user))
+        .route("/api/iam/users/{id}", put(modules::iam::user::update_user))
+        .route("/api/iam/users/{id}", delete(modules::iam::user::delete_user))
         .route("/api/iam/users/me", get(modules::iam::user::get_current_user))
         .route("/api/core/iam/users/{id}/disable", post(modules::iam::user::disable_user))
         .route("/api/core/iam/users/{id}/enable", post(modules::iam::user::enable_user))
@@ -169,6 +175,10 @@ async fn main() {
         .route("/api/core/iam/roles/{id}", put(modules::iam::role::update_role))
         .route("/api/core/iam/roles/{id}", delete(modules::iam::role::delete_role))
         .route("/api/core/iam/permissions", get(modules::iam::permission::list_permissions))
+        // IAM API v1 compatibility routes for roles and permissions
+        .route("/api/iam/roles", get(modules::iam::role::list_roles))
+        .route("/api/iam/roles/{id}", get(modules::iam::role::get_role))
+        .route("/api/iam/permissions", get(modules::iam::permission::list_permissions))
         .route("/api/core/iam/user-permissions/{user_id}", get(modules::iam::user_permission::get_user_permissions))
         .route("/api/core/iam/user-permissions/{user_id}", put(modules::iam::user_permission::update_user_permissions))
 

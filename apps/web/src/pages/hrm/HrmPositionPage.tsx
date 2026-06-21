@@ -34,7 +34,6 @@ import {
 import { useAppStore } from "../../store";
 import {
   ListPageTemplate,
-  StatCardGroup,
   type ColumnDef,
   type RowAction,
 } from "@/components/templates";
@@ -394,13 +393,8 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      {/* 统计卡片 */}
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, pt: 3, pb: 2 }}>
-        <StatCardGroup stats={stats} loading={loading} columns={4} />
-      </Box>
-
       {/* 列表页模板 */}
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, pb: 3 }}>
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
         <ListPageTemplate
           title="岗位管理"
           subtitle="管理企业岗位信息、薪资范围"

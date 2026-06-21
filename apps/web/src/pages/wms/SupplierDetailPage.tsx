@@ -393,7 +393,7 @@ const SupplierDetailPage: React.FC = () => {
                 supplier.contact_name,
                 supplier.contact_phone,
                 supplier.email,
-              ].filter(Boolean),
+              ].filter((tag): tag is string => Boolean(tag)),
               stats: statsData.map((stat) => ({
                 label: stat.label,
                 value: stat.value,

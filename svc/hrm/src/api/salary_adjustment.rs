@@ -69,8 +69,8 @@ async fn list_salary_adjustments(
             sa.created_at, 
             sa.updated_at
         FROM plugin_hrm.salary_adjustments sa
-        LEFT JOIN public.employees e ON sa.employee_id = e.id
-        LEFT JOIN public.departments d ON e.department_id = d.id
+        LEFT JOIN hrm.employees e ON sa.employee_id = e.id
+        LEFT JOIN hrm.departments d ON e.department_id = d.id
         WHERE ($1::uuid IS NULL OR sa.employee_id = $1)
           AND ($2::text IS NULL OR sa.status = $2)
         ORDER BY sa.created_at DESC
@@ -141,8 +141,8 @@ async fn get_salary_adjustment(
             sa.created_at, 
             sa.updated_at
         FROM plugin_hrm.salary_adjustments sa
-        LEFT JOIN public.employees e ON sa.employee_id = e.id
-        LEFT JOIN public.departments d ON e.department_id = d.id
+        LEFT JOIN hrm.employees e ON sa.employee_id = e.id
+        LEFT JOIN hrm.departments d ON e.department_id = d.id
         WHERE sa.id = $1
         "#,
     )

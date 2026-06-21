@@ -188,12 +188,12 @@ const BIReportPage = () => {
     });
   }, [reports, searchTerm, filterType, filterStatus]);
 
-  const handleChangePage = (_: any, newPage: number) => {
+  const handleChangePage = (newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: any) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+  const handleChangeRowsPerPage = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
     setPage(0);
   };
 

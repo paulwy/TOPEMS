@@ -25,21 +25,21 @@ pub enum ModulePermission {
 impl std::fmt::Display for ModulePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModulePermission::CompanyRead => write!(f, "company_read"),
-            ModulePermission::CompanyWrite => write!(f, "company_write"),
-            ModulePermission::AttendanceRead => write!(f, "attendance_read"),
-            ModulePermission::AttendanceWrite => write!(f, "attendance_write"),
-            ModulePermission::LeaveRead => write!(f, "leave_read"),
-            ModulePermission::LeaveWrite => write!(f, "leave_write"),
-            ModulePermission::EmployeeRead => write!(f, "employee_read"),
-            ModulePermission::EmployeeWrite => write!(f, "employee_write"),
-            ModulePermission::DepartmentRead => write!(f, "department_read"),
-            ModulePermission::DepartmentWrite => write!(f, "department_write"),
-            ModulePermission::PayrollRead => write!(f, "payroll_read"),
-            ModulePermission::PayrollWrite => write!(f, "payroll_write"),
-            ModulePermission::PerformanceRead => write!(f, "performance_read"),
-            ModulePermission::PerformanceWrite => write!(f, "performance_write"),
-            ModulePermission::All => write!(f, "all"),
+            ModulePermission::CompanyRead => write!(f, "hrm:read"),
+            ModulePermission::CompanyWrite => write!(f, "hrm:write"),
+            ModulePermission::AttendanceRead => write!(f, "hrm:read"),
+            ModulePermission::AttendanceWrite => write!(f, "hrm:write"),
+            ModulePermission::LeaveRead => write!(f, "hrm:read"),
+            ModulePermission::LeaveWrite => write!(f, "hrm:write"),
+            ModulePermission::EmployeeRead => write!(f, "hrm:read"),
+            ModulePermission::EmployeeWrite => write!(f, "hrm:write"),
+            ModulePermission::DepartmentRead => write!(f, "hrm:read"),
+            ModulePermission::DepartmentWrite => write!(f, "hrm:write"),
+            ModulePermission::PayrollRead => write!(f, "hrm:read"),
+            ModulePermission::PayrollWrite => write!(f, "hrm:write"),
+            ModulePermission::PerformanceRead => write!(f, "hrm:read"),
+            ModulePermission::PerformanceWrite => write!(f, "hrm:write"),
+            ModulePermission::All => write!(f, "hrm:admin"),
         }
     }
 }
@@ -53,13 +53,17 @@ pub async fn check_permission<T>(
         return Ok(());
     }
 
-    if claims.has_permission("hrm.manage") {
-        return Ok(());
-    }
-
     let permission_str = permission.to_string();
 
     if claims.has_permission(&permission_str) {
+        return Ok(());
+    }
+
+    if claims.has_permission("hrm:admin") {
+        return Ok(());
+    }
+
+    if claims.has_permission("all") {
         return Ok(());
     }
 

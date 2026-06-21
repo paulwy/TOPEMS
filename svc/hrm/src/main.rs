@@ -115,7 +115,8 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT")
+    let port = env::var("HRM_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
         .or_else(|_| env::var("PORT"))
         .unwrap_or_else(|_| "8011".to_string());
     let addr = format!("0.0.0.0:{}", port);

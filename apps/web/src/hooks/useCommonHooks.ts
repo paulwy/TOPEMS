@@ -96,7 +96,7 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
  * usePrevious - 获取上一个状态值
  */
 export function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>();
+  const ref = useRef<T | undefined>(undefined);
 
   useEffect(() => {
     ref.current = value;

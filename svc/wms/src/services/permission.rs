@@ -1,8 +1,5 @@
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
-use topems_shared::permission::{
-    check_module_permission, ModulePermission as SharedModulePermission,
-};
 use topems_shared::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -21,33 +18,44 @@ pub enum ModulePermission {
 impl std::fmt::Display for ModulePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModulePermission::WarehouseRead => write!(f, "warehouse_read"),
-            ModulePermission::WarehouseWrite => write!(f, "warehouse_write"),
-            ModulePermission::InventoryRead => write!(f, "inventory_read"),
-            ModulePermission::InventoryWrite => write!(f, "inventory_write"),
-            ModulePermission::InboundRead => write!(f, "inbound_read"),
-            ModulePermission::InboundWrite => write!(f, "inbound_write"),
-            ModulePermission::OutboundRead => write!(f, "outbound_read"),
-            ModulePermission::OutboundWrite => write!(f, "outbound_write"),
-            ModulePermission::All => write!(f, "all"),
+            ModulePermission::WarehouseRead => write!(f, "wms:read"),
+            ModulePermission::WarehouseWrite => write!(f, "wms:write"),
+            ModulePermission::InventoryRead => write!(f, "wms:read"),
+            ModulePermission::InventoryWrite => write!(f, "wms:write"),
+            ModulePermission::InboundRead => write!(f, "wms:read"),
+            ModulePermission::InboundWrite => write!(f, "wms:write"),
+            ModulePermission::OutboundRead => write!(f, "wms:read"),
+            ModulePermission::OutboundWrite => write!(f, "wms:write"),
+            ModulePermission::All => write!(f, "wms:admin"),
         }
     }
 }
 
-impl SharedModulePermission for ModulePermission {
-    fn module_name() -> &'static str {
-        "wms"
-    }
-
-    fn all_permission() -> Self {
-        ModulePermission::All
-    }
-}
-
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &PgPool,
     claims: &Claims,
     permission: &ModulePermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_module_permission(db, claims, permission).await
+    if claims.is_superuser {
+        return Ok(());
+    }
+
+    let permission_str = permission.to_string();
+
+    if claims.has_permission(&permission_str) {
+        return Ok(());
+    }
+
+    if claims.has_permission("wms:admin") {
+        return Ok(());
+    }
+
+    if claims.has_permission("all") {
+        return Ok(());
+    }
+
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }

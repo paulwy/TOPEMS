@@ -4,10 +4,11 @@
 
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { CardListTemplate } from "./CardListTemplate";
+import { vi } from "vitest";
+import { CardListTemplate } from "../CardListTemplate";
 
 // Mock MUI components
-jest.mock("@mui/material", () => ({
+vi.mock("@mui/material", () => ({
   Box: ({ children, ...props }: any) => (
     <div data-testid="box" {...props}>
       {children}

@@ -504,6 +504,48 @@ const registerDefaultModules = () => {
       permission: "hrm:read",
     },
   });
+
+  navigationRegistry.register("im", {
+    top_nav: [
+      {
+        code: "im",
+        label: "即时通讯",
+        icon: "MessageCircle",
+        path: "/im",
+        order: 9,
+        permission: "im:read",
+      },
+    ],
+    module_tabs: [
+      {
+        code: "im-chats",
+        label: "消息",
+        path: "/im/chats",
+        permission: "im:read",
+      },
+      {
+        code: "im-contacts",
+        label: "联系人",
+        path: "/im/contacts",
+        permission: "im:read",
+      },
+      {
+        code: "im-groups",
+        label: "群组",
+        path: "/im/groups",
+        permission: "im:read",
+      },
+    ],
+    module_card: {
+      code: "im",
+      name: "即时通讯",
+      icon: "MessageCircle",
+      path: "/im",
+      status: "online",
+      order: 9,
+      permission: "im:read",
+    },
+  });
 };
 
 registerDefaultModules();

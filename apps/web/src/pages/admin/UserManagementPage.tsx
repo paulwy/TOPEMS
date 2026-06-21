@@ -499,7 +499,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         columns={columns}
         data={users}
         loading={loading}
-        error={error}
+        error={error || undefined}
         rowActions={rowActions}
         selectable
         selection={{

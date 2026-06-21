@@ -13,7 +13,6 @@ import {
   Download,
   Upload,
   RefreshCw,
-  Switch,
 } from "lucide-react";
 import {
   dictTypeApi,
@@ -44,6 +43,7 @@ import {
   CircularProgress,
   Checkbox,
   Paper,
+  Switch,
 } from "@mui/material";
 import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
@@ -915,7 +915,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                 filters={filters}
                 selectable
                 selectedIds={selectedItems}
-                onSelectionChange={setSelectedItems}
+                onSelectionChange={(ids) => setSelectedItems(ids.map(String))}
                 actions={[
                   {
                     label: "导出",
@@ -1120,7 +1120,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     checked={
                       (editingType?.status || newType.status) === "active"
                     }
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const status = e.target.checked ? "active" : "inactive";
                       if (editingType) {
                         setEditingType({ ...editingType, status });
@@ -1264,7 +1264,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     </Typography>
                     <Switch
                       checked={editingItem.status === "active"}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setEditingItem({
                           ...editingItem,
                           status: e.target.checked ? "active" : "inactive",

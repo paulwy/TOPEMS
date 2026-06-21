@@ -271,7 +271,7 @@ export function useDebouncedQuery<T>(
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const debouncedQueryRef = useRef<NodeJS.Timeout>();
+  const debouncedQueryRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!query) {

@@ -591,9 +591,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                             key={col.id}
                             style={{ textAlign: col.align || "left" }}
                           >
-                            {col.render
+                            {col.render && col.field
                               ? col.render(row[col.field], row)
-                              : row[col.field]}
+                              : col.field ? row[col.field] : ""}
                           </td>
                         ))}
                       </tr>
@@ -609,7 +609,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   };
 
   // 渲染加载状态
-  if (loading && data.length === 0) {
+  if (loading && statCards.length === 0 && charts.length === 0 && tables.length === 0) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         {/* 页面标题栏 */}
@@ -652,7 +652,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   }
 
   // 空状态
-  if (!loading && data.length === 0) {
+  if (!loading && statCards.length === 0 && charts.length === 0 && tables.length === 0) {
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         <EmptyState
@@ -750,7 +750,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 key={tab.value}
                 value={tab.value}
                 label={tab.label}
-                icon={tab.icon}
+                icon={tab.icon as React.ReactElement<unknown> | undefined}
                 disabled={tab.disabled}
                 iconPosition="start"
               />

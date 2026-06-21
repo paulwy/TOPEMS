@@ -2,9 +2,7 @@
 
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
-use topems_shared::permission::{
-    check_module_permission, check_resource_permission, ModulePermission as SharedModulePermission,
-};
+use topems_shared::permission::check_resource_permission;
 use topems_shared::response::ApiResponse;
 use uuid::Uuid;
 
@@ -26,37 +24,48 @@ pub enum ModulePermission {
 impl std::fmt::Display for ModulePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModulePermission::EmployeeRead => write!(f, "employee_read"),
-            ModulePermission::EmployeeWrite => write!(f, "employee_write"),
-            ModulePermission::DepartmentRead => write!(f, "department_read"),
-            ModulePermission::DepartmentWrite => write!(f, "department_write"),
-            ModulePermission::CompanyRead => write!(f, "company_read"),
-            ModulePermission::CompanyWrite => write!(f, "company_write"),
-            ModulePermission::FinanceRead => write!(f, "finance_read"),
-            ModulePermission::FinanceWrite => write!(f, "finance_write"),
-            ModulePermission::AssetRead => write!(f, "asset_read"),
-            ModulePermission::AssetWrite => write!(f, "asset_write"),
-            ModulePermission::All => write!(f, "all"),
+            ModulePermission::EmployeeRead => write!(f, "erp:read"),
+            ModulePermission::EmployeeWrite => write!(f, "erp:write"),
+            ModulePermission::DepartmentRead => write!(f, "erp:read"),
+            ModulePermission::DepartmentWrite => write!(f, "erp:write"),
+            ModulePermission::CompanyRead => write!(f, "erp:read"),
+            ModulePermission::CompanyWrite => write!(f, "erp:write"),
+            ModulePermission::FinanceRead => write!(f, "erp:read"),
+            ModulePermission::FinanceWrite => write!(f, "erp:write"),
+            ModulePermission::AssetRead => write!(f, "erp:read"),
+            ModulePermission::AssetWrite => write!(f, "erp:write"),
+            ModulePermission::All => write!(f, "erp:admin"),
         }
     }
 }
 
-impl SharedModulePermission for ModulePermission {
-    fn module_name() -> &'static str {
-        "erp"
-    }
-
-    fn all_permission() -> Self {
-        ModulePermission::All
-    }
-}
-
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &PgPool,
     claims: &Claims,
     permission: &ModulePermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_module_permission(db, claims, permission).await
+    if claims.is_superuser {
+        return Ok(());
+    }
+
+    let permission_str = permission.to_string();
+
+    if claims.has_permission(&permission_str) {
+        return Ok(());
+    }
+
+    if claims.has_permission("erp:admin") {
+        return Ok(());
+    }
+
+    if claims.has_permission("all") {
+        return Ok(());
+    }
+
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }
 
 pub async fn check_employee_permission<T>(

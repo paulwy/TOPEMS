@@ -521,9 +521,9 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       : "primary.light";
 
     const statusConfig =
-      cardConfig.status?.options?.[item[cardConfig.status.field]];
+      cardConfig.status?.field ? cardConfig.status?.options?.[item[cardConfig.status.field]] : undefined;
     const statusColor = statusConfig?.color || "default";
-    const statusLabel = statusConfig?.label || item[cardConfig.status?.field];
+    const statusLabel = statusConfig?.label || (cardConfig.status?.field ? item[cardConfig.status.field] : "");
 
     return (
       <Paper
