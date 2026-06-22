@@ -6,7 +6,14 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      '@react-leaflet/core':
+        specifier: ^3.0.0
+        version: 3.0.0
+      react-leaflet:
+        specifier: ^5.0.0
+        version: 5.0.0
 
   apps/core:
     dependencies:
@@ -110,6 +117,9 @@ importers:
       '@mui/x-tree-view':
         specifier: ^9.0.0
         version: 9.6.0(@emotion/react@11.14.0)(@emotion/styled@11.14.1)(@mui/material@9.1.1)(@types/react@19.2.17)(react-dom@19.2.7)(react@19.2.7)
+      '@react-leaflet/core':
+        specifier: 2.0.0
+        version: 2.0.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7)
       '@react-three/drei':
         specifier: ^10.7.7
         version: 10.7.7(@react-three/fiber@9.6.1)(@types/react@19.2.17)(@types/three@0.184.1)(react-dom@19.2.7)(react@19.2.7)(three@0.184.0)
@@ -192,8 +202,8 @@ importers:
         specifier: ^17.0.8
         version: 17.0.8(i18next@26.3.1)(react-dom@19.2.7)(react@19.2.7)(typescript@6.0.3)
       react-leaflet:
-        specifier: ^4.2.1
-        version: 4.2.1(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7)
+        specifier: ^5.0.0
+        version: 5.0.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7)
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.17)(react@19.2.7)
@@ -2766,12 +2776,32 @@ packages:
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
     dev: false
 
-  /@react-leaflet/core@2.1.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7):
-    resolution: {integrity: sha512-Qk7Pfu8BSarKGqILj4x7bCSZ1pjuAPZ+qmRwH5S7mDS91VSbVVsJSrW4qA+GPrro8t69gFYVMWb1Zc4yFmPiVg==}
+  /@react-leaflet/core@2.0.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7):
+    resolution: {integrity: sha512-SQQ5DCQIaLzvslN6wCXs5OWqtlvk1Ubv2n5d7zTM8SDl9hM5Rr2wVy7/nOCIY958D75/ovhq6ZoSvT7GLCX6sg==}
     peerDependencies:
-      leaflet: ^1.9.0
+      leaflet: ^1.8.0
       react: ^18.0.0
       react-dom: ^18.0.0
+    dependencies:
+      leaflet: 1.9.4
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+    dev: false
+
+  /@react-leaflet/core@3.0.0:
+    resolution: {integrity: sha512-3EWmekh4Nz+pGcr+xjf0KNyYfC3U2JjnkWsh0zcqaexYqmmB5ZhH37kz41JXGmKzpaMZCnPofBBm64i+YrEvGQ==}
+    peerDependencies:
+      leaflet: ^1.9.0
+      react: ^19.0.0
+      react-dom: ^19.0.0
+    dev: false
+
+  /@react-leaflet/core@3.0.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7):
+    resolution: {integrity: sha512-3EWmekh4Nz+pGcr+xjf0KNyYfC3U2JjnkWsh0zcqaexYqmmB5ZhH37kz41JXGmKzpaMZCnPofBBm64i+YrEvGQ==}
+    peerDependencies:
+      leaflet: ^1.9.0
+      react: ^19.0.0
+      react-dom: ^19.0.0
     dependencies:
       leaflet: 1.9.4
       react: 19.2.7
@@ -7459,14 +7489,24 @@ packages:
     resolution: {integrity: sha512-kZFnouyVv7eP/Phmrlo9FK+zcAdriZJvzxXHF1Sl1P377WSGe2G/JxVolhTrB/jeV47lKImhNUsijjHAAbcl/A==}
     dev: false
 
-  /react-leaflet@4.2.1(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7):
-    resolution: {integrity: sha512-p9chkvhcKrWn/H/1FFeVSqLdReGwn2qmiobOQGO3BifX+/vV/39qhY8dGqbdcPh1e6jxh/QHriLXr7a4eLFK4Q==}
+  /react-leaflet@5.0.0:
+    resolution: {integrity: sha512-CWbTpr5vcHw5bt9i4zSlPEVQdTVcML390TjeDG0cK59z1ylexpqC6M1PJFjV8jD7CF+ACBFsLIDs6DRMoLEofw==}
     peerDependencies:
       leaflet: ^1.9.0
-      react: ^18.0.0
-      react-dom: ^18.0.0
+      react: ^19.0.0
+      react-dom: ^19.0.0
     dependencies:
-      '@react-leaflet/core': 2.1.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7)
+      '@react-leaflet/core': 3.0.0
+    dev: false
+
+  /react-leaflet@5.0.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7):
+    resolution: {integrity: sha512-CWbTpr5vcHw5bt9i4zSlPEVQdTVcML390TjeDG0cK59z1ylexpqC6M1PJFjV8jD7CF+ACBFsLIDs6DRMoLEofw==}
+    peerDependencies:
+      leaflet: ^1.9.0
+      react: ^19.0.0
+      react-dom: ^19.0.0
+    dependencies:
+      '@react-leaflet/core': 3.0.0(leaflet@1.9.4)(react-dom@19.2.7)(react@19.2.7)
       leaflet: 1.9.4
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)

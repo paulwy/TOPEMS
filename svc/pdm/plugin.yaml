@@ -1,0 +1,16 @@
+code: pdm
+name: PDM
+version: 1.0.0
+description: TOPEMS-PDM
+author: TOPEMS
+category: Manufacturing
+plugin_type: business
+
+runtime:
+  port: 8031
+  health_endpoint: /health
+  base_path: /api/mfg
+
+dependencies:
+  - unified-core
+  - mes

@@ -2,6 +2,8 @@
 .gitignore
 node_modules
 target
+!target/release
+!target/linux-release
 dist
 .env
 *.log

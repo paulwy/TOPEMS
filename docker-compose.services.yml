@@ -1,0 +1,184 @@
+# TOPEMS Services - Docker Compose for local development
+version: '3.8'
+
+services:
+  # MES Service
+  mes:
+    image: topems/mes:latest
+    container_name: topems-mes
+    ports:
+      - "8030:8030"
+    environment:
+      - MES_PORT=8030
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8030/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # PDM Service
+  pdm:
+    image: topems/pdm:latest
+    container_name: topems-pdm
+    ports:
+      - "8031:8031"
+    environment:
+      - PDM_PORT=8031
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8031/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # QMS Service
+  qms:
+    image: topems/qms:latest
+    container_name: topems-qms
+    ports:
+      - "8050:8050"
+    environment:
+      - QMS_PORT=8050
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8050/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # LIMS Service
+  lims:
+    image: topems/lims:latest
+    container_name: topems-lims
+    ports:
+      - "8051:8051"
+    environment:
+      - LIMS_PORT=8051
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8051/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # EHS Service
+  ehs:
+    image: topems/ehs:latest
+    container_name: topems-ehs
+    ports:
+      - "8052:8052"
+    environment:
+      - EHS_PORT=8052
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8052/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # BI Service
+  bi:
+    image: topems/bi:latest
+    container_name: topems-bi
+    ports:
+      - "8060:8060"
+    environment:
+      - BI_PORT=8060
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8060/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # Report Service
+  report:
+    image: topems/report:latest
+    container_name: topems-report
+    ports:
+      - "8061:8061"
+    environment:
+      - REPORT_PORT=8061
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8061/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:latest
+    container_name: topems-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=topems
+      - POSTGRES_PASSWORD=topems_secret
+      - POSTGRES_DB=topems
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U topems"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - topems-network
+
+  # Redis Cache
+  redis:
+    image: redis:latest
+    container_name: topems-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - topems-network
+
+volumes:
+  postgres_data:
+
+networks:
+  topems-network:
+    driver: bridge

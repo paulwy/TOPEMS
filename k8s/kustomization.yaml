@@ -1,0 +1,41 @@
+# TOPEMS Kubernetes Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: topems
+
+resources:
+  - base/namespace.yaml
+  - base/configmap.yaml
+  - base/monitoring.yaml
+  - base/grafana-dashboard.yaml
+  - services/mes.yaml
+  - services/pdm.yaml
+  - services/qms.yaml
+  - services/lims.yaml
+  - services/ehs.yaml
+  - services/bi.yaml
+  - services/report.yaml
+
+# Common labels
+commonLabels:
+  app.kubernetes.io/name: topems
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/managed-by: kustomize
+
+# Images (override for different environments)
+images:
+  - name: topems/mes
+    newTag: latest
+  - name: topems/pdm
+    newTag: latest
+  - name: topems/qms
+    newTag: latest
+  - name: topems/lims
+    newTag: latest
+  - name: topems/ehs
+    newTag: latest
+  - name: topems/bi
+    newTag: latest
+  - name: topems/report
+    newTag: latest

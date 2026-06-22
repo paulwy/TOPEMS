@@ -1,0 +1,23 @@
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates tzdata wget
+
+RUN addgroup -S topems && adduser -S topems -G topems
+
+WORKDIR /app
+
+COPY target/release/topems-report /usr/local/bin/topems-report
+
+RUN chown -R topems:topems /usr/local/bin
+
+USER topems
+
+ENV REPORT_PORT=8061
+ENV RUST_LOG=info
+
+EXPOSE 8061
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8061/health || exit 1
+
+CMD ["topems-report"]
