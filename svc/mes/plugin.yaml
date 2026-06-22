@@ -1,0 +1,79 @@
+code: mes
+name: 生产执行系统
+version: 1.0.0
+description: MES 生产执行系统，包含生产工单、生产工艺、生产记录、设备管理、工位管理等模块
+author: TOPEMS
+category: Manufacturing
+plugin_type: business
+
+runtime:
+  port: 8030
+  health_endpoint: /health
+  base_path: /api/mfg
+
+permissions:
+  - code: mes:production_order:read
+    name: 查看生产工单
+    description: 查看生产工单
+  - code: mes:production_order:write
+    name: 管理生产工单
+    description: 创建和更新生产工单
+  - code: mes:production_order:start
+    name: 启动生产工单
+    description: 启动生产工单执行
+  - code: mes:production_order:complete
+    name: 完成生产工单
+    description: 完成生产工单
+  - code: mes:production_order:cancel
+    name: 取消生产工单
+    description: 取消生产工单
+  - code: mes:process:read
+    name: 查看生产工艺
+    description: 查看生产工艺
+  - code: mes:process:code: mes
+name: 生产执行系统
+version: 1.0.0
+descrip??ame: ??version: 1.0.0
+descripts:description:   author: TOPEMS
+category: Manufacturing
+plugin_type: business
+
+runtime:
+  port: 8030
+  health_endpoint: /health
+  base_path: sccategory: Man??plugin_type: business
+  
+runtime:
+  port: 80t:r  port: n  health_en? base_path: /api/mfg
+
+pe?permissions:
+  - cos:e  - code: mit    name: 查看生产工单
+    dip    description: 查看生?
+   - code: mes:production_order:wri n    name: 管理生产工单
+    de?   description: 创建和?k  - code: mes:production_order:start
+    naes    name: 启动生产工单
+    depe    description: 启动生?O  - code: mes:prodngzhai/TOPEMS/svc/mes/Do    name: 完成生产工单
+    descre     description: 完成生?N  - code: mes:production_order:cansl    name: 取消生产工单
+    desCO    description: 取消生ild --release
+
+FROM alpine:3.19
+
+RUN ap    name: 查看生产工ca    description: 查看生?u  - code: mes:process:code: mes
+naesname: 生产执行系统
+versiPOversion: 1.0.0
+descrip?esdescrip??ame /descripts:description:   author:rgcategory: Manufacturing
+plugin_type: bmsplugin_type: business
+e 
+runtime:
+  port: 80pac  port:e
+  health_erks  base_path: sccategory:= "  
+runtime:
+  port: 80t:r  port: n  health_en? bs]rax  port:sp
+pe?permissions:
+  - cos:e  - code: mit    name: 查?
+s  - cos:e  - codac    dip    description: 查看生?
+   - code: mes t   - code: mes:production_order:wng    de?   description: 创建和?k  - code: mes:production_or.w    naes    name: 启动生产工单
+    depe    description: 启动生?h    depe    descript../lib" }
+axum-pr    descre     description: 完成生?N  - code: mes:production_order:cansl    name: 取消生产工单
+ bi    desCO    deems-pdm"
+path = "src/main.rs"

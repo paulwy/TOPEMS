@@ -1,6 +1,6 @@
 # TOPEMS 服务配置
-# 与 port-planning.md 保持严格一致
-# 版本: v4.1
+# 与 plugin-architecture-design.md 保持严格一致
+# 版本: v5.0
 
 service_groups:
   # 核心服务 (8000-8009)
@@ -8,26 +8,12 @@ service_groups:
     - name: unified-core
       port: 8000
       env_var: CORE_PORT
-      description: 统一核心服务 (IAM + Doc + Flow + File + Communication)
+      description: 统一核心服务 (IAM + Doc + Flow + File + Communication + AI)
       status: implemented
       dependencies: []
       service_dir: unified-core
 
-    - name: pm
-      port: 8001
-      env_var: PM_PORT
-      description: 项目管理服务
-      status: implemented
-      dependencies: [unified-core]
-
-    - name: integration
-      port: 8005
-      env_var: INTEGRATION_PORT
-      description: 集成服务
-      status: implemented
-      dependencies: [unified-core]
-
-  # ERP/财务服务 (8010-8019)
+  # 经营管理服务 (8010-8019)
   erp:
     - name: erp
       port: 8010
@@ -36,49 +22,49 @@ service_groups:
       status: implemented
       dependencies: [unified-core]
 
+  # 协同办公服务 (8020-8029)
+  collaboration:
     - name: hrm
-      port: 8011
+      port: 8020
       env_var: HRM_PORT
       description: 人力资源管理
       status: implemented
       dependencies: [unified-core]
 
+    - name: pm
+      port: 8022
+      env_var: PM_PORT
+      description: 项目管理服务
+      status: implemented
+      dependencies: [unified-core]
+
     - name: crm
-      port: 8012
+      port: 8029
       env_var: CRM_PORT
       description: 客户关系管理
       status: implemented
       dependencies: [unified-core]
 
-  # PLM/研发服务 (8020-8029)
-  plm:
-    - name: rs
-      port: 8020
-      env_var: RS_PORT
-      description: 研发管理
+  # 生产制造服务 (8030-8039)
+  manufacturing:
+    - name: mes
+      port: 8030
+      env_var: MES_PORT
+      description: 生产执行系统
       status: implemented
       dependencies: [unified-core]
+      service_dir: mes
 
-    - name: manufacturing
-      port: 8023
-      env_var: MANUFACTURING_PORT
-      description: 制造服务 (PDM + MES)
+    - name: pdm
+      port: 8031
+      env_var: PDM_PORT
+      description: 产品数据管理
       status: implemented
-      dependencies: [unified-core]
-      service_dir: manufacturing
+      dependencies: [unified-core, mes]
+      service_dir: pdm
 
-  # MES/生产服务 (8030-8039)
-  mes:
-    - name: quality-assurance
-      port: 8032
-      env_var: QUALITY_ASSURANCE_PORT
-      description: 质量保证服务 (QMS + LIMS + EHS)
-      status: implemented
-      dependencies: [unified-core]
-      service_dir: quality-assurance
-
-  # SCM/供应链服务 (8040-8049)
-  scm:
+  # 供应链服务 (8040-8049)
+  supply-chain:
     - name: scm
       port: 8040
       env_var: SCM_PORT
@@ -86,44 +72,105 @@ service_groups:
       status: implemented
       dependencies: [unified-core]
 
-    - name: srm
-      port: 8041
-      env_var: SRM_PORT
-      description: 供应商管理
-      status: implemented
-      dependencies: [unified-core]
-
     - name: wms
-      port: 8042
+      port: 8041
       env_var: WMS_PORT
       description: 仓储管理
       status: implemented
-      dependencies: [unified-core]
+      dependencies: [unified-core, scm]
 
-  # 基础设施服务 (8050-8059)
-  infrastructure:
-    - name: gis
+    - name: srm
+      port: 8042
+      env_var: SRM_PORT
+      description: 供应商管理
+      status: implemented
+      dependencies: [unified-core, scm]
+
+  # 质量/研发服务 (8050-8059)
+  quality-rd:
+    - name: qms
+      port: 8050
+      env_var: QMS_PORT
+      description: 质量管理
+      status: implemented
+      dependencies: [unified-core, erp, mes]
+      service_dir: qms
+
+    - name: lims
+      port: 8051
+      env_var: LIMS_PORT
+      description: 实验室信息管理
+      status: implemented
+      dependencies: [unified-core, qms]
+      service_dir: lims
+
+    - name: ehs
+      port: 8052
+      env_var: EHS_PORT
+      description: 环境健康安全
+      status: implemented
+      dependencies: [unified-core, mes, qms]
+      service_dir: ehs
+
+    - name: rs
       port: 8053
-      env_var: GIS_PORT
-      description: 地理信息服务
+      env_var: RS_PORT
+      description: 研发管理
       status: implemented
-      dependencies: [unified-core]
+      dependencies: [unified-core, pm, mes]
 
-  # 数据分析服务 (8060-8069)
+  # 数据分析/门户服务 (8060-8069)
   analytics:
-    - name: ai
+    - name: bi
+      port: 8060
+      env_var: BI_PORT
+      description: 商业智能
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: bi
+
+    - name: report
+      port: 8061
+      env_var: REPORT_PORT
+      description: 报表服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: report
+
+    - name: monitor
       port: 8062
-      env_var: AI_PORT
-      description: 人工智能服务
+      env_var: MONITOR_PORT
+      description: 系统监控
       status: implemented
       dependencies: [unified-core]
 
-  # 扩展服务 (8070-8079)
-  extensions:
+    - name: portal
+      port: 8063
+      env_var: PORTAL_PORT
+      description: 企业门户
+      status: implemented
+      dependencies: [unified-core]
+
+  # 基础设施服务 (8070-8079)
+  infrastructure:
     - name: mobile
       port: 8070
       env_var: MOBILE_PORT
       description: 移动服务
+      status: implemented
+      dependencies: [unified-core]
+
+    - name: gis
+      port: 8071
+      env_var: GIS_PORT
+      description: 地理信息服务
+      status: implemented
+      dependencies: [unified-core, mes]
+
+    - name: integration
+      port: 8072
+      env_var: INTEGRATION_PORT
+      description: 集成服务
       status: implemented
       dependencies: [unified-core]
 
@@ -139,12 +186,6 @@ virtual_services:
     port: 8000
     env_var: NOTIFICATION_PORT
     description: 通知服务 (由 unified-core 提供)
-    provider: unified-core
-
-  - name: portal
-    port: 8000
-    env_var: PORTAL_PORT
-    description: 统一门户 (由 unified-core 提供)
     provider: unified-core
 
   - name: flow
@@ -176,48 +217,6 @@ virtual_services:
     env_var: DOC_PORT
     description: 文档管理 (由 unified-core 提供)
     provider: unified-core
-
-  - name: lims
-    port: 8023
-    env_var: LIMS_PORT
-    description: 实验室管理 (由 manufacturing 提供)
-    provider: manufacturing
-
-  - name: pdm
-    port: 8023
-    env_var: PDM_PORT
-    description: 产品数据管理 (由 manufacturing 提供)
-    provider: manufacturing
-
-  - name: mes
-    port: 8023
-    env_var: MES_PORT
-    description: 制造执行系统 (由 manufacturing 提供)
-    provider: manufacturing
-
-  - name: qms
-    port: 8031
-    env_var: QMS_PORT
-    description: 质量管理 (由 quality-assurance 提供)
-    provider: quality-assurance
-
-  - name: ehs
-    port: 8031
-    env_var: EHS_PORT
-    description: 环境健康安全 (由 quality-assurance 提供)
-    provider: quality-assurance
-
-  - name: bi
-    port: 8060
-    env_var: BI_PORT
-    description: 商业智能 (预留)
-    status: reserved
-
-  - name: report
-    port: 8061
-    env_var: REPORT_PORT
-    description: 报表服务 (预留)
-    status: reserved
 
 # 特殊端口配置
 special_ports:
@@ -257,48 +256,60 @@ special_ports:
 module_groups:
   core:
     - unified-core
-    - pm
-    - integration
 
   erp:
     - erp
+
+  collaboration:
     - hrm
+    - pm
     - crm
 
-  plm:
-    - rs
-    - manufacturing
+  manufacturing:
+    - mes
+    - pdm
 
-  mes:
-    - quality-assurance
-
-  scm:
+  supply-chain:
     - scm
-    - srm
     - wms
+    - srm
 
-  infrastructure:
-    - gis
+  quality-rd:
+    - qms
+    - lims
+    - ehs
+    - rs
 
   analytics:
-    - ai
+    - bi
+    - report
+    - monitor
+    - portal
 
-  extensions:
+  infrastructure:
     - mobile
+    - gis
+    - integration
 
   all:
     - unified-core
-    - pm
-    - integration
     - erp
     - hrm
+    - pm
     - crm
-    - rs
-    - manufacturing
-    - quality-assurance
+    - mes
+    - pdm
     - scm
-    - srm
     - wms
-    - gis
-    - ai
+    - srm
+    - qms
+    - lims
+    - ehs
+    - rs
+    - bi
+    - report
+    - monitor
+    - portal
     - mobile
+    - gis
+    - integration

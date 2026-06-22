@@ -1,0 +1,15 @@
+code: report
+name: Report
+version: 1.0.0
+description: TOPEMS-Report
+author: TOPEMS
+category: Analytics
+plugin_type: business
+
+runtime:
+  port: 8061
+  health_endpoint: /health
+  base_path: /api/report
+
+dependencies:
+  - unified-core

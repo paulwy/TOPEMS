@@ -34,21 +34,25 @@ load_services_config() {
     else
         SERVICES_CONFIG="
 iam         svc/unified-core       unified-core-service        8000
+mes         svc/mes                 topems-mes                  8030
+pdm         svc/pdm                 topems-pdm                  8031
+qms         svc/qms                 topems-qms                  8050
+lims        svc/lims                topems-lims                 8051
+ehs         svc/ehs                 topems-ehs                  8052
+bi          svc/bi                  topems-bi                   8060
+report      svc/report              topems-report               8061
 pm          svc/pm                 topems-pm                   8001
-manufacturing   svc/manufacturing     manufacturing-service   8023
-quality-assurance svc/quality-assurance quality-assurance-service 8032
-analytics       svc/analytics         analytics-service       8060
 integration  svc/integration        topems-integration        8005
 portal       svc/portal             topems-portal            8066
 erp          svc/erp                topems-erp               8010
 hrm          svc/hrm                topems-hrm               8011
 crm          svc/crm                topems-crm               8012
-ai           svc/ai                 topems-ai                8062
+ai           svc/ai                 topems-ai                8050
 rs           svc/rs                 topems-rs                8020
 scm          svc/scm                topems-scm               8040
 srm          svc/srm                topems-srm               8041
 wms          svc/wms                topems-wms               8042
-gis          svc/gis                topems-gis               8053
+gis          svc/gis                topems-gis               8054
 mobile       svc/mobile             topems-mobile             8070
 monitor      svc/monitor            topems-monitor            8064
 "
@@ -113,9 +117,13 @@ get_port_env_var() {
     case "$service_name" in
         iam) echo "CORE_PORT" ;;
         pm) echo "PM_PORT" ;;
-        manufacturing) echo "MANUFACTURING_PORT" ;;
-        quality-assurance) echo "QUALITY_ASSURANCE_PORT" ;;
-        analytics) echo "ANALYTICS_PORT" ;;
+        mes) echo "MES_PORT" ;;
+        pdm) echo "PDM_PORT" ;;
+        qms) echo "QMS_PORT" ;;
+        lims) echo "LIMS_PORT" ;;
+        ehs) echo "EHS_PORT" ;;
+        bi) echo "BI_PORT" ;;
+        report) echo "REPORT_PORT" ;;
         rs) echo "RS_PORT" ;;
         # 以下服务使用 SERVER_PORT 或 PORT
         erp|hrm|crm|ai|scm|srm|wms|gis|mobile|monitor|portal|integration)
@@ -159,9 +167,13 @@ start_service() {
     case "$service_name" in
         iam) env_cmd="env CORE_PORT=$port" ;;
         pm) env_cmd="env PM_PORT=$port" ;;
-        manufacturing) env_cmd="env MANUFACTURING_PORT=$port" ;;
-        quality-assurance) env_cmd="env QUALITY_ASSURANCE_PORT=$port" ;;
-        analytics) env_cmd="env ANALYTICS_PORT=$port" ;;
+        mes) env_cmd="env MES_PORT=$port" ;;
+        pdm) env_cmd="env PDM_PORT=$port" ;;
+        qms) env_cmd="env QMS_PORT=$port" ;;
+        lims) env_cmd="env LIMS_PORT=$port" ;;
+        ehs) env_cmd="env EHS_PORT=$port" ;;
+        bi) env_cmd="env BI_PORT=$port" ;;
+        report) env_cmd="env REPORT_PORT=$port" ;;
         *) env_cmd="env SERVER_PORT=$port" ;;
     esac
     $env_cmd nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &

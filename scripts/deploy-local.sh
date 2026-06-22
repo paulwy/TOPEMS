@@ -135,29 +135,9 @@ echo ""
 # 5. 编译后端服务
 print_info "5. 编译后端服务..."
 
-# 编译 lib
-print_info "编译共享库..."
-cd lib
-cargo build --release
-cd ..
-
-# 编译 unified-core
-print_info "编译 unified-core..."
-cd svc/unified-core
-cargo build --release
-cd ../..
-
-# 编译 PM 服务
-print_info "编译 PM 服务..."
-cd svc/pm
-cargo build --release
-cd ../..
-
-# 编译 HRM 服务
-print_info "编译 HRM 服务..."
-cd svc/hrm
-cargo build --release
-cd ../..
+# 编译所有服务（使用 workspace）
+print_info "编译所有后端服务..."
+cargo build --release --workspace
 
 print_ok "后端编译完成"
 
@@ -204,6 +184,41 @@ print_info "启动 HRM 服务 (端口 8011)..."
 ./target/release/topems-hrm &
 HRM_PID=$!
 
+# 后台启动 MES 服务
+print_info "启动 MES 服务 (端口 8030)..."
+MES_PORT=8030 ./target/release/topems-mes &
+MES_PID=$!
+
+# 后台启动 PDM 服务
+print_info "启动 PDM 服务 (端口 8031)..."
+PDM_PORT=8031 ./target/release/topems-pdm &
+PDM_PID=$!
+
+# 后台启动 QMS 服务
+print_info "启动 QMS 服务 (端口 8050)..."
+QMS_PORT=8050 ./target/release/topems-qms &
+QMS_PID=$!
+
+# 后台启动 LIMS 服务
+print_info "启动 LIMS 服务 (端口 8051)..."
+LIMS_PORT=8051 ./target/release/topems-lims &
+LIMS_PID=$!
+
+# 后台启动 EHS 服务
+print_info "启动 EHS 服务 (端口 8052)..."
+EHS_PORT=8052 ./target/release/topems-ehs &
+EHS_PID=$!
+
+# 后台启动 BI 服务
+print_info "启动 BI 服务 (端口 8060)..."
+BI_PORT=8060 ./target/release/topems-bi &
+BI_PID=$!
+
+# 后台启动 Report 服务
+print_info "启动 Report 服务 (端口 8061)..."
+REPORT_PORT=8061 ./target/release/topems-report &
+REPORT_PID=$!
+
 # 前端开发服务器（使用未被占用的端口）
 print_info "启动前端开发服务器 (端口 3001)..."
 cd apps/web
@@ -215,7 +230,7 @@ echo ""
 
 # 8. 等待服务启动
 print_info "8. 等待服务启动..."
-sleep 10
+sleep 15
 
 # 9. 健康检查
 print_info "9. 健康检查..."
@@ -239,6 +254,55 @@ if curl -s http://localhost:8011/health > /dev/null; then
     print_ok "HRM 服务健康"
 else
     print_fail "HRM 服务未响应"
+fi
+
+# 检查 MES 服务
+if curl -s http://localhost:8030/health > /dev/null; then
+    print_ok "MES 服务健康"
+else
+    print_fail "MES 服务未响应"
+fi
+
+# 检查 PDM 服务
+if curl -s http://localhost:8031/health > /dev/null; then
+    print_ok "PDM 服务健康"
+else
+    print_fail "PDM 服务未响应"
+fi
+
+# 检查 QMS 服务
+if curl -s http://localhost:8050/health > /dev/null; then
+    print_ok "QMS 服务健康"
+else
+    print_fail "QMS 服务未响应"
+fi
+
+# 检查 LIMS 服务
+if curl -s http://localhost:8051/health > /dev/null; then
+    print_ok "LIMS 服务健康"
+else
+    print_fail "LIMS 服务未响应"
+fi
+
+# 检查 EHS 服务
+if curl -s http://localhost:8052/health > /dev/null; then
+    print_ok "EHS 服务健康"
+else
+    print_fail "EHS 服务未响应"
+fi
+
+# 检查 BI 服务
+if curl -s http://localhost:8060/health > /dev/null; then
+    print_ok "BI 服务健康"
+else
+    print_fail "BI 服务未响应"
+fi
+
+# 检查 Report 服务
+if curl -s http://localhost:8061/health > /dev/null; then
+    print_ok "Report 服务健康"
+else
+    print_fail "Report 服务未响应"
 fi
 
 # 检查前端
@@ -286,6 +350,13 @@ echo ""
 echo "访问地址："
 echo "  前端: http://localhost:3001"
 echo "  API:  http://localhost:8000"
+echo "  MES:  http://localhost:8030"
+echo "  PDM:  http://localhost:8031"
+echo "  QMS:  http://localhost:8050"
+echo "  LIMS: http://localhost:8051"
+echo "  EHS:  http://localhost:8052"
+echo "  BI:   http://localhost:8060"
+echo "  Report: http://localhost:8061"
 echo ""
 echo "默认管理员账户："
 echo "  用户名: admin"
@@ -295,8 +366,15 @@ echo "进程 ID（停止服务时使用）："
 echo "  unified-core: $CORE_PID"
 echo "  PM: $PM_PID"
 echo "  HRM: $HRM_PID"
+echo "  MES: $MES_PID"
+echo "  PDM: $PDM_PID"
+echo "  QMS: $QMS_PID"
+echo "  LIMS: $LIMS_PID"
+echo "  EHS: $EHS_PID"
+echo "  BI: $BI_PID"
+echo "  Report: $REPORT_PID"
 echo "  Web: $WEB_PID"
 echo ""
 echo "停止服务命令："
-echo "  kill $CORE_PID $PM_PID $HRM_PID $WEB_PID"
+echo "  kill $CORE_PID $PM_PID $HRM_PID $MES_PID $PDM_PID $QMS_PID $LIMS_PID $EHS_PID $BI_PID $REPORT_PID $WEB_PID"
 echo ""

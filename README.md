@@ -18,18 +18,20 @@
 - 📢 **通知服务** - 实时通知，消息推送
 
 ### 业务服务
-- 📊 **数据分析** - 实时报表，数据可视化
-- 🏭 **质量管控** - QMS质量管理，EHS安全环保
-- 💼 **资源规划** - ERP企业资源，MES制造执行
+- 🏭 **制造执行** - MES制造执行系统
+- 📋 **产品数据** - PDM产品数据管理
+- 🏭 **质量管控** - QMS质量管理
+- 🔬 **实验室** - LIMS实验室管理
+- 🌍 **环境安全** - EHS环境健康安全
+- 📈 **商业智能** - BI数据分析
+- 📊 **报表服务** - Report报表生成
+- 💼 **资源规划** - ERP企业资源计划
+- 👥 **人力资源** - HRM人力资源管理（共享Schema）
 - 📦 **供应链** - SCM供应链，SRM供应商，CRM客户关系
 - 📦 **仓储物流** - WMS仓库管理
-- 👥 **人力资源** - HRM人力资源管理（共享Schema）
-- 🔬 **实验室** - LIMS实验室管理
 - 🔬 **研发管理** - RS科研研发
 - 🌍 **地理信息** - GIS服务
-- 📋 **产品数据** - PDM产品数据管理
 - 💬 **即时通讯** - IM即时通讯
-- 📈 **商业智能** - BI数据分析
 - 📮 **邮件服务** - 邮件发送与模板
 - 📱 **移动端** - 移动端API服务
 - 🏠 **企业门户** - 统一门户入口
@@ -71,10 +73,14 @@ topems/
 │       └── src/                 # 可复用组件、stores、API
 ├── svc/                          # 后端服务 (Rust)
 │   ├── unified-core/            # 统一核心服务 (8000)
+│   ├── mes/                     # 制造执行系统 (8030)
+│   ├── pdm/                     # 产品数据管理 (8031)
+│   ├── qms/                     # 质量管理系统 (8050)
+│   ├── lims/                    # 实验室管理系统 (8051)
+│   ├── ehs/                     # 环境健康安全 (8052)
+│   ├── bi/                      # 商业智能 (8060)
+│   ├── report/                  # 报表服务 (8061)
 │   ├── ai/                      # AI 服务 (8050)
-│   ├── analytics/               # 数据分析服务 (8044)
-│   ├── manufacturing/           # 制造服务 (8030)
-│   ├── quality-assurance/       # 质量管控服务 (8052)
 │   ├── hrm/                     # 人力资源管理 (8011)
 │   ├── crm/                     # 客户关系管理 (8012)
 │   ├── pm/                      # 项目管理 (8046)
@@ -214,12 +220,12 @@ cargo check --workspace
 
 | 端口范围 | 服务类型 | 说明 |
 |---------|---------|------|
-| 8000-8009 | 平台核心服务 | Unified Core, AI, Analytics, Manufacturing, Quality Assurance |
+| 8000-8009 | 平台核心服务 | Unified Core |
 | 8010-8019 | 业务服务 | ERP, HRM, CRM |
-| 8030-8039 | 制造服务 | Manufacturing |
+| 8030-8039 | 制造服务 | MES, PDM |
 | 8040-8049 | 供应链服务 | SCM, WMS |
-| 8050-8059 | 辅助服务 | AI, GIS, Mobile, Quality-Assurance |
-| 8060-8069 | 扩展服务 | Analytics, Monitor, Portal, Integration, SRM |
+| 8050-8059 | 质量与实验室服务 | QMS, LIMS, EHS, AI |
+| 8060-8069 | 分析与扩展服务 | BI, Report, Monitor, Portal |
 | 8000 | 核心服务 | Unified-Core (IAM) |
 | 3000 | 前端 | Host Shell 开发服务器 |
 | 3001 | 前端 | Remote Module 开发服务器 |
@@ -229,23 +235,26 @@ cargo check --workspace
 | 服务名 | 端口 | 服务路径 | 说明 |
 |-------|------|---------|------|
 | unified-core | 8000 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin） |
+| mes | 8030 | svc/mes | 制造执行系统 |
+| pdm | 8031 | svc/pdm | 产品数据管理 |
+| qms | 8050 | svc/qms | 质量管理系统 |
+| lims | 8051 | svc/lims | 实验室信息管理系统 |
+| ehs | 8052 | svc/ehs | 环境健康安全管理 |
+| bi | 8060 | svc/bi | 商业智能 |
+| report | 8061 | svc/report | 报表服务 |
 | erp | 8010 | svc/erp | 企业资源计划 |
 | hrm | 8011 | svc/hrm | 人力资源管理 |
 | crm | 8012 | svc/crm | 客户关系管理 |
-| manufacturing | 8030 | svc/manufacturing | 制造服务（MES, PDM） |
 | scm | 8040 | svc/scm | 供应链管理 |
 | wms | 8042 | svc/wms | 仓库管理 |
 | pm | 8046 | svc/pm | 项目管理 |
-| analytics | 8044 | svc/analytics | 数据分析服务（BI, Report） |
 | ai | 8050 | svc/ai | AI 服务 |
-| quality-assurance | 8052 | svc/quality-assurance | 质量管控服务（QMS, LIMS, EHS） |
 | gis | 8054 | svc/gis | 地理信息系统 |
 | mobile | 8056 | svc/mobile | 移动端服务 |
-| srm | 8060 | svc/srm | 供应商关系管理 |
+| rs | 8058 | svc/rs | 研发管理 |
 | monitor | 8064 | svc/monitor | 监控服务 |
 | portal | 8066 | svc/portal | 企业门户 |
 | integration | 8068 | svc/integration | 集成服务 |
-| rs | 8058 | svc/rs | 研发管理 |
 
 ### 前端端口
 
@@ -596,5 +605,5 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-20
-**版本**: v2.5.0
+**最后更新**: 2026-06-22
+**版本**: v2.5.0 (服务拆分版)

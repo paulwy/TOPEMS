@@ -7,6 +7,14 @@ members = [
     "svc/manufacturing",     # mes + pdm
     "svc/quality-assurance", # qms + lims + ehs
     "svc/analytics",        # bi + report
+    # [拆分服务] 独立部署
+    "svc/mes",
+    "svc/pdm",
+    "svc/qms",
+    "svc/lims",
+    "svc/ehs",
+    "svc/bi",
+    "svc/report",
     # [独立服务]
     "svc/ai",
     "svc/erp",

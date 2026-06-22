@@ -1,0 +1,364 @@
+name: Split Services CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'svc/mes/**'
+      - 'svc/pdm/**'
+      - 'svc/qms/**'
+      - 'svc/lims/**'
+      - 'svc/ehs/**'
+      - 'svc/bi/**'
+      - 'svc/report/**'
+      - 'lib/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/split-services.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'svc/mes/**'
+      - 'svc/pdm/**'
+      - 'svc/qms/**'
+      - 'svc/lims/**'
+      - 'svc/ehs/**'
+      - 'svc/bi/**'
+      - 'svc/report/**'
+      - 'lib/**'
+
+env:
+  REGISTRY: ghcr.io
+  RUST_VERSION: 1.78
+  CARGO_TERM_COLOR: always
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      mes: ${{ steps.changes.outputs.mes }}
+      pdm: ${{ steps.changes.outputs.pdm }}
+      qms: ${{ steps.changes.outputs.qms }}
+      lims: ${{ steps.changes.outputs.lims }}
+      ehs: ${{ steps.changes.outputs.ehs }}
+      bi: ${{ steps.changes.outputs.bi }}
+      report: ${{ steps.changes.outputs.report }}
+      lib: ${{ steps.changes.outputs.lib }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            mes:
+              - 'svc/mes/**'
+            pdm:
+              - 'svc/pdm/**'
+            qms:
+              - 'svc/qms/**'
+            lims:
+              - 'svc/lims/**'
+            ehs:
+              - 'svc/ehs/**'
+            bi:
+              - 'svc/bi/**'
+            report:
+              - 'svc/report/**'
+            lib:
+              - 'lib/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
+  build-test:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: mes
+            port: 8030
+            changed: ${{ needs.detect-changes.outputs.mes }}
+          - name: pdm
+            port: 8031
+            changed: ${{ needs.detect-changes.outputs.pdm }}
+          - name: qms
+            port: 8050
+            changed: ${{ needs.detect-changes.outputs.qms }}
+          - name: lims
+            port: 8051
+            changed: ${{ needs.detect-changes.outputs.lims }}
+          - name: ehs
+            port: 8052
+            changed: ${{ needs.detect-changes.outputs.ehs }}
+          - name: bi
+            port: 8060
+            changed: ${{ needs.detect-changes.outputs.bi }}
+          - name: report
+            port: 8061
+            changed: ${{ needs.detect-changes.outputs.report }}
+
+    if: matrix.service.changed == 'true' || needs.detect-changes.outputs.lib == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: x86_64-unknown-linux-musl
+          components: rustfmt, clippy
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-cargo-${{ matrix.service.name }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ matrix.service.name }}-
+            ${{ runner.os }}-cargo-
+
+      - name: Format check
+        run: cargo fmt --check -p topems-${{ matrix.service.name }}
+
+      - name: Clippy lint
+        run: cargo clippy -p topems-${{ matrix.service.name }} -- -D warnings
+
+      - name: Build service
+        run: cargo build --release -p topems-${{ matrix.service.name }}
+
+      - name: Run tests
+        run: cargo test -p topems-${{ matrix.service.name }} -- --test-threads=1
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: topems-${{ matrix.service.name }}-binary
+          path: target/release/topems-${{ matrix.service.name }}
+
+  docker-build:
+    needs: [detect-changes, build-test]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: mes
+            port: 8030
+            changed: ${{ needs.detect-changes.outputs.mes }}
+          - name: pdm
+            port: 8031
+            changed: ${{ needs.detect-changes.outputs.pdm }}
+          - name: qms
+            port: 8050
+            changed: ${{ needs.detect-changes.outputs.qms }}
+          - name: lims
+            port: 8051
+            changed: ${{ needs.detect-changes.outputs.lims }}
+          - name: ehs
+            port: 8052
+            changed: ${{ needs.detect-changes.outputs.ehs }}
+          - name: bi
+            port: 8060
+            changed: ${{ needs.detect-changes.outputs.bi }}
+          - name: report
+            port: 8061
+            changed: ${{ needs.detect-changes.outputs.report }}
+
+    if: github.event_name == 'push' && (matrix.service.changed == 'true' || needs.detect-changes.outputs.lib == 'true')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: topems-${{ matrix.service.name }}-binary
+          path: target/release/
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/topems-${{ matrix.service.name }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: svc/${{ matrix.service.name }}/Dockerfile.local
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubeconfig for staging
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > ~/.kube/config
+
+      - name: Deploy to staging cluster
+        run: |
+          kubectl apply -k k8s/ --namespace=topems-staging
+
+      - name: Verify staging deployment
+        run: |
+          kubectl rollout status deployment/mes -n topems-staging --timeout=300s || true
+          kubectl rollout status deployment/pdm -n topems-staging --timeout=300s || true
+          kubectl rollout status deployment/qms -n topems-staging --timeout=300s || true
+          kubectl rollout status deployment/lims -n topems-staging --timeout=300s || true
+          kubectl rollout status deployment/ehs -n topems-staging --timeout=300s || true
+          kubectl rollout status deployment/bi -n topems-staging --timeout=300s || true
+          kubectl rollout status deployment/report -n topems-staging --timeout=300s || true
+
+      - name: Health check staging
+        run: |
+          sleep 30
+          kubectl get pods -n topems-staging
+
+  deploy-production:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubeconfig for production
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+
+      - name: Deploy to production cluster
+        run: |
+          kubectl apply -k k8s/ --namespace=topems
+
+      - name: Verify production deployment
+        run: |
+          kubectl rollout status deployment/mes -n topems --timeout=300s
+          kubectl rollout status deployment/pdm -n topems --timeout=300s
+          kubectl rollout status deployment/qms -n topems --timeout=300s
+          kubectl rollout status deployment/lims -n topems --timeout=300s
+          kubectl rollout status deployment/ehs -n topems --timeout=300s
+          kubectl rollout status deployment/bi -n topems --timeout=300s
+          kubectl rollout status deployment/report -n topems --timeout=300s
+
+      - name: Health check production
+        run: |
+          sleep 30
+          kubectl get pods -n topems
+          kubectl describe services -n topems
+
+      - name: Slack notification
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ TOPEMS Services Deployment Complete",
+              "attachments": [
+                {
+                  "title": "Deployment Summary",
+                  "color": "#36a64f",
+                  "fields": [
+                    {
+                      "title": "Branch",
+                      "value": "${{ github.ref }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Commit",
+                      "value": "${{ github.sha }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Author",
+                      "value": "${{ github.actor }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  rollback:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+
+      - name: Rollback deployments
+        run: |
+          kubectl rollout undo deployment/mes -n topems
+          kubectl rollout undo deployment/pdm -n topems
+          kubectl rollout undo deployment/qms -n topems
+          kubectl rollout undo deployment/lims -n topems
+          kubectl rollout undo deployment/ehs -n topems
+          kubectl rollout undo deployment/bi -n topems
+          kubectl rollout undo deployment/report -n topems
+
+      - name: Verify rollback
+        run: |
+          kubectl rollout status deployment/mes -n topems --timeout=300s
+          kubectl get pods -n topems
+
+      - name: Slack rollback notification
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "🔄 TOPEMS Services Rollback Triggered",
+              "attachments": [
+                {
+                  "title": "Rollback Summary",
+                  "color": "#ff9900",
+                  "fields": [
+                    {
+                      "title": "Triggered by",
+                      "value": "${{ github.actor }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL

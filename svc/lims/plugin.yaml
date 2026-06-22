@@ -1,0 +1,16 @@
+code: lims
+name: LIMS
+version: 1.0.0
+description: TOPEMS-LIMS
+author: TOPEMS
+category: Quality
+plugin_type: business
+
+runtime:
+  port: 8051
+  health_endpoint: /health
+  base_path: /api/qa
+
+dependencies:
+  - unified-core
+  - qms

@@ -1,0 +1,17 @@
+code: qms
+name: QMS
+version: 1.0.0
+description: TOPEMS-QMS
+author: TOPEMS
+category: Quality
+plugin_type: business
+
+runtime:
+  port: 8050
+  health_endpoint: /health
+  base_path: /api/qa
+
+dependencies:
+  - unified-core
+  - erp
+  - mes

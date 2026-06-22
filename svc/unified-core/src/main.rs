@@ -103,7 +103,9 @@ async fn main() {
     modules::tenant::init_database(&pool).await.expect("Failed to init tenant database");
     modules::billing::init_database(&pool).await.expect("Failed to init billing database");
     modules::plugin::init_database(&pool).await.expect("Failed to init plugin database");
-    modules::ai::init_database(&pool).await.expect("Failed to init ai database");
+    if let Err(e) = modules::ai::init_database(&pool).await {
+        tracing::warn!("⚠️ AI module database init failed: {}. AI features may be limited.", e);
+    }
 
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());

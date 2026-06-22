@@ -1,0 +1,119 @@
+# TOPEMS Grafana Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: topems-dashboard
+  namespace: topems
+  labels:
+    grafana_dashboard: "1"
+data:
+  topems-services.json: |
+    {
+      "dashboard": {
+        "title": "TOPEMS Split Services Dashboard",
+        "uid": "topems-split-services",
+        "tags": ["topems", "services", "monitoring"],
+        "timezone": "browser",
+        "refresh": "30s",
+        "panels": [
+          {
+            "title": "Service Status",
+            "type": "stat",
+            "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "up{namespace=\"topems\"}",
+                "legendFormat": "{{ service }}"
+              }
+            ],
+            "options": {
+              "colorMode": "background",
+              "mappings": [
+                {"type": "value", "options": {"1": {"text": "UP", "color": "green"}, "0": {"text": "DOWN", "color": "red"}}}
+              ]
+            }
+          },
+          {
+            "title": "Request Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{namespace=\"topems\"}[5m])) by (service)",
+                "legendFormat": "{{ service }}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "reqps"}
+            }
+          },
+          {
+            "title": "Error Rate",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{namespace=\"topems\", status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{namespace=\"topems\"}[5m])) by (service)",
+                "legendFormat": "{{ service }}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "percentunit", "max": 1}
+            }
+          },
+          {
+            "title": "Response Time (P95)",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"topems\"}[5m])) by (le, service))",
+                "legendFormat": "{{ service }}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "s"}
+            }
+          },
+          {
+            "title": "Memory Usage",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{namespace=\"topems\"}",
+                "legendFormat": "{{ pod }}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "bytes"}
+            }
+          },
+          {
+            "title": "CPU Usage",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{namespace=\"topems\"}[5m])",
+                "legendFormat": "{{ pod }}"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {"unit": "percentunit"}
+            }
+          },
+          {
+            "title": "Database Connections",
+            "type": "timeseries",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+            "targets": [
+              {
+                "expr": "pg_stat_activity_count{datname=\"topems\"}",
+                "legendFormat": "{{ state }}"
+              }
+            ]
+          }
+        ]
+      }
+    }

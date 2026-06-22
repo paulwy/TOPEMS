@@ -1,0 +1,71 @@
+# EHS Service - Kubernetes Deployment and Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ehs
+  namespace: topems
+  labels:
+    app: ehs
+    suite: quality
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ehs
+  template:
+    metadata:
+      labels:
+        app: ehs
+        suite: quality
+    spec:
+      containers:
+      - name: ehs
+        image: topems/ehs:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8052
+          name: http
+        envFrom:
+        - configMapRef:
+            name: topems-config
+        - secretRef:
+            name: topems-secrets
+        env:
+        - name: EHS_PORT
+          value: "8052"
+        - name: MES_URL
+          value: "http://mes-service:8030"
+        - name: QMS_URL
+          value: "http://qms-service:8050"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8052
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8052
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ehs-service
+  namespace: topems
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8052
+    targetPort: 8052
+  selector:
+    app: ehs

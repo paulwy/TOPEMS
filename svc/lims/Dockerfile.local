@@ -1,0 +1,23 @@
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates tzdata wget
+
+RUN addgroup -S topems && adduser -S topems -G topems
+
+WORKDIR /app
+
+COPY target/release/topems-lims /usr/local/bin/topems-lims
+
+RUN chown -R topems:topems /usr/local/bin
+
+USER topems
+
+ENV LIMS_PORT=8051
+ENV RUST_LOG=info
+
+EXPOSE 8051
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8051/health || exit 1
+
+CMD ["topems-lims"]

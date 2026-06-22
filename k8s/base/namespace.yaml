@@ -1,0 +1,9 @@
+# TOPEMS Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: topems
+  labels:
+    app.kubernetes.io/name: topems
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: kubectl

@@ -1,0 +1,114 @@
+name: Build Services
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'svc/mes/**'
+      - 'svc/pdm/**'
+      - 'svc/qms/**'
+      - 'svc/lims/**'
+      - 'svc/ehs/**'
+      - 'svc/bi/**'
+      - 'svc/report/**'
+      - 'shared/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [mes, pdm, qms, lims, ehs, bi, report]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build ${{ matrix.service }} service
+        run: cargo build --release -p topems-${{ matrix.service }}
+
+      - name: Run clippy
+        run: cargo clippy --release -p topems-${{ matrix.service }} -- -D warnings
+
+      - name: Run tests
+        run: cargo test --release -p topems-${{ matrix.service }}
+
+  docker-build:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [mes, pdm, qms, lims, ehs, bi, report]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push ${{ matrix.service }} image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: svc/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            topems/${{ matrix.service }}:latest
+            topems/${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure Kubernetes context
+        uses: azure/k8s-set-context@v4
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -k k8s/
+          kubectl rollout restart deployment mes pdm qms lims ehs bi report -n topems

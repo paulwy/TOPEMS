@@ -1,0 +1,85 @@
+# TOPEMS Prometheus ServiceMonitor for Split Services
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: topems-split-services
+  namespace: topems
+  labels:
+    app: topems
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: topems
+  namespaceSelector:
+    matchNames:
+      - topems
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# PrometheusRule for Split Services
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: topems-split-services-alerts
+  namespace: topems
+  labels:
+    app: topems
+    release: prometheus
+spec:
+  groups:
+    - name: topems-service-health
+      rules:
+        - alert: ServiceDown
+          expr: up{namespace="topems"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Service {{ $labels.job }} is down"
+            description: "{{ $labels.job }} has been down for more than 1 minute."
+
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="topems", status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_requests_total{namespace="topems"}[5m])) by (service) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate on {{ $labels.service }}"
+            description: "Service {{ $labels.service }} has error rate > 10% for 5 minutes."
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace="topems"}[5m])) by (le, service)) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency on {{ $labels.service }}"
+            description: "Service {{ $labels.service }} P95 latency > 1s for 5 minutes."
+
+        - alert: MemoryUsageHigh
+          expr: |
+            container_memory_usage_bytes{namespace="topems"} / container_spec_memory_limit_bytes{namespace="topems"} > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage on {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} memory usage > 90% for 5 minutes."
+
+        - alert: CPUUsageHigh
+          expr: |
+            rate(container_cpu_usage_seconds_total{namespace="topems"}[5m]) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage on {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} CPU usage > 80% for 5 minutes."
