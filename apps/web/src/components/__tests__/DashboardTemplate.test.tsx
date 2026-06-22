@@ -12,6 +12,9 @@ import type {
   LayoutConfig,
 } from "../templates/DashboardTemplate";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {};

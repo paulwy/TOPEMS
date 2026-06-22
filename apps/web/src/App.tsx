@@ -15,6 +15,7 @@ import { GlobalLayout } from "./components/layout";
 import { DynamicRouter } from "./modules/loader/DynamicRouter";
 import { eventBus, ModuleEvents } from "./modules/loader/EventBus";
 import { logger } from "@/utils/logger";
+import { PluginProvider } from "./context/PluginContext";
 
 // Check if we're in static mode (Module Federation disabled)
 const IS_STATIC_MODE =
@@ -300,8 +301,10 @@ const App: React.FC = () => {
         <ToastProvider>
           <LoadingProvider>
             <AuthProvider>
-              <AppContent />
-              <Toaster />
+              <PluginProvider>
+                <AppContent />
+                <Toaster />
+              </PluginProvider>
             </AuthProvider>
           </LoadingProvider>
         </ToastProvider>

@@ -3,7 +3,7 @@ mod tests {
     use serde_json::json;
 
     async fn test_project_contract_crud() {
-        let rs_base_url = "http://localhost:8020";
+        let rs_base_url = "http://localhost:8058";
         let erp_base_url = "http://localhost:8010";
         let client = reqwest::Client::new();
 
@@ -144,7 +144,7 @@ mod tests {
     }
 
     async fn test_project_budget_crud() {
-        let rs_base_url = "http://localhost:8020";
+        let rs_base_url = "http://localhost:8058";
         let erp_base_url = "http://localhost:8010";
         let client = reqwest::Client::new();
 
@@ -282,7 +282,7 @@ mod tests {
     }
 
     async fn test_payment_schedule_crud() {
-        let rs_base_url = "http://localhost:8020";
+        let rs_base_url = "http://localhost:8058";
         let erp_base_url = "http://localhost:8010";
         let client = reqwest::Client::new();
 

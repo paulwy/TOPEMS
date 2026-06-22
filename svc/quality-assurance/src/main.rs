@@ -211,6 +211,12 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ Quality Assurance Service is running at http://{}", addr);
 
+    // 启动时自动注册到统一核心
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
+
     axum::serve(
         tokio::net::TcpListener::bind(&addr).await.unwrap(),
         app.into_make_service(),

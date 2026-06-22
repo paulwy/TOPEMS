@@ -1923,6 +1923,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("🔒 认证保护已启用");
     tracing::info!("📊 向量库功能已启用，嵌入模型: {}", embedding_model);
 
+    // 启动时自动注册到统一核心
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
+
     if use_ollama {
         tracing::info!(
             "✅ 使用 Ollama 本地 AI 服务 (模型: {}, 地址: {}, 超时: 120 秒)",

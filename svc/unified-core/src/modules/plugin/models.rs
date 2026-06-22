@@ -626,6 +626,34 @@ pub struct PluginWithRuntimeStatus {
     pub last_heartbeat: Option<DateTime<Utc>>,
 }
 
+/// 租户已安装插件（带运行时状态）
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TenantPluginWithRuntimeStatus {
+    // TenantPlugin fields
+    pub id: uuid::Uuid,
+    pub tenant_id: uuid::Uuid,
+    pub plugin_id: uuid::Uuid,
+    pub installed_version: Option<String>,
+    pub is_active: bool,
+    pub license_type: Option<String>,
+    pub license_expires_at: Option<DateTime<Utc>>,
+    pub activated_at: Option<DateTime<Utc>>,
+    pub last_used_at: Option<DateTime<Utc>>,
+    pub usage_count: Option<i32>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    // Plugin info
+    pub plugin_code: String,
+    pub plugin_name: String,
+    pub plugin_description: Option<String>,
+    pub plugin_version: String,
+    pub plugin_category: Option<String>,
+    // Runtime status
+    pub runtime_status: Option<String>,
+    pub runtime_url: Option<String>,
+    pub last_heartbeat: Option<DateTime<Utc>>,
+}
+
 // ============================================================================
 // Version Management Types
 // ============================================================================

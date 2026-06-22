@@ -4,6 +4,8 @@
 use crate::AppState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
+use std::env;
+
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,4 +90,36 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
+}
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+
+    let info = PluginInfo {
+        code: "qa".to_string(),
+        name: "质量管理与安全".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全".to_string(),
+        author: "TOPEMS".to_string(),
+        category: "Quality".to_string(),
+        plugin_type: "business".to_string(),
+        permissions: vec![],
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/qa/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[QA Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[QA Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[QA Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
 }

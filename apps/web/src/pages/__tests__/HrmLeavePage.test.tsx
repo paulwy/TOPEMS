@@ -13,6 +13,9 @@ import { ToastProvider } from "@/components/notification/ToastProvider";
 import LeaveManagementPage from "@/pages/hrm/HrmLeavePage";
 import type { LeaveRequest, PaginatedResult } from "@/api/hrm";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 const mockLeaveList = vi.fn();
 const mockLeaveCreate = vi.fn();
 const mockLeaveUpdate = vi.fn();

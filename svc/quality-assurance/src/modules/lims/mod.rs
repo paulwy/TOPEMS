@@ -6,6 +6,7 @@ pub mod inspection_record;
 pub mod instrument;
 pub mod reagent;
 pub mod statistics;
+pub mod lims_plugin;
 
 use sqlx::PgPool;
 

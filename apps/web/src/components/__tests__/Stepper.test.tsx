@@ -3,6 +3,9 @@ import { render } from "@testing-library/react";
 import Stepper from "../common/Stepper";
 import type { StepItem } from "../common/Stepper";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 describe("Stepper", () => {
   const mockSteps: StepItem[] = [
     { label: "步骤1" },

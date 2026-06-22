@@ -300,21 +300,21 @@ describe("format utils", () => {
     });
 
     it("should format KB", () => {
-      expect(formatFileSize(1024)).toBe("1 KB");
-      expect(formatFileSize(1536)).toBe("1.5 KB");
+      expect(formatFileSize(1024)).toBe("1.00 KB");
+      expect(formatFileSize(1536)).toBe("1.50 KB");
     });
 
     it("should format MB", () => {
-      expect(formatFileSize(1048576)).toBe("1 MB");
-      expect(formatFileSize(1572864)).toBe("1.5 MB");
+      expect(formatFileSize(1048576)).toBe("1.00 MB");
+      expect(formatFileSize(1572864)).toBe("1.50 MB");
     });
 
     it("should format GB", () => {
-      expect(formatFileSize(1073741824)).toBe("1 GB");
+      expect(formatFileSize(1073741824)).toBe("1.00 GB");
     });
 
     it("should format TB", () => {
-      expect(formatFileSize(1099511627776)).toBe("1 TB");
+      expect(formatFileSize(1099511627776)).toBe("1.00 TB");
     });
   });
 

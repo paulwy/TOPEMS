@@ -12,6 +12,7 @@ pub struct PluginInfo {
     pub version: String,
     pub description: String,
     pub permissions: Vec<PermissionDef>,
+    pub runtime_url: String,
 }
 
 /// 权限定义
@@ -25,6 +26,8 @@ pub struct PermissionDef {
 
 /// 获取插件信息
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let runtime_url = std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
+
     let info = PluginInfo {
         code: "scm".to_string(),
         name: "供应链管理".to_string(),
@@ -92,6 +95,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
                 action: "write".to_string(),
             },
         ],
+        runtime_url,
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
@@ -107,4 +111,35 @@ pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiRespo
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
+}
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+    let runtime_url = std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
+
+    let info = PluginInfo {
+        code: "scm".to_string(),
+        name: "供应链管理".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "SCM 供应链管理系统".to_string(),
+        permissions: vec![],
+        runtime_url,
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/scm/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[SCM Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[SCM Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[SCM Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
 }

@@ -1,13 +1,13 @@
 # TOPEMS 环境健康安全系统 API
 
 **服务**: topems-ehs (集成在 quality-assurance)
-**端口**: 8032
+**端口**: 8052 (已整合至质量管控服务)
 **版本**: v2
 
 ---
 
 > **API 路径**: `/api/ehs/` (例如 `/api/ehs/hazards`)
-> **实际访问地址**: `http://localhost:8032/api/ehs/`
+> **实际访问地址**: `http://localhost:8052/api/ehs/`
 
 ## 1. 概述
 
@@ -139,7 +139,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8032/api/ehs/hazards?status=open&level=重大风险" \
+curl -X GET "http://localhost:8052/api/ehs/hazards?status=open&level=重大风险" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -185,7 +185,7 @@ curl -X GET "http://localhost:8032/api/ehs/hazards?status=open&level=重大风�
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/ehs/hazards/hazard-001 \
+curl -X GET http://localhost:8052/api/ehs/hazards/hazard-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -236,7 +236,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8032/api/ehs/hazards \
+curl -X POST http://localhost:8052/api/ehs/hazards \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -292,7 +292,7 @@ curl -X POST http://localhost:8032/api/ehs/hazards \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8032/api/ehs/hazards/hazard-001 \
+curl -X DELETE http://localhost:8052/api/ehs/hazards/hazard-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -599,7 +599,7 @@ curl -X DELETE http://localhost:8032/api/ehs/hazards/hazard-001 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/health
+curl -X GET http://localhost:8052/health
 ```
 
 **成功响应** (200 OK):

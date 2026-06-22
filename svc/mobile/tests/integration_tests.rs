@@ -60,7 +60,9 @@ mod tests {
         }
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_create_patrol_record() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -89,7 +91,9 @@ mod tests {
         assert!(result.is_ok(), "巡检记录创建应该成功: {:?}", result.err());
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_list_patrol_records() {
         let pool = setup_test_pool().await.unwrap();
 

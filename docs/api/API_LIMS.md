@@ -1,13 +1,13 @@
 # TOPEMS 实验室管理系统 API
 
 **服务**: topems-lims (集成在 quality-assurance)
-**端口**: 8032
+**端口**: 8052 (已整合至质量管控服务)
 **版本**: v2
 
 ---
 
 > **API 路径**: `/api/lims/` (例如 `/api/lims/samples`)
-> **实际访问地址**: `http://localhost:8032/api/lims/`
+> **实际访问地址**: `http://localhost:8052/api/lims/`
 
 ## 1. 概述
 
@@ -135,7 +135,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8032/api/lims/samples?page=1&page_size=20&status=received" \
+curl -X GET "http://localhost:8052/api/lims/samples?page=1&page_size=20&status=received" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -188,7 +188,7 @@ curl -X GET "http://localhost:8032/api/lims/samples?page=1&page_size=20&status=r
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/lims/samples/sample-001 \
+curl -X GET http://localhost:8052/api/lims/samples/sample-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -248,7 +248,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8032/api/lims/samples \
+curl -X POST http://localhost:8052/api/lims/samples \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -306,7 +306,7 @@ curl -X POST http://localhost:8032/api/lims/samples \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8032/api/lims/samples/sample-001 \
+curl -X PUT http://localhost:8052/api/lims/samples/sample-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -348,7 +348,7 @@ curl -X PUT http://localhost:8032/api/lims/samples/sample-001 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8032/api/lims/samples/sample-001 \
+curl -X DELETE http://localhost:8052/api/lims/samples/sample-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -377,7 +377,7 @@ curl -X DELETE http://localhost:8032/api/lims/samples/sample-001 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/lims/processes \
+curl -X GET http://localhost:8052/api/lims/processes \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -432,7 +432,7 @@ curl -X GET http://localhost:8032/api/lims/processes \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/lims/processes/process-001 \
+curl -X GET http://localhost:8052/api/lims/processes/process-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -496,7 +496,7 @@ curl -X GET http://localhost:8032/api/lims/processes/process-001 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8032/api/lims/tasks?status=in_progress" \
+curl -X GET "http://localhost:8052/api/lims/tasks?status=in_progress" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -541,7 +541,7 @@ curl -X GET "http://localhost:8032/api/lims/tasks?status=in_progress" \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/lims/tasks/task-001 \
+curl -X GET http://localhost:8052/api/lims/tasks/task-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -603,7 +603,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8032/api/lims/tasks \
+curl -X POST http://localhost:8052/api/lims/tasks \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -664,7 +664,7 @@ curl -X POST http://localhost:8032/api/lims/tasks \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8032/api/lims/tasks/task-001 \
+curl -X PUT http://localhost:8052/api/lims/tasks/task-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -734,7 +734,7 @@ curl -X PUT http://localhost:8032/api/lims/tasks/task-001 \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8032/api/lims/tasks/task-001/complete_step \
+curl -X POST http://localhost:8052/api/lims/tasks/task-001/complete_step \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -788,7 +788,7 @@ curl -X POST http://localhost:8032/api/lims/tasks/task-001/complete_step \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8032/api/lims/records?conclusion=通过" \
+curl -X GET "http://localhost:8052/api/lims/records?conclusion=通过" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -848,7 +848,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8032/api/lims/records \
+curl -X POST http://localhost:8052/api/lims/records \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -899,7 +899,7 @@ curl -X POST http://localhost:8032/api/lims/records \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/lims/records/task/task-001 \
+curl -X GET http://localhost:8052/api/lims/records/task/task-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -951,7 +951,7 @@ curl -X GET http://localhost:8032/api/lims/records/task/task-001 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/health
+curl -X GET http://localhost:8052/health
 ```
 
 **成功响应** (200 OK):

@@ -1,13 +1,13 @@
 # TOPEMS 供应商管理系统 API
 
 **服务**: topems-srm
-**端口**: 8041
+**端口**: 8060
 **版本**: v2
 
 ---
 
 > **API 路径**: `/api/srm/` (例如 `/api/srm/suppliers`)
-> **实际访问地址**: `http://localhost:8041/api/srm/`
+> **实际访问地址**: `http://localhost:8060/api/srm/`
 
 ## 1. 概述
 
@@ -123,7 +123,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8041/api/srm/suppliers?status=approved&category=原材料供应商" \
+curl -X GET "http://localhost:8060/api/srm/suppliers?status=approved&category=原材料供应商" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -182,7 +182,7 @@ curl -X GET "http://localhost:8041/api/srm/suppliers?status=approved&category=�
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8041/api/srm/suppliers/supplier-001 \
+curl -X GET http://localhost:8060/api/srm/suppliers/supplier-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -270,7 +270,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8041/api/srm/suppliers \
+curl -X POST http://localhost:8060/api/srm/suppliers \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -324,7 +324,7 @@ curl -X POST http://localhost:8041/api/srm/suppliers \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8041/api/srm/suppliers/supplier-001 \
+curl -X PUT http://localhost:8060/api/srm/suppliers/supplier-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -377,7 +377,7 @@ curl -X PUT http://localhost:8041/api/srm/suppliers/supplier-001 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8041/api/srm/suppliers/supplier-001 \
+curl -X DELETE http://localhost:8060/api/srm/suppliers/supplier-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -476,7 +476,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8041/api/srm/supplier-evaluations \
+curl -X POST http://localhost:8060/api/srm/supplier-evaluations \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -610,7 +610,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8041/api/srm/purchase-orders \
+curl -X POST http://localhost:8060/api/srm/purchase-orders \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -677,7 +677,7 @@ curl -X POST http://localhost:8041/api/srm/purchase-orders \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8041/health
+curl -X GET http://localhost:8060/health
 ```
 
 **成功响应** (200 OK):

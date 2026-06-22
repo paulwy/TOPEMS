@@ -3,7 +3,7 @@ name = "unified-core-service"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing"
+description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing + AI"
 
 [dependencies]
 axum = { workspace = true, features = ["ws"] }

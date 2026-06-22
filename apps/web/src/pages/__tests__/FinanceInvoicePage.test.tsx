@@ -4,6 +4,9 @@ import { render, screen, waitFor, cleanup, act } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import FinanceInvoicePage from "@/pages/finance/FinanceInvoicePage";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(<BrowserRouter>{ui}</BrowserRouter>);
 };

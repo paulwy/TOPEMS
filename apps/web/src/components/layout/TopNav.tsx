@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Box,
   Button,
@@ -14,6 +14,28 @@ import { topNavItems, type NavItem } from "../../config/navigation";
 import { ModeToggle } from "../ModeToggle";
 import { NavDropdown } from "./NavDropdown";
 import { MobileNav } from "./MobileNav";
+import { useInstalledPlugins } from "../../context/PluginContext";
+
+// 菜单模块到插件代码的映射
+const menuModuleMapping: Record<string, string> = {
+  "/finance": "erp",
+  "/hrm": "hrm",
+  "/crm": "crm",
+  "/pm": "pm",
+  "/scm": "scm",
+  "/wms": "wms",
+  "/mes": "mes",
+  "/qms": "qa",
+  "/bi": "bi",
+  "/ai": "ai",
+  "/mobile": "mobile",
+  "/gis": "gis",
+  "/integration": "integration",
+  "/monitor": "monitor",
+  "/portal": "portal",
+  "/rs": "rs",
+  "/srm": "srm",
+};
 
 interface TopNavProps {
   onNavHover?: (event: React.MouseEvent<HTMLElement>, item: NavItem) => void;
@@ -23,10 +45,23 @@ interface TopNavProps {
 export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isPluginInstalled, loading } = useInstalledPlugins();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // 过滤后的导航菜单（根据插件安装状态）
+  const filteredNavItems = useMemo(() => {
+    return topNavItems.filter((item) => {
+      // 首页始终显示
+      if (item.path === "/dashboard") return true;
+      // 检查是否需要插件
+      const pluginCode = item.path ? menuModuleMapping[item.path] : null;
+      if (!pluginCode) return true; // 没有映射的菜单默认显示
+      return isPluginInstalled(pluginCode);
+    });
+  }, [isPluginInstalled]);
 
   const handleNavHover = useCallback(
     (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
@@ -195,7 +230,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
             overflow: "auto",
           }}
         >
-          {topNavItems.map((item) => renderNavItem(item))}
+          {filteredNavItems.map((item) => renderNavItem(item))}
         </Box>
 
         {/* 右侧工具 */}

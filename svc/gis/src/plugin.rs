@@ -3,6 +3,29 @@ use serde::{Deserialize, Serialize};
 
 use topems_shared::{ApiResponse, ServiceHealth};
 
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+
+    let info = get_plugin_info();
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/gis/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[GIS Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[GIS Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[GIS Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
     pub code: String,

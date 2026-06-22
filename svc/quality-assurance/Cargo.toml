@@ -3,7 +3,7 @@ name = "quality-assurance-service"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "TOPEMS Quality Assurance Service - Unified QMS, LIMS and EHS"
+description = "TOPEMS Quality Assurance Service - QMS, LIMS and EHS (Multi-binary)"
 
 [dependencies]
 axum = { workspace = true }
@@ -22,7 +22,16 @@ topems-shared = { path = "../../lib" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
+reqwest.workspace = true
 
 [[bin]]
-name = "quality-assurance-service"
-path = "src/main.rs"
+name = "qms-service"
+path = "src/main_qms.rs"
+
+[[bin]]
+name = "lims-service"
+path = "src/main_lims.rs"
+
+[[bin]]
+name = "ehs-service"
+path = "src/main_ehs.rs"

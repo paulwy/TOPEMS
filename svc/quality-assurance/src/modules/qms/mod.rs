@@ -4,6 +4,7 @@ pub mod quality_inspection;
 pub mod quality_issue;
 pub mod quality_standard;
 pub mod dashboard;
+pub mod qms_plugin;
 
 use sqlx::PgPool;
 

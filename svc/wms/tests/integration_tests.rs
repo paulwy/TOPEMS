@@ -20,7 +20,9 @@ mod tests {
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_warehouse_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -39,7 +41,9 @@ mod tests {
         }
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_inventory_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -77,7 +81,9 @@ mod tests {
         }
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_outbound_order_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -115,7 +121,9 @@ mod tests {
         }
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_stock_take_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -153,7 +161,9 @@ mod tests {
         }
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_create_warehouse() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -185,7 +195,9 @@ mod tests {
         assert!(result.is_ok(), "仓库创建应该成功");
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_list_warehouses() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -211,7 +223,9 @@ mod tests {
         }
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_inventory_transaction() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -298,7 +312,9 @@ mod tests {
             .await;
     }
 
+    // 需要实际的数据库连接和表结构
     #[tokio::test]
+    #[ignore]
     async fn test_audit_log_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 

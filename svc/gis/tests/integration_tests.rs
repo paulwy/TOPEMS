@@ -181,6 +181,7 @@ mod tests {
 
     // 测试审计日志
     #[tokio::test]
+    #[ignore] // 需要实际的数据库连接和表结构
     async fn test_audit_log() {
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()

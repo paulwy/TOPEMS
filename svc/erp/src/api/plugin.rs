@@ -17,6 +17,7 @@ pub struct PluginInfo {
     pub version: String,
     pub description: String,
     pub permissions: Vec<PermissionDef>,
+    pub runtime_url: String,
 }
 
 /// 权限定义
@@ -37,6 +38,8 @@ pub struct PluginHeartbeat {
 
 /// 获取插件信息
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let runtime_url = env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+
     let info = PluginInfo {
         code: "erp".to_string(),
         name: "企业资源计划".to_string(),
@@ -167,6 +170,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
                 action: "write".to_string(),
             },
         ],
+        runtime_url,
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
@@ -188,6 +192,7 @@ pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiRespo
 /// 注册插件到核心平台（启动时调用）
 pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiResponse<()>> {
     let core_url = std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let runtime_url = env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 
     // 获取插件信息
     let info = PluginInfo {
@@ -196,6 +201,7 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "ERP 企业资源计划系统".to_string(),
         permissions: vec![],
+        runtime_url,
     };
 
     let client = reqwest::Client::new();
@@ -221,4 +227,35 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
+}
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+    let runtime_url = env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+
+    let info = PluginInfo {
+        code: "erp".to_string(),
+        name: "企业资源计划".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "ERP 企业资源计划系统".to_string(),
+        permissions: vec![],
+        runtime_url,
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/erp/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[ERP Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[ERP Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[ERP Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
 }

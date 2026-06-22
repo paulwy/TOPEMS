@@ -24,6 +24,7 @@ topems-shared = { path = "../../lib" }
 axum-prometheus = "0.8"
 prometheus = "0.13"
 utoipa = "4"
+reqwest = { version = "0.12", features = ["json"] }
 
 [dev-dependencies]
 tokio-test = "0.4"
