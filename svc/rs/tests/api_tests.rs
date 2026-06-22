@@ -4,7 +4,7 @@ mod tests {
     use serde_json::json;
 
     async fn test_project_crud() {
-        let base_url = "http://localhost:8020";
+        let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
 
         println!("Testing RS Project CRUD...");
@@ -105,7 +105,7 @@ mod tests {
     }
 
     async fn test_project_batch_operations() {
-        let base_url = "http://localhost:8020";
+        let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Project Batch Operations...");
@@ -219,7 +219,7 @@ mod tests {
     }
 
     async fn test_project_export_import() {
-        let base_url = "http://localhost:8020";
+        let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Project Export/Import...");
@@ -375,7 +375,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     async fn test_audit_logs() {
-        let base_url = "http://localhost:8020";
+        let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
 
         println!("\nTesting RS Audit Logs...");

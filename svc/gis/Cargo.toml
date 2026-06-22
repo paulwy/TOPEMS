@@ -26,6 +26,7 @@ prometheus.workspace = true
 csv.workspace = true
 mime_guess.workspace = true
 utoipa.workspace = true
+reqwest = { workspace = true, features = ["json"] }
 
 [dev-dependencies]
 tokio-test.workspace = true

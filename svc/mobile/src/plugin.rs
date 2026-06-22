@@ -129,3 +129,36 @@ pub fn create_routes() -> Router<AppState> {
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
 }
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    use std::env;
+
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+    
+    let info = PluginInfo {
+        code: "mobile".to_string(),
+        name: "移动端服务".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "Mobile 移动端服务 - 离线同步、扫码、设备管理".to_string(),
+        category: "System".to_string(),
+        plugin_type: "business".to_string(),
+        permissions: vec![],
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/mobile/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[MOBILE Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[MOBILE Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[MOBILE Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
+}

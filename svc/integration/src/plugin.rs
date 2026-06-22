@@ -1,5 +1,6 @@
 use axum::{routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
+use std::env;
 
 use topems_shared::{ApiResponse, ServiceHealth};
 
@@ -52,4 +53,37 @@ pub fn create_routes() -> Router {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
+}
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+
+    let info = PluginInfo {
+        code: "integration".to_string(),
+        name: "系统集成".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "Integration 系统集成中间件".to_string(),
+        deployment: DeploymentInfo {
+            port: 8068,
+            base_path: "/api/integration".to_string(),
+        },
+        permissions: vec![],
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/integration/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[Integration Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[Integration Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[Integration Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
 }

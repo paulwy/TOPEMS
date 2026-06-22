@@ -1,13 +1,13 @@
 # TOPEMS 质量管理系统 API
 
 **服务**: topems-qms (集成在 quality-assurance)
-**端口**: 8032
+**端口**: 8052 (已整合至质量管控服务)
 **版本**: v2
 
 ---
 
 > **API 路径**: `/api/qms/` (例如 `/api/qms/standards`)
-> **实际访问地址**: `http://localhost:8032/api/qms/`
+> **实际访问地址**: `http://localhost:8052/api/qms/`
 
 ## 1. 概述
 
@@ -139,7 +139,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8032/api/qms/standards?page=1&page_size=20&status=active" \
+curl -X GET "http://localhost:8052/api/qms/standards?page=1&page_size=20&status=active" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -195,7 +195,7 @@ curl -X GET "http://localhost:8032/api/qms/standards?page=1&page_size=20&status=
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/qms/standards/std-001 \
+curl -X GET http://localhost:8052/api/qms/standards/std-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -267,7 +267,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8032/api/qms/standards \
+curl -X POST http://localhost:8052/api/qms/standards \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -337,7 +337,7 @@ curl -X POST http://localhost:8032/api/qms/standards \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8032/api/qms/standards/std-001 \
+curl -X PUT http://localhost:8052/api/qms/standards/std-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -385,7 +385,7 @@ curl -X PUT http://localhost:8032/api/qms/standards/std-001 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8032/api/qms/standards/std-001 \
+curl -X DELETE http://localhost:8052/api/qms/standards/std-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -422,7 +422,7 @@ curl -X DELETE http://localhost:8032/api/qms/standards/std-001 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8032/api/qms/checks?page=1&page_size=20&status=completed" \
+curl -X GET "http://localhost:8052/api/qms/checks?page=1&page_size=20&status=completed" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -468,7 +468,7 @@ curl -X GET "http://localhost:8032/api/qms/checks?page=1&page_size=20&status=com
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/api/qms/checks/check-001 \
+curl -X GET http://localhost:8052/api/qms/checks/check-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -519,7 +519,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8032/api/qms/checks \
+curl -X POST http://localhost:8052/api/qms/checks \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -576,7 +576,7 @@ curl -X POST http://localhost:8032/api/qms/checks \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8032/api/qms/checks/check-001 \
+curl -X DELETE http://localhost:8052/api/qms/checks/check-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -601,7 +601,7 @@ curl -X DELETE http://localhost:8032/api/qms/checks/check-001 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8032/api/qms/issues?status=open" \
+curl -X GET "http://localhost:8052/api/qms/issues?status=open" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -815,7 +815,7 @@ curl -X GET "http://localhost:8032/api/qms/issues?status=open" \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8032/health
+curl -X GET http://localhost:8052/health
 ```
 
 **成功响应** (200 OK):

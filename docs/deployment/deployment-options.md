@@ -441,7 +441,7 @@ curl http://localhost:8000/health
 curl http://localhost:3000
 
 # 检查AI服务
-curl http://localhost:8062/health
+curl http://localhost:8050/health
 ```
 
 ---

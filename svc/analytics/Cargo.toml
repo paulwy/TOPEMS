@@ -3,7 +3,7 @@ name = "analytics-service"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "TOPEMS Analytics Service - Unified BI and Report"
+description = "TOPEMS Analytics Service - BI and Report (Multi-binary)"
 
 [dependencies]
 axum = { workspace = true }
@@ -22,7 +22,12 @@ topems-shared = { path = "../../lib" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
+reqwest.workspace = true
 
 [[bin]]
-name = "analytics-service"
-path = "src/main.rs"
+name = "bi-service"
+path = "src/main_bi.rs"
+
+[[bin]]
+name = "report-service"
+path = "src/main_report.rs"

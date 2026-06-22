@@ -463,6 +463,29 @@ pub async fn auth_middleware(
         return next.run(req).await;
     }
 
+    // Allow plugin marketplace APIs without auth (public browsing)
+    if path.starts_with("/api/core/plugin/marketplace") {
+        return next.run(req).await;
+    }
+
+    // Allow plugin install/uninstall APIs (requires tenant header, but no full auth)
+    if path.starts_with("/api/core/plugins/") && (path.ends_with("/install") || path.ends_with("/uninstall") || path.ends_with("/enable") || path.ends_with("/disable")) {
+        return next.run(req).await;
+    }
+
+    // Allow GET requests for plugin browsing (public)
+    if path == "/api/core/plugins" || path == "/api/core/plugins/my" || path.starts_with("/api/core/plugins/") {
+        let method = req.method().as_str();
+        if method == "GET" {
+            return next.run(req).await;
+        }
+    }
+
+    // Allow plugin registration without auth (service-to-service call)
+    if path.starts_with("/api/core/plugin/dev/plugins/") && path.ends_with("/register") {
+        return next.run(req).await;
+    }
+
     let (mut parts, body) = req.into_parts();
 
     let auth_header = parts

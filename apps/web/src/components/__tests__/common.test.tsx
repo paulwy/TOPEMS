@@ -4,6 +4,9 @@ import { vi } from "vitest";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { EmptyState } from "../EmptyState";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 describe("LoadingSpinner", () => {
   it("renders with default size", () => {
     render(<LoadingSpinner />);

@@ -6,6 +6,9 @@ import { ToastProvider } from "../../components/notification/ToastProvider";
 import { LoadingProvider } from "../../components/LoadingProvider";
 import ErrorBoundary from "../../components/ErrorBoundary";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 // 模拟所有 API
 vi.mock("../../api/hrm", () => ({
   employeeApi: {

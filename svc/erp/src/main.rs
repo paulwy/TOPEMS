@@ -171,6 +171,12 @@ async fn main() -> Result<()> {
     tracing::info!("📦 端口: {}", port);
     tracing::info!("🔒 认证保护已启用");
 
+    // 启动时自动注册到统一核心
+    let core_url = env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        api::plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
+
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
 

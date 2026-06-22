@@ -1,6 +1,6 @@
 //! TOPEMS Unified Core Platform
 //!
-//! Unified service for: IAM + Doc + Flow + File + Communication
+//! Unified service for: IAM + Doc + Flow + File + Communication + AI
 //!
 //! This is the core platform that must be included in any TOPEMS product.
 
@@ -50,6 +50,7 @@ pub struct AppState {
     pub health_config: SimpleHealthConfig,
     pub ws_state: std::sync::Arc<modules::communication::ws::WsState>,
     pub http_client: Client,
+    pub ai_service: modules::ai::AIService,
 }
 
 impl axum::extract::FromRef<AppState> for AuthState {
@@ -73,7 +74,7 @@ async fn main() {
     init_logging("topems-unified-core");
 
     tracing::info!("🚀 TOPEMS Unified Core Platform starting...");
-    tracing::info!("📦 Contains: IAM + Doc + Flow + File + Communication");
+    tracing::info!("📦 Contains: IAM + Doc + Flow + File + Communication + AI");
 
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -102,11 +103,14 @@ async fn main() {
     modules::tenant::init_database(&pool).await.expect("Failed to init tenant database");
     modules::billing::init_database(&pool).await.expect("Failed to init billing database");
     modules::plugin::init_database(&pool).await.expect("Failed to init plugin database");
+    modules::ai::init_database(&pool).await.expect("Failed to init ai database");
 
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
     let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new());
     let http_client = Client::new();
+    let ai_config = modules::ai::AIConfig::default();
+    let ai_service = modules::ai::AIService::new(pool.clone(), ai_config);
 
     let state = AppState {
         auth_state,
@@ -114,6 +118,7 @@ async fn main() {
         health_config,
         ws_state: ws_state.clone(),
         http_client,
+        ai_service,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections
@@ -327,6 +332,7 @@ async fn main() {
 
         // Simplified Plugin Management API (frontend plugin marketplace)
         .route("/api/core/plugins", get(modules::plugin::handlers::list_installed_plugins))
+        .route("/api/core/plugins/my", get(modules::plugin::handlers::list_tenant_installed_plugins))
         .route("/api/core/plugins/{plugin_code}", get(modules::plugin::handlers::get_plugin_details))
         .route("/api/core/plugins/{plugin_code}/install", post(modules::plugin::handlers::install_plugin_simple))
         .route("/api/core/plugins/{plugin_code}/uninstall", post(modules::plugin::handlers::uninstall_plugin_simple))
@@ -356,6 +362,16 @@ async fn main() {
         .route("/api/core/plugins/upgrade/queue/{item_id}", delete(modules::plugin::handlers::cancel_upgrade_queue_item))
         .route("/api/core/plugins/upgrade/batch", post(modules::plugin::handlers::batch_upgrade))
         .route("/api/core/plugins/{plugin_code}/upgrade/history", get(modules::plugin::handlers::get_upgrade_history))
+
+        // ===== AI Routes (/api/core/ai/*) =====
+        .route("/api/core/ai/chat", post(modules::ai::chat))
+        .route("/api/core/ai/generate", post(modules::ai::generate))
+        .route("/api/core/ai/summarize", post(modules::ai::summarize))
+        .route("/api/core/ai/templates", get(modules::ai::list_templates))
+        .route("/api/core/ai/vectors/stats", get(modules::ai::vector_stats))
+        .route("/api/core/ai/vectors/search", post(modules::ai::vector_search))
+        .route("/api/core/ai/vectors/clear", post(modules::ai::clear_vectors))
+        .route("/api/core/ai/health", get(modules::ai::ai_health))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))

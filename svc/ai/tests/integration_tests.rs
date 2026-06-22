@@ -99,6 +99,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore] // 需要实际的数据库连接和表结构
     async fn test_create_document() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -108,7 +109,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_ai.documents (id, tenant_id, organization_id, title, file_path, file_name, status, created_at, updated_at)
+            INSERT INTO ai.documents (id, tenant_id, organization_id, title, file_path, file_name, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title,
@@ -130,6 +131,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore] // 需要实际的数据库连接和表结构
     async fn test_list_documents() {
         let pool = setup_test_pool().await.unwrap();
 

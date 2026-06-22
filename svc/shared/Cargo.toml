@@ -3,6 +3,12 @@ name = "shared"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "shared"
+path = "src/lib.rs"
+
+[workspace]
+
 [dependencies]
 axum = { version = "0.8", features = ["json"] }
 chrono = { version = "0.4", features = ["serde"] }

@@ -3,6 +3,7 @@
 pub mod report;
 pub mod template;
 pub mod schedule;
+pub mod report_plugin;
 
 use sqlx::PgPool;
 

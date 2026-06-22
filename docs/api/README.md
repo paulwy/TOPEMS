@@ -17,15 +17,13 @@
 | API名称 | 文档链接 | 服务端口 |
 |--------|---------|---------|
 | 认证授权(IAM) | [API_AUTH.md](./API_AUTH.md) | 8000 |
-| 工作流 | [API_WORKFLOW.md](./API_WORKFLOW.md) | 8006 |
-| 通知服务 | [API_NOTIFICATION.md](./API_NOTIFICATION.md) | 8002 |
-| 报表服务 | [API_REPORT.md](./API_REPORT.md) | 8053 |
-| 研发管理(RS) | [API_RS.md](./API_RS.md) | 8020 |
-| 实验室管理(LIMS) | [API_LIMS.md](./API_LIMS.md) | 8022 |
-| 质量管理(QMS) | [API_QMS.md](./API_QMS.md) | 8031 |
-| 安全环保(EHS) | [API_EHS.md](./API_EHS.md) | 8032 |
-| 供应商管理(SRM) | [API_SRM.md](./API_SRM.md) | 8041 |
-| 产品数据管理(PDM) | [API_PDM.md](./API_PDM.md) | 8023 |
+| 工作流 | [API_WORKFLOW.md](./API_WORKFLOW.md) | 8000 |
+| 通知服务 | [API_NOTIFICATION.md](./API_NOTIFICATION.md) | 8000 |
+| 报表服务 | [API_REPORT.md](./API_REPORT.md) | 8060 |
+| 研发管理(RS) | [API_RS.md](./API_RS.md) | 8058 |
+| 质量管控(QMS/LIMS/EHS) | [API_QMS.md](./API_QMS.md) | 8052 |
+| 供应商管理(SRM) | [API_SRM.md](./API_SRM.md) | 8060 |
+| 产品数据管理(PDM) | [API_PDM.md](./API_PDM.md) | 8030 |
 
 ## 服务路径一览
 
@@ -36,18 +34,16 @@
 | HRM | /api/hrm/ | 8011 |
 | CRM | /api/crm/ | 8012 |
 | ERP | /api/erp/ | 8010 |
-| RS | /api/rs/ | 8020 |
+| RS | /api/rs/ | 8058 |
 | SCM | /api/scm/ | 8040 |
-| SRM | /api/srm/ | 8041 |
+| SRM | /api/srm/ | 8060 |
 | WMS | /api/wms/ | 8042 |
-| EHS | /api/ehs/ | 8032 |
-| QMS | /api/qms/ | 8031 |
-| LIMS | /api/lims/ | 8032 |
-| AI | /api/ai/ | 8062 |
+| 质量管控 | /api/qa/ | 8052 |
+| AI | /api/ai/ | 8050 |
 | BI | /api/bi/ | 8060 |
-| GIS | /api/gis/ | 8053 |
-| Mobile | /api/mobile/ | 8070 |
-| Integration | /api/integration/ | 8005 |
+| GIS | /api/gis/ | 8054 |
+| Mobile | /api/mobile/ | 8056 |
+| Integration | /api/integration/ | 8068 |
 | Mail | /api/mail/ | 8000 |
 | Notification | /api/notification/ | 8000 |
 

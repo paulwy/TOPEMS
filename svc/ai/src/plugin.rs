@@ -15,6 +15,7 @@ pub struct PluginInfo {
     pub author: String,
     pub category: String,
     pub plugin_type: String,
+    pub runtime_url: String,
     pub permissions: Vec<Permission>,
 }
 
@@ -34,6 +35,8 @@ pub struct PluginHealth {
 
 // Plugin info endpoint
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let runtime_url = std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
+
     let plugin_info = PluginInfo {
         code: "ai".to_string(),
         name: "AI 智能服务".to_string(),
@@ -42,6 +45,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         author: "TOPEMS".to_string(),
         category: "AI".to_string(),
         plugin_type: "ai".to_string(),
+        runtime_url,
         permissions: vec![
             Permission {
                 code: "ai:search".to_string(),
@@ -131,4 +135,38 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
+}
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+    let runtime_url = std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
+
+    let info = PluginInfo {
+        code: "ai".to_string(),
+        name: "AI 智能服务".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "AI 智能服务".to_string(),
+        author: "TOPEMS".to_string(),
+        category: "AI".to_string(),
+        plugin_type: "ai".to_string(),
+        runtime_url,
+        permissions: vec![],
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/ai/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[AI Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[AI Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[AI Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
 }

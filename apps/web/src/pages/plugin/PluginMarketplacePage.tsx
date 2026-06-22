@@ -53,10 +53,12 @@ import {
   getPlugin,
   getPluginVersions,
   getPluginReviews,
+  pluginApi,
   type Plugin,
   type PluginCategory,
   type PluginVersion,
   type PluginReview,
+  type TenantInstalledPlugin,
 } from "@/api/plugin";
 
 // Mock tenant ID - in production, this should come from auth context
@@ -72,6 +74,7 @@ interface MarketplaceState {
   } | null;
   plugins: Plugin[];
   categories: PluginCategory[];
+  installedPlugins: TenantInstalledPlugin[];  // 租户已安装的插件
   loading: boolean;
   error: string | null;
   viewMode: "grid" | "list";
@@ -96,6 +99,7 @@ export default function PluginMarketplacePage() {
     summary: null,
     plugins: [],
     categories: [],
+    installedPlugins: [],
     loading: true,
     error: null,
     viewMode: "grid",
@@ -125,7 +129,12 @@ export default function PluginMarketplacePage() {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
-      const [summaryRes, categoriesRes, pluginsRes] = await Promise.all([
+      // Set default tenant ID if not set
+      if (!localStorage.getItem("tenant_id")) {
+        localStorage.setItem("tenant_id", MOCK_TENANT_ID);
+      }
+
+      const [summaryRes, categoriesRes, pluginsRes, installedRes] = await Promise.all([
         getMarketplaceSummary(),
         getPluginCategories(),
         listPlugins({
@@ -135,6 +144,7 @@ export default function PluginMarketplacePage() {
           page: state.page,
           page_size: state.pageSize,
         }),
+        pluginApi.listInstalled(), // 获取当前租户已安装的插件
       ]);
 
       if (summaryRes.success && summaryRes.data) {
@@ -153,6 +163,11 @@ export default function PluginMarketplacePage() {
           totalPages: pluginsRes.data!.total_pages,
         }));
       }
+
+      // 保存已安装插件列表
+      if (installedRes.success && installedRes.data) {
+        setState((prev) => ({ ...prev, installedPlugins: installedRes.data! }));
+      }
     } catch (error) {
       setState((prev) => ({ ...prev, error: "Failed to load marketplace" }));
     } finally {
@@ -167,6 +182,10 @@ export default function PluginMarketplacePage() {
   ]);
 
   useEffect(() => {
+    // Set default tenant ID if not set
+    if (!localStorage.getItem("tenant_id")) {
+      localStorage.setItem("tenant_id", MOCK_TENANT_ID);
+    }
     loadMarketplace();
   }, [loadMarketplace]);
 
@@ -199,17 +218,30 @@ export default function PluginMarketplacePage() {
     }
   };
 
-  // Handle install/uninstall (mock for now)
+  // Handle install/uninstall
   const handleInstall = async (pluginCode: string) => {
     setInstallingPlugins((prev) => new Set(prev).add(pluginCode));
-    // In real implementation, call installPlugin API
-    setTimeout(() => {
+    
+    try {
+      const result = await pluginApi.install(pluginCode);
+      if (result.success) {
+        // 重新加载已安装插件列表
+        const installedRes = await pluginApi.listInstalled();
+        if (installedRes.success && installedRes.data) {
+          setState((prev) => ({ ...prev, installedPlugins: installedRes.data! }));
+        }
+        alert(`插件安装成功！`);
+      }
+    } catch (error: any) {
+      console.error("Failed to install plugin:", error);
+      alert(`安装失败: ${error?.response?.data?.message || error.message || "未知错误"}`);
+    } finally {
       setInstallingPlugins((prev) => {
         const next = new Set(prev);
         next.delete(pluginCode);
         return next;
       });
-    }, 1500);
+    }
   };
 
   // Search and filter handlers
@@ -229,6 +261,19 @@ export default function PluginMarketplacePage() {
 
   const handlePageChange = (page: number) => {
     setState((prev) => ({ ...prev, page }));
+  };
+
+  // 辅助函数：检查插件是否已安装
+  const isPluginInstalled = (pluginCode: string): TenantInstalledPlugin | undefined => {
+    return state.installedPlugins.find((p) => p.plugin_code === pluginCode);
+  };
+
+  // 获取插件运行状态
+  const getRuntimeStatus = (pluginCode: string): { status: string; url?: string } => {
+    const installed = isPluginInstalled(pluginCode);
+    if (!installed) return { status: "not_installed" };
+    if (installed.runtime_status) return { status: installed.runtime_status, url: installed.runtime_url || undefined };
+    return { status: "registered" };
   };
 
   return (
@@ -264,6 +309,45 @@ export default function PluginMarketplacePage() {
           </Box>
         </Box>
       </Box>
+
+      {/* 已安装插件状态面板 */}
+      {state.installedPlugins.length > 0 && (
+        <Box sx={{ bgcolor: "primary.main", py: 2 }}>
+          <Box sx={{ maxWidth: 1400, mx: "auto", px: 3 }}>
+            <Typography variant="subtitle1" sx={{ color: "white", fontWeight: "bold", mb: 1.5 }}>
+              我的插件 ({state.installedPlugins.length})
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              {state.installedPlugins.map((plugin) => (
+                <Chip
+                  key={plugin.id}
+                  label={`${plugin.plugin_name}`}
+                  onClick={() => {
+                    // 导航到插件详情
+                  }}
+                  icon={
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        bgcolor: plugin.runtime_status === "running" ? "success.main" : 
+                                 plugin.runtime_status === "error" ? "error.main" : "warning.main",
+                        ml: 1,
+                      }}
+                    />
+                  }
+                  sx={{ 
+                    bgcolor: "rgba(255,255,255,0.15)", 
+                    color: "white",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      )}
 
       <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 4 }}>
         <Grid container spacing={3}>
@@ -376,71 +460,6 @@ export default function PluginMarketplacePage() {
                 </IconButton>
               </Box>
             </Card>
-
-            {/* Featured Section */}
-            {!state.searchQuery && !state.selectedCategory && state.summary && (
-              <Box sx={{ mb: 4 }}>
-                {state.summary.featured_plugins.length > 0 && (
-                  <Box sx={{ mb: 4 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <Sparkles size={20} color="#eab308" />
-                      <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        Featured Plugins
-                      </Typography>
-                    </Box>
-                    <Grid container spacing={2}>
-                      {state.summary.featured_plugins.map((plugin) => (
-                        <Grid key={plugin.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                          <PluginCard
-                            plugin={plugin}
-                            onClick={() => loadPluginDetails(plugin.code)}
-                            onInstall={handleInstall}
-                            isInstalling={installingPlugins.has(plugin.code)}
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </Box>
-                )}
-
-                {state.summary.new_plugins.length > 0 && (
-                  <Box sx={{ mb: 4 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <Zap size={20} color="#22c55e" />
-                      <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        New Releases
-                      </Typography>
-                    </Box>
-                    <Grid container spacing={2}>
-                      {state.summary.new_plugins.map((plugin) => (
-                        <Grid key={plugin.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                          <PluginCard
-                            plugin={plugin}
-                            onClick={() => loadPluginDetails(plugin.code)}
-                            onInstall={handleInstall}
-                            isInstalling={installingPlugins.has(plugin.code)}
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </Box>
-                )}
-              </Box>
-            )}
 
             {/* All Plugins */}
             <Box>
@@ -625,7 +644,7 @@ function PluginCard({
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <Star size={12} color="#eab308" fill="#eab308" />
               <Typography variant="caption">
-                {plugin.rating.toFixed(1)}
+                {Number(plugin.rating).toFixed(1)}
               </Typography>
             </Box>
           )}
@@ -785,7 +804,7 @@ function PluginDetailModal({
               <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {plugin.rating?.toFixed(1) || "N/A"}
+                    {plugin.rating ? Number(plugin.rating).toFixed(1) : "N/A"}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Rating

@@ -75,6 +75,8 @@ import { flowApi } from "@/api/flow";
 import { erpApi } from "@/api/erp";
 import { hrmApi } from "@/api/hrm";
 import { mobileApi } from "@/api/mobile";
+import { pluginApi, type TenantInstalledPlugin } from "@/api/plugin";
+import { useInstalledPlugins } from "../../context/PluginContext";
 import MobileNav from "@/components/MobileNav";
 import MobileHeader from "@/components/MobileHeader";
 import { usePermission } from "@/hooks/usePermission";
@@ -115,6 +117,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   } = useAuth();
   const { serviceStatuses, refresh: refreshServiceStatuses } =
     useServiceStatus();
+  const { installedPlugins, isPluginInstalled } = useInstalledPlugins();
   const shortcuts = useAppStore((state) => state.shortcuts);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -245,15 +248,23 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       permission?: string | null;
       module?: string | null;
     }): boolean => {
+      // 1. 检查权限
       const hasAccess =
         !module.permission ||
         (user?.is_superuser ? true : hasPermission(module.permission));
       if (!hasAccess) return false;
+      
+      // 2. 如果没有指定 module，默认显示（如通讯录、帮助中心等）
       if (!module.module) return true;
+      
+      // 3. 检查插件是否已安装
+      if (!isPluginInstalled(module.module)) return false;
+      
+      // 4. 检查服务是否在线
       const serviceKey = moduleToService[module.module];
       return serviceStatuses[serviceKey];
     },
-    [hasPermission, user?.is_superuser, moduleToService, serviceStatuses],
+    [hasPermission, user?.is_superuser, moduleToService, serviceStatuses, isPluginInstalled],
   );
 
   useEffect(() => {

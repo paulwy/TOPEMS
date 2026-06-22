@@ -6,6 +6,7 @@ pub mod accident;
 pub mod environment;
 pub mod training;
 pub mod health;
+pub mod ehs_plugin;
 
 use sqlx::PgPool;
 

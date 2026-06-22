@@ -1,13 +1,13 @@
 # TOPEMS 生产管理系统 API
 
 **服务**: topems-pdm (集成在 manufacturing)
-**端口**: 8023
+**端口**: 8030 (已整合至制造服务)
 **版本**: v2
 
 ---
 
 > **API 路径**: `/api/pdm/` (例如 `/api/pdm/production-processes`)
-> **实际访问地址**: `http://localhost:8023/api/pdm/`
+> **实际访问地址**: `http://localhost:8030/api/pdm/`
 
 ## 1. 概述
 
@@ -148,7 +148,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8023/api/pdm/production-processes?status=active" \
+curl -X GET "http://localhost:8030/api/pdm/production-processes?status=active" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -201,7 +201,7 @@ curl -X GET "http://localhost:8023/api/pdm/production-processes?status=active" \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8023/api/pdm/production-processes/process-001 \
+curl -X GET http://localhost:8030/api/pdm/production-processes/process-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -265,7 +265,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8023/api/pdm/production-processes \
+curl -X POST http://localhost:8030/api/pdm/production-processes \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -380,7 +380,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8023/api/pdm/production-steps \
+curl -X POST http://localhost:8030/api/pdm/production-steps \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -571,7 +571,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8023/api/pdm/production-batches \
+curl -X POST http://localhost:8030/api/pdm/production-batches \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -653,7 +653,7 @@ curl -X POST http://localhost:8023/api/pdm/production-batches \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8023/api/pdm/production-statistics?start_date=2026-05-01&end_date=2026-05-31" \
+curl -X GET "http://localhost:8030/api/pdm/production-statistics?start_date=2026-05-01&end_date=2026-05-31" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -695,7 +695,7 @@ curl -X GET "http://localhost:8023/api/pdm/production-statistics?start_date=2026
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8023/health
+curl -X GET http://localhost:8030/health
 ```
 
 **成功响应** (200 OK):

@@ -3,7 +3,7 @@ name = "manufacturing-service"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "TOPEMS Manufacturing Service - Unified MES and PDM"
+description = "TOPEMS Manufacturing Service - MES and PDM (Multi-binary)"
 
 [dependencies]
 axum = { workspace = true }
@@ -22,7 +22,12 @@ topems-shared = { path = "../../lib" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
+reqwest.workspace = true
 
 [[bin]]
-name = "manufacturing-service"
-path = "src/main.rs"
+name = "mes-service"
+path = "src/main_mes.rs"
+
+[[bin]]
+name = "pdm-service"
+path = "src/main_pdm.rs"

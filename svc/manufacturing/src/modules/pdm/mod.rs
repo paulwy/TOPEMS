@@ -5,6 +5,7 @@ pub mod material;
 pub mod configuration;
 pub mod document;
 pub mod version;
+pub mod plugin;
 
 use sqlx::PgPool;
 

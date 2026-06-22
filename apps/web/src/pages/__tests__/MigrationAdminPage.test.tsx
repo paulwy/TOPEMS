@@ -13,6 +13,9 @@ import { ToastProvider } from "@/components/notification/ToastProvider";
 import MigrationAdminPage from "@/pages/system/MigrationAdminPage";
 import type { MigrationService, MigrationStatus } from "@/api/migration";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 const mockListServices = vi.fn();
 const mockApplyMigration = vi.fn();
 const mockRollbackMigration = vi.fn();

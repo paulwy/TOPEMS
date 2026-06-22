@@ -105,7 +105,7 @@ mod service_dto_tests {
             id: "rs".to_string(),
             name: "科研研发".to_string(),
             description: "科研项目管理系统".to_string(),
-            url: "http://localhost:8020".to_string(),
+            url: "http://localhost:8058".to_string(),
             icon: "FlaskConical".to_string(),
             status: "running".to_string(),
             category: "研发".to_string(),

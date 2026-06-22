@@ -55,7 +55,7 @@
 
 ### 1.1 IAM 认证服务 (topems-iam)
 
-**服务地址**: `http://localhost:8020`
+**服务地址**: `http://localhost:8000`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -78,9 +78,9 @@
 - Permission（权限）
 - ApiKey（API密钥）
 
-### 1.2 文档服务 (topems-doc)
+### 1.2 文档服务 (topems-doc, 已整合至 unified-core)
 
-**服务地址**: `http://localhost:8001`
+**服务地址**: `http://localhost:8000`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -103,7 +103,7 @@
 
 ### 1.3 AI服务 (topems-ai)
 
-**服务地址**: `http://localhost:8062`
+**服务地址**: `http://localhost:8050`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -186,7 +186,7 @@
 
 ### 2.2 研发管理服务 (topems-rs)
 
-**服务地址**: `http://localhost:8020`
+**服务地址**: `http://localhost:8058`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -221,9 +221,9 @@
 - Patent（专利）
 - AuditLog（审计日志）
 
-### 2.3 实验室管理服务 (topems-lims)
+### 2.3 实验室管理服务 (topems-lims, 已整合至质量管控服务)
 
-**服务地址**: `http://localhost:8032`
+**服务地址**: `http://localhost:8052`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -257,9 +257,9 @@
 - Instrument（仪器）
 - Reagent（试剂）
 
-### 2.4 质量管理服务 (topems-qms)
+### 2.4 质量管理服务 (topems-qms, 已整合至质量管控服务)
 
-**服务地址**: `http://localhost:8032`
+**服务地址**: `http://localhost:8052`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -286,9 +286,9 @@
 - NonConformity（不合格品）
 - CorrectiveAction（纠正措施）
 
-### 2.5 安全环保服务 (topems-ehs)
+### 2.5 安全环保服务 (topems-ehs, 已整合至质量管控服务)
 
-**服务地址**: `http://localhost:8032`
+**服务地址**: `http://localhost:8052`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -315,7 +315,7 @@
 
 ### 2.6 供应商管理服务 (topems-srm)
 
-**服务地址**: `http://localhost:8041`
+**服务地址**: `http://localhost:8060`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -341,7 +341,7 @@
 
 ### 2.7 产品数据管理服务 (topems-pdm)
 
-**服务地址**: `http://localhost:8023`
+**服务地址**: `http://localhost:8030`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -367,7 +367,7 @@
 
 ### 2.8 移动工作台服务 (topems-mobile)
 
-**服务地址**: `http://localhost:8070`
+**服务地址**: `http://localhost:8056`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -510,7 +510,7 @@ curl -X POST http://localhost:8000/api/v1/mail/emails/send-with-template \
 
 **JWT Token 认证**:
 ```bash
-curl -X GET "http://localhost:8020/api/v1/projects" \
+curl -X GET "http://localhost:8058/api/v1/projects" \
   -H "Authorization: Bearer <your-token>"
 ```
 

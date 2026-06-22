@@ -12,6 +12,7 @@ pub struct PluginInfo {
     pub version: String,
     pub description: String,
     pub permissions: Vec<PermissionDef>,
+    pub runtime_url: String,
 }
 
 /// 权限定义
@@ -23,8 +24,14 @@ pub struct PermissionDef {
     pub action: String,
 }
 
+/// 获取运行时 URL
+fn get_runtime_url() -> String {
+    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8030".to_string())
+}
+
 /// 获取插件信息
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let runtime_url = get_runtime_url();
     let info = PluginInfo {
         code: "mes".to_string(),
         name: "制造执行系统".to_string(),
@@ -110,6 +117,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
                 action: "write".to_string(),
             },
         ],
+        runtime_url,
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
@@ -126,4 +134,35 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
+}
+
+/// 启动时自动注册到统一核心
+pub async fn auto_register_to_core(core_url: Option<&str>) {
+    let core_url = core_url.unwrap_or("http://localhost:8000");
+    let runtime_url = get_runtime_url();
+
+    let info = PluginInfo {
+        code: "mes".to_string(),
+        name: "制造执行系统".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "MES 制造执行系统".to_string(),
+        permissions: vec![],
+        runtime_url,
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/mes/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[MES Plugin] Successfully registered to core at {}", core_url);
+            } else {
+                tracing::warn!("[MES Plugin] Failed to register to core: {}", response.status());
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[MES Plugin] Failed to connect to core at {}: {}", core_url, e);
+        }
+    }
 }

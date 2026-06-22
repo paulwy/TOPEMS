@@ -3,7 +3,7 @@ mod tests {
     use serde_json::json;
 
     async fn test_project_phase_crud() {
-        let base_url = "http://localhost:8020";
+        let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
 
         println!("Testing Project Phase CRUD...");
@@ -122,7 +122,7 @@ mod tests {
 
     #[allow(dead_code)]
     async fn test_project_milestone_crud() {
-        let base_url = "http://localhost:8020";
+        let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
 
         println!("\nTesting Project Milestone CRUD...");
@@ -238,7 +238,7 @@ mod tests {
 
     #[allow(dead_code)]
     async fn test_project_member_crud() {
-        let base_url = "http://localhost:8020";
+        let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
 
         println!("\nTesting Project Member CRUD...");

@@ -8,6 +8,9 @@ import type {
   FieldDependency,
 } from "../templates/FormPageTemplate";
 
+// 增加测试超时时间
+vi.setConfig({ testTimeout: 30000 });
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {};

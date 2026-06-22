@@ -118,13 +118,18 @@ pub async fn list_plugins(
     .await
     .unwrap_or((0,));
     
-    let plugins: Vec<Plugin> = sqlx::query_as(&format!(
+    let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&format!(
         "SELECT * FROM core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
         where_clause, sort_order, page_size, offset
     ))
     .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    .await {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to fetch plugins: {:?}", e);
+            return Json(CoreResponse::error(&format!("Failed to fetch plugins: {}", e)));
+        }
+    };
     
     let response = PluginListResponse {
         plugins,
@@ -949,6 +954,41 @@ pub async fn uninstall_plugin_simple(
         Ok(r) => Json(CoreResponse::success(r.rows_affected() > 0, "Plugin uninstalled")),
         Err(_) => Json(CoreResponse::error("Failed to uninstall plugin")),
     }
+}
+
+/// Get list of plugins installed for current tenant (uses X-Tenant-ID header)
+pub async fn list_tenant_installed_plugins(
+    State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> Json<CoreResponse<Vec<TenantPluginWithRuntimeStatus>>> {
+    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+        Some(id) => id,
+        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+    };
+
+    tracing::info!("[Plugin] Listing installed plugins for tenant: {}", tenant_id);
+
+    let plugins: Vec<TenantPluginWithRuntimeStatus> = sqlx::query_as(
+        r#"
+        SELECT tp.id, tp.tenant_id, tp.plugin_id, tp.installed_version, tp.is_active,
+               tp.license_type, tp.license_expires_at, tp.activated_at, tp.last_used_at,
+               tp.usage_count, tp.created_at, tp.updated_at,
+               p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
+               p.version as plugin_version, p.category as plugin_category,
+               pi.runtime_status, pi.runtime_url, pi.last_heartbeat
+        FROM core_tenant_plugins tp
+        JOIN core_plugins p ON tp.plugin_id = p.id
+        LEFT JOIN core_plugin_instances pi ON p.id = pi.plugin_id
+        WHERE tp.tenant_id = $1
+        ORDER BY p.code
+        "#,
+    )
+    .bind(tenant_id)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    Json(CoreResponse::success(plugins, "Tenant plugins retrieved"))
 }
 
 /// Simplified: Enable plugin (uses X-Tenant-ID header)

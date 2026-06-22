@@ -29,6 +29,7 @@ axum-prometheus.workspace = true
 prometheus.workspace = true
 bigdecimal.workspace = true
 rust_decimal.workspace = true
+reqwest.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true

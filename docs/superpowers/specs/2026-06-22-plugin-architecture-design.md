@@ -280,26 +280,30 @@ CREATE TABLE shared.sync_log (
 
 ## 7. 实施计划
 
-### Phase 1: 端口统一（进行中）
+### Phase 1: 端口统一（已完成）
 - [x] 确定权威端口表
-- [ ] 更新所有服务的 main.rs 默认端口
-- [ ] 更新 vite.config.ts 代理配置
-- [ ] 更新 plugin.ts 配置
-- [ ] 更新文档中的端口引用
+- [x] 更新后端服务默认端口（mes/pdm/qms/lims/ehs/bi/report）
+- [x] 更新 vite.config.ts 代理配置（hrm/mes/pdm/qms/lims/ehs/wms/pm/bi/report/integration）
+- [x] 更新前端 plugin.ts 配置（已验证端口正确）
+- [x] 更新文档中的端口引用
 
-### Phase 2: 套件拆分
-- [ ] 拆分 manufacturing → mes + pdm
-- [ ] 拆分 quality-assurance → qms + lims + ehs
-- [ ] 拆分 analytics → bi + report
+### Phase 2: 套件拆分（已完成）
+- [x] 拆分 manufacturing → mes (8030) + pdm (8031)
+- [x] 拆分 quality-assurance → qms (8050) + lims (8051) + ehs (8052)
+- [x] 拆分 analytics → bi (8060) + report (8061)
 
-### Phase 3: 数据层重构
-- [ ] 创建 shared schema
-- [ ] 实现 code_mapping 表
-- [ ] 实现外部数据同步机制
+### Phase 3: 数据层重构（已完成）
+- [x] 创建 shared schema 迁移文件
+- [x] 实现 customers, suppliers, materials, projects 基础表
+- [x] 实现 code_mapping, sync_log, audit_log 表
+- [x] 实现 code_sequences 编码序列生成器
 
-### Phase 4: Core 整合
-- [ ] 将 AI 能力整合到 unified-core
-- [ ] 验证 Core 启动正常
+### Phase 4: Core 整合 AI（已完成）
+- [x] 创建 modules/ai 模块结构
+- [x] 实现 AIService 核心服务
+- [x] 实现 AI API handlers
+- [x] 添加 AI 路由到 unified-core
+- [x] 编译验证通过
 
 ---
 
@@ -308,6 +312,8 @@ CREATE TABLE shared.sync_log (
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v1.0 | 2026-06-22 | 初始设计，批准执行 |
+| v1.1 | 2026-06-22 | 完成 Phase 2-4：套件拆分、数据层重构、AI整合到Core |
+| v1.2 | 2026-06-22 | 完成 Phase 1：端口统一，前端代理配置更新 |
 
 ---
 
