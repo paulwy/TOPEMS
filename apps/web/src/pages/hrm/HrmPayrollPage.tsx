@@ -15,7 +15,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, InputBase, Typography } from "@mui/material";
+import { Box, InputBase, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { apiLogger } from "@/utils/logger";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";

@@ -27,7 +27,8 @@ import { BIChartColors } from "@/components/charts/chartTheme";
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from "@/components/ui/OrganizationFilter";
-import { Button, Skeleton, Box, Typography } from "@mui/material";
+import { Skeleton, Box, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 const ModuleCard = ({
   id,

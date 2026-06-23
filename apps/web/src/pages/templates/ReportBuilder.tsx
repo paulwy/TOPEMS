@@ -11,14 +11,8 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  Checkbox,
-  FormControlLabel,
-} from "@mui/material";
+import { Box, Typography, TextField, Checkbox, FormControlLabel,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type {
   ReportTypeInfo,
   ReportType,

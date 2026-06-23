@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button } from "@mui/material";
+import { Box } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { QuickSearch } from "@/components/common";
 import {
   Warehouse,

@@ -1,14 +1,6 @@
 import React, { useState, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  Avatar,
-  Button,
-  TextField,
-  Chip,
-  Divider,
-  Paper,
-} from "@mui/material";
+import { Box, Typography, Avatar, TextField, Chip, Divider, Paper,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Send, ThumbsUp, MoreHorizontal, Reply, User } from "lucide-react";
 
 export interface Comment {

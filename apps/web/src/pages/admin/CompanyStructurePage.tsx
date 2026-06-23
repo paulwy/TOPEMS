@@ -21,18 +21,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Button,
-  Card,
-  CardContent,
-  TextField,
-  Chip,
-  Box,
-  Typography,
-  Stack,
-  Tabs,
-  Tab,
-} from "@mui/material";
+import { Card, CardContent, TextField, Chip, Box, Typography, Stack, Tabs, Tab,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   useCompanyRelations,
   useCompanyTree,

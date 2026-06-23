@@ -2,16 +2,8 @@ import React, { useState, useMemo } from "react";
 import { logger } from "@/utils/logger";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  TextField,
-  InputAdornment,
-  Typography,
-  Box,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, TextField, InputAdornment, Typography, Box,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type { ProjectTemplate } from "@/components/pm/ProjectTemplateCard";
 import ProjectTemplateCard from "@/components/pm/ProjectTemplateCard";
 import ProjectTemplateModal from "@/components/pm/ProjectTemplateModal";

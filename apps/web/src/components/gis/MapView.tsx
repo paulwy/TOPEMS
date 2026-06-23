@@ -39,14 +39,8 @@ import {
   Thermometer,
   Box,
 } from "lucide-react";
-import {
-  Box as MuiBox,
-  Button,
-  Typography,
-  Paper,
-  Chip,
-  IconButton,
-} from "@mui/material";
+import { Box as MuiBox, Typography, Paper, Chip, IconButton,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type {
   DevicePoint,
   Pipeline,

@@ -1,25 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Box,
-  Container,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  IconButton,
-  Button,
-  TextField,
-  InputAdornment,
-  Chip,
-  Tooltip,
-  Stack,
-} from "@mui/material";
+import { Box, Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Paper, IconButton, TextField, InputAdornment, Chip, Tooltip, Stack,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Plus, Search, Edit, Trash2, Eye, FileText } from "lucide-react";
 
 interface Formula {

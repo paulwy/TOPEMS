@@ -1,17 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, Chip, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Box,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 /**
  * 凭证模板管理页面
  * 管理凭证自动生成规则和模板

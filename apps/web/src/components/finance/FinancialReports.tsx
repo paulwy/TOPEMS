@@ -6,17 +6,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { reportApi } from "@/api/finance";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  Chip,
-  Box,
-  Tabs,
-  Tab,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, Typography, Chip, Box, Tabs, Tab,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Download, AlertCircle } from "lucide-react";
 import {
   BarChart,

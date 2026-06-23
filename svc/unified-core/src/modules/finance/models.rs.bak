@@ -1,0 +1,263 @@
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
+use uuid::Uuid;
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct Account {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub code: String,
+    pub name: String,
+    pub parent_id: Option<Uuid>,
+    pub account_type: AccountType,
+    pub level: i32,
+    pub currency: String,
+    pub is_enabled: bool,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "account_type")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum AccountType {
+    Asset,
+    Liability,
+    Equity,
+    Income,
+    Expense,
+    Cost,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct Voucher {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub voucher_no: String,
+    pub voucher_date: DateTime<Utc>,
+    pub period: String,
+    pub voucher_type: VoucherType,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub status: VoucherStatus,
+    pub description: Option<String>,
+    pub created_by: String,
+    pub approved_by: Option<String>,
+    pub posted_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "voucher_type")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum VoucherType {
+    General,
+    Payment,
+    Receipt,
+    Transfer,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "voucher_status")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum VoucherStatus {
+    Draft,
+    Submitted,
+    Approved,
+    Posted,
+    Rejected,
+    Cancelled,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct VoucherLine {
+    pub id: Uuid,
+    pub voucher_id: Uuid,
+    pub line_no: i32,
+    pub account_id: Uuid,
+    pub account_code: String,
+    pub account_name: String,
+    pub description: Option<String>,
+    pub debit: Decimal,
+    pub credit: Decimal,
+    pub project_id: Option<Uuid>,
+    pub department_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct LedgerEntry {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub account_id: Uuid,
+    pub account_code: String,
+    pub account_name: String,
+    pub voucher_id: Uuid,
+    pub voucher_no: String,
+    pub voucher_date: DateTime<Utc>,
+    pub period: String,
+    pub description: Option<String>,
+    pub debit: Decimal,
+    pub credit: Decimal,
+    pub balance: Decimal,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct TrialBalance {
+    pub account_id: Uuid,
+    pub account_code: String,
+    pub account_name: String,
+    pub account_type: AccountType,
+    pub debit_balance: f64,
+    pub credit_balance: f64,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct Period {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub year: i32,
+    pub month: i32,
+    pub period_name: String,
+    pub status: PeriodStatus,
+    pub start_date: DateTime<Utc>,
+    pub end_date: DateTime<Utc>,
+    pub closed_at: Option<DateTime<Utc>>,
+    pub closed_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[sqlx(type_name = "period_status")]
+#[sqlx(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum PeriodStatus {
+    Open,
+    Closing,
+    Closed,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateAccountRequest {
+    pub code: String,
+    pub name: String,
+    pub parent_id: Option<Uuid>,
+    pub account_type: AccountType,
+    pub currency: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateVoucherRequest {
+    pub voucher_date: DateTime<Utc>,
+    pub voucher_type: VoucherType,
+    pub lines: Vec<VoucherLineRequest>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct VoucherLineRequest {
+    pub account_code: String,
+    pub description: Option<String>,
+    pub debit: Decimal,
+    pub credit: Decimal,
+    pub project_id: Option<Uuid>,
+    pub department_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PostVoucherRequest {
+    pub voucher_id: Uuid,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ClosePeriodRequest {
+    pub year: i32,
+    pub month: i32,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct VoucherResponse {
+    pub id: Uuid,
+    pub voucher_no: String,
+    pub voucher_date: DateTime<Utc>,
+    pub voucher_type: VoucherType,
+    pub status: VoucherStatus,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+    pub lines: Vec<VoucherLine>,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LedgerQueryParams {
+    pub account_id: Option<Uuid>,
+    pub account_code: Option<String>,
+    pub start_date: Option<DateTime<Utc>>,
+    pub end_date: Option<DateTime<Utc>>,
+    pub period: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct JournalReport {
+    pub period: String,
+    pub entries: Vec<JournalEntry>,
+    pub total_debit: Decimal,
+    pub total_credit: Decimal,
+}
+
+#[derive(Debug, Clone)]
+pub struct JournalEntry {
+    pub voucher_no: String,
+    pub voucher_date: DateTime<Utc>,
+    pub account_code: String,
+    pub account_name: String,
+    pub description: Option<String>,
+    pub debit: Decimal,
+    pub credit: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BalanceSheet {
+    pub period: String,
+    pub assets: Vec<BalanceItem>,
+    pub liabilities: Vec<BalanceItem>,
+    pub equity: Vec<BalanceItem>,
+    pub total_assets: f64,
+    pub total_liabilities: f64,
+    pub total_equity: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BalanceItem {
+    pub account_code: String,
+    pub account_name: String,
+    pub amount: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct IncomeStatement {
+    pub period: String,
+    pub revenues: Vec<IncomeItem>,
+    pub expenses: Vec<IncomeItem>,
+    pub total_revenue: f64,
+    pub total_expense: f64,
+    pub net_income: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct IncomeItem {
+    pub account_code: String,
+    pub account_name: String,
+    pub amount: f64,
+}

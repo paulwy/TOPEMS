@@ -1,13 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  Select,
-  MenuItem,
-  FormLabel,
-  Typography,
-  Box,
-} from "@mui/material";
+import { Card, CardContent, Select, MenuItem, FormLabel, Typography, Box,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check, Quote } from "lucide-react";
 

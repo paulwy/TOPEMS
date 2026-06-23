@@ -16,23 +16,8 @@ import {
   FileCheck,
   Trash2,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Box, Typography, FormControl, InputLabel, Select, MenuItem,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { ehsApi } from "@/api/ehs";

@@ -7,7 +7,8 @@ import {
   Sparkles,
   RefreshCw,
 } from "lucide-react";
-import { Button, Card, CardContent, Box, Typography } from "@mui/material";
+import { Card, CardContent, Box, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type { ValidateRequest, ValidationIssue, Suggestion } from "@/types/ai";

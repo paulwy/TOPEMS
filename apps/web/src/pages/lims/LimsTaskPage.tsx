@@ -10,31 +10,8 @@ import {
   Eye,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  IconButton,
-  TextField,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Card,
-  CardContent,
-  Snackbar,
-  Alert,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Divider,
-  LinearProgress,
-  Avatar,
-  Stack,
-} from "@mui/material";
+import { Box, Paper, Typography, IconButton, TextField, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent, Snackbar, Alert, MenuItem, Select, FormControl, InputLabel, Divider, LinearProgress, Avatar, Stack,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type {
   Sample,
   InspectionProcess,

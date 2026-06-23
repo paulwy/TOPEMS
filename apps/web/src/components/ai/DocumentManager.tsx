@@ -1,19 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Tabs,
-  Tab,
-  Chip,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+import { Card, CardContent, Box, Typography, Dialog, DialogContent, DialogTitle, TextField, Tabs, Tab, Chip, IconButton, Tooltip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { useState, useEffect, useRef } from "react";
 import {
   Upload,

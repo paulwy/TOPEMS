@@ -10,26 +10,8 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  Button,
-  IconButton,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Card,
-  CardContent,
-  Snackbar,
-  Alert,
-  LinearProgress,
-  Avatar,
-  Stack,
-} from "@mui/material";
+import { Box, Container, Paper, Typography, IconButton, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent, Snackbar, Alert, LinearProgress, Avatar, Stack,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type { InspectionProcess, LimsStatistics } from "@/api/lims";
 import { limsApi } from "@/api/lims";
 import { MetricCard } from "@/components/MetricCard";

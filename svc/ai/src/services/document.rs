@@ -291,7 +291,7 @@ impl DocumentService {
             .to_lowercase();
 
         match ext.as_str() {
-            "txt" | "md" | "csv" => {
+            "txt" | "md" | "csv" | "json" | "xml" | "yaml" | "yml" => {
                 String::from_utf8(data.to_vec()).map_err(|e| format!("文件编码错误: {}", e))
             }
             "pdf" => {
@@ -305,11 +305,84 @@ impl DocumentService {
                 let _ = std::fs::remove_file(&temp_file);
                 Ok(text)
             }
+            "docx" => {
+                self.extract_text_from_docx(data).map_err(|e| format!("解析 DOCX 失败: {}", e))
+            }
+            "xlsx" => {
+                self.extract_text_from_xlsx(data).map_err(|e| format!("解析 XLSX 失败: {}", e))
+            }
             _ => {
                 // 尝试作为纯文本读取
                 String::from_utf8(data.to_vec()).map_err(|_| "[无法解析的文件内容]".to_string())
             }
         }
+    }
+
+    /// 从 DOCX 文件提取文本
+    fn extract_text_from_docx(&self, data: &[u8]) -> Result<String, String> {
+        use zip::ZipArchive;
+        use std::io::Cursor;
+
+        let cursor = Cursor::new(data);
+        let mut archive = ZipArchive::new(cursor).map_err(|e| format!("无法打开 DOCX 文件: {}", e))?;
+
+        let mut text = String::new();
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i).map_err(|e| format!("读取 DOCX 条目失败: {}", e))?;
+            if file.name() == "word/document.xml" {
+                let mut content = String::new();
+                file.read_to_string(&mut content).map_err(|e| format!("读取文档内容失败: {}", e))?;
+                text = self.extract_text_from_xml(&content);
+                break;
+            }
+        }
+
+        Ok(text)
+    }
+
+    /// 从 XLSX 文件提取文本
+    fn extract_text_from_xlsx(&self, data: &[u8]) -> Result<String, String> {
+        use zip::ZipArchive;
+        use std::io::Cursor;
+
+        let cursor = Cursor::new(data);
+        let mut archive = ZipArchive::new(cursor).map_err(|e| format!("无法打开 XLSX 文件: {}", e))?;
+
+        let mut text = String::new();
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i).map_err(|e| format!("读取 XLSX 条目失败: {}", e))?;
+            if file.name().starts_with("xl/worksheets/sheet") && file.name().ends_with(".xml") {
+                let mut content = String::new();
+                file.read_to_string(&mut content).map_err(|e| format!("读取工作表内容失败: {}", e))?;
+                text.push_str(&self.extract_text_from_xml(&content));
+                text.push('\n');
+            }
+        }
+
+        Ok(text)
+    }
+
+    /// 从 XML 提取纯文本
+    fn extract_text_from_xml(&self, xml_content: &str) -> String {
+        let mut result = String::new();
+        let mut in_tag = false;
+        
+        for c in xml_content.chars() {
+            if c == '<' {
+                in_tag = true;
+            } else if c == '>' {
+                in_tag = false;
+            } else if !in_tag {
+                result.push(c);
+            }
+        }
+        
+        result
+            .replace("\n", " ")
+            .replace("\r", "")
+            .replace("  ", " ")
+            .trim()
+            .to_string()
     }
 }
 

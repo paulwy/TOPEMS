@@ -1,6 +1,7 @@
 import React from "react";
 import type { BoxProps } from "@mui/material";
-import { Box, Typography, Button, Stack } from "@mui/material";
+import { Box, Typography, Stack } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   FileX,
   Inbox,

@@ -1,19 +1,5 @@
-import {
-  Button as MuiButton,
-  Box,
-  Typography,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  IconButton,
-} from "@mui/material";
+import { Box, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip, IconButton } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Package,
@@ -586,15 +572,15 @@ const OfficeSuppliesManagementPage: React.FC<
                 gap: 1,
               }}
             >
-              <MuiButton
+              <Button
                 variant="outlined"
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
-              </MuiButton>
-              <MuiButton variant="contained" type="submit">
+              </Button>
+              <Button variant="contained" type="submit">
                 创建
-              </MuiButton>
+              </Button>
             </Box>
           </Box>
         </DialogContent>
@@ -738,7 +724,7 @@ const OfficeSuppliesManagementPage: React.FC<
                   gap: 1,
                 }}
               >
-                <MuiButton
+                <Button
                   variant="outlined"
                   onClick={() => {
                     setShowEditModal(false);
@@ -746,10 +732,10 @@ const OfficeSuppliesManagementPage: React.FC<
                   }}
                 >
                   取消
-                </MuiButton>
-                <MuiButton variant="contained" type="submit">
+                </Button>
+                <Button variant="contained" type="submit">
                   保存
-                </MuiButton>
+                </Button>
               </Box>
             </Box>
           )}

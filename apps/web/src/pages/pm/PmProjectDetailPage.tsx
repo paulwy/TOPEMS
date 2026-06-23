@@ -14,23 +14,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Badge,
-  LinearProgress,
-  Tabs,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-} from "@mui/material";
+import { Box, Typography, Card, CardContent, CardHeader, Badge, LinearProgress, Tabs, Tab, Table, TableBody, TableCell, TableHead, TableRow,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import GanttChart from "@/components/pm/GanttChart";
 import { pmApi } from "@/api/pm";
 import type {

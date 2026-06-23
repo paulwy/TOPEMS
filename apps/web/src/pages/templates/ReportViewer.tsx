@@ -13,20 +13,8 @@ import {
   Table,
   Eye,
 } from "lucide-react";
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  Table as MuiTable,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-} from "@mui/material";
+import { Box, Typography, TextField, Table as MuiTable, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type { ReportData } from "@/api/report";
 
 interface ReportViewerProps {

@@ -19,23 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import {
-  Box,
-  Button,
-  Typography,
-  Paper,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  IconButton,
-  Slider,
-  Chip,
-  Stack,
-  Grid,
-  Divider,
-} from "@mui/material";
+import { Box, Typography, Paper, TextField, Select, MenuItem, FormControl, InputLabel, IconButton, Slider, Chip, Stack, Grid, Divider,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type { DevicePoint, DeviceLocationRecord } from "../../api/gis";
 import { gisApi } from "../../api/gis";
 import { logger } from "@/utils/logger";

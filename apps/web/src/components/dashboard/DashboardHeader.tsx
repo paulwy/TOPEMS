@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, IconButton, Button } from "@mui/material";
+import { Box, Typography, IconButton } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Clock, LogOut, Zap } from "lucide-react";
 import { NotificationBell } from "../notifications";
 import { ModeToggle } from "../ModeToggle";

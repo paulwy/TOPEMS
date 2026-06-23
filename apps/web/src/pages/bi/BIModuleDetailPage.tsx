@@ -11,21 +11,8 @@ import {
   Table as TableIcon,
   Clock,
 } from "lucide-react";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  Box,
-  Skeleton,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Chip,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, Typography, Box, Skeleton, Table, TableHead, TableBody, TableRow, TableCell, Chip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Grid } from "@/components/Grid";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import ExportButton from "@/components/ExportButton";

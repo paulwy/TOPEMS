@@ -440,6 +440,26 @@ python -m topems_cli db migrate
 
 ## 📖 文档
 
+### 文档中心（内网推荐）
+
+系统提供独立的文档中心，支持内网部署，无需互联网访问：
+
+```bash
+# 启动文档中心
+cd docs-center
+./start.sh 8080
+
+# 访问地址
+# http://localhost:8080
+```
+
+文档中心包含：
+- 用户手册（Finance Core、IAM、Tenant、Plugin、Workflow）
+- 开发文档（架构设计、服务依赖）
+- API 文档
+
+### 其他文档
+
 - [Python CLI](./cli/README.md) - 服务管理命令行工具
 - [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览
 - [架构设计](./docs/architecture/overview.md) - 系统架构设计

@@ -1,13 +1,5 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  LinearProgress,
-} from "@mui/material";
+import { Box, Card, CardContent, CardHeader, Chip, Typography, LinearProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
 import { monitorApi } from "@/api/shared/monitor";
 import { apiLogger } from "@/utils/logger";

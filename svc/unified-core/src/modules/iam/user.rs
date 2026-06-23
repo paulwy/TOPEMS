@@ -4,7 +4,7 @@ use axum::{extract::{Path, State}, Json};
 use crate::AppState;
 use topems_shared::Claims;
 use axum::Extension;
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 struct UserResponse {

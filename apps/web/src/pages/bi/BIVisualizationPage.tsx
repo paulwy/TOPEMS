@@ -24,23 +24,8 @@ import {
   Save,
   Play,
 } from "lucide-react";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  TextField,
-  Box,
-  Skeleton,
-  Typography,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Tooltip,
-  Divider,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, TextField, Box, Skeleton, Typography, IconButton, FormControl, InputLabel, Select, MenuItem, Tooltip, Divider,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/EmptyState";
 
 interface VisualizationComponent {

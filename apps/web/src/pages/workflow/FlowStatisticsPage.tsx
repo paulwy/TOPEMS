@@ -1,15 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Stack,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { Card, CardContent, Typography, Box, Stack, FormControl, InputLabel, Select, MenuItem,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
 import {
   BarChart3,

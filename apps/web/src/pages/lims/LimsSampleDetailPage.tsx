@@ -15,20 +15,8 @@ import {
   Plus,
   BarChart3,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  MenuItem,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Box, Typography, MenuItem,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";

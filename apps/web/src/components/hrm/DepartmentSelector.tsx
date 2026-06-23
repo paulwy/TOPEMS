@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Button, TextField, Paper } from "@mui/material";
+import { Box, Typography, TextField, Paper } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Building2, ChevronRight } from "lucide-react";
 import { type Department } from "@/api/hrm";
 import type { TreeNode } from "../TreeView";

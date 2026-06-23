@@ -9,21 +9,8 @@ import {
   useEmployeeFinanceInfo,
   useUpdateEmployeeFinanceInfo,
 } from "@/hooks/useHrmFinance";
-import {
-  Button,
-  TextField,
-  FormLabel,
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  Typography,
-} from "@mui/material";
+import { TextField, FormLabel, Chip, Card, CardContent, CardHeader, FormControl, InputLabel, Select, MenuItem, Box, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Banknote, DollarSign, Shield, Save, Edit2, X } from "lucide-react";
 
 interface EmployeeFinanceTabProps {

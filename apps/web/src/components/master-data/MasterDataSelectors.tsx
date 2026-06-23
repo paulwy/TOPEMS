@@ -3,22 +3,8 @@
  * 包含往来单位选择器、项目选择器、组织架构选择器、会计科目选择器等
  */
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Button,
-  TextField,
-  Tabs,
-  Tab,
-  Box,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CircularProgress,
-} from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, TextField, Tabs, Tab, Box, Chip, FormControl, InputLabel, Select, MenuItem, CircularProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 

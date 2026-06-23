@@ -12,7 +12,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Button, Chip } from "@mui/material";
+import { Box, Typography, Chip } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type {
   NotificationTemplate,
   CreateTemplateRequest,

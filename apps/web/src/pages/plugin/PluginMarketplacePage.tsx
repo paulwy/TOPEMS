@@ -1,974 +1,742 @@
-/**
- * Plugin Marketplace Page
- * TOPEMS - Plugin Market and Management
- */
-
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  CardActions,
-  Modal,
-  Avatar,
-  Rating,
-  Skeleton,
-  Tabs,
-  Tab,
-  Badge as MuiBadge,
-  IconButton,
-} from "@mui/material";
-import { Grid } from "@/components/Grid";
-import {
+  Package,
+  Star,
+  Download,
+  Shield,
+  Clock,
   Search,
   Filter,
-  Grid as GridIcon,
+  Grid3X3,
   List,
-  Download,
-  CheckCircle,
-  XCircle,
-  Plus,
-  X,
-  ChevronLeft,
   ChevronRight,
-  Package,
-  Tag,
-  User,
-  Calendar,
-  TrendingUp,
+  CheckCircle,
+  AlertCircle,
   Sparkles,
-  Clock,
-  Shield,
-  Zap,
-  Star,
+  TrendingUp,
+  Users,
+  X,
+  Heart,
+  ShoppingCart,
+  ExternalLink,
 } from "lucide-react";
 import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Chip,
+  Rating,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Avatar,
+  Divider,
+} from "@mui/material";
+import {
+  Plugin,
+  PluginReview,
+  PluginVersion,
+  SuiteInfo,
+  SUITES,
+  PLUGIN_SUITE_MAP,
   getMarketplaceSummary,
-  getPluginCategories,
   listPlugins,
   getPlugin,
-  getPluginVersions,
   getPluginReviews,
+  getPluginVersions,
+  submitPluginReview,
   pluginApi,
-  type Plugin,
-  type PluginCategory,
-  type PluginVersion,
-  type PluginReview,
-  type TenantInstalledPlugin,
+  checkAllPluginsHealth,
 } from "@/api/plugin";
+import { useToast } from "@/hooks/use-toast";
+import { Loading } from "@/components/ui/Loading";
 
-// Mock tenant ID - in production, this should come from auth context
-const MOCK_TENANT_ID = "00000000-0000-0000-0000-000000000001";
+type SortOption = "popular" | "rating" | "newest" | "price";
+type ViewMode = "grid" | "list";
 
-interface MarketplaceState {
-  summary: {
-    total_plugins: number;
-    categories: PluginCategory[];
-    featured_plugins: Plugin[];
-    new_plugins: Plugin[];
-    top_rated: Plugin[];
-  } | null;
-  plugins: Plugin[];
-  categories: PluginCategory[];
-  installedPlugins: TenantInstalledPlugin[];  // 租户已安装的插件
-  loading: boolean;
-  error: string | null;
-  viewMode: "grid" | "list";
-  searchQuery: string;
-  selectedCategory: string | null;
-  sortBy: "popular" | "rating" | "recent" | "name";
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  total: number;
-}
-
-interface PluginDetailState {
-  plugin: Plugin | null;
-  versions: PluginVersion[];
-  reviews: PluginReview[];
-  loading: boolean;
-}
-
-export default function PluginMarketplacePage() {
-  const [state, setState] = useState<MarketplaceState>({
-    summary: null,
-    plugins: [],
-    categories: [],
-    installedPlugins: [],
-    loading: true,
-    error: null,
-    viewMode: "grid",
-    searchQuery: "",
-    selectedCategory: null,
-    sortBy: "popular",
-    page: 1,
-    pageSize: 20,
-    totalPages: 1,
-    total: 0,
-  });
-
-  const [selectedPlugin, setSelectedPlugin] = useState<PluginDetailState>({
-    plugin: null,
-    versions: [],
-    reviews: [],
-    loading: false,
-  });
-
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [installingPlugins, setInstallingPlugins] = useState<Set<string>>(
-    new Set(),
-  );
-
-  // Load marketplace data
-  const loadMarketplace = useCallback(async () => {
-    try {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-
-      // Set default tenant ID if not set
-      if (!localStorage.getItem("tenant_id")) {
-        localStorage.setItem("tenant_id", MOCK_TENANT_ID);
-      }
-
-      const [summaryRes, categoriesRes, pluginsRes, installedRes] = await Promise.all([
-        getMarketplaceSummary(),
-        getPluginCategories(),
-        listPlugins({
-          search: state.searchQuery || undefined,
-          category: state.selectedCategory || undefined,
-          sort_by: state.sortBy,
-          page: state.page,
-          page_size: state.pageSize,
-        }),
-        pluginApi.listInstalled(), // 获取当前租户已安装的插件
-      ]);
-
-      if (summaryRes.success && summaryRes.data) {
-        setState((prev) => ({ ...prev, summary: summaryRes.data! }));
-      }
-
-      if (categoriesRes.success && categoriesRes.data) {
-        setState((prev) => ({ ...prev, categories: categoriesRes.data! }));
-      }
-
-      if (pluginsRes.success && pluginsRes.data) {
-        setState((prev) => ({
-          ...prev,
-          plugins: pluginsRes.data!.plugins,
-          total: pluginsRes.data!.total,
-          totalPages: pluginsRes.data!.total_pages,
-        }));
-      }
-
-      // 保存已安装插件列表
-      if (installedRes.success && installedRes.data) {
-        setState((prev) => ({ ...prev, installedPlugins: installedRes.data! }));
-      }
-    } catch (error) {
-      setState((prev) => ({ ...prev, error: "Failed to load marketplace" }));
-    } finally {
-      setState((prev) => ({ ...prev, loading: false }));
-    }
-  }, [
-    state.searchQuery,
-    state.selectedCategory,
-    state.sortBy,
-    state.page,
-    state.pageSize,
-  ]);
-
-  useEffect(() => {
-    // Set default tenant ID if not set
-    if (!localStorage.getItem("tenant_id")) {
-      localStorage.setItem("tenant_id", MOCK_TENANT_ID);
-    }
-    loadMarketplace();
-  }, [loadMarketplace]);
-
-  // Load plugin details
-  const loadPluginDetails = async (code: string) => {
-    setSelectedPlugin({
-      plugin: null,
-      versions: [],
-      reviews: [],
-      loading: true,
-    });
-    setShowDetailModal(true);
-
-    try {
-      const [pluginRes, versionsRes, reviewsRes] = await Promise.all([
-        getPlugin(code),
-        getPluginVersions(code),
-        getPluginReviews(code),
-      ]);
-
-      setSelectedPlugin({
-        plugin: pluginRes.success && pluginRes.data ? pluginRes.data : null,
-        versions:
-          versionsRes.success && versionsRes.data ? versionsRes.data : [],
-        reviews: reviewsRes.success && reviewsRes.data ? reviewsRes.data : [],
-        loading: false,
-      });
-    } catch (error) {
-      setSelectedPlugin((prev) => ({ ...prev, loading: false }));
-    }
-  };
-
-  // Handle install/uninstall
-  const handleInstall = async (pluginCode: string) => {
-    setInstallingPlugins((prev) => new Set(prev).add(pluginCode));
-    
-    try {
-      const result = await pluginApi.install(pluginCode);
-      if (result.success) {
-        // 重新加载已安装插件列表
-        const installedRes = await pluginApi.listInstalled();
-        if (installedRes.success && installedRes.data) {
-          setState((prev) => ({ ...prev, installedPlugins: installedRes.data! }));
-        }
-        alert(`插件安装成功！`);
-      }
-    } catch (error: any) {
-      console.error("Failed to install plugin:", error);
-      alert(`安装失败: ${error?.response?.data?.message || error.message || "未知错误"}`);
-    } finally {
-      setInstallingPlugins((prev) => {
-        const next = new Set(prev);
-        next.delete(pluginCode);
-        return next;
-      });
-    }
-  };
-
-  // Search and filter handlers
-  const handleSearch = (query: string) => {
-    setState((prev) => ({ ...prev, searchQuery: query, page: 1 }));
-  };
-
-  const handleCategorySelect = (category: string | null) => {
-    setState((prev) => ({ ...prev, selectedCategory: category, page: 1 }));
-  };
-
-  const handleSortChange = (
-    sortBy: "popular" | "rating" | "recent" | "name",
-  ) => {
-    setState((prev) => ({ ...prev, sortBy, page: 1 }));
-  };
-
-  const handlePageChange = (page: number) => {
-    setState((prev) => ({ ...prev, page }));
-  };
-
-  // 辅助函数：检查插件是否已安装
-  const isPluginInstalled = (pluginCode: string): TenantInstalledPlugin | undefined => {
-    return state.installedPlugins.find((p) => p.plugin_code === pluginCode);
-  };
-
-  // 获取插件运行状态
-  const getRuntimeStatus = (pluginCode: string): { status: string; url?: string } => {
-    const installed = isPluginInstalled(pluginCode);
-    if (!installed) return { status: "not_installed" };
-    if (installed.runtime_status) return { status: installed.runtime_status, url: installed.runtime_url || undefined };
-    return { status: "registered" };
-  };
-
-  return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      {/* Header */}
-      <Box sx={{ bgcolor: "background.paper", boxShadow: 1 }}>
-        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 4 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box>
-              <Typography
-                variant="h4"
-                sx={{ fontWeight: "bold" }}
-                color="text.primary"
-              >
-                Plugin Marketplace
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Discover and install plugins to extend your TOPEMS system
-              </Typography>
-            </Box>
-            <MuiBadge
-              badgeContent={state.summary?.total_plugins || 0}
-              color="primary"
-            >
-              <Chip label="Plugins" color="primary" variant="outlined" />
-            </MuiBadge>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* 已安装插件状态面板 */}
-      {state.installedPlugins.length > 0 && (
-        <Box sx={{ bgcolor: "primary.main", py: 2 }}>
-          <Box sx={{ maxWidth: 1400, mx: "auto", px: 3 }}>
-            <Typography variant="subtitle1" sx={{ color: "white", fontWeight: "bold", mb: 1.5 }}>
-              我的插件 ({state.installedPlugins.length})
-            </Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              {state.installedPlugins.map((plugin) => (
-                <Chip
-                  key={plugin.id}
-                  label={`${plugin.plugin_name}`}
-                  onClick={() => {
-                    // 导航到插件详情
-                  }}
-                  icon={
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        bgcolor: plugin.runtime_status === "running" ? "success.main" : 
-                                 plugin.runtime_status === "error" ? "error.main" : "warning.main",
-                        ml: 1,
-                      }}
-                    />
-                  }
-                  sx={{ 
-                    bgcolor: "rgba(255,255,255,0.15)", 
-                    color: "white",
-                    "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-                  }}
-                />
-              ))}
-            </Box>
-          </Box>
-        </Box>
-      )}
-
-      <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 4 }}>
-        <Grid container spacing={3}>
-          {/* Sidebar */}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Card sx={{ p: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ ...{ mb: 2 }, fontWeight: "bold" }}
-              >
-                Categories
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                <Button
-                  variant={
-                    state.selectedCategory === null ? "contained" : "text"
-                  }
-                  color={
-                    state.selectedCategory === null ? "primary" : "inherit"
-                  }
-                  onClick={() => handleCategorySelect(null)}
-                  sx={{ justifyContent: "flex-start", borderRadius: 1 }}
-                >
-                  All Plugins
-                </Button>
-                {state.categories.map((cat) => (
-                  <Button
-                    key={cat.id}
-                    variant={
-                      state.selectedCategory === cat.code ? "contained" : "text"
-                    }
-                    color={
-                      state.selectedCategory === cat.code
-                        ? "primary"
-                        : "inherit"
-                    }
-                    onClick={() => handleCategorySelect(cat.code)}
-                    sx={{ justifyContent: "space-between", borderRadius: 1 }}
-                  >
-                    {cat.name}
-                    {cat.plugin_count && (
-                      <Chip label={cat.plugin_count} size="small" />
-                    )}
-                  </Button>
-                ))}
-              </Box>
-
-              <Typography
-                variant="subtitle1"
-                sx={{ ...{ mt: 4, mb: 2 }, fontWeight: "bold" }}
-              >
-                Sort By
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                {[
-                  { value: "popular", label: "Popular", icon: TrendingUp },
-                  { value: "rating", label: "Top Rated", icon: Star },
-                  { value: "recent", label: "Recent", icon: Clock },
-                  { value: "name", label: "Name", icon: Package },
-                ].map((item) => (
-                  <Button
-                    key={item.value}
-                    variant={state.sortBy === item.value ? "contained" : "text"}
-                    color={state.sortBy === item.value ? "primary" : "inherit"}
-                    onClick={() => handleSortChange(item.value as any)}
-                    startIcon={<item.icon size={16} />}
-                    sx={{ justifyContent: "flex-start", borderRadius: 1 }}
-                  >
-                    {item.label}
-                  </Button>
-                ))}
-              </Box>
-            </Card>
-          </Grid>
-
-          {/* Main Content */}
-          <Grid size={{ xs: 12, md: 9 }}>
-            {/* Search Bar */}
-            <Card sx={{ p: 2, mb: 3 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <TextField
-                  placeholder="Search plugins..."
-                  value={state.searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  size="small"
-                  sx={{ flex: 1 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Search size={20} style={{ marginRight: 8 }} />
-                      ),
-                    },
-                  }}
-                />
-                <IconButton
-                  onClick={() =>
-                    setState((prev) => ({ ...prev, viewMode: "grid" }))
-                  }
-                  color={state.viewMode === "grid" ? "primary" : "default"}
-                >
-                  <GridIcon size={20} />
-                </IconButton>
-                <IconButton
-                  onClick={() =>
-                    setState((prev) => ({ ...prev, viewMode: "list" }))
-                  }
-                  color={state.viewMode === "list" ? "primary" : "default"}
-                >
-                  <List size={20} />
-                </IconButton>
-              </Box>
-            </Card>
-
-            {/* All Plugins */}
-            <Box>
-              <Typography
-                variant="h6"
-                sx={{ ...{ mb: 2 }, fontWeight: "bold" }}
-              >
-                {state.selectedCategory
-                  ? state.categories.find(
-                      (c) => c.code === state.selectedCategory,
-                    )?.name
-                  : "All Plugins"}
-              </Typography>
-              {state.loading ? (
-                <Grid container spacing={2}>
-                  {[...Array(6)].map((_, i) => (
-                    <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-                      <Card sx={{ p: 2 }}>
-                        <Skeleton
-                          variant="rectangular"
-                          height={80}
-                          sx={{ mb: 1 }}
-                        />
-                        <Skeleton variant="text" width="60%" />
-                        <Skeleton variant="text" width="40%" />
-                        <Skeleton variant="text" width="80%" />
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : state.plugins.length === 0 ? (
-                <Card sx={{ p: 4, textAlign: "center" }}>
-                  <Package
-                    size={48}
-                    color="#9ca3af"
-                    style={{ margin: "0 auto 16px" }}
-                  />
-                  <Typography color="text.secondary">
-                    No plugins found matching your criteria
-                  </Typography>
-                </Card>
-              ) : (
-                <Grid container spacing={2}>
-                  {state.plugins.map((plugin) => (
-                    <Grid key={plugin.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                      <PluginCard
-                        plugin={plugin}
-                        onClick={() => loadPluginDetails(plugin.code)}
-                        onInstall={handleInstall}
-                        isInstalling={installingPlugins.has(plugin.code)}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Box>
-
-            {/* Pagination */}
-            {state.totalPages > 1 && (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 2,
-                  mt: 3,
-                }}
-              >
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => handlePageChange(state.page - 1)}
-                  disabled={state.page <= 1}
-                >
-                  <ChevronLeft size={16} />
-                </Button>
-                <Typography variant="body2" color="text.secondary">
-                  Page {state.page} of {state.totalPages}
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => handlePageChange(state.page + 1)}
-                  disabled={state.page >= state.totalPages}
-                >
-                  <ChevronRight size={16} />
-                </Button>
-              </Box>
-            )}
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Plugin Detail Modal */}
-      <PluginDetailModal
-        state={selectedPlugin}
-        open={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        onInstall={handleInstall}
-        isInstalling={installingPlugins.has(selectedPlugin.plugin?.code || "")}
-      />
-    </Box>
-  );
-}
-
-// Plugin Card Component
 interface PluginCardProps {
   plugin: Plugin;
-  onClick: () => void;
-  onInstall?: (code: string) => void;
-  isInstalling?: boolean;
+  healthStatus?: boolean;
+  onInstall?: () => void;
+  onViewDetails?: () => void;
 }
 
-function PluginCard({
+const PluginCard: React.FC<PluginCardProps> = ({
   plugin,
-  onClick,
+  healthStatus,
   onInstall,
-  isInstalling,
-}: PluginCardProps) {
+  onViewDetails,
+}) => {
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  const handleInstall = async () => {
+    setIsInstalling(true);
+    try {
+      await pluginApi.install(plugin.code);
+      onInstall?.();
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
   return (
     <Card
-      sx={{
-        cursor: "pointer",
-        transition: "box-shadow 0.2s",
-        "&:hover": { boxShadow: 4 },
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}
-      onClick={onClick}
+      className="h-full flex flex-col hover:shadow-lg transition-shadow duration-300"
+      sx={{ borderRadius: 2 }}
     >
-      <Box
-        sx={{
-          height: 80,
-          bgcolor: "primary.main",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Package size={40} color="white" />
-      </Box>
-      <CardContent sx={{ flex: 1 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            mb: 1,
-          }}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-            {plugin.name}
-          </Typography>
-          <Chip
-            label={
-              plugin.is_free
-                ? "Free"
-                : `$${((plugin.price_cents || 0) / 100).toFixed(2)}`
-            }
-            color={plugin.is_free ? "success" : "warning"}
-            size="small"
-          />
-        </Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block" }}
-        >
-          by {plugin.author_name || "Unknown"}
-        </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ mt: 1 }}
-          noWrap
-        >
-          {plugin.description || "No description available"}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 2 }}>
-          {plugin.rating && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Star size={12} color="#eab308" fill="#eab308" />
-              <Typography variant="caption">
-                {Number(plugin.rating).toFixed(1)}
+      <CardContent className="flex flex-col h-full">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
+              <Package className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <Typography variant="h6" fontWeight="bold">
+                {plugin.name}
               </Typography>
-            </Box>
+              <Typography variant="body2" color="textSecondary">
+                v{plugin.version}
+              </Typography>
+            </div>
+          </div>
+          {healthStatus !== undefined && (
+            <div className={`w-3 h-3 rounded-full ${healthStatus ? "bg-green-500" : "bg-red-500"}`} />
           )}
-          {plugin.install_count && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Download size={12} />
-              <Typography variant="caption">{plugin.install_count}</Typography>
-            </Box>
-          )}
-          {plugin.category && (
-            <Chip label={plugin.category} size="small" variant="outlined" />
-          )}
-        </Box>
-      </CardContent>
-      {onInstall && (
-        <CardActions sx={{ px: 2, pb: 2 }}>
+        </div>
+
+        <Typography variant="body2" color="textSecondary" className="mb-3 flex-grow">
+          {plugin.description || "暂无描述"}
+        </Typography>
+
+        <div className="flex flex-wrap gap-1 mb-3">
+          {plugin.tags?.slice(0, 3).map((tag) => (
+            <Chip
+              key={tag}
+              label={tag}
+              size="small"
+              variant="outlined"
+              sx={{ fontSize: 10 }}
+            />
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1">
+            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+            <Typography variant="body2" fontWeight="medium">
+              {plugin.rating || 0}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              ({plugin.rating_count || 0})
+            </Typography>
+          </div>
+          <div className="flex items-center gap-1">
+            <Download className="w-4 h-4 text-gray-400" />
+            <Typography variant="body2" color="textSecondary">
+              {plugin.install_count?.toLocaleString() || 0}
+            </Typography>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
           <Button
-            variant="contained"
+            variant="outlined"
             size="small"
             fullWidth
-            onClick={(e) => {
-              e.stopPropagation();
-              onInstall(plugin.code);
-            }}
-            disabled={isInstalling}
-            startIcon={
-              plugin.is_installed ? (
-                <CheckCircle size={16} />
-              ) : (
-                <Download size={16} />
-              )
-            }
+            onClick={onViewDetails}
+            startIcon={<ExternalLink className="w-4 h-4" />}
           >
-            {isInstalling
-              ? "Installing..."
-              : plugin.is_installed
-                ? "Installed"
-                : "Install"}
+            详情
           </Button>
-        </CardActions>
-      )}
-    </Card>
-  );
-}
-
-// Plugin Detail Modal Component
-interface PluginDetailModalProps {
-  state: PluginDetailState;
-  open: boolean;
-  onClose: () => void;
-  onInstall: (code: string) => void;
-  isInstalling: boolean;
-}
-
-function PluginDetailModal({
-  state,
-  open,
-  onClose,
-  onInstall,
-  isInstalling,
-}: PluginDetailModalProps) {
-  const { plugin, versions, reviews, loading } = state;
-
-  return (
-    <Modal open={open} onClose={onClose} sx={{ overflow: "auto" }}>
-      <Box
-        sx={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "90%",
-          maxWidth: 600,
-          bgcolor: "background.paper",
-          borderRadius: 2,
-          boxShadow: 24,
-          p: 4,
-          maxHeight: "90vh",
-          overflow: "auto",
-        }}
-      >
-        {loading || !plugin ? (
-          <Box sx={{ p: 2 }}>
-            <Skeleton variant="text" width="60%" height={40} />
-            <Skeleton variant="text" width="40%" />
-            <Skeleton variant="rectangular" height={100} sx={{ mt: 2 }} />
-          </Box>
-        ) : (
-          <>
-            {/* Header */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                mb: 3,
-              }}
-            >
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                  {plugin.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  by {plugin.author_name || "Unknown"} • v{plugin.version}
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-                  <Chip
-                    label={
-                      plugin.is_free
-                        ? "Free"
-                        : `$${((plugin.price_cents || 0) / 100).toFixed(2)}`
-                    }
-                    color={plugin.is_free ? "success" : "warning"}
-                    size="small"
-                  />
-                  {plugin.is_featured && (
-                    <Chip label="Featured" color="primary" size="small" />
-                  )}
-                  {plugin.is_published ? (
-                    <Chip label="Published" color="success" size="small" />
-                  ) : (
-                    <Chip label="Draft" size="small" />
-                  )}
-                </Box>
-              </Box>
-              <IconButton onClick={onClose}>
-                <X size={20} />
-              </IconButton>
-            </Box>
-
-            {/* Description */}
-            <Box sx={{ mb: 3 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: "bold" }}
-                gutterBottom
-              >
-                Description
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {plugin.description || "No description available"}
-              </Typography>
-            </Box>
-
-            {/* Stats */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid size={3}>
-                <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {plugin.install_count || 0}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Downloads
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid size={3}>
-                <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {plugin.rating ? Number(plugin.rating).toFixed(1) : "N/A"}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Rating
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid size={3}>
-                <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {plugin.rating_count || 0}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Reviews
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid size={3}>
-                <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {versions.length}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Versions
-                  </Typography>
-                </Card>
-              </Grid>
-            </Grid>
-
-            {/* Tags */}
-            {plugin.tags && plugin.tags.length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: "bold" }}
-                  gutterBottom
-                >
-                  Tags
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {plugin.tags.map((tag, i) => (
-                    <Chip key={i} label={tag} size="small" variant="outlined" />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {/* Versions */}
-            {versions.length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: "bold" }}
-                  gutterBottom
-                >
-                  Versions
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {versions.slice(0, 5).map((v) => (
-                    <Card key={v.id} sx={{ p: 1.5, bgcolor: "grey.50" }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <Typography
-                            variant="body2"
-                            sx={{ fontFamily: "monospace" }}
-                          >
-                            v{v.version}
-                          </Typography>
-                          {v.is_latest && (
-                            <Chip label="Latest" color="primary" size="small" />
-                          )}
-                          {v.is_stable && (
-                            <Chip label="Stable" color="success" size="small" />
-                          )}
-                        </Box>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(v.created_at).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    </Card>
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {/* Reviews */}
-            {reviews.length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: "bold" }}
-                  gutterBottom
-                >
-                  Reviews
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {reviews.slice(0, 3).map((r) => (
-                    <Card key={r.id} sx={{ p: 2, bgcolor: "grey.50" }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          mb: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: "medium" }}
-                        >
-                          {r.user_name || "Anonymous"}
-                        </Typography>
-                        <Rating value={r.rating || 0} readOnly size="small" />
-                      </Box>
-                      {r.title && (
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: "medium" }}
-                        >
-                          {r.title}
-                        </Typography>
-                      )}
-                      {r.content && (
-                        <Typography variant="caption" color="text.secondary">
-                          {r.content}
-                        </Typography>
-                      )}
-                    </Card>
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {/* Install Button */}
+          {plugin.is_installed ? (
             <Button
               variant="contained"
+              size="small"
               fullWidth
-              size="large"
-              onClick={() => onInstall(plugin.code)}
-              disabled={isInstalling}
-              startIcon={
-                plugin.is_installed ? (
-                  <CheckCircle size={20} />
-                ) : (
-                  <Download size={20} />
-                )
-              }
+              disabled
+              startIcon={<CheckCircle className="w-4 h-4" />}
             >
-              {isInstalling
-                ? "Installing..."
-                : plugin.is_installed
-                  ? "Reinstall"
-                  : "Install Now"}
+              已安装
             </Button>
-          </>
-        )}
-      </Box>
-    </Modal>
+          ) : (
+            <Button
+              variant="contained"
+              size="small"
+              fullWidth
+              onClick={handleInstall}
+              disabled={isInstalling}
+              startIcon={isInstalling ? <Loading className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+            >
+              {plugin.is_free ? "免费安装" : "购买"}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
-}
+};
+
+const PluginDetailModal: React.FC<{
+  plugin: Plugin;
+  onClose: () => void;
+}> = ({ plugin, onClose }) => {
+  const [reviews, setReviews] = useState<PluginReview[]>([]);
+  const [versions, setVersions] = useState<PluginVersion[]>([]);
+  const [rating, setRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewContent, setReviewContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    getPluginReviews(plugin.code).then((res) => {
+      if (res.success && res.data) {
+        setReviews(res.data.reviews);
+      }
+    });
+    getPluginVersions(plugin.code).then((res) => {
+      if (res.success && res.data) {
+        setVersions(res.data);
+      }
+    });
+  }, [plugin.code]);
+
+  const handleSubmitReview = async () => {
+    if (rating === 0) return;
+    setIsSubmitting(true);
+    try {
+      await submitPluginReview(plugin.code, {
+        rating,
+        title: reviewTitle || undefined,
+        content: reviewContent || undefined,
+      });
+      toast({
+        title: "评价成功",
+        description: "感谢您的评价",
+      });
+      setRating(0);
+      setReviewTitle("");
+      setReviewContent("");
+      getPluginReviews(plugin.code).then((res) => {
+        if (res.success && res.data) {
+          setReviews(res.data.reviews);
+        }
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      sx={{ borderRadius: 2 }}
+    >
+      <DialogTitle className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
+            <Package className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <Typography variant="h5" fontWeight="bold">
+              {plugin.name}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              v{plugin.version}
+            </Typography>
+          </div>
+        </div>
+        <Button onClick={onClose} startIcon={<X className="w-5 h-5" />}>
+          关闭
+        </Button>
+      </DialogTitle>
+
+      <DialogContent className="max-h-[70vh] overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div>
+              <Typography variant="h6" fontWeight="bold">
+                描述
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                {plugin.description || "暂无描述"}
+              </Typography>
+            </div>
+
+            <div>
+              <Typography variant="h6" fontWeight="bold">
+                版本历史
+              </Typography>
+              <div className="space-y-2">
+                {versions.length > 0 ? (
+                  versions.map((v) => (
+                    <div
+                      key={v.id}
+                      className="p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Typography fontWeight="medium">{v.version}</Typography>
+                          {v.is_latest && (
+                            <Chip
+                              label="最新"
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                          )}
+                          {v.is_stable && (
+                            <Chip
+                              label="稳定"
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                            />
+                          )}
+                        </div>
+                        <Typography variant="body2" color="textSecondary">
+                          {new Date(v.created_at).toLocaleDateString()}
+                        </Typography>
+                      </div>
+                      {v.release_notes && (
+                        <Typography variant="body2" color="textSecondary" className="mt-1">
+                          {v.release_notes}
+                        </Typography>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="textSecondary">
+                    暂无版本信息
+                  </Typography>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Typography variant="h6" fontWeight="bold">
+                用户评价 ({reviews.length})
+              </Typography>
+              <div className="space-y-4">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <div key={review.id} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Avatar>{review.user_name?.charAt(0) || "U"}</Avatar>
+                          <div>
+                            <Typography fontWeight="medium">
+                              {review.user_name || "匿名用户"}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </Typography>
+                          </div>
+                        </div>
+                        <Rating
+                          value={review.rating || 0}
+                          readOnly
+                          size="small"
+                        />
+                      </div>
+                      {review.title && (
+                        <Typography fontWeight="medium">{review.title}</Typography>
+                      )}
+                      {review.content && (
+                        <Typography variant="body2" color="textSecondary">
+                          {review.content}
+                        </Typography>
+                      )}
+                      {review.is_verified_purchase && (
+                        <Chip
+                          label="已购买"
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          className="mt-2"
+                        />
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <Typography variant="body2" color="textSecondary">
+                    暂无评价
+                  </Typography>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Typography variant="h6" fontWeight="bold">
+                    评分
+                  </Typography>
+                  <div className="text-center">
+                    <Typography variant="h3" fontWeight="bold">
+                      {plugin.rating || 0}
+                    </Typography>
+                    <Rating value={plugin.rating || 0} readOnly />
+                  </div>
+                </div>
+
+                <Divider />
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">下载量</span>
+                  <Typography fontWeight="medium">
+                    {plugin.install_count?.toLocaleString() || 0}
+                  </Typography>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">分类</span>
+                  <Typography fontWeight="medium">{plugin.category}</Typography>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">作者</span>
+                  <Typography fontWeight="medium">
+                    {plugin.author_name || "未知"}
+                  </Typography>
+                </div>
+
+                <Divider />
+
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  disabled={plugin.is_installed}
+                  startIcon={plugin.is_installed ? <CheckCircle className="w-5 h-5" /> : <ShoppingCart className="w-5 h-5" />}
+                >
+                  {plugin.is_installed ? "已安装" : plugin.is_free ? "免费安装" : "购买"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" className="mb-4">
+                  发表评价
+                </Typography>
+                <div className="space-y-3">
+                  <Rating
+                    value={rating}
+                    onChange={(_, newValue) => setRating(newValue || 0)}
+                  />
+                  <TextField
+                    label="标题"
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    fullWidth
+                  />
+                  <TextField
+                    label="评价内容"
+                    value={reviewContent}
+                    onChange={(e) => setReviewContent(e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={3}
+                  />
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={handleSubmitReview}
+                    disabled={rating === 0 || isSubmitting}
+                  >
+                    {isSubmitting ? "提交中..." : "提交评价"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const PluginMarketplacePage: React.FC = () => {
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSuite, setSelectedSuite] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("popular");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
+  const [healthStatus, setHealthStatus] = useState<Record<string, boolean>>({});
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [summaryRes, healthRes] = await Promise.all([
+          getMarketplaceSummary(),
+          checkAllPluginsHealth(),
+        ]);
+        if (summaryRes.success && summaryRes.data) {
+          setPlugins([
+            ...summaryRes.data.featured_plugins,
+            ...summaryRes.data.new_plugins,
+            ...summaryRes.data.top_rated,
+          ]);
+        } else {
+          const listRes = await listPlugins();
+          if (listRes.success && listRes.data) {
+            setPlugins(listRes.data.plugins);
+          }
+        }
+        const healthMap: Record<string, boolean> = {};
+        Object.entries(healthRes).forEach(([code, status]) => {
+          healthMap[code] = status.healthy;
+        });
+        setHealthStatus(healthMap);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredPlugins = useMemo(() => {
+    let result = [...plugins];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term) ||
+          p.tags?.some((t) => t.toLowerCase().includes(term))
+      );
+    }
+
+    if (selectedSuite !== "all") {
+      result = result.filter((p) => PLUGIN_SUITE_MAP[p.code] === selectedSuite);
+    }
+
+    switch (sortBy) {
+      case "popular":
+        result.sort((a, b) => (b.install_count || 0) - (a.install_count || 0));
+        break;
+      case "rating":
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case "newest":
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case "price":
+        result.sort((a, b) => (a.price_cents || 0) - (b.price_cents || 0));
+        break;
+    }
+
+    return result;
+  }, [plugins, searchTerm, selectedSuite, sortBy]);
+
+  const handleInstall = (pluginCode: string) => {
+    toast({
+      title: "安装成功",
+      description: `${pluginCode} 插件已安装`,
+    });
+    setPlugins((prev) =>
+      prev.map((p) => (p.code === pluginCode ? { ...p, is_installed: true } : p))
+    );
+  };
+
+  if (loading) {
+    return <Loading />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-8 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-2">
+            <Sparkles className="w-8 h-8" />
+            <Typography variant="h4" fontWeight="bold">
+              插件市场
+            </Typography>
+          </div>
+          <Typography variant="body1" opacity={0.9}>
+            发现和安装强大的插件，扩展您的 TOPEMS 功能
+          </Typography>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex flex-col lg:flex-row gap-6 mb-8">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <TextField
+              placeholder="搜索插件..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
+              sx={{ pl: 10 }}
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <FormControl size="small" className="min-w-[160px]">
+              <InputLabel>套件分类</InputLabel>
+              <Select
+                value={selectedSuite}
+                label="套件分类"
+                onChange={(e) => setSelectedSuite(e.target.value)}
+              >
+                <MenuItem value="all">全部套件</MenuItem>
+                {SUITES.map((suite) => (
+                  <MenuItem key={suite.code} value={suite.code}>
+                    {suite.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" className="min-w-[140px]">
+              <InputLabel>排序方式</InputLabel>
+              <Select
+                value={sortBy}
+                label="排序方式"
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+              >
+                <MenuItem value="popular">
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  最受欢迎
+                </MenuItem>
+                <MenuItem value="rating">
+                  <Star className="w-4 h-4 mr-2" />
+                  评分最高
+                </MenuItem>
+                <MenuItem value="newest">
+                  <Clock className="w-4 h-4 mr-2" />
+                  最新发布
+                </MenuItem>
+                <MenuItem value="price">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  价格排序
+                </MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+            >
+              {viewMode === "grid" ? (
+                <List className="w-5 h-5" />
+              ) : (
+                <Grid3X3 className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+          {SUITES.map((suite) => (
+            <Card
+              key={suite.id}
+              className="cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setSelectedSuite(suite.code)}
+            >
+              <CardContent className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+                  <Package className="w-7 h-7 text-primary-600" />
+                </div>
+                <div className="flex-1">
+                  <Typography variant="h6" fontWeight="bold">
+                    {suite.name}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {suite.description}
+                  </Typography>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Chip
+                      label={`${suite.plugins.length} 个插件`}
+                      size="small"
+                      variant="outlined"
+                    />
+                    {suite.is_free ? (
+                      <Chip label="免费" size="small" color="success" />
+                    ) : (
+                      <Chip
+                        label={`¥${(suite.price_cents || 0) / 100}`}
+                        size="small"
+                        color="primary"
+                      />
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between mb-6">
+          <Typography variant="h5" fontWeight="bold">
+            {selectedSuite === "all" ? "全部插件" : SUITES.find((s) => s.code === selectedSuite)?.name}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            共 {filteredPlugins.length} 个插件
+          </Typography>
+        </div>
+
+        <div
+          className={`grid gap-6 ${
+            viewMode === "grid"
+              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+              : "grid-cols-1"
+          }`}
+        >
+          {filteredPlugins.map((plugin) => (
+            <PluginCard
+              key={plugin.id}
+              plugin={plugin}
+              healthStatus={healthStatus[plugin.code]}
+              onInstall={() => handleInstall(plugin.code)}
+              onViewDetails={() => setSelectedPlugin(plugin)}
+            />
+          ))}
+        </div>
+
+        {filteredPlugins.length === 0 && (
+          <div className="text-center py-16">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <Typography variant="h6" fontWeight="medium">
+              未找到匹配的插件
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              尝试调整搜索条件或选择其他分类
+            </Typography>
+          </div>
+        )}
+      </div>
+
+      {selectedPlugin && (
+        <PluginDetailModal
+          plugin={selectedPlugin}
+          onClose={() => setSelectedPlugin(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default PluginMarketplacePage;

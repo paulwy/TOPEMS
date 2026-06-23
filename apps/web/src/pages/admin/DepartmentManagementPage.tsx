@@ -1,18 +1,5 @@
-import {
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box, Typography, FormControl, InputLabel, Select, MenuItem, Chip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect, useMemo } from "react";
 import { Building2, Plus, Edit, Trash2, Folder } from "lucide-react";
 import { departmentApi, type Department } from "@/api/hrm";

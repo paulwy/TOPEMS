@@ -2,12 +2,11 @@
 
 use axum::{
     extract::State,
-    routing::{delete, get, post},
+    routing::{get, post},
     Json, Router,
 };
 use std::time::Instant;
 use topems_shared::ApiResponse;
-use uuid::Uuid;
 
 use super::models::*;
 use super::AIService;

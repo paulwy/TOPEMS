@@ -1,18 +1,5 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  LinearProgress,
-  Paper,
-  Typography,
-} from "@mui/material";
+import { Box, Card, CardContent, CardHeader, Chip, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, Paper, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
 import type { CustomerScore, ScoreFactor } from "@/api/modules/crm/crm";
 import { crmApi } from "@/api/modules/crm/crm";

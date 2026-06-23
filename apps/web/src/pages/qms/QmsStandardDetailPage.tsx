@@ -12,17 +12,8 @@ import {
   Download,
   Upload,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Chip,
-  Box,
-  Typography,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Box, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 import {
   DetailPageTemplate,

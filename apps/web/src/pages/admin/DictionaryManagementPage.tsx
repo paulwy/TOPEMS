@@ -22,29 +22,8 @@ import {
 } from "@/api/system";
 import { useAppStore } from "../../store";
 import { apiLogger } from "@/utils/logger";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Card,
-  CardContent,
-  CardHeader,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  IconButton,
-  CircularProgress,
-  Checkbox,
-  Paper,
-  Switch,
-} from "@mui/material";
+import { Box, TextField, Typography, Card, CardContent, CardHeader, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip, IconButton, CircularProgress, Checkbox, Paper, Switch,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 
 interface DictionaryManagementPageProps {

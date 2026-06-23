@@ -1,604 +1,735 @@
-import type { NavGroup, TabItem, ModuleTabsConfig } from "@/types/navigation";
+import {
+  LayoutDashboard,
+  Users,
+  Building2,
+  Target,
+  Factory,
+  Layers,
+  Shield,
+  FlaskConical,
+  Leaf,
+  FlaskRound,
+  BarChart3,
+  FileText,
+  Activity,
+  Map,
+  Network,
+  Smartphone,
+  Package,
+  Warehouse,
+  Truck,
+  Handshake,
+  ShoppingCart,
+  Settings,
+  Wrench,
+  Plus,
+  Grid3X3,
+  AlertTriangle,
+  AlertCircle,
+  Database,
+  Link,
+  GitBranch,
+  BookOpen,
+  Mail,
+  Navigation,
+  Lock,
+} from "lucide-react";
 
-/**
- * Header全局导航配置
- * 首页入口简化为唯一入口，不展开
- */
-export const topNavItems: NavGroup[] = [
-  { label: "首页", path: "/dashboard" }, // 唯一入口，不展开
+export interface NavigationItem {
+  id: string;
+  title: string;
+  path?: string;
+  icon?: typeof LayoutDashboard;
+  badge?: number | string;
+  badgeColor?: "primary" | "success" | "warning" | "error";
+  children?: NavigationItem[];
+  pluginCode?: string;
+  suiteCode?: string;
+  permissions?: string[];
+}
+
+export interface NavigationGroup {
+  id: string;
+  title: string;
+  items: NavigationItem[];
+  suiteCode?: string;
+}
+
+export const pluginNavigation: Record<string, NavigationItem[]> = {
+  erp: [
+    {
+      id: "erp-dashboard",
+      title: "ERP 首页",
+      path: "/erp/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "erp-finance",
+      title: "财务管理",
+      icon: Building2,
+      children: [
+        { id: "erp-finance-voucher", title: "凭证管理", path: "/erp/finance/voucher" },
+        { id: "erp-finance-invoice", title: "发票管理", path: "/erp/finance/invoice" },
+        { id: "erp-finance-budget", title: "预算管理", path: "/erp/finance/budget" },
+        { id: "erp-finance-reports", title: "财务报表", path: "/erp/finance/reports" },
+      ],
+    },
+    {
+      id: "erp-purchase",
+      title: "采购管理",
+      icon: ShoppingCart,
+      children: [
+        { id: "erp-purchase-order", title: "采购订单", path: "/erp/purchase/order" },
+        { id: "erp-purchase-receipt", title: "采购收货", path: "/erp/purchase/receipt" },
+      ],
+    },
+    {
+      id: "erp-sales",
+      title: "销售管理",
+      icon: Truck,
+      children: [
+        { id: "erp-sales-order", title: "销售订单", path: "/erp/sales/order" },
+        { id: "erp-sales-delivery", title: "销售发货", path: "/erp/sales/delivery" },
+      ],
+    },
+  ],
+  hrm: [
+    {
+      id: "hrm-dashboard",
+      title: "HRM 首页",
+      path: "/hrm/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "hrm-employee",
+      title: "员工管理",
+      icon: Users,
+      children: [
+        { id: "hrm-employee-list", title: "员工列表", path: "/hrm/employee" },
+        { id: "hrm-employee-create", title: "新增员工", path: "/hrm/employee/create" },
+        { id: "hrm-department", title: "部门管理", path: "/hrm/department" },
+      ],
+    },
+    {
+      id: "hrm-attendance",
+      title: "考勤管理",
+      icon: Activity,
+      children: [
+        { id: "hrm-attendance-record", title: "考勤记录", path: "/hrm/attendance" },
+        { id: "hrm-leave", title: "请假管理", path: "/hrm/leave" },
+      ],
+    },
+    {
+      id: "hrm-payroll",
+      title: "薪酬管理",
+      icon: FileText,
+      path: "/hrm/payroll",
+    },
+    {
+      id: "hrm-performance",
+      title: "绩效管理",
+      icon: Target,
+      path: "/hrm/performance",
+    },
+    {
+      id: "hrm-recruitment",
+      title: "招聘管理",
+      icon: Plus,
+      path: "/hrm/recruitment",
+    },
+  ],
+  crm: [
+    {
+      id: "crm-dashboard",
+      title: "CRM 首页",
+      path: "/crm/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "crm-customer",
+      title: "客户管理",
+      icon: Users,
+      children: [
+        { id: "crm-customer-list", title: "客户列表", path: "/crm/customer" },
+        { id: "crm-contact", title: "联系人", path: "/crm/contact" },
+      ],
+    },
+    {
+      id: "crm-opportunity",
+      title: "商机管理",
+      icon: Target,
+      path: "/crm/opportunity",
+    },
+    {
+      id: "crm-interaction",
+      title: "互动管理",
+      icon: Activity,
+      path: "/crm/interaction",
+    },
+  ],
+  pm: [
+    {
+      id: "pm-dashboard",
+      title: "项目管理",
+      path: "/pm/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "pm-project",
+      title: "项目列表",
+      icon: Grid3X3,
+      path: "/pm/project",
+    },
+    {
+      id: "pm-contract",
+      title: "合同管理",
+      icon: FileText,
+      path: "/pm/contract",
+    },
+    {
+      id: "pm-report",
+      title: "项目报表",
+      icon: BarChart3,
+      path: "/pm/report",
+    },
+  ],
+  mes: [
+    {
+      id: "mes-dashboard",
+      title: "MES 首页",
+      path: "/mes/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "mes-production",
+      title: "生产管理",
+      icon: Factory,
+      children: [
+        { id: "mes-order", title: "生产工单", path: "/mes/production/order" },
+        { id: "mes-process", title: "生产工艺", path: "/mes/production/process" },
+        { id: "mes-record", title: "生产记录", path: "/mes/production/record" },
+      ],
+    },
+    {
+      id: "mes-workstation",
+      title: "工位管理",
+      icon: Wrench,
+      path: "/mes/workstation",
+    },
+    {
+      id: "mes-mobile",
+      title: "移动端",
+      icon: Smartphone,
+      path: "/mes/mobile",
+    },
+  ],
+  pdm: [
+    {
+      id: "pdm-stats",
+      title: "产品数据",
+      path: "/pdm/stats",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "pdm-formula",
+      title: "配方管理",
+      icon: FlaskConical,
+      path: "/pdm/formula",
+    },
+    {
+      id: "pdm-process",
+      title: "工艺管理",
+      icon: Layers,
+      path: "/pdm/process",
+    },
+    {
+      id: "pdm-batch",
+      title: "批次管理",
+      icon: Package,
+      path: "/pdm/batch",
+    },
+  ],
+  qms: [
+    {
+      id: "qms-inspection",
+      title: "质量检验",
+      path: "/qms/inspection",
+      icon: Shield,
+    },
+    {
+      id: "qms-nonconformance",
+      title: "不合格品",
+      path: "/qms/nonconformance",
+      icon: Activity,
+    },
+    {
+      id: "qms-audit",
+      title: "审核管理",
+      path: "/qms/audit",
+      icon: FileText,
+    },
+    {
+      id: "qms-standard",
+      title: "质量标准",
+      path: "/qms/standard",
+      icon: Target,
+    },
+  ],
+  lims: [
+    {
+      id: "lims-sample",
+      title: "样品管理",
+      path: "/lims/sample",
+      icon: FlaskConical,
+    },
+    {
+      id: "lims-task",
+      title: "检验任务",
+      path: "/lims/task",
+      icon: Activity,
+    },
+    {
+      id: "lims-instrument",
+      title: "仪器管理",
+      path: "/lims/instrument",
+      icon: Wrench,
+    },
+  ],
+  ehs: [
+    {
+      id: "ehs-hazard",
+      title: "危险源",
+      path: "/ehs/hazard",
+      icon: AlertTriangle,
+    },
+    {
+      id: "ehs-check",
+      title: "安全检查",
+      path: "/ehs/check",
+      icon: Shield,
+    },
+    {
+      id: "ehs-accident",
+      title: "事故管理",
+      path: "/ehs/accident",
+      icon: AlertCircle,
+    },
+    {
+      id: "ehs-plan",
+      title: "应急预案",
+      path: "/ehs/plan",
+      icon: FileText,
+    },
+  ],
+  rs: [
+    {
+      id: "rs-dashboard",
+      title: "研发首页",
+      path: "/rs/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "rs-experiment",
+      title: "实验管理",
+      icon: FlaskRound,
+      path: "/rs/experiment",
+    },
+    {
+      id: "rs-formula",
+      title: "配方管理",
+      icon: FlaskConical,
+      path: "/rs/formula",
+    },
+    {
+      id: "rs-project",
+      title: "项目管理",
+      icon: Target,
+      path: "/rs/project",
+    },
+  ],
+  scm: [
+    {
+      id: "scm-dashboard",
+      title: "供应链",
+      path: "/scm/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "scm-purchase",
+      title: "采购管理",
+      icon: ShoppingCart,
+      path: "/scm/purchase",
+    },
+    {
+      id: "scm-sales",
+      title: "销售管理",
+      icon: Truck,
+      path: "/scm/sales",
+    },
+  ],
+  wms: [
+    {
+      id: "wms-inventory",
+      title: "库存管理",
+      path: "/wms/inventory",
+      icon: Warehouse,
+    },
+    {
+      id: "wms-inbound",
+      title: "入库管理",
+      icon: Package,
+      path: "/wms/inbound",
+    },
+    {
+      id: "wms-outbound",
+      title: "出库管理",
+      icon: Truck,
+      path: "/wms/outbound",
+    },
+  ],
+  srm: [
+    {
+      id: "srm-supplier",
+      title: "供应商管理",
+      path: "/srm/supplier",
+      icon: Handshake,
+    },
+    {
+      id: "srm-sourcing",
+      title: "寻源管理",
+      icon: Target,
+      path: "/srm/sourcing",
+    },
+    {
+      id: "srm-contract",
+      title: "合同管理",
+      icon: FileText,
+      path: "/srm/contract",
+    },
+  ],
+  bi: [
+    {
+      id: "bi-dashboard",
+      title: "BI 首页",
+      path: "/bi/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "bi-analytics",
+      title: "数据分析",
+      icon: BarChart3,
+      path: "/bi/analytics",
+    },
+    {
+      id: "bi-datasource",
+      title: "数据源",
+      icon: Database,
+      path: "/bi/datasource",
+    },
+  ],
+  report: [
+    {
+      id: "report-list",
+      title: "报表中心",
+      path: "/report/list",
+      icon: FileText,
+    },
+    {
+      id: "report-design",
+      title: "报表设计",
+      path: "/report/design",
+      icon: LayoutDashboard,
+    },
+  ],
+  monitor: [
+    {
+      id: "monitor-dashboard",
+      title: "监控首页",
+      path: "/monitor/dashboard",
+      icon: Activity,
+    },
+    {
+      id: "monitor-alerts",
+      title: "告警管理",
+      path: "/monitor/alerts",
+      icon: AlertTriangle,
+    },
+    {
+      id: "monitor-performance",
+      title: "性能监控",
+      path: "/monitor/performance",
+      icon: BarChart3,
+    },
+  ],
+  portal: [
+    {
+      id: "portal-home",
+      title: "企业门户",
+      path: "/portal/home",
+      icon: LayoutDashboard,
+    },
+  ],
+  mobile: [
+    {
+      id: "mobile-settings",
+      title: "移动端设置",
+      path: "/mobile/settings",
+      icon: Smartphone,
+    },
+  ],
+  gis: [
+    {
+      id: "gis-dashboard",
+      title: "GIS 首页",
+      path: "/gis/dashboard",
+      icon: Map,
+    },
+    {
+      id: "gis-tracking",
+      title: "设备跟踪",
+      path: "/gis/tracking",
+      icon: Map,
+    },
+  ],
+  integration: [
+    {
+      id: "integration-dashboard",
+      title: "集成管理",
+      path: "/integration/dashboard",
+      icon: Network,
+    },
+    {
+      id: "integration-connections",
+      title: "外部连接",
+      path: "/integration/connections",
+      icon: Link,
+    },
+    {
+      id: "integration-mapping",
+      title: "数据映射",
+      path: "/integration/mapping",
+      icon: GitBranch,
+    },
+  ],
+};
+
+export const coreNavigation: NavigationGroup[] = [
   {
-    label: "财务",
-    path: "/finance",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/finance" },
+    id: "core-dashboard",
+    title: "工作台",
+    items: [
       {
-        label: "总账管理",
-        children: [
-          { label: "凭证管理", path: "/finance/vouchers" },
-          { label: "账簿查询", path: "/finance/ledger" },
-          { label: "科目管理", path: "/finance/accounts" },
-        ],
+        id: "dashboard",
+        title: "总览",
+        path: "/dashboard",
+        icon: LayoutDashboard,
       },
       {
-        label: "应收应付",
-        children: [
-          { label: "应收管理", path: "/finance/receivable" },
-          { label: "应付管理", path: "/finance/payable" },
-          { label: "收款管理", path: "/finance/receipts" },
-          { label: "付款管理", path: "/finance/payments" },
-        ],
+        id: "document-center",
+        title: "文档中心",
+        path: "/documents",
+        icon: FileText,
       },
       {
-        label: "发票税务",
-        children: [
-          { label: "发票管理", path: "/finance/invoices" },
-          { label: "税务管理", path: "/finance/tax" },
-        ],
+        id: "knowledge-base",
+        title: "知识库",
+        path: "/knowledge",
+        icon: BookOpen,
       },
       {
-        label: "资产管理",
-        children: [
-          { label: "资产卡片", path: "/finance/assets" },
-          { label: "折旧管理", path: "/finance/depreciation" },
-        ],
+        id: "help-center",
+        title: "帮助中心",
+        path: "/help",
+        icon: BookOpen,
       },
       {
-        label: "成本费用",
-        children: [
-          { label: "费用报销", path: "/finance/expense" },
-          { label: "成本核算", path: "/finance/cost" },
-        ],
-      },
-      {
-        label: "预算管理",
-        children: [
-          { label: "预算编制", path: "/finance/budget" },
-          { label: "预算执行", path: "/finance/budget-execution" },
-        ],
-      },
-      {
-        label: "财务报表",
-        children: [
-          { label: "报表中心", path: "/finance/reports" },
-          { label: "合并报表", path: "/finance/consolidation" },
-        ],
+        id: "mail",
+        title: "邮件",
+        path: "/mail",
+        icon: Mail,
       },
     ],
   },
   {
-    label: "人力",
-    path: "/hrm",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/hrm" },
+    id: "core-workflow",
+    title: "工作流",
+    items: [
       {
-        label: "人事管理",
-        children: [
-          { label: "员工列表", path: "/hrm/employees" },
-          { label: "合同管理", path: "/hrm/contracts" },
-        ],
+        id: "flow-approval",
+        title: "审批中心",
+        path: "/flow/approval",
+        icon: GitBranch,
       },
       {
-        label: "组织管理",
-        children: [
-          { label: "公司管理", path: "/hrm/companies" },
-          { label: "部门管理", path: "/hrm/departments" },
-          { label: "岗位管理", path: "/hrm/positions" },
-        ],
+        id: "flow-design",
+        title: "流程设计",
+        path: "/flow/designer",
+        icon: Settings,
       },
       {
-        label: "考勤管理",
-        children: [
-          { label: "考勤记录", path: "/hrm/attendance" },
-          { label: "请假管理", path: "/hrm/leave" },
-        ],
-      },
-      {
-        label: "薪酬绩效",
-        children: [
-          { label: "薪酬管理", path: "/hrm/payroll" },
-          { label: "绩效管理", path: "/hrm/performance" },
-        ],
-      },
-      {
-        label: "人才发展",
-        children: [
-          { label: "招聘管理", path: "/hrm/recruitment" },
-          { label: "培训管理", path: "/hrm/training" },
-        ],
+        id: "flow-template",
+        title: "流程模板",
+        path: "/flow/template",
+        icon: FileText,
       },
     ],
   },
   {
-    label: "客户",
-    path: "/crm",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/crm" },
+    id: "core-system",
+    title: "系统管理",
+    items: [
       {
-        label: "客户关系",
-        children: [
-          { label: "客户列表", path: "/crm/customers" },
-          { label: "商机列表", path: "/crm/opportunities" },
-          { label: "联系人", path: "/crm/contacts" },
-          { label: "交互记录", path: "/crm/interactions" },
-        ],
+        id: "system-settings",
+        title: "系统设置",
+        path: "/admin/system",
+        icon: Settings,
       },
       {
-        label: "销售分析",
-        children: [
-          { label: "客户评分", path: "/crm/scoring" },
-          { label: "销售预测", path: "/crm/forecast" },
-          { label: "计费管理", path: "/crm/billing" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "项目",
-    path: "/pm",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/pm" },
-      {
-        label: "项目管理",
-        children: [{ label: "项目列表", path: "/pm/projects" }],
+        id: "user-management",
+        title: "用户管理",
+        path: "/admin/users",
+        icon: Users,
       },
       {
-        label: "合同与报表",
-        children: [
-          { label: "合同列表", path: "/pm/contracts" },
-          { label: "模板库", path: "/pm/templates" },
-          { label: "项目报表", path: "/pm/reports" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "数据",
-    path: "/bi",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/bi/dashboard" },
-      {
-        label: "数据可视化",
-        children: [
-          { label: "分析仪表盘", path: "/bi/dashboard" },
-          { label: "报表中心", path: "/bi/reports" },
-          { label: "可视化编辑", path: "/bi/visualizations" },
-        ],
+        id: "role-management",
+        title: "角色管理",
+        path: "/admin/roles",
+        icon: Shield,
       },
       {
-        label: "数据管理",
-        children: [
-          { label: "数据源", path: "/bi/datasources" },
-          { label: "对比分析", path: "/bi/comparison" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "运营",
-    path: "/assets",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/assets" },
-      {
-        label: "资产设备",
-        children: [
-          { label: "资产台账", path: "/assets" },
-          { label: "设备管理", path: "/equipment" },
-        ],
+        id: "permission-management",
+        title: "权限管理",
+        path: "/admin/permissions",
+        icon: Lock,
       },
       {
-        label: "行政综合",
-        children: [
-          { label: "行政管理", path: "/administration" },
-          { label: "办公用品", path: "/office-supplies" },
-          { label: "车辆管理", path: "/vehicles" },
-          { label: "会议室", path: "/meeting-rooms" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "工作流",
-    path: "/flow",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/flow" },
-      {
-        label: "流程审批",
-        children: [
-          { label: "审批中心", path: "/flow/approvals" },
-          { label: "实例管理", path: "/flow/instances" },
-          { label: "版本历史", path: "/flow/history" },
-        ],
-      },
-      {
-        label: "流程统计",
-        children: [
-          { label: "流程设计器", path: "/flow/designer" },
-          { label: "流程统计", path: "/flow/statistics" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "协作",
-    path: "/im",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/im" },
-      {
-        label: "沟通协作",
-        children: [
-          { label: "即时通讯", path: "/im" },
-          { label: "邮件", path: "/mail" },
-          { label: "文件管理", path: "/docs" },
-        ],
-      },
-      {
-        label: "AI助手",
-        children: [
-          { label: "AI助手", path: "/ai" },
-          { label: "知识库", path: "/knowledge-base" },
-        ],
-      },
-    ],
-  },
-  {
-    label: "更多",
-    isGroup: true,
-    children: [
-      {
-        label: "研发创新",
-        children: [
-          { label: "LIMS", path: "/lims" },
-          { label: "RS研发", path: "/rs" },
-          { label: "PDM", path: "/pdm" },
-        ],
-      },
-      {
-        label: "质量安全",
-        children: [
-          { label: "QMS", path: "/qms" },
-          { label: "EHS", path: "/ehs" },
-        ],
-      },
-      {
-        label: "供应链",
-        children: [{ label: "SRM", path: "/srm" }],
-      },
-      {
-        label: "生产",
-        children: [
-          { label: "MES", path: "/mes" },
-          { label: "SCM", path: "/scm" },
-          { label: "WMS", path: "/wms" },
-        ],
-      },
-      {
-        label: "地理信息",
-        children: [{ label: "GIS", path: "/gis" }],
-      },
-      {
-        label: "系统管理",
-        children: [
-          { label: "概览", path: "/iam" },
-          { label: "用户管理", path: "/iam/users" },
-          { label: "角色管理", path: "/iam/roles" },
-          { label: "权限配置", path: "/iam/permissions" },
-          { label: "插件市场", path: "/iam/plugins" },
-          { label: "通知管理", path: "/notifications" },
-          { label: "系统集成", path: "/integration" },
-        ],
-      },
-      {
-        label: "帮助",
-        children: [{ label: "帮助中心", path: "/help" }],
+        id: "audit-log",
+        title: "审计日志",
+        path: "/admin/audit",
+        icon: FileText,
       },
     ],
   },
 ];
 
-/**
- * 模块Tab配置
- * 每个模块入口页展示模块Tab，用于模块内页面切换
- */
-export const moduleTabsConfig: ModuleTabsConfig[] = [
-  {
-    module: "finance",
-    tabs: [
-      { label: "概览", path: "/finance", pinned: true },
-      { label: "凭证", path: "/finance/vouchers" },
-      { label: "账簿", path: "/finance/ledger" },
-      { label: "应收", path: "/finance/receivable" },
-      { label: "应付", path: "/finance/payable" },
-      { label: "收款", path: "/finance/receipts" },
-      { label: "付款", path: "/finance/payments" },
-      { label: "发票", path: "/finance/invoices" },
-      { label: "税务", path: "/finance/tax" },
-      { label: "资产", path: "/finance/assets" },
-      { label: "费用", path: "/finance/expense" },
-      { label: "成本", path: "/finance/cost" },
-      { label: "预算", path: "/finance/budget" },
-      { label: "报表", path: "/finance/reports" },
-      { label: "合并报表", path: "/finance/consolidation" },
+export const suiteNavigation: Record<string, NavigationGroup> = {
+  production: {
+    id: "suite-production",
+    title: "生产套件",
+    suiteCode: "production",
+    items: [
+      { id: "mes", title: "生产执行", path: "/mes/dashboard", icon: Factory, pluginCode: "mes" },
+      { id: "pdm", title: "产品数据", path: "/pdm/stats", icon: Layers, pluginCode: "pdm" },
     ],
   },
-  {
-    module: "hrm",
-    tabs: [
-      { label: "概览", path: "/hrm", pinned: true },
-      { label: "员工", path: "/hrm/employees" },
-      { label: "部门", path: "/hrm/departments" },
-      { label: "岗位", path: "/hrm/positions" },
-      { label: "考勤", path: "/hrm/attendance" },
-      { label: "薪酬", path: "/hrm/payroll" },
-      { label: "绩效", path: "/hrm/performance" },
-      { label: "招聘", path: "/hrm/recruitment" },
-      { label: "培训", path: "/hrm/training" },
-      { label: "合同", path: "/hrm/contracts" },
+  quality: {
+    id: "suite-quality",
+    title: "质量套件",
+    suiteCode: "quality",
+    items: [
+      { id: "qms", title: "质量管理", path: "/qms/inspection", icon: Shield, pluginCode: "qms" },
+      { id: "lims", title: "实验室", path: "/lims/sample", icon: FlaskConical, pluginCode: "lims" },
+      { id: "ehs", title: "环境安全", path: "/ehs/hazard", icon: Leaf, pluginCode: "ehs" },
     ],
   },
-  {
-    module: "crm",
-    tabs: [
-      { label: "概览", path: "/crm/dashboard", pinned: true },
-      { label: "客户", path: "/crm/customers" },
-      { label: "商机", path: "/crm/opportunities" },
-      { label: "联系人", path: "/crm/contacts" },
-      { label: "交互", path: "/crm/interactions" },
-      { label: "评分", path: "/crm/scoring" },
-      { label: "预测", path: "/crm/forecast" },
-      { label: "计费", path: "/crm/billing" },
+  rd: {
+    id: "suite-rd",
+    title: "研发套件",
+    suiteCode: "rd",
+    items: [
+      { id: "rs", title: "研发管理", path: "/rs/dashboard", icon: FlaskRound, pluginCode: "rs" },
     ],
   },
-  {
-    module: "pm",
-    tabs: [
-      { label: "概览", path: "/pm", pinned: true },
-      { label: "项目", path: "/pm/projects" },
-      { label: "合同", path: "/pm/contracts" },
-      { label: "模板", path: "/pm/templates" },
-      { label: "报表", path: "/pm/reports" },
+  collab: {
+    id: "suite-collab",
+    title: "协同套件",
+    suiteCode: "collab",
+    items: [
+      { id: "hrm", title: "人力资源", path: "/hrm/dashboard", icon: Users, pluginCode: "hrm" },
+      { id: "crm", title: "客户管理", path: "/crm/dashboard", icon: Users, pluginCode: "crm" },
+      { id: "pm", title: "项目管理", path: "/pm/dashboard", icon: Target, pluginCode: "pm" },
     ],
   },
-  {
-    module: "bi",
-    tabs: [
-      { label: "概览", path: "/bi/dashboard", pinned: true },
-      { label: "仪表盘", path: "/bi/dashboard" },
-      { label: "报表", path: "/bi/reports" },
-      { label: "可视化", path: "/bi/visualizations" },
-      { label: "数据源", path: "/bi/datasources" },
-      { label: "对比", path: "/bi/comparison" },
+  business: {
+    id: "suite-business",
+    title: "经营套件",
+    suiteCode: "business",
+    items: [
+      { id: "erp", title: "ERP", path: "/erp/dashboard", icon: Building2, pluginCode: "erp" },
     ],
   },
-  {
-    module: "assets",
-    tabs: [
-      { label: "概览", path: "/assets", pinned: true },
-      { label: "资产台账", path: "/assets" },
-      { label: "设备管理", path: "/equipment" },
-      { label: "行政管理", path: "/administration" },
-      { label: "办公用品", path: "/office-supplies" },
-      { label: "车辆管理", path: "/vehicles" },
-      { label: "会议室", path: "/meeting-rooms" },
+  supply: {
+    id: "suite-supply",
+    title: "供应链套件",
+    suiteCode: "supply",
+    items: [
+      { id: "scm", title: "供应链", path: "/scm/dashboard", icon: Truck, pluginCode: "scm" },
+      { id: "wms", title: "仓储管理", path: "/wms/inventory", icon: Warehouse, pluginCode: "wms" },
+      { id: "srm", title: "供应商", path: "/srm/supplier", icon: Handshake, pluginCode: "srm" },
     ],
   },
-  {
-    module: "flow",
-    tabs: [
-      { label: "概览", path: "/flow", pinned: true },
-      { label: "审批中心", path: "/flow/approvals" },
-      { label: "实例管理", path: "/flow/instances" },
-      { label: "版本历史", path: "/flow/history" },
-      { label: "流程定义", path: "/flow/definitions" },
-      { label: "流程设计器", path: "/flow/designer" },
-      { label: "流程统计", path: "/flow/statistics" },
+  analytics: {
+    id: "suite-analytics",
+    title: "分析套件",
+    suiteCode: "analytics",
+    items: [
+      { id: "bi", title: "商业智能", path: "/bi/dashboard", icon: BarChart3, pluginCode: "bi" },
+      { id: "report", title: "报表服务", path: "/report/list", icon: FileText, pluginCode: "report" },
     ],
   },
-  {
-    module: "im",
-    tabs: [
-      { label: "概览", path: "/im", pinned: true },
-      { label: "即时通讯", path: "/im" },
-      { label: "邮件", path: "/mail" },
-      { label: "文件管理", path: "/docs" },
-      { label: "AI助手", path: "/ai" },
-      { label: "知识库", path: "/knowledge-base" },
+  portal: {
+    id: "suite-portal",
+    title: "门户套件",
+    suiteCode: "portal",
+    items: [
+      { id: "portal", title: "企业门户", path: "/portal/home", icon: LayoutDashboard, pluginCode: "portal" },
     ],
   },
-  {
-    module: "lims",
-    tabs: [
-      { label: "概览", path: "/lims", pinned: true },
-      { label: "样品", path: "/lims/samples" },
-      { label: "检测任务", path: "/lims/tasks" },
-      { label: "流程管理", path: "/lims/processes" },
-      { label: "仪器", path: "/lims/instruments" },
+  infrastructure: {
+    id: "suite-infrastructure",
+    title: "基础设施",
+    suiteCode: "infrastructure",
+    items: [
+      { id: "mobile", title: "移动端", path: "/mobile/settings", icon: Smartphone, pluginCode: "mobile" },
+      { id: "gis", title: "地理信息", path: "/gis/dashboard", icon: Map, pluginCode: "gis" },
+      { id: "integration", title: "数据交换", path: "/integration/dashboard", icon: Network, pluginCode: "integration" },
     ],
   },
+};
+
+export const adminNavigation: NavigationGroup[] = [
   {
-    module: "rs",
-    tabs: [
-      { label: "概览", path: "/rs", pinned: true },
-      { label: "项目", path: "/rs/projects" },
-      { label: "配方", path: "/rs/formulas" },
-      { label: "材料", path: "/rs/materials" },
-    ],
-  },
-  {
-    module: "pdm",
-    tabs: [
-      { label: "概览", path: "/pdm", pinned: true },
-      { label: "工艺管理", path: "/pdm/processes" },
-      { label: "工序管理", path: "/pdm/steps" },
-      { label: "配方管理", path: "/pdm/formulas" },
-      { label: "批次管理", path: "/pdm/batches" },
-    ],
-  },
-  {
-    module: "qms",
-    tabs: [
-      { label: "概览", path: "/qms", pinned: true },
-      { label: "质量审核", path: "/qms/audit" },
-      { label: "质量标准", path: "/qms/standards" },
-      { label: "质量检查", path: "/qms/checks" },
-      { label: "不合格品", path: "/qms/issues" },
-      { label: "持续改进", path: "/qms/improvements" },
-    ],
-  },
-  {
-    module: "ehs",
-    tabs: [
-      { label: "概览", path: "/ehs", pinned: true },
-      { label: "风险评估", path: "/ehs/hazards" },
-      { label: "应急预案", path: "/ehs/plans" },
-      { label: "安全演练", path: "/ehs/drills" },
-      { label: "安全检查", path: "/ehs/checks" },
-    ],
-  },
-  {
-    module: "srm",
-    tabs: [
-      { label: "概览", path: "/srm", pinned: true },
-      { label: "供应商", path: "/srm/suppliers" },
-      { label: "采购订单", path: "/srm/orders" },
-    ],
-  },
-  {
-    module: "mes",
-    tabs: [
-      { label: "概览", path: "/mes", pinned: true },
-      { label: "生产订单", path: "/mes/orders" },
-      { label: "工序", path: "/mes/processes" },
-      { label: "工作站", path: "/mes/workstations" },
-      { label: "生产记录", path: "/mes/records" },
-    ],
-  },
-  {
-    module: "scm",
-    tabs: [
-      { label: "概览", path: "/scm", pinned: true },
-      { label: "供应商", path: "/scm/suppliers" },
-      { label: "采购订单", path: "/scm/purchase-orders" },
-      { label: "采购明细", path: "/scm/purchase-items" },
-      { label: "评估", path: "/scm/evaluations" },
-    ],
-  },
-  {
-    module: "wms",
-    tabs: [
-      { label: "概览", path: "/wms", pinned: true },
-      { label: "仓库", path: "/wms/warehouses" },
-      { label: "库存", path: "/wms/inventory" },
-      { label: "入库", path: "/wms/inbound-orders" },
-      { label: "出库", path: "/wms/outbound-orders" },
-    ],
-  },
-  {
-    module: "gis",
-    tabs: [{ label: "概览", path: "/gis", pinned: true }],
-  },
-  {
-    module: "ai",
-    tabs: [
-      { label: "概览", path: "/ai", pinned: true },
-      { label: "AI聊天", path: "/ai/chat" },
-      { label: "文档生成", path: "/ai/documents" },
-      { label: "文本分析", path: "/ai/analysis" },
-      { label: "数据补全", path: "/ai/completion" },
-      { label: "编码生成", path: "/ai/code" },
-    ],
-  },
-  {
-    module: "iam",
-    tabs: [
-      { label: "概览", path: "/iam", pinned: true },
-      { label: "用户管理", path: "/iam/users" },
-      { label: "角色管理", path: "/iam/roles" },
-      { label: "权限配置", path: "/iam/permissions" },
-      { label: "插件市场", path: "/iam/plugins" },
-      { label: "通知管理", path: "/notifications" },
-      { label: "系统集成", path: "/integration" },
+    id: "admin-plugins",
+    title: "插件管理",
+    items: [
+      {
+        id: "plugin-marketplace",
+        title: "插件市场",
+        path: "/plugin/marketplace",
+        icon: Package,
+      },
+      {
+        id: "plugin-management",
+        title: "已安装插件",
+        path: "/admin/plugins",
+        icon: Grid3X3,
+      },
     ],
   },
 ];
 
-/**
- * 根据模块名获取Tab配置
- */
-export function getModuleTabs(module: string): TabItem[] {
-  const config = moduleTabsConfig.find((c) => c.module === module);
-  return config?.tabs || [];
-}
+export const getNavigationForPlugin = (pluginCode: string): NavigationItem[] => {
+  return pluginNavigation[pluginCode] || [];
+};
 
-/**
- * 根据路径获取模块名
- */
-export function getModuleFromPath(path: string): string | null {
-  const pathSegments = path.split("/").filter(Boolean);
-  if (pathSegments.length === 0) return null;
+export const getNavigationForSuite = (suiteCode: string): NavigationGroup | null => {
+  return suiteNavigation[suiteCode] || null;
+};
 
-  const moduleMap: Record<string, string> = {
-    dashboard: "dashboard",
-    hrm: "hrm",
-    crm: "crm",
-    pm: "pm",
-    bi: "bi",
-    finance: "finance",
-    assets: "assets",
-    equipment: "assets",
-    administration: "assets",
-    "office-supplies": "assets",
-    "meeting-rooms": "assets",
-    vehicles: "assets",
-    flow: "flow",
-    "workflow-designer": "flow",
-    workflows: "flow",
-    im: "im",
-    mail: "im",
-    docs: "im",
-    documents: "im",
-    "document-center": "im",
-    "knowledge-base": "im",
-    ai: "ai",
-    lims: "lims",
-    rs: "rs",
-    pdm: "pdm",
-    qms: "qms",
-    ehs: "ehs",
-    srm: "srm",
-    mes: "mes",
-    scm: "scm",
-    wms: "wms",
-    gis: "gis",
-    iam: "iam",
-    users: "iam",
-    roles: "iam",
-    permissions: "iam",
-    plugins: "iam",
-    audit: "iam",
-    system: "iam",
-    dictionaries: "iam",
-    database: "iam",
-    migration: "iam",
-    debug: "iam",
-    notifications: "iam",
-    help: "help",
-    templates: "docs",
-    profile: "dashboard",
-    addressbook: "dashboard",
-    announcements: "erp",
-    budget: "erp",
-    performance: "performance",
-    "mobile-workstation": "mobile",
-  };
-
-  const firstSegment = pathSegments[0];
-  return moduleMap[firstSegment] || firstSegment || null;
-}
+export const getAllNavigation = (): NavigationGroup[] => {
+  return [
+    ...coreNavigation,
+    ...Object.values(suiteNavigation),
+    ...adminNavigation,
+  ];
+};

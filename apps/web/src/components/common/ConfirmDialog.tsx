@@ -3,17 +3,8 @@
  * 支持多种对话框类型、图标、自定义按钮、拖拽等功能
  */
 import React, { useState, useRef, useCallback } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  CircularProgress,
-  IconButton,
-  Box,
-  Typography,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, IconButton, Box, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   AlertCircle,
   CheckCircle,

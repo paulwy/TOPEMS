@@ -1,6 +1,7 @@
 import React from "react";
 import { AlertCircle, ArrowLeft } from "lucide-react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 const ErrorPage: React.FC = () => {
   const handleGoBack = () => {

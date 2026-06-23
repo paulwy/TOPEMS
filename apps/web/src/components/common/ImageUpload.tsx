@@ -1,16 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Slider,
-  TextField,
-} from "@mui/material";
+import { Box, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Slider, TextField,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { styled } from "@mui/material/styles";
 import {
   Image,

@@ -2,27 +2,8 @@ import { Grid } from "@/components/Grid";
 import React, { useState, useMemo } from "react";
 import { logger } from "@/utils/logger";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Stack,
-} from "@mui/material";
+import { Box, Container, Typography, Paper, TextField, MenuItem, FormControl, InputLabel, Select, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Stack,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Save, X, Plus, Trash2 } from "lucide-react";
 
 interface Component {

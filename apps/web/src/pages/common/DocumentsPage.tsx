@@ -38,24 +38,8 @@ import { useAppStore } from "../../store";
 import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { apiLogger } from "@/utils/logger";
 
-import {
-  Button,
-  TextField,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-  Tooltip,
-  Tabs,
-  Tab,
-  Box,
-  Typography,
-  Stack,
-  IconButton,
-} from "@mui/material";
+import { TextField, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Tooltip, Tabs, Tab, Box, Typography, Stack, IconButton,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { ModeToggle } from "@/components/ModeToggle";
 
 interface File {

@@ -39,34 +39,8 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from "@/api/gis";
-import {
-  Box,
-  Paper,
-  Stack,
-  Chip,
-  Button,
-  IconButton,
-  TextField,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tabs,
-  Tab,
-  Snackbar,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Checkbox,
-  FormControlLabel,
-  InputAdornment,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Paper, Stack, Chip, IconButton, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Tabs, Tab, Snackbar, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, FormControlLabel, InputAdornment, CircularProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 type TabType =
   | "map"

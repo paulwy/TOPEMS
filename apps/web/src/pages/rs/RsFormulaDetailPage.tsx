@@ -1,19 +1,6 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Chip,
-  Paper,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Stack,
-  Divider,
-} from "@mui/material";
+import { Box, Typography, Chip, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Divider,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Edit, History } from "lucide-react";
 import { DetailPageTemplate, type SectionConfig } from "@/components/templates";
 

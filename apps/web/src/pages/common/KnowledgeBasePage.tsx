@@ -27,31 +27,8 @@ import { useAppStore } from "../../store";
 import type { Document } from "@/api/ai";
 import { aiApi } from "@/api/ai";
 
-import {
-  Button,
-  TextField,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Menu,
-  MenuItem,
-  Tabs,
-  Tab,
-  FormControl,
-  InputLabel,
-  Select,
-  Box,
-  Typography,
-  Stack,
-  IconButton,
-  Divider,
-} from "@mui/material";
+import { TextField, Card, CardContent, CardHeader, Chip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Menu, MenuItem, Tabs, Tab, FormControl, InputLabel, Select, Box, Typography, Stack, IconButton, Divider,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 interface DocumentWithMeta extends Document {
   category?: string;

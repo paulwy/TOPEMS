@@ -13,14 +13,8 @@ import type { Notification } from "@/api/flow";
 import { flowApi } from "@/api/flow";
 import { useAppStore } from "../../store";
 import { apiLogger } from "@/utils/logger";
-import {
-  Box,
-  Button,
-  Typography,
-  Tabs,
-  Tab,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, Tabs, Tab, CircularProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();

@@ -17,20 +17,8 @@ import {
   Eye,
 } from "lucide-react";
 
-import {
-  Box,
-  Button,
-  Typography,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
+import { Box, Typography, TextField, Chip, Card, CardContent, CardHeader, Dialog, DialogTitle, DialogContent, DialogActions,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 import {
   ListPageTemplate,

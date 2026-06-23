@@ -1,10 +1,5 @@
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-} from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, DialogActions,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Sparkles } from "lucide-react";
 
 export interface AIGenerateModalProps {

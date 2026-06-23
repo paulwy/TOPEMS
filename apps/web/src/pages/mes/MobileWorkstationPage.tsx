@@ -15,15 +15,8 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react";
-import {
-  Box,
-  Paper,
-  Stack,
-  Chip,
-  Button,
-  Typography,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Paper, Stack, Chip, Typography, CircularProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 type TabKey = "home" | "patrol" | "task" | "scan" | "media";
 

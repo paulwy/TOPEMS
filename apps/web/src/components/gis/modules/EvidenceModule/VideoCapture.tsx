@@ -9,7 +9,8 @@ import {
   X,
   Check,
 } from "lucide-react";
-import { Box, Button, IconButton, Typography } from "@mui/material";
+import { Box, IconButton, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { logger } from "@/utils/logger";
 
 interface VideoCaptureProps {
