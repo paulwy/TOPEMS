@@ -11,11 +11,32 @@ import {
   Calendar,
   TrendingUp,
   AlertCircle,
+  BarChart2,
+  Target,
+  Grid3X3,
 } from "lucide-react";
-import { Card, CardHeader, CardContent, Menu, MenuItem, Skeleton, Typography, Chip,  } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Typography,
+  Chip,
+  Box,
+} from "@mui/material";
 import { Button } from "@/components/ui/Button";
 
-type ChartType = "bar" | "line" | "area" | "pie";
+type ChartType =
+  | "bar"
+  | "line"
+  | "area"
+  | "pie"
+  | "histogram"
+  | "gauge"
+  | "scatter"
+  | "radar";
 
 interface TimeRange {
   label: string;
@@ -28,6 +49,7 @@ const timeRanges: TimeRange[] = [
   { label: "本月", value: "month" },
   { label: "本季度", value: "quarter" },
   { label: "本年", value: "year" },
+  { label: "自定义", value: "custom" },
 ];
 
 interface ChartCardProps {
@@ -53,6 +75,16 @@ interface ChartCardProps {
   className?: string;
   trend?: "up" | "down" | "stable";
   trendValue?: string;
+  summary?: {
+    total?: number;
+    avg?: number;
+    max?: number;
+    min?: number;
+  };
+  onDrillDown?: () => void;
+  showDrillDown?: boolean;
+  bordered?: boolean;
+  elevation?: number;
 }
 
 const ChartCardIcon: Record<ChartType, React.ReactNode> = {
@@ -60,6 +92,10 @@ const ChartCardIcon: Record<ChartType, React.ReactNode> = {
   line: <LineChart style={{ width: 16, height: 16 }} />,
   area: <AreaChart style={{ width: 16, height: 16 }} />,
   pie: <PieChart style={{ width: 16, height: 16 }} />,
+  histogram: <BarChart2 style={{ width: 16, height: 16 }} />,
+  gauge: <Target style={{ width: 16, height: 16 }} />,
+  scatter: <Grid3X3 style={{ width: 16, height: 16 }} />,
+  radar: <Grid3X3 style={{ width: 16, height: 16 }} />,
 };
 
 export const ChartCard: React.FC<ChartCardProps> = ({
@@ -85,6 +121,11 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   className = "",
   trend,
   trendValue,
+  summary,
+  onDrillDown,
+  showDrillDown = false,
+  bordered = true,
+  elevation = 0,
 }) => {
   const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(
     null,
@@ -118,15 +159,17 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     <Card
       sx={{
         overflow: "hidden",
-        transition: "all 0.3s",
-        "&:hover": { boxShadow: 2 },
+        transition: "all 0.3s ease",
+        "&:hover": { boxShadow: elevation + 2 },
+        border: bordered ? "1px solid rgba(0,0,0,0.05)" : "none",
+        boxShadow: elevation || 0,
       }}
       className={className}
     >
       <CardHeader
         sx={{
           padding: "16px 24px",
-          borderBottom: "1px solid rgba(0,0,0,0.05)",
+          borderBottom: bordered ? "1px solid rgba(0,0,0,0.05)" : "none",
         }}
         action={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -157,6 +200,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                         activeChartType === type
                           ? "0 1px 2px rgba(0,0,0,0.1)"
                           : "none",
+                      transition: "all 0.2s ease",
                     }}
                     title={type}
                   >
@@ -191,7 +235,14 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           </div>
         }
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
           <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
             {title}
           </Typography>
@@ -210,6 +261,19 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               </span>
             </div>
           )}
+          {showDrillDown && onDrillDown && (
+            <Chip
+              label="下钻"
+              size="small"
+              onClick={onDrillDown}
+              sx={{
+                cursor: "pointer",
+                backgroundColor: "#EFF6FF",
+                color: "#1D4ED8",
+                "&:hover": { backgroundColor: "#DBEAFE" },
+              }}
+            />
+          )}
         </div>
         {subtitle && (
           <Typography
@@ -226,7 +290,9 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <Skeleton sx={{ width: "33%", height: 16 }} />
-            <Skeleton sx={{ width: "100%", height: 200, borderRadius: 8 }} />
+            <Skeleton
+              sx={{ width: "100%", height: height - 40, borderRadius: 8 }}
+            />
           </div>
         ) : error ? (
           <div
@@ -270,7 +336,70 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             )}
           </div>
         ) : (
-          <div style={{ height }}>{children}</div>
+          <>
+            <div style={{ height }}>{children}</div>
+            {summary && (
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 2,
+                  marginTop: 3,
+                  paddingTop: 2,
+                  borderTop: "1px solid rgba(0,0,0,0.05)",
+                }}
+              >
+                {summary.total !== undefined && (
+                  <div style={{ textAlign: "center" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      总计
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {typeof summary.total === "number"
+                        ? summary.total.toLocaleString()
+                        : summary.total}
+                    </Typography>
+                  </div>
+                )}
+                {summary.avg !== undefined && (
+                  <div style={{ textAlign: "center" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      平均
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {typeof summary.avg === "number"
+                        ? summary.avg.toFixed(1)
+                        : summary.avg}
+                    </Typography>
+                  </div>
+                )}
+                {summary.max !== undefined && (
+                  <div style={{ textAlign: "center" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      最大
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {typeof summary.max === "number"
+                        ? summary.max.toLocaleString()
+                        : summary.max}
+                    </Typography>
+                  </div>
+                )}
+                {summary.min !== undefined && (
+                  <div style={{ textAlign: "center" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      最小
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {typeof summary.min === "number"
+                        ? summary.min.toLocaleString()
+                        : summary.min}
+                    </Typography>
+                  </div>
+                )}
+              </Box>
+            )}
+          </>
         )}
       </CardContent>
 
@@ -331,7 +460,20 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             全屏查看
           </MenuItem>
         )}
+        {showDrillDown && onDrillDown && (
+          <MenuItem
+            onClick={() => {
+              onDrillDown();
+              setActionMenuAnchor(null);
+            }}
+          >
+            <TrendingUp style={{ width: 16, height: 16, marginRight: 8 }} />
+            数据下钻
+          </MenuItem>
+        )}
       </Menu>
     </Card>
   );
 };
+
+export default ChartCard;

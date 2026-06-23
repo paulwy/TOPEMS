@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { federation } from '@module-federation/vite'
+import viteCompression from 'vite-plugin-compression'
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
@@ -39,7 +40,11 @@ const createServiceProxyConfig = (serviceName: string, target: string, skipRewri
 
 const enableMF = DEPLOYMENT_MODE !== 'static';
 
-const plugins = [react()];
+const plugins = [react(), viteCompression({
+  algorithm: 'gzip',
+  threshold: 10240,
+  verbose: true,
+})];
 
 if (enableMF) {
   plugins.push(
@@ -128,6 +133,13 @@ export default defineConfig({
           'topems_core',
           /^topems_core\/.*/,
         ] : [],
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          mui: ['@mui/material', '@mui/lab', '@mui/x-date-pickers', '@mui/x-tree-view'],
+          charts: ['recharts'],
+          utils: ['axios', 'dayjs', 'date-fns', 'zod', 'zustand'],
+          i18n: ['i18next', 'react-i18next'],
+        },
       },
     },
     chunkSizeWarningLimit: 1500,
@@ -137,8 +149,17 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      },
+      mangle: {
+        properties: {
+          regex: /^_/,
+        },
       },
     },
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
+    reportCompressedSize: true,
   },
   server: {
     port: 3000,
@@ -250,8 +271,8 @@ export default defineConfig({
       },
       '/hrm/health': createServiceProxyConfig('hrm', 'http://localhost:8020'),
 
-      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8022'),
-      '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8022'),
+      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8023'),
+      '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8023'),
 
       '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8029'),
       '/crm/health': createServiceProxyConfig('crm', 'http://localhost:8029'),
@@ -340,8 +361,8 @@ export default defineConfig({
       '/master/api': createServiceProxyConfig('master', 'http://localhost:8000'),
       '/master/health': createServiceProxyConfig('master', 'http://localhost:8000'),
 
-      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8000'),
-      '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8000'),
+      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8064'),
+      '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8064'),
 
       '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8000'),
 

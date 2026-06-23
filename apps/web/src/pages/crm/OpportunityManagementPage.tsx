@@ -1,16 +1,41 @@
-import { Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions,  } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
+} from "@mui/material";
 import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect, useMemo } from "react";
 import type {
   Opportunity,
   CreateOpportunityRequest,
   UpdateOpportunityRequest,
+  FunnelStage,
+  OpportunityStats,
 } from "@/api/modules/crm/crm";
 import { crmApi } from "@/api/modules/crm/crm";
 import { useAppStore } from "@/store";
 import { logger } from "@/utils/logger";
 import { DataExport } from "@/components/common";
-import { Plus, Edit, Trash2, Eye, TrendingUp } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  TrendingUp,
+  Target,
+  TrendingDown,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { ListPageTemplate } from "@/components/templates";
 import type {
   ColumnDef,
@@ -41,11 +66,15 @@ const OpportunityManagementPage: React.FC = () => {
     pageSize: 20,
     total: 0,
   });
+  const [funnelData, setFunnelData] = useState<FunnelStage[]>([]);
+  const [stats, setStats] = useState<OpportunityStats | null>(null);
 
   const { addNotification } = useAppStore();
 
   useEffect(() => {
     loadOpportunities();
+    loadFunnelData();
+    loadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, stageFilter, pagination.page, pagination.pageSize]);
 
@@ -76,6 +105,28 @@ const OpportunityManagementPage: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFunnelData = async () => {
+    try {
+      const response = await crmApi.opportunities.getFunnel();
+      if (response.success && response.data) {
+        setFunnelData(response.data);
+      }
+    } catch (error) {
+      logger.error("加载销售漏斗数据失败:", error);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const response = await crmApi.opportunities.getStats();
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      logger.error("加载商机统计数据失败:", error);
     }
   };
 
@@ -177,7 +228,7 @@ const OpportunityManagementPage: React.FC = () => {
           | "warning";
       }
     > = {
-      lead: { label: "线索", color: "default" },
+      prospecting: { label: "线索", color: "default" },
       qualified: { label: "合格", color: "info" },
       proposal: { label: "提案", color: "primary" },
       negotiation: { label: "谈判", color: "warning" },
@@ -188,42 +239,7 @@ const OpportunityManagementPage: React.FC = () => {
     return <Chip size="small" color={s.color} label={s.label} />;
   };
 
-  const getFunnelData = () => {
-    const stages = [
-      "lead",
-      "qualified",
-      "proposal",
-      "negotiation",
-      "closed_won",
-      "closed_lost",
-    ];
-    const stageLabels: Record<string, string> = {
-      lead: "线索",
-      qualified: "合格",
-      proposal: "提案",
-      negotiation: "谈判",
-      closed_won: "赢单",
-      closed_lost: "输单",
-    };
-
-    return stages.map((stage) => {
-      const stageOpportunities = opportunities.filter((o) => o.stage === stage);
-      const count = stageOpportunities.length;
-      const value = stageOpportunities.reduce(
-        (sum, o) => sum + (o.value || 0),
-        0,
-      );
-      return {
-        stage,
-        label: stageLabels[stage],
-        count,
-        value,
-      };
-    });
-  };
-
-  const funnelData = getFunnelData();
-  const maxValue = Math.max(...funnelData.map((f) => f.value), 1);
+  const maxValue = Math.max(...funnelData.map((f) => f.total_value || 0), 1);
 
   const columns = useMemo<ColumnDef<Opportunity>[]>(
     () => [
@@ -327,6 +343,86 @@ const OpportunityManagementPage: React.FC = () => {
 
   return (
     <>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+            >
+              <Target sx={{ width: 18, height: 18, color: "primary.main" }} />
+              <Typography variant="body2" color="text.secondary">
+                商机总数
+              </Typography>
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+              {stats?.total_count || 0}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+            >
+              <TrendingUp
+                sx={{ width: 18, height: 18, color: "warning.main" }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                总金额
+              </Typography>
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+              ¥{(stats?.total_value || 0).toLocaleString()}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+            >
+              <CheckCircle
+                sx={{ width: 18, height: 18, color: "success.main" }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                赢单数量
+              </Typography>
+            </Box>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: "bold", color: "success.main" }}
+            >
+              {stats?.won_count || 0}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+            >
+              <XCircle sx={{ width: 18, height: 18, color: "error.main" }} />
+              <Typography variant="body2" color="text.secondary">
+                输单数量
+              </Typography>
+            </Box>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: "bold", color: "error.main" }}
+            >
+              {stats?.lost_count || 0}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+
       <Card sx={{ mb: 3 }}>
         <CardHeader>
           <Typography
@@ -346,47 +442,103 @@ const OpportunityManagementPage: React.FC = () => {
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(6, 1fr)",
-              },
-              gap: 2,
-            }}
-          >
-            {funnelData.map((item) => (
-              <Card
-                key={item.stage}
-                sx={{ position: "relative", overflow: "hidden" }}
-              >
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {funnelData.map((item, index) => {
+              const widthPercent = 100 - index * 10;
+              const stageColors: Record<string, string> = {
+                prospecting: "#9CA3AF",
+                qualified: "#3B82F6",
+                proposal: "#8B5CF6",
+                negotiation: "#F59E0B",
+                closed_won: "#10B981",
+                closed_lost: "#EF4444",
+              };
+              return (
                 <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    bgcolor: "primary.main",
-                    opacity: 0.1,
-                    transition: "height 0.3s",
-                    height: `${(item.value / maxValue) * 100}%`,
-                  }}
-                />
-                <CardContent sx={{ position: "relative", p: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.label}
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                    {item.count}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    ¥{item.value.toLocaleString()}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
+                  key={item.stage}
+                  sx={{ display: "flex", alignItems: "center", gap: 3 }}
+                >
+                  <Box sx={{ width: 80, textAlign: "right" }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {item.stage_label}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, maxWidth: "400px" }}>
+                    <Box
+                      sx={{
+                        height: 40,
+                        bgcolor: "grey.100",
+                        borderRadius: 1,
+                        overflow: "hidden",
+                        position: "relative",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: "100%",
+                          bgcolor: stageColors[item.stage] || "#6B7280",
+                          width: `${widthPercent}%`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          px: 2,
+                          transition: "width 0.3s",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "white", fontWeight: 500 }}
+                        >
+                          {item.count} 个商机
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "white" }}>
+                          ¥{(item.total_value || 0).toLocaleString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {item.avg_probability !== undefined && (
+                      <Box
+                        sx={{
+                          mt: 0.5,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
+                        <LinearProgress
+                          variant="determinate"
+                          value={item.avg_probability}
+                          sx={{ flex: 1, height: 4, borderRadius: 2 }}
+                        />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            width: 40,
+                            textAlign: "right",
+                          }}
+                        >
+                          {item.avg_probability.toFixed(0)}%
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                  <Box sx={{ width: 100, textAlign: "right" }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      平均概率
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {item.avg_probability
+                        ? `${item.avg_probability.toFixed(0)}%`
+                        : "-"}
+                    </Typography>
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
         </CardContent>
       </Card>

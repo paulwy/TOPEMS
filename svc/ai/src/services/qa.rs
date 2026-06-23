@@ -2,8 +2,7 @@ use crate::api::models::{QAHistory, SearchResult};
 use crate::services::db::Database;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use sqlx::Row;
-use std::collections::HashMap;
+use sqlx::{Executor, Row};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -25,16 +24,24 @@ pub struct QAConfig {
 /// 问题分类
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum QuestionType {
-    /// 事实性问题
+    /// 事实性问题 - 寻求具体事实信息
     Factual,
-    /// 过程性问题（如何做）
+    /// 过程性问题 - 询问如何做某事
     Procedural,
-    /// 分析性问题
+    /// 分析性问题 - 需要分析或评估
     Analytical,
-    /// 建议性问题
+    /// 建议性问题 - 寻求建议或意见
     Advisory,
-    /// 确认性问题
+    /// 确认性问题 - 确认信息是否正确
     Confirmation,
+    /// 比较性问题 - 比较两个或多个事物
+    Comparative,
+    /// 预测性问题 - 预测未来趋势或结果
+    Predictive,
+    /// 诊断性问题 - 诊断问题或故障原因
+    Diagnostic,
+    /// 定义性问题 - 询问定义或概念解释
+    Definition,
     /// 未知类型
     Unknown,
 }
@@ -52,15 +59,59 @@ pub struct StructuredAnswer {
 /// 问题分类提示词
 const QUESTION_CLASSIFICATION_PROMPT: &str = r#"
 请将以下问题分类为：
-- Factual: 事实性问题，寻求具体事实信息
-- Procedural: 过程性问题，询问如何做某事
-- Analytical: 分析性问题，需要分析或评估
-- Advisory: 建议性问题，寻求建议或意见
-- Confirmation: 确认性问题，确认信息是否正确
+- Factual: 事实性问题，寻求具体事实信息（如：仓库地址、订单数量、产品规格）
+- Procedural: 过程性问题，询问如何做某事（如：如何创建订单、如何进行入库操作）
+- Analytical: 分析性问题，需要分析或评估（如：库存趋势分析、成本效益评估）
+- Advisory: 建议性问题，寻求建议或意见（如：推荐哪种产品、如何优化流程）
+- Confirmation: 确认性问题，确认信息是否正确（如：订单是否已发货、库存是否充足）
+- Comparative: 比较性问题，比较两个或多个事物（如：A产品和B产品的区别、不同仓库的对比）
+- Predictive: 预测性问题，预测未来趋势或结果（如：下个月库存预测、需求趋势）
+- Diagnostic: 诊断性问题，诊断问题或故障原因（如：为什么入库失败、库存差异原因）
+- Definition: 定义性问题，询问定义或概念解释（如：什么是安全库存、ABC分类是什么）
 
 只返回分类结果，不需要额外解释。
 
 问题：
+"#;
+
+/// 问题意图识别提示词
+const INTENT_RECOGNITION_PROMPT: &str = r#"
+请分析以下问题的意图，并返回意图类型和关键实体。
+
+意图类型包括：
+- INFORMATION: 信息查询
+- TRANSACTION: 业务操作请求
+- TROUBLESHOOTING: 问题排查
+- REPORTING: 数据报告
+- CONFIGURATION: 系统配置
+- OTHER: 其他
+
+关键实体：从问题中提取的关键名词（如客户名称、订单号、产品名称等），用逗号分隔。
+
+请以 JSON 格式返回：
+{
+  "intent": "意图类型",
+  "entities": ["实体1", "实体2"]
+}
+
+问题：
+"#;
+
+/// 答案质量评估提示词
+const ANSWER_QUALITY_PROMPT: &str = r#"
+请评估以下回答的质量，基于以下标准：
+
+评分标准（1-5分）：
+1分：完全错误或无关
+2分：部分正确但有重大遗漏
+3分：基本正确但不够完整
+4分：正确且比较完整
+5分：完全正确且完整
+
+请只返回分数。
+
+问题：{}
+回答：{}
 "#;
 
 impl QAService {
@@ -158,16 +209,27 @@ impl QAService {
         Ok((answer, context_chunks.to_vec(), qa_id, confidence))
     }
 
-    /// 获取问答历史
+    /// 获取问答历史（支持分页）
     pub async fn get_qa_history(&self, limit: usize) -> Result<Vec<QAHistory>, String> {
+        self.get_qa_history_paged(0, limit).await
+    }
+
+    /// 获取问答历史（分页版本）
+    pub async fn get_qa_history_paged(
+        &self,
+        offset: usize,
+        limit: usize,
+    ) -> Result<Vec<QAHistory>, String> {
         let rows = sqlx::query(
             r#"
             SELECT id, question, answer, context, sources, feedback, rating, created_at
-            FROM plugin_ai.qa_history
+            FROM ai.qa_history
+            WHERE deleted_at IS NULL
             ORDER BY created_at DESC
-            LIMIT $1
+            OFFSET $1 LIMIT $2
             "#,
         )
+        .bind(offset as i64)
         .bind(limit as i64)
         .fetch_all(self.db.pool())
         .await
@@ -194,6 +256,116 @@ impl QAService {
         Ok(history)
     }
 
+    /// 获取问答历史总数
+    pub async fn get_qa_history_count(&self) -> Result<i64, String> {
+        let count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL
+            "#,
+        )
+        .fetch_one(self.db.pool())
+        .await
+        .map_err(|e| format!("查询问答历史总数失败: {}", e))?;
+
+        Ok(count)
+    }
+
+    /// 搜索问答历史
+    pub async fn search_qa_history(
+        &self,
+        query: &str,
+        offset: usize,
+        limit: usize,
+    ) -> Result<Vec<QAHistory>, String> {
+        let rows = sqlx::query(
+            r#"
+            SELECT id, question, answer, context, sources, feedback, rating, created_at
+            FROM ai.qa_history
+            WHERE deleted_at IS NULL
+              AND (question ILIKE $1 OR answer ILIKE $1)
+            ORDER BY created_at DESC
+            OFFSET $2 LIMIT $3
+            "#,
+        )
+        .bind(format!("%{}%", query))
+        .bind(offset as i64)
+        .bind(limit as i64)
+        .fetch_all(self.db.pool())
+        .await
+        .map_err(|e| format!("搜索问答历史失败: {}", e))?;
+
+        let history = rows
+            .iter()
+            .map(|row| {
+                let sources_value: Option<serde_json::Value> = row.try_get("sources").ok();
+                let sources = sources_value.and_then(|v| serde_json::from_value(v).ok());
+                QAHistory {
+                    id: row.get("id"),
+                    question: row.get("question"),
+                    answer: row.get("answer"),
+                    context: row.get("context"),
+                    sources,
+                    feedback: row.get("feedback"),
+                    rating: row.get("rating"),
+                    created_at: row.get("created_at"),
+                }
+            })
+            .collect();
+
+        Ok(history)
+    }
+
+    /// 搜索问答历史总数
+    pub async fn search_qa_history_count(&self, query: &str) -> Result<i64, String> {
+        let count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*) FROM ai.qa_history 
+            WHERE deleted_at IS NULL
+              AND (question ILIKE $1 OR answer ILIKE $1)
+            "#,
+        )
+        .bind(format!("%{}%", query))
+        .fetch_one(self.db.pool())
+        .await
+        .map_err(|e| format!("搜索问答历史总数失败: {}", e))?;
+
+        Ok(count)
+    }
+
+    /// 删除问答历史（软删除）
+    pub async fn delete_qa_history(&self, qa_id: Uuid) -> Result<bool, String> {
+        let result = sqlx::query(
+            r#"
+            UPDATE ai.qa_history
+            SET deleted_at = CURRENT_TIMESTAMP
+            WHERE id = $1 AND deleted_at IS NULL
+            "#,
+        )
+        .bind(qa_id)
+        .execute(self.db.pool())
+        .await
+        .map_err(|e| format!("删除问答历史失败: {}", e))?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// 批量删除问答历史
+    pub async fn batch_delete_qa_history(&self, qa_ids: &[Uuid]) -> Result<i64, String> {
+        let result = sqlx::query(
+            r#"
+            UPDATE ai.qa_history
+            SET deleted_at = CURRENT_TIMESTAMP
+            WHERE id = ANY($1) AND deleted_at IS NULL
+            "#,
+        )
+        .bind(qa_ids)
+        .execute(self.db.pool())
+        .await
+        .map_err(|e| format!("批量删除问答历史失败: {}", e))?;
+
+        Ok(result.rows_affected() as i64)
+    }
+
     /// 提交答案反馈
     pub async fn submit_feedback(
         &self,
@@ -203,7 +375,7 @@ impl QAService {
     ) -> Result<(), String> {
         sqlx::query(
             r#"
-            UPDATE plugin_ai.qa_history
+            UPDATE ai.qa_history
             SET feedback = $1, rating = $2
             WHERE id = $3
             "#,
@@ -327,6 +499,10 @@ impl QAService {
             "analytical" => QuestionType::Analytical,
             "advisory" => QuestionType::Advisory,
             "confirmation" => QuestionType::Confirmation,
+            "comparative" => QuestionType::Comparative,
+            "predictive" => QuestionType::Predictive,
+            "diagnostic" => QuestionType::Diagnostic,
+            "definition" => QuestionType::Definition,
             _ => QuestionType::Unknown,
         };
 
@@ -391,6 +567,34 @@ impl QAService {
             QuestionType::Confirmation => (
                 format!(
                     "你是 TOPEMS 智能助手。请根据以下知识库内容确认信息是否正确。\n\n知识库内容：\n{}\n\n用户问题：{}\n\n请明确回答是或否，并简要说明原因。",
+                    context, question
+                ),
+                false,
+            ),
+            QuestionType::Comparative => (
+                format!(
+                    "你是 TOPEMS 智能助手。请根据以下知识库内容比较两个或多个事物。\n\n知识库内容：\n{}\n\n用户问题：{}\n\n请从多个维度进行对比分析，清晰列出相同点和不同点。",
+                    context, question
+                ),
+                true,
+            ),
+            QuestionType::Predictive => (
+                format!(
+                    "你是 TOPEMS 智能助手。请根据以下知识库内容预测未来趋势或结果。\n\n知识库内容：\n{}\n\n用户问题：{}\n\n请基于历史数据和趋势，给出合理的预测和分析。",
+                    context, question
+                ),
+                true,
+            ),
+            QuestionType::Diagnostic => (
+                format!(
+                    "你是 TOPEMS 智能助手。请根据以下知识库内容诊断问题或故障原因。\n\n知识库内容：\n{}\n\n用户问题：{}\n\n请分析可能的原因，并提供排查步骤和解决方案。",
+                    context, question
+                ),
+                true,
+            ),
+            QuestionType::Definition => (
+                format!(
+                    "你是 TOPEMS 智能助手。请根据以下知识库内容解释定义或概念。\n\n知识库内容：\n{}\n\n用户问题：{}\n\n请给出清晰、准确的定义，并提供相关示例。",
                     context, question
                 ),
                 false,
@@ -545,7 +749,7 @@ impl QAService {
     ) -> Result<Uuid, String> {
         let id: Uuid = sqlx::query_scalar(
             r#"
-            INSERT INTO plugin_ai.qa_history (question, answer, context, sources)
+            INSERT INTO ai.qa_history (question, answer, context, sources)
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
@@ -560,4 +764,267 @@ impl QAService {
 
         Ok(id)
     }
+
+    /// 意图识别
+    pub async fn recognize_intent(&self, question: &str) -> Result<IntentResult, String> {
+        let prompt = format!("{}{}", INTENT_RECOGNITION_PROMPT, question);
+        let response = self.call_ai_api(&prompt).await?;
+
+        let result: IntentResult = serde_json::from_str(&response)
+            .map_err(|e| {
+                tracing::warn!("解析意图识别响应失败: {}, 响应: {}", e, response);
+                format!("解析意图识别响应失败: {}", e)
+            })?;
+
+        Ok(result)
+    }
+
+    /// 评估答案质量
+    pub async fn evaluate_answer_quality(&self, question: &str, answer: &str) -> Result<i32, String> {
+        let prompt = ANSWER_QUALITY_PROMPT.replace("{}", question).replace("{}", answer);
+        let response = self.call_ai_api(&prompt).await?;
+
+        let score = response.trim().parse::<i32>().map_err(|e| {
+            tracing::warn!("解析答案质量评分失败: {}, 响应: {}", e, response);
+            format!("解析答案质量评分失败: {}", e)
+        })?;
+
+        Ok(score)
+    }
+
+    /// 增强版知识检索 - 结合关键词和语义搜索
+    pub async fn enhanced_search(
+        &self,
+        query: &str,
+        top_k: usize,
+        context_chunks: &[SearchResult],
+    ) -> Result<Vec<SearchResult>, String> {
+        let intent_result = self.recognize_intent(query).await?;
+        
+        let mut enhanced_results = context_chunks.to_vec();
+        
+        if !intent_result.entities.is_empty() {
+            let _entities_query = intent_result.entities.join(" OR ");
+            enhanced_results.retain(|chunk| {
+                chunk.content.to_lowercase().contains(&query.to_lowercase()) ||
+                intent_result.entities.iter().any(|entity| {
+                    chunk.content.to_lowercase().contains(&entity.to_lowercase())
+                })
+            });
+        }
+        
+        enhanced_results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
+        
+        Ok(enhanced_results.into_iter().take(top_k).collect())
+    }
+
+    /// 语义搜索 - 基于查询文本生成嵌入并搜索
+    pub async fn semantic_search(
+        &self,
+        query: &str,
+        top_k: usize,
+    ) -> Result<Vec<SearchResult>, String> {
+        let query_embedding = self.generate_query_embedding(query).await?;
+        
+        if query_embedding.is_empty() {
+            return Ok(Vec::new());
+        }
+        
+        let results = self
+            .db
+            .pool()
+            .fetch_all(
+                sqlx::query(
+                    r#"
+                    SELECT
+                        c.document_id,
+                        c.id AS chunk_id,
+                        c.content,
+                        1 - (c.embedding <=> $1::vector) AS similarity,
+                        d.title AS document_title
+                    FROM ai.document_chunks c
+                    JOIN plugin_ai.documents d ON c.document_id = d.id
+                    WHERE c.embedding IS NOT NULL
+                    ORDER BY c.embedding <=> $1::vector
+                    LIMIT $2
+                    "#,
+                )
+                .bind(format!(
+                    "[{}]",
+                    query_embedding
+                        .iter()
+                        .map(|v| v.to_string())
+                        .collect::<Vec<_>>()
+                        .join(",")
+                ))
+                .bind(top_k as i64),
+            )
+            .await
+            .map_err(|e| format!("语义搜索失败: {}", e))?;
+        
+        let search_results = results
+            .iter()
+            .map(|row| SearchResult {
+                document_id: row.get("document_id"),
+                chunk_id: row.get("chunk_id"),
+                content: row.get("content"),
+                similarity: row.get("similarity"),
+                document_title: row.get("document_title"),
+            })
+            .collect();
+        
+        Ok(search_results)
+    }
+
+    /// 混合检索 - 结合向量搜索和关键词搜索
+    pub async fn hybrid_search(
+        &self,
+        query: &str,
+        top_k: usize,
+        vector_weight: f64,
+        keyword_weight: f64,
+    ) -> Result<Vec<SearchResult>, String> {
+        let vector_results = self.semantic_search(query, top_k * 2).await?;
+        
+        let keyword_results = self
+            .db
+            .pool()
+            .fetch_all(
+                sqlx::query(
+                    r#"
+                    SELECT
+                        c.document_id,
+                        c.id AS chunk_id,
+                        c.content,
+                        ts_rank_cd(to_tsvector('simple', c.content), query) AS keyword_score,
+                        d.title AS document_title
+                    FROM ai.document_chunks c
+                    JOIN plugin_ai.documents d ON c.document_id = d.id,
+                         to_tsquery('simple', $1) query
+                    WHERE to_tsvector('simple', c.content) @@ query
+                    ORDER BY keyword_score DESC
+                    LIMIT $2
+                    "#,
+                )
+                .bind(query)
+                .bind((top_k * 2) as i64),
+            )
+            .await
+            .map_err(|e| format!("关键词搜索失败: {}", e))?;
+        
+        let mut combined_map: std::collections::HashMap<uuid::Uuid, SearchResult> =
+            std::collections::HashMap::new();
+        
+        for result in vector_results {
+            let entry = combined_map.entry(result.chunk_id).or_insert(result.clone());
+            entry.similarity = result.similarity;
+        }
+        
+        for row in keyword_results.iter() {
+            let chunk_id: uuid::Uuid = row.get("chunk_id");
+            let score: f32 = row.get("keyword_score");
+            let entry = combined_map.entry(chunk_id).or_insert(SearchResult {
+                document_id: row.get("document_id"),
+                chunk_id,
+                content: row.get("content"),
+                similarity: score as f64 * keyword_weight,
+                document_title: row.get("document_title"),
+            });
+            entry.similarity =
+                entry.similarity * vector_weight + (score as f64) * keyword_weight;
+        }
+        
+        let mut results: Vec<_> = combined_map.values().cloned().collect();
+        results.sort_by(|a, b| {
+            b.similarity
+                .partial_cmp(&a.similarity)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        
+        Ok(results.into_iter().take(top_k).collect())
+    }
+
+    /// 生成查询向量嵌入
+    async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>, String> {
+        let embedding_url = format!("{}/embeddings", self.config.base_url);
+        
+        #[derive(Serialize)]
+        struct EmbeddingRequest {
+            model: String,
+            input: String,
+        }
+        
+        #[derive(Deserialize)]
+        struct EmbeddingResponse {
+            data: Vec<EmbeddingData>,
+        }
+        
+        #[derive(Deserialize)]
+        struct EmbeddingData {
+            embedding: Vec<f32>,
+        }
+        
+        let request = EmbeddingRequest {
+            model: self.config.embedding_model.clone(),
+            input: query.to_string(),
+        };
+        
+        let mut req_builder = self
+            .http_client
+            .post(&embedding_url)
+            .header("Content-Type", "application/json");
+        
+        if let Some(key) = &self.config.api_key {
+            if key != "ollama" {
+                req_builder = req_builder.header("Authorization", format!("Bearer {}", key));
+            }
+        }
+        
+        let response = req_builder
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| format!("调用嵌入 API 失败: {}", e))?;
+        
+        let status = response.status();
+        if !status.is_success() {
+            let error_text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(format!("嵌入 API 错误: {} - {}", status, error_text));
+        }
+        
+        let embedding_response: EmbeddingResponse = response
+            .json()
+            .await
+            .map_err(|e| format!("解析嵌入响应失败: {}", e))?;
+        
+        if let Some(data) = embedding_response.data.first() {
+            Ok(data.embedding.clone())
+        } else {
+            Err("嵌入 API 未返回有效响应".to_string())
+        }
+    }
+
+    /// 多轮对话优化 - 检测问题是否需要上下文
+    pub fn needs_context(&self, question: &str) -> bool {
+        let context_indicators = ["上次", "之前", "刚才", "继续", "接着", "之前说的", "刚才提到"];
+        context_indicators.iter().any(|indicator| question.contains(indicator))
+    }
+
+    /// 生成答案的置信区间
+    pub fn calculate_confidence_interval(&self, confidence: f64) -> (f64, f64) {
+        let margin = 0.1 * (1.0 - confidence);
+        (
+            (confidence - margin).max(0.0),
+            (confidence + margin).min(1.0),
+        )
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IntentResult {
+    pub intent: String,
+    pub entities: Vec<String>,
 }

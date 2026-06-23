@@ -39,8 +39,9 @@ fn get_uptime() -> u64 {
 }
 
 use api::{
-    create_category_routes, create_contract_routes, create_evaluation_routes,
-    create_product_routes, create_supplier_routes,
+    create_category_routes, create_contract_routes, create_data_sync_routes,
+    create_evaluation_routes, create_performance_routes, create_product_routes,
+    create_scoring_dimension_routes, create_supplier_routes,
 };
 
 #[derive(Clone)]
@@ -128,6 +129,9 @@ async fn main() -> Result<()> {
         .merge(create_evaluation_routes(pool.clone()).await?)
         .merge(create_contract_routes(pool.clone()).await?)
         .merge(create_product_routes(pool.clone()).await?)
+        .merge(create_performance_routes(pool.clone()).await?)
+        .merge(create_data_sync_routes(pool.clone()).await?)
+        .merge(create_scoring_dimension_routes(pool.clone()).await?)
         .merge(create_statistics_routes(pool.clone()))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),

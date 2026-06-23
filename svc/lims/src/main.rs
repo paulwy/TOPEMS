@@ -23,7 +23,7 @@ use std::net::SocketAddr;
 
 use axum::{
     extract::State,
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -79,7 +79,6 @@ async fn main() {
         }
     };
 
-    // Initialize database for LIMS module
     if let Err(e) = modules::lims::init_database(&pool).await {
         tracing::warn!("LIMS module database init warning: {}", e);
     }
@@ -97,7 +96,6 @@ async fn main() {
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
@@ -107,7 +105,6 @@ async fn main() {
         .route("/api/info", get(|| get_api_info_handler("lims-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
-    // Protected routes (auth required)
     let protected_routes = Router::new()
         // ===== LIMS routes (prefix: /api/lims) =====
         // Sample Management
@@ -115,26 +112,47 @@ async fn main() {
         .route("/api/lims/samples", post(modules::lims::sample::register_sample))
         .route("/api/lims/samples/{id}", get(modules::lims::sample::get_sample))
         .route("/api/lims/samples/{id}", put(modules::lims::sample::update_sample))
+        .route("/api/lims/samples/{id}", delete(modules::lims::sample::delete_sample))
+        // Sample Lifecycle Tracking
+        .route("/api/lims/samples/{id}/lifecycle", get(modules::lims::sample::get_sample_lifecycle))
+        .route("/api/lims/samples/lifecycle", post(modules::lims::sample::record_lifecycle_event))
+        .route("/api/lims/samples/{id}/stage/{to_stage}", post(modules::lims::sample::transition_sample_stage))
+        .route("/api/lims/samples/{id}/traceability", get(modules::lims::sample::get_sample_traceability))
+        .route("/api/lims/lifecycle-stages", get(modules::lims::sample::get_lifecycle_stages))
         // Inspection Task
         .route("/api/lims/tasks", get(modules::lims::inspection_task::list_tasks))
         .route("/api/lims/tasks", post(modules::lims::inspection_task::create_task))
         .route("/api/lims/tasks/{id}", get(modules::lims::inspection_task::get_task))
+        .route("/api/lims/tasks/{id}", put(modules::lims::inspection_task::update_task))
+        .route("/api/lims/tasks/{id}", delete(modules::lims::inspection_task::delete_task))
         .route("/api/lims/tasks/{id}/result", post(modules::lims::inspection_task::submit_result))
         // Inspection Record
         .route("/api/lims/records", get(modules::lims::inspection_record::list_records))
         .route("/api/lims/records", post(modules::lims::inspection_record::create_record))
         .route("/api/lims/records/{id}", get(modules::lims::inspection_record::get_record))
+        .route("/api/lims/records/{id}", delete(modules::lims::inspection_record::delete_record))
         // Instrument
         .route("/api/lims/instruments", get(modules::lims::instrument::list_instruments))
         .route("/api/lims/instruments", post(modules::lims::instrument::create_instrument))
         .route("/api/lims/instruments/{id}", get(modules::lims::instrument::get_instrument))
+        .route("/api/lims/instruments/{id}", put(modules::lims::instrument::update_instrument))
+        .route("/api/lims/instruments/{id}", delete(modules::lims::instrument::delete_instrument))
         .route("/api/lims/instruments/{id}/calibration", post(modules::lims::instrument::calibrate))
         // Reagent
         .route("/api/lims/reagents", get(modules::lims::reagent::list_reagents))
         .route("/api/lims/reagents", post(modules::lims::reagent::create_reagent))
         .route("/api/lims/reagents/{id}", get(modules::lims::reagent::get_reagent))
+        .route("/api/lims/reagents/{id}", put(modules::lims::reagent::update_reagent))
+        .route("/api/lims/reagents/{id}", delete(modules::lims::reagent::delete_reagent))
         // Statistics
         .route("/api/lims/statistics", get(modules::lims::statistics::get_statistics))
+        // Data Sync
+        .route("/api/lims/sync-records", get(modules::lims::data_sync::list_sync_records))
+        .route("/api/lims/sync-records/{id}", get(modules::lims::data_sync::get_sync_record))
+        .route("/api/lims/sync-records/{id}", delete(modules::lims::data_sync::delete_sync_record))
+        .route("/api/lims/sync-records/{id}/retry", post(modules::lims::data_sync::retry_sync))
+        .route("/api/lims/sync/record-to-qms", post(modules::lims::data_sync::sync_record_to_qms))
+        .route("/api/lims/sync/reagent-to-ehs", post(modules::lims::data_sync::sync_reagent_to_ehs))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
@@ -157,7 +175,6 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ LIMS Service is running at http://{}", addr);
 
-    // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         plugin::auto_register_to_core(core_url.as_deref()).await;

@@ -5,6 +5,8 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use serde::Deserialize;
+use sqlx::Row;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -29,6 +31,18 @@ pub fn create_routes() -> Router<ApiState> {
             get(get_sales_forecast)
                 .put(update_sales_forecast)
                 .delete(delete_sales_forecast),
+        )
+        .route(
+            "/api/crm/sales-forecast/trend",
+            get(get_sales_trend),
+        )
+        .route(
+            "/api/crm/sales-forecast/compare",
+            get(compare_sales_forecasts),
+        )
+        .route(
+            "/api/crm/sales-forecast/accuracy-report",
+            get(get_accuracy_report),
         )
 }
 
@@ -431,4 +445,310 @@ async fn delete_sales_forecast(
     .await;
 
     response
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SalesTrendQuery {
+    pub period_type: Option<String>,
+    pub start_period: Option<String>,
+    pub end_period: Option<String>,
+}
+
+async fn get_sales_trend(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<SalesTrendQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let period_type = params.period_type.unwrap_or("month".to_string());
+
+    let result = sqlx::query(
+        r#"
+        SELECT period, predicted_amount, actual_amount, accuracy, trend
+        FROM plugin_crm.sales_forecasts
+        WHERE period_type = $1
+          AND ($2::text IS NULL OR period >= $2)
+          AND ($3::text IS NULL OR period <= $3)
+        ORDER BY period ASC
+        "#,
+    )
+    .bind(&period_type)
+    .bind(&params.start_period)
+    .bind(&params.end_period)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let trend_data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| serde_json::json!({
+                    "period": r.get::<String, _>("period"),
+                    "predicted_amount": r.get::<f64, _>("predicted_amount"),
+                    "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
+                    "accuracy": r.get::<Option<f64>, _>("accuracy"),
+                    "trend": r.get::<String, _>("trend"),
+                }))
+                .collect();
+
+            let mut comparison_data = Vec::new();
+            for i in 1..trend_data.len() {
+                let prev = &trend_data[i - 1];
+                let curr = &trend_data[i];
+                let prev_predicted = prev.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                let curr_predicted = curr.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                let change_rate = if prev_predicted != 0.0 {
+                    ((curr_predicted - prev_predicted) / prev_predicted * 100.0).round() / 100.0
+                } else {
+                    0.0
+                };
+                comparison_data.push(serde_json::json!({
+                    "period": curr.get("period"),
+                    "change_rate": change_rate,
+                    "absolute_change": curr_predicted - prev_predicted,
+                }));
+            }
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "trend_data": trend_data,
+                    "period_type": period_type,
+                    "comparison_data": comparison_data,
+                    "total_periods": comparison_data.len() + 1,
+                }),
+                "获取销售趋势数据成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取销售趋势数据失败: {}", e);
+            Json(api_error(500, "获取销售趋势数据失败"))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CompareForecastQuery {
+    pub periods: Option<Vec<String>>,
+    pub period_type: Option<String>,
+}
+
+async fn compare_sales_forecasts(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<CompareForecastQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let periods = params.periods.unwrap_or_default();
+    let period_type = params.period_type.unwrap_or("month".to_string());
+
+    if periods.len() < 2 {
+        return Json(api_error(400, "至少需要对比两个周期"));
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
+        FROM plugin_crm.sales_forecasts
+        WHERE period_type = $1 AND period = ANY($2)
+        ORDER BY period ASC
+        "#,
+    )
+    .bind(&period_type)
+    .bind(&periods)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let forecasts: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| serde_json::json!({
+                    "period": r.get::<String, _>("period"),
+                    "predicted_amount": r.get::<f64, _>("predicted_amount"),
+                    "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
+                    "accuracy": r.get::<Option<f64>, _>("accuracy"),
+                    "confidence_level": r.get::<f64, _>("confidence_level"),
+                    "trend": r.get::<String, _>("trend"),
+                }))
+                .collect();
+
+            let base_period = forecasts.first().unwrap();
+            let base_predicted = base_period.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+            let base_actual = base_period.get("actual_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+
+            let comparisons: Vec<serde_json::Value> = forecasts
+                .iter()
+                .skip(1)
+                .map(|f| {
+                    let predicted = f.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    let actual = f.get("actual_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    let acc1 = f.get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    let acc2 = base_period.get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    let accuracy_gap = acc1 - acc2;
+                    serde_json::json!({
+                        "period": f.get("period"),
+                        "predicted_vs_base": predicted - base_predicted,
+                        "predicted_rate": if base_predicted != 0.0 { (predicted / base_predicted * 100.0).round() / 100.0 } else { 0.0 },
+                        "actual_vs_base": actual - base_actual,
+                        "actual_rate": if base_actual != 0.0 { (actual / base_actual * 100.0).round() / 100.0 } else { 0.0 },
+                        "accuracy_gap": accuracy_gap,
+                    })
+                })
+                .collect();
+
+            let avg_accuracy: f64 = forecasts
+                .iter()
+                .filter_map(|f| f.get("accuracy").and_then(|v| v.as_f64()))
+                .collect::<Vec<f64>>()
+                .into_iter()
+                .sum::<f64>() / forecasts.len() as f64;
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "base_period": base_period,
+                    "comparisons": comparisons,
+                    "forecasts": forecasts,
+                    "period_type": period_type,
+                    "average_accuracy": avg_accuracy.round() / 100.0,
+                }),
+                "销售预测对比分析成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("销售预测对比分析失败: {}", e);
+            Json(api_error(500, "销售预测对比分析失败"))
+        }
+    }
+}
+
+async fn get_accuracy_report(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<SalesTrendQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let period_type = params.period_type.unwrap_or("month".to_string());
+
+    let result = sqlx::query(
+        r#"
+        SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
+        FROM plugin_crm.sales_forecasts
+        WHERE period_type = $1
+          AND ($2::text IS NULL OR period >= $2)
+          AND ($3::text IS NULL OR period <= $3)
+          AND actual_amount IS NOT NULL
+        ORDER BY period ASC
+        "#,
+    )
+    .bind(&period_type)
+    .bind(&params.start_period)
+    .bind(&params.end_period)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let records: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    let predicted = r.get::<f64, _>("predicted_amount");
+                    let actual = r.get::<f64, _>("actual_amount");
+                    let deviation = (predicted - actual).abs();
+                    let deviation_rate = if actual != 0.0 {
+                        ((predicted - actual).abs() / actual * 100.0).round() / 100.0
+                    } else {
+                        0.0
+                    };
+                    serde_json::json!({
+                        "period": r.get::<String, _>("period"),
+                        "predicted_amount": predicted,
+                        "actual_amount": actual,
+                        "accuracy": r.get::<f64, _>("accuracy"),
+                        "confidence_level": r.get::<f64, _>("confidence_level"),
+                        "trend": r.get::<String, _>("trend"),
+                        "deviation": deviation,
+                        "deviation_rate": deviation_rate,
+                    })
+                })
+                .collect();
+
+            let total_records = records.len();
+            let avg_accuracy: f64 = records
+                .iter()
+                .filter_map(|r| r.get("accuracy").and_then(|v| v.as_f64()))
+                .sum::<f64>() / total_records as f64;
+
+            let avg_deviation: f64 = records
+                .iter()
+                .filter_map(|r| r.get("deviation").and_then(|v| v.as_f64()))
+                .sum::<f64>() / total_records as f64;
+
+            let max_accuracy = records
+                .iter()
+                .filter_map(|r| r.get("accuracy").and_then(|v| v.as_f64()))
+                .fold(0.0, f64::max);
+
+            let min_accuracy = records
+                .iter()
+                .filter_map(|r| r.get("accuracy").and_then(|v| v.as_f64()))
+                .fold(1.0, f64::min);
+
+            let high_confidence_count = records
+                .iter()
+                .filter(|r| r.get("confidence_level").and_then(|v| v.as_f64()).unwrap_or(0.0) >= 0.8)
+                .count();
+
+            let trend_analysis = if records.len() >= 3 {
+                let recent: Vec<&serde_json::Value> = records.iter().rev().take(3).rev().collect();
+                let accuracy_trend = recent.windows(2).map(|w| {
+                    let acc1 = w[0].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    let acc2 = w[1].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    acc2 - acc1
+                }).sum::<f64>() / 2.0;
+
+                if accuracy_trend > 0.01 {
+                    "improving".to_string()
+                } else if accuracy_trend < -0.01 {
+                    "declining".to_string()
+                } else {
+                    "stable".to_string()
+                }
+            } else {
+                "insufficient_data".to_string()
+            };
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "records": records,
+                    "period_type": period_type,
+                    "summary": {
+                        "total_records": total_records,
+                        "average_accuracy": avg_accuracy.round() / 100.0,
+                        "average_deviation": avg_deviation.round() / 100.0,
+                        "max_accuracy": max_accuracy.round() / 100.0,
+                        "min_accuracy": min_accuracy.round() / 100.0,
+                        "high_confidence_count": high_confidence_count,
+                        "trend_analysis": trend_analysis,
+                    },
+                }),
+                "获取预测准确率报告成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取预测准确率报告失败: {}", e);
+            Json(api_error(500, "获取预测准确率报告失败"))
+        }
+    }
 }

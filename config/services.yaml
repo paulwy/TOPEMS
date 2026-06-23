@@ -1,6 +1,25 @@
 # TOPEMS 服务配置
 # 与 plugin-architecture-design.md 保持严格一致
-# 版本: v5.0
+# 版本: v6.0
+
+# ================================================
+# 端口分配规则 (Port Allocation Rules)
+# ================================================
+# 1. 范围: 8000-8079 业务服务，5432/6379/11434/3000/8080 基础设施
+# 2. 策略: 按业务域分组，每 10 个端口预留一个域段
+# 3. 编号: 域内从 X0 开始顺序递增（如 8030, 8031, ...）
+# 4. 首位即主服务: 段首 (X0) 分配给该域的核心服务
+# 5. 虚拟服务: 由 unified-core 内部模块提供的服务（iam/doc/flow/file/mail/im/notification）共用 8000，通过 URL 路径区分
+# 6. 权威源: 本文件 + 各服务 main.rs 中的实际端口
+# 7. 同步: 任何端口变更必须同步到 services.conf, ports.env, docker-compose, vite.config.ts
+#
+# 段位速查:
+#   8000-8009 核心 (Core)         8050-8059 质量/研发 (Q/RD)
+#   8010-8019 经营管理 (ERP)      8060-8069 数据分析/门户 (Analytics)
+#   8020-8029 协同办公 (Collab)   8070-8079 基础设施 (Infra)
+#   8030-8039 生产制造 (Mfg)      3000/5432/6379/8080/11434 基础设施
+#   8040-8049 供应链 (SCM)
+# ================================================
 
 service_groups:
   # 核心服务 (8000-8009)
@@ -32,7 +51,7 @@ service_groups:
       dependencies: [unified-core]
 
     - name: pm
-      port: 8022
+      port: 8023
       env_var: PM_PORT
       description: 项目管理服务
       status: implemented
@@ -150,6 +169,14 @@ service_groups:
       description: 企业门户
       status: implemented
       dependencies: [unified-core]
+
+    - name: ai
+      port: 8064
+      env_var: AI_PORT
+      description: AI智能服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: ai
 
   # 基础设施服务 (8070-8079)
   infrastructure:

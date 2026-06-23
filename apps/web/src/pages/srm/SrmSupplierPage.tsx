@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Typography,  } from "@mui/material";
+import {
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { Button } from "@/components/ui/Button";
-import { Plus, Eye, Users } from "lucide-react";
+import { Plus, Eye, Users, TrendingUp, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   ListPageTemplate,
@@ -9,7 +21,11 @@ import {
   type RowAction,
 } from "@/components/templates";
 import { srmApi } from "@/api/srm";
-import type { Supplier } from "@/api/srm";
+import type {
+  Supplier,
+  PerformanceSummary,
+  ScoreLevelDistribution,
+} from "@/api/srm";
 import { toast } from "react-toastify";
 import { apiLogger } from "@/utils/logger";
 
@@ -19,6 +35,11 @@ const SrmSupplierPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [performanceSummary, setPerformanceSummary] =
+    useState<PerformanceSummary | null>(null);
+  const [scoreDistribution, setScoreDistribution] = useState<
+    ScoreLevelDistribution[]
+  >([]);
   const [formData, setFormData] = useState({
     supplier_no: "",
     name: "",
@@ -33,6 +54,8 @@ const SrmSupplierPage: React.FC = () => {
 
   useEffect(() => {
     loadSuppliers();
+    loadPerformanceSummary();
+    loadScoreDistribution();
   }, []);
 
   const loadSuppliers = async () => {
@@ -63,6 +86,28 @@ const SrmSupplierPage: React.FC = () => {
       setSuppliers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPerformanceSummary = async () => {
+    try {
+      const response = await srmApi.getPerformanceSummary();
+      if (response.success && response.data) {
+        setPerformanceSummary(response.data);
+      }
+    } catch (err) {
+      apiLogger.error("加载绩效汇总失败:", err);
+    }
+  };
+
+  const loadScoreDistribution = async () => {
+    try {
+      const response = await srmApi.getScoreLevelDistribution();
+      if (response.success && response.data) {
+        setScoreDistribution(response.data.distribution);
+      }
+    } catch (err) {
+      apiLogger.error("加载评分分布失败:", err);
     }
   };
 
@@ -129,6 +174,14 @@ const SrmSupplierPage: React.FC = () => {
         icon: <Eye style={{ width: 16, height: 16 }} />,
         onClick: (row) => navigate(`/srm/suppliers/${row.id}`),
       },
+      {
+        label: "评估",
+        icon: <Award style={{ width: 16, height: 16 }} />,
+        onClick: (row) =>
+          navigate(
+            `/srm/evaluation?supplier_id=${row.id}&supplier_name=${row.name}`,
+          ),
+      },
     ],
     [navigate],
   );
@@ -176,6 +229,7 @@ const SrmSupplierPage: React.FC = () => {
       toast.success("供应商创建成功");
       setShowCreateModal(false);
       loadSuppliers();
+      loadPerformanceSummary();
     } catch (err) {
       toast.error("创建失败");
       apiLogger.error("创建供应商失败:", err);
@@ -191,151 +245,310 @@ const SrmSupplierPage: React.FC = () => {
     };
   }, [suppliers]);
 
+  const getLevelColor = (level: string) => {
+    const colorMap: Record<string, { bg: string; color: string }> = {
+      A: { bg: "#dcfce7", color: "#15803d" },
+      B: { bg: "#dbeafe", color: "#1d4ed8" },
+      C: { bg: "#fef3c7", color: "#b45309" },
+      D: { bg: "#fde68a", color: "#92400e" },
+      E: { bg: "#fee2e2", color: "#b91c1c" },
+    };
+    return colorMap[level] || { bg: "#f1f5f9", color: "#475569" };
+  };
+
   const headerContent = useMemo(
     () => (
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-          gap: 2,
-          mb: 4,
-        }}
-      >
-        <Card sx={{ bgcolor: "#faf5ff" }}>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: "#ede9fe",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Users sx={{ width: 20, height: 20, color: "#a855f7" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+      <Box>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+            gap: 2,
+            mb: 4,
+          }}
+        >
+          <Card sx={{ bgcolor: "#faf5ff" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "#ede9fe",
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  供应商总数
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "slate.900" }}
-                >
-                  {stats.total}
-                </Typography>
+                  <Users sx={{ width: 20, height: 20, color: "#a855f7" }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
+                    供应商总数
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
+                    {stats.total}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: "#dcfce7",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "#dcfce7",
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  已启用
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "slate.900" }}
-                >
-                  {stats.active}
-                </Typography>
+                  <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
+                    已启用
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
+                    {stats.active}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: "#dcfce7",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "#dcfce7",
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  低风险
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "slate.900" }}
-                >
-                  {stats.lowRisk}
-                </Typography>
+                  <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
+                    低风险
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
+                    {stats.lowRisk}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: "#fee2e2",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Users sx={{ width: 20, height: 20, color: "#dc2626" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "#fee2e2",
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  高风险
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "slate.900" }}
-                >
-                  {stats.highRisk}
-                </Typography>
+                  <Users sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
+                    高风险
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
+                    {stats.highRisk}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {performanceSummary && (
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(3, 1fr)",
+              },
+              gap: 2,
+              mb: 4,
+            }}
+          >
+            <Card sx={{ bgcolor: "#fef3c7" }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#fde68a",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Award sx={{ width: 20, height: 20, color: "#d97706" }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    >
+                      综合评分
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: "slate.900" }}
+                    >
+                      {performanceSummary.avg_overall_score.toFixed(1)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#dbeafe",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <TrendingUp
+                      sx={{ width: 20, height: 20, color: "#3b82f6" }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    >
+                      评估覆盖率
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: "slate.900" }}
+                    >
+                      {performanceSummary.evaluation_rate}%
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: "#dcfce7",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Award sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    >
+                      已评估供应商
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 700, color: "slate.900" }}
+                    >
+                      {performanceSummary.evaluated_suppliers}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+        )}
+
+        {scoreDistribution.length > 0 && (
+          <Card sx={{ mb: 4 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                评分等级分布
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                {scoreDistribution.map((item) => {
+                  const colors = getLevelColor(item.level);
+                  return (
+                    <Box
+                      key={item.level}
+                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                    >
+                      <Chip
+                        label={`${item.level}级`}
+                        size="small"
+                        sx={{ bgcolor: colors.bg, color: colors.color }}
+                      />
+                      <Typography variant="body2" sx={{ color: "slate.600" }}>
+                        {item.count}家
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </CardContent>
+          </Card>
+        )}
       </Box>
     ),
-    [stats],
+    [stats, performanceSummary, scoreDistribution],
   );
 
   return (
@@ -362,6 +575,12 @@ const SrmSupplierPage: React.FC = () => {
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: handleCreate,
             variant: "contained",
+          },
+          {
+            label: "绩效报表",
+            icon: <TrendingUp style={{ width: 18, height: 18 }} />,
+            onClick: () => navigate("/srm/performance"),
+            variant: "outlined",
           },
         ]}
         headerContent={headerContent}

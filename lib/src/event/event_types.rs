@@ -2,10 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// 事件类型枚举
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum EventType {
-    /// HRM 相关事件
     HrmEmployeeCreated,
     HrmEmployeeUpdated,
     HrmEmployeeDeleted,
@@ -13,34 +11,50 @@ pub enum EventType {
     HrmDepartmentUpdated,
     HrmDepartmentDeleted,
 
-    /// PM 相关事件
     PmProjectCreated,
     PmProjectUpdated,
     PmTaskCreated,
     PmTaskUpdated,
     PmTaskDeleted,
 
-    /// 通用事件
+    // LIMS Events
+    LimsSampleRegistered,
+    LimsSampleUpdated,
+    LimsInspectionTaskCreated,
+    LimsInspectionTaskUpdated,
+    LimsInspectionResultSubmitted,
+    LimsInspectionAbnormalDetected,
+
+    // QMS Events
+    QmsInspectionCompleted,
+    QmsCorrectiveActionCreated,
+    QmsCorrectiveActionUpdated,
+
+    // EHS Events
+    EhsHazardReported,
+    EhsHazardRectified,
+    EhsHazardVerified,
+    EhsAccidentReported,
+    EhsAccidentInvestigated,
+
+    // Integration Events
+    QmsToLimsSyncTriggered,
+    EhsToQmsTriggered,
+    LimsToEhsTriggered,
+
     HealthCheck,
 }
 
-/// 事件实体
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
-    /// 事件唯一标识
     pub event_id: Uuid,
-    /// 事件类型
     pub event_type: EventType,
-    /// 事件源模块
     pub source: String,
-    /// 事件数据（JSON 格式）
     pub payload: serde_json::Value,
-    /// 发生时间
     pub occurred_at: DateTime<Utc>,
 }
 
 impl Event {
-    /// 创建新事件
     pub fn new(event_type: EventType, source: &str, payload: serde_json::Value) -> Self {
         Self {
             event_id: Uuid::new_v4(),
@@ -52,9 +66,8 @@ impl Event {
     }
 }
 
-// --- HRM 事件专用 ---
+// --- HRM Events ---
 
-/// HRM 员工创建事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HrmEmployeeCreatedPayload {
     pub employee_id: Uuid,
@@ -63,7 +76,6 @@ pub struct HrmEmployeeCreatedPayload {
     pub department_id: Option<Uuid>,
 }
 
-/// HRM 员工更新事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HrmEmployeeUpdatedPayload {
     pub employee_id: Uuid,
@@ -72,9 +84,30 @@ pub struct HrmEmployeeUpdatedPayload {
     pub new_data: Option<serde_json::Value>,
 }
 
-// --- PM 事件专用 ---
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmDepartmentCreatedPayload {
+    pub department_id: Uuid,
+    pub department_name: String,
+    pub parent_id: Option<Uuid>,
+}
 
-/// PM 项目创建事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmDepartmentUpdatedPayload {
+    pub department_id: Uuid,
+    pub updated_fields: Vec<String>,
+    pub old_data: Option<serde_json::Value>,
+    pub new_data: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmDepartmentDeletedPayload {
+    pub department_id: Uuid,
+    pub department_name: String,
+    pub deleted_by: Option<Uuid>,
+}
+
+// --- PM Events ---
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PmProjectCreatedPayload {
     pub project_id: Uuid,
@@ -82,7 +115,6 @@ pub struct PmProjectCreatedPayload {
     pub owner_id: Uuid,
 }
 
-/// PM 任务创建事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PmTaskCreatedPayload {
     pub task_id: Uuid,
@@ -90,7 +122,6 @@ pub struct PmTaskCreatedPayload {
     pub task_name: String,
 }
 
-/// PM 项目更新事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PmProjectUpdatedPayload {
     pub project_id: Uuid,
@@ -99,7 +130,6 @@ pub struct PmProjectUpdatedPayload {
     pub new_data: Option<serde_json::Value>,
 }
 
-/// PM 任务更新事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PmTaskUpdatedPayload {
     pub task_id: Uuid,
@@ -109,7 +139,6 @@ pub struct PmTaskUpdatedPayload {
     pub new_data: Option<serde_json::Value>,
 }
 
-/// PM 任务删除事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PmTaskDeletedPayload {
     pub task_id: Uuid,
@@ -117,31 +146,83 @@ pub struct PmTaskDeletedPayload {
     pub deleted_by: Option<Uuid>,
 }
 
-// --- HRM 部门事件专用 ---
+// --- LIMS Events ---
 
-/// HRM 部门创建事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HrmDepartmentCreatedPayload {
-    pub department_id: Uuid,
-    pub department_name: String,
-    pub parent_id: Option<Uuid>,
+pub struct LimsSampleRegisteredPayload {
+    pub sample_id: Uuid,
+    pub sample_no: String,
+    pub sample_name: String,
+    pub sample_type: Option<String>,
+    pub source: Option<String>,
 }
 
-/// HRM 部门更新事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HrmDepartmentUpdatedPayload {
-    pub department_id: Uuid,
-    pub updated_fields: Vec<String>,
-    pub old_data: Option<serde_json::Value>,
-    pub new_data: Option<serde_json::Value>,
+pub struct LimsInspectionResultSubmittedPayload {
+    pub task_id: Uuid,
+    pub task_no: String,
+    pub sample_id: Uuid,
+    pub sample_no: String,
+    pub conclusion: String,
+    pub result: serde_json::Value,
+    pub recorded_by: String,
 }
 
-/// HRM 部门删除事件 Payload
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HrmDepartmentDeletedPayload {
-    pub department_id: Uuid,
-    pub department_name: String,
-    pub deleted_by: Option<Uuid>,
+pub struct LimsInspectionAbnormalDetectedPayload {
+    pub task_id: Uuid,
+    pub task_no: String,
+    pub sample_id: Uuid,
+    pub sample_no: String,
+    pub test_item: String,
+    pub abnormal_data: serde_json::Value,
+    pub conclusion: String,
+}
+
+// --- QMS Events ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QmsInspectionCompletedPayload {
+    pub inspection_id: Uuid,
+    pub inspection_no: String,
+    pub product_id: Option<Uuid>,
+    pub product_name: Option<String>,
+    pub result: String,
+    pub qualification_rate: Option<f64>,
+    pub inspector: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QmsCorrectiveActionCreatedPayload {
+    pub action_id: Uuid,
+    pub issue_id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub assigned_to: String,
+}
+
+// --- EHS Events ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EhsHazardReportedPayload {
+    pub hazard_id: Uuid,
+    pub hazard_no: String,
+    pub title: String,
+    pub category: String,
+    pub level: String,
+    pub location: Option<String>,
+    pub description: Option<String>,
+    pub reported_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EhsAccidentReportedPayload {
+    pub accident_id: Uuid,
+    pub accident_no: String,
+    pub title: String,
+    pub severity: String,
+    pub location: Option<String>,
+    pub occurred_at: Option<String>,
 }
 
 impl std::fmt::Display for EventType {

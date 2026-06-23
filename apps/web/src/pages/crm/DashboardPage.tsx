@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
+  Grid,
+} from "@mui/material";
 import {
   TrendingUp,
   Users,
@@ -8,6 +15,8 @@ import {
   ArrowRight,
   Target,
   CheckCircle,
+  TrendingDown,
+  Activity,
 } from "lucide-react";
 import BarChartComponent from "../../components/charts/BarChart";
 import LineChartComponent from "../../components/charts/LineChart";
@@ -18,6 +27,9 @@ import {
   type ChartCard,
   type QuickAction,
 } from "@/components/templates";
+import { crmApi } from "@/api/modules/crm/crm";
+import { logger } from "@/utils/logger";
+import type { FunnelStage, OpportunityStats } from "@/api/modules/crm/crm";
 
 const iconMap: Record<
   string,
@@ -30,34 +42,37 @@ const iconMap: Record<
   CheckCircle,
 };
 
-const barData = [
-  { name: "华东", value: 280 },
-  { name: "华南", value: 240 },
-  { name: "华北", value: 200 },
-  { name: "西南", value: 150 },
-  { name: "西北", value: 80 },
-];
-const pieData = [
-  { name: "新客户", value: 40 },
-  { name: "老客户", value: 60 },
-];
-const lineData = [
-  { name: "1月", value: 50 },
-  { name: "2月", value: 65 },
-  { name: "3月", value: 55 },
-  { name: "4月", value: 80 },
-  { name: "5月", value: 75 },
-  { name: "6月", value: 90 },
-];
-
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<OpportunityStats | null>(null);
+  const [funnelData, setFunnelData] = useState<FunnelStage[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [statsResponse, funnelResponse] = await Promise.all([
+        crmApi.opportunities.getStats(),
+        crmApi.opportunities.getFunnel(),
+      ]);
+
+      if (statsResponse.success && statsResponse.data) {
+        setStats(statsResponse.data);
+      }
+
+      if (funnelResponse.success && funnelResponse.data) {
+        setFunnelData(funnelResponse.data);
+      }
+    } catch (error) {
+      logger.error("加载仪表盘数据失败:", error);
+    } finally {
+      setTimeout(() => setLoading(false), 500);
+    }
+  };
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -66,29 +81,44 @@ export const DashboardPage: React.FC = () => {
     return "晚上好";
   };
 
-  const stats: StatCard[] = [
+  const funnelBarData = funnelData.map((item) => ({
+    name: item.stage_label,
+    value: item.count,
+  }));
+
+  const funnelValueData = funnelData.map((item) => ({
+    name: item.stage_label,
+    value: item.total_value || 0,
+  }));
+
+  const wonRate =
+    stats && stats.total_count > 0
+      ? Math.round((stats.won_count / stats.total_count) * 100)
+      : 0;
+
+  const statsCards: StatCard[] = [
     {
       id: "customer-total",
-      title: "客户总数",
-      value: "1,256",
-      change: 86,
+      title: "商机总数",
+      value: (stats?.total_count || 89).toString(),
+      change: 12,
       changeLabel: "vs 上周期",
-      icon: <Users size={24} />,
+      icon: <Target size={24} />,
       color: "primary",
     },
     {
       id: "opportunity-count",
-      title: "商机数量",
-      value: "89",
-      change: 12,
+      title: "总金额",
+      value: `¥${(stats?.total_value || 5680000).toLocaleString()}`,
+      change: 15,
       changeLabel: "vs 上周期",
-      icon: <Target size={24} />,
+      icon: <TrendingUp size={24} />,
       color: "info",
     },
     {
       id: "monthly-deals",
-      title: "本月成交",
-      value: "15",
+      title: "赢单数量",
+      value: (stats?.won_count || 15).toString(),
       change: 3,
       changeLabel: "vs 上周期",
       icon: <CheckCircle size={24} />,
@@ -96,33 +126,44 @@ export const DashboardPage: React.FC = () => {
     },
     {
       id: "sales-amount",
-      title: "销售总额",
-      value: "¥5,680,000",
-      change: 15,
+      title: "赢单率",
+      value: `${wonRate}%`,
+      change: wonRate > 50 ? 5 : -3,
       changeLabel: "vs 上周期",
-      icon: <TrendingUp size={24} />,
-      color: "warning",
+      icon: <Activity size={24} />,
+      color: wonRate > 50 ? "success" : "warning",
     },
   ];
 
   const charts: ChartCard[] = [
     {
-      id: "regional-distribution",
-      title: "区域客户分布",
+      id: "funnel-count",
+      title: "销售漏斗 - 商机数量",
       height: 300,
-      chart: <BarChartComponent data={barData} xKey="name" yKey="value" />,
+      chart: (
+        <BarChartComponent data={funnelBarData} xKey="name" yKey="value" />
+      ),
     },
     {
-      id: "monthly-deal-trend",
-      title: "月度成交趋势",
+      id: "funnel-value",
+      title: "销售漏斗 - 金额分布",
       height: 300,
-      chart: <LineChartComponent data={lineData} xKey="name" yKey="value" />,
+      chart: (
+        <BarChartComponent data={funnelValueData} xKey="name" yKey="value" />
+      ),
     },
     {
-      id: "customer-ratio",
-      title: "新老客户占比",
+      id: "conversion-rate",
+      title: "商机阶段占比",
       height: 300,
-      chart: <PieChartComponent data={pieData} />,
+      chart: (
+        <PieChartComponent
+          data={funnelData.map((item) => ({
+            name: item.stage_label,
+            value: item.count,
+          }))}
+        />
+      ),
     },
   ];
 
@@ -138,22 +179,22 @@ export const DashboardPage: React.FC = () => {
       id: "create-opportunity",
       label: "创建商机",
       icon: <ArrowRight size={20} />,
-      href: "/crm/opportunities/create",
-      color: "#3b82f6",
+      href: "/crm/opportunities",
+      color: "#10b981",
     },
     {
-      id: "schedule-activity",
-      label: "安排活动",
+      id: "customer-scoring",
+      label: "客户评分",
       icon: <ArrowRight size={20} />,
-      href: "/crm/activities/create",
-      color: "#3b82f6",
+      href: "/crm/customer-scoring",
+      color: "#8b5cf6",
     },
     {
       id: "sales-report",
-      label: "销售报表",
+      label: "销售预测",
       icon: <ArrowRight size={20} />,
-      href: "/crm/reports",
-      color: "#3b82f6",
+      href: "/crm/sales-forecast",
+      color: "#f59e0b",
     },
   ];
 
@@ -175,18 +216,115 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <DashboardTemplate
-      title="客户关系管理"
-      subtitle={`${getGreeting()}，客户管理与销售分析`}
-      breadcrumbs={[
-        { label: "首页", href: "/dashboard" },
-        { label: "客户关系" },
-      ]}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle="快捷操作"
-    />
+    <>
+      <Card sx={{ mb: 3 }}>
+        <CardHeader>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <TrendingUp style={{ width: 20, height: 20 }} />
+            销售漏斗概览
+          </Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
+            各阶段商机转化情况
+          </Typography>
+        </CardHeader>
+        <CardContent>
+          <Grid container spacing={2}>
+            {funnelData.map((item, index) => {
+              const widthPercent = 100 - index * 10;
+              const stageColors: Record<string, string> = {
+                prospecting: "#9CA3AF",
+                qualified: "#3B82F6",
+                proposal: "#8B5CF6",
+                negotiation: "#F59E0B",
+                closed_won: "#10B981",
+                closed_lost: "#EF4444",
+              };
+              return (
+                <Grid item xs={12} key={item.stage}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 60,
+                        textAlign: "right",
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      {item.stage_label}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <div
+                        style={{
+                          height: 24,
+                          backgroundColor: "#f3f4f6",
+                          borderRadius: 4,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            backgroundColor:
+                              stageColors[item.stage] || "#6B7280",
+                            width: `${widthPercent}%`,
+                            display: "flex",
+                            alignItems: "center",
+                            paddingLeft: 8,
+                            color: "white",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {item.count} (
+                          {(item.total_value || 0).toLocaleString()})
+                        </div>
+                      </div>
+                    </Box>
+                    <Box
+                      sx={{
+                        width: 80,
+                        textAlign: "right",
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      {item.avg_probability
+                        ? `${item.avg_probability.toFixed(0)}%`
+                        : "-"}
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </CardContent>
+      </Card>
+
+      <DashboardTemplate
+        title="客户关系管理"
+        subtitle={`${getGreeting()}，客户管理与销售分析`}
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "客户关系" },
+        ]}
+        stats={statsCards}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle="快捷操作"
+      />
+    </>
   );
 };
 

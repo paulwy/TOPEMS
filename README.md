@@ -80,18 +80,17 @@ topems/
 │   ├── ehs/                     # 环境健康安全 (8052)
 │   ├── bi/                      # 商业智能 (8060)
 │   ├── report/                  # 报表服务 (8061)
-│   ├── ai/                      # AI 服务 (8050)
-│   ├── hrm/                     # 人力资源管理 (8011)
-│   ├── crm/                     # 客户关系管理 (8012)
-│   ├── pm/                      # 项目管理 (8046)
+│   ├── hrm/                     # 人力资源管理 (8020)
+│   ├── crm/                     # 客户关系管理 (8029)
+│   ├── pm/                      # 项目管理 (8023)
 │   ├── erp/                     # 企业资源计划 (8010)
-│   ├── gis/                     # 地理信息系统 (8054)
-│   ├── rs/                      # 研发管理 (8058)
+│   ├── gis/                     # 地理信息系统 (8071)
+│   ├── rs/                      # 研发管理 (8053)
 │   ├── scm/                     # 供应链管理 (8040)
-│   ├── wms/                     # 仓库管理 (8042)
-│   ├── mobile/                  # 移动端服务 (8056)
-│   ├── monitor/                 # 监控服务 (8064)
-│   └── portal/                  # 企业门户 (8066)
+│   ├── wms/                     # 仓库管理 (8041)
+│   ├── mobile/                  # 移动端服务 (8070)
+│   ├── monitor/                 # 监控服务 (8062)
+│   └── portal/                  # 企业门户 (8063)
 ├── lib/                          # Rust 共享库
 ├── packages/                     # TypeScript 共享包
 │   ├── shared-types/            # 类型定义
@@ -243,18 +242,17 @@ cargo check --workspace
 | bi | 8060 | svc/bi | 商业智能 |
 | report | 8061 | svc/report | 报表服务 |
 | erp | 8010 | svc/erp | 企业资源计划 |
-| hrm | 8011 | svc/hrm | 人力资源管理 |
-| crm | 8012 | svc/crm | 客户关系管理 |
+| hrm | 8020 | svc/hrm | 人力资源管理 |
+| crm | 8029 | svc/crm | 客户关系管理 |
 | scm | 8040 | svc/scm | 供应链管理 |
-| wms | 8042 | svc/wms | 仓库管理 |
-| pm | 8046 | svc/pm | 项目管理 |
-| ai | 8050 | svc/ai | AI 服务 |
-| gis | 8054 | svc/gis | 地理信息系统 |
-| mobile | 8056 | svc/mobile | 移动端服务 |
-| rs | 8058 | svc/rs | 研发管理 |
-| monitor | 8064 | svc/monitor | 监控服务 |
-| portal | 8066 | svc/portal | 企业门户 |
-| integration | 8068 | svc/integration | 集成服务 |
+| wms | 8041 | svc/wms | 仓库管理 |
+| pm | 8023 | svc/pm | 项目管理 |
+| gis | 8071 | svc/gis | 地理信息系统 |
+| mobile | 8070 | svc/mobile | 移动端服务 |
+| rs | 8053 | svc/rs | 研发管理 |
+| monitor | 8062 | svc/monitor | 监控服务 |
+| portal | 8063 | svc/portal | 企业门户 |
+| integration | 8072 | svc/integration | 系统集成服务 |
 
 ### 前端端口
 
@@ -391,37 +389,63 @@ python -m topems_cli db migrate
 
 ```bash
 # 查看帮助
-./scripts/topems.sh
+./scripts/topems.sh help
 
 # 服务管理
-./scripts/topems.sh status [服务]     # 查看服务状态
-./scripts/topems.sh start <服务>     # 启动服务
-./scripts/topems.sh stop <服务>      # 停止服务
-./scripts/topems.sh restart <服务>   # 重启服务
-./scripts/topems.sh logs <服务> [行数] # 查看服务日志
-./scripts/topems.sh build <服务>     # 编译服务
+./scripts/topems.sh status [服务]            # 查看服务状态
+./scripts/topems.sh start <服务>             # 启动服务
+./scripts/topems.sh stop <服务>              # 停止服务
+./scripts/topems.sh restart <服务>           # 重启服务
+./scripts/topems.sh logs <服务> [行数]       # 查看服务日志
+./scripts/topems.sh build <服务>             # 编译服务
+
+# 编译/构建
+./scripts/topems.sh build-all                # 全量编译（后端+前端）
+./scripts/topems.sh build-backend            # 编译所有后端
+./scripts/topems.sh build-frontend           # 编译前端
 
 # 批量操作
-./scripts/topems.sh start-all        # 启动所有服务（含前端）
-./scripts/topems.sh stop-all         # 停止所有服务（含前端）
+./scripts/topems.sh start-all                # 启动所有服务（含前端）
+./scripts/topems.sh stop-all                 # 停止所有服务（含前端）
+./scripts/topems.sh restart-all              # 重启所有服务
 
-# 开发环境
-./scripts/topems.sh dev              # 启动 macOS 开发环境
+# 一键运行
+./scripts/topems.sh run                      # 一键启动数据库+所有服务
+./scripts/topems.sh run-stop                 # 一键停止所有服务+数据库
+
+# 测试
+./scripts/topems.sh test-all                 # 运行所有测试
+./scripts/topems.sh test-backend             # 运行后端测试
+./scripts/topems.sh test-frontend            # 运行前端测试
 
 # 数据库
-./scripts/topems.sh reset-password [用户名] [密码]  # 重置密码（默认 admin/admin123）
+./scripts/topems.sh db start                 # 启动 PostgreSQL
+./scripts/topems.sh db stop                  # 停止 PostgreSQL
+./scripts/topems.sh db status                # 查看数据库状态
+./scripts/topems.sh db migrate               # 运行数据库迁移
+./scripts/topems.sh db backup                # 备份数据库
+./scripts/topems.sh db restore <文件>        # 恢复数据库
+./scripts/topems.sh db reset                 # 重置数据库
+./scripts/topems.sh redis start              # 启动 Redis
+./scripts/topems.sh redis stop               # 停止 Redis
+
+# 开发环境
+./scripts/topems.sh dev                      # 启动 macOS 开发环境
+
+# 用户管理
+./scripts/topems.sh reset-password [用户] [密码]  # 重置密码（默认 admin/admin123）
 
 # 部署
-./scripts/topems.sh deploy           # 一键部署
+./scripts/topems.sh deploy                   # 一键部署
 
 # 示例
-./scripts/topems.sh status                    # 查看所有服务状态
-./scripts/topems.sh start iam                 # 启动 IAM 服务
-./scripts/topems.sh start-all                 # 启动所有服务
-./scripts/topems.sh start web                 # 启动前端
-./scripts/topems.sh logs hrm 100              # 查看 HRM 最近 100 行日志
-./scripts/topems.sh reset-password            # 重置 admin 密码为 admin123
-./scripts/topems.sh reset-password admin newpass  # 重置 admin 密码为 newpass
+./scripts/topems.sh status                   # 查看所有服务状态
+./scripts/topems.sh start iam                # 启动 IAM 服务
+./scripts/topems.sh start-all                # 启动所有服务
+./scripts/topems.sh start web                # 启动前端
+./scripts/topems.sh run                      # 一键运行
+./scripts/topems.sh logs hrm 100             # 查看 HRM 最近 100 行日志
+./scripts/topems.sh db backup                # 备份数据库
 ```
 
 ### 其他脚本
@@ -453,24 +477,107 @@ cd docs-center
 # http://localhost:8080
 ```
 
-文档中心包含：
-- 用户手册（Finance Core、IAM、Tenant、Plugin、Workflow）
-- 开发文档（架构设计、服务依赖）
-- API 文档
+### 文档目录
 
-### 其他文档
+```
+docs/
+├── api/                              # API文档
+│   ├── openapi.yaml                  # OpenAPI规范文档（2700+行）
+│   ├── API_DOCUMENTATION.md          # API文档总览
+│   ├── API_AUTH.md                   # 认证API文档
+│   ├── API_HRM.md                    # HRM模块API文档
+│   ├── API_QMS.md                    # QMS模块API文档
+│   ├── API_RS.md                     # 研发管理API文档
+│   ├── API_SRM.md                    # 供应商API文档
+│   ├── API_WORKFLOW.md               # 工作流API文档
+│   └── plugins-api.md                # 插件API文档
+├── architecture/                     # 架构设计
+│   ├── overview.md                   # 系统架构总览
+│   ├── database.md                   # 数据库设计
+│   └── DATABASE_SCHEMA_DESIGN.md     # 数据库Schema设计
+├── deployment/                       # 部署指南
+│   ├── DEPLOYMENT_GUIDE.md           # 部署指南
+│   ├── DEPLOYMENT_OFFLINE.md         # 离线部署指南
+│   ├── DEPLOYMENT_MANUAL.md          # 部署手册
+│   └── windows-deployment.md        # Windows部署指南
+├── services/                         # 服务文档
+│   ├── AI_SETUP_GUIDE.md             # AI服务配置指南
+│   ├── MAIL_SERVICE_GUIDE.md         # 邮件服务配置
+│   └── SERVICE_OPTIMIZATION_GUIDE.md # 服务优化指南
+├── superpowers/                      # 高级功能文档
+│   ├── user-manuals/                 # 各模块用户手册
+│   ├── plans/                        # 实施计划
+│   └── specs/                        # 技术规格
+├── user/                             # 用户手册
+│   └── UserManual.md                 # 完整用户操作手册（16个模块）
+├── database-design.md                # 数据库表结构文档（含业务模块）
+├── deployment-guide.md               # 部署指南（含运维说明）
+├── developers-guide.md               # 开发者指南（API示例、插件开发）
+└── README.md                         # 文档中心索引
+```
 
-- [Python CLI](./cli/README.md) - 服务管理命令行工具
-- [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览
-- [架构设计](./docs/architecture/overview.md) - 系统架构设计
-- [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
-- [离线部署指南](./docs/deployment/DEPLOYMENT_OFFLINE.md) - 离线部署指南
-- [用户手册](./docs/user/UserManual.md) - 用户使用手册
-- [服务文档](./docs/services/) - 各个服务详细文档
-- [环境配置指南](./docs/guides/ENVIRONMENT_CONFIG.md) - 环境配置指南
-- [AI 模块](./docs/AI_MODULE.md) - AI 知识库与向量搜索
-- [向量搜索架构](./docs/vector-architecture.md) - 向量存储设计
-- [PostgreSQL 故障排查](./docs/postgresql-troubleshooting.md) - 数据库自动修复与故障排查
+### 文档入口
+
+#### 核心文档
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| **OpenAPI规范** | [docs/api/openapi.yaml](docs/api/openapi.yaml) | 完整API规范文档（2700+行） |
+| **用户操作手册** | [docs/user/UserManual.md](docs/user/UserManual.md) | 16个模块的完整操作指南 |
+| **部署指南** | [docs/deployment-guide.md](docs/deployment-guide.md) | 环境配置、安装步骤、运维说明 |
+| **开发者指南** | [docs/developers-guide.md](docs/developers-guide.md) | API使用示例、插件开发规范 |
+| **数据库设计** | [docs/database-design.md](docs/database-design.md) | 完整数据库表结构文档 |
+
+#### API文档
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| API总览 | [docs/api/API_DOCUMENTATION.md](docs/api/API_DOCUMENTATION.md) | API文档总览 |
+| 认证API | [docs/api/API_AUTH.md](docs/api/API_AUTH.md) | 身份认证API |
+| HRM API | [docs/api/API_HRM.md](docs/api/API_HRM.md) | 人力资源API |
+| QMS API | [docs/api/API_QMS.md](docs/api/API_QMS.md) | 质量管理API |
+| 研发API | [docs/api/API_RS.md](docs/api/API_RS.md) | 研发管理API |
+| 工作流API | [docs/api/API_WORKFLOW.md](docs/api/API_WORKFLOW.md) | 工作流API |
+
+#### 架构与设计
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 系统架构 | [docs/architecture/overview.md](docs/architecture/overview.md) | 整体架构设计 |
+| 数据库设计 | [docs/architecture/database.md](docs/architecture/database.md) | 数据库架构 |
+| Schema设计 | [docs/architecture/DATABASE_SCHEMA_DESIGN.md](docs/architecture/DATABASE_SCHEMA_DESIGN.md) | Schema设计规范 |
+| 技术架构 | [docs/OVERALL_ARCHITECTURE_DESIGN.md](docs/OVERALL_ARCHITECTURE_DESIGN.md) | 总体架构设计 |
+
+#### 部署与运维
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 部署指南 | [docs/deployment/DEPLOYMENT_GUIDE.md](docs/deployment/DEPLOYMENT_GUIDE.md) | 标准部署指南 |
+| 离线部署 | [docs/deployment/DEPLOYMENT_OFFLINE.md](docs/deployment/DEPLOYMENT_OFFLINE.md) | 离线部署指南 |
+| 运维指南 | [docs/deployment-guide.md](docs/deployment-guide.md) | 运维管理、故障排查 |
+
+#### 服务文档
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| AI配置 | [docs/services/AI_SETUP_GUIDE.md](docs/services/AI_SETUP_GUIDE.md) | AI服务配置 |
+| 邮件服务 | [docs/services/MAIL_SERVICE_GUIDE.md](docs/services/MAIL_SERVICE_GUIDE.md) | 邮件服务配置 |
+| 服务优化 | [docs/services/SERVICE_OPTIMIZATION_GUIDE.md](docs/services/SERVICE_OPTIMIZATION_GUIDE.md) | 服务性能优化 |
+
+#### 模块文档
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| HRM模块 | [docs/HRM_MODULE.md](docs/HRM_MODULE.md) | 人力资源模块 |
+| QMS模块 | [docs/QMS_MODULE.md](docs/QMS_MODULE.md) | 质量管理模块 |
+| CRM模块 | [docs/CRM_MODULE.md](docs/CRM_MODULE.md) | 客户关系模块 |
+| MES模块 | [docs/MES_MODULE.md](docs/MES_MODULE.md) | 制造执行模块 |
+| PDM模块 | [docs/PDM_MODULE.md](docs/PDM_MODULE.md) | 产品数据模块 |
+| WMS模块 | [docs/WMS_MODULE.md](docs/WMS_MODULE.md) | 仓库管理模块 |
+| EHS模块 | [docs/EHS_MODULE.md](docs/EHS_MODULE.md) | 环境健康安全模块 |
+| RS模块 | [docs/RS_MODULE.md](docs/RS_MODULE.md) | 研发管理模块 |
+
+### 快速参考
+
+- **安装部署**: 查看 [部署指南](docs/deployment-guide.md)
+- **API调用**: 查看 [开发者指南](docs/developers-guide.md) 或 [OpenAPI规范](docs/api/openapi.yaml)
+- **系统使用**: 查看 [用户操作手册](docs/user/UserManual.md)
+- **插件开发**: 查看 [开发者指南](docs/developers-guide.md#插件开发规范)
+- **数据库设计**: 查看 [数据库设计文档](docs/database-design.md)
 
 ## 🤖 AI 与向量搜索
 
@@ -549,24 +656,27 @@ TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管�
 
 | 服务名 | 说明 | 端口 |
 |--------|------|------|
-| iam | 统一身份认证 | 8000 |
-| pm | 项目管理 | 8001 |
+| unified-core | 统一核心服务 | 8000 |
 | erp | 企业资源计划 | 8010 |
-| hrm | 人力资源管理 | 8011 |
-| crm | 客户关系管理 | 8012 |
-| integration | 系统集成 | 8005 |
-| manufacturing | 制造执行 | 8023 |
-| quality-assurance | 质量管控 | 8032 |
-| rs | 研发管理 | 8020 |
+| hrm | 人力资源管理 | 8020 |
+| pm | 项目管理 | 8023 |
+| crm | 客户关系管理 | 8029 |
+| mes | 制造执行系统 | 8030 |
+| pdm | 产品数据管理 | 8031 |
 | scm | 供应链管理 | 8040 |
-| srm | 供应商管理 | 8041 |
-| wms | 仓库管理 | 8042 |
-| ai | AI 服务 | 8062 |
-| analytics | 数据分析 | 8060 |
-| gis | 地理信息 | 8053 |
-| mobile | 移动端 | 8070 |
-| monitor | 系统监控 | 8064 |
-| portal | 企业门户 | 8066 |
+| wms | 仓库管理 | 8041 |
+| srm | 供应商管理 | 8042 |
+| qms | 质量管理系统 | 8050 |
+| lims | 实验室信息管理 | 8051 |
+| ehs | 环境健康安全 | 8052 |
+| rs | 研发管理 | 8053 |
+| bi | 商业智能 | 8060 |
+| report | 报表服务 | 8061 |
+| monitor | 系统监控 | 8062 |
+| portal | 企业门户 | 8063 |
+| mobile | 移动端服务 | 8070 |
+| gis | 地理信息系统 | 8071 |
+| integration | 系统集成服务 | 8072 |
 | web | 前端应用 | 3000 |
 
 ## 📦 配置文件
@@ -625,5 +735,6 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-22
+**最后更新**: 2026-06-24
 **版本**: v2.5.0 (服务拆分版)
+**文档版本**: v2.0

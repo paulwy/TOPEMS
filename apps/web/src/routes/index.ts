@@ -20,4 +20,7 @@ export { scmRoutes } from "./scm";
 export { wmsRoutes } from "./wms";
 export { gisRoutes } from "./gis";
 export { pluginRoutes } from "./plugin";
+export { reportRoutes } from "./report";
+export { mobileRoutes } from "./mobile";
+export { pdmRoutes } from "./pdm";
 export { type RouteConfig, lazyWithRetry } from "./utils";

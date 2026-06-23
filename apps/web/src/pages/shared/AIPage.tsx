@@ -553,25 +553,57 @@ const AIPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await aiApi.chat({ query: userMessage.content });
+      let assistantContent = "";
+
+      if (currentRole === "document" && documents.length > 0) {
+        const documentIds = documents.map((doc) => doc.id);
+        const response = await aiApi.documentQA({
+          question: userMessage.content,
+          document_ids: documentIds,
+          top_k: 5,
+        });
+
+        if (response.success && response.data) {
+          let content = response.data.answer;
+          
+          if (response.data.sources && response.data.sources.length > 0) {
+            content += "\n\n**参考来源：**\n";
+            response.data.sources.forEach((source: any, index: number) => {
+              content += `${index + 1}. ${source.document_title}\n`;
+            });
+          }
+
+          if (response.data.follow_up_questions && response.data.follow_up_questions.length > 0) {
+            content += "\n\n**建议后续问题：**\n";
+            response.data.follow_up_questions.forEach((q: string, index: number) => {
+              content += `${index + 1}. ${q}\n`;
+            });
+          }
+
+          assistantContent = content;
+        } else {
+          assistantContent = response.message || "抱歉,处理您的请求时出现了问题。";
+        }
+      } else {
+        const response = await aiApi.chat({ query: userMessage.content });
+        assistantContent = response.success
+          ? (response.data?.answer ?? "抱歉,处理您的请求时出现了问题。")
+          : "抱歉,处理您的请求时出现了问题。";
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: response.success
-          ? (response.data?.answer ?? "抱歉,处理您的请求时出现了问题。")
-          : "抱歉,处理您的请求时出现了问题。",
+        content: assistantContent,
         timestamp: new Date(),
       };
 
       const finalMessages = [...newMessages, assistantMessage];
       setMessages(finalMessages);
 
-      // 更新或创建对话
       if (currentConversationId) {
         const updatedConversations = conversations.map((conv) => {
           if (conv.id === currentConversationId) {
-            // 自动生成标题(使用第一条用户消息或前30个字符)
             const firstUserMessage = finalMessages.find(
               (m) => m.role === "user",
             );

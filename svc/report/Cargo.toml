@@ -23,6 +23,9 @@ axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
+cron.workspace = true
+job_scheduler_ng.workspace = true
+futures-util.workspace = true
 
 [[bin]]
 name = "topems-report"

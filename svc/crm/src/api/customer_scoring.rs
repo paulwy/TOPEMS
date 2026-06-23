@@ -4,7 +4,9 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::Utc;
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+use rust_decimal::prelude::ToPrimitive;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -429,22 +431,74 @@ async fn batch_calculate(
     let now = Utc::now();
 
     for customer_id in &req.customer_ids {
-        let customer_name = sqlx::query_scalar::<_, String>(
-            "SELECT name FROM plugin_crm.customers WHERE id = $1",
+        let customer_info: Option<(String, DateTime<Utc>, Option<String>, Option<Decimal>)> = sqlx::query_scalar(
+            "SELECT name, created_at, status, revenue FROM plugin_crm.customers WHERE id = $1",
         )
         .bind(customer_id)
         .fetch_optional(&state.db)
-        .await;
+        .await
+        .unwrap_or(None);
 
-        if let Ok(Some(name)) = customer_name {
+        if let Some((name, created_at, status, revenue)) = customer_info {
             let id = Uuid::new_v4();
-            let score = (rand::random::<i32>() % 50) + 50;
+
+            let total_opportunity_value: Option<Decimal> = sqlx::query_scalar(
+                "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE customer_id = $1",
+            )
+            .bind(customer_id)
+            .fetch_optional(&state.db)
+            .await
+            .unwrap_or(None);
+
+            let opportunity_count: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE customer_id = $1",
+            )
+            .bind(customer_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+            let interaction_count: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM plugin_crm.interactions WHERE customer_id = $1",
+            )
+            .bind(customer_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+            let won_opportunity_count: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE customer_id = $1 AND stage = 'closed_won'",
+            )
+            .bind(customer_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+            let days_since_created = (now - created_at).num_days();
+            let years_since_created = days_since_created / 365;
+
+            let revenue_score = calculate_revenue_score(revenue, total_opportunity_value);
+            let opportunity_score = calculate_opportunity_score(opportunity_count, won_opportunity_count);
+            let interaction_score = calculate_interaction_score(interaction_count);
+            let loyalty_score = calculate_loyalty_score(years_since_created, status.as_deref());
+
+            let total_score = (
+                revenue_score * 35 +
+                opportunity_score * 30 +
+                interaction_score * 20 +
+                loyalty_score * 15
+            ) / 100;
+
+            let score = total_score.max(10).min(100);
+
             let score_level = if score >= 80 {
                 "A".to_string()
             } else if score >= 60 {
                 "B".to_string()
-            } else {
+            } else if score >= 40 {
                 "C".to_string()
+            } else {
+                "D".to_string()
             };
 
             let last_score = sqlx::query_scalar::<_, Option<i32>>(
@@ -463,10 +517,10 @@ async fn batch_calculate(
             };
 
             let factors = serde_json::json!([
-                {"name": "购买频率", "weight": 30, "score": (rand::random::<i32>() % 30) + 10, "max_score": 30},
-                {"name": "购买金额", "weight": 30, "score": (rand::random::<i32>() % 30) + 10, "max_score": 30},
-                {"name": "合作年限", "weight": 20, "score": (rand::random::<i32>() % 20) + 10, "max_score": 20},
-                {"name": "满意度", "weight": 20, "score": (rand::random::<i32>() % 20) + 10, "max_score": 20}
+                {"name": "营收价值", "weight": 35, "score": revenue_score, "max_score": 100, "description": format!("营收: {}, 商机总值: {}", revenue.unwrap_or(Decimal::ZERO), total_opportunity_value.unwrap_or(Decimal::ZERO))},
+                {"name": "商机表现", "weight": 30, "score": opportunity_score, "max_score": 100, "description": format!("商机数: {}, 赢单数: {}", opportunity_count, won_opportunity_count)},
+                {"name": "互动活跃度", "weight": 20, "score": interaction_score, "max_score": 100, "description": format!("互动次数: {}", interaction_count)},
+                {"name": "客户忠诚度", "weight": 15, "score": loyalty_score, "max_score": 100, "description": format!("合作年限: {}年, 状态: {}", years_since_created, status.unwrap_or_default())}
             ]);
 
             let result = sqlx::query_as::<_, CustomerScore>(
@@ -501,4 +555,98 @@ async fn batch_calculate(
         serde_json::json!({ "scores": results, "count": results.len() }),
         &format!("成功计算 {} 个客户评分", results.len()),
     ))
+}
+
+fn calculate_revenue_score(revenue: Option<Decimal>, total_opportunity_value: Option<Decimal>) -> i32 {
+    let total_value = revenue.unwrap_or(Decimal::ZERO) + total_opportunity_value.unwrap_or(Decimal::ZERO);
+    
+    let value_f64: f64 = total_value.to_f64().unwrap_or(0.0);
+    
+    if value_f64 >= 1_000_000.0 {
+        100
+    } else if value_f64 >= 500_000.0 {
+        80
+    } else if value_f64 >= 100_000.0 {
+        60
+    } else if value_f64 >= 50_000.0 {
+        40
+    } else if value_f64 >= 10_000.0 {
+        20
+    } else {
+        10
+    }
+}
+
+fn calculate_opportunity_score(opportunity_count: i64, won_count: i64) -> i32 {
+    if opportunity_count == 0 {
+        return 10;
+    }
+    
+    let win_rate = if opportunity_count > 0 {
+        (won_count as f64 / opportunity_count as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let volume_score = if opportunity_count >= 10 {
+        60
+    } else if opportunity_count >= 5 {
+        45
+    } else if opportunity_count >= 3 {
+        30
+    } else if opportunity_count >= 1 {
+        15
+    } else {
+        10
+    };
+
+    let win_rate_score = if win_rate >= 70.0 {
+        40
+    } else if win_rate >= 50.0 {
+        30
+    } else if win_rate >= 30.0 {
+        20
+    } else {
+        10
+    };
+
+    volume_score + win_rate_score
+}
+
+fn calculate_interaction_score(interaction_count: i64) -> i32 {
+    if interaction_count >= 20 {
+        100
+    } else if interaction_count >= 10 {
+        80
+    } else if interaction_count >= 5 {
+        60
+    } else if interaction_count >= 3 {
+        40
+    } else if interaction_count >= 1 {
+        20
+    } else {
+        10
+    }
+}
+
+fn calculate_loyalty_score(years_since_created: i64, status: Option<&str>) -> i32 {
+    let base_score = if years_since_created >= 5 {
+        60
+    } else if years_since_created >= 3 {
+        45
+    } else if years_since_created >= 1 {
+        30
+    } else {
+        15
+    };
+
+    let status_bonus = if status == Some("active") {
+        40
+    } else if status == Some("inactive") {
+        20
+    } else {
+        10
+    };
+
+    base_score + status_bonus
 }

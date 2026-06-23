@@ -88,9 +88,14 @@ async fn main() {
 
     let state = AppState {
         auth_state,
-        pool,
+        pool: pool.clone(),
         health_config,
     };
+
+    let scheduler = modules::report::scheduler::ReportScheduler::new(pool);
+    if let Err(e) = scheduler.start().await {
+        tracing::warn!("Failed to start report scheduler: {}", e);
+    }
 
     let cors = create_cors_layer();
 
@@ -110,6 +115,7 @@ async fn main() {
         // Report (matches frontend /api/report/reports)
         .route("/api/report/reports", get(modules::report::report::list_reports))
         .route("/api/report/reports", post(modules::report::report::create_report))
+        .route("/api/report/reports/from-template", post(modules::report::report::create_report_from_template))
         .route("/api/report/reports/{id}", get(modules::report::report::get_report))
         .route("/api/report/reports/{id}", put(modules::report::report::update_report))
         .route("/api/report/reports/{id}", delete(modules::report::report::delete_report))
@@ -120,12 +126,23 @@ async fn main() {
         .route("/api/report/templates", post(modules::report::template::create_template))
         .route("/api/report/templates/{id}", get(modules::report::template::get_template))
         .route("/api/report/templates/{id}", put(modules::report::template::update_template))
+        .route("/api/report/templates/{id}", delete(modules::report::template::delete_template))
         // Report Schedule
         .route("/api/report/schedules", get(modules::report::schedule::list_schedules))
         .route("/api/report/schedules", post(modules::report::schedule::create_schedule))
         .route("/api/report/schedules/{id}", get(modules::report::schedule::get_schedule))
         .route("/api/report/schedules/{id}", put(modules::report::schedule::update_schedule))
         .route("/api/report/schedules/{id}", delete(modules::report::schedule::delete_schedule))
+        .route("/api/report/schedules/{id}/execute", post(modules::report::schedule::execute_schedule))
+        .route("/api/report/schedules/{id}/history", get(modules::report::schedule::get_execution_history))
+        // Report Subscription
+        .route("/api/report/subscriptions", get(modules::report::subscription::list_subscriptions))
+        .route("/api/report/subscriptions", post(modules::report::subscription::create_subscription))
+        .route("/api/report/subscriptions/{id}", get(modules::report::subscription::get_subscription))
+        .route("/api/report/subscriptions/{id}", put(modules::report::subscription::update_subscription))
+        .route("/api/report/subscriptions/{id}", delete(modules::report::subscription::delete_subscription))
+        .route("/api/report/subscriptions/{id}/toggle", post(modules::report::subscription::toggle_subscription))
+        .route("/api/report/subscriptions/user/{user_id}", get(modules::report::subscription::get_user_subscriptions))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))

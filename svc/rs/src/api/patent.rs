@@ -1,13 +1,12 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
-use std::sync::Arc;
+use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
 use topems_shared::response::ApiResponse;
@@ -21,11 +20,7 @@ pub struct PaginationParams {
     pub project_id: Option<Uuid>,
 }
 
-pub struct AppState {
-    pub db: PgPool,
-}
-
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Patent {
     pub id: Uuid,
     pub project_id: Option<Uuid>,
@@ -34,11 +29,15 @@ pub struct Patent {
     pub application_date: Option<chrono::DateTime<chrono::Utc>>,
     pub grant_date: Option<chrono::DateTime<chrono::Utc>>,
     pub status: String,
+    #[serde(rename = "type")]
+    #[sqlx(rename = "type")]
     pub r#type: Option<String>,
     pub inventors: serde_json::Value,
     pub assignee: Option<String>,
     pub description: Option<String>,
-    pub abstract: Option<String>,
+    #[serde(rename = "abstract")]
+    #[sqlx(rename = "abstract")]
+    pub patent_abstract: Option<String>,
     pub created_by: String,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
@@ -52,11 +51,13 @@ pub struct CreatePatentRequest {
     pub application_date: Option<String>,
     pub grant_date: Option<String>,
     pub status: String,
-    pub r#type: Option<String>,
+    #[serde(rename = "type")]
+    pub patent_type: Option<String>,
     pub inventors: Vec<String>,
     pub assignee: Option<String>,
     pub description: Option<String>,
-    pub abstract: Option<String>,
+    #[serde(rename = "abstract")]
+    pub patent_abstract: Option<String>,
     pub created_by: String,
 }
 
@@ -67,42 +68,59 @@ pub struct UpdatePatentRequest {
     pub application_date: Option<String>,
     pub grant_date: Option<String>,
     pub status: Option<String>,
-    pub r#type: Option<String>,
+    #[serde(rename = "type")]
+    pub patent_type: Option<String>,
     pub inventors: Option<Vec<String>>,
     pub assignee: Option<String>,
     pub description: Option<String>,
-    pub abstract: Option<String>,
+    #[serde(rename = "abstract")]
+    pub patent_abstract: Option<String>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
-    let state = Arc::new(AppState { db });
-
-    let app = Router::new()
+pub fn create_routes() -> Router<crate::api::ApiState> {
+    Router::<crate::api::ApiState>::new()
         .route("/api/rs/patents", get(list_patents).post(create_patent))
         .route(
             "/api/rs/patents/{id}",
             get(get_patent).put(update_patent).delete(delete_patent),
         )
         .route("/api/rs/patents/project/{project_id}", get(list_patents_by_project))
-        .with_state(state);
+}
 
-    Ok(app)
+fn row_to_patent(row: sqlx::postgres::PgRow) -> Patent {
+    Patent {
+        id: row.get(0),
+        project_id: row.get(1),
+        name: row.get(2),
+        patent_number: row.get(3),
+        application_date: row.get(4),
+        grant_date: row.get(5),
+        status: row.get(6),
+        r#type: row.get(7),
+        inventors: row.get(8),
+        assignee: row.get(9),
+        description: row.get(10),
+        patent_abstract: row.get(11),
+        created_by: row.get(12),
+        created_at: row.get(13),
+        updated_at: row.get(14),
+    }
 }
 
 async fn list_patents(
-    State(state): State<Arc<AppState>>,
+    State(state): State<crate::api::ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query_as::<_, Patent>(
+    let result = sqlx::query(
         r#"
         SELECT id, project_id, name, patent_number, application_date, grant_date,
                status, type, inventors, assignee, description, abstract,
                created_by, created_at, updated_at
-        FROM patents
+        FROM rs.patents
         WHERE ($1::text IS NULL OR name ILIKE $1 OR patent_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR project_id = $3)
@@ -119,10 +137,11 @@ async fn list_patents(
     .await;
 
     match result {
-        Ok(patents) => {
+        Ok(rows) => {
+            let patents: Vec<Patent> = rows.into_iter().map(row_to_patent).collect();
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM patents
+                SELECT COUNT(*) FROM rs.patents
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR patent_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR project_id = $3)
@@ -154,15 +173,15 @@ async fn list_patents(
 }
 
 async fn list_patents_by_project(
-    State(state): State<Arc<AppState>>,
+    State(state): State<crate::api::ApiState>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Patent>>> {
-    let result = sqlx::query_as::<_, Patent>(
+    let result = sqlx::query(
         r#"
         SELECT id, project_id, name, patent_number, application_date, grant_date,
                status, type, inventors, assignee, description, abstract,
                created_by, created_at, updated_at
-        FROM patents
+        FROM rs.patents
         WHERE project_id = $1
         ORDER BY created_at DESC
         "#,
@@ -172,7 +191,10 @@ async fn list_patents_by_project(
     .await;
 
     match result {
-        Ok(patents) => Json(ApiResponse::success(patents, "获取项目专利列表成功")),
+        Ok(rows) => {
+            let patents: Vec<Patent> = rows.into_iter().map(row_to_patent).collect();
+            Json(ApiResponse::success(patents, "获取项目专利列表成功"))
+        }
         Err(e) => {
             tracing::error!("获取项目专利列表失败: {}", e);
             Json(ApiResponse::error(500, "获取项目专利列表失败"))
@@ -181,7 +203,7 @@ async fn list_patents_by_project(
 }
 
 async fn create_patent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<crate::api::ApiState>,
     Json(req): Json<CreatePatentRequest>,
 ) -> Json<ApiResponse<Patent>> {
     let id = Uuid::new_v4();
@@ -189,7 +211,7 @@ async fn create_patent(
 
     let result = sqlx::query_as::<_, Patent>(
         r#"
-        INSERT INTO patents (
+        INSERT INTO rs.patents (
             id, name, patent_number, project_id, application_date, grant_date,
             status, type, inventors, assignee, description, abstract, created_by,
             created_at, updated_at
@@ -206,11 +228,11 @@ async fn create_patent(
     .bind(req.application_date)
     .bind(req.grant_date)
     .bind(&req.status)
-    .bind(&req.r#type)
+    .bind(&req.patent_type)
     .bind(serde_json::to_value(req.inventors).unwrap())
     .bind(&req.assignee)
     .bind(&req.description)
-    .bind(&req.abstract)
+    .bind(&req.patent_abstract)
     .bind(&req.created_by)
     .bind(now)
     .bind(now)
@@ -227,15 +249,15 @@ async fn create_patent(
 }
 
 async fn get_patent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<crate::api::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Patent>> {
-    let result = sqlx::query_as::<_, Patent>(
+    let result = sqlx::query(
         r#"
         SELECT id, project_id, name, patent_number, application_date, grant_date,
                status, type, inventors, assignee, description, abstract,
                created_by, created_at, updated_at
-        FROM patents WHERE id = $1
+        FROM rs.patents WHERE id = $1
         "#,
     )
     .bind(id)
@@ -243,7 +265,7 @@ async fn get_patent(
     .await;
 
     match result {
-        Ok(Some(patent)) => Json(ApiResponse::success(patent, "获取专利成功")),
+        Ok(Some(row)) => Json(ApiResponse::success(row_to_patent(row), "获取专利成功")),
         Ok(None) => Json(ApiResponse::error(404, "专利不存在")),
         Err(e) => {
             tracing::error!("获取专利失败: {}", e);
@@ -253,19 +275,20 @@ async fn get_patent(
 }
 
 async fn update_patent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<crate::api::ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdatePatentRequest>,
 ) -> Json<ApiResponse<Patent>> {
-    let existing = sqlx::query_as::<_, Patent>(
-        "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM patents WHERE id = $1",
+    let existing_result = sqlx::query(
+        "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM rs.patents WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
     .await;
 
-    let existing = match existing {
-        Ok(Some(p)) => p,
+    let existing = match existing_result {
+        Ok(Some(r)) => row_to_patent(r),
         Ok(None) => return Json(ApiResponse::error(404, "专利不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询专利失败: {}", e))),
     };
@@ -276,12 +299,12 @@ async fn update_patent(
     let inventors = req.inventors.map(|v| serde_json::to_value(v).unwrap()).unwrap_or(existing.inventors);
     let assignee = req.assignee.or(existing.assignee);
     let description = req.description.or(existing.description);
-    let abstract_text = req.abstract.or(existing.abstract);
+    let abstract_text = req.patent_abstract.or(existing.patent_abstract);
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, Patent>(
+    let result = sqlx::query(
         r#"
-        UPDATE patents SET
+        UPDATE rs.patents SET
             name = $2, patent_number = $3, status = $4, type = $5,
             inventors = $6, assignee = $7, description = $8, abstract = $9,
             updated_at = $10
@@ -295,7 +318,7 @@ async fn update_patent(
     .bind(&name)
     .bind(patent_number)
     .bind(&status)
-    .bind(&req.r#type)
+    .bind(&req.patent_type)
     .bind(inventors)
     .bind(assignee)
     .bind(description)
@@ -305,7 +328,7 @@ async fn update_patent(
     .await;
 
     match result {
-        Ok(patent) => Json(ApiResponse::success(patent, "专利更新成功")),
+        Ok(row) => Json(ApiResponse::success(row_to_patent(row), "专利更新成功")),
         Err(e) => {
             tracing::error!("更新专利失败: {}", e);
             Json(ApiResponse::error(500, "专利更新失败"))
@@ -314,10 +337,10 @@ async fn update_patent(
 }
 
 async fn delete_patent(
-    State(state): State<Arc<AppState>>,
+    State(state): State<crate::api::ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM patents WHERE id = $1")
+    let result = sqlx::query("DELETE FROM rs.patents WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

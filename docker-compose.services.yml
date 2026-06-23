@@ -1,7 +1,107 @@
 # TOPEMS Services - Docker Compose for local development
-version: '3.8'
+# 端口配置与 config/services.yaml 保持严格一致
 
 services:
+  # IAM/Unified Core Service (必须先启动)
+  unified-core:
+    image: topems/unified-core:latest
+    container_name: topems-unified-core
+    ports:
+      - "8000:8000"
+    environment:
+      - CORE_PORT=8000
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # ERP Service
+  erp:
+    image: topems/erp:latest
+    container_name: topems-erp
+    ports:
+      - "8010:8010"
+    environment:
+      - SERVER_PORT=8010
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8010/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # HRM Service
+  hrm:
+    image: topems/hrm:latest
+    container_name: topems-hrm
+    ports:
+      - "8020:8020"
+    environment:
+      - HRM_PORT=8020
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8020/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # PM Service
+  pm:
+    image: topems/pm:latest
+    container_name: topems-pm
+    ports:
+      - "8023:8023"
+    environment:
+      - PM_PORT=8023
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8023/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # CRM Service
+  crm:
+    image: topems/crm:latest
+    container_name: topems-crm
+    ports:
+      - "8029:8029"
+    environment:
+      - SERVER_PORT=8029
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8029/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
   # MES Service
   mes:
     image: topems/mes:latest
@@ -36,6 +136,66 @@ services:
       - postgres
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8031/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # SCM Service
+  scm:
+    image: topems/scm:latest
+    container_name: topems-scm
+    ports:
+      - "8040:8040"
+    environment:
+      - PORT=8040
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8040/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # WMS Service
+  wms:
+    image: topems/wms:latest
+    container_name: topems-wms
+    ports:
+      - "8041:8041"
+    environment:
+      - SERVER_PORT=8041
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8041/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # SRM Service
+  srm:
+    image: topems/srm:latest
+    container_name: topems-srm
+    ports:
+      - "8042:8042"
+    environment:
+      - SERVER_PORT=8042
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8042/health"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -102,6 +262,26 @@ services:
     networks:
       - topems-network
 
+  # RS Service
+  rs:
+    image: topems/rs:latest
+    container_name: topems-rs
+    ports:
+      - "8053:8053"
+    environment:
+      - SERVER_PORT=8053
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8053/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
   # BI Service
   bi:
     image: topems/bi:latest
@@ -136,6 +316,106 @@ services:
       - postgres
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8061/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # Monitor Service
+  monitor:
+    image: topems/monitor:latest
+    container_name: topems-monitor
+    ports:
+      - "8062:8062"
+    environment:
+      - SERVER_PORT=8062
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8062/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # Portal Service
+  portal:
+    image: topems/portal:latest
+    container_name: topems-portal
+    ports:
+      - "8063:8063"
+    environment:
+      - SERVER_PORT=8063
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8063/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # Mobile Service
+  mobile:
+    image: topems/mobile:latest
+    container_name: topems-mobile
+    ports:
+      - "8070:8070"
+    environment:
+      - SERVER_PORT=8070
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8070/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # GIS Service
+  gis:
+    image: topems/gis:latest
+    container_name: topems-gis
+    ports:
+      - "8071:8071"
+    environment:
+      - SERVER_PORT=8071
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8071/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks:
+      - topems-network
+
+  # Integration Service
+  integration:
+    image: topems/integration:latest
+    container_name: topems-integration
+    ports:
+      - "8072:8072"
+    environment:
+      - SERVER_PORT=8072
+      - RUST_LOG=info
+      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8072/health"]
       interval: 30s
       timeout: 3s
       retries: 3

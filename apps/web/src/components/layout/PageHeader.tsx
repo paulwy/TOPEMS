@@ -1,5 +1,15 @@
 import React from "react";
-import { Box, Typography, IconButton, Tooltip, TextField, InputAdornment, useTheme, useMediaQuery, Link,  } from "@mui/material";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Tooltip,
+  TextField,
+  InputAdornment,
+  useTheme,
+  useMediaQuery,
+  Link,
+} from "@mui/material";
 import { Button } from "@/components/ui/Button";
 import { ArrowLeft, Search, Plus, ChevronRight } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
@@ -265,8 +275,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             color="primary"
             startIcon={<Plus style={{ width: 18, height: 18 }} />}
             onClick={createButton.onClick}
-            component={createButton.href ? RouterLink : "button"}
-            to={createButton.href}
             disabled={createButton.disabled}
             size={isMobile ? "small" : "medium"}
           >
@@ -285,8 +293,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   startIcon={action.icon}
                   onClick={action.onClick}
                   disabled={action.disabled || action.loading}
-                  component={action.href ? RouterLink : "button"}
-                  to={action.href}
                   size={isMobile ? "small" : "medium"}
                 >
                   {!isMobile && action.label}

@@ -3,23 +3,104 @@
 pub mod report;
 pub mod template;
 pub mod schedule;
+pub mod subscription;
+pub mod scheduler;
 pub mod report_plugin;
 
 use sqlx::PgPool;
 
 /// Initialize Report database tables
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // Create reports table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS analytics_reports (
+        CREATE TABLE IF NOT EXISTS report_templates (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(256) NOT NULL,
+            code VARCHAR(128) UNIQUE NOT NULL,
+            description TEXT,
+            category VARCHAR(64),
+            report_type VARCHAR(128) NOT NULL,
+            data_source JSONB,
+            layout_config JSONB,
+            filter_config JSONB,
+            style_config JSONB,
+            columns JSONB,
+            output_format VARCHAR(32) DEFAULT 'pdf',
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS report_schedules (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(256) NOT NULL,
+            template_id UUID NOT NULL REFERENCES report_templates(id),
+            schedule_type VARCHAR(32) NOT NULL,
+            schedule_expression VARCHAR(128) NOT NULL,
+            parameters JSONB,
+            recipients JSONB,
+            status VARCHAR(32) DEFAULT 'active',
+            last_run_at TIMESTAMP,
+            next_run_at TIMESTAMP,
+            run_count INTEGER DEFAULT 0,
+            error_message TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS report_execution_records (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            schedule_id UUID NOT NULL REFERENCES report_schedules(id),
+            schedule_name VARCHAR(256) NOT NULL,
+            status VARCHAR(32) NOT NULL,
+            output_path TEXT,
+            error_message TEXT,
+            started_at TIMESTAMP DEFAULT NOW(),
+            completed_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS report_subscriptions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            template_id UUID NOT NULL REFERENCES report_templates(id),
+            user_id VARCHAR(64) NOT NULL,
+            email VARCHAR(256),
+            frequency VARCHAR(32) NOT NULL,
+            enabled BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS reports (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(256) NOT NULL,
             description TEXT,
             report_type VARCHAR(64) NOT NULL,
             config JSONB,
-            datasource_id UUID,
-            template_id UUID,
+            output_format VARCHAR(32) DEFAULT 'pdf',
+            template_id UUID REFERENCES report_templates(id),
             created_by VARCHAR(64) NOT NULL,
             status VARCHAR(32) DEFAULT 'draft',
             last_run_at TIMESTAMP,
@@ -31,48 +112,13 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // Create report_templates table
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS analytics_report_templates (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name VARCHAR(128) NOT NULL,
-            description TEXT,
-            template_type VARCHAR(64) NOT NULL,
-            template_content TEXT,
-            config JSONB,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    // Create report_schedules table
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS analytics_report_schedules (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            report_id UUID NOT NULL,
-            cron_expression VARCHAR(64) NOT NULL,
-            recipients TEXT[],
-            enabled BOOLEAN DEFAULT TRUE,
-            last_run_at TIMESTAMP,
-            next_run_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    // Create indexes
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_reports_status ON analytics_reports(status)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_report_templates_code ON report_templates(code)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_schedules_report ON analytics_report_schedules(report_id)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_report_schedules_template ON report_schedules(template_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_report_subscriptions_user ON report_subscriptions(user_id)")
         .execute(pool)
         .await?;
 

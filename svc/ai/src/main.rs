@@ -6,7 +6,8 @@ mod plugin;
 mod services;
 
 // 分析 API handlers
-use crate::api::{AnalysisApi, DocumentApi, QaApi, VectorApi};
+use crate::api::{AnalysisApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi, RecommendationApi, VectorApi};
+use crate::services::document::DocumentQAConfig;
 
 use axum::{
     extract::{DefaultBodyLimit, FromRef, Query, State},
@@ -27,7 +28,7 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 
 use services::{
-    AnalysisConfig, AnalysisService, Database, DocumentService, QAConfig, QAService, VectorService,
+    AnalysisConfig, AnalysisService, Database, DocumentService, MultimodalService, QAConfig, QAService, RecommendationService, VectorService,
 };
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
@@ -234,6 +235,9 @@ struct AppState {
     vector_service: VectorService,
     qa_service: QAService,
     analysis_service: AnalysisService,
+    agent_service: crate::services::AgentService,
+    recommendation_service: RecommendationService,
+    multimodal_service: MultimodalService,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -1757,12 +1761,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_service_url =
         std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
 
-    let document_service = if std::env::var("FILE_SERVICE_URL").is_ok() {
-        tracing::info!("🔗 连接 File 服务: {}", file_service_url);
-        DocumentService::with_file_client(vector_service.clone(), &file_service_url)
-    } else {
-        tracing::warn!("⚠️ FILE_SERVICE_URL 未设置，DocumentService 将以兼容模式运行");
-        DocumentService::new(vector_service.clone())
+    let document_service = {
+        let qa_config = DocumentQAConfig {
+            base_url: base_url.clone(),
+            api_key: api_key.clone(),
+            model: model.clone(),
+        };
+        
+        if std::env::var("FILE_SERVICE_URL").is_ok() {
+            tracing::info!("🔗 连接 File 服务: {}", file_service_url);
+            DocumentService::with_file_client(vector_service.clone(), &file_service_url)
+                .with_qa_config(qa_config)
+        } else {
+            tracing::warn!("⚠️ FILE_SERVICE_URL 未设置，DocumentService 将以兼容模式运行");
+            DocumentService::new(vector_service.clone())
+                .with_qa_config(qa_config)
+        }
     };
 
     // 创建 QA 和 Analysis 服务
@@ -1806,6 +1820,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     CONNECTORS.set(Arc::new(Mutex::new(Vec::new()))).unwrap();
     tracing::info!("✅ 数据连接器框架已初始化");
 
+    // 创建 Agent 服务
+    let agent_service = crate::services::AgentService::new(qa_service.clone());
+
+    // 创建推荐服务
+    let recommendation_service = RecommendationService::new(vector_service.db().clone(), qa_service.clone());
+
+    // 创建多模态服务
+    let multimodal_service = MultimodalService::new(qa_service.clone());
+
     // 创建应用状态
     let app_state = AppState {
         auth_state: AuthState::from_env(),
@@ -1813,6 +1836,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         vector_service,
         qa_service,
         analysis_service,
+        agent_service,
+        recommendation_service,
+        multimodal_service,
     };
 
     let cors = create_cors_layer();
@@ -1849,10 +1875,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/ai/documents/{id}", delete(DocumentApi::delete))
         .route("/api/ai/documents/{id}/process", post(DocumentApi::process))
         .route("/api/ai/documents/{id}/extract", post(DocumentApi::extract))
-        .route(
-            "/api/ai/documents/{id}/summarize",
-            post(DocumentApi::summarize),
-        )
+        .route("/api/ai/documents/{id}/summarize", post(DocumentApi::summarize))
+        .route("/api/ai/documents/{id}/key-points", post(DocumentApi::extract_key_points))
+        .route("/api/ai/documents/qa", post(DocumentApi::document_qa))
         // 向量检索 API - 使用 VectorApi 模块
         .route("/api/ai/vectors/stats", get(VectorApi::stats))
         .route("/api/ai/vectors/search", post(VectorApi::search))
@@ -1860,6 +1885,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/ai/vectors/{id}", get(VectorApi::get))
         .route("/api/ai/vectors/{id}", delete(VectorApi::delete))
         .route("/api/ai/vectors/batch-store", post(VectorApi::batch_store))
+        .route("/api/ai/embedding/generate", post(EmbeddingApi::generate))
         .route(
             "/api/ai/vectors/hybrid-search",
             post(VectorApi::hybrid_search),
@@ -1872,6 +1898,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/ai/qa/ask-conversation", post(QaApi::ask_conversation))
         .route("/api/ai/qa/classify", post(QaApi::classify))
         .route("/api/ai/qa/history", get(QaApi::history))
+        .route("/api/ai/qa/history/:id", delete(QaApi::delete_history))
+        .route("/api/ai/qa/history/batch-delete", post(QaApi::batch_delete_history))
         .route("/api/ai/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API
         .route("/api/ai/connectors", get(list_connectors))
@@ -1906,10 +1934,48 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ))
         .with_state(app_state.clone());
 
+    let agent_router = Router::new()
+        .merge(api::agent::create_routes())
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    let recommendation_router = Router::new()
+        .route("/api/ai/recommend", post(RecommendationApi::recommend))
+        .route("/api/ai/recommend/documents", post(RecommendationApi::recommend_documents))
+        .route("/api/ai/recommend/opportunities", post(RecommendationApi::recommend_opportunities))
+        .route("/api/ai/recommend/knowledge", post(RecommendationApi::recommend_knowledge))
+        .route("/api/ai/profile/get", post(RecommendationApi::get_user_profile))
+        .route("/api/ai/profile/update", post(RecommendationApi::update_user_profile))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
+    let multimodal_router = Router::new()
+        .route("/api/ai/multimodal/image/analyze", post(MultimodalApi::analyze_image))
+        .route("/api/ai/multimodal/image/caption", post(MultimodalApi::generate_caption))
+        .route("/api/ai/multimodal/image/objects", post(MultimodalApi::detect_objects))
+        .route("/api/ai/multimodal/image/text", post(MultimodalApi::extract_text))
+        .route("/api/ai/multimodal/image/describe", post(MultimodalApi::describe_image))
+        .route("/api/ai/multimodal/video/analyze", post(MultimodalApi::analyze_video))
+        .route("/api/ai/multimodal/video/summary", post(MultimodalApi::summarize_video))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
         .merge(analysis_router)
+        .merge(agent_router)
+        .merge(recommendation_router)
+        .merge(multimodal_router)
         .merge(create_api_info_router("topems-ai"))
         .layer(prometheus_layer)
         .layer(cors)
@@ -1917,9 +1983,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let port = std::env::var("SERVER_PORT")
         .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8050".to_string())
+        .or_else(|_| std::env::var("AI_PORT"))
+        .unwrap_or_else(|_| "8064".to_string())
         .parse()
-        .unwrap_or(8050);
+        .unwrap_or(8064);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS-AI 服务运行在 http://{}", addr);

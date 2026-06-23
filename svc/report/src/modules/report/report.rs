@@ -1,67 +1,390 @@
 //! Report handlers
 
-use axum::{extract::State, Json};
+use axum::{extract::{Path, State}, Json};
+use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use tracing::info;
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateReportRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub template_id: Option<Uuid>,
+    pub parameters: Option<serde_json::Value>,
+    pub created_by: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateReportFromTemplateRequest {
+    pub template_id: Uuid,
+    pub report_name: Option<String>,
+    pub parameters: Option<serde_json::Value>,
+    pub created_by: String,
+}
 
 /// List reports
-pub async fn list_reports(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
+pub async fn list_reports(State(state): State<crate::AppState>) -> Json<serde_json::Value> {
     info!("Listing reports");
+    
+    let reports = sqlx::query(
+        r#"
+        SELECT id, name, description, report_type, status, template_id, created_by, created_at
+        FROM reports
+        ORDER BY created_at DESC
+        "#
+    )
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+    
+    let result: Vec<serde_json::Value> = reports
+        .into_iter()
+        .map(|r| serde_json::json!({
+            "id": r.get::<Uuid, _>("id"),
+            "name": r.get::<String, _>("name"),
+            "description": r.get::<Option<String>, _>("description"),
+            "report_type": r.get::<String, _>("report_type"),
+            "status": r.get::<String, _>("status"),
+            "template_id": r.get::<Option<Uuid>, _>("template_id"),
+            "created_by": r.get::<String, _>("created_by"),
+            "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+        }))
+        .collect();
+    
     Json(serde_json::json!({
         "success": true,
-        "message": "List reports"
+        "data": result,
+        "total": result.len()
     }))
 }
 
 /// Create report
-pub async fn create_report(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
+pub async fn create_report(
+    State(state): State<crate::AppState>,
+    Json(req): Json<CreateReportRequest>,
+) -> Json<serde_json::Value> {
     info!("Creating report");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Create report"
-    }))
+    
+    let id = Uuid::new_v4();
+    let now = chrono::Utc::now();
+    
+    let result = sqlx::query(
+        r#"
+        INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        "#,
+    )
+    .bind(id)
+    .bind(req.name.unwrap_or_else(|| "Untitled Report".to_string()))
+    .bind(req.description)
+    .bind("custom")
+    .bind(req.parameters.unwrap_or(serde_json::json!({})))
+    .bind(req.template_id)
+    .bind(req.created_by)
+    .bind("draft")
+    .bind(now)
+    .bind(now)
+    .execute(&state.pool)
+    .await;
+    
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "Report created",
+            "data": id
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to create report: {}", e)
+        }))
+    }
+}
+
+/// Create report from template
+pub async fn create_report_from_template(
+    State(state): State<crate::AppState>,
+    Json(req): Json<CreateReportFromTemplateRequest>,
+) -> Json<serde_json::Value> {
+    info!("Creating report from template: {}", req.template_id);
+    
+    let template = sqlx::query(
+        r#"
+        SELECT id, name, report_type, data_source, layout_config, filter_config, style_config, columns, output_format
+        FROM report_templates
+        WHERE id = $1 AND is_active = TRUE
+        "#,
+    )
+    .bind(req.template_id)
+    .fetch_optional(&state.pool)
+    .await;
+    
+    match template {
+        Ok(Some(row)) => {
+            let id = Uuid::new_v4();
+            let now = chrono::Utc::now();
+            let t_name: String = row.get("name");
+            let t_report_type: String = row.get("report_type");
+            let t_data_source: serde_json::Value = row.get("data_source");
+            let t_layout_config: serde_json::Value = row.get("layout_config");
+            let t_filter_config: serde_json::Value = row.get("filter_config");
+            let t_style_config: serde_json::Value = row.get("style_config");
+            let t_columns: serde_json::Value = row.get("columns");
+            let t_output_format: String = row.get("output_format");
+            let report_name = req.report_name.unwrap_or_else(|| format!("{} - Report", t_name));
+            
+            let config = serde_json::json!({
+                "report_type": t_report_type,
+                "data_source": t_data_source,
+                "layout_config": t_layout_config,
+                "filter_config": t_filter_config,
+                "style_config": t_style_config,
+                "columns": t_columns,
+                "output_format": t_output_format,
+                "parameters": req.parameters.unwrap_or(serde_json::json!({}))
+            });
+            
+            let result = sqlx::query(
+                r#"
+                INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                "#,
+            )
+            .bind(id)
+            .bind(report_name.clone())
+            .bind(t_name)
+            .bind(t_report_type.clone())
+            .bind(config)
+            .bind(req.template_id)
+            .bind(req.created_by)
+            .bind("draft")
+            .bind(now)
+            .bind(now)
+            .execute(&state.pool)
+            .await;
+            
+            match result {
+                Ok(_) => Json(serde_json::json!({
+                    "success": true,
+                    "message": "Report created from template",
+                    "data": {
+                        "id": id,
+                        "name": report_name,
+                        "report_type": t_report_type,
+                        "template_id": req.template_id
+                    }
+                })),
+                Err(e) => Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Failed to create report: {}", e)
+                }))
+            }
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false,
+            "message": "Template not found or inactive"
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to get template: {}", e)
+        }))
+    }
 }
 
 /// Get report
-pub async fn get_report(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
-    info!("Getting report");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get report"
-    }))
+pub async fn get_report(
+    State(state): State<crate::AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Getting report: {}", id);
+    
+    let report = sqlx::query!(
+        r#"
+        SELECT id, name, description, report_type, config, template_id, created_by, status, last_run_at, created_at, updated_at
+        FROM reports
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_optional(&state.pool)
+    .await;
+    
+    match report {
+        Ok(Some(r)) => Json(serde_json::json!({
+            "success": true,
+            "data": {
+                "id": r.id,
+                "name": r.name,
+                "description": r.description,
+                "report_type": r.report_type,
+                "config": r.config,
+                "template_id": r.template_id,
+                "created_by": r.created_by,
+                "status": r.status,
+                "last_run_at": r.last_run_at,
+                "created_at": r.created_at,
+                "updated_at": r.updated_at,
+            }
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": false,
+            "message": "Report not found"
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to get report: {}", e)
+        }))
+    }
 }
 
 /// Update report
-pub async fn update_report(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
-    info!("Updating report");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Update report"
-    }))
+pub async fn update_report(
+    State(state): State<crate::AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    info!("Updating report: {}", id);
+    
+    let name = req.get("name").and_then(|v| v.as_str());
+    let description = req.get("description").and_then(|v| v.as_str());
+    let status = req.get("status").and_then(|v| v.as_str());
+    let config = req.get("config");
+    
+    let result = sqlx::query(
+        r#"
+        UPDATE reports
+        SET name = COALESCE($1, name),
+            description = COALESCE($2, description),
+            status = COALESCE($3, status),
+            config = COALESCE($4, config),
+            updated_at = $5
+        WHERE id = $6
+        "#,
+    )
+    .bind(name)
+    .bind(description)
+    .bind(status)
+    .bind(config)
+    .bind(chrono::Utc::now())
+    .bind(id)
+    .execute(&state.pool)
+    .await;
+    
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "Report updated"
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to update report: {}", e)
+        }))
+    }
 }
 
 /// Delete report
-pub async fn delete_report(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
-    info!("Deleting report");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Delete report"
-    }))
+pub async fn delete_report(
+    State(state): State<crate::AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Deleting report: {}", id);
+    
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM reports
+        WHERE id = $1
+        "#,
+        id,
+    )
+    .execute(&state.pool)
+    .await;
+    
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "Report deleted"
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to delete report: {}", e)
+        }))
+    }
 }
 
 /// Export report
-pub async fn export_report(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
-    info!("Exporting report");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Export report"
-    }))
+pub async fn export_report(
+    State(state): State<crate::AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Exporting report: {}", id);
+    
+    let report = sqlx::query(
+        r#"
+        SELECT name, report_type, config, output_format
+        FROM reports
+        WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+    
+    match report {
+        Ok(Some(row)) => {
+            let r_name: String = row.get("name");
+            let r_report_type: String = row.get("report_type");
+            let r_config: serde_json::Value = row.get("config");
+            let r_output_format: Option<String> = row.get("output_format");
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Export report",
+                "data": {
+                    "id": id,
+                    "name": r_name,
+                    "report_type": r_report_type,
+                    "output_format": r_config.as_object().and_then(|c| c.get("output_format").and_then(|v| v.as_str())).unwrap_or(&r_output_format.unwrap_or_else(|| "pdf".to_string()))
+                }
+            }))
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false,
+            "message": "Report not found"
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to export report: {}", e)
+        }))
+    }
 }
 
 /// Run report
-pub async fn run_report(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
-    info!("Running report");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Run report"
-    }))
+pub async fn run_report(
+    State(state): State<crate::AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Running report: {}", id);
+    
+    let result = sqlx::query(
+        r#"
+        UPDATE reports
+        SET status = 'running', last_run_at = $1
+        WHERE id = $2
+        "#,
+    )
+    .bind(chrono::Utc::now())
+    .bind(id)
+    .execute(&state.pool)
+    .await;
+    
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "Report is running",
+            "data": id
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to run report: {}", e)
+        }))
+    }
 }

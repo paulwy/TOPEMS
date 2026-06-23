@@ -115,6 +115,26 @@ async fn main() {
         .route("/api/bi/dashboard/{id}", get(modules::bi::dashboard::get_dashboard))
         .route("/api/bi/dashboard/{id}", put(modules::bi::dashboard::update_dashboard))
         .route("/api/bi/dashboard/{id}", delete(modules::bi::dashboard::delete_dashboard))
+        .route("/api/bi/dashboard/public", get(modules::bi::dashboard::get_public_dashboards))
+        .route("/api/bi/dashboard/user/{owner_id}", get(modules::bi::dashboard::get_user_dashboards))
+        // Dashboard Share
+        .route("/api/bi/dashboard/{id}/share", post(modules::bi::dashboard::create_share_link))
+        .route("/api/bi/dashboard/{id}/shares", get(modules::bi::dashboard::list_share_links))
+        .route("/api/bi/dashboard/share/{share_id}", get(modules::bi::dashboard::get_shared_dashboard))
+        .route("/api/bi/dashboard/share/{id}", delete(modules::bi::dashboard::delete_share_link))
+        // Dashboard Export/Import
+        .route("/api/bi/dashboard/{id}/export", get(modules::bi::dashboard::export_dashboard))
+        .route("/api/bi/dashboard/import", post(modules::bi::dashboard::import_dashboard))
+        // Dashboard Real-time Data
+        .route("/api/bi/dashboard/{id}/realtime", get(modules::bi::dashboard::query_dashboard_realtime_data))
+        // Dashboard Refresh
+        .route("/api/bi/dashboard/{id}/refresh", post(modules::bi::dashboard::refresh_dashboard_data))
+        .route("/api/bi/dashboard/{id}/auto-refresh", post(modules::bi::dashboard::set_auto_refresh))
+        // Dashboard Export (PDF/Excel)
+        .route("/api/bi/dashboard/{id}/export/pdf", get(modules::bi::dashboard::export_dashboard_pdf))
+        .route("/api/bi/dashboard/{id}/export/excel", get(modules::bi::dashboard::export_dashboard_excel))
+        // WebSocket
+        .route("/ws/dashboard/{dashboard_id}", get(modules::bi::websocket::dashboard_websocket))
         // Widget
         .route("/api/bi/widget", get(modules::bi::widget::list_widgets))
         .route("/api/bi/widget", post(modules::bi::widget::create_widget))
@@ -122,6 +142,18 @@ async fn main() {
         .route("/api/bi/widget/{id}", put(modules::bi::widget::update_widget))
         .route("/api/bi/widget/{id}", delete(modules::bi::widget::delete_widget))
         .route("/api/bi/widget/{id}/data", get(modules::bi::widget::get_widget_data))
+        .route("/api/bi/widget/{id}/data/realtime", get(modules::bi::widget::get_widget_data_realtime))
+        .route("/api/bi/widget/{id}/cache/invalidate", post(modules::bi::widget::invalidate_widget_cache))
+        .route("/api/bi/widget/cache/invalidate-all", post(modules::bi::widget::invalidate_all_widget_cache))
+        .route("/api/bi/widget/dashboard/{dashboard_id}", get(modules::bi::widget::get_widgets_by_dashboard))
+        // Dashboard Templates
+        .route("/api/bi/dashboard/template", get(modules::bi::dashboard::list_dashboard_templates))
+        .route("/api/bi/dashboard/template", post(modules::bi::dashboard::create_dashboard_template))
+        .route("/api/bi/dashboard/template/{id}", get(modules::bi::dashboard::get_dashboard_template))
+        .route("/api/bi/dashboard/template/{id}", put(modules::bi::dashboard::update_dashboard_template))
+        .route("/api/bi/dashboard/template/{id}", delete(modules::bi::dashboard::delete_dashboard_template))
+        .route("/api/bi/dashboard/{id}/clone", post(modules::bi::dashboard::clone_dashboard))
+        .route("/api/bi/dashboard/template/{template_id}/create", post(modules::bi::dashboard::create_dashboard_from_template))
         // Data Source
         .route("/api/bi/datasource", get(modules::bi::datasource::list_datasources))
         .route("/api/bi/datasource", post(modules::bi::datasource::create_datasource))
@@ -131,6 +163,11 @@ async fn main() {
         .route("/api/bi/visualization", get(modules::bi::visualization::list_visualizations))
         .route("/api/bi/visualization", post(modules::bi::visualization::create_visualization))
         .route("/api/bi/visualization/{id}", get(modules::bi::visualization::get_visualization))
+        .route("/api/bi/visualization/chart-types", get(modules::bi::visualization::get_chart_types))
+        .route("/api/bi/visualization/line", post(modules::bi::visualization::generate_line_chart))
+        .route("/api/bi/visualization/bar", post(modules::bi::visualization::generate_bar_chart))
+        .route("/api/bi/visualization/pie", post(modules::bi::visualization::generate_pie_chart))
+        .route("/api/bi/visualization/gauge", post(modules::bi::visualization::generate_gauge_chart))
         // Analysis
         .route("/api/bi/analysis", get(modules::bi::analysis::list_analyses))
         .route("/api/bi/analysis", post(modules::bi::analysis::create_analysis))

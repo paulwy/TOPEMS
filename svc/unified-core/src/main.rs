@@ -405,6 +405,17 @@ async fn main() {
         .route("/api/core/ai/vectors/clear", post(modules::ai::clear_vectors))
         .route("/api/core/ai/health", get(modules::ai::ai_health))
 
+        // ===== Sync Routes (/api/core/sync/*) =====
+        .route("/api/core/sync/task", post(modules::sync::handlers::create_task))
+        .route("/api/core/sync/task/:task_id", get(modules::sync::handlers::get_task))
+        .route("/api/core/sync/task/:task_id/status", post(modules::sync::handlers::update_status))
+        .route("/api/core/sync/pending", get(modules::sync::handlers::get_pending))
+        .route("/api/core/sync/statistics", get(modules::sync::handlers::get_statistics))
+        .route("/api/core/sync/retry-failed", post(modules::sync::handlers::retry_failed))
+        .route("/api/core/sync/trigger/scm-to-wms", post(modules::sync::handlers::trigger_scm_wms))
+        .route("/api/core/sync/trigger/wms-to-crm", post(modules::sync::handlers::trigger_wms_crm))
+        .route("/api/core/sync/trigger/srm-to-scm", post(modules::sync::handlers::trigger_srm_scm))
+
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(

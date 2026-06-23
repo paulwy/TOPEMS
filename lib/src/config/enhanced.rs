@@ -531,25 +531,42 @@ impl ServiceRegistry {
         services.insert("unified-core".to_string(), 8000);
         services.insert("core".to_string(), 8000);
 
+        // 虚拟服务（由 unified-core 内部模块提供）
+        services.insert("iam".to_string(), 8000);
+        services.insert("doc".to_string(), 8000);
+        services.insert("flow".to_string(), 8000);
+        services.insert("file".to_string(), 8000);
+        services.insert("mail".to_string(), 8000);
+        services.insert("im".to_string(), 8000);
+        services.insert("notification".to_string(), 8000);
+
         // 业务应用服务
-        services.insert("pm".to_string(), 8001);
-        services.insert("portal".to_string(), 8003);
-        services.insert("integration".to_string(), 8005);
-        services.insert("hrm".to_string(), 8011);
+        services.insert("pm".to_string(), 8023);
+        services.insert("ai".to_string(), 8064);
+        services.insert("portal".to_string(), 8063);
+        services.insert("integration".to_string(), 8072);
+        services.insert("hrm".to_string(), 8020);
         services.insert("erp".to_string(), 8010);
-        services.insert("crm".to_string(), 8012);
-        services.insert("rs".to_string(), 8020);
+        services.insert("crm".to_string(), 8029);
+        services.insert("rs".to_string(), 8053);
         services.insert("manufacturing".to_string(), 8030);
         services.insert("mfg".to_string(), 8030);
-        services.insert("quality-assurance".to_string(), 8032);
-        services.insert("qa".to_string(), 8032);
+        services.insert("quality-assurance".to_string(), 8050);
+        services.insert("qa".to_string(), 8050);
         services.insert("scm".to_string(), 8040);
-        services.insert("srm".to_string(), 8041);
-        services.insert("wms".to_string(), 8042);
-        services.insert("gis".to_string(), 8053);
+        services.insert("srm".to_string(), 8042);
+        services.insert("wms".to_string(), 8041);
+        services.insert("gis".to_string(), 8071);
         services.insert("analytics".to_string(), 8060);
-        services.insert("ai".to_string(), 8062);
         services.insert("mobile".to_string(), 8070);
+        services.insert("mes".to_string(), 8030);
+        services.insert("pdm".to_string(), 8031);
+        services.insert("qms".to_string(), 8050);
+        services.insert("lims".to_string(), 8051);
+        services.insert("ehs".to_string(), 8052);
+        services.insert("bi".to_string(), 8060);
+        services.insert("report".to_string(), 8061);
+        services.insert("monitor".to_string(), 8062);
 
         Self { services }
     }
@@ -586,7 +603,7 @@ impl Default for ServiceRegistry {
 pub fn get_default_port(service_name: &str) -> u16 {
     ServiceRegistry::new()
         .get_port(service_name)
-        .unwrap_or(8000)
+        .unwrap_or(8080)
 }
 
 #[cfg(test)]
@@ -613,14 +630,14 @@ mod tests {
     fn test_service_registry() {
         let registry = ServiceRegistry::new();
         assert_eq!(registry.get_port("core"), Some(8000));
-        assert_eq!(registry.get_port("hrm"), Some(8011));
+        assert_eq!(registry.get_port("hrm"), Some(8020));
         assert_eq!(registry.get_port("unknown"), None);
     }
 
     #[test]
     fn test_get_default_port() {
         assert_eq!(get_default_port("core"), 8000);
-        assert_eq!(get_default_port("hrm"), 8011);
-        assert_eq!(get_default_port("unknown"), 8000);
+        assert_eq!(get_default_port("hrm"), 8020);
+        assert_eq!(get_default_port("unknown"), 8080);
     }
 }

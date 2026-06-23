@@ -22,9 +22,13 @@ use std::time::Instant;
 use api::{plugin, ApiState};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
+use std::sync::Arc;
+use std::time::Duration;
+use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, ServiceHealth,
+    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, RedisConfig,
+    RedisPool, RedisCacheService, ServiceHealth,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -57,10 +61,10 @@ async fn main() -> Result<()> {
 
     let db_config = DatabaseConfig {
         url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
-        max_connections: 10,
-        min_connections: Some(2),
-        connect_timeout: Some(30),
-        idle_timeout: Some(60),
+        max_connections: 50,
+        min_connections: Some(10),
+        connect_timeout: Some(10),
+        idle_timeout: Some(300),
         max_lifetime: Some(1800),
         test_interval: Some(60),
         enable_connection_reuse: Some(true),
@@ -70,6 +74,32 @@ async fn main() -> Result<()> {
 
     tracing::info!("🔗 数据库连接成功");
 
+    let redis_cache = match env::var("REDIS_URL").ok() {
+        Some(url) => {
+            let redis_config = RedisConfig {
+                url,
+                max_connections: 20,
+                connect_timeout: Some(5),
+            };
+            let redis_pool = RedisPool::new(&redis_config).await;
+            match redis_pool {
+                Ok(pool) => {
+                    let cache = Arc::new(RedisCacheService::new(Arc::new(pool)));
+                    tracing::info!("✅ Redis 缓存服务已初始化");
+                    Some(cache)
+                }
+                Err(e) => {
+                    tracing::warn!("⚠️ Redis 初始化失败: {}", e);
+                    None
+                }
+            }
+        }
+        None => {
+            tracing::info!("ℹ️ 未配置 Redis URL，跳过缓存初始化");
+            None
+        }
+    };
+
     if let Err(e) = init_db(&pool).await {
         tracing::warn!("数据库初始化警告: {}", e);
     }
@@ -77,6 +107,7 @@ async fn main() -> Result<()> {
     let api_state = ApiState {
         db: pool.clone(),
         auth_state: AuthState::from_env(),
+        cache: redis_cache,
     };
 
     let cors = create_cors_layer();
@@ -100,7 +131,9 @@ async fn main() -> Result<()> {
         .merge(create_api_info_router("topems-scm"))
         .with_state(api_state)
         .layer(cors)
-        .layer(prometheus_layer);
+        .layer(prometheus_layer)
+        .layer(CompressionLayer::new())
+        .layer(TimeoutLayer::new(Duration::from_secs(30)));
 
     let port = env::var("PORT").unwrap_or_else(|_| "8040".to_string());
     let addr = format!("0.0.0.0:{}", port);

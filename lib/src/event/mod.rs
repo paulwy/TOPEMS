@@ -12,10 +12,13 @@ pub mod subscriber;
 pub use dead_letter_queue::{DeadLetter, DeadLetterQueue};
 pub use error::{EventError, EventResult};
 pub use event_types::{
-    Event, EventType, HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload,
-    HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload,
-    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload,
-    PmTaskUpdatedPayload,
+    Event, EventType,
+    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
+    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload,
+    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    LimsSampleRegisteredPayload, LimsInspectionResultSubmittedPayload, LimsInspectionAbnormalDetectedPayload,
+    QmsInspectionCompletedPayload, QmsCorrectiveActionCreatedPayload,
+    EhsHazardReportedPayload, EhsAccidentReportedPayload,
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};
 pub use publisher::EventPublisher;

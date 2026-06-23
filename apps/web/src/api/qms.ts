@@ -33,34 +33,92 @@ export interface UpdateQualityStandardRequestBackend {
 
 export interface QualityInspectionBackend {
   id: string;
-  title: string;
-  description?: string;
+  inspection_no: string;
   inspection_type: string;
+  product_id?: string;
+  product_name?: string;
   standard_id?: string;
-  inspector: string;
+  quantity: number;
+  qualified_quantity?: number;
+  unqualified_quantity?: number;
+  qualification_rate?: number;
   status: string;
-  result?: string;
-  findings?: string;
+  inspector?: string;
+  assignee?: string;
   inspected_at?: string;
-  created_at: string;
-  updated_at: string;
+  result?: string;
+  memo?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateQualityInspectionRequestBackend {
-  title: string;
-  description?: string;
   inspection_type: string;
+  product_id?: string;
+  product_name?: string;
   standard_id?: string;
-  inspector: string;
+  quantity: number;
+  created_by?: string;
 }
 
 export interface UpdateQualityInspectionRequestBackend {
-  title?: string;
-  description?: string;
-  status?: string;
+  inspection_type?: string;
+  product_id?: string;
+  product_name?: string;
+  standard_id?: string;
+  quantity?: number;
+}
+
+export interface AssignInspectionRequestBackend {
+  assignee: string;
+  operator: string;
+}
+
+export interface SubmitInspectionResultRequestBackend {
+  qualified_quantity: number;
+  unqualified_quantity: number;
+  qualification_rate?: number;
   result?: string;
-  findings?: string;
-  inspected_at?: string;
+  memo?: string;
+  inspector: string;
+  results?: InspectionResultItem[];
+}
+
+export interface InspectionResultItem {
+  item_name: string;
+  standard_value?: string;
+  measured_value?: string;
+  is_qualified: boolean;
+  remark?: string;
+}
+
+export interface AuditInspectionRequestBackend {
+  action: string;
+  operator: string;
+  comment?: string;
+}
+
+export interface InspectionAudit {
+  id: string;
+  inspection_id: string;
+  status_from: string;
+  status_to: string;
+  action: string;
+  operator: string;
+  comment?: string;
+  created_at?: string;
+}
+
+export interface InspectionResult {
+  id: string;
+  inspection_id: string;
+  item_name: string;
+  standard_value?: string;
+  measured_value?: string;
+  is_qualified: boolean;
+  remark?: string;
+  created_at?: string;
 }
 
 export interface QualityIssueBackend {
@@ -162,27 +220,31 @@ export interface CreateQualityStandardRequest {
 
 export interface QualityCheck {
   id: string;
-  check_no: string;
-  check_type: string;
-  inspector: string;
-  check_date: string;
-  location: string;
-  result: string;
-  conclusion: string;
+  inspection_no: string;
+  inspection_type: string;
+  product_name?: string;
+  standard_id?: string;
+  quantity: number;
+  qualified_quantity?: number;
+  unqualified_quantity?: number;
+  qualification_rate?: number;
   status: string;
-  created_at: string;
-  updated_at: string;
+  inspector?: string;
+  assignee?: string;
+  inspected_at?: string;
+  result?: string;
+  memo?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateQualityCheckRequest {
-  check_no: string;
-  check_type: string;
-  inspector: string;
-  check_date: string;
-  location: string;
-  result: string;
-  conclusion: string;
-  status: string;
+  inspection_type: string;
+  product_name?: string;
+  standard_id?: string;
+  quantity: number;
+  created_by?: string;
 }
 
 export interface QualityIssue {
@@ -343,14 +405,21 @@ const adaptInspectionToFrontend = (
   backend: QualityInspectionBackend,
 ): QualityCheck => ({
   id: backend.id,
-  check_no: backend.title,
-  check_type: backend.inspection_type,
-  inspector: backend.inspector,
-  check_date: backend.inspected_at || backend.created_at,
-  location: "",
-  result: backend.result || "",
-  conclusion: backend.findings || "",
+  inspection_no: backend.inspection_no,
+  inspection_type: backend.inspection_type,
+  product_name: backend.product_name,
+  standard_id: backend.standard_id,
+  quantity: backend.quantity,
+  qualified_quantity: backend.qualified_quantity,
+  unqualified_quantity: backend.unqualified_quantity,
+  qualification_rate: backend.qualification_rate,
   status: backend.status,
+  inspector: backend.inspector,
+  assignee: backend.assignee,
+  inspected_at: backend.inspected_at,
+  result: backend.result,
+  memo: backend.memo,
+  created_by: backend.created_by,
   created_at: backend.created_at,
   updated_at: backend.updated_at,
 });
@@ -358,10 +427,11 @@ const adaptInspectionToFrontend = (
 const adaptInspectionToBackend = (
   frontend: CreateQualityCheckRequest,
 ): CreateQualityInspectionRequestBackend => ({
-  title: frontend.check_no,
-  description: frontend.conclusion,
-  inspection_type: frontend.check_type,
-  inspector: frontend.inspector,
+  inspection_type: frontend.inspection_type,
+  product_name: frontend.product_name,
+  standard_id: frontend.standard_id,
+  quantity: frontend.quantity,
+  created_by: frontend.created_by,
 });
 
 const adaptIssueToFrontend = (backend: QualityIssueBackend): QualityIssue => ({
@@ -541,11 +611,10 @@ export const qmsApi = {
     data: CreateQualityCheckRequest,
   ): Promise<ApiResponse<QualityCheck>> => {
     const backendData: UpdateQualityInspectionRequestBackend = {
-      title: data.check_no,
-      description: data.conclusion,
-      status: data.status,
-      result: data.result,
-      findings: data.conclusion,
+      inspection_type: data.inspection_type,
+      product_name: data.product_name,
+      standard_id: data.standard_id,
+      quantity: data.quantity,
     };
     const response = await apiClient.qms.put<QualityInspectionBackend>(
       `/api/qms/checks/${id}`,
@@ -560,6 +629,82 @@ export const qmsApi = {
   },
   deleteCheck: async (id: string): Promise<ApiResponse<boolean>> => {
     return apiClient.qms.delete<boolean>(`/api/qms/checks/${id}`);
+  },
+  assignCheck: async (
+    id: string,
+    data: AssignInspectionRequestBackend,
+  ): Promise<ApiResponse<QualityCheck>> => {
+    const response = await apiClient.qms.post<QualityInspectionBackend>(
+      `/api/qms/checks/${id}/assign`,
+      data,
+    );
+    return {
+      ...response,
+      data: response.data
+        ? adaptInspectionToFrontend(response.data)
+        : undefined,
+    };
+  },
+  submitCheckResult: async (
+    id: string,
+    data: SubmitInspectionResultRequestBackend,
+  ): Promise<ApiResponse<QualityCheck>> => {
+    const response = await apiClient.qms.post<QualityInspectionBackend>(
+      `/api/qms/checks/${id}/submit`,
+      data,
+    );
+    return {
+      ...response,
+      data: response.data
+        ? adaptInspectionToFrontend(response.data)
+        : undefined,
+    };
+  },
+  auditCheck: async (
+    id: string,
+    data: AuditInspectionRequestBackend,
+  ): Promise<ApiResponse<QualityCheck>> => {
+    const response = await apiClient.qms.post<QualityInspectionBackend>(
+      `/api/qms/checks/${id}/audit`,
+      data,
+    );
+    return {
+      ...response,
+      data: response.data
+        ? adaptInspectionToFrontend(response.data)
+        : undefined,
+    };
+  },
+  reworkCheck: async (
+    id: string,
+    data: AuditInspectionRequestBackend,
+  ): Promise<ApiResponse<QualityCheck>> => {
+    const response = await apiClient.qms.post<QualityInspectionBackend>(
+      `/api/qms/checks/${id}/rework`,
+      data,
+    );
+    return {
+      ...response,
+      data: response.data
+        ? adaptInspectionToFrontend(response.data)
+        : undefined,
+    };
+  },
+  getCheckResults: async (
+    id: string,
+  ): Promise<ApiResponse<InspectionResult[]>> => {
+    const response = await apiClient.qms.get<{ results?: InspectionResult[] }>(
+      `/api/qms/checks/${id}/results`,
+    );
+    return { ...response, data: response.data?.results || [] };
+  },
+  getCheckAudits: async (
+    id: string,
+  ): Promise<ApiResponse<InspectionAudit[]>> => {
+    const response = await apiClient.qms.get<{ audits?: InspectionAudit[] }>(
+      `/api/qms/checks/${id}/audits`,
+    );
+    return { ...response, data: response.data?.audits || [] };
   },
 
   // Quality Issues

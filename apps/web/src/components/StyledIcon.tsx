@@ -10,7 +10,7 @@ export interface StyledIconProps extends Omit<LucideProps, "size"> {
 export const StyledIcon = styled(
   React.forwardRef<SVGSVGElement, StyledIconProps>(
     ({ icon: Icon, size = 24, ...props }, ref) => (
-      <Icon ref={ref as React.Ref<SVGSVGElement>} size={size} {...props} />
+      <Icon ref={ref as any} size={size} {...props} />
     ),
   ),
 )<StyledIconProps>``;

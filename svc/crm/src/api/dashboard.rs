@@ -208,13 +208,20 @@ async fn get_sales_funnel(
         Err(e) => return e,
     }
 
-    let stages = vec!["prospecting", "qualification", "proposal", "negotiation", "closed"];
+    let stages = vec![
+        ("prospecting", "线索"),
+        ("qualified", "合格"),
+        ("proposal", "提案"),
+        ("negotiation", "谈判"),
+        ("closed_won", "赢单"),
+        ("closed_lost", "输单"),
+    ];
     
     let mut funnel_stages = Vec::new();
     
-    for stage in stages {
+    for (stage, stage_label) in stages {
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM opportunities WHERE stage = $1"
+            "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"
         )
         .bind(stage)
         .fetch_one(&state.db)
@@ -222,7 +229,7 @@ async fn get_sales_funnel(
         .unwrap_or(0);
 
         let total_value: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(value), 0) FROM opportunities WHERE stage = $1 AND value IS NOT NULL"
+            "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND value IS NOT NULL"
         )
         .bind(stage)
         .fetch_optional(&state.db)
@@ -261,8 +268,8 @@ async fn get_sales_forecast(
         let weighted_value: Option<f64> = sqlx::query_scalar(
             r#"
             SELECT COALESCE(SUM(value * probability / 100), 0) 
-            FROM opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage != 'closed'
+            FROM plugin_crm.opportunities 
+            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
         .bind(month_start)
@@ -283,8 +290,8 @@ async fn get_sales_forecast(
     let last_month_actual: Option<f64> = sqlx::query_scalar(
         r#"
         SELECT COALESCE(SUM(value), 0) 
-        FROM opportunities 
-        WHERE close_date >= $1 AND close_date < $2 AND stage = 'closed'
+        FROM plugin_crm.opportunities 
+        WHERE close_date >= $1 AND close_date < $2 AND stage = 'closed_won'
         "#,
     )
     .bind(last_month_start)

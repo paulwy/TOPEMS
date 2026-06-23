@@ -88,7 +88,7 @@ interface ServiceItem {
   service: string;
   port: number;
   key: string;
-  icon: React.ComponentType<SvgIconProps>;
+  icon: React.ComponentType<any>;
 }
 
 const generateInitialStatuses = (): Record<string, boolean> => {
@@ -184,14 +184,14 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
         {
           name: "项目管理",
           service: "PM",
-          port: 8001,
+          port: 8023,
           key: "pm",
           icon: FolderKanban,
         },
         {
           name: "系统集成",
           service: "INTEGRATION",
-          port: 8005,
+          port: 8072,
           key: "integration",
           icon: Link,
         },
@@ -210,14 +210,14 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
         {
           name: "人力资源",
           service: "HRM",
-          port: 8011,
+          port: 8020,
           key: "hrm",
           icon: Users,
         },
         {
           name: "客户关系",
           service: "CRM",
-          port: 8012,
+          port: 8029,
           key: "crm",
           icon: Users,
         },
@@ -229,29 +229,49 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
         {
           name: "研发管理",
           service: "RS",
-          port: 8020,
+          port: 8053,
           key: "rs",
           icon: FlaskConical,
         },
         {
-          name: "制造服务",
-          service: "MFG",
-          port: 8023,
-          key: "manufacturing",
+          name: "生产执行",
+          service: "MES",
+          port: 8030,
+          key: "mes",
           icon: Factory,
         },
-        { name: "AI服务", service: "AI", port: 8062, key: "ai", icon: Bot },
+        {
+          name: "产品数据",
+          service: "PDM",
+          port: 8031,
+          key: "pdm",
+          icon: ShoppingCart,
+        },
       ],
     },
     {
-      title: "生产管理",
+      title: "质量管理",
       services: [
         {
-          name: "质量保证",
-          service: "QA",
-          port: 8032,
-          key: "quality-assurance",
+          name: "质量管理",
+          service: "QMS",
+          port: 8050,
+          key: "qms",
           icon: ClipboardList,
+        },
+        {
+          name: "实验室信息",
+          service: "LIMS",
+          port: 8051,
+          key: "lims",
+          icon: FlaskConical,
+        },
+        {
+          name: "环境安全",
+          service: "EHS",
+          port: 8052,
+          key: "ehs",
+          icon: Truck,
         },
       ],
     },
@@ -266,25 +286,34 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
           icon: Truck,
         },
         {
-          name: "供应商管理",
-          service: "SRM",
-          port: 8041,
-          key: "srm",
-          icon: ShoppingCart,
-        },
-        {
           name: "仓储管理",
           service: "WMS",
-          port: 8042,
+          port: 8041,
           key: "wms",
           icon: Warehouse,
         },
+        {
+          name: "供应商管理",
+          service: "SRM",
+          port: 8042,
+          key: "srm",
+          icon: ShoppingCart,
+        },
+      ],
+    },
+    {
+      title: "数据/门户",
+      services: [
+        { name: "商业智能", service: "BI", port: 8060, key: "bi", icon: BarChart2 },
+        { name: "报表服务", service: "REPORT", port: 8061, key: "report", icon: ClipboardList },
+        { name: "系统监控", service: "MONITOR", port: 8062, key: "monitor", icon: Activity },
+        { name: "企业门户", service: "PORTAL", port: 8063, key: "portal", icon: Building },
       ],
     },
     {
       title: "专业服务",
       services: [
-        { name: "地理信息", service: "GIS", port: 8053, key: "gis", icon: Map },
+        { name: "地理信息", service: "GIS", port: 8071, key: "gis", icon: Map },
         {
           name: "移动服务",
           service: "MOBILE",

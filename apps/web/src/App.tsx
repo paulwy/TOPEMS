@@ -41,6 +41,9 @@ import {
   scmRoutes,
   wmsRoutes,
   gisRoutes,
+  reportRoutes,
+  mobileRoutes,
+  pdmRoutes,
   type RouteConfig,
 } from "./routes";
 
@@ -220,6 +223,9 @@ const AppContent: React.FC = () => {
         {renderRoutes(scmRoutes)}
         {renderRoutes(wmsRoutes)}
         {renderRoutes(gisRoutes)}
+        {renderRoutes(reportRoutes)}
+        {renderRoutes(mobileRoutes)}
+        {renderRoutes(pdmRoutes)}
 
         {/* Core module routes - only load via Module Federation when not in static mode */}
         {!IS_STATIC_MODE && (

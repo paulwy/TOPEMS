@@ -167,20 +167,21 @@ impl RetryManager {
         error_message: Option<String>,
     ) -> bool {
         let mut tasks = self.pending_tasks.write().await;
-        if let Some(task) = tasks.get_mut(task_id) {
+        if let Some(task) = tasks.get_mut(&task_id) {
             task.status = status.clone();
             task.error_message = error_message;
             task.updated_at = Utc::now();
 
             // 如果任务完成或取消，移到历史
             if status == RetryTaskStatus::Completed || status == RetryTaskStatus::Cancelled {
-                let completed_task = tasks.remove(task_id).unwrap();
+                let completed_task = tasks.remove(&task_id).unwrap();
                 let mut history = self.history.write().await;
                 history.push(completed_task);
 
                 // 清理过多历史
-                if history.len() > self.max_history {
-                    history.drain(0..history.len() - self.max_history);
+                let len = history.len();
+                if len > self.max_history {
+                    history.drain(0..len - self.max_history);
                 }
             }
             return true;
@@ -237,7 +238,7 @@ impl RetryManager {
         policy: &RetryPolicy,
     ) -> bool {
         let mut tasks = self.pending_tasks.write().await;
-        if let Some(task) = tasks.get_mut(task_id) {
+        if let Some(task) = tasks.get_mut(&task_id) {
             task.retry_count += 1;
             task.error_message = Some(error_message);
             task.next_retry_at = Some(self.calculate_next_retry(task.retry_count, policy));

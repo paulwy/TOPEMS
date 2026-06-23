@@ -52,8 +52,46 @@ pub struct ExtractDocumentRequest {
 pub struct SummarizeDocumentRequest {
     #[allow(dead_code)]
     pub document_id: Uuid,
-    #[allow(dead_code)]
     pub max_length: Option<i32>,
+}
+
+/// 提取关键点请求
+#[derive(Debug, Deserialize)]
+pub struct ExtractKeyPointsRequest {
+    pub max_points: Option<i32>,
+}
+
+/// 提取关键点响应
+#[derive(Debug, Serialize)]
+pub struct ExtractKeyPointsResponse {
+    pub document_id: Uuid,
+    pub key_points: Vec<String>,
+}
+
+/// 文档问答请求
+#[derive(Debug, Deserialize)]
+pub struct DocumentQAQuestionRequest {
+    pub question: String,
+    pub document_ids: Option<Vec<Uuid>>,
+    pub top_k: Option<usize>,
+}
+
+/// 文档问答响应
+#[derive(Debug, Serialize)]
+pub struct DocumentQAAnswerResponse {
+    pub answer: String,
+    pub confidence: f64,
+    pub sources: Vec<DocumentQASourceResponse>,
+    pub follow_up_questions: Vec<String>,
+}
+
+/// 文档问答来源响应
+#[derive(Debug, Serialize)]
+pub struct DocumentQASourceResponse {
+    pub document_id: Uuid,
+    pub document_title: String,
+    pub chunk_content: String,
+    pub similarity: f64,
 }
 
 /// 向量存储请求

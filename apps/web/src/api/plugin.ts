@@ -236,7 +236,7 @@ export const PLUGIN_REGISTRY: Record<string, { url: string; port: number; name: 
   workflow: { url: "http://localhost:8000", port: 8000, name: "工作流", icon: "GitBranch" },
   erp: { url: "http://localhost:8010", port: 8010, name: "ERP", icon: "Building2" },
   hrm: { url: "http://localhost:8020", port: 8020, name: "人力资源", icon: "Users" },
-  pm: { url: "http://localhost:8022", port: 8022, name: "项目管理", icon: "Target" },
+  pm: { url: "http://localhost:8023", port: 8023, name: "项目管理", icon: "Target" },
   crm: { url: "http://localhost:8029", port: 8029, name: "客户管理", icon: "Users" },
   mes: { url: "http://localhost:8030", port: 8030, name: "生产执行", icon: "Factory" },
   pdm: { url: "http://localhost:8031", port: 8031, name: "产品数据", icon: "Layers" },

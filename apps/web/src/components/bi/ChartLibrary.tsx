@@ -23,9 +23,19 @@ import {
   Scatter,
   ComposedChart,
   Brush,
+  ResponsiveContainer,
 } from "recharts";
 
-export type ChartType = "bar" | "pie" | "line" | "area" | "radar" | "scatter" | "composed";
+export type ChartType =
+  | "bar"
+  | "pie"
+  | "line"
+  | "area"
+  | "radar"
+  | "scatter"
+  | "composed"
+  | "histogram"
+  | "gauge";
 
 export interface ChartDataPoint {
   [key: string]: string | number | boolean;
@@ -42,12 +52,16 @@ export interface ChartConfig {
   colors?: string[];
   dataKey?: string;
   nameKey?: string;
-  height?: number;
-  width?: number;
+  chartHeight?: number;
+  chartWidth?: number;
   showLegend?: boolean;
   showTooltip?: boolean;
   stacked?: boolean;
   smooth?: boolean;
+  gaugeMin?: number;
+  gaugeMax?: number;
+  gaugeValue?: number;
+  gaugeLabel?: string;
 }
 
 const defaultColors = [
@@ -80,7 +94,8 @@ const CustomTooltip = ({
           backgroundColor: "#ffffff",
           padding: "12px 16px",
           borderRadius: "8px",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
+          boxShadow:
+            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
           border: "1px solid #e2e8f0",
           minWidth: "120px",
         }}
@@ -89,7 +104,10 @@ const CustomTooltip = ({
           {payload[0].name}
         </p>
         {payload.map((item, index) => (
-          <p key={index} style={{ fontSize: "14px", color: "#64748b", margin: "4px 0" }}>
+          <p
+            key={index}
+            style={{ fontSize: "14px", color: "#64748b", margin: "4px 0" }}
+          >
             <span style={{ color: item.color || "#6366f1" }}>●</span>
             {item.dataKey}: {item.value}
           </p>
@@ -98,6 +116,106 @@ const CustomTooltip = ({
     );
   }
   return null;
+};
+
+const GaugeChart = ({
+  value = 0,
+  min = 0,
+  max = 100,
+  label,
+  color = "#6366f1",
+}: {
+  value: number;
+  min?: number;
+  max?: number;
+  label?: string;
+  color?: string;
+}) => {
+  const percentage = ((value - min) / (max - min)) * 100;
+  const circumference = 270;
+  const radius = 80;
+  const strokeWidth = 12;
+  const startAngle = 135;
+  const endAngle = -135;
+  const offset = circumference * ((100 - percentage) / 100);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+      }}
+    >
+      <svg width="200" height="160" viewBox="0 0 200 160">
+        <defs>
+          <linearGradient
+            id="gaugeGradient"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
+          >
+            <stop offset="0%" stopColor={color} />
+            <stop offset="100%" stopColor={color} stopOpacity={0.6} />
+          </linearGradient>
+          <linearGradient
+            id="gaugeBgGradient"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
+          >
+            <stop offset="0%" stopColor="#e2e8f0" />
+            <stop offset="100%" stopColor="#f1f5f9" />
+          </linearGradient>
+        </defs>
+        <path
+          d={`M 20 120 A ${radius} ${radius} 0 0 1 180 120`}
+          fill="none"
+          stroke="url(#gaugeBgGradient)"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          transform="rotate(-135 100 120)"
+        />
+        <path
+          d={`M 20 120 A ${radius} ${radius} 0 0 1 180 120`}
+          fill="none"
+          stroke="url(#gaugeGradient)"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={offset}
+          transform="rotate(-135 100 120)"
+          style={{ transition: "stroke-dashoffset 0.5s ease" }}
+        />
+        <g transform={`translate(100, ${120 - radius + 20})`}>
+          <text
+            x="0"
+            y="0"
+            textAnchor="middle"
+            fill="#0f172a"
+            fontSize="36"
+            fontWeight="700"
+          >
+            {value.toFixed(1)}
+          </text>
+          <text x="0" y="24" textAnchor="middle" fill="#64748b" fontSize="14">
+            {label || ""}
+          </text>
+        </g>
+        <text x="25" y="140" textAnchor="middle" fill="#94a3b8" fontSize="12">
+          {min}
+        </text>
+        <text x="175" y="140" textAnchor="middle" fill="#94a3b8" fontSize="12">
+          {max}
+        </text>
+      </svg>
+    </div>
+  );
 };
 
 export const ChartComponent: React.FC<ChartConfig> = ({
@@ -111,15 +229,19 @@ export const ChartComponent: React.FC<ChartConfig> = ({
   colors = defaultColors,
   dataKey,
   nameKey,
-  height,
-  width,
+  chartHeight: heightProp,
+  chartWidth: widthProp,
   showLegend = true,
   showTooltip = true,
   stacked = false,
   smooth = false,
+  gaugeMin = 0,
+  gaugeMax = 100,
+  gaugeValue,
+  gaugeLabel,
 }) => {
-  const chartWidth = width || CHART_WIDTH;
-  const chartHeight = height || CHART_HEIGHT;
+  const chartWidth = widthProp || CHART_WIDTH;
+  const chartHeight = heightProp || CHART_HEIGHT;
 
   if (!data || data.length === 0) {
     return (
@@ -178,7 +300,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={type === "pie" ? 40 : 0}
+              innerRadius={40}
               outerRadius={80}
               paddingAngle={2}
               dataKey={dataKey || yKey}
@@ -187,7 +309,9 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry[colorKey] || colors[index % colors.length]}
+                  fill={
+                    (entry[colorKey] as string) || colors[index % colors.length]
+                  }
                 />
               ))}
             </Pie>
@@ -233,22 +357,62 @@ export const ChartComponent: React.FC<ChartConfig> = ({
         return (
           <AreaChart width={chartWidth} height={chartHeight} data={data}>
             <defs>
-              <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={colors[0]} stopOpacity={0.3} />
-                <stop offset="100%" stopColor={colors[0]} stopOpacity={0.05} />
-              </linearGradient>
+              {yKeys && yKeys.length > 0 ? (
+                yKeys.map((key, index) => (
+                  <linearGradient
+                    key={key}
+                    id={`colorGradient-${key}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor={colors[index % colors.length]}
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={colors[index % colors.length]}
+                      stopOpacity={0.05}
+                    />
+                  </linearGradient>
+                ))
+              ) : (
+                <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={colors[0]} stopOpacity={0.3} />
+                  <stop
+                    offset="100%"
+                    stopColor={colors[0]}
+                    stopOpacity={0.05}
+                  />
+                </linearGradient>
+              )}
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey={xKey} tick={{ fill: "#64748b", fontSize: 12 }} />
             <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
-            <Area
-              type={smooth ? "monotone" : "linear"}
-              dataKey={yKey}
-              stroke={colors[0]}
-              fill="url(#colorGradient)"
-            />
+            {yKeys && yKeys.length > 0 ? (
+              yKeys.map((key, index) => (
+                <Area
+                  key={key}
+                  type={smooth ? "monotone" : "linear"}
+                  dataKey={key}
+                  stroke={colors[index % colors.length]}
+                  fill={`url(#colorGradient-${key})`}
+                />
+              ))
+            ) : (
+              <Area
+                type={smooth ? "monotone" : "linear"}
+                dataKey={yKey}
+                stroke={colors[0]}
+                fill="url(#colorGradient)"
+              />
+            )}
           </AreaChart>
         );
 
@@ -264,7 +428,6 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
             <Radar
-              nameKey={nameKey || xKey}
               dataKey={yKey}
               stroke={colors[0]}
               fill={colors[0]}
@@ -303,16 +466,61 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
-            <Bar dataKey={yKeys?.[0] || yKey} fill={colors[0]} radius={[4, 4, 0, 0]} />
-            <Line type="monotone" dataKey={yKeys?.[1] || yKey} stroke={colors[1]} />
+            <Bar
+              dataKey={yKeys?.[0] || yKey}
+              fill={colors[0]}
+              radius={[4, 4, 0, 0]}
+            />
+            <Line
+              type="monotone"
+              dataKey={yKeys?.[1] || yKey}
+              stroke={colors[1]}
+            />
             <Brush dataKey={xKey} height={30} stroke="#6366f1" />
           </ComposedChart>
+        );
+
+      case "histogram":
+        return (
+          <BarChart width={chartWidth} height={chartHeight} data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis dataKey={xKey} tick={{ fill: "#64748b", fontSize: 12 }} />
+            <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+            {showTooltip && <Tooltip content={<CustomTooltip />} />}
+            {showLegend && <Legend />}
+            <Bar dataKey={yKey} fill={colors[0]} radius={[0, 0, 0, 0]}>
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={colors[index % colors.length]}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        );
+
+      case "gauge":
+        return (
+          <div style={{ width: chartWidth, height: chartHeight }}>
+            <GaugeChart
+              value={gaugeValue || (data[0]?.[yKey] as number) || 0}
+              min={gaugeMin}
+              max={gaugeMax}
+              label={gaugeLabel}
+              color={colors[0]}
+            />
+          </div>
         );
 
       case "bar":
       default:
         return (
-          <BarChart width={chartWidth} height={chartHeight} data={data} stackOffset={stacked ? "expand" : undefined}>
+          <BarChart
+            width={chartWidth}
+            height={chartHeight}
+            data={data}
+            stackOffset={stacked ? "expand" : undefined}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey={xKey} tick={{ fill: "#64748b", fontSize: 12 }} />
             <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
@@ -333,7 +541,10 @@ export const ChartComponent: React.FC<ChartConfig> = ({
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry[colorKey] || colors[index % colors.length]}
+                    fill={
+                      (entry[colorKey] as string) ||
+                      colors[index % colors.length]
+                    }
                   />
                 ))}
               </Bar>
@@ -371,32 +582,40 @@ export const ChartComponent: React.FC<ChartConfig> = ({
   );
 };
 
-export const BarChartComponent: React.FC<Omit<ChartConfig, "type">> = (props) => (
-  <ChartComponent type="bar" {...props} />
-);
+export const BarChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="bar" {...props} />;
 
-export const LineChartComponent: React.FC<Omit<ChartConfig, "type">> = (props) => (
-  <ChartComponent type="line" {...props} />
-);
+export const LineChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="line" {...props} />;
 
-export const PieChartComponent: React.FC<Omit<ChartConfig, "type">> = (props) => (
-  <ChartComponent type="pie" {...props} />
-);
+export const PieChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="pie" {...props} />;
 
-export const AreaChartComponent: React.FC<Omit<ChartConfig, "type">> = (props) => (
-  <ChartComponent type="area" {...props} />
-);
+export const AreaChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="area" {...props} />;
 
-export const RadarChartComponent: React.FC<Omit<ChartConfig, "type">> = (props) => (
-  <ChartComponent type="radar" {...props} />
-);
+export const RadarChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="radar" {...props} />;
 
-export const ScatterChartComponent: React.FC<Omit<ChartConfig, "type">> = (props) => (
-  <ChartComponent type="scatter" {...props} />
-);
+export const ScatterChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="scatter" {...props} />;
 
-export const ComposedChartComponent: React.FC<Omit<ChartConfig, "type">> = (props) => (
-  <ChartComponent type="composed" {...props} />
-);
+export const ComposedChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="composed" {...props} />;
+
+export const HistogramChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="histogram" {...props} />;
+
+export const GaugeChartComponent: React.FC<Omit<ChartConfig, "type">> = (
+  props,
+) => <ChartComponent type="gauge" {...props} />;
 
 export default ChartComponent;

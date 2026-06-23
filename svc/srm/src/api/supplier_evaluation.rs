@@ -214,7 +214,6 @@ async fn create_evaluation(
         ));
     }
 
-    // 验证评分范围
     let validate_score = |score: Option<f64>, name: &str| -> Result<(), String> {
         if let Some(s) = score {
             if s < 0.0 || s > 100.0 {
@@ -224,9 +223,6 @@ async fn create_evaluation(
         Ok(())
     };
 
-    if let Err(msg) = validate_score(req.overall_score, "综合") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg));
-    }
     if let Err(msg) = validate_score(req.quality_score, "质量") {
         return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg));
     }
@@ -238,6 +234,68 @@ async fn create_evaluation(
     }
     if let Err(msg) = validate_score(req.price_score, "价格") {
         return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg));
+    }
+
+    let overall_score = if req.overall_score.is_some() {
+        req.overall_score
+    } else {
+        let dimensions = sqlx::query_as::<_, (String, f64)>(
+            r#"
+            SELECT code, weight 
+            FROM plugin_srm.scoring_dimensions 
+            WHERE is_active = true
+            ORDER BY sort_order ASC
+            "#,
+        )
+        .fetch_all(&state.db)
+        .await
+        .unwrap_or_default();
+
+        if !dimensions.is_empty() {
+            let mut total_weighted_score = 0.0;
+            let mut total_weight = 0.0;
+
+            for (code, weight) in dimensions {
+                let score = match code.as_str() {
+                    "quality" => req.quality_score.unwrap_or(0.0),
+                    "delivery" => req.delivery_score.unwrap_or(0.0),
+                    "service" => req.service_score.unwrap_or(0.0),
+                    "price" => req.price_score.unwrap_or(0.0),
+                    _ => 0.0,
+                };
+                total_weighted_score += score * weight;
+                total_weight += weight;
+            }
+
+            if total_weight > 0.0 {
+                Some((total_weighted_score / total_weight * 100.0).round() / 100.0)
+            } else {
+                None
+            }
+        } else {
+            let scores = vec![
+                req.quality_score,
+                req.delivery_score,
+                req.service_score,
+                req.price_score,
+            ];
+            let valid_scores: Vec<f64> = scores.into_iter().flatten().collect();
+            if !valid_scores.is_empty() {
+                let avg = valid_scores.iter().sum::<f64>() / valid_scores.len() as f64;
+                Some(avg.round() / 100.0 * 100.0)
+            } else {
+                None
+            }
+        }
+    };
+
+    if let Some(os) = overall_score {
+        if os < 0.0 || os > 100.0 {
+            return Json(ApiResponse::<SupplierEvaluation>::error(
+                400,
+                "综合评分必须在0-100之间",
+            ));
+        }
     }
 
     let id = Uuid::new_v4();
@@ -256,7 +314,7 @@ async fn create_evaluation(
     .bind(&req.evaluation_no)
     .bind(now)
     .bind(&req.evaluator)
-    .bind(req.overall_score)
+    .bind(overall_score)
     .bind(req.quality_score)
     .bind(req.delivery_score)
     .bind(req.service_score)

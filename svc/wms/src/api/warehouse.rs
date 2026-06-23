@@ -43,10 +43,11 @@ async fn list_warehouses(
 
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        SELECT id, name, code, address, manager, phone, status, created_at, updated_at
-        FROM warehouses
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+        SELECT id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        FROM wms.warehouses
+        WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -62,9 +63,10 @@ async fn list_warehouses(
         Ok(warehouses) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM warehouses
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
+                SELECT COUNT(*) FROM wms.warehouses
+                WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND deleted_at IS NULL
                 "#,
             )
             .bind(&search_pattern)
@@ -102,9 +104,9 @@ async fn create_warehouse(
 
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        INSERT INTO warehouses (id, name, code, address, manager, phone, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $8)
-        RETURNING id, name, code, address, manager, phone, status, created_at, updated_at
+        INSERT INTO wms.warehouses (id, organization_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at)
+        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, 'active', $7, $8)
+        RETURNING id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -165,8 +167,8 @@ async fn get_warehouse(
 ) -> Json<ApiResponse<Warehouse>> {
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        SELECT id, name, code, address, manager, phone, status, created_at, updated_at
-        FROM warehouses WHERE id = $1
+        SELECT id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -189,11 +191,13 @@ async fn update_warehouse(
     headers: HeaderMap,
     Json(req): Json<UpdateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
-    // 先获取 request_data 避免所有权问题
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Warehouse>(
-        "SELECT id, name, code, address, manager, phone, status, created_at, updated_at FROM warehouses WHERE id = $1",
+        r#"
+        SELECT id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
+        "#,
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -215,10 +219,10 @@ async fn update_warehouse(
 
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        UPDATE warehouses SET
-            name = $2, code = $3, address = $4, manager = $5, phone = $6, status = $7, updated_at = $8
-        WHERE id = $1
-        RETURNING id, name, code, address, manager, phone, status, created_at, updated_at
+        UPDATE wms.warehouses SET
+            warehouse_name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -278,7 +282,7 @@ async fn delete_warehouse(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM warehouses WHERE id = $1")
+    let result = sqlx::query(r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
         .bind(id)
         .execute(&state.db)
         .await;
