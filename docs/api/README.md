@@ -2,56 +2,33 @@
 
 ## 概述
 
-本文档集合包含TOPEMS系统的所有API文档。
+TOPEMS 系统 API 文档，包含所有服务的 RESTful API 接口定义。系统采用统一的 API 规范，支持 JWT 认证、RESTful 风格、标准响应格式。
 
 ## API 版本
 
-当前版本: v2
+**当前版本**: v3.0  
+**更新时间**: 2026-06-23  
+**服务总数**: 21
 
-所有API路径格式: `/api/{module}/{resource}`
+## 基础规范
 
-> **说明**: 各服务 API 路径已统一改为 `/api/{服务名}/{资源}` 格式，例如 `/api/iam/auth/login`、`/api/hrm/employees`。
+### 基础 URL
 
-## 核心API文档
+通过 Nginx 反向代理访问：
+```
+http://localhost/api/{service}/...
+```
 
-| API名称 | 文档链接 | 服务端口 |
-|--------|---------|---------|
-| 认证授权(IAM) | [API_AUTH.md](./API_AUTH.md) | 8000 |
-| 工作流 | [API_WORKFLOW.md](./API_WORKFLOW.md) | 8000 |
-| 通知服务 | [API_NOTIFICATION.md](./API_NOTIFICATION.md) | 8000 |
-| 报表服务 | [API_REPORT.md](./API_REPORT.md) | 8060 |
-| 研发管理(RS) | [API_RS.md](./API_RS.md) | 8058 |
-| 质量管控(QMS/LIMS/EHS) | [API_QMS.md](./API_QMS.md) | 8052 |
-| 供应商管理(SRM) | [API_SRM.md](./API_SRM.md) | 8060 |
-| 产品数据管理(PDM) | [API_PDM.md](./API_PDM.md) | 8030 |
+或直接访问服务：
+```
+http://localhost:8000/api/iam/...  # 核心服务
+http://localhost:8010/api/erp/...   # ERP 服务
+http://localhost:8064/api/ai/...    # AI 服务
+```
 
-## 服务路径一览
+### 认证方式
 
-| 服务 | 前缀 | 端口 |
-|------|------|------|
-| IAM | /api/iam/ | 8000 |
-| PM | /api/pm/ | 8001 |
-| HRM | /api/hrm/ | 8011 |
-| CRM | /api/crm/ | 8012 |
-| ERP | /api/erp/ | 8010 |
-| RS | /api/rs/ | 8058 |
-| SCM | /api/scm/ | 8040 |
-| SRM | /api/srm/ | 8060 |
-| WMS | /api/wms/ | 8042 |
-| 质量管控 | /api/qa/ | 8052 |
-| AI | /api/ai/ | 8050 |
-| BI | /api/bi/ | 8060 |
-| GIS | /api/gis/ | 8054 |
-| Mobile | /api/mobile/ | 8056 |
-| Integration | /api/integration/ | 8068 |
-| Mail | /api/mail/ | 8000 |
-| Notification | /api/notification/ | 8000 |
-
-## 通用规范
-
-### 认证
-
-所有需要认证的API请求都必须包含JWT Token：
+所有需要认证的 API 请求必须携带 JWT Token：
 
 ```http
 Authorization: Bearer {token}
@@ -59,98 +36,318 @@ Authorization: Bearer {token}
 
 ### 响应格式
 
-所有API响应遵循统一格式：
-
-#### 成功响应
+**成功响应**:
 ```json
 {
   "code": 200,
-  "message": "Success",
+  "message": "success",
   "data": {},
-  "timestamp": "2026-06-04T12:00:00Z"
+  "timestamp": 1717056000
 }
 ```
 
-#### 错误响应
+**列表响应**:
 ```json
 {
-  "code": 400,
-  "message": "Error message",
-  "error": "Detailed error",
-  "timestamp": "2026-06-04T12:00:00Z"
+  "code": 200,
+  "message": "success",
+  "data": {
+    "list": [],
+    "total": 100,
+    "page": 1,
+    "page_size": 20
+  },
+  "timestamp": 1717056000
 }
 ```
 
-### HTTP状态码
+**错误响应**:
+```json
+{
+  "code": 401,
+  "message": "Unauthorized",
+  "data": null,
+  "timestamp": 1717056000
+}
+```
+
+### HTTP 状态码
 
 | 状态码 | 描述 |
 |-------|------|
 | 200 | 请求成功 |
 | 201 | 资源创建成功 |
 | 400 | 请求参数错误 |
-| 401 | 未认证 |
-| 403 | 无权限 |
+| 401 | 未认证（Token 无效或过期） |
+| 403 | 无权限访问 |
 | 404 | 资源不存在 |
-| 409 | 资源冲突 |
 | 500 | 服务器内部错误 |
 
-### 分页
-
-列表API支持分页参数：
+### 分页规范
 
 ```http
 GET /api/{module}/resources?page=1&page_size=20
 ```
 
-参数说明：
-- `page`: 页码（默认1）
-- `per_page`: 每页数量（默认20）
-- `sort_by`: 排序字段
-- `sort_order`: 排序方向（asc/desc）
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | int | 1 | 页码 |
+| page_size | int | 20 | 每页大小（最大 100） |
 
-## 健康检查
+### 过滤与排序
 
-所有服务都提供健康检查端点：
+```http
+GET /api/hrm/employees?department=研发部&status=active&sort=created_at&order=desc
+```
+
+### 健康检查
+
+所有服务提供健康检查端点：
 
 ```http
 GET /health
+GET /health/details
 ```
 
 响应：
 ```json
 {
   "status": "healthy",
-  "version": "2.0.0"
+  "service": "topems-iam",
+  "version": "1.0.0",
+  "timestamp": 1717056000
 }
 ```
 
-## 前端代理配置
+## 服务端口映射
 
-开发环境使用Vite代理，避免CORS问题，配置见：`frontend/vite.config.ts`
+| 服务 | 端口 | API 前缀 | 说明 | 状态 |
+|------|------|----------|------|------|
+| **核心服务 (统一承载)** |
+| unified-core | 8000 | /api/iam/, /api/doc/, /api/flow/, /api/file/, /api/mail/, /api/comm/, /api/notification/ | 核心平台 | ✅ |
+| **经营管理 (8010-8019)** |
+| erp | 8010 | /api/erp/ | 企业资源计划 | ✅ |
+| **协同办公 (8020-8029)** |
+| hrm | 8020 | /api/hrm/ | 人力资源管理 | ✅ |
+| pm | 8023 | /api/pm/ | 项目管理 | ✅ |
+| crm | 8029 | /api/crm/ | 客户关系管理 | ✅ |
+| **生产制造 (8030-8039)** |
+| mes | 8030 | /api/mes/ | 生产执行系统 | ✅ |
+| pdm | 8031 | /api/pdm/ | 产品数据管理 | ✅ |
+| **供应链 (8040-8049)** |
+| scm | 8040 | /api/scm/ | 供应链管理 | ✅ |
+| wms | 8041 | /api/wms/ | 仓储管理 | ✅ |
+| srm | 8042 | /api/srm/ | 供应商管理 | ✅ |
+| **质量/研发 (8050-8059)** |
+| qms | 8050 | /api/qms/ | 质量管理 | ✅ |
+| lims | 8051 | /api/lims/ | 实验室信息管理 | ✅ |
+| ehs | 8052 | /api/ehs/ | 环境健康安全 | ✅ |
+| rs | 8053 | /api/rs/ | 研发管理 | ✅ |
+| **数据分析 (8060-8069)** |
+| bi | 8060 | /api/bi/ | 商业智能 | ✅ |
+| report | 8061 | /api/report/ | 报表服务 | ✅ |
+| monitor | 8062 | /api/monitor/ | 系统监控 | ✅ |
+| portal | 8063 | /api/portal/ | 企业门户 | ✅ |
+| ai | 8064 | /api/ai/ | AI 智能服务 | ✅ |
+| **基础设施 (8070-8079)** |
+| mobile | 8070 | /api/mobile/ | 移动服务 | ✅ |
+| gis | 8071 | /api/gis/ | 地理信息服务 | ✅ |
+| integration | 8072 | /api/integration/ | 集成服务 | ✅ |
+
+## 核心服务 API
+
+### IAM 认证服务 (/api/iam/)
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|----------|
+| POST | /api/iam/auth/login | 用户登录 | ❌ |
+| POST | /api/iam/auth/logout | 用户登出 | ✅ |
+| POST | /api/iam/auth/refresh | 刷新 Token | ✅ |
+| GET | /api/iam/users/me | 获取当前用户 | ✅ |
+| GET | /api/iam/users | 获取用户列表 | ✅ |
+| POST | /api/iam/users | 创建用户 | ✅ |
+| GET | /api/iam/users/{id} | 获取用户详情 | ✅ |
+| PUT | /api/iam/users/{id} | 更新用户 | ✅ |
+| DELETE | /api/iam/users/{id} | 删除用户 | ✅ |
+| GET | /api/iam/roles | 获取角色列表 | ✅ |
+| POST | /api/iam/roles | 创建角色 | ✅ |
+| GET | /api/iam/permissions | 获取权限列表 | ✅ |
+
+### 工作流服务 (/api/flow/)
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|----------|
+| GET | /api/flow/processes | 获取流程列表 | ✅ |
+| POST | /api/flow/processes | 创建流程定义 | ✅ |
+| GET | /api/flow/processes/{id} | 获取流程详情 | ✅ |
+| POST | /api/flow/instances | 创建流程实例 | ✅ |
+| GET | /api/flow/instances | 获取实例列表 | ✅ |
+| POST | /api/flow/tasks/{id}/complete | 完成任务 | ✅ |
+
+### 通知服务 (/api/notification/)
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|----------|
+| GET | /api/notification/messages | 获取消息列表 | ✅ |
+| POST | /api/notification/messages | 发送消息 | ✅ |
+| PUT | /api/notification/messages/{id}/read | 标记已读 | ✅ |
+| DELETE | /api/notification/messages/{id} | 删除消息 | ✅ |
+
+## 业务服务 API
+
+### HRM 人力资源 (/api/hrm/)
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|----------|
+| GET | /api/hrm/employees | 获取员工列表 | ✅ |
+| POST | /api/hrm/employees | 创建员工 | ✅ |
+| GET | /api/hrm/employees/{id} | 获取员工详情 | ✅ |
+| PUT | /api/hrm/employees/{id} | 更新员工 | ✅ |
+| GET | /api/hrm/departments | 获取部门列表 | ✅ |
+| GET | /api/hrm/attendance | 获取考勤记录 | ✅ |
+
+### QMS 质量管理 (/api/qms/)
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|----------|
+| GET | /api/qms/standards | 获取质量标准 | ✅ |
+| POST | /api/qms/inspections | 创建检验记录 | ✅ |
+| GET | /api/qms/inspections | 获取检验列表 | ✅ |
+| GET | /api/qms/nonconformances | 获取不合格项 | ✅ |
+
+### AI 智能服务 (/api/ai/)
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|----------|
+| POST | /api/ai/chat | 智能对话 | ✅ |
+| POST | /api/ai/embedding | 文本向量化 | ✅ |
+| POST | /api/ai/summary | 文本摘要 | ✅ |
+| GET | /api/ai/models | 获取可用模型 | ✅ |
+| POST | /api/ai/recommend | 智能推荐 | ✅ |
+
+## API 文档索引
+
+### 核心服务
+
+| 服务 | 文档 | 说明 |
+|------|------|------|
+| IAM 认证 | [API_AUTH.md](./API_AUTH.md) | 用户认证、权限管理 |
+| 工作流 | [API_WORKFLOW.md](./API_WORKFLOW.md) | 流程引擎 |
+| 通知服务 | [API_NOTIFICATION.md](./API_NOTIFICATION.md) | 消息通知 |
+
+### 业务服务
+
+| 服务 | 文档 | 说明 |
+|------|------|------|
+| 人力资源 | [API_HRM.md](./API_HRM.md) | 员工、部门、考勤 |
+| 质量管理 | [API_QMS.md](./API_QMS.md) | 质量标准、检验 |
+| 实验室 | [API_LIMS.md](./API_LIMS.md) | 样品、仪器、试剂 |
+| 环境健康 | [API_EHS.md](./API_EHS.md) | 安全、环保 |
+| 研发管理 | [API_RS.md](./API_RS.md) | 项目、配方、专利 |
+| 供应商 | [API_SRM.md](./API_SRM.md) | 供应商、采购 |
+| 产品数据 | [API_PDM.md](./API_PDM.md) | 产品、BOM |
+| 报表服务 | [API_REPORT.md](./API_REPORT.md) | 报表生成导出 |
+
+### 技术规范
+
+| 文档 | 说明 |
+|------|------|
+| [API_VERSION_AND_SCHEMA_GUIDE.md](./API_VERSION_AND_SCHEMA_GUIDE.md) | 版本与 Schema 规范 |
+| [openapi.yaml](./openapi.yaml) | OpenAPI 3.0 规范文件 |
+| [plugins-api.md](./plugins-api.md) | 插件 API |
 
 ## 快速开始
 
-### 1. 认证
+### 1. 登录获取 Token
+
 ```bash
-# 登录获取Token
 curl -X POST http://localhost:8000/api/iam/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"password"}'
+  -d '{"username":"admin","password":"admin123"}'
 ```
 
-### 2. 使用Token调用API
+响应：
+```json
+{
+  "code": 200,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": 1,
+      "username": "admin",
+      "name": "管理员",
+      "email": "admin@topems.com"
+    }
+  }
+}
+```
+
+### 2. 使用 Token 调用 API
+
 ```bash
+# 获取当前用户信息
 curl -X GET http://localhost:8000/api/iam/users/me \
   -H "Authorization: Bearer {token}"
+
+# 获取员工列表
+curl -X GET http://localhost:8020/api/hrm/employees \
+  -H "Authorization: Bearer {token}"
+
+# 智能对话
+curl -X POST http://localhost:8064/api/ai/chat \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"帮我分析本月销售数据"}'
 ```
 
-## 更多文档
+### 3. 健康检查
 
-- [系统架构](../architecture/overview.md)
-- [数据库设计](../architecture/database.md)
-- [部署指南](../deployment/DEPLOYMENT_GUIDE.md)
-- [用户指南](../guides/USER_GUIDE.md)
+```bash
+# 检查所有服务
+curl http://localhost:8000/health
+curl http://localhost:8010/health
+curl http://localhost:8020/health
+curl http://localhost:8064/health
+```
 
----
-**版本**: 2.0.0
-**最后更新**: 2026-06-04
+## 开发工具
+
+### curl 示例
+
+```bash
+# 设置变量
+TOKEN=$(curl -s -X POST http://localhost:8000/api/iam/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}' | jq -r '.data.token')
+
+# 使用变量
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/iam/users/me
+```
+
+### JavaScript 示例
+
+```javascript
+async function login(username, password) {
+  const response = await fetch('http://localhost:8000/api/iam/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  return response.json();
+}
+
+async function getEmployees(token) {
+  const response = await fetch('http://localhost:8020/api/hrm/employees', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return response.json();
+}
+```
+
+## 相关文档
+
+- [系统架构](../architecture/overview.md) - 了解系统架构
+- [数据库设计](../architecture/database.md) - 数据库 Schema 设计
+- [部署指南](../deployment-guide.md) - 系统部署说明
+- [端口分配规则](../port-allocation-rules.md) - 端口配置说明

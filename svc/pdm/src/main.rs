@@ -123,6 +123,11 @@ async fn main() {
         .route("/api/pdm/documents", post(modules::pdm::document::create_document))
         .route("/api/pdm/documents/{id}", get(modules::pdm::document::get_document))
         .route("/api/pdm/documents/{id}", put(modules::pdm::document::update_document))
+        .route("/api/pdm/documents/{id}", delete(modules::pdm::document::delete_document))
+        // Document Approval
+        .route("/api/pdm/documents/{id}/approve", post(modules::pdm::document::start_document_approval))
+        .route("/api/pdm/documents/{id}/approval-history", get(modules::pdm::document::get_document_approval_history))
+        .route("/api/pdm/documents/pending-approval", get(modules::pdm::document::list_pending_documents))
         // Version
         .route("/api/pdm/versions", get(modules::pdm::version::list_versions))
         .route("/api/pdm/versions", post(modules::pdm::version::create_version))
@@ -155,6 +160,27 @@ async fn main() {
         // Production Statistics
         .route("/api/pdm/production-statistics", get(modules::pdm::production_statistics::list_statistics))
         .route("/api/pdm/statistics", get(modules::pdm::production_statistics::get_statistics))
+
+        // Change Notices (ECN)
+        .route("/api/pdm/change-notices", get(modules::pdm::change_notice::list_change_notices))
+        .route("/api/pdm/change-notices", post(modules::pdm::change_notice::create_change_notice))
+        .route("/api/pdm/change-notices/{id}", get(modules::pdm::change_notice::get_change_notice))
+        .route("/api/pdm/change-notices/{id}", put(modules::pdm::change_notice::update_change_notice))
+        .route("/api/pdm/change-notices/{id}", delete(modules::pdm::change_notice::delete_change_notice))
+        .route("/api/pdm/change-notices/{id}/submit", post(modules::pdm::change_notice::submit_change_notice))
+        .route("/api/pdm/change-notices/{id}/approve", post(modules::pdm::change_notice::approve_change_notice))
+        .route("/api/pdm/change-notices/{id}/reject", post(modules::pdm::change_notice::reject_change_notice))
+
+        // Workflows
+        .route("/api/pdm/workflows", get(modules::pdm::workflow::list_workflows))
+        .route("/api/pdm/workflows", post(modules::pdm::workflow::create_workflow))
+        .route("/api/pdm/workflows/{id}", get(modules::pdm::workflow::get_workflow))
+        .route("/api/pdm/workflows/{id}", put(modules::pdm::workflow::update_workflow))
+        .route("/api/pdm/workflows/{id}", delete(modules::pdm::workflow::delete_workflow))
+        .route("/api/pdm/workflows/start", post(modules::pdm::workflow::start_workflow))
+        .route("/api/pdm/workflow-instances", get(modules::pdm::workflow::list_workflow_instances))
+        .route("/api/pdm/workflow-instances/{id}", get(modules::pdm::workflow::get_workflow_instance))
+        .route("/api/pdm/workflow-instances/{id}/advance", post(modules::pdm::workflow::advance_workflow))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))

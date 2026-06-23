@@ -20,13 +20,23 @@ export interface Customer {
   name: string;
   code?: string;
   industry?: string;
+  company_size?: string;
   website?: string;
   email?: string;
   phone?: string;
+  fax?: string;
   address?: string;
+  city?: string;
+  province?: string;
+  country?: string;
+  postal_code?: string;
   status: string;
+  customer_type?: string;
+  source?: string;
+  rating?: string;
+  revenue?: number;
+  employee_count?: number;
   notes?: string;
-  images?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -35,25 +45,76 @@ export interface CreateCustomerRequest {
   name: string;
   code?: string;
   industry?: string;
+  company_size?: string;
   website?: string;
   email?: string;
   phone?: string;
+  fax?: string;
   address?: string;
+  city?: string;
+  province?: string;
+  country?: string;
+  postal_code?: string;
+  customer_type?: string;
+  source?: string;
+  rating?: string;
+  revenue?: number;
+  employee_count?: number;
   notes?: string;
-  images?: string[];
 }
 
 export interface UpdateCustomerRequest {
   name?: string;
   code?: string;
   industry?: string;
+  company_size?: string;
   website?: string;
   email?: string;
   phone?: string;
+  fax?: string;
   address?: string;
+  city?: string;
+  province?: string;
+  country?: string;
+  postal_code?: string;
   status?: string;
+  customer_type?: string;
+  source?: string;
+  rating?: string;
+  revenue?: number;
+  employee_count?: number;
   notes?: string;
-  images?: string[];
+}
+
+export interface CustomerQueryParams extends PaginationParams {
+  status?: string;
+  customer_type?: string;
+  rating?: string;
+  industry?: string;
+}
+
+/**
+ * 标签
+ */
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTagRequest {
+  name: string;
+  color?: string;
+  description?: string;
+}
+
+export interface UpdateTagRequest {
+  name?: string;
+  color?: string;
+  description?: string;
 }
 
 /**
@@ -138,6 +199,31 @@ export interface OpportunityQueryParams extends PaginationParams {
   customer_id?: string;
 }
 
+export interface FunnelStage {
+  stage: string;
+  stage_label: string;
+  count: number;
+  total_value?: number;
+  avg_probability?: number;
+}
+
+export interface OpportunityStats {
+  total_count: number;
+  total_value?: number;
+  weighted_value?: number;
+  won_count: number;
+  won_value?: number;
+  lost_count: number;
+  lost_value?: number;
+}
+
+export interface OpportunityForecast {
+  forecast_month: string;
+  forecast_value: number;
+  opportunity_count: number;
+  avg_probability: number;
+}
+
 /**
  * 交互记录
  */
@@ -188,7 +274,7 @@ const customerApi = {
    * 获取客户列表
    */
   list: async (
-    params?: PaginationParams,
+    params?: CustomerQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
     return apiClient.crm.get("/api/crm/customers", { params });
   },
@@ -231,6 +317,80 @@ const customerApi = {
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
     return apiClient.crm.post("/api/crm/customers/batch-delete", { ids });
+  },
+
+  /**
+   * 获取客户标签
+   */
+  getTags: async (id: string): Promise<ApiResponse<Tag[]>> => {
+    return apiClient.crm.get(`/api/crm/customers/${id}/tags`);
+  },
+
+  /**
+   * 添加标签到客户
+   */
+  addTag: async (id: string, tagId: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.post(`/api/crm/customers/${id}/tags`, {
+      tag_id: tagId,
+    });
+  },
+
+  /**
+   * 从客户移除标签
+   */
+  removeTag: async (id: string, tagId: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/crm/customers/${id}/tags/${tagId}`);
+  },
+};
+
+// ==================== Tag API ====================
+
+const tagApi = {
+  /**
+   * 获取标签列表
+   */
+  list: async (
+    params?: PaginationParams,
+  ): Promise<ApiResponse<PaginatedResponse<Tag>>> => {
+    return apiClient.crm.get("/api/crm/tags", { params });
+  },
+
+  /**
+   * 创建标签
+   */
+  create: async (data: CreateTagRequest): Promise<ApiResponse<Tag>> => {
+    return apiClient.crm.post("/api/crm/tags", data);
+  },
+
+  /**
+   * 获取标签详情
+   */
+  get: async (id: string): Promise<ApiResponse<Tag>> => {
+    return apiClient.crm.get(`/api/crm/tags/${id}`);
+  },
+
+  /**
+   * 更新标签
+   */
+  update: async (
+    id: string,
+    data: UpdateTagRequest,
+  ): Promise<ApiResponse<Tag>> => {
+    return apiClient.crm.put(`/api/crm/tags/${id}`, data);
+  },
+
+  /**
+   * 删除标签
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/crm/tags/${id}`);
+  },
+
+  /**
+   * 获取标签关联的客户
+   */
+  getTaggedCustomers: async (id: string): Promise<ApiResponse<any[]>> => {
+    return apiClient.crm.get(`/api/crm/tags/${id}/customers`);
   },
 };
 
@@ -335,6 +495,29 @@ const opportunityApi = {
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
     return apiClient.crm.post("/api/crm/opportunities/batch-delete", { ids });
+  },
+
+  /**
+   * 获取销售漏斗数据
+   */
+  getFunnel: async (): Promise<ApiResponse<FunnelStage[]>> => {
+    return apiClient.crm.get("/api/crm/opportunities/funnel");
+  },
+
+  /**
+   * 获取商机统计数据
+   */
+  getStats: async (): Promise<ApiResponse<OpportunityStats>> => {
+    return apiClient.crm.get("/api/crm/opportunities/stats");
+  },
+
+  /**
+   * 获取商机预测数据
+   */
+  getForecast: async (
+    params?: { months?: number },
+  ): Promise<ApiResponse<OpportunityForecast[]>> => {
+    return apiClient.crm.get("/api/crm/opportunities/forecast", { params });
   },
 };
 
@@ -670,6 +853,7 @@ const billingApi = {
  */
 export const crmApi = {
   customers: customerApi,
+  tags: tagApi,
   contacts: contactApi,
   opportunities: opportunityApi,
   interactions: interactionApi,
@@ -688,6 +872,7 @@ export const crmApi = {
 // 导出独立的 API 对象供直接使用
 export {
   customerApi,
+  tagApi,
   contactApi,
   opportunityApi,
   interactionApi,

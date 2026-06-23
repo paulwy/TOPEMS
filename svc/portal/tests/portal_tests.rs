@@ -141,7 +141,7 @@ mod service_dto_tests {
             id: "lims".to_string(),
             name: "实验室".to_string(),
             description: "实验室信息管理系统".to_string(),
-            url: "http://localhost:8022".to_string(),
+            url: "http://localhost:8023".to_string(),
             icon: "Beaker".to_string(),
             status: "running".to_string(),
             category: "实验室".to_string(),

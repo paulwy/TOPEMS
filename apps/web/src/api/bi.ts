@@ -5,7 +5,32 @@ export interface Dashboard {
   name: string;
   description?: string;
   layout?: any;
-  created_by?: string;
+  owner_id?: string;
+  is_public?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  layout: any;
+  preview_image?: string;
+  category?: string;
+  tags?: string[];
+  is_active?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Widget {
+  id: string;
+  dashboard_id?: string;
+  name: string;
+  widget_type: string;
+  config?: any;
+  position?: any;
   created_at: string;
   updated_at: string;
 }
@@ -139,6 +164,70 @@ export async function updateDashboard(id: string, data: Partial<Dashboard>) {
 
 export async function deleteDashboard(id: string) {
   return await apiClient.bi.delete(`/api/bi/dashboard/${id}`);
+}
+
+export async function cloneDashboard(id: string) {
+  return await apiClient.bi.post(`/api/bi/dashboard/${id}/clone`);
+}
+
+export async function fetchPublicDashboards() {
+  return await apiClient.bi.get("/api/bi/dashboard/public");
+}
+
+export async function fetchUserDashboards(ownerId: string) {
+  return await apiClient.bi.get(`/api/bi/dashboard/user/${ownerId}`);
+}
+
+export async function fetchDashboardTemplates() {
+  return await apiClient.bi.get("/api/bi/dashboard/template");
+}
+
+export async function fetchDashboardTemplate(id: string) {
+  return await apiClient.bi.get(`/api/bi/dashboard/template/${id}`);
+}
+
+export async function createDashboardTemplate(data: Partial<DashboardTemplate>) {
+  return await apiClient.bi.post("/api/bi/dashboard/template", data);
+}
+
+export async function updateDashboardTemplate(id: string, data: Partial<DashboardTemplate>) {
+  return await apiClient.bi.put(`/api/bi/dashboard/template/${id}`, data);
+}
+
+export async function deleteDashboardTemplate(id: string) {
+  return await apiClient.bi.delete(`/api/bi/dashboard/template/${id}`);
+}
+
+export async function createDashboardFromTemplate(templateId: string, data: Partial<Dashboard>) {
+  return await apiClient.bi.post(`/api/bi/dashboard/template/${templateId}/create`, data);
+}
+
+export async function fetchWidgets() {
+  return await apiClient.bi.get("/api/bi/widget");
+}
+
+export async function fetchWidgetsByDashboard(dashboardId: string) {
+  return await apiClient.bi.get(`/api/bi/widget/dashboard/${dashboardId}`);
+}
+
+export async function fetchWidget(id: string) {
+  return await apiClient.bi.get(`/api/bi/widget/${id}`);
+}
+
+export async function createWidget(data: Partial<Widget>) {
+  return await apiClient.bi.post("/api/bi/widget", data);
+}
+
+export async function updateWidget(id: string, data: Partial<Widget>) {
+  return await apiClient.bi.put(`/api/bi/widget/${id}`, data);
+}
+
+export async function deleteWidget(id: string) {
+  return await apiClient.bi.delete(`/api/bi/widget/${id}`);
+}
+
+export async function fetchWidgetData(id: string) {
+  return await apiClient.bi.get(`/api/bi/widget/${id}/data`);
 }
 
 export async function fetchReports() {

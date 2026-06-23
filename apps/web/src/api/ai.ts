@@ -28,6 +28,54 @@ export interface Document {
   error_message?: string;
 }
 
+export interface DocumentQAAnswer {
+  answer: string;
+  confidence: number;
+  sources: DocumentQASource[];
+  follow_up_questions: string[];
+}
+
+export interface DocumentQASource {
+  document_id: string;
+  document_title: string;
+  chunk_content: string;
+  similarity: number;
+}
+
+export interface DocumentQAQuestionRequest {
+  question: string;
+  document_ids?: string[];
+  top_k?: number;
+}
+
+export interface ExtractDocumentRequest {
+  extract_type: string;
+}
+
+export interface ExtractDocumentResponse {
+  document_id: string;
+  extract_type: string;
+  result: Record<string, any>;
+}
+
+export interface SummarizeDocumentRequest {
+  max_length?: number;
+}
+
+export interface SummarizeDocumentResponse {
+  document_id: string;
+  summary: string;
+}
+
+export interface ExtractKeyPointsRequest {
+  max_points?: number;
+}
+
+export interface ExtractKeyPointsResponse {
+  document_id: string;
+  key_points: string[];
+}
+
 export interface Conversation {
   id: string;
   title: string;
@@ -135,6 +183,17 @@ export interface Keyword {
 
 export interface ExtractKeywordsResponse {
   keywords: Keyword[];
+}
+
+export interface QAHistoryItem {
+  id: string;
+  question: string;
+  answer: string;
+  context?: Record<string, any>;
+  sources?: any[];
+  feedback?: string;
+  rating?: number;
+  created_at: string;
 }
 
 export interface AIGenerateRequest {
@@ -291,6 +350,149 @@ export const aiApi = {
   ): Promise<ApiResponse<ExtractKeywordsResponse>> => {
     return apiClient.ai.post<ExtractKeywordsResponse>(
       "/api/ai/analysis/keywords",
+      data,
+    );
+  },
+
+  // 文档问答接口
+  documentQA: async (
+    data: DocumentQAQuestionRequest,
+  ): Promise<ApiResponse<DocumentQAAnswer>> => {
+    return apiClient.ai.post<DocumentQAAnswer>("/api/v1/documents/qa", data);
+  },
+
+  // 智能问答接口
+  ask: async (data: {
+    question: string;
+    top_k?: number;
+  }): Promise<
+    ApiResponse<{
+      answer: string;
+      sources: any[];
+      qa_id: string;
+      confidence: number;
+    }>
+  > => {
+    return apiClient.ai.post("/api/ai/qa/ask", data);
+  },
+
+  askWithContext: async (data: {
+    question: string;
+    document_ids: string[];
+    top_k?: number;
+  }): Promise<
+    ApiResponse<{
+      answer: string;
+      sources: any[];
+      qa_id: string;
+      confidence: number;
+    }>
+  > => {
+    return apiClient.ai.post("/api/ai/qa/ask-with-context", data);
+  },
+
+  askStructured: async (data: {
+    question: string;
+    document_ids?: string[];
+    top_k?: number;
+  }): Promise<
+    ApiResponse<{
+      answer: string;
+      question_type: string;
+      confidence: number;
+      sources: string[];
+      follow_up_questions: string[];
+    }>
+  > => {
+    return apiClient.ai.post("/api/ai/qa/ask-structured", data);
+  },
+
+  askConversation: async (data: {
+    question: string;
+    history: { question: string; answer: string }[];
+    document_ids?: string[];
+    top_k?: number;
+  }): Promise<
+    ApiResponse<{
+      answer: string;
+      sources: any[];
+      qa_id: string;
+      confidence: number;
+    }>
+  > => {
+    return apiClient.ai.post("/api/ai/qa/ask-conversation", data);
+  },
+
+  classifyQuestion: async (data: {
+    question: string;
+  }): Promise<ApiResponse<{ question_type: string }>> => {
+    return apiClient.ai.post("/api/ai/qa/classify", data);
+  },
+
+  getQAHistory: async (params?: {
+    page?: number;
+    page_size?: number;
+    query?: string;
+  }): Promise<ApiResponse<{ history: QAHistoryItem[]; total: number }>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", params.page.toString());
+    if (params?.page_size)
+      searchParams.set("page_size", params.page_size.toString());
+    if (params?.query) searchParams.set("query", params.query);
+
+    const queryString = searchParams.toString();
+    return apiClient.ai.get(
+      `/api/ai/qa/history${queryString ? "?" + queryString : ""}`,
+    );
+  },
+
+  deleteQAHistory: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.ai.delete(`/api/ai/qa/history/${id}`);
+  },
+
+  batchDeleteQAHistory: async (
+    ids: string[],
+  ): Promise<ApiResponse<{ deleted_count: number; message: string }>> => {
+    return apiClient.ai.post("/api/ai/qa/history/batch-delete", { ids });
+  },
+
+  submitFeedback: async (data: {
+    qa_id: string;
+    feedback: string;
+    rating?: number;
+  }): Promise<ApiResponse<{ qa_id: string; message: string }>> => {
+    return apiClient.ai.post("/api/ai/qa/feedback", data);
+  },
+
+  // 文档摘要接口
+  summarizeDocument: async (
+    id: string,
+    data?: SummarizeDocumentRequest,
+  ): Promise<ApiResponse<SummarizeDocumentResponse>> => {
+    return apiClient.ai.post<SummarizeDocumentResponse>(
+      `/api/v1/documents/${id}/summarize`,
+      data || {},
+    );
+  },
+
+  // 提取文档关键点接口
+  extractKeyPoints: async (
+    id: string,
+    data?: ExtractKeyPointsRequest,
+  ): Promise<ApiResponse<ExtractKeyPointsResponse>> => {
+    return apiClient.ai.post<ExtractKeyPointsResponse>(
+      `/api/v1/documents/${id}/key-points`,
+      data || {},
+    );
+  },
+
+  // 文档提取接口
+  extractDocument: async (
+    id: string,
+    data: ExtractDocumentRequest,
+  ): Promise<ApiResponse<ExtractDocumentResponse>> => {
+    return apiClient.ai.post<ExtractDocumentResponse>(
+      `/api/v1/documents/${id}/extract`,
       data,
     );
   },

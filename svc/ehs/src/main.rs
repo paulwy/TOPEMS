@@ -23,7 +23,7 @@ use std::net::SocketAddr;
 
 use axum::{
     extract::State,
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -35,8 +35,6 @@ use topems_shared::{
 };
 
 pub use shared::*;
-
-// ==================== 应用状态 ====================
 
 #[derive(Clone)]
 pub struct AppState {
@@ -50,8 +48,6 @@ impl axum::extract::FromRef<AppState> for AuthState {
         state.auth_state.clone()
     }
 }
-
-// ==================== 主入口 ====================
 
 #[tokio::main]
 async fn main() {
@@ -79,7 +75,6 @@ async fn main() {
         }
     };
 
-    // Initialize database for EHS module
     if let Err(e) = modules::ehs::init_database(&pool).await {
         tracing::warn!("EHS module database init warning: {}", e);
     }
@@ -97,7 +92,6 @@ async fn main() {
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
@@ -107,7 +101,6 @@ async fn main() {
         .route("/api/info", get(|| get_api_info_handler("ehs-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
-    // Protected routes (auth required)
     let protected_routes = Router::new()
         // ===== EHS routes (prefix: /api/ehs) =====
         // Hazards (Safety Hazard Management)
@@ -116,27 +109,73 @@ async fn main() {
         .route("/api/ehs/hazards/{id}", get(modules::ehs::risk::get_risk))
         .route("/api/ehs/hazards/{id}", put(modules::ehs::risk::update_risk))
         .route("/api/ehs/hazards/{id}/assessments", post(modules::ehs::risk::assess_risk))
-        // Safety Checks
-        .route("/api/ehs/checks", get(modules::ehs::safety::list_inspections))
-        .route("/api/ehs/checks", post(modules::ehs::safety::create_inspection))
-        .route("/api/ehs/checks/{id}", get(modules::ehs::safety::get_inspection))
+
+        // Inspection Plans
+        .route("/api/ehs/checks/plans", get(modules::ehs::safety::list_plans))
+        .route("/api/ehs/checks/plans", post(modules::ehs::safety::create_plan))
+        .route("/api/ehs/checks/plans/{id}", get(modules::ehs::safety::get_plan))
+        .route("/api/ehs/checks/plans/{id}", put(modules::ehs::safety::update_plan))
+        .route("/api/ehs/checks/plans/{id}", delete(modules::ehs::safety::delete_plan))
+
+        // Inspection Items
+        .route("/api/ehs/checks/plans/{plan_id}/items", get(modules::ehs::safety::list_plan_items))
+        .route("/api/ehs/checks/plans/{plan_id}/items", post(modules::ehs::safety::create_plan_item))
+        .route("/api/ehs/checks/plans/{plan_id}/items/{item_id}", delete(modules::ehs::safety::delete_plan_item))
+
+        // Inspection Records
+        .route("/api/ehs/checks/records", get(modules::ehs::safety::list_records))
+        .route("/api/ehs/checks/records", post(modules::ehs::safety::create_record))
+        .route("/api/ehs/checks/records/{id}", get(modules::ehs::safety::get_record))
+        .route("/api/ehs/checks/records/{id}", put(modules::ehs::safety::update_record))
+        .route("/api/ehs/checks/records/{id}", delete(modules::ehs::safety::delete_record))
+
+        // Safety Issues (Hazard Management)
+        .route("/api/ehs/issues", get(modules::ehs::hazard::list_hazards))
+        .route("/api/ehs/issues", post(modules::ehs::hazard::create_hazard))
+        .route("/api/ehs/issues/{id}", get(modules::ehs::hazard::get_hazard))
+        .route("/api/ehs/issues/{id}", put(modules::ehs::hazard::update_hazard))
+        .route("/api/ehs/issues/{id}", delete(modules::ehs::hazard::delete_hazard))
+        .route("/api/ehs/issues/{id}/rectification", post(modules::ehs::hazard::start_rectification))
+        .route("/api/ehs/issues/{id}/rectification", put(modules::ehs::hazard::update_rectification))
+        .route("/api/ehs/issues/{id}/rectification/submit", post(modules::ehs::hazard::submit_rectification))
+        .route("/api/ehs/issues/{id}/verification", post(modules::ehs::hazard::verify_hazard))
+        .route("/api/ehs/issues/{id}/close", post(modules::ehs::hazard::close_hazard))
+
         // Incidents (Accident Reports)
         .route("/api/ehs/incidents", get(modules::ehs::accident::list_accidents))
         .route("/api/ehs/incidents", post(modules::ehs::accident::report_accident))
         .route("/api/ehs/incidents/{id}", get(modules::ehs::accident::get_accident))
         .route("/api/ehs/incidents/{id}", put(modules::ehs::accident::update_accident))
+        .route("/api/ehs/incidents/{id}", delete(modules::ehs::accident::delete_accident))
+        .route("/api/ehs/incidents/{id}/investigation", post(modules::ehs::accident::start_investigation))
+        .route("/api/ehs/incidents/{id}/investigation", put(modules::ehs::accident::update_investigation))
+        .route("/api/ehs/incidents/{id}/investigation/complete", post(modules::ehs::accident::complete_investigation))
+        .route("/api/ehs/incidents/{id}/treatment", post(modules::ehs::accident::create_treatment))
+        .route("/api/ehs/incidents/{id}/treatment/actions/{action_id}", put(modules::ehs::accident::update_treatment_action))
+        .route("/api/ehs/incidents/{id}/treatment/complete", post(modules::ehs::accident::complete_treatment))
+        .route("/api/ehs/incidents/{id}/review", post(modules::ehs::accident::create_review))
+        .route("/api/ehs/incidents/{id}/close", post(modules::ehs::accident::close_accident))
+
         // Environment
         .route("/api/ehs/environment", get(modules::ehs::environment::list_records))
         .route("/api/ehs/environment", post(modules::ehs::environment::create_record))
+
         // Training
         .route("/api/ehs/training", get(modules::ehs::training::list_trainings))
         .route("/api/ehs/training", post(modules::ehs::training::create_training))
         .route("/api/ehs/training/{id}", get(modules::ehs::training::get_training))
+
         // Health
         .route("/api/ehs/health", get(modules::ehs::health::list_records))
         .route("/api/ehs/health", post(modules::ehs::health::create_record))
+        // Data Sync
+        .route("/api/ehs/sync-records", get(modules::ehs::data_sync::list_sync_records))
+        .route("/api/ehs/sync-records/{id}", get(modules::ehs::data_sync::get_sync_record))
+        .route("/api/ehs/sync-records/{id}", delete(modules::ehs::data_sync::delete_sync_record))
+        .route("/api/ehs/sync-records/{id}/retry", post(modules::ehs::data_sync::retry_sync))
+        .route("/api/ehs/sync/hazard-to-qms", post(modules::ehs::data_sync::sync_hazard_to_qms))
+        .route("/api/ehs/sync/accident-to-lims", post(modules::ehs::data_sync::sync_accident_to_lims))
 
-        // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
@@ -157,7 +196,6 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ EHS Service is running at http://{}", addr);
 
-    // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         plugin::auto_register_to_core(core_url.as_deref()).await;
@@ -170,8 +208,6 @@ async fn main() {
     .await
     .unwrap();
 }
-
-// ==================== 公共处理函数 ====================
 
 async fn home() -> &'static str {
     "TOPEMS EHS Service API\n\n\

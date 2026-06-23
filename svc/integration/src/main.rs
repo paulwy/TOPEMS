@@ -12,7 +12,7 @@
 use axum::{
     extract::FromRef,
     extract::{Path, State},
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -30,6 +30,8 @@ mod conversion_rules;
 mod rule_engine;
 mod event_bus;
 mod retry_handler;
+mod qms_lims_ehs;
+mod sync_retry;
 
 use conversion_rules::{
     ConversionExecution, ConversionRule, CreateConversionRuleRequest, ExecuteConversionRequest,
@@ -986,75 +988,49 @@ async fn update_conversion_rule_api(
 ) -> Json<ApiResponse<ConversionRule>> {
     let now = Utc::now();
     
-    let mut update_fields = Vec::new();
-    let mut params: Vec<Box<dyn sqlx::Encode<'_, sqlx::Postgres> + Send>> = Vec::new();
+    let row = sqlx::query(
+        "UPDATE conversion_rules SET name = COALESCE($1, name), description = COALESCE($2, description), trigger_type = COALESCE($3, trigger_type), trigger_condition = COALESCE($4, trigger_condition), field_mappings = COALESCE($5, field_mappings), transform_script = COALESCE($6, transform_script), status = COALESCE($7, status), priority = COALESCE($8, priority), is_enabled = COALESCE($9, is_enabled), max_retries = COALESCE($10, max_retries), retry_interval_secs = COALESCE($11, retry_interval_secs), stop_on_failure = COALESCE($12, stop_on_failure), updated_at = $13 WHERE id = $14 RETURNING id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at::TEXT, updated_at::TEXT"
+    )
+    .bind(&req.name)
+    .bind(&req.description)
+    .bind(req.trigger_type.as_ref().map(|v| v.as_str().to_string()))
+    .bind(&req.trigger_condition)
+    .bind(req.field_mappings.as_ref().map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Array(vec![]))))
+    .bind(&req.transform_script)
+    .bind(req.status.as_ref().map(|v| v.as_str().to_string()))
+    .bind(req.priority)
+    .bind(req.is_enabled)
+    .bind(req.max_retries)
+    .bind(req.retry_interval_secs)
+    .bind(req.stop_on_failure)
+    .bind(now)
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await;
     
-    if let Some(name) = &req.name {
-        update_fields.push("name = $1");
-        params.push(Box::new(name.clone()));
-    }
-    if let Some(description) = &req.description {
-        update_fields.push(format!("description = ${}", params.len() + 1));
-        params.push(Box::new(description.clone()));
-    }
-    if let Some(trigger_type) = &req.trigger_type {
-        update_fields.push(format!("trigger_type = ${}", params.len() + 1));
-        params.push(Box::new(serde_json::to_string(trigger_type).unwrap_or_default()));
-    }
-    if let Some(trigger_condition) = &req.trigger_condition {
-        update_fields.push(format!("trigger_condition = ${}", params.len() + 1));
-        params.push(Box::new(trigger_condition.clone()));
-    }
-    if let Some(field_mappings) = &req.field_mappings {
-        update_fields.push(format!("field_mappings = ${}", params.len() + 1));
-        params.push(Box::new(serde_json::to_value(field_mappings).unwrap_or(serde_json::Value::Array(vec![]))));
-    }
-    if let Some(transform_script) = &req.transform_script {
-        update_fields.push(format!("transform_script = ${}", params.len() + 1));
-        params.push(Box::new(transform_script.clone()));
-    }
-    if let Some(status) = &req.status {
-        update_fields.push(format!("status = ${}", params.len() + 1));
-        params.push(Box::new(serde_json::to_string(status).unwrap_or_default()));
-    }
-    if let Some(priority) = req.priority {
-        update_fields.push(format!("priority = ${}", params.len() + 1));
-        params.push(Box::new(priority));
-    }
-    if let Some(is_enabled) = req.is_enabled {
-        update_fields.push(format!("is_enabled = ${}", params.len() + 1));
-        params.push(Box::new(is_enabled));
-    }
-    if let Some(max_retries) = req.max_retries {
-        update_fields.push(format!("max_retries = ${}", params.len() + 1));
-        params.push(Box::new(max_retries));
-    }
-    if let Some(retry_interval_secs) = req.retry_interval_secs {
-        update_fields.push(format!("retry_interval_secs = ${}", params.len() + 1));
-        params.push(Box::new(retry_interval_secs));
-    }
-    if let Some(stop_on_failure) = req.stop_on_failure {
-        update_fields.push(format!("stop_on_failure = ${}", params.len() + 1));
-        params.push(Box::new(stop_on_failure));
-    }
-    
-    update_fields.push(format!("updated_at = ${}", params.len() + 1));
-    params.push(Box::new(now));
-    
-    let query = format!(
-        "UPDATE conversion_rules SET {} WHERE id = ${} RETURNING *",
-        update_fields.join(", "),
-        params.len() + 1
-    );
-    
-    let mut query_builder = sqlx::query_as::<_, ConversionRule>(&query);
-    for param in params {
-        query_builder = query_builder.bind(param);
-    }
-    query_builder = query_builder.bind(id);
-    
-    match query_builder.fetch_one(&state.pool).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule updated successfully")),
+    match row {
+        Ok(r) => Json(ApiResponse::success(ConversionRule {
+            id: r.get("id"),
+            code: r.get("code"),
+            name: r.get("name"),
+            description: r.get("description"),
+            source_system: r.get("source_system"),
+            source_entity: r.get("source_entity"),
+            target_system: r.get("target_system"),
+            target_entity: r.get("target_entity"),
+            trigger_type: TriggerType::from_str(r.get::<String, _>("trigger_type").as_str()),
+            trigger_condition: r.get("trigger_condition"),
+            field_mappings: r.get("field_mappings"),
+            transform_script: r.get("transform_script"),
+            status: RuleStatus::from_str(r.get::<String, _>("status").as_str()),
+            priority: r.get("priority"),
+            is_enabled: r.get("is_enabled"),
+            max_retries: r.get("max_retries"),
+            retry_interval_secs: r.get("retry_interval_secs"),
+            stop_on_failure: r.get("stop_on_failure"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
+        }, "Conversion rule updated successfully")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to update conversion rule: {}", e);

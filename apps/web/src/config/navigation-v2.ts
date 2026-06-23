@@ -33,6 +33,8 @@ import {
   Mail,
   Navigation,
   Lock,
+  Award,
+  Bell,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -68,10 +70,26 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       title: "财务管理",
       icon: Building2,
       children: [
-        { id: "erp-finance-voucher", title: "凭证管理", path: "/erp/finance/voucher" },
-        { id: "erp-finance-invoice", title: "发票管理", path: "/erp/finance/invoice" },
-        { id: "erp-finance-budget", title: "预算管理", path: "/erp/finance/budget" },
-        { id: "erp-finance-reports", title: "财务报表", path: "/erp/finance/reports" },
+        {
+          id: "erp-finance-voucher",
+          title: "凭证管理",
+          path: "/erp/finance/voucher",
+        },
+        {
+          id: "erp-finance-invoice",
+          title: "发票管理",
+          path: "/erp/finance/invoice",
+        },
+        {
+          id: "erp-finance-budget",
+          title: "预算管理",
+          path: "/erp/finance/budget",
+        },
+        {
+          id: "erp-finance-reports",
+          title: "财务报表",
+          path: "/erp/finance/reports",
+        },
       ],
     },
     {
@@ -79,8 +97,16 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       title: "采购管理",
       icon: ShoppingCart,
       children: [
-        { id: "erp-purchase-order", title: "采购订单", path: "/erp/purchase/order" },
-        { id: "erp-purchase-receipt", title: "采购收货", path: "/erp/purchase/receipt" },
+        {
+          id: "erp-purchase-order",
+          title: "采购订单",
+          path: "/erp/purchase/order",
+        },
+        {
+          id: "erp-purchase-receipt",
+          title: "采购收货",
+          path: "/erp/purchase/receipt",
+        },
       ],
     },
     {
@@ -89,7 +115,11 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       icon: Truck,
       children: [
         { id: "erp-sales-order", title: "销售订单", path: "/erp/sales/order" },
-        { id: "erp-sales-delivery", title: "销售发货", path: "/erp/sales/delivery" },
+        {
+          id: "erp-sales-delivery",
+          title: "销售发货",
+          path: "/erp/sales/delivery",
+        },
       ],
     },
   ],
@@ -106,7 +136,11 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       icon: Users,
       children: [
         { id: "hrm-employee-list", title: "员工列表", path: "/hrm/employee" },
-        { id: "hrm-employee-create", title: "新增员工", path: "/hrm/employee/create" },
+        {
+          id: "hrm-employee-create",
+          title: "新增员工",
+          path: "/hrm/employee/create",
+        },
         { id: "hrm-department", title: "部门管理", path: "/hrm/department" },
       ],
     },
@@ -115,7 +149,11 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       title: "考勤管理",
       icon: Activity,
       children: [
-        { id: "hrm-attendance-record", title: "考勤记录", path: "/hrm/attendance" },
+        {
+          id: "hrm-attendance-record",
+          title: "考勤记录",
+          path: "/hrm/attendance",
+        },
         { id: "hrm-leave", title: "请假管理", path: "/hrm/leave" },
       ],
     },
@@ -206,7 +244,11 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       icon: Factory,
       children: [
         { id: "mes-order", title: "生产工单", path: "/mes/production/order" },
-        { id: "mes-process", title: "生产工艺", path: "/mes/production/process" },
+        {
+          id: "mes-process",
+          title: "生产工艺",
+          path: "/mes/production/process",
+        },
         { id: "mes-record", title: "生产记录", path: "/mes/production/record" },
       ],
     },
@@ -247,6 +289,24 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       title: "批次管理",
       icon: Package,
       path: "/pdm/batch",
+    },
+    {
+      id: "pdm-bom",
+      title: "物料清单",
+      icon: Package,
+      path: "/pdm/bom",
+    },
+    {
+      id: "pdm-version",
+      title: "版本管理",
+      icon: GitBranch,
+      path: "/pdm/version",
+    },
+    {
+      id: "pdm-product-config",
+      title: "产品配置",
+      icon: Settings,
+      path: "/pdm/product-config",
     },
   ],
   qms: [
@@ -395,6 +455,18 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       icon: Handshake,
     },
     {
+      id: "srm-evaluation",
+      title: "供应商评估",
+      icon: Award,
+      path: "/srm/evaluation",
+    },
+    {
+      id: "srm-performance",
+      title: "绩效报表",
+      icon: BarChart3,
+      path: "/srm/performance",
+    },
+    {
       id: "srm-sourcing",
       title: "寻源管理",
       icon: Target,
@@ -440,25 +512,37 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
       path: "/report/design",
       icon: LayoutDashboard,
     },
+    {
+      id: "report-schedule",
+      title: "定时任务",
+      path: "/report/schedules",
+      icon: Activity,
+    },
+    {
+      id: "report-subscription",
+      title: "订阅管理",
+      path: "/report/subscriptions",
+      icon: Mail,
+    },
   ],
   monitor: [
     {
       id: "monitor-dashboard",
       title: "监控首页",
-      path: "/monitor/dashboard",
+      path: "/monitor",
       icon: Activity,
     },
     {
-      id: "monitor-alerts",
-      title: "告警管理",
-      path: "/monitor/alerts",
-      icon: AlertTriangle,
+      id: "monitor-metrics",
+      title: "性能指标",
+      path: "/monitor/metrics",
+      icon: BarChart3,
     },
     {
-      id: "monitor-performance",
-      title: "性能监控",
-      path: "/monitor/performance",
-      icon: BarChart3,
+      id: "monitor-alerts",
+      title: "告警通知",
+      path: "/monitor/alerts",
+      icon: AlertTriangle,
     },
   ],
   portal: [
@@ -473,22 +557,46 @@ export const pluginNavigation: Record<string, NavigationItem[]> = {
     {
       id: "mobile-settings",
       title: "移动端设置",
-      path: "/mobile/settings",
+      path: "/mobile",
       icon: Smartphone,
+    },
+    {
+      id: "mobile-offline-sync",
+      title: "离线数据同步",
+      path: "/mobile/offline-sync",
+      icon: Database,
+    },
+    {
+      id: "mobile-scan",
+      title: "扫码功能",
+      path: "/mobile/scan",
+      icon: Grid3X3,
+    },
+    {
+      id: "mobile-notifications",
+      title: "通知推送",
+      path: "/mobile/notifications",
+      icon: Bell,
     },
   ],
   gis: [
     {
       id: "gis-dashboard",
       title: "GIS 首页",
-      path: "/gis/dashboard",
+      path: "/gis",
       icon: Map,
     },
     {
+      id: "gis-fence",
+      title: "地理围栏",
+      path: "/gis/fence",
+      icon: Shield,
+    },
+    {
       id: "gis-tracking",
-      title: "设备跟踪",
+      title: "轨迹追踪",
       path: "/gis/tracking",
-      icon: Map,
+      icon: Navigation,
     },
   ],
   integration: [
@@ -618,8 +726,20 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "生产套件",
     suiteCode: "production",
     items: [
-      { id: "mes", title: "生产执行", path: "/mes/dashboard", icon: Factory, pluginCode: "mes" },
-      { id: "pdm", title: "产品数据", path: "/pdm/stats", icon: Layers, pluginCode: "pdm" },
+      {
+        id: "mes",
+        title: "生产执行",
+        path: "/mes/dashboard",
+        icon: Factory,
+        pluginCode: "mes",
+      },
+      {
+        id: "pdm",
+        title: "产品数据",
+        path: "/pdm/stats",
+        icon: Layers,
+        pluginCode: "pdm",
+      },
     ],
   },
   quality: {
@@ -627,9 +747,27 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "质量套件",
     suiteCode: "quality",
     items: [
-      { id: "qms", title: "质量管理", path: "/qms/inspection", icon: Shield, pluginCode: "qms" },
-      { id: "lims", title: "实验室", path: "/lims/sample", icon: FlaskConical, pluginCode: "lims" },
-      { id: "ehs", title: "环境安全", path: "/ehs/hazard", icon: Leaf, pluginCode: "ehs" },
+      {
+        id: "qms",
+        title: "质量管理",
+        path: "/qms/inspection",
+        icon: Shield,
+        pluginCode: "qms",
+      },
+      {
+        id: "lims",
+        title: "实验室",
+        path: "/lims/sample",
+        icon: FlaskConical,
+        pluginCode: "lims",
+      },
+      {
+        id: "ehs",
+        title: "环境安全",
+        path: "/ehs/hazard",
+        icon: Leaf,
+        pluginCode: "ehs",
+      },
     ],
   },
   rd: {
@@ -637,7 +775,13 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "研发套件",
     suiteCode: "rd",
     items: [
-      { id: "rs", title: "研发管理", path: "/rs/dashboard", icon: FlaskRound, pluginCode: "rs" },
+      {
+        id: "rs",
+        title: "研发管理",
+        path: "/rs/dashboard",
+        icon: FlaskRound,
+        pluginCode: "rs",
+      },
     ],
   },
   collab: {
@@ -645,9 +789,27 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "协同套件",
     suiteCode: "collab",
     items: [
-      { id: "hrm", title: "人力资源", path: "/hrm/dashboard", icon: Users, pluginCode: "hrm" },
-      { id: "crm", title: "客户管理", path: "/crm/dashboard", icon: Users, pluginCode: "crm" },
-      { id: "pm", title: "项目管理", path: "/pm/dashboard", icon: Target, pluginCode: "pm" },
+      {
+        id: "hrm",
+        title: "人力资源",
+        path: "/hrm/dashboard",
+        icon: Users,
+        pluginCode: "hrm",
+      },
+      {
+        id: "crm",
+        title: "客户管理",
+        path: "/crm/dashboard",
+        icon: Users,
+        pluginCode: "crm",
+      },
+      {
+        id: "pm",
+        title: "项目管理",
+        path: "/pm/dashboard",
+        icon: Target,
+        pluginCode: "pm",
+      },
     ],
   },
   business: {
@@ -655,7 +817,13 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "经营套件",
     suiteCode: "business",
     items: [
-      { id: "erp", title: "ERP", path: "/erp/dashboard", icon: Building2, pluginCode: "erp" },
+      {
+        id: "erp",
+        title: "ERP",
+        path: "/erp/dashboard",
+        icon: Building2,
+        pluginCode: "erp",
+      },
     ],
   },
   supply: {
@@ -663,9 +831,27 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "供应链套件",
     suiteCode: "supply",
     items: [
-      { id: "scm", title: "供应链", path: "/scm/dashboard", icon: Truck, pluginCode: "scm" },
-      { id: "wms", title: "仓储管理", path: "/wms/inventory", icon: Warehouse, pluginCode: "wms" },
-      { id: "srm", title: "供应商", path: "/srm/supplier", icon: Handshake, pluginCode: "srm" },
+      {
+        id: "scm",
+        title: "供应链",
+        path: "/scm/dashboard",
+        icon: Truck,
+        pluginCode: "scm",
+      },
+      {
+        id: "wms",
+        title: "仓储管理",
+        path: "/wms/inventory",
+        icon: Warehouse,
+        pluginCode: "wms",
+      },
+      {
+        id: "srm",
+        title: "供应商",
+        path: "/srm/supplier",
+        icon: Handshake,
+        pluginCode: "srm",
+      },
     ],
   },
   analytics: {
@@ -673,8 +859,20 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "分析套件",
     suiteCode: "analytics",
     items: [
-      { id: "bi", title: "商业智能", path: "/bi/dashboard", icon: BarChart3, pluginCode: "bi" },
-      { id: "report", title: "报表服务", path: "/report/list", icon: FileText, pluginCode: "report" },
+      {
+        id: "bi",
+        title: "商业智能",
+        path: "/bi/dashboard",
+        icon: BarChart3,
+        pluginCode: "bi",
+      },
+      {
+        id: "report",
+        title: "报表服务",
+        path: "/report/list",
+        icon: FileText,
+        pluginCode: "report",
+      },
     ],
   },
   portal: {
@@ -682,7 +880,13 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "门户套件",
     suiteCode: "portal",
     items: [
-      { id: "portal", title: "企业门户", path: "/portal/home", icon: LayoutDashboard, pluginCode: "portal" },
+      {
+        id: "portal",
+        title: "企业门户",
+        path: "/portal/home",
+        icon: LayoutDashboard,
+        pluginCode: "portal",
+      },
     ],
   },
   infrastructure: {
@@ -690,9 +894,27 @@ export const suiteNavigation: Record<string, NavigationGroup> = {
     title: "基础设施",
     suiteCode: "infrastructure",
     items: [
-      { id: "mobile", title: "移动端", path: "/mobile/settings", icon: Smartphone, pluginCode: "mobile" },
-      { id: "gis", title: "地理信息", path: "/gis/dashboard", icon: Map, pluginCode: "gis" },
-      { id: "integration", title: "数据交换", path: "/integration/dashboard", icon: Network, pluginCode: "integration" },
+      {
+        id: "mobile",
+        title: "移动端",
+        path: "/mobile/settings",
+        icon: Smartphone,
+        pluginCode: "mobile",
+      },
+      {
+        id: "gis",
+        title: "地理信息",
+        path: "/gis/dashboard",
+        icon: Map,
+        pluginCode: "gis",
+      },
+      {
+        id: "integration",
+        title: "数据交换",
+        path: "/integration/dashboard",
+        icon: Network,
+        pluginCode: "integration",
+      },
     ],
   },
 };
@@ -718,11 +940,15 @@ export const adminNavigation: NavigationGroup[] = [
   },
 ];
 
-export const getNavigationForPlugin = (pluginCode: string): NavigationItem[] => {
+export const getNavigationForPlugin = (
+  pluginCode: string,
+): NavigationItem[] => {
   return pluginNavigation[pluginCode] || [];
 };
 
-export const getNavigationForSuite = (suiteCode: string): NavigationGroup | null => {
+export const getNavigationForSuite = (
+  suiteCode: string,
+): NavigationGroup | null => {
   return suiteNavigation[suiteCode] || null;
 };
 
@@ -733,3 +959,290 @@ export const getAllNavigation = (): NavigationGroup[] => {
     ...adminNavigation,
   ];
 };
+
+export const moduleTabsConfig: {
+  module: string;
+  tabs: { label: string; path: string; closable?: boolean; pinned?: boolean }[];
+}[] = [
+  {
+    module: "dashboard",
+    tabs: [{ label: "总览", path: "/dashboard", pinned: true }],
+  },
+  {
+    module: "erp",
+    tabs: [
+      { label: "ERP 首页", path: "/erp/dashboard", pinned: true },
+      { label: "凭证管理", path: "/erp/finance/voucher" },
+      { label: "发票管理", path: "/erp/finance/invoice" },
+      { label: "采购订单", path: "/erp/purchase/order" },
+      { label: "销售订单", path: "/erp/sales/order" },
+    ],
+  },
+  {
+    module: "hrm",
+    tabs: [
+      { label: "HRM 首页", path: "/hrm/dashboard", pinned: true },
+      { label: "员工列表", path: "/hrm/employee" },
+      { label: "考勤记录", path: "/hrm/attendance" },
+    ],
+  },
+  {
+    module: "crm",
+    tabs: [
+      { label: "CRM 首页", path: "/crm/dashboard", pinned: true },
+      { label: "客户列表", path: "/crm/customer" },
+      { label: "商机管理", path: "/crm/opportunity" },
+    ],
+  },
+  {
+    module: "pm",
+    tabs: [
+      { label: "项目管理", path: "/pm/dashboard", pinned: true },
+      { label: "项目列表", path: "/pm/project" },
+      { label: "合同管理", path: "/pm/contract" },
+    ],
+  },
+  {
+    module: "mes",
+    tabs: [
+      { label: "MES 首页", path: "/mes/dashboard", pinned: true },
+      { label: "生产工单", path: "/mes/production/order" },
+      { label: "工位管理", path: "/mes/workstation" },
+    ],
+  },
+  {
+    module: "scm",
+    tabs: [
+      { label: "供应链", path: "/scm/dashboard", pinned: true },
+      { label: "采购管理", path: "/scm/purchase" },
+      { label: "销售管理", path: "/scm/sales" },
+    ],
+  },
+  {
+    module: "wms",
+    tabs: [
+      { label: "库存管理", path: "/wms/inventory", pinned: true },
+      { label: "入库管理", path: "/wms/inbound" },
+      { label: "出库管理", path: "/wms/outbound" },
+    ],
+  },
+  {
+    module: "srm",
+    tabs: [
+      { label: "供应商管理", path: "/srm/supplier", pinned: true },
+      { label: "寻源管理", path: "/srm/sourcing" },
+      { label: "合同管理", path: "/srm/contract" },
+    ],
+  },
+  {
+    module: "qms",
+    tabs: [
+      { label: "质量检验", path: "/qms/inspection", pinned: true },
+      { label: "不合格品", path: "/qms/nonconformance" },
+      { label: "审核管理", path: "/qms/audit" },
+    ],
+  },
+  {
+    module: "lims",
+    tabs: [
+      { label: "样品管理", path: "/lims/sample", pinned: true },
+      { label: "检验任务", path: "/lims/task" },
+      { label: "仪器管理", path: "/lims/instrument" },
+    ],
+  },
+  {
+    module: "ehs",
+    tabs: [
+      { label: "危险源", path: "/ehs/hazard", pinned: true },
+      { label: "安全检查", path: "/ehs/check" },
+      { label: "事故管理", path: "/ehs/accident" },
+    ],
+  },
+  {
+    module: "rs",
+    tabs: [
+      { label: "研发首页", path: "/rs/dashboard", pinned: true },
+      { label: "实验管理", path: "/rs/experiment" },
+      { label: "配方管理", path: "/rs/formula" },
+    ],
+  },
+  {
+    module: "pdm",
+    tabs: [
+      { label: "产品数据", path: "/pdm/stats", pinned: true },
+      { label: "配方管理", path: "/pdm/formula" },
+      { label: "工艺管理", path: "/pdm/process" },
+    ],
+  },
+  {
+    module: "bi",
+    tabs: [
+      { label: "BI 首页", path: "/bi/dashboard", pinned: true },
+      { label: "数据分析", path: "/bi/analytics" },
+      { label: "数据源", path: "/bi/datasource" },
+    ],
+  },
+  {
+    module: "report",
+    tabs: [
+      { label: "报表中心", path: "/report/list", pinned: true },
+      { label: "报表设计", path: "/report/design" },
+      { label: "定时任务", path: "/report/schedules" },
+      { label: "订阅管理", path: "/report/subscriptions" },
+    ],
+  },
+  {
+    module: "monitor",
+    tabs: [
+      { label: "监控首页", path: "/monitor/dashboard", pinned: true },
+      { label: "告警管理", path: "/monitor/alerts" },
+      { label: "性能监控", path: "/monitor/performance" },
+    ],
+  },
+];
+
+export const getModuleTabs = (
+  module: string,
+): { label: string; path: string; closable?: boolean; pinned?: boolean }[] => {
+  return moduleTabsConfig.find((c) => c.module === module)?.tabs || [];
+};
+
+export const getModuleFromPath = (path: string): string | null => {
+  const modulePatterns: Record<string, string> = {
+    "^/dashboard": "dashboard",
+    "^/erp": "erp",
+    "^/hrm": "hrm",
+    "^/crm": "crm",
+    "^/pm": "pm",
+    "^/mes": "mes",
+    "^/scm": "scm",
+    "^/wms": "wms",
+    "^/srm": "srm",
+    "^/qms": "qms",
+    "^/lims": "lims",
+    "^/ehs": "ehs",
+    "^/rs": "rs",
+    "^/pdm": "pdm",
+    "^/bi": "bi",
+    "^/report": "report",
+    "^/monitor": "monitor",
+    "^/portal": "portal",
+    "^/mobile": "mobile",
+    "^/gis": "gis",
+    "^/integration": "integration",
+  };
+
+  for (const [pattern, module] of Object.entries(modulePatterns)) {
+    if (new RegExp(pattern).test(path)) {
+      return module;
+    }
+  }
+
+  return null;
+};
+
+export const topNavItems: NavigationItem[] = [
+  {
+    id: "dashboard",
+    title: "总览",
+    path: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    id: "suite-production",
+    title: "生产套件",
+    icon: Factory,
+    children: [
+      { id: "mes", title: "生产执行", path: "/mes/dashboard", icon: Factory },
+      { id: "pdm", title: "产品数据", path: "/pdm/stats", icon: Layers },
+    ],
+  },
+  {
+    id: "suite-quality",
+    title: "质量套件",
+    icon: Shield,
+    children: [
+      { id: "qms", title: "质量管理", path: "/qms/inspection", icon: Shield },
+      { id: "lims", title: "实验室", path: "/lims/sample", icon: FlaskConical },
+      { id: "ehs", title: "环境安全", path: "/ehs/hazard", icon: Leaf },
+    ],
+  },
+  {
+    id: "suite-rd",
+    title: "研发套件",
+    icon: FlaskRound,
+    children: [
+      { id: "rs", title: "研发管理", path: "/rs/dashboard", icon: FlaskRound },
+    ],
+  },
+  {
+    id: "suite-collab",
+    title: "协同套件",
+    icon: Users,
+    children: [
+      { id: "hrm", title: "人力资源", path: "/hrm/dashboard", icon: Users },
+      { id: "crm", title: "客户管理", path: "/crm/dashboard", icon: Users },
+      { id: "pm", title: "项目管理", path: "/pm/dashboard", icon: Target },
+    ],
+  },
+  {
+    id: "suite-business",
+    title: "经营套件",
+    icon: Building2,
+    children: [
+      { id: "erp", title: "ERP", path: "/erp/dashboard", icon: Building2 },
+    ],
+  },
+  {
+    id: "suite-supply",
+    title: "供应链套件",
+    icon: Truck,
+    children: [
+      { id: "scm", title: "供应链", path: "/scm/dashboard", icon: Truck },
+      { id: "wms", title: "仓储管理", path: "/wms/inventory", icon: Warehouse },
+      { id: "srm", title: "供应商", path: "/srm/supplier", icon: Handshake },
+    ],
+  },
+  {
+    id: "suite-analytics",
+    title: "分析套件",
+    icon: BarChart3,
+    children: [
+      { id: "bi", title: "商业智能", path: "/bi/dashboard", icon: BarChart3 },
+      { id: "report", title: "报表服务", path: "/report/list", icon: FileText },
+    ],
+  },
+  {
+    id: "suite-portal",
+    title: "门户套件",
+    icon: LayoutDashboard,
+    children: [
+      {
+        id: "portal",
+        title: "企业门户",
+        path: "/portal/home",
+        icon: LayoutDashboard,
+      },
+    ],
+  },
+  {
+    id: "suite-infrastructure",
+    title: "基础设施",
+    icon: Network,
+    children: [
+      {
+        id: "mobile",
+        title: "移动端",
+        path: "/mobile/settings",
+        icon: Smartphone,
+      },
+      { id: "gis", title: "地理信息", path: "/gis/dashboard", icon: Map },
+      {
+        id: "integration",
+        title: "数据交换",
+        path: "/integration/dashboard",
+        icon: Network,
+      },
+    ],
+  },
+];

@@ -41,7 +41,7 @@ const mockServices: MigrationService[] = [
   {
     name: "hrm-service",
     schema: "hrm",
-    port: 8011,
+    port: 8020,
     tables: 30,
     description: "人力资源服务",
   },

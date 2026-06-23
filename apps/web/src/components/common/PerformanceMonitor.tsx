@@ -10,7 +10,6 @@ import {
   History,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 
 interface PerformanceMetrics {
   fps: number;
@@ -659,11 +658,13 @@ const Button = ({
   onClick,
   disabled,
   className,
+  sx,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
+  sx?: React.CSSProperties;
 }) => (
   <button
     onClick={onClick}
@@ -671,6 +672,7 @@ const Button = ({
     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
       disabled ? "opacity-50 cursor-not-allowed" : ""
     } ${className}`}
+    style={sx}
   >
     {children}
   </button>

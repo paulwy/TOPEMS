@@ -4,8 +4,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::Utc;
-use serde::Deserialize;
+use chrono::{Datelike, TimeZone, Utc};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::ApiState;
@@ -14,6 +14,46 @@ use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequ
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FunnelStage {
+    pub stage: String,
+    pub stage_label: String,
+    pub count: i64,
+    pub total_value: Option<f64>,
+    pub avg_probability: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpportunityStats {
+    pub total_count: i64,
+    pub total_value: Option<f64>,
+    pub weighted_value: Option<f64>,
+    pub won_count: i64,
+    pub won_value: Option<f64>,
+    pub lost_count: i64,
+    pub lost_value: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct StageTransition {
+    pub from_stage: String,
+    pub to_stage: String,
+    pub count: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpportunityForecast {
+    pub forecast_month: String,
+    pub forecast_value: f64,
+    pub opportunity_count: i64,
+    pub avg_probability: f64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ForecastParams {
+    pub months: Option<i64>,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct OpportunityPaginationParams {
@@ -45,6 +85,10 @@ pub fn create_routes() -> Router<ApiState> {
                 .put(update_opportunity)
                 .delete(delete_opportunity),
         )
+        .route("/api/crm/opportunities/funnel", get(get_sales_funnel))
+        .route("/api/crm/opportunities/stats", get(get_opportunity_stats))
+        .route("/api/crm/opportunities/forecast", get(get_opportunity_forecast))
+        .route("/api/crm/opportunities/stage-transitions", get(get_stage_transitions))
 }
 
 async fn list_opportunities(
@@ -459,4 +503,228 @@ async fn batch_delete_opportunities(
     .await;
 
     response
+}
+
+async fn get_sales_funnel(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<FunnelStage>>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let stages = vec![
+        ("prospecting", "线索"),
+        ("qualified", "合格"),
+        ("proposal", "提案"),
+        ("negotiation", "谈判"),
+        ("closed_won", "赢单"),
+        ("closed_lost", "输单"),
+    ];
+
+    let mut funnel_stages = Vec::new();
+
+    for (stage, stage_label) in stages {
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"
+        )
+        .bind(stage)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+        let total_value: Option<f64> = sqlx::query_scalar(
+            "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND value IS NOT NULL"
+        )
+        .bind(stage)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap_or(Some(0.0));
+
+        let avg_probability: Option<f64> = sqlx::query_scalar(
+            "SELECT COALESCE(AVG(probability), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND probability IS NOT NULL"
+        )
+        .bind(stage)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap_or(Some(0.0));
+
+        funnel_stages.push(FunnelStage {
+            stage: stage.to_string(),
+            stage_label: stage_label.to_string(),
+            count,
+            total_value,
+            avg_probability,
+        });
+    }
+
+    Json(ApiResponse::success(funnel_stages, "获取销售漏斗成功"))
+}
+
+async fn get_opportunity_stats(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<OpportunityStats>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let total_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plugin_crm.opportunities")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let total_value: Option<f64> = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE value IS NOT NULL"
+    )
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(Some(0.0));
+
+    let weighted_value: Option<f64> = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(value * probability / 100), 0) FROM plugin_crm.opportunities WHERE value IS NOT NULL AND probability IS NOT NULL"
+    )
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(Some(0.0));
+
+    let won_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_won'"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    let won_value: Option<f64> = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = 'closed_won' AND value IS NOT NULL"
+    )
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(Some(0.0));
+
+    let lost_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_lost'"
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    let lost_value: Option<f64> = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = 'closed_lost' AND value IS NOT NULL"
+    )
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(Some(0.0));
+
+    let stats = OpportunityStats {
+        total_count,
+        total_value,
+        weighted_value,
+        won_count,
+        won_value,
+        lost_count,
+        lost_value,
+    };
+
+    Json(ApiResponse::success(stats, "获取商机统计成功"))
+}
+
+async fn get_opportunity_forecast(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ForecastParams>,
+) -> Json<ApiResponse<Vec<OpportunityForecast>>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let months = params.months.unwrap_or(12).min(24).max(1);
+
+    let mut forecasts = Vec::new();
+
+    for i in 0..months as usize {
+        let forecast_month = Utc::now() + chrono::Duration::days(i as i64 * 30);
+        let month_start = Utc.from_utc_datetime(
+            &forecast_month.date_naive().with_day(1).unwrap().and_hms_opt(0, 0, 0).unwrap()
+        );
+        let month_end = month_start + chrono::Duration::days(31);
+
+        let forecast_value: f64 = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(SUM(value * probability / 100), 0) 
+            FROM plugin_crm.opportunities 
+            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            "#,
+        )
+        .bind(month_start)
+        .bind(month_end)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap_or(Some(0.0))
+        .unwrap_or(0.0);
+
+        let opportunity_count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*) 
+            FROM plugin_crm.opportunities 
+            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            "#,
+        )
+        .bind(month_start)
+        .bind(month_end)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap_or(Some(0))
+        .unwrap_or(0);
+
+        let avg_probability: f64 = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(AVG(probability), 0) 
+            FROM plugin_crm.opportunities 
+            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost') AND probability IS NOT NULL
+            "#,
+        )
+        .bind(month_start)
+        .bind(month_end)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap_or(Some(0.0))
+        .unwrap_or(0.0);
+
+        forecasts.push(OpportunityForecast {
+            forecast_month: forecast_month.format("%Y-%m").to_string(),
+            forecast_value,
+            opportunity_count,
+            avg_probability,
+        });
+    }
+
+    Json(ApiResponse::success(forecasts, "获取商机预测成功"))
+}
+
+async fn get_stage_transitions(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<StageTransition>>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let transitions: Vec<StageTransition> = sqlx::query_as(
+        r#"
+        SELECT stage AS from_stage, stage AS to_stage, COUNT(*) as count
+        FROM plugin_crm.opportunities
+        GROUP BY stage
+        ORDER BY count DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+
+    Json(ApiResponse::success(transitions, "获取阶段转换统计成功"))
 }

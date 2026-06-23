@@ -50,7 +50,7 @@ async fn list_tags(
     let result = sqlx::query_as::<_, Tag>(
         r#"
         SELECT id, name, color, description, created_at, updated_at
-        FROM tags
+        FROM crm.tags
         WHERE ($1::text IS NULL OR name ILIKE $1)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
@@ -66,7 +66,7 @@ async fn list_tags(
         Ok(tags) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM tags
+                SELECT COUNT(*) FROM crm.tags
                 WHERE ($1::text IS NULL OR name ILIKE $1)
                 "#,
             )
@@ -114,7 +114,7 @@ async fn create_tag(
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        INSERT INTO tags (id, name, color, description, created_at, updated_at)
+        INSERT INTO crm.tags (id, name, color, description, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, name, color, description, created_at, updated_at
         "#,
@@ -183,7 +183,7 @@ async fn get_tag(
     let result = sqlx::query_as::<_, Tag>(
         r#"
         SELECT id, name, color, description, created_at, updated_at
-        FROM tags WHERE id = $1
+        FROM crm.tags WHERE id = $1
         "#,
     )
     .bind(id)
@@ -214,7 +214,7 @@ async fn update_tag(
 
     let existing = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, name, color, description, created_at, updated_at FROM tags WHERE id = $1
+        SELECT id, name, color, description, created_at, updated_at FROM crm.tags WHERE id = $1
         "#,
     )
     .bind(id)
@@ -236,7 +236,7 @@ async fn update_tag(
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        UPDATE tags SET
+        UPDATE crm.tags SET
             name = $2, color = $3, description = $4, updated_at = $5
         WHERE id = $1
         RETURNING id, name, color, description, created_at, updated_at
@@ -302,7 +302,7 @@ async fn delete_tag(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM tags WHERE id = $1")
+    let result = sqlx::query("DELETE FROM crm.tags WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -366,8 +366,8 @@ async fn get_customer_tags(
     let result = sqlx::query_as::<_, Tag>(
         r#"
         SELECT t.id, t.name, t.color, t.description, t.created_at, t.updated_at
-        FROM tags t
-        JOIN customer_tags ct ON t.id = ct.tag_id
+        FROM crm.tags t
+        JOIN crm.customer_tags ct ON t.id = ct.tag_id
         WHERE ct.customer_id = $1
         ORDER BY t.created_at DESC
         "#,
@@ -401,7 +401,7 @@ async fn add_tag_to_customer(
     let tag_id = req.tag_id;
 
     let exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM customer_tags WHERE customer_id = $1 AND tag_id = $2)"
+        "SELECT EXISTS(SELECT 1 FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2)"
     )
     .bind(customer_id)
     .bind(tag_id)
@@ -414,7 +414,7 @@ async fn add_tag_to_customer(
     }
 
     let result = sqlx::query(
-        "INSERT INTO customer_tags (customer_id, tag_id) VALUES ($1, $2)"
+        "INSERT INTO crm.customer_tags (customer_id, tag_id) VALUES ($1, $2)"
     )
     .bind(customer_id)
     .bind(tag_id)
@@ -470,7 +470,7 @@ async fn remove_tag_from_customer(
     let customer_id = id;
 
     let result = sqlx::query(
-        "DELETE FROM customer_tags WHERE customer_id = $1 AND tag_id = $2"
+        "DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2"
     )
     .bind(customer_id)
     .bind(tag_id)
@@ -530,8 +530,8 @@ async fn get_tagged_customers(
     let customers = sqlx::query!(
         r#"
         SELECT c.id as customer_id, c.name as customer_name
-        FROM customers c
-        JOIN customer_tags ct ON c.id = ct.customer_id
+        FROM crm.customers c
+        JOIN crm.customer_tags ct ON c.id = ct.customer_id
         WHERE ct.tag_id = $1
         ORDER BY c.created_at DESC
         "#,
@@ -547,8 +547,8 @@ async fn get_tagged_customers(
                 let tags = sqlx::query_as::<_, Tag>(
                     r#"
                     SELECT t.id, t.name, t.color, t.description, t.created_at, t.updated_at
-                    FROM tags t
-                    JOIN customer_tags ct ON t.id = ct.tag_id
+                    FROM crm.tags t
+                    JOIN crm.customer_tags ct ON t.id = ct.tag_id
                     WHERE ct.customer_id = $1
                     "#,
                 )

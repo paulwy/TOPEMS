@@ -1,115 +1,148 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Typography,  } from "@mui/material";
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Typography, FormControl, InputLabel, Select, MenuItem, Stepper, Step, StepLabel, LinearProgress, } from "@mui/material";
 import { Button } from "@/components/ui/Button";
-import { Plus, Eye, AlertTriangle, Shield, MapPin } from "lucide-react";
+import { Plus, Eye, AlertTriangle, MapPin, User, Calendar, CheckCircle, Clock, FileEdit, CheckSquare, XCircle, } from "lucide-react";
 import { ListPageTemplate, type ColumnDef } from "@/components/templates";
-
-interface Hazard {
-  id: string;
-  hazard_no: string;
-  name: string;
-  risk_level: string;
-  category: string;
-  location: string;
-  control_measures: string;
-  status: string;
-}
-
-const mockHazards: Hazard[] = [
-  {
-    id: "1",
-    hazard_no: "HZ2024001",
-    name: "化学溶剂泄漏",
-    risk_level: "高风险",
-    category: "化学品",
-    location: "A栋2层车间",
-    control_measures: "防溢流措施、应急泄漏处理套装",
-    status: "活动中",
-  },
-  {
-    id: "2",
-    hazard_no: "HZ2024002",
-    name: "高温蒸汽烫伤",
-    risk_level: "中风险",
-    category: "物理危害",
-    location: "B栋1层锅炉房",
-    control_measures: "隔热防护、警示标识",
-    status: "已控制",
-  },
-  {
-    id: "3",
-    hazard_no: "HZ2024003",
-    name: "电气触电",
-    risk_level: "高风险",
-    category: "电气",
-    location: "C栋配电室",
-    control_measures: "绝缘防护、接地保护、定期检修",
-    status: "活动中",
-  },
-  {
-    id: "4",
-    hazard_no: "HZ2024004",
-    name: "机械伤害",
-    risk_level: "中风险",
-    category: "机械",
-    location: "D栋生产车间",
-    control_measures: "安全防护罩、紧急停止按钮",
-    status: "活动中",
-  },
-  {
-    id: "5",
-    hazard_no: "HZ2024005",
-    name: "高处坠落",
-    risk_level: "高风险",
-    category: "高处作业",
-    location: "E栋维护通道",
-    control_measures: "安全带、安全网、护栏",
-    status: "已消除",
-  },
-];
+import { ehsApi } from "@/api/ehs";
+import type { SafetyIssue, Rectification, Verification } from "@/api/ehs";
+import { toast } from "react-toastify";
 
 const EhsHazardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [hazards, setHazards] = useState<Hazard[]>([]);
+  const [issues, setIssues] = useState<SafetyIssue[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null);
+  const [showRectificationModal, setShowRectificationModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<SafetyIssue | null>(null);
+  const [rectification, setRectification] = useState<Rectification | null>(null);
+  const [verification, setVerification] = useState<Verification | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    risk_level: "中风险",
-    category: "化学品",
+    title: "",
+    description: "",
+    category: "equipment",
+    level: "major",
+    source: "inspection",
     location: "",
-    control_measures: "",
+    reported_by: "",
+  });
+  const [rectificationFormData, setRectificationFormData] = useState({
+    description: "",
+    responsible: "",
+    deadline: "",
+  });
+  const [verificationFormData, setVerificationFormData] = useState({
+    verifier: "",
+    result: "passed",
+    remarks: "",
   });
 
   useEffect(() => {
-    loadHazards();
+    loadIssues();
   }, []);
 
-  const loadHazards = async () => {
-    setLoading(true);
-    setTimeout(() => {
-      setHazards(mockHazards);
+  const loadIssues = async () => {
+    try {
+      setLoading(true);
+      const response = await ehsApi.listSafetyIssues({ page_size: 100 });
+      if (response.success && response.data) {
+        const issuesData = Array.isArray(response.data)
+          ? response.data
+          : response.data.data || [];
+        const adapted = issuesData.map((item: any) => ({
+          ...item,
+          status: translateStatus(item.status),
+        }));
+        setIssues(adapted);
+      } else {
+        setIssues([]);
+      }
+    } catch (err) {
+      apiLogger.error("加载隐患列表失败:", err);
+      setIssues([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
-  const getRiskLevelBadge = (level: string) => {
-    const levelMap: Record<string, { bg: string; color: string }> = {
-      高风险: { bg: "#fee2e2", color: "#dc2626" },
-      中风险: { bg: "#fef9c3", color: "#ca8a04" },
-      低风险: { bg: "#dcfce7", color: "#16a34a" },
+  const loadIssueDetail = async (issueId: string) => {
+    try {
+      const response = await ehsApi.getSafetyIssue(issueId);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        setSelectedIssue(data.hazard);
+        setRectification(data.rectification || null);
+        setVerification(data.verification || null);
+      }
+    } catch (err) {
+      apiLogger.error("加载隐患详情失败:", err);
+    }
+  };
+
+  const translateStatus = (status: string) => {
+    const statusMap: Record<string, string> = {
+      reported: "待整改",
+      rectifying: "整改中",
+      pending_verification: "待验收",
+      verified: "已验收",
+      closed: "已闭环",
+      rejected: "已驳回",
     };
-    const colors = levelMap[level] || { bg: "#f3f4f6", color: "#4b5563" };
+    return statusMap[status] || status;
+  };
+
+  const getLevelLabel = (level: string) => {
+    const levelMap: Record<string, string> = {
+      major: "重大隐患",
+      serious: "严重隐患",
+      general: "一般隐患",
+      minor: "轻微隐患",
+    };
+    return levelMap[level] || level;
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      equipment: "设备隐患",
+      environment: "环境隐患",
+      behavior: "行为隐患",
+      management: "管理隐患",
+      fire: "消防隐患",
+      electrical: "电气隐患",
+      chemical: "化学品隐患",
+      structural: "结构隐患",
+    };
+    return categoryMap[category] || category;
+  };
+
+  const getSourceLabel = (source: string) => {
+    const sourceMap: Record<string, string> = {
+      inspection: "检查发现",
+      reporting: "员工上报",
+      audit: "审计发现",
+      accident: "事故排查",
+      monitoring: "监测预警",
+    };
+    return sourceMap[source] || source;
+  };
+
+  const getLevelBadge = (level: string) => {
+    const levelMap: Record<string, { bg: string; color: string; label: string }> = {
+      major: { bg: "#fee2e2", color: "#dc2626", label: "重大" },
+      serious: { bg: "#fecaca", color: "#b91c1c", label: "严重" },
+      general: { bg: "#fef9c3", color: "#ca8a04", label: "一般" },
+      minor: { bg: "#dcfce7", color: "#16a34a", label: "轻微" },
+    };
+    const colors = levelMap[level] || { bg: "#f3f4f6", color: "#4b5563", label: level };
     return (
       <Chip
-        label={level}
+        label={colors.label}
         size="small"
         sx={{
           backgroundColor: colors.bg,
@@ -122,9 +155,12 @@ const EhsHazardPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      活动中: { bg: "#fee2e2", color: "#dc2626" },
-      已控制: { bg: "#fef9c3", color: "#ca8a04" },
-      已消除: { bg: "#dcfce7", color: "#16a34a" },
+      待整改: { bg: "#fee2e2", color: "#dc2626" },
+      整改中: { bg: "#fef9c3", color: "#ca8a04" },
+      待验收: { bg: "#eff6ff", color: "#2563eb" },
+      已验收: { bg: "#dcfce7", color: "#16a34a" },
+      已闭环: { bg: "#f3f4f6", color: "#4b5563" },
+      已驳回: { bg: "#fecaca", color: "#b91c1c" },
     };
     const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
@@ -140,17 +176,46 @@ const EhsHazardPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<Hazard>[] = [
-    { id: "hazard_no", label: "危险源编号" },
-    { id: "name", label: "名称" },
+  const getStepIndex = (status: string) => {
+    const stepMap: Record<string, number> = {
+      待整改: 0,
+      整改中: 1,
+      待验收: 2,
+      已验收: 3,
+      已闭环: 4,
+      已驳回: 0,
+    };
+    return stepMap[status] || 0;
+  };
+
+  const columns: ColumnDef<SafetyIssue>[] = [
+    { id: "hazard_no", label: "隐患编号" },
+    { id: "title", label: "隐患名称" },
     {
-      id: "risk_level",
-      label: "风险等级",
-      render: (row) => getRiskLevelBadge(row.risk_level),
+      id: "level",
+      label: "等级",
+      render: (row) => getLevelBadge(row.level),
     },
-    { id: "category", label: "类别" },
-    { id: "location", label: "位置" },
-    { id: "control_measures", label: "管控措施" },
+    {
+      id: "category",
+      label: "类别",
+      render: (row) => getCategoryLabel(row.category),
+    },
+    {
+      id: "location",
+      label: "位置",
+      render: (row) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <MapPin style={{ width: 14, height: 14 }} />
+          {row.location || "-"}
+        </Box>
+      ),
+    },
+    {
+      id: "source",
+      label: "来源",
+      render: (row) => getSourceLabel(row.source),
+    },
     {
       id: "status",
       label: "状态",
@@ -173,85 +238,159 @@ const EhsHazardPage: React.FC = () => {
     },
   ];
 
-  const filteredHazards = hazards.filter((hazard) => {
+  const filteredIssues = issues.filter((issue) => {
     const matchesSearch =
-      hazard.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      hazard.hazard_no.toLowerCase().includes(searchTerm.toLowerCase());
+      issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      issue.hazard_no.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel =
-      levelFilter === "all" || hazard.risk_level === levelFilter;
-    const matchesCategory =
-      categoryFilter === "all" || hazard.category === categoryFilter;
+      levelFilter === "all" || issue.level === levelFilter;
     const matchesStatus =
-      statusFilter === "all" || hazard.status === statusFilter;
-    return matchesSearch && matchesLevel && matchesCategory && matchesStatus;
+      statusFilter === "all" || issue.status === statusFilter;
+    return matchesSearch && matchesLevel && matchesStatus;
   });
 
-  const handleView = (hazard: Hazard) => {
-    setSelectedHazard(hazard);
+  const handleView = async (issue: SafetyIssue) => {
+    await loadIssueDetail(issue.id);
     setShowDetailModal(true);
   };
 
   const handleCreate = () => {
     setFormData({
-      name: "",
-      risk_level: "中风险",
-      category: "化学品",
+      title: "",
+      description: "",
+      category: "equipment",
+      level: "general",
+      source: "inspection",
       location: "",
-      control_measures: "",
+      reported_by: "",
     });
     setShowCreateModal(true);
   };
 
-  const handleSave = () => {
-    const newHazard: Hazard = {
-      id: String(Date.now()),
-      hazard_no: `HZ${Date.now()}`,
-      name: formData.name,
-      risk_level: formData.risk_level,
-      category: formData.category,
-      location: formData.location,
-      control_measures: formData.control_measures,
-      status: "活动中",
-    };
-    setHazards((prev) => [newHazard, ...prev]);
-    setShowCreateModal(false);
+  const handleSave = async () => {
+    try {
+      await ehsApi.createSafetyIssue({
+        title: formData.title,
+        description: formData.description || null,
+        category: formData.category,
+        level: formData.level,
+        source: formData.source,
+        location: formData.location || null,
+        reported_by: formData.reported_by || null,
+      });
+      toast.success("隐患上报成功");
+      setShowCreateModal(false);
+      loadIssues();
+    } catch (err) {
+      toast.error("上报失败");
+      apiLogger.error("创建隐患失败:", err);
+    }
+  };
+
+  const handleStartRectification = () => {
+    setRectificationFormData({
+      description: "",
+      responsible: "",
+      deadline: "",
+    });
+    setShowRectificationModal(true);
+  };
+
+  const handleSaveRectification = async () => {
+    if (!selectedIssue) return;
+    try {
+      await ehsApi.startRectification(selectedIssue.id, {
+        description: rectificationFormData.description,
+        responsible: rectificationFormData.responsible || null,
+        deadline: rectificationFormData.deadline || null,
+      });
+      toast.success("整改任务创建成功");
+      setShowRectificationModal(false);
+      await loadIssueDetail(selectedIssue.id);
+      loadIssues();
+    } catch (err) {
+      toast.error("创建失败");
+      apiLogger.error("创建整改任务失败:", err);
+    }
+  };
+
+  const handleSubmitRectification = async () => {
+    if (!selectedIssue) return;
+    try {
+      await ehsApi.submitRectification(selectedIssue.id);
+      toast.success("整改完成，等待验收");
+      await loadIssueDetail(selectedIssue.id);
+      loadIssues();
+    } catch (err) {
+      toast.error("提交失败");
+      apiLogger.error("提交整改失败:", err);
+    }
+  };
+
+  const handleStartVerification = () => {
+    setVerificationFormData({
+      verifier: "",
+      result: "passed",
+      remarks: "",
+    });
+    setShowVerificationModal(true);
+  };
+
+  const handleSaveVerification = async () => {
+    if (!selectedIssue) return;
+    try {
+      await ehsApi.verifySafetyIssue(selectedIssue.id, {
+        verifier: verificationFormData.verifier || null,
+        result: verificationFormData.result,
+        remarks: verificationFormData.remarks || null,
+      });
+      toast.success("验收完成");
+      setShowVerificationModal(false);
+      await loadIssueDetail(selectedIssue.id);
+      loadIssues();
+    } catch (err) {
+      toast.error("验收失败");
+      apiLogger.error("验收失败:", err);
+    }
+  };
+
+  const handleCloseIssue = async () => {
+    if (!selectedIssue) return;
+    try {
+      await ehsApi.closeSafetyIssue(selectedIssue.id);
+      toast.success("隐患已闭环");
+      setShowDetailModal(false);
+      loadIssues();
+    } catch (err) {
+      toast.error("闭环失败");
+      apiLogger.error("闭环失败:", err);
+    }
   };
 
   const stats = {
-    total: hazards.length,
-    highRisk: hazards.filter((h) => h.risk_level === "高风险").length,
-    controlled: hazards.filter((h) => h.status === "已控制").length,
-    eliminated: hazards.filter((h) => h.status === "已消除").length,
+    total: issues.length,
+    major: issues.filter((i) => i.level === "major").length,
+    serious: issues.filter((i) => i.level === "serious").length,
+    pending: issues.filter((i) => i.status === "待整改").length,
+    rectifying: issues.filter((i) => i.status === "整改中").length,
+    pendingVerification: issues.filter((i) => i.status === "待验收").length,
+    closed: issues.filter((i) => i.status === "已闭环").length,
   };
 
   const filters = [
     {
       id: "level",
-      label: "风险等级",
+      label: "隐患等级",
       type: "select" as const,
       options: [
         { label: "全部", value: "all" },
-        { label: "高风险", value: "高风险" },
-        { label: "中风险", value: "中风险" },
-        { label: "低风险", value: "低风险" },
+        { label: "重大", value: "major" },
+        { label: "严重", value: "serious" },
+        { label: "一般", value: "general" },
+        { label: "轻微", value: "minor" },
       ],
       value: levelFilter,
       onChange: (value: string) => setLevelFilter(value),
-    },
-    {
-      id: "category",
-      label: "类别",
-      type: "select" as const,
-      options: [
-        { label: "全部", value: "all" },
-        { label: "化学品", value: "化学品" },
-        { label: "物理危害", value: "物理危害" },
-        { label: "电气", value: "电气" },
-        { label: "机械", value: "机械" },
-        { label: "高处作业", value: "高处作业" },
-      ],
-      value: categoryFilter,
-      onChange: (value: string) => setCategoryFilter(value),
     },
     {
       id: "status",
@@ -259,253 +398,292 @@ const EhsHazardPage: React.FC = () => {
       type: "select" as const,
       options: [
         { label: "全部", value: "all" },
-        { label: "活动中", value: "活动中" },
-        { label: "已控制", value: "已控制" },
-        { label: "已消除", value: "已消除" },
+        { label: "待整改", value: "待整改" },
+        { label: "整改中", value: "整改中" },
+        { label: "待验收", value: "待验收" },
+        { label: "已验收", value: "已验收" },
+        { label: "已闭环", value: "已闭环" },
+        { label: "已驳回", value: "已驳回" },
       ],
       value: statusFilter,
       onChange: (value: string) => setStatusFilter(value),
     },
   ];
 
+  const steps = ["隐患上报", "整改中", "待验收", "已验收", "已闭环"];
+
   return (
     <>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            md: "repeat(4, 1fr)",
+          },
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        <Card sx={{ bgcolor: "#fef2f2" }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#fee2e2",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <AlertTriangle
+                  sx={{ width: 20, height: 20, color: "#ef4444" }}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  隐患总数
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.total}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#fee2e2",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <XCircle sx={{ width: 20, height: 20, color: "#dc2626" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  重大/严重
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.major + stats.serious}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#fef3c7",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Clock sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  待处理
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.pending + stats.rectifying + stats.pendingVerification}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#dcfce7",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  已闭环
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.closed}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
       <ListPageTemplate
-        title="危险源管理"
-        subtitle="Hazard Source Management"
+        title="隐患管理"
+        subtitle="Safety Hazard Management"
         columns={columns}
-        data={filteredHazards}
+        data={filteredIssues}
         loading={loading}
         filters={filters}
         searchable
-        searchPlaceholder="搜索危险源名称或编号..."
+        searchPlaceholder="搜索隐患名称或编号..."
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         actions={[
           {
-            label: "新增危险源",
+            label: "上报隐患",
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: handleCreate,
             variant: "contained",
           },
         ]}
-        headerContent={
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(1, 1fr)",
-                md: "repeat(4, 1fr)",
-              },
-              gap: 2,
-              mb: 4,
-            }}
-          >
-            <Card sx={{ bgcolor: "#fef2f2" }}>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: "#fee2e2",
-                      borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <AlertTriangle
-                      sx={{ width: 20, height: 20, color: "#ef4444" }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                    >
-                      危险源总数
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "slate.900" }}
-                    >
-                      {stats.total}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: "#fee2e2",
-                      borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Shield sx={{ width: 20, height: 20, color: "#dc2626" }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                    >
-                      高风险
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "slate.900" }}
-                    >
-                      {stats.highRisk}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: "#fef3c7",
-                      borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Shield sx={{ width: 20, height: 20, color: "#ca8a04" }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                    >
-                      已控制
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "slate.900" }}
-                    >
-                      {stats.controlled}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: "#dcfce7",
-                      borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Shield sx={{ width: 20, height: 20, color: "#16a34a" }} />
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                    >
-                      已消除
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "slate.900" }}
-                    >
-                      {stats.eliminated}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        }
-        emptyMessage="暂无危险源"
-        onRefresh={loadHazards}
+        emptyMessage="暂无隐患记录"
+        onRefresh={loadIssues}
       />
 
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>新增危险源</DialogTitle>
+        <DialogTitle>上报隐患</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               fullWidth
-              label="危险源名称 *"
-              value={formData.name}
+              label="隐患名称 *"
+              value={formData.title}
               onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
+                setFormData({ ...formData, title: e.target.value })
               }
-              placeholder="请输入危险源名称"
+              placeholder="请输入隐患名称"
             />
             <TextField
               fullWidth
-              select
-              label="风险等级"
-              value={formData.risk_level}
+              label="隐患描述"
+              value={formData.description}
               onChange={(e) =>
-                setFormData({ ...formData, risk_level: e.target.value })
+                setFormData({ ...formData, description: e.target.value })
               }
-            >
-              <option value="高风险">高风险</option>
-              <option value="中风险">中风险</option>
-              <option value="低风险">低风险</option>
-            </TextField>
-            <TextField
-              fullWidth
-              select
-              label="类别"
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
-            >
-              <option value="化学品">化学品</option>
-              <option value="物理危害">物理危害</option>
-              <option value="电气">电气</option>
-              <option value="机械">机械</option>
-              <option value="高处作业">高处作业</option>
-            </TextField>
-            <TextField
-              fullWidth
-              label="位置"
-              value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
-              }
-              placeholder="请输入所在位置"
-            />
-            <TextField
-              fullWidth
-              label="管控措施"
-              value={formData.control_measures}
-              onChange={(e) =>
-                setFormData({ ...formData, control_measures: e.target.value })
-              }
-              placeholder="请输入管控措施"
+              placeholder="请描述隐患详情"
               multiline
               rows={3}
+            />
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>隐患类别 *</InputLabel>
+                <Select
+                  value={formData.category}
+                  label="隐患类别"
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                >
+                  <MenuItem value="equipment">设备隐患</MenuItem>
+                  <MenuItem value="environment">环境隐患</MenuItem>
+                  <MenuItem value="behavior">行为隐患</MenuItem>
+                  <MenuItem value="management">管理隐患</MenuItem>
+                  <MenuItem value="fire">消防隐患</MenuItem>
+                  <MenuItem value="electrical">电气隐患</MenuItem>
+                  <MenuItem value="chemical">化学品隐患</MenuItem>
+                  <MenuItem value="structural">结构隐患</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>隐患等级 *</InputLabel>
+                <Select
+                  value={formData.level}
+                  label="隐患等级"
+                  onChange={(e) =>
+                    setFormData({ ...formData, level: e.target.value })
+                  }
+                >
+                  <MenuItem value="major">重大隐患</MenuItem>
+                  <MenuItem value="serious">严重隐患</MenuItem>
+                  <MenuItem value="general">一般隐患</MenuItem>
+                  <MenuItem value="minor">轻微隐患</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>来源 *</InputLabel>
+                <Select
+                  value={formData.source}
+                  label="来源"
+                  onChange={(e) =>
+                    setFormData({ ...formData, source: e.target.value })
+                  }
+                >
+                  <MenuItem value="inspection">检查发现</MenuItem>
+                  <MenuItem value="reporting">员工上报</MenuItem>
+                  <MenuItem value="audit">审计发现</MenuItem>
+                  <MenuItem value="accident">事故排查</MenuItem>
+                  <MenuItem value="monitoring">监测预警</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                label="位置"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+                placeholder="请输入隐患位置"
+              />
+            </Box>
+            <TextField
+              fullWidth
+              label="上报人"
+              value={formData.reported_by}
+              onChange={(e) =>
+                setFormData({ ...formData, reported_by: e.target.value })
+              }
+              placeholder="请输入上报人姓名"
             />
           </Box>
         </DialogContent>
@@ -518,7 +696,7 @@ const EhsHazardPage: React.FC = () => {
             onClick={handleSave}
             sx={{ bgcolor: "#ef4444" }}
           >
-            保存
+            上报
           </Button>
         </DialogActions>
       </Dialog>
@@ -526,95 +704,437 @@ const EhsHazardPage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
       >
-        <DialogTitle>危险源详情</DialogTitle>
+        <DialogTitle>{selectedIssue?.title}</DialogTitle>
         <DialogContent>
-          {selectedHazard && (
-            <Box
-              sx={{
-                pt: 2,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
-                >
-                  危险源编号
-                </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedHazard.hazard_no}</Box>
+          {selectedIssue && (
+            <Box sx={{ pt: 2 }}>
+              <Box sx={{ mb: 4 }}>
+                <Stepper activeStep={getStepIndex(selectedIssue.status)} alternativeLabel>
+                  {steps.map((label) => (
+                    <Step key={label}>
+                      <StepLabel>{label}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
               </Box>
-              <Box>
-                <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
-                >
-                  名称
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                  mb: 4,
+                }}
+              >
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    隐患编号
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>{selectedIssue.hazard_no}</Typography>
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedHazard.name}</Box>
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    隐患等级
+                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>
+                    {getLevelBadge(selectedIssue.level)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    类别
+                  </Typography>
+                  <Typography>{getCategoryLabel(selectedIssue.category)}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    状态
+                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>
+                    {getStatusBadge(selectedIssue.status)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    位置
+                  </Typography>
+                  <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <MapPin style={{ width: 16, height: 16 }} />
+                    {selectedIssue.location || "-"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    来源
+                  </Typography>
+                  <Typography>{getSourceLabel(selectedIssue.source)}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    上报人
+                  </Typography>
+                  <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <User style={{ width: 16, height: 16 }} />
+                    {selectedIssue.reported_by || "-"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                    上报时间
+                  </Typography>
+                  <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Calendar style={{ width: 16, height: 16 }} />
+                    {selectedIssue.reported_at
+                      ? new Date(selectedIssue.reported_at).toLocaleString("zh-CN")
+                      : "-"}
+                  </Typography>
+                </Box>
               </Box>
-              <Box>
-                <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+
+              <Box sx={{ mb: 4 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  风险等级
-                </Box>
-                <Box sx={{ mt: 0.5 }}>
-                  {getRiskLevelBadge(selectedHazard.risk_level)}
-                </Box>
+                  隐患描述
+                </Typography>
+                <Typography>{selectedIssue.description || "-"}</Typography>
               </Box>
-              <Box>
-                <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
-                >
-                  类别
-                </Box>
-                <Box>{selectedHazard.category}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
-                >
-                  位置
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <MapPin style={{ width: 16, height: 16 }} />
-                  {selectedHazard.location}
-                </Box>
-              </Box>
-              <Box>
-                <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
-                >
-                  状态
-                </Box>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(selectedHazard.status)}
-                </Box>
-              </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
-                <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
-                >
-                  管控措施
-                </Box>
-                <Box>{selectedHazard.control_measures}</Box>
-              </Box>
+
+              {rectification && (
+                <Card sx={{ mb: 4 }}>
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <FileEdit sx={{ width: 18, height: 18, color: "#ca8a04" }} />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        整改信息
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          整改措施
+                        </Typography>
+                        <Typography>{rectification.description}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          整改负责人
+                        </Typography>
+                        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <User style={{ width: 14, height: 14 }} />
+                          {rectification.responsible || "-"}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          整改期限
+                        </Typography>
+                        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Calendar style={{ width: 14, height: 14 }} />
+                          {rectification.deadline || "-"}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          整改状态
+                        </Typography>
+                        <Typography>
+                          {rectification.status === "in_progress" ? "整改中" : "已完成"}
+                        </Typography>
+                      </Box>
+                      {rectification.progress !== undefined && (
+                        <Box sx={{ gridColumn: "1 / -1" }}>
+                          <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                            整改进度
+                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={rectification.progress}
+                              sx={{ flex: 1 }}
+                            />
+                            <Typography sx={{ fontWeight: 500 }}>
+                              {rectification.progress}%
+                            </Typography>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+
+              {verification && (
+                <Card sx={{ mb: 4 }}>
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <CheckSquare sx={{ width: 18, height: 18, color: "#16a34a" }} />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        验收信息
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          验收人
+                        </Typography>
+                        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <User style={{ width: 14, height: 14 }} />
+                          {verification.verifier || "-"}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          验收结果
+                        </Typography>
+                        <Typography>
+                          {verification.result === "passed" ? (
+                            <Chip
+                              label="验收通过"
+                              size="small"
+                              sx={{ bgcolor: "#dcfce7", color: "#16a34a" }}
+                            />
+                          ) : (
+                            <Chip
+                              label="验收未通过"
+                              size="small"
+                              sx={{ bgcolor: "#fee2e2", color: "#dc2626" }}
+                            />
+                          )}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          验收时间
+                        </Typography>
+                        <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Calendar style={{ width: 14, height: 14 }} />
+                          {verification.verified_at
+                            ? new Date(verification.verified_at).toLocaleString("zh-CN")
+                            : "-"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ gridColumn: "1 / -1" }}>
+                        <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                          验收备注
+                        </Typography>
+                        <Typography>{verification.remarks || "-"}</Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
             </Box>
           )}
         </DialogContent>
         <DialogActions>
+          {selectedIssue && (
+            <>
+              {selectedIssue.status === "待整改" && (
+                <Button
+                  variant="contained"
+                  onClick={handleStartRectification}
+                  sx={{ bgcolor: "#ca8a04" }}
+                >
+                  开始整改
+                </Button>
+              )}
+              {selectedIssue.status === "整改中" && (
+                <Button
+                  variant="contained"
+                  onClick={handleSubmitRectification}
+                  sx={{ bgcolor: "#2563eb" }}
+                >
+                  提交整改
+                </Button>
+              )}
+              {selectedIssue.status === "待验收" && (
+                <Button
+                  variant="contained"
+                  onClick={handleStartVerification}
+                  sx={{ bgcolor: "#16a34a" }}
+                >
+                  开始验收
+                </Button>
+              )}
+              {selectedIssue.status === "已验收" && (
+                <Button
+                  variant="contained"
+                  onClick={handleCloseIssue}
+                  sx={{ bgcolor: "#4b5563" }}
+                >
+                  闭环处理
+                </Button>
+              )}
+            </>
+          )}
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={showRectificationModal}
+        onClose={() => setShowRectificationModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>创建整改任务</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              fullWidth
+              label="整改措施 *"
+              value={rectificationFormData.description}
+              onChange={(e) =>
+                setRectificationFormData({
+                  ...rectificationFormData,
+                  description: e.target.value,
+                })
+              }
+              placeholder="请输入具体的整改措施"
+              multiline
+              rows={3}
+            />
+            <TextField
+              fullWidth
+              label="整改负责人 *"
+              value={rectificationFormData.responsible}
+              onChange={(e) =>
+                setRectificationFormData({
+                  ...rectificationFormData,
+                  responsible: e.target.value,
+                })
+              }
+              placeholder="请输入整改负责人姓名"
+            />
+            <TextField
+              fullWidth
+              type="date"
+              label="整改期限 *"
+              value={rectificationFormData.deadline}
+              onChange={(e) =>
+                setRectificationFormData({
+                  ...rectificationFormData,
+                  deadline: e.target.value,
+                })
+              }
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => setShowRectificationModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveRectification}
+            sx={{ bgcolor: "#ca8a04" }}
+          >
+            创建整改任务
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>验收整改结果</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              fullWidth
+              label="验收人 *"
+              value={verificationFormData.verifier}
+              onChange={(e) =>
+                setVerificationFormData({
+                  ...verificationFormData,
+                  verifier: e.target.value,
+                })
+              }
+              placeholder="请输入验收人姓名"
+            />
+            <FormControl fullWidth>
+              <InputLabel>验收结果 *</InputLabel>
+              <Select
+                value={verificationFormData.result}
+                label="验收结果"
+                onChange={(e) =>
+                  setVerificationFormData({
+                    ...verificationFormData,
+                    result: e.target.value,
+                  })
+                }
+              >
+                <MenuItem value="passed">验收通过</MenuItem>
+                <MenuItem value="failed">验收未通过</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="验收备注"
+              value={verificationFormData.remarks}
+              onChange={(e) =>
+                setVerificationFormData({
+                  ...verificationFormData,
+                  remarks: e.target.value,
+                })
+              }
+              placeholder="请输入验收意见"
+              multiline
+              rows={3}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => setShowVerificationModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveVerification}
+            sx={{ bgcolor: "#16a34a" }}
+          >
+            完成验收
+          </Button>
         </DialogActions>
       </Dialog>
     </>

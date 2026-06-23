@@ -38,7 +38,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { NavItem } from "../../config/navigation";
+import type { NavigationItem } from "../../config/navigation-v2";
 
 // 模块图标映射
 const moduleIconMap: Record<string, React.ReactNode> = {
@@ -55,7 +55,7 @@ const moduleIconMap: Record<string, React.ReactNode> = {
 };
 
 interface MobileNavProps {
-  navItems: NavItem[];
+  navItems: NavigationItem[];
   open: boolean;
   onClose: () => void;
   onOpen: () => void;
@@ -89,7 +89,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 
   // 处理菜单项点击
   const handleItemClick = useCallback(
-    (item: NavItem) => {
+    (item: NavigationItem) => {
       if (item.children && !item.path) {
         // 有子菜单但没有路径，展开子菜单
         toggleExpand(item.label);
@@ -104,7 +104,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   );
 
   // 渲染菜单项
-  const renderMenuItem = (item: NavItem, depth: number = 0) => {
+  const renderMenuItem = (item: NavigationItem, depth: number = 0) => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.label);
     const isActive = item.path === location.pathname;
@@ -156,7 +156,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         {hasChildren && (
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {(item.children as NavItem[]).map((child) =>
+              {(item.children as NavigationItem[]).map((child) =>
                 renderMenuItem(child, depth + 1),
               )}
             </List>
@@ -167,10 +167,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   };
 
   // 渲染分组模式的内容
-  const renderGroupContent = (item: NavItem) => {
+  const renderGroupContent = (item: NavigationItem) => {
     if (!item.children || !item.isGroup) return null;
 
-    const groups = item.children as NavItem[];
+    const groups = item.children as NavigationItem[];
     const isExpanded =
       expandedItems.has(item.label) || activeGroup === item.label;
 
@@ -223,7 +223,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                 </Typography>
                 <List component="div" disablePadding>
                   {group.children &&
-                    (group.children as NavItem[]).map((child) => (
+                    (group.children as NavigationItem[]).map((child) => (
                       <ListItem key={child.label} disablePadding>
                         <ListItemButton
                           onClick={() => {

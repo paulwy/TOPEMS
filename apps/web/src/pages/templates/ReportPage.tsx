@@ -13,11 +13,14 @@ import {
   File,
   Columns,
   Calendar,
+  Template,
+  Edit,
+  Play,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, TextField, Select, MenuItem, Chip,  } from "@mui/material";
+import { Box, Typography, TextField, Select, MenuItem, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Switch, } from "@mui/material";
 import { Button } from "@/components/ui/Button";
-import type { ReportData, ReportTypeInfo } from "@/api/report";
+import type { ReportData, ReportTypeInfo, ReportTemplate, CreateTemplateRequest, UpdateTemplateRequest, CreateReportFromTemplateRequest } from "@/api/report";
 import { reportApi } from "@/api/report";
 import ReportBuilder from "./ReportBuilder";
 import ReportViewer from "./ReportViewer";
@@ -27,6 +30,7 @@ import { apiLogger } from "@/utils/logger";
 const ReportPage: React.FC = () => {
   const navigate = useNavigate();
   const [reports, setReports] = useState<ReportData[]>([]);
+  const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [reportTypes, setReportTypes] = useState<ReportTypeInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceStatuses, setServiceStatuses] = useState<{
@@ -35,12 +39,10 @@ const ReportPage: React.FC = () => {
     report: false,
   });
 
-  // Check if a specific service is up
   const isServiceUp = (serviceName: string): boolean => {
     return serviceStatuses[serviceName] || false;
   };
 
-  // Check service status
   const checkServiceStatus = async (
     serviceName: string,
     port: number,
@@ -61,7 +63,6 @@ const ReportPage: React.FC = () => {
     }
   };
 
-  // Check all services on mount and periodically
   useEffect(() => {
     const checkAllServices = () => {
       checkServiceStatus("report", 8053, (up) =>
@@ -74,6 +75,7 @@ const ReportPage: React.FC = () => {
 
     return () => clearInterval(intervalId);
   }, []);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [showBuilder, setShowBuilder] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
@@ -84,6 +86,46 @@ const ReportPage: React.FC = () => {
     message: string;
   } | null>(null);
   const [filterModule, setFilterModule] = useState<string>("all");
+
+  const [showCreateTemplateModal, setShowCreateTemplateModal] = useState(false);
+  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
+  const [showCreateReportFromTemplateModal, setShowCreateReportFromTemplateModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
+  const [activeTab, setActiveTab] = useState<"reports" | "templates">("reports");
+
+  const [templateFormData, setTemplateFormData] = useState<CreateTemplateRequest>({
+    name: "",
+    code: "",
+    description: "",
+    category: "",
+    report_type: "rs_project_progress",
+    data_source: {
+      source_type: "sql",
+      query: "",
+      params: {},
+    },
+    layout_config: {
+      layout_type: "table",
+      orientation: "portrait",
+      paper_size: "A4",
+      margins: { top: 20, right: 20, bottom: 20, left: 20 },
+      sections: {},
+    },
+    filter_config: {
+      conditions: [],
+      sort_by: [],
+    },
+    style_config: {
+      theme: "default",
+      colors: {},
+      fonts: {},
+      borders: {},
+      header_style: {},
+      body_style: {},
+    },
+    columns: [],
+    output_format: "pdf",
+  });
 
   const mockReportTypes: ReportTypeInfo[] = [
     { type: "rs_project_progress", name: "研发项目进度报表", module: "RS" },
@@ -199,8 +241,20 @@ const ReportPage: React.FC = () => {
     setLoading(false);
   };
 
+  const loadTemplates = async () => {
+    try {
+      const response = await reportApi.listTemplates();
+      if (response.success && response.data) {
+        setTemplates(response.data);
+      }
+    } catch (err) {
+      apiLogger.error("加载模板失败:", err);
+    }
+  };
+
   useEffect(() => {
     loadReports();
+    loadTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -209,7 +263,7 @@ const ReportPage: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteReport = async (id: string) => {
     if (!confirm("确定要删除这个报表吗？")) return;
 
     try {
@@ -234,6 +288,129 @@ const ReportPage: React.FC = () => {
   const handleView = (report: ReportData) => {
     setSelectedReport(report);
     setShowViewer(true);
+  };
+
+  const handleCreateTemplate = async () => {
+    try {
+      const response = await reportApi.createTemplate(templateFormData);
+      if (response.success) {
+        showNotification("success", "模板创建成功");
+        setShowCreateTemplateModal(false);
+        loadTemplates();
+        resetTemplateForm();
+      } else {
+        showNotification("error", response.message || "创建失败");
+      }
+    } catch (err: any) {
+      showNotification("error", err.message || "创建失败");
+    }
+  };
+
+  const handleEditTemplate = async () => {
+    if (!selectedTemplate) return;
+    try {
+      const response = await reportApi.updateTemplate(selectedTemplate.id, templateFormData);
+      if (response.success) {
+        showNotification("success", "模板更新成功");
+        setShowEditTemplateModal(false);
+        setSelectedTemplate(null);
+        loadTemplates();
+        resetTemplateForm();
+      } else {
+        showNotification("error", response.message || "更新失败");
+      }
+    } catch (err: any) {
+      showNotification("error", err.message || "更新失败");
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm("确定要删除这个模板吗？")) return;
+
+    try {
+      const response = await reportApi.deleteTemplate(id);
+      if (response.success) {
+        showNotification("success", "模板删除成功");
+        loadTemplates();
+      } else {
+        showNotification("error", response.message || "删除失败");
+      }
+    } catch (err: any) {
+      showNotification("error", err.message || "删除失败");
+    }
+  };
+
+  const handleCreateReportFromTemplate = async (templateId: string) => {
+    try {
+      const request: CreateReportFromTemplateRequest = {
+        template_id: templateId,
+        created_by: "current-user",
+      };
+      const response = await reportApi.createReportFromTemplate(request);
+      if (response.success) {
+        showNotification("success", "报表创建成功");
+        setShowCreateReportFromTemplateModal(false);
+        loadReports();
+      } else {
+        showNotification("error", response.message || "创建失败");
+      }
+    } catch (err: any) {
+      showNotification("error", err.message || "创建失败");
+    }
+  };
+
+  const handleEditTemplateClick = (template: ReportTemplate) => {
+    setSelectedTemplate(template);
+    setTemplateFormData({
+      name: template.name,
+      code: template.code,
+      description: template.description || "",
+      category: template.category,
+      report_type: template.report_type,
+      data_source: template.data_source,
+      layout_config: template.layout_config,
+      filter_config: template.filter_config,
+      style_config: template.style_config,
+      columns: template.columns,
+      output_format: template.output_format,
+    });
+    setShowEditTemplateModal(true);
+  };
+
+  const resetTemplateForm = () => {
+    setTemplateFormData({
+      name: "",
+      code: "",
+      description: "",
+      category: "",
+      report_type: "rs_project_progress",
+      data_source: {
+        source_type: "sql",
+        query: "",
+        params: {},
+      },
+      layout_config: {
+        layout_type: "table",
+        orientation: "portrait",
+        paper_size: "A4",
+        margins: { top: 20, right: 20, bottom: 20, left: 20 },
+        sections: {},
+      },
+      filter_config: {
+        conditions: [],
+        sort_by: [],
+      },
+      style_config: {
+        theme: "default",
+        colors: {},
+        fonts: {},
+        borders: {},
+        header_style: {},
+        body_style: {},
+      },
+      columns: [],
+      output_format: "pdf",
+    });
   };
 
   const getModuleColor = (module: string) => {
@@ -269,6 +446,11 @@ const ReportPage: React.FC = () => {
     return type?.module || "RS";
   };
 
+  const getReportTypeName = (reportType: string): string => {
+    const type = reportTypes.find((t) => t.type === reportType);
+    return type?.name || reportType;
+  };
+
   const filteredReports = reports.filter((r) => {
     const matchesSearch =
       r.config.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -277,6 +459,14 @@ const ReportPage: React.FC = () => {
       filterModule === "all" ||
       getModuleFromReportType(r.config.report_type) === filterModule;
     return matchesSearch && matchesModule;
+  });
+
+  const filteredTemplates = templates.filter((t) => {
+    return (
+      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
   const uniqueModules = Array.from(new Set(reportTypes.map((t) => t.module)));
@@ -374,7 +564,6 @@ const ReportPage: React.FC = () => {
         background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
       }}
     >
-      {/* Header */}
       <Box
         sx={{
           bgcolor: "background.paper",
@@ -450,7 +639,6 @@ const ReportPage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Notification */}
       {notification && (
         <Box
           sx={{
@@ -476,9 +664,7 @@ const ReportPage: React.FC = () => {
         </Box>
       )}
 
-      {/* Main Content */}
       <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 4 }}>
-        {/* Search and Filter */}
         <Box sx={{ mb: 3, display: "flex", gap: 3 }}>
           <Box sx={{ flex: 1, position: "relative" }}>
             <Search
@@ -497,7 +683,7 @@ const ReportPage: React.FC = () => {
               size="small"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="搜索报表..."
+              placeholder="搜索..."
               sx={{
                 pl: 5,
                 "& .MuiOutlinedInput-root": {
@@ -507,405 +693,612 @@ const ReportPage: React.FC = () => {
               }}
             />
           </Box>
-          <Select
-            value={filterModule}
-            onChange={(e) => setFilterModule(e.target.value)}
-            size="small"
-            sx={{ minWidth: 120, bgcolor: "background.paper", borderRadius: 2 }}
-          >
-            <MenuItem value="all">全部模块</MenuItem>
-            {uniqueModules.map((module) => (
-              <MenuItem key={module} value={module}>
-                {module}
-              </MenuItem>
-            ))}
-          </Select>
+          {activeTab === "reports" && (
+            <Select
+              value={filterModule}
+              onChange={(e) => setFilterModule(e.target.value)}
+              size="small"
+              sx={{ minWidth: 120, bgcolor: "background.paper", borderRadius: 2 }}
+            >
+              <MenuItem value="all">全部模块</MenuItem>
+              {uniqueModules.map((module) => (
+                <MenuItem key={module} value={module}>
+                  {module}
+                </MenuItem>
+              ))}
+            </Select>
+          )}
         </Box>
 
-        {/* Stats */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 3,
-            mb: 4,
-          }}
-        >
+        <Box sx={{ mb: 3 }}>
           <Box
             sx={{
+              display: "inline-flex",
               bgcolor: "background.paper",
-              borderRadius: 3,
-              p: 3,
+              borderRadius: 2,
               boxShadow: 1,
+              p: 1,
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
+            <Button
+              variant={activeTab === "reports" ? "contained" : "text"}
+              onClick={() => setActiveTab("reports")}
+              sx={{ borderRadius: 1.5, textTransform: "none" }}
             >
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
-                  报表总数
-                </Typography>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: 700, color: "grey.900" }}
-                >
-                  {reports.length}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: "primary.light",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FileText
-                  sx={{ width: 24, height: 24, color: "primary.main" }}
-                />
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: "background.paper",
-              borderRadius: 3,
-              p: 3,
-              boxShadow: 1,
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
-                  RS 模块
-                </Typography>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: 700, color: "warning.main" }}
-                >
-                  {
-                    reports.filter(
-                      (r) =>
-                        getModuleFromReportType(r.config.report_type) === "RS",
-                    ).length
-                  }
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: "warning.light",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FileText
-                  sx={{ width: 24, height: 24, color: "warning.main" }}
-                />
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: "background.paper",
-              borderRadius: 3,
-              p: 3,
-              boxShadow: 1,
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
-                  LIMS 模块
-                </Typography>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: 700, color: "info.main" }}
-                >
-                  {
-                    reports.filter(
-                      (r) =>
-                        getModuleFromReportType(r.config.report_type) ===
-                        "LIMS",
-                    ).length
-                  }
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: "info.light",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FileText sx={{ width: 24, height: 24, color: "info.main" }} />
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: "background.paper",
-              borderRadius: 3,
-              p: 3,
-              boxShadow: 1,
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
-                  QMS 模块
-                </Typography>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: 700, color: "success.main" }}
-                >
-                  {
-                    reports.filter(
-                      (r) =>
-                        getModuleFromReportType(r.config.report_type) === "QMS",
-                    ).length
-                  }
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: "success.light",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FileText
-                  sx={{ width: 24, height: 24, color: "success.main" }}
-                />
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Report List */}
-        <Box
-          sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 1 }}
-        >
-          <Box sx={{ p: 3, borderBottom: 1, borderColor: "grey.200" }}>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 600, color: "grey.900" }}
-            >
+              <FileText sx={{ width: 16, height: 16, mr: 1 }} />
               报表列表
-            </Typography>
+            </Button>
+            <Button
+              variant={activeTab === "templates" ? "contained" : "text"}
+              onClick={() => {
+                setActiveTab("templates");
+                loadTemplates();
+              }}
+              sx={{ borderRadius: 1.5, textTransform: "none" }}
+            >
+              <Template sx={{ width: 16, height: 16, mr: 1 }} />
+              模板管理 ({templates.length})
+            </Button>
           </Box>
-          <Box
-            sx={{
-              "& > div:not(:last-child)": {
-                borderBottom: 1,
-                borderColor: "grey.200",
-              },
-            }}
-          >
-            {filteredReports.length === 0 ? (
-              <Box sx={{ p: 6, textAlign: "center" }}>
-                <FileText
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    color: "grey.300",
-                    mx: "auto",
-                    mb: 2,
-                  }}
-                />
-                <Typography sx={{ color: "grey.600" }}>暂无报表</Typography>
-                <Button
-                  onClick={() => setShowBuilder(true)}
-                  variant="contained"
-                  sx={{ mt: 2, borderRadius: 2 }}
-                >
-                  生成第一个报表
-                </Button>
-              </Box>
-            ) : (
-              filteredReports.map((report) => (
+        </Box>
+
+        {activeTab === "reports" ? (
+          <>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+                gap: 3,
+                mb: 4,
+              }}
+            >
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 3,
+                  p: 3,
+                  boxShadow: 1,
+                }}
+              >
                 <Box
-                  key={report.id}
-                  sx={{ p: 3, "&:hover": { bgcolor: "grey.50" } }}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
+                  <Box>
+                    <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                      报表总数
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: 700, color: "grey.900" }}
+                    >
+                      {reports.length}
+                    </Typography>
+                  </Box>
                   <Box
                     sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: "primary.light",
+                      borderRadius: 2,
                       display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    <Box sx={{ flex: 1 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          mb: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 600, color: "grey.900" }}
-                        >
-                          {report.config.title}
-                        </Typography>
-                        <Chip
-                          label={getModuleFromReportType(
-                            report.config.report_type,
-                          )}
-                          color={getModuleColor(
-                            getModuleFromReportType(report.config.report_type),
-                          )}
-                          size="small"
-                          sx={{ borderRadius: "50%" }}
-                        />
-                        <Chip
-                          label={`${report.row_count} 条数据`}
-                          size="small"
-                          sx={{
-                            bgcolor: "grey.100",
-                            color: "grey.700",
-                            borderRadius: "50%",
-                          }}
-                        />
-                      </Box>
-                      {report.config.description && (
-                        <Typography sx={{ color: "grey.600", mb: 2 }}>
-                          {report.config.description}
-                        </Typography>
-                      )}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 3,
-                          fontSize: 14,
-                          color: "grey.600",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Calendar sx={{ width: 16, height: 16 }} />
-                          创建时间:{" "}
-                          {new Date(report.created_at).toLocaleDateString(
-                            "zh-CN",
-                          )}
-                        </Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          {getFormatIcon(report.config.format)}
-                          <span style={{ marginLeft: 4 }}>
-                            {report.config.format.toUpperCase()}
-                          </span>
-                        </Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Columns sx={{ width: 16, height: 16 }} />
-                          {report.config.columns.length} 列
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Button
-                        onClick={() => handleView(report)}
-                        size="small"
-                        startIcon={<Eye sx={{ width: 16, height: 16 }} />}
-                        sx={{
-                          color: "info.main",
-                          "&:hover": { bgcolor: "info.light" },
-                          borderRadius: 2,
-                        }}
-                      >
-                        查看
-                      </Button>
-                      <Button
-                        onClick={() => handleExport(report)}
-                        size="small"
-                        startIcon={<Download sx={{ width: 16, height: 16 }} />}
-                        sx={{
-                          color: "success.main",
-                          "&:hover": { bgcolor: "success.light" },
-                          borderRadius: 2,
-                        }}
-                      >
-                        导出
-                      </Button>
-                      <Button
-                        onClick={() => handleDelete(report.id)}
-                        size="small"
-                        sx={{
-                          color: "error.main",
-                          "&:hover": { bgcolor: "error.light" },
-                          borderRadius: 2,
-                          p: 1,
-                          minWidth: "auto",
-                        }}
-                      >
-                        <Trash2 sx={{ width: 20, height: 20 }} />
-                      </Button>
-                    </Box>
+                    <FileText
+                      sx={{ width: 24, height: 24, color: "primary.main" }}
+                    />
                   </Box>
                 </Box>
-              ))
-            )}
-          </Box>
-        </Box>
+              </Box>
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 3,
+                  p: 3,
+                  boxShadow: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box>
+                    <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                      RS 模块
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: 700, color: "warning.main" }}
+                    >
+                      {
+                        reports.filter(
+                          (r) =>
+                            getModuleFromReportType(r.config.report_type) === "RS",
+                        ).length
+                      }
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: "warning.light",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <FileText
+                      sx={{ width: 24, height: 24, color: "warning.main" }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 3,
+                  p: 3,
+                  boxShadow: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box>
+                    <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                      LIMS 模块
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: 700, color: "info.main" }}
+                    >
+                      {
+                        reports.filter(
+                          (r) =>
+                            getModuleFromReportType(r.config.report_type) ===
+                            "LIMS",
+                        ).length
+                      }
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: "info.light",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <FileText sx={{ width: 24, height: 24, color: "info.main" }} />
+                  </Box>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 3,
+                  p: 3,
+                  boxShadow: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box>
+                    <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                      QMS 模块
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: 700, color: "success.main" }}
+                    >
+                      {
+                        reports.filter(
+                          (r) =>
+                            getModuleFromReportType(r.config.report_type) === "QMS",
+                        ).length
+                      }
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: "success.light",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <FileText
+                      sx={{ width: 24, height: 24, color: "success.main" }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 1 }}
+            >
+              <Box sx={{ p: 3, borderBottom: 1, borderColor: "grey.200" }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "grey.900" }}
+                >
+                  报表列表
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  "& > div:not(:last-child)": {
+                    borderBottom: 1,
+                    borderColor: "grey.200",
+                  },
+                }}
+              >
+                {filteredReports.length === 0 ? (
+                  <Box sx={{ p: 6, textAlign: "center" }}>
+                    <FileText
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        color: "grey.300",
+                        mx: "auto",
+                        mb: 2,
+                      }}
+                    />
+                    <Typography sx={{ color: "grey.600" }}>暂无报表</Typography>
+                    <Button
+                      onClick={() => setShowBuilder(true)}
+                      variant="contained"
+                      sx={{ mt: 2, borderRadius: 2 }}
+                    >
+                      生成第一个报表
+                    </Button>
+                  </Box>
+                ) : (
+                  filteredReports.map((report) => (
+                    <Box
+                      key={report.id}
+                      sx={{ p: 3, "&:hover": { bgcolor: "grey.50" } }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: 600, color: "grey.900" }}
+                            >
+                              {report.config.title}
+                            </Typography>
+                            <Chip
+                              label={getModuleFromReportType(
+                                report.config.report_type,
+                              )}
+                              color={getModuleColor(
+                                getModuleFromReportType(report.config.report_type),
+                              )}
+                              size="small"
+                              sx={{ borderRadius: "50%" }}
+                            />
+                            <Chip
+                              label={`${report.row_count} 条数据`}
+                              size="small"
+                              sx={{
+                                bgcolor: "grey.100",
+                                color: "grey.700",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          </Box>
+                          {report.config.description && (
+                            <Typography sx={{ color: "grey.600", mb: 2 }}>
+                              {report.config.description}
+                            </Typography>
+                          )}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 3,
+                              fontSize: 14,
+                              color: "grey.600",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Calendar sx={{ width: 16, height: 16 }} />
+                              创建时间:{" "}
+                              {new Date(report.created_at).toLocaleDateString(
+                                "zh-CN",
+                              )}
+                            </Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              {getFormatIcon(report.config.format)}
+                              <span style={{ marginLeft: 4 }}>
+                                {report.config.format.toUpperCase()}
+                              </span>
+                            </Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Columns sx={{ width: 16, height: 16 }} />
+                              {report.config.columns.length} 列
+                            </Box>
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Button
+                            onClick={() => handleView(report)}
+                            size="small"
+                            startIcon={<Eye sx={{ width: 16, height: 16 }} />}
+                            sx={{
+                              color: "info.main",
+                              "&:hover": { bgcolor: "info.light" },
+                              borderRadius: 2,
+                            }}
+                          >
+                            查看
+                          </Button>
+                          <Button
+                            onClick={() => handleExport(report)}
+                            size="small"
+                            startIcon={<Download sx={{ width: 16, height: 16 }} />}
+                            sx={{
+                              color: "success.main",
+                              "&:hover": { bgcolor: "success.light" },
+                              borderRadius: 2,
+                            }}
+                          >
+                            导出
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteReport(report.id)}
+                            size="small"
+                            sx={{
+                              color: "error.main",
+                              "&:hover": { bgcolor: "error.light" },
+                              borderRadius: 2,
+                              p: 1,
+                              minWidth: "auto",
+                            }}
+                          >
+                            <Trash2 sx={{ width: 20, height: 20 }} />
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))
+                )}
+              </Box>
+            </Box>
+          </>
+        ) : (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "grey.900" }}
+              >
+                报表模板列表
+              </Typography>
+              <Button
+                onClick={() => setShowCreateTemplateModal(true)}
+                variant="contained"
+                startIcon={<Plus sx={{ width: 16, height: 16 }} />}
+                sx={{ borderRadius: 2, textTransform: "none" }}
+              >
+                新增模板
+              </Button>
+            </Box>
+
+            <Box
+              sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 1 }}
+            >
+              {filteredTemplates.length === 0 ? (
+                <Box sx={{ p: 6, textAlign: "center" }}>
+                  <Template
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      color: "grey.300",
+                      mx: "auto",
+                      mb: 2,
+                    }}
+                  />
+                  <Typography sx={{ color: "grey.600" }}>暂无模板</Typography>
+                  <Button
+                    onClick={() => setShowCreateTemplateModal(true)}
+                    variant="contained"
+                    sx={{ mt: 2, borderRadius: 2 }}
+                  >
+                    创建第一个模板
+                  </Button>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    "& > div:not(:last-child)": {
+                      borderBottom: 1,
+                      borderColor: "grey.200",
+                    },
+                  }}
+                >
+                  {filteredTemplates.map((template) => (
+                    <Box
+                      key={template.id}
+                      sx={{ p: 3, "&:hover": { bgcolor: "grey.50" } }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{ fontWeight: 600, color: "grey.900" }}
+                            >
+                              {template.name}
+                            </Typography>
+                            <Chip
+                              label={template.category}
+                              size="small"
+                              sx={{
+                                bgcolor: "primary.light",
+                                color: "primary.main",
+                                borderRadius: "50%",
+                              }}
+                            />
+                            <Chip
+                              label={template.is_active ? "启用" : "禁用"}
+                              size="small"
+                              sx={{
+                                bgcolor: template.is_active
+                                  ? "success.light"
+                                  : "grey.100",
+                                color: template.is_active
+                                  ? "success.main"
+                                  : "grey.600",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          </Box>
+                          <Typography sx={{ color: "grey.600", mb: 2 }}>
+                            {template.description || "暂无描述"}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 3,
+                              fontSize: 14,
+                              color: "grey.600",
+                            }}
+                          >
+                            <span>编码: {template.code}</span>
+                            <span>类型: {getReportTypeName(template.report_type)}</span>
+                            <span>列数: {template.columns.length}</span>
+                            <span>输出格式: {template.output_format.toUpperCase()}</span>
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Button
+                            onClick={() => handleCreateReportFromTemplate(template.id)}
+                            size="small"
+                            startIcon={<Play sx={{ width: 16, height: 16 }} />}
+                            sx={{
+                              color: "primary.main",
+                              "&:hover": { bgcolor: "primary.light" },
+                              borderRadius: 2,
+                            }}
+                          >
+                            创建报表
+                          </Button>
+                          <Button
+                            onClick={() => handleEditTemplateClick(template)}
+                            size="small"
+                            startIcon={<Edit sx={{ width: 16, height: 16 }} />}
+                            sx={{
+                              color: "info.main",
+                              "&:hover": { bgcolor: "info.light" },
+                              borderRadius: 2,
+                            }}
+                          >
+                            编辑
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteTemplate(template.id)}
+                            size="small"
+                            sx={{
+                              color: "error.main",
+                              "&:hover": { bgcolor: "error.light" },
+                              borderRadius: 2,
+                              p: 1,
+                              minWidth: "auto",
+                            }}
+                          >
+                            <Trash2 sx={{ width: 20, height: 20 }} />
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          </>
+        )}
       </Box>
 
-      {/* Report Builder Modal */}
       {showBuilder && (
         <ReportBuilder
           onClose={() => setShowBuilder(false)}
@@ -918,7 +1311,6 @@ const ReportPage: React.FC = () => {
         />
       )}
 
-      {/* Report Viewer Modal */}
       {showViewer && selectedReport && (
         <ReportViewer
           report={selectedReport}
@@ -929,7 +1321,6 @@ const ReportPage: React.FC = () => {
         />
       )}
 
-      {/* Export Modal */}
       {showExportModal && selectedReport && (
         <ExportModal
           report={selectedReport}
@@ -939,6 +1330,162 @@ const ReportPage: React.FC = () => {
           }}
         />
       )}
+
+      <Dialog
+        open={showCreateTemplateModal || showEditTemplateModal}
+        onClose={() => {
+          setShowCreateTemplateModal(false);
+          setShowEditTemplateModal(false);
+          setSelectedTemplate(null);
+          resetTemplateForm();
+        }}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedTemplate ? "编辑模板" : "新增模板"}
+        </DialogTitle>
+        <DialogContent sx={{ overflowY: "auto", maxHeight: "80vh" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+              <TextField
+                label="模板名称 *"
+                required
+                value={templateFormData.name}
+                onChange={(e) =>
+                  setTemplateFormData({ ...templateFormData, name: e.target.value })
+                }
+                fullWidth
+              />
+              <TextField
+                label="模板编码 *"
+                required
+                value={templateFormData.code}
+                onChange={(e) =>
+                  setTemplateFormData({ ...templateFormData, code: e.target.value })
+                }
+                fullWidth
+              />
+            </Box>
+
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>报表类型 *</InputLabel>
+                <Select
+                  required
+                  value={templateFormData.report_type}
+                  label="报表类型 *"
+                  onChange={(e) =>
+                    setTemplateFormData({ ...templateFormData, report_type: e.target.value as any })
+                  }
+                  fullWidth
+                >
+                  {mockReportTypes.map((type) => (
+                    <MenuItem key={type.type} value={type.type}>
+                      {type.name} ({type.module})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                label="分类"
+                value={templateFormData.category}
+                onChange={(e) =>
+                  setTemplateFormData({ ...templateFormData, category: e.target.value })
+                }
+                fullWidth
+              />
+            </Box>
+
+            <TextField
+              label="描述"
+              value={templateFormData.description || ""}
+              onChange={(e) =>
+                setTemplateFormData({ ...templateFormData, description: e.target.value })
+              }
+              multiline
+              rows={2}
+              fullWidth
+            />
+
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>输出格式</InputLabel>
+                <Select
+                  value={templateFormData.output_format}
+                  label="输出格式"
+                  onChange={(e) =>
+                    setTemplateFormData({ ...templateFormData, output_format: e.target.value })
+                  }
+                  fullWidth
+                >
+                  <MenuItem value="pdf">PDF</MenuItem>
+                  <MenuItem value="excel">Excel</MenuItem>
+                  <MenuItem value="csv">CSV</MenuItem>
+                </Select>
+              </FormControl>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 2 }}>
+                <Typography>启用状态</Typography>
+                <Switch
+                  checked={selectedTemplate?.is_active ?? true}
+                  disabled={!!selectedTemplate}
+                />
+              </Box>
+            </Box>
+
+            <TextField
+              label="数据源查询"
+              value={templateFormData.data_source.query}
+              onChange={(e) =>
+                setTemplateFormData({
+                  ...templateFormData,
+                  data_source: { ...templateFormData.data_source, query: e.target.value },
+                })
+              }
+              multiline
+              rows={4}
+              fullWidth
+              placeholder="输入SQL查询语句"
+              sx={{ fontFamily: "monospace" }}
+            />
+
+            <TextField
+              label="列配置 (JSON)"
+              value={JSON.stringify(templateFormData.columns, null, 2)}
+              onChange={(e) => {
+                try {
+                  const columns = JSON.parse(e.target.value);
+                  setTemplateFormData({ ...templateFormData, columns });
+                } catch {
+                }
+              }}
+              multiline
+              rows={4}
+              fullWidth
+              sx={{ fontFamily: "monospace" }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowCreateTemplateModal(false);
+              setShowEditTemplateModal(false);
+              setSelectedTemplate(null);
+              resetTemplateForm();
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={selectedTemplate ? handleEditTemplate : handleCreateTemplate}
+          >
+            {selectedTemplate ? "保存" : "创建"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

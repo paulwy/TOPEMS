@@ -24,9 +24,9 @@ import {
   topNavItems,
   getModuleFromPath,
   getModuleTabs,
-  type NavItem,
   type TabItem,
 } from "../../config/navigation";
+import type { NavigationItem } from "../../config/navigation-v2";
 import { ModeToggle } from "../ModeToggle";
 import { FloatingAIHelper } from "../ai/FloatingAIHelper";
 import { ModuleTabs } from "./ModuleTabs";
@@ -54,7 +54,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const { logout } = useAuth();
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
+  const [openMenu, setOpenMenu] = useState<NavigationItem | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState<HTMLElement | null>(null);
@@ -79,7 +79,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const moduleTabs = currentModule ? getModuleTabs(currentModule) : [];
 
   const handleNavHover = useCallback(
-    (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
+    (event: React.MouseEvent<HTMLElement>, item: NavigationItem) => {
       if (item.children) {
         setAnchorEl(event.currentTarget);
         setOpenMenu(item);
@@ -104,7 +104,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   }, []);
 
   const handleMenuItemClick = useCallback(
-    (item: NavItem) => {
+    (item: NavigationItem) => {
       if (item.path) {
         navigate(item.path);
       }
@@ -116,94 +116,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const isMenuOpen = Boolean(anchorEl) && Boolean(openMenu?.children);
 
   // 渲染下拉菜单内容
-  const renderDropdownContent = (item: NavItem) => {
+  const renderDropdownContent = (item: NavigationItem) => {
     if (!item.children) return null;
 
-    // 如果是分组模式（isGroup: true），children 是分组列表
-    if (item.isGroup) {
-      const groups = item.children as NavItem[];
-      return (
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            minWidth: 500,
-            maxWidth: { lg: 800, md: 600, sm: 450 },
-            p: 2,
-            gap: 2,
-            maxHeight: isMobile ? "70vh" : "80vh",
-            overflowY: "auto",
-          }}
-          onMouseEnter={() => {
-            if (anchorEl) setAnchorEl(anchorEl);
-          }}
-          onMouseLeave={handleCloseMenu}
-        >
-          {groups.map((group, idx) => (
-            <Box key={idx} sx={{ minWidth: 140, flex: 1 }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  display: "block",
-                  color: "text.secondary",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  mb: 1,
-                  px: 1,
-                }}
-              >
-                {group.label}
-              </Typography>
-              {group.children?.map((child: NavItem) => (
-                <Box
-                  key={child.label}
-                  onClick={() => handleMenuItemClick(child)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    p: 1,
-                    borderRadius: 1,
-                    cursor: "pointer",
-                    "&:hover": {
-                      backgroundColor: "action.hover",
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 1,
-                      backgroundColor: "primary.light",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: 0.8,
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "primary.main", fontWeight: 600 }}
-                    >
-                      {child.label.charAt(0)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {child.label}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          ))}
-        </Box>
-      );
-    }
-
-    // 非分组模式，children 直接是菜单项列表
-    const menuItems = item.children as NavItem[];
+    const menuItems = item.children as NavigationItem[];
     return (
       <Box
         sx={{
@@ -218,9 +134,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         }}
         onMouseLeave={handleCloseMenu}
       >
-        {menuItems.map((child, idx) => (
+        {menuItems.map((child: NavigationItem) => (
           <Box
-            key={child.label + idx}
+            key={child.id}
             onClick={() => handleMenuItemClick(child)}
             sx={{
               display: "flex",
@@ -246,16 +162,20 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 opacity: 0.8,
               }}
             >
-              <Typography
-                variant="caption"
-                sx={{ color: "primary.main", fontWeight: 600 }}
-              >
-                {child.label.charAt(0)}
-              </Typography>
+              {child.icon ? (
+                <child.icon style={{ width: 16, height: 16, color: "primary.main" }} />
+              ) : (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "primary.main", fontWeight: 600 }}
+                >
+                  {child.title.charAt(0)}
+                </Typography>
+              )}
             </Box>
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {child.label}
+                {child.title}
               </Typography>
             </Box>
           </Box>
@@ -265,14 +185,14 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   };
 
   // 渲染顶部导航项
-  const renderNavItem = (item: NavItem, index: number) => {
+  const renderNavigationItem = (item: NavigationItem, index: number) => {
     const isActive =
       item.path === location.pathname ||
-      location.pathname.startsWith(item.path + "/");
+      (item.path && location.pathname.startsWith(item.path + "/"));
 
     return (
       <Box
-        key={item.label + index}
+        key={item.title + index}
         onMouseEnter={(e) => handleNavHover(e, item)}
         onMouseLeave={handleNavLeave}
         sx={{
@@ -280,8 +200,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         }}
       >
         <Button
+          onClick={() => item.path && navigate(item.path)}
           endIcon={
-            item.children ? (
+            item.children && item.children.length > 0 ? (
               <ChevronDown style={{ width: 14, height: 14 }} />
             ) : null
           }
@@ -297,9 +218,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             "&:hover": {
               backgroundColor: isActive ? "primary.light" : "action.hover",
             },
+            cursor: item.path ? "pointer" : "default",
           }}
         >
-          {item.label}
+          {item.title}
         </Button>
       </Box>
     );
@@ -398,7 +320,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               overflow: "auto",
             }}
           >
-            {topNavItems.map((item, index) => renderNavItem(item, index))}
+            {topNavigationItems.map((item, index) => renderNavigationItem(item, index))}
           </Box>
 
           {/* 右侧工具 */}
@@ -455,7 +377,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             </Menu>
             {/* 移动端汉堡菜单 */}
             <MobileNav
-              navItems={topNavItems}
+              navItems={topNavigationItems}
               open={mobileMenuOpen}
               onClose={() => setMobileMenuOpen(false)}
               onOpen={() => setMobileMenuOpen(true)}

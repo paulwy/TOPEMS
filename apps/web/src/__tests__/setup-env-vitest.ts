@@ -6,7 +6,7 @@ const testEnv = {
   VITE_WS_MAX_RECONNECT_ATTEMPTS: "10",
   VITE_IAM_SERVICE_URL: "http://localhost:8000",
   VITE_DOC_SERVICE_URL: "http://localhost:8000",
-  VITE_PM_SERVICE_URL: "http://localhost:8022",
+  VITE_PM_SERVICE_URL: "http://localhost:8023",
   VITE_NOTIFICATION_SERVICE_URL: "http://localhost:8000",
   VITE_INTEGRATION_SERVICE_URL: "http://localhost:8072",
   VITE_PORTAL_SERVICE_URL: "http://localhost:8063",

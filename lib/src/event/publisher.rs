@@ -1,8 +1,11 @@
 use super::error::EventResult;
 use super::event_types::{
-    Event, EventType, HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload,
-    HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload, PmProjectCreatedPayload,
-    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    Event, EventType,
+    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload,
+    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    LimsSampleRegisteredPayload, LimsInspectionResultSubmittedPayload, LimsInspectionAbnormalDetectedPayload,
+    QmsInspectionCompletedPayload, QmsCorrectiveActionCreatedPayload,
+    EhsHazardReportedPayload, EhsAccidentReportedPayload,
 };
 use redis::Client;
 use serde::Serialize;
@@ -57,7 +60,7 @@ impl EventPublisher {
         Ok(())
     }
 
-    /// 发布 HRM 员工创建事件（便捷方法）
+    /// 发布 HRM 员工创建事件
     pub async fn publish_hrm_employee_created(
         &self,
         employee_id: uuid::Uuid,
@@ -71,12 +74,10 @@ impl EventPublisher {
             email: email.to_string(),
             department_id,
         };
-
-        self.publish_event(EventType::HrmEmployeeCreated, payload)
-            .await
+        self.publish_event(EventType::HrmEmployeeCreated, payload).await
     }
 
-    /// 发布 PM 项目创建事件（便捷方法）
+    /// 发布 PM 项目创建事件
     pub async fn publish_pm_project_created(
         &self,
         project_id: uuid::Uuid,
@@ -88,9 +89,7 @@ impl EventPublisher {
             project_name: project_name.to_string(),
             owner_id,
         };
-
-        self.publish_event(EventType::PmProjectCreated, payload)
-            .await
+        self.publish_event(EventType::PmProjectCreated, payload).await
     }
 
     pub async fn publish_pm_project_updated(
@@ -106,9 +105,7 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-
-        self.publish_event(EventType::PmProjectUpdated, payload)
-            .await
+        self.publish_event(EventType::PmProjectUpdated, payload).await
     }
 
     pub async fn publish_pm_task_created(
@@ -122,9 +119,7 @@ impl EventPublisher {
             project_id,
             task_name: task_name.to_string(),
         };
-
-        self.publish_event(EventType::PmTaskCreated, payload)
-            .await
+        self.publish_event(EventType::PmTaskCreated, payload).await
     }
 
     pub async fn publish_pm_task_updated(
@@ -142,9 +137,7 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-
-        self.publish_event(EventType::PmTaskUpdated, payload)
-            .await
+        self.publish_event(EventType::PmTaskUpdated, payload).await
     }
 
     pub async fn publish_pm_task_deleted(
@@ -158,9 +151,7 @@ impl EventPublisher {
             project_id,
             deleted_by,
         };
-
-        self.publish_event(EventType::PmTaskDeleted, payload)
-            .await
+        self.publish_event(EventType::PmTaskDeleted, payload).await
     }
 
     pub async fn publish_hrm_department_created(
@@ -174,9 +165,7 @@ impl EventPublisher {
             department_name: department_name.to_string(),
             parent_id,
         };
-
-        self.publish_event(EventType::HrmDepartmentCreated, payload)
-            .await
+        self.publish_event(EventType::HrmDepartmentCreated, payload).await
     }
 
     pub async fn publish_hrm_department_updated(
@@ -192,9 +181,7 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-
-        self.publish_event(EventType::HrmDepartmentUpdated, payload)
-            .await
+        self.publish_event(EventType::HrmDepartmentUpdated, payload).await
     }
 
     pub async fn publish_hrm_department_deleted(
@@ -208,8 +195,158 @@ impl EventPublisher {
             department_name: department_name.to_string(),
             deleted_by,
         };
+        self.publish_event(EventType::HrmDepartmentDeleted, payload).await
+    }
 
-        self.publish_event(EventType::HrmDepartmentDeleted, payload)
-            .await
+    // --- LIMS Events ---
+
+    pub async fn publish_lims_sample_registered(
+        &self,
+        sample_id: uuid::Uuid,
+        sample_no: &str,
+        sample_name: &str,
+        sample_type: Option<&str>,
+        source: Option<&str>,
+    ) -> EventResult<()> {
+        let payload = LimsSampleRegisteredPayload {
+            sample_id,
+            sample_no: sample_no.to_string(),
+            sample_name: sample_name.to_string(),
+            sample_type: sample_type.map(|s| s.to_string()),
+            source: source.map(|s| s.to_string()),
+        };
+        self.publish_event(EventType::LimsSampleRegistered, payload).await
+    }
+
+    pub async fn publish_lims_inspection_result_submitted(
+        &self,
+        task_id: uuid::Uuid,
+        task_no: &str,
+        sample_id: uuid::Uuid,
+        sample_no: &str,
+        conclusion: &str,
+        result: serde_json::Value,
+        recorded_by: &str,
+    ) -> EventResult<()> {
+        let payload = LimsInspectionResultSubmittedPayload {
+            task_id,
+            task_no: task_no.to_string(),
+            sample_id,
+            sample_no: sample_no.to_string(),
+            conclusion: conclusion.to_string(),
+            result,
+            recorded_by: recorded_by.to_string(),
+        };
+        self.publish_event(EventType::LimsInspectionResultSubmitted, payload).await
+    }
+
+    pub async fn publish_lims_inspection_abnormal_detected(
+        &self,
+        task_id: uuid::Uuid,
+        task_no: &str,
+        sample_id: uuid::Uuid,
+        sample_no: &str,
+        test_item: &str,
+        abnormal_data: serde_json::Value,
+        conclusion: &str,
+    ) -> EventResult<()> {
+        let payload = LimsInspectionAbnormalDetectedPayload {
+            task_id,
+            task_no: task_no.to_string(),
+            sample_id,
+            sample_no: sample_no.to_string(),
+            test_item: test_item.to_string(),
+            abnormal_data,
+            conclusion: conclusion.to_string(),
+        };
+        self.publish_event(EventType::LimsInspectionAbnormalDetected, payload).await
+    }
+
+    // --- QMS Events ---
+
+    pub async fn publish_qms_inspection_completed(
+        &self,
+        inspection_id: uuid::Uuid,
+        inspection_no: &str,
+        product_id: Option<uuid::Uuid>,
+        product_name: Option<&str>,
+        result: &str,
+        qualification_rate: Option<f64>,
+        inspector: &str,
+    ) -> EventResult<()> {
+        let payload = QmsInspectionCompletedPayload {
+            inspection_id,
+            inspection_no: inspection_no.to_string(),
+            product_id,
+            product_name: product_name.map(|s| s.to_string()),
+            result: result.to_string(),
+            qualification_rate,
+            inspector: inspector.to_string(),
+        };
+        self.publish_event(EventType::QmsInspectionCompleted, payload).await
+    }
+
+    pub async fn publish_qms_corrective_action_created(
+        &self,
+        action_id: uuid::Uuid,
+        issue_id: uuid::Uuid,
+        title: &str,
+        description: Option<&str>,
+        assigned_to: &str,
+    ) -> EventResult<()> {
+        let payload = QmsCorrectiveActionCreatedPayload {
+            action_id,
+            issue_id,
+            title: title.to_string(),
+            description: description.map(|s| s.to_string()),
+            assigned_to: assigned_to.to_string(),
+        };
+        self.publish_event(EventType::QmsCorrectiveActionCreated, payload).await
+    }
+
+    // --- EHS Events ---
+
+    pub async fn publish_ehs_hazard_reported(
+        &self,
+        hazard_id: uuid::Uuid,
+        hazard_no: &str,
+        title: &str,
+        category: &str,
+        level: &str,
+        location: Option<&str>,
+        description: Option<&str>,
+        reported_by: Option<&str>,
+    ) -> EventResult<()> {
+        let payload = EhsHazardReportedPayload {
+            hazard_id,
+            hazard_no: hazard_no.to_string(),
+            title: title.to_string(),
+            category: category.to_string(),
+            level: level.to_string(),
+            location: location.map(|s| s.to_string()),
+            description: description.map(|s| s.to_string()),
+            reported_by: reported_by.map(|s| s.to_string()),
+        };
+        self.publish_event(EventType::EhsHazardReported, payload).await
+    }
+
+    pub async fn publish_ehs_accident_reported(
+        &self,
+        accident_id: uuid::Uuid,
+        accident_no: &str,
+        title: &str,
+        severity: &str,
+        location: Option<&str>,
+        occurred_at: Option<&str>,
+    ) -> EventResult<()> {
+        let payload = EhsAccidentReportedPayload {
+            accident_id,
+            accident_no: accident_no.to_string(),
+            title: title.to_string(),
+            severity: severity.to_string(),
+            location: location.map(|s| s.to_string()),
+            occurred_at: occurred_at.map(|s| s.to_string()),
+        };
+        self.publish_event(EventType::EhsAccidentReported, payload).await
     }
 }

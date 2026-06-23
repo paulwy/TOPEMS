@@ -5,13 +5,19 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use serde_json;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use super::ApiState;
 use crate::api::audit::log_audit_event;
 use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::services::permission::{check_permission, ModulePermission};
-use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
+use topems_shared::{api_error, auth::Claims, redis::{CacheService, RedisCacheService}, ApiResponse, PaginationParams};
+
+const CACHE_TTL_SECONDS: u64 = 300;
+const CACHE_PREFIX_SUPPLIER: &str = "scm:supplier";
+const CACHE_PREFIX_SUPPLIERS_LIST: &str = "scm:suppliers:list";
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -43,10 +49,24 @@ async fn list_suppliers(
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
+    let cache_key = format!(
+        "{}:page:{}:size:{}:search:{:?}:status:{:?}",
+        CACHE_PREFIX_SUPPLIERS_LIST, page, page_size, search_pattern, status_filter
+    );
+
+    if let Some(cache) = &state.cache {
+        if let Ok(Some(cached)) = cache.get(&cache_key).await {
+            tracing::debug!("📋 缓存命中: {}", cache_key);
+            if let Ok(data) = serde_json::from_str(&cached) {
+                return Json(ApiResponse::success(data, "获取供应商列表成功"));
+            }
+        }
+    }
+
     let result = sqlx::query_as::<_, Supplier>(
         r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at
-        FROM suppliers
+        FROM scm.suppliers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR contact_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -64,7 +84,7 @@ async fn list_suppliers(
         Ok(suppliers) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM suppliers
+                SELECT COUNT(*) FROM scm.suppliers
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR contact_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -76,15 +96,20 @@ async fn list_suppliers(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "suppliers": suppliers,
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size
-                }),
-                "获取供应商列表成功",
-            ))
+            let response_data = serde_json::json!({
+                "suppliers": suppliers,
+                "total": total,
+                "page": page,
+                "page_size": page_size
+            });
+
+            if let Some(cache) = &state.cache {
+                if let Ok(serialized) = serde_json::to_string(&response_data) {
+                    let _ = cache.set(&cache_key, &serialized, Some(CACHE_TTL_SECONDS)).await;
+                }
+            }
+
+            Json(ApiResponse::success(response_data, "获取供应商列表成功"))
         }
         Err(e) => {
             tracing::error!("获取供应商列表失败: {}", e);
@@ -109,7 +134,7 @@ async fn create_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         r#"
-        INSERT INTO suppliers (id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at)
+        INSERT INTO scm.suppliers (id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
         RETURNING id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at
         "#,
@@ -150,6 +175,10 @@ async fn create_supplier(
         None
     };
 
+    tokio::spawn(async move {
+        clear_supplier_caches(&state.cache).await;
+    });
+
     log_audit_event(
         &state.db,
         "create".to_string(),
@@ -178,10 +207,22 @@ async fn get_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let cache_key = format!("{}:{}", CACHE_PREFIX_SUPPLIER, id);
+
+    if let Some(cache) = &state.cache {
+        if let Ok(Some(cached)) = cache.get(&cache_key).await {
+            tracing::debug!("📋 缓存命中: {}", cache_key);
+            if let Ok(supplier) = serde_json::from_str(&cached) {
+                return Json(ApiResponse::success(supplier, "获取供应商成功"));
+            }
+        }
+    }
+
     let result = sqlx::query_as::<_, Supplier>(
         r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at
-        FROM suppliers WHERE id = $1
+        FROM scm.suppliers WHERE id = $1
         "#,
     )
     .bind(id)
@@ -189,7 +230,14 @@ async fn get_supplier(
     .await;
 
     match result {
-        Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "获取供应商成功")),
+        Ok(Some(supplier)) => {
+            if let Some(cache) = &state.cache {
+                if let Ok(serialized) = serde_json::to_string(&supplier) {
+                    let _ = cache.set(&cache_key, &serialized, Some(CACHE_TTL_SECONDS)).await;
+                }
+            }
+            Json(ApiResponse::success(supplier, "获取供应商成功"))
+        }
         Ok(None) => Json(api_error(404, "供应商不存在")),
         Err(e) => {
             tracing::error!("获取供应商失败: {}", e);
@@ -212,7 +260,7 @@ async fn update_supplier(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Supplier>(
-        "SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at FROM suppliers WHERE id = $1",
+        "SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at FROM scm.suppliers WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -237,7 +285,7 @@ async fn update_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         r#"
-        UPDATE suppliers SET
+        UPDATE scm.suppliers SET
             name = $2, short_name = $3, contact_name = $4, contact_phone = $5, email = $6, address = $7, bank_account = $8, tax_number = $9, status = $10, updated_at = $11
         WHERE id = $1
         RETURNING id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status, created_at, updated_at
@@ -279,6 +327,10 @@ async fn update_supplier(
         None
     };
 
+    tokio::spawn(async move {
+        clear_supplier_caches(&state.cache).await;
+    });
+
     log_audit_event(
         &state.db,
         "update".to_string(),
@@ -308,7 +360,7 @@ async fn delete_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM suppliers WHERE id = $1")
+    let result = sqlx::query("DELETE FROM scm.suppliers WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -340,6 +392,10 @@ async fn delete_supplier(
         None
     };
 
+    tokio::spawn(async move {
+        clear_supplier_caches(&state.cache).await;
+    });
+
     log_audit_event(
         &state.db,
         "delete".to_string(),
@@ -357,4 +413,12 @@ async fn delete_supplier(
     .await;
 
     response
+}
+
+async fn clear_supplier_caches(cache: &Option<Arc<RedisCacheService>>) {
+    if let Some(cache) = cache {
+        let _ = cache.delete(&format!("{}:*", CACHE_PREFIX_SUPPLIER)).await;
+        let _ = cache.delete(&format!("{}:*", CACHE_PREFIX_SUPPLIERS_LIST)).await;
+        tracing::debug!("🗑️ 供应商缓存已清除");
+    }
 }

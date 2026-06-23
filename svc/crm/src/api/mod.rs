@@ -9,12 +9,16 @@ pub mod audit;
 pub mod billing;
 pub mod contact;
 pub mod customer;
+pub mod customer_profile;
+pub mod customer_recommendation;
 pub mod customer_scoring;
+pub mod customer_segmentation;
 pub mod interaction;
 pub mod openapi;
 pub mod opportunity;
 pub mod plugin;
 pub mod sales_forecast;
+pub mod sales_funnel;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -39,12 +43,16 @@ impl FromRef<ApiState> for PgPool {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .merge(customer::create_routes())
+        .merge(customer_profile::create_routes())
+        .merge(customer_segmentation::create_routes())
+        .merge(customer_recommendation::create_routes())
         .merge(contact::create_routes())
         .merge(opportunity::create_routes())
         .merge(interaction::create_routes())
         .merge(audit::create_routes())
         .merge(customer_scoring::create_routes())
         .merge(sales_forecast::create_routes())
+        .merge(sales_funnel::create_routes())
         .merge(billing::create_routes())
         .merge(plugin::create_routes())
 }

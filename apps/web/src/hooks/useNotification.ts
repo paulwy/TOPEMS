@@ -9,6 +9,13 @@ export interface Notification {
   duration?: number;
 }
 
+export interface NotificationOptions {
+  title?: string;
+  message: string;
+  type: NotificationType;
+  duration?: number;
+}
+
 export function useNotification() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -60,7 +67,14 @@ export function useNotification() {
     [showNotification],
   );
 
-  return {
+  const addNotification = useCallback(
+    (options: NotificationOptions) => {
+      return showNotification(options.type, options.message, options.duration);
+    },
+    [showNotification],
+  );
+
+  const result = {
     notifications,
     showNotification,
     hideNotification,
@@ -69,4 +83,6 @@ export function useNotification() {
     info,
     warning,
   };
+
+  return Object.assign(addNotification, result);
 }

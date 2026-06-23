@@ -13,11 +13,13 @@ pub mod experiment;
 pub mod formula;
 pub mod material;
 pub mod openapi;
+pub mod patent;
 pub mod project;
 pub mod project_member;
 pub mod project_milestone;
 pub mod project_phase;
 pub mod project_report;
+pub mod research_cost;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -47,6 +49,8 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(formula::create_routes())
         .merge(experiment::create_routes())
         .merge(material::create_routes())
+        .merge(patent::create_routes())
+        .merge(research_cost::create_routes())
         .merge(doc_integration::create_routes())
         .merge(ai_integration::create_routes())
         .merge(audit::create_routes())

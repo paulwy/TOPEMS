@@ -1,567 +1,745 @@
-import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
-import { logger } from "@/utils/logger";
 import {
-  Activity,
-  Clock,
-  TrendingUp,
-  TrendingDown,
-  BarChart3,
-  PieChart,
-  ArrowUpRight,
-  RefreshCw,
+  Plus,
+  Edit2,
+  Trash2,
+  Copy,
+  Eye,
+  EyeOff,
+  Grid3X3,
+  LayoutDashboard,
+  FolderOpen,
+  Search,
+  Filter,
+  SortDesc,
 } from "lucide-react";
-import BarChart from "@/components/charts/BarChart";
 import {
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardActions,
+  Chip,
+  Divider,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Menu,
+  MenuItem,
+  IconButton,
   Tooltip,
-  ResponsiveContainer,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  LineChart as RechartsLineChart,
-  Line,
-} from "recharts";
+  Skeleton,
+  Tabs,
+  Tab,
+} from "@mui/material";
 import {
-  fetchSummaryDashboard,
-  fetchDevelopmentAnalytics,
-  fetchQualityAnalytics,
-  fetchProductionAnalytics,
-  fetchLaboratoryAnalytics,
-  type SummaryDashboard,
-  type DevelopmentAnalytics,
-  type QualityAnalytics,
-  type ProductionAnalytics,
-  type LaboratoryAnalytics,
+  fetchDashboards,
+  createDashboard,
+  deleteDashboard,
+  cloneDashboard,
+  updateDashboard,
+  fetchDashboardTemplates,
+  createDashboardFromTemplate,
+  type Dashboard,
+  type DashboardTemplate,
 } from "@/api/bi";
-import MetricCard from "@/components/MetricCard";
-import { ChartCard } from "@/components/ChartCard";
-import { BIChartColors } from "@/components/charts/chartTheme";
-import { Box, Typography, Chip } from "@mui/material";
-import {
-  DashboardTemplate,
-  type StatCard,
-  type ChartCard as ChartCardType,
-  type RecentItem,
-} from "@/components/templates";
+import { DashboardEditor } from "@/components/bi/DashboardEditor";
+import { DashboardTemplateManager } from "@/components/bi/DashboardTemplateManager";
+import { DashboardTemplate as DashboardLayout } from "@/components/templates";
+import { logger } from "@/utils/logger";
 
-const ActivityItem = ({
-  activity,
-  index,
-}: {
-  activity: { id: number; type: string; title: string; time: string };
-  index: number;
-}) => {
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "production":
-        return (
-          <BarChart3 sx={{ width: 16, height: 16, color: "primary.main" }} />
-        );
-      case "quality":
-        return (
-          <Activity sx={{ width: 16, height: 16, color: "success.main" }} />
-        );
-      case "maintenance":
-        return (
-          <TrendingUp sx={{ width: 16, height: 16, color: "warning.main" }} />
-        );
-      default:
-        return <Activity sx={{ width: 16, height: 16, color: "grey.600" }} />;
-    }
-  };
+type ViewMode = "list" | "editor";
+type TabType = "dashboards" | "templates";
 
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case "production":
-        return { bgcolor: "blue.50", borderColor: "blue.100" };
-      case "quality":
-        return { bgcolor: "green.50", borderColor: "green.100" };
-      case "maintenance":
-        return { bgcolor: "orange.50", borderColor: "orange.100" };
-      default:
-        return { bgcolor: "grey.50", borderColor: "grey.100" };
-    }
-  };
-
-  const colors = getActivityColor(activity.type);
-
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 2,
-        p: 1.5,
-        borderRadius: 2,
-        border: "1px solid",
-        transition: "all 0.3s",
-        "&:hover": {
-          boxShadow: 1,
-        },
-        animation: "fadeIn 0.5s ease-in-out",
-        animationDelay: `${index * 100}ms`,
-        animationFillMode: "both",
-        ...colors,
-      }}
-    >
-      <Box
-        sx={{
-          flexShrink: 0,
-          width: 40,
-          height: 40,
-          borderRadius: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          ...colors,
-        }}
-      >
-        {getActivityIcon(activity.type)}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 500,
-            color: "grey.800",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {activity.title}
-        </Typography>
-        <Typography variant="caption" sx={{ color: "grey.500" }}>
-          {activity.time}
-        </Typography>
-      </Box>
-    </Box>
-  );
-};
+interface CreateDialogState {
+  open: boolean;
+  useTemplate: boolean;
+  selectedTemplateId: string | null;
+  name: string;
+  description: string;
+}
 
 const BIDashboardPage = () => {
-  const [summary, setSummary] = useState<SummaryDashboard | null>(null);
-  const [development, setDevelopment] = useState<DevelopmentAnalytics | null>(
-    null,
-  );
-  const [quality, setQuality] = useState<QualityAnalytics | null>(null);
-  const [production, setProduction] = useState<ProductionAnalytics | null>(
-    null,
-  );
-  const [laboratory, setLaboratory] = useState<LaboratoryAnalytics | null>(
-    null,
-  );
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [activeTab, setActiveTab] = useState<TabType>("dashboards");
+  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
+  const [templates, setTemplates] = useState<DashboardTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(
+    null,
+  );
+  const [createDialog, setCreateDialog] = useState<CreateDialogState>({
+    open: false,
+    useTemplate: false,
+    selectedTemplateId: null,
+    name: "",
+    description: "",
+  });
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [contextDashboard, setContextDashboard] = useState<Dashboard | null>(
+    null,
+  );
 
-  const loadData = async (showRefreshing = false) => {
-    if (showRefreshing) setIsRefreshing(true);
-    else setLoading(true);
+  const loadDashboards = async () => {
+    setLoading(true);
     try {
-      const [summaryRes, devRes, qualityRes, prodRes, labRes] =
-        await Promise.all([
-          fetchSummaryDashboard(),
-          fetchDevelopmentAnalytics(),
-          fetchQualityAnalytics(),
-          fetchProductionAnalytics(),
-          fetchLaboratoryAnalytics(),
-        ]);
-
-      if (summaryRes.success && summaryRes.data) {
-        setSummary(summaryRes.data);
-      }
-      if (devRes.success && devRes.data) {
-        setDevelopment(devRes.data);
-      }
-      if (qualityRes.success && qualityRes.data) {
-        setQuality(qualityRes.data);
-      }
-      if (prodRes.success && prodRes.data) {
-        setProduction(prodRes.data);
-      }
-      if (labRes.success && labRes.data) {
-        setLaboratory(labRes.data);
+      const res = await fetchDashboards();
+      if (res.success && res.data) {
+        setDashboards(res.data.items || []);
       }
     } catch (error) {
-      logger.error("Failed to load data:", error);
+      logger.error("Failed to load dashboards:", error);
     } finally {
       setLoading(false);
-      setIsRefreshing(false);
+    }
+  };
+
+  const loadTemplates = async () => {
+    try {
+      const res = await fetchDashboardTemplates();
+      if (res.success && res.data) {
+        setTemplates(res.data.items || []);
+      }
+    } catch (error) {
+      logger.error("Failed to load templates:", error);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadDashboards();
+    loadTemplates();
   }, []);
 
-  const handleRefresh = () => {
-    loadData(true);
+  const handleCreateDashboard = async () => {
+    try {
+      const data: Partial<Dashboard> = {
+        name: createDialog.name || "未命名仪表盘",
+        description: createDialog.description,
+        owner_id: "current-user",
+        is_public: false,
+      };
+
+      let result;
+      if (createDialog.useTemplate && createDialog.selectedTemplateId) {
+        result = await createDashboardFromTemplate(
+          createDialog.selectedTemplateId,
+          data,
+        );
+      } else {
+        result = await createDashboard(data);
+      }
+
+      if (result.success) {
+        loadDashboards();
+        setCreateDialog({
+          open: false,
+          useTemplate: false,
+          selectedTemplateId: null,
+          name: "",
+          description: "",
+        });
+      }
+    } catch (error) {
+      logger.error("Failed to create dashboard:", error);
+    }
   };
 
-  const defaultMetrics = [
-    {
-      title: "生产效率",
-      value: 85.5,
-      unit: "%",
-      change: 2.3,
-      trend: "up" as const,
-      sparklineData: [78, 82, 85, 83, 86, 85.5],
-    },
-    {
-      title: "质量合格率",
-      value: 98.2,
-      unit: "%",
-      change: 0.8,
-      trend: "up" as const,
-      sparklineData: [96, 97, 97.5, 98, 98, 98.2],
-    },
-    {
-      title: "设备稼动率",
-      value: 92.3,
-      unit: "%",
-      change: -1.2,
-      trend: "down" as const,
-      sparklineData: [94, 93, 93.5, 92, 92.5, 92.3],
-    },
-    {
-      title: "交付准时率",
-      value: 96.8,
-      unit: "%",
-      change: 1.5,
-      trend: "up" as const,
-      sparklineData: [94, 95, 96, 95.5, 96.5, 96.8],
-    },
-  ];
+  const handleDeleteDashboard = async (id: string) => {
+    if (!confirm("确定要删除这个仪表盘吗？")) return;
+    try {
+      const res = await deleteDashboard(id);
+      if (res.success) {
+        loadDashboards();
+      }
+    } catch (error) {
+      logger.error("Failed to delete dashboard:", error);
+    }
+  };
 
-  const defaultActivities = [
-    {
-      id: 1,
-      type: "production",
-      title: "完成生产订单 PO-2024-001",
-      time: "10分钟前",
-    },
-    {
-      id: 2,
-      type: "quality",
-      title: "质量检验完成，批次 B-001",
-      time: "25分钟前",
-    },
-    {
-      id: 3,
-      type: "maintenance",
-      title: "设备维护完成：生产线A",
-      time: "1小时前",
-    },
-  ];
+  const handleCloneDashboard = async (id: string) => {
+    try {
+      const res = await cloneDashboard(id);
+      if (res.success) {
+        loadDashboards();
+      }
+    } catch (error) {
+      logger.error("Failed to clone dashboard:", error);
+    }
+  };
 
-  const testTypeData = laboratory
-    ? [
-        {
-          name: "化学检验",
-          value: laboratory.test_type_distribution.chemical,
-          color: BIChartColors.series[0],
-        },
-        {
-          name: "物理检验",
-          value: laboratory.test_type_distribution.physical,
-          color: BIChartColors.series[1],
-        },
-        {
-          name: "微生物检验",
-          value: laboratory.test_type_distribution.microbiological,
-          color: BIChartColors.series[2],
-        },
-        {
-          name: "其他",
-          value: laboratory.test_type_distribution.other,
-          color: BIChartColors.series[3],
-        },
-      ]
-    : [
-        { name: "化学检验", value: 40, color: BIChartColors.series[0] },
-        { name: "物理检验", value: 30, color: BIChartColors.series[1] },
-        { name: "微生物检验", value: 20, color: BIChartColors.series[2] },
-        { name: "其他", value: 10, color: BIChartColors.series[3] },
-      ];
+  const handleTogglePublic = async (dashboard: Dashboard) => {
+    try {
+      const res = await updateDashboard(dashboard.id, {
+        is_public: !dashboard.is_public,
+      });
+      if (res.success) {
+        loadDashboards();
+      }
+    } catch (error) {
+      logger.error("Failed to update dashboard:", error);
+    }
+  };
 
-  const metrics = (summary?.key_metrics || defaultMetrics).map(
-    (metric, index) => ({
-      ...metric,
-      color: `from-${["blue", "emerald", "amber", "rose"][index]}-500 to-${["cyan", "teal", "orange", "pink"][index]}-400`,
-      icon: [ArrowUpRight, Activity, TrendingDown, TrendingUp][index],
-    }),
+  const handleOpenEditor = (dashboard?: Dashboard) => {
+    setSelectedDashboard(dashboard || null);
+    setViewMode("editor");
+  };
+
+  const handleSaveDashboard = async (config: any) => {
+    try {
+      const data: Partial<Dashboard> = {
+        name: config.name,
+        description: config.description,
+        layout: { widgets: config.widgets },
+      };
+
+      if (selectedDashboard) {
+        await updateDashboard(selectedDashboard.id, data);
+      } else {
+        await createDashboard({
+          ...data,
+          owner_id: "current-user",
+          is_public: false,
+        });
+      }
+      setViewMode("list");
+      loadDashboards();
+    } catch (error) {
+      logger.error("Failed to save dashboard:", error);
+    }
+  };
+
+  const filteredDashboards = dashboards.filter(
+    (d) =>
+      d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      d.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // Stats area - 保留原有的 MetricCard 渲染
-  const statsArea = (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: {
-          xs: "repeat(1, 1fr)",
-          md: "repeat(2, 1fr)",
-          lg: "repeat(4, 1fr)",
-        },
-        gap: 2,
-      }}
-    >
-      {metrics.map((metric, index) => (
-        <MetricCard
-          key={index}
-          title={metric.title}
-          value={metric.value}
-          unit={metric.unit}
-          change={metric.change}
-          trend={(metric as any).trend}
-          icon={metric.icon}
-          color={metric.color}
-          sparklineData={(metric as any).sparklineData}
-        />
-      ))}
-    </Box>
-  );
+  const handleContextMenu = (
+    event: React.MouseEvent<HTMLElement>,
+    dashboard: Dashboard,
+  ) => {
+    event.preventDefault();
+    setAnchorEl(event.currentTarget);
+    setContextDashboard(dashboard);
+  };
 
-  // Charts area - 保留原有的 ChartCard 渲染
-  const chartsArea = (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {/* Charts Row 1 */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
-          gap: 3,
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setContextDashboard(null);
+  };
+
+  if (viewMode === "editor") {
+    return (
+      <DashboardEditor
+        initialConfig={
+          selectedDashboard?.layout
+            ? {
+                id: selectedDashboard.id,
+                name: selectedDashboard.name,
+                description: selectedDashboard.description || "",
+                widgets: selectedDashboard.layout?.widgets || [],
+              }
+            : undefined
+        }
+        onSave={handleSaveDashboard}
+        onCancel={() => {
+          setViewMode("list");
+          setSelectedDashboard(null);
         }}
-      >
-        <Box sx={{ gridColumn: { lg: "span 2" } }}>
-          <ChartCard
-            title="月度新增项目"
-            subtitle="研发项目月度趋势"
-            height={280}
-            showChartType
-            activeChartType="bar"
-            onChartTypeChange={(type) =>
-              logger.debug("Chart type changed:", type)
-            }
-          >
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
-              <BarChart
-                data={
-                  development?.monthly_new_projects || [
-                    { month: "1月", count: 25 },
-                    { month: "2月", count: 30 },
-                    { month: "3月", count: 28 },
-                    { month: "4月", count: 35 },
-                    { month: "5月", count: 42 },
-                    { month: "6月", count: 38 },
-                  ]
-                }
-                xKey="month"
-                yKeys={[
-                  {
-                    key: "count",
-                    name: "项目数",
-                    color: BIChartColors.series[0],
-                  },
-                ]}
-                height={240}
-                barRadius={6}
-                animate
-              />
-            </ResponsiveContainer>
-          </ChartCard>
-        </Box>
-        <Box>
-          <ChartCard
-            title="检验类型分布"
-            subtitle="实验室检验构成"
-            height={280}
-            showChartType
-            activeChartType="pie"
-            onChartTypeChange={(type) =>
-              logger.debug("Chart type changed:", type)
-            }
-          >
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
-              <RechartsPieChart>
-                <Pie
-                  data={testTypeData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  innerRadius={50}
-                  dataKey="value"
-                >
-                  {testTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </Box>
-      </Box>
-
-      {/* Charts Row 2 */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
-          gap: 3,
-        }}
-      >
-        <Box>
-          <ChartCard
-            title="质量合格率趋势"
-            subtitle="月度质量走势"
-            height={260}
-            trend="up"
-            trendValue="+0.8%"
-          >
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
-              <RechartsLineChart
-                data={
-                  quality?.quality_trend || [
-                    { month: "1月", pass_rate: 96.5 },
-                    { month: "2月", pass_rate: 97.2 },
-                    { month: "3月", pass_rate: 97.8 },
-                    { month: "4月", pass_rate: 98.1 },
-                    { month: "5月", pass_rate: 97.6 },
-                    { month: "6月", pass_rate: 97.8 },
-                  ]
-                }
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fill: "#64748B", fontSize: 12 }}
-                />
-                <YAxis
-                  domain={[90, 100]}
-                  tick={{ fill: "#64748B", fontSize: 12 }}
-                />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="pass_rate"
-                  stroke={BIChartColors.semantic.success}
-                  strokeWidth={2.5}
-                  dot={{
-                    fill: BIChartColors.semantic.success,
-                    strokeWidth: 0,
-                    r: 4,
-                  }}
-                  activeDot={{ r: 6, fill: BIChartColors.semantic.success }}
-                />
-              </RechartsLineChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </Box>
-        <Box>
-          <ChartCard title="日产量统计" subtitle="生产批次日趋势" height={260}>
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
-              <BarChart
-                data={
-                  production?.daily_output || [
-                    { date: "1日", output: 1850 },
-                    { date: "2日", output: 2100 },
-                    { date: "3日", output: 1980 },
-                    { date: "4日", output: 2350 },
-                    { date: "5日", output: 2200 },
-                    { date: "6日", output: 2420 },
-                  ]
-                }
-                xKey="date"
-                yKeys={[
-                  {
-                    key: "output",
-                    name: "产量",
-                    color: BIChartColors.semantic.warning,
-                  },
-                ]}
-                height={220}
-                barRadius={[4, 4, 0, 0]}
-                animate
-              />
-            </ResponsiveContainer>
-          </ChartCard>
-        </Box>
-        <Box>
-          <ChartCard
-            title="最近活动"
-            subtitle="系统动态"
-            height={260}
-            showExport={false}
-            showRefresh={false}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1.5,
-                overflowY: "auto",
-                maxHeight: 220,
-                pr: 1,
-              }}
-            >
-              {(summary?.recent_activities || defaultActivities).map(
-                (activity, index) => (
-                  <ActivityItem
-                    key={activity.id}
-                    activity={activity}
-                    index={index}
-                  />
-                ),
-              )}
-            </Box>
-          </ChartCard>
-        </Box>
-      </Box>
-    </Box>
-  );
+      />
+    );
+  }
 
   return (
-    <DashboardTemplate
-      title="数据大屏"
-      subtitle="实时业务数据总览"
+    <DashboardLayout
+      title="自定义仪表盘"
+      subtitle="管理和创建您的个性化数据仪表盘"
       breadcrumbs={[
         { label: "首页", href: "/dashboard" },
         { label: "BI" },
-        { label: "数据大屏" },
+        { label: "自定义仪表盘" },
       ]}
-      onRefresh={handleRefresh}
-      loading={loading}
-      statsArea={statsArea}
-      chartsArea={chartsArea}
-    />
+    >
+      <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 4,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+              sx={{ minWidth: 200 }}
+            >
+              <Tab
+                value="dashboards"
+                label="仪表盘"
+                icon={<LayoutDashboard size={18} />}
+                iconPosition="start"
+              />
+              <Tab
+                value="templates"
+                label="模板"
+                icon={<FolderOpen size={18} />}
+                iconPosition="start"
+              />
+            </Tabs>
+          </Box>
+          {activeTab === "dashboards" && (
+            <Button
+              variant="contained"
+              startIcon={<Plus />}
+              onClick={() => setCreateDialog({ ...createDialog, open: true })}
+            >
+              创建仪表盘
+            </Button>
+          )}
+        </Box>
+
+        {activeTab === "templates" ? (
+          <DashboardTemplateManager
+            onDashboardCreated={() => {
+              setActiveTab("dashboards");
+              loadDashboards();
+            }}
+          />
+        ) : (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 4,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <TextField
+                  placeholder="搜索仪表盘..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  size="small"
+                  sx={{ width: 300 }}
+                />
+                <Button variant="outlined" size="small" startIcon={<Filter />}>
+                  筛选
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<SortDesc />}
+                >
+                  排序
+                </Button>
+              </Box>
+            </Box>
+
+            {loading ? (
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 3,
+                }}
+              >
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardContent>
+                      <Skeleton sx={{ width: "60%", mb: 2 }} />
+                      <Skeleton sx={{ width: "100%", height: 120 }} />
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            ) : filteredDashboards.length === 0 ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 12,
+                  color: "text.secondary",
+                }}
+              >
+                <Grid3X3 sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
+                <Typography variant="h6">暂无仪表盘</Typography>
+                <Typography variant="body2">
+                  点击上方按钮创建您的第一个仪表盘
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Plus />}
+                  sx={{ mt: 3 }}
+                  onClick={() =>
+                    setCreateDialog({ ...createDialog, open: true })
+                  }
+                >
+                  创建仪表盘
+                </Button>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 3,
+                }}
+              >
+                {filteredDashboards.map((dashboard) => (
+                  <Card
+                    key={dashboard.id}
+                    sx={{
+                      position: "relative",
+                      cursor: "pointer",
+                      transition: "all 0.3s",
+                      "&:hover": {
+                        boxShadow: 3,
+                        transform: "translateY(-2px)",
+                      },
+                    }}
+                    onClick={() => handleOpenEditor(dashboard)}
+                    onContextMenu={(e) => handleContextMenu(e, dashboard)}
+                  >
+                    {dashboard.is_public && (
+                      <Chip
+                        label="公开"
+                        size="small"
+                        color="primary"
+                        sx={{ position: "absolute", top: 8, right: 8 }}
+                      />
+                    )}
+                    <CardContent sx={{ pb: 2 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mb: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 1,
+                            backgroundColor: "#EEF2FF",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <LayoutDashboard sx={{ color: "#6366F1" }} />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 600,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {dashboard.name}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            {new Date(
+                              dashboard.created_at,
+                            ).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      {dashboard.description && (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.secondary",
+                            mb: 2,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {dashboard.description}
+                        </Typography>
+                      )}
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Chip label="图表" size="small" variant="outlined" />
+                        <Chip label="指标" size="small" variant="outlined" />
+                      </Box>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: "flex-end", gap: 1 }}>
+                      <Tooltip title="编辑">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditor(dashboard);
+                          }}
+                        >
+                          <Edit2 sx={{ width: 18, height: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="克隆">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCloneDashboard(dashboard.id);
+                          }}
+                        >
+                          <Copy sx={{ width: 18, height: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip
+                        title={dashboard.is_public ? "设为私有" : "设为公开"}
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTogglePublic(dashboard);
+                          }}
+                        >
+                          {dashboard.is_public ? (
+                            <Eye sx={{ width: 18, height: 18 }} />
+                          ) : (
+                            <EyeOff sx={{ width: 18, height: 18 }} />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="删除">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDashboard(dashboard.id);
+                          }}
+                        >
+                          <Trash2 sx={{ width: 18, height: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </CardActions>
+                  </Card>
+                ))}
+              </Box>
+            )}
+
+            <Dialog
+              open={createDialog.open}
+              onClose={() => setCreateDialog({ ...createDialog, open: false })}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle>创建仪表盘</DialogTitle>
+              <DialogContent sx={{ mt: 2 }}>
+                <TextField
+                  label="仪表盘名称"
+                  fullWidth
+                  value={createDialog.name}
+                  onChange={(e) =>
+                    setCreateDialog({ ...createDialog, name: e.target.value })
+                  }
+                  sx={{ mb: 3 }}
+                />
+                <TextField
+                  label="描述"
+                  multiline
+                  rows={2}
+                  fullWidth
+                  value={createDialog.description}
+                  onChange={(e) =>
+                    setCreateDialog({
+                      ...createDialog,
+                      description: e.target.value,
+                    })
+                  }
+                  sx={{ mb: 3 }}
+                />
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={createDialog.useTemplate}
+                    onChange={(e) =>
+                      setCreateDialog({
+                        ...createDialog,
+                        useTemplate: e.target.checked,
+                        selectedTemplateId: null,
+                      })
+                    }
+                  />
+                  <Typography variant="body1">从模板创建</Typography>
+                </Box>
+                {createDialog.useTemplate && templates.length > 0 && (
+                  <Box
+                    sx={{
+                      border: "1px solid rgba(0,0,0,0.1)",
+                      borderRadius: 1,
+                      p: 2,
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+                      选择模板
+                    </Typography>
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                    >
+                      {templates.map((template) => (
+                        <Box
+                          key={template.id}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            p: 2,
+                            borderRadius: 1,
+                            cursor: "pointer",
+                            backgroundColor:
+                              createDialog.selectedTemplateId === template.id
+                                ? "#EEF2FF"
+                                : "transparent",
+                            "&:hover": { backgroundColor: "#F5F5F5" },
+                          }}
+                          onClick={() =>
+                            setCreateDialog({
+                              ...createDialog,
+                              selectedTemplateId: template.id,
+                            })
+                          }
+                        >
+                          <input
+                            type="radio"
+                            checked={
+                              createDialog.selectedTemplateId === template.id
+                            }
+                            onChange={() =>
+                              setCreateDialog({
+                                ...createDialog,
+                                selectedTemplateId: template.id,
+                              })
+                            }
+                          />
+                          <FolderOpen sx={{ color: "#6366F1" }} />
+                          <div>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {template.name}
+                            </Typography>
+                            {template.description && (
+                              <Typography
+                                variant="caption"
+                                sx={{ color: "text.secondary" }}
+                              >
+                                {template.description}
+                              </Typography>
+                            )}
+                          </div>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() =>
+                    setCreateDialog({ ...createDialog, open: false })
+                  }
+                >
+                  取消
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleCreateDashboard}
+                  disabled={
+                    !createDialog.name ||
+                    (createDialog.useTemplate &&
+                      !createDialog.selectedTemplateId)
+                  }
+                >
+                  创建
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleCloseMenu}
+            >
+              {contextDashboard && (
+                <>
+                  <MenuItem
+                    onClick={() => {
+                      handleOpenEditor(contextDashboard);
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Edit2 sx={{ mr: 2 }} />
+                    编辑
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleCloneDashboard(contextDashboard.id);
+                      handleCloseMenu();
+                    }}
+                  >
+                    <Copy sx={{ mr: 2 }} />
+                    克隆
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      handleTogglePublic(contextDashboard);
+                      handleCloseMenu();
+                    }}
+                  >
+                    {contextDashboard.is_public ? (
+                      <EyeOff sx={{ mr: 2 }} />
+                    ) : (
+                      <Eye sx={{ mr: 2 }} />
+                    )}
+                    {contextDashboard.is_public ? "设为私有" : "设为公开"}
+                  </MenuItem>
+                  <Divider />
+                  <MenuItem
+                    onClick={() => {
+                      handleDeleteDashboard(contextDashboard.id);
+                      handleCloseMenu();
+                    }}
+                    sx={{ color: "error.main" }}
+                  >
+                    <Trash2 sx={{ mr: 2 }} />
+                    删除
+                  </MenuItem>
+                </>
+              )}
+            </Menu>
+          </>
+        )}
+      </Box>
+    </DashboardLayout>
   );
 };
 

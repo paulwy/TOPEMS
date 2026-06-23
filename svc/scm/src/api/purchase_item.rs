@@ -43,7 +43,7 @@ async fn list_items(
     let result = sqlx::query_as::<_, PurchaseItem>(
         r#"
         SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
-        FROM purchase_items
+        FROM scm.purchase_items
         WHERE ($1::text IS NULL OR product_name ILIKE $1 OR product_code ILIKE $1)
           AND ($2::uuid IS NULL OR order_id = $2)
         ORDER BY created_at DESC
@@ -61,7 +61,7 @@ async fn list_items(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM purchase_items
+                SELECT COUNT(*) FROM scm.purchase_items
                 WHERE ($1::text IS NULL OR product_name ILIKE $1 OR product_code ILIKE $1)
                   AND ($2::uuid IS NULL OR order_id = $2)
                 "#,
@@ -101,7 +101,7 @@ async fn create_item(
 
     let result = sqlx::query_as::<_, PurchaseItem>(
         r#"
-        INSERT INTO purchase_items (id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at)
+        INSERT INTO scm.purchase_items (id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
         "#,
@@ -168,7 +168,7 @@ async fn get_item(
     let result = sqlx::query_as::<_, PurchaseItem>(
         r#"
         SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
-        FROM purchase_items WHERE id = $1
+        FROM scm.purchase_items WHERE id = $1
         "#,
     )
     .bind(id)
@@ -194,7 +194,7 @@ async fn update_item(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseItem>(
-        "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM purchase_items WHERE id = $1",
+        "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM scm.purchase_items WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -217,7 +217,7 @@ async fn update_item(
 
     let result = sqlx::query_as::<_, PurchaseItem>(
         r#"
-        UPDATE purchase_items SET
+        UPDATE scm.purchase_items SET
             product_code = $2, product_name = $3, specification = $4, unit = $5, quantity = $6, unit_price = $7, amount = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at

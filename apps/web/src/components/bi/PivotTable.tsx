@@ -1,4 +1,12 @@
 import React, { useState, useMemo } from "react";
+import {
+  Search,
+  Filter,
+  RefreshCw,
+  Download,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 export interface PivotData {
   [key: string]: string | number | boolean;
@@ -11,6 +19,8 @@ export interface PivotConfig {
   values: string[];
   aggregator?: "sum" | "count" | "avg" | "min" | "max";
   title?: string;
+  onExport?: () => void;
+  onRefresh?: () => void;
 }
 
 const aggregators = {
@@ -21,6 +31,14 @@ const aggregators = {
   max: (values: number[]) => Math.max(...values),
 };
 
+const aggregatorLabels: Record<string, string> = {
+  sum: "求和",
+  count: "计数",
+  avg: "平均值",
+  min: "最小值",
+  max: "最大值",
+};
+
 export const PivotTable: React.FC<PivotConfig> = ({
   data,
   rows,
@@ -28,14 +46,38 @@ export const PivotTable: React.FC<PivotConfig> = ({
   values,
   aggregator = "sum",
   title,
+  onExport,
+  onRefresh,
 }) => {
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+  const [filterText, setFilterText] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeAggregator, setActiveAggregator] = useState(aggregator);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const filteredData = useMemo(() => {
+    if (!filterText.trim()) return data;
+    const lowerText = filterText.toLowerCase();
+    return data.filter((item) =>
+      Object.values(item).some((val) =>
+        String(val).toLowerCase().includes(lowerText),
+      ),
+    );
+  }, [data, filterText]);
 
   const pivotResult = useMemo(() => {
-    if (!data || data.length === 0) return { rows: [], cols: [], cells: {} };
+    if (!filteredData || filteredData.length === 0)
+      return { rows: [], cols: [], cells: {} };
 
-    const rowValues = [...new Set(data.map((d) => d[rows[0]])).values()];
-    const colValues = [...new Set(data.map((d) => d[cols[0]])).values()];
+    const rowValues = [
+      ...new Set(filteredData.map((d) => d[rows[0]])).values(),
+    ];
+    const colValues = [
+      ...new Set(filteredData.map((d) => d[cols[0]])).values(),
+    ];
 
     const cells: Record<string, Record<string, number>> = {};
 
@@ -46,7 +88,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
       });
     });
 
-    data.forEach((item) => {
+    filteredData.forEach((item) => {
       const rowKey = item[rows[0]] as string;
       const colKey = item[cols[0]] as string;
       const value = values[0] ? (item[values[0]] as number) : 1;
@@ -57,7 +99,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
     });
 
     return { rows: rowValues, cols: colValues, cells };
-  }, [data, rows, cols, values]);
+  }, [filteredData, rows, cols, values]);
 
   const handleSort = (key: string) => {
     setSortConfig((prev) => {
@@ -72,8 +114,10 @@ export const PivotTable: React.FC<PivotConfig> = ({
     if (!sortConfig) return pivotResult.rows;
 
     return [...pivotResult.rows].sort((a, b) => {
-      const aVal = pivotResult.cells[a as string]?.[pivotResult.cols[0] as string] || 0;
-      const bVal = pivotResult.cells[b as string]?.[pivotResult.cols[0] as string] || 0;
+      const aVal =
+        pivotResult.cells[a as string]?.[pivotResult.cols[0] as string] || 0;
+      const bVal =
+        pivotResult.cells[b as string]?.[pivotResult.cols[0] as string] || 0;
       return sortConfig.direction === "asc" ? aVal - bVal : bVal - aVal;
     });
   }, [pivotResult, sortConfig]);
@@ -81,9 +125,16 @@ export const PivotTable: React.FC<PivotConfig> = ({
   const rowTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     sortedRows.forEach((row) => {
-      totals[row as string] = pivotResult.cols.reduce((sum, col) => {
-        return sum + (pivotResult.cells[row as string]?.[col as string] || 0);
-      }, 0);
+      const rowKey = String(row);
+      let sum = 0;
+      pivotResult.cols.forEach((col) => {
+        const colKey = String(col);
+        const val = pivotResult.cells[rowKey]?.[colKey];
+        if (typeof val === "number") {
+          sum += val;
+        }
+      });
+      totals[rowKey] = sum;
     });
     return totals;
   }, [sortedRows, pivotResult]);
@@ -91,9 +142,16 @@ export const PivotTable: React.FC<PivotConfig> = ({
   const colTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     pivotResult.cols.forEach((col) => {
-      totals[col as string] = sortedRows.reduce((sum, row) => {
-        return sum + (pivotResult.cells[row as string]?.[col as string] || 0);
-      }, 0);
+      const colKey = String(col);
+      let sum = 0;
+      sortedRows.forEach((row) => {
+        const rowKey = String(row);
+        const val = pivotResult.cells[rowKey]?.[colKey];
+        if (typeof val === "number") {
+          sum += val;
+        }
+      });
+      totals[colKey] = sum;
     });
     return totals;
   }, [sortedRows, pivotResult]);
@@ -101,6 +159,18 @@ export const PivotTable: React.FC<PivotConfig> = ({
   const grandTotal = useMemo(() => {
     return Object.values(rowTotals).reduce((sum, val) => sum + val, 0);
   }, [rowTotals]);
+
+  const toggleRow = (row: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(row)) {
+        next.delete(row);
+      } else {
+        next.add(row);
+      }
+      return next;
+    });
+  };
 
   if (!data || data.length === 0) {
     return (
@@ -159,18 +229,211 @@ export const PivotTable: React.FC<PivotConfig> = ({
         padding: "24px",
       }}
     >
-      {title && (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "16px",
+        }}
+      >
         <h3
           style={{
             fontSize: "18px",
             fontWeight: 600,
             color: "#0f172a",
-            marginBottom: "16px",
+            margin: 0,
           }}
         >
           {title}
         </h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ position: "relative" }}>
+            <Search
+              style={{
+                position: "absolute",
+                left: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 16,
+                height: 16,
+                color: "#94a3b8",
+              }}
+            />
+            <input
+              type="text"
+              placeholder="搜索..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              style={{
+                padding: "6px 12px 6px 32px",
+                borderRadius: 6,
+                border: "1px solid #e2e8f0",
+                fontSize: 14,
+                outline: "none",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#6366f1";
+                e.target.style.boxShadow = "0 0 0 2px rgba(99, 102, 241, 0.2)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#e2e8f0";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            style={{
+              padding: 6,
+              borderRadius: 6,
+              border: "1px solid #e2e8f0",
+              backgroundColor: showFilters ? "#eff6ff" : "#f8fafc",
+              color: showFilters ? "#6366f1" : "#64748b",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <Filter style={{ width: 16, height: 16 }} />
+            <span style={{ fontSize: 12 }}>筛选</span>
+          </button>
+          <select
+            value={activeAggregator}
+            onChange={(e) =>
+              setActiveAggregator(e.target.value as typeof activeAggregator)
+            }
+            style={{
+              padding: "6px 12px",
+              borderRadius: 6,
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
+              fontSize: 12,
+              cursor: "pointer",
+              outline: "none",
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#6366f1";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "#e2e8f0";
+            }}
+          >
+            {Object.entries(aggregatorLabels).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              style={{
+                padding: 6,
+                borderRadius: 6,
+                border: "1px solid #e2e8f0",
+                backgroundColor: "#f8fafc",
+                color: "#64748b",
+                cursor: "pointer",
+              }}
+              title="刷新"
+            >
+              <RefreshCw style={{ width: 16, height: 16 }} />
+            </button>
+          )}
+          {onExport && (
+            <button
+              onClick={onExport}
+              style={{
+                padding: 6,
+                borderRadius: 6,
+                border: "1px solid #e2e8f0",
+                backgroundColor: "#f8fafc",
+                color: "#64748b",
+                cursor: "pointer",
+              }}
+              title="导出"
+            >
+              <Download style={{ width: 16, height: 16 }} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showFilters && (
+        <div
+          style={{
+            marginBottom: "16px",
+            padding: "12px",
+            backgroundColor: "#f8fafc",
+            borderRadius: 8,
+            border: "1px solid #e2e8f0",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              color: "#334155",
+              marginBottom: 8,
+            }}
+          >
+            筛选条件
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            {rows.map((row) => (
+              <div key={row}>
+                <div
+                  style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}
+                >
+                  {row}
+                </div>
+                <select
+                  style={{
+                    padding: 4,
+                    borderRadius: 4,
+                    border: "1px solid #e2e8f0",
+                    fontSize: 12,
+                  }}
+                >
+                  <option value="">全部</option>
+                  {[...new Set(data.map((d) => d[row]))].map((val) => (
+                    <option key={String(val)} value={String(val)}>
+                      {val}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            {cols.map((col) => (
+              <div key={col}>
+                <div
+                  style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}
+                >
+                  {col}
+                </div>
+                <select
+                  style={{
+                    padding: 4,
+                    borderRadius: 4,
+                    border: "1px solid #e2e8f0",
+                    fontSize: 12,
+                  }}
+                >
+                  <option value="">全部</option>
+                  {[...new Set(data.map((d) => d[col]))].map((val) => (
+                    <option key={String(val)} value={String(val)}>
+                      {val}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
+
       <div style={{ overflowX: "auto" }}>
         <table
           style={{
@@ -196,7 +459,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               </th>
               {pivotResult.cols.map((col) => (
                 <th
-                  key={col}
+                  key={String(col)}
                   style={{
                     backgroundColor: "#f8fafc",
                     padding: "12px 16px",
@@ -204,7 +467,10 @@ export const PivotTable: React.FC<PivotConfig> = ({
                     fontWeight: 600,
                     color: "#334155",
                     borderBottom: "2px solid #e2e8f0",
-                    borderRight: col !== pivotResult.cols[pivotResult.cols.length - 1] ? "1px solid #e2e8f0" : "none",
+                    borderRight:
+                      col !== pivotResult.cols[pivotResult.cols.length - 1]
+                        ? "1px solid #e2e8f0"
+                        : "none",
                   }}
                 >
                   {col}
@@ -226,55 +492,90 @@ export const PivotTable: React.FC<PivotConfig> = ({
           </thead>
           <tbody>
             {sortedRows.map((row) => (
-              <tr key={row} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                <td
-                  style={{
-                    padding: "12px 16px",
-                    fontWeight: 500,
-                    color: "#1e293b",
-                    borderRight: "1px solid #e2e8f0",
-                  }}
-                  onClick={() => handleSort(row as string)}
-                  style={{
-                    cursor: "pointer",
-                    padding: "12px 16px",
-                    fontWeight: 500,
-                    color: "#1e293b",
-                    borderRight: "1px solid #e2e8f0",
-                  }}
-                >
-                  {row}
-                  {sortConfig?.key === row && (
-                    <span style={{ marginLeft: "8px", color: "#6366f1" }}>
-                      {sortConfig.direction === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </td>
-                {pivotResult.cols.map((col) => (
+              <React.Fragment key={String(row)}>
+                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
                   <td
-                    key={col}
+                    style={{
+                      cursor: "pointer",
+                      padding: "12px 16px",
+                      fontWeight: 500,
+                      color: "#1e293b",
+                      borderRight: "1px solid #e2e8f0",
+                    }}
+                    onClick={() => {
+                      handleSort(row as string);
+                      toggleRow(row as string);
+                    }}
+                  >
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      {expandedRows.has(row as string) ? (
+                        <ChevronDown
+                          style={{ width: 14, height: 14, color: "#64748b" }}
+                        />
+                      ) : (
+                        <ChevronUp
+                          style={{ width: 14, height: 14, color: "#64748b" }}
+                        />
+                      )}
+                      {row}
+                      {sortConfig?.key === row && (
+                        <span
+                          style={{
+                            marginLeft: "8px",
+                            color: "#6366f1",
+                            fontSize: 12,
+                          }}
+                        >
+                          {sortConfig.direction === "asc" ? "↑" : "↓"}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  {pivotResult.cols.map((col) => (
+                    <td
+                      key={String(col)}
+                      style={{
+                        padding: "12px 16px",
+                        textAlign: "right",
+                        color: "#475569",
+                        borderRight:
+                          col !== pivotResult.cols[pivotResult.cols.length - 1]
+                            ? "1px solid #e2e8f0"
+                            : "none",
+                      }}
+                    >
+                      {typeof pivotResult.cells[row as string]?.[
+                        col as string
+                      ] === "number"
+                        ? activeAggregator === "avg"
+                          ? pivotResult.cells[row as string]?.[
+                              col as string
+                            ]?.toFixed(2)
+                          : pivotResult.cells[row as string]?.[
+                              col as string
+                            ]?.toLocaleString()
+                        : pivotResult.cells[row as string]?.[col as string]}
+                    </td>
+                  ))}
+                  <td
                     style={{
                       padding: "12px 16px",
                       textAlign: "right",
-                      color: "#475569",
-                      borderRight: col !== pivotResult.cols[pivotResult.cols.length - 1] ? "1px solid #e2e8f0" : "none",
+                      fontWeight: 600,
+                      color: "#1e293b",
+                      backgroundColor: "#f8fafc",
                     }}
                   >
-                    {pivotResult.cells[row as string]?.[col as string]?.toLocaleString()}
+                    {typeof rowTotals[row as string] === "number"
+                      ? activeAggregator === "avg"
+                        ? rowTotals[row as string]?.toFixed(2)
+                        : rowTotals[row as string]?.toLocaleString()
+                      : rowTotals[row as string]}
                   </td>
-                ))}
-                <td
-                  style={{
-                    padding: "12px 16px",
-                    textAlign: "right",
-                    fontWeight: 600,
-                    color: "#1e293b",
-                    backgroundColor: "#f8fafc",
-                  }}
-                >
-                  {rowTotals[row as string]?.toLocaleString()}
-                </td>
-              </tr>
+                </tr>
+              </React.Fragment>
             ))}
             <tr style={{ backgroundColor: "#f1f5f9" }}>
               <td
@@ -289,16 +590,23 @@ export const PivotTable: React.FC<PivotConfig> = ({
               </td>
               {pivotResult.cols.map((col) => (
                 <td
-                  key={col}
+                  key={String(col)}
                   style={{
                     padding: "12px 16px",
                     textAlign: "right",
                     fontWeight: 600,
                     color: "#1e293b",
-                    borderRight: col !== pivotResult.cols[pivotResult.cols.length - 1] ? "1px solid #e2e8f0" : "none",
+                    borderRight:
+                      col !== pivotResult.cols[pivotResult.cols.length - 1]
+                        ? "1px solid #e2e8f0"
+                        : "none",
                   }}
                 >
-                  {colTotals[col as string]?.toLocaleString()}
+                  {typeof colTotals[col as string] === "number"
+                    ? activeAggregator === "avg"
+                      ? colTotals[col as string]?.toFixed(2)
+                      : colTotals[col as string]?.toLocaleString()
+                    : colTotals[col as string]}
                 </td>
               ))}
               <td
@@ -310,7 +618,11 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   backgroundColor: "#e0e7ff",
                 }}
               >
-                {grandTotal.toLocaleString()}
+                {typeof grandTotal === "number"
+                  ? activeAggregator === "avg"
+                    ? grandTotal.toFixed(2)
+                    : grandTotal.toLocaleString()
+                  : grandTotal}
               </td>
             </tr>
           </tbody>
@@ -324,7 +636,11 @@ export const PivotTable: React.FC<PivotConfig> = ({
           textAlign: "right",
         }}
       >
-        聚合方式: {aggregator} | 总计: {grandTotal.toLocaleString()}
+        聚合方式: {aggregatorLabels[activeAggregator]} | 总计:{" "}
+        {typeof grandTotal === "number"
+          ? grandTotal.toLocaleString()
+          : grandTotal}{" "}
+        | 数据行数: {filteredData.length}
       </div>
     </div>
   );

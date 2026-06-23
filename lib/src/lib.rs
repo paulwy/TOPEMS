@@ -71,7 +71,12 @@ pub use database::{
 pub use error::{Result, TopemsError};
 pub use event::{
     Event, EventError, EventPublisher, EventResult, EventSubscriber, EventType,
-    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, PmProjectCreatedPayload,
+    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
+    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload,
+    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    LimsSampleRegisteredPayload, LimsInspectionResultSubmittedPayload, LimsInspectionAbnormalDetectedPayload,
+    QmsInspectionCompletedPayload, QmsCorrectiveActionCreatedPayload,
+    EhsHazardReportedPayload, EhsAccidentReportedPayload,
 };
 pub use health::{
     build_health_response, check_http_health, create_health_router, create_metrics_router,

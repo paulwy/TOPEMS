@@ -35,13 +35,15 @@ import { usePermission } from "../../hooks/usePermission";
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
+  pluginCode?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const { installedPlugins, pluginHealth, isPluginInstalled, isPluginActive } = usePlugins();
+  const { installedPlugins, pluginHealth, isPluginInstalled, isPluginActive } =
+    usePlugins();
   const { checkPermission, isSuperuser } = usePermission();
 
   const hasPermission = (permissions?: string[]): boolean => {
@@ -143,16 +145,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                   status.status === "healthy"
                     ? "success.light"
                     : status.status === "unhealthy"
-                    ? "error.light"
-                    : status.status === "disabled"
-                    ? "warning.light"
-                    : "grey.light",
+                      ? "error.light"
+                      : status.status === "disabled"
+                        ? "warning.light"
+                        : "grey.light",
                 color:
                   status.status === "healthy"
                     ? "success"
                     : status.status === "unhealthy"
-                    ? "error"
-                    : "default",
+                      ? "error"
+                      : "default",
               }}
             />
           )}
@@ -160,7 +162,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         {hasChildren && (
           <Collapse in={isExpanded}>
             <List component="div" disablePadding>
-              {(item.children || []).map((child) => renderNavItem(child, depth + 1))}
+              {(item.children || []).map((child) =>
+                renderNavItem(child, depth + 1),
+              )}
             </List>
           </Collapse>
         )}
@@ -168,7 +172,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     );
   };
 
-  const renderNavigationGroup = (group: typeof coreNavigation[0]) => {
+  const renderNavigationGroup = (group: (typeof coreNavigation)[0]) => {
     const hasAccessibleItems = group.items.some((item) => {
       if (!hasPermission(item.permissions)) return false;
       if (item.pluginCode && !isPluginInstalled(item.pluginCode)) return false;
@@ -220,27 +224,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
 
   const renderSuiteNavigation = () => {
     const installedSuiteCodes = new Set(
-      installedPlugins.map((p) => {
-        const suiteCode = Object.entries(suiteNavigation).find(([, suite]) =>
-          suite.items.some((item) => item.pluginCode === p.plugin_code)
-        )?.[0];
-        return suiteCode;
-      }).filter(Boolean)
+      installedPlugins
+        .map((p) => {
+          const suiteCode = Object.entries(suiteNavigation).find(([, suite]) =>
+            suite.items.some((item) => item.pluginCode === p.plugin_code),
+          )?.[0];
+          return suiteCode;
+        })
+        .filter(Boolean),
     );
 
     return Array.from(installedSuiteCodes)
+      .filter(
+        (suiteCode): suiteCode is keyof typeof suiteNavigation =>
+          suiteCode !== undefined && suiteCode in suiteNavigation,
+      )
       .map((suiteCode) => suiteNavigation[suiteCode])
       .filter(Boolean)
       .map((suite) => {
-        const hasAccessiblePlugins = suite.items.some((item) => {
-          if (item.pluginCode && !isPluginActive(item.pluginCode)) return false;
-          return true;
-        });
+        const hasAccessiblePlugins = suite.items.some(
+          (item: NavigationItem) => {
+            if (item.pluginCode && !isPluginActive(item.pluginCode))
+              return false;
+            return true;
+          },
+        );
 
         if (!hasAccessiblePlugins) return null;
 
         const isExpanded = expandedItems.has(suite.id);
-        const suiteActive = suite.items.some((item) => isActive(item.path));
+        const suiteActive = suite.items.some((item: NavigationItem) =>
+          isActive(item.path),
+        );
 
         return (
           <div key={suite.id}>
@@ -266,7 +281,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             </ListItem>
             <Collapse in={isExpanded}>
               <List component="div" disablePadding sx={{ pl: 2 }}>
-                {suite.items.map((item) => renderNavItem(item, 1))}
+                {suite.items.map((item: NavigationItem) =>
+                  renderNavItem(item, 1),
+                )}
               </List>
             </Collapse>
           </div>
@@ -304,8 +321,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
             onClose();
           }}
           sx={{
-            color: location.pathname === "/" ? "primary.main" : "text.secondary",
-            backgroundColor: location.pathname === "/" ? "primary.50" : "transparent",
+            color:
+              location.pathname === "/" ? "primary.main" : "text.secondary",
+            backgroundColor:
+              location.pathname === "/" ? "primary.50" : "transparent",
             borderRadius: 1,
             marginY: 0.5,
             marginX: 1,
@@ -322,7 +341,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         {coreNavigation.map(renderNavigationGroup)}
 
         <Divider sx={{ my: 2 }} />
-        <Typography variant="overline" sx={{ px: 3, py: 1, color: "textSecondary", fontSize: 11 }}>
+        <Typography
+          variant="overline"
+          sx={{ px: 3, py: 1, color: "textSecondary", fontSize: 11 }}
+        >
           已安装套件
         </Typography>
         {renderSuiteNavigation()}

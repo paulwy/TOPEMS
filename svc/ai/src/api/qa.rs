@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, extract::Path, extract::Query, Json};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 use uuid::Uuid;
@@ -44,6 +44,24 @@ pub struct ClassifyRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClassifyResponse {
     pub question_type: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct QaHistoryQuery {
+    pub page: Option<usize>,
+    pub page_size: Option<usize>,
+    pub query: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchDeleteRequest {
+    pub ids: Vec<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchDeleteResponse {
+    pub deleted_count: i32,
+    pub message: String,
 }
 
 pub struct QaApi;
@@ -261,17 +279,70 @@ impl QaApi {
         }
     }
 
-    /// GET /api/v1/qa/history - 获取问答历史
-    pub async fn history(State(state): State<AppState>) -> Json<ApiResponse<QAHistoryResponse>> {
-        match state.qa_service.get_qa_history(100).await {
-            Ok(history) => {
-                let total = history.len() as i32;
-                Json(ApiResponse::success(
-                    QAHistoryResponse { history, total },
-                    "Success",
-                ))
+    /// GET /api/v1/qa/history - 获取问答历史（支持分页和搜索）
+    pub async fn history(
+        State(state): State<AppState>,
+        Query(params): Query<QaHistoryQuery>,
+    ) -> Json<ApiResponse<QAHistoryResponse>> {
+        let page = params.page.unwrap_or(1);
+        let page_size = params.page_size.unwrap_or(20);
+        let offset = (page - 1) * page_size;
+
+        let (history, total) = if let Some(query) = params.query.as_deref() {
+            match state
+                .qa_service
+                .search_qa_history(query, offset, page_size)
+                .await
+            {
+                Ok(history) => match state.qa_service.search_qa_history_count(query).await {
+                    Ok(total) => (history, total as i32),
+                    Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e)),
+                },
+                Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e)),
             }
-            Err(e) => Json(ApiResponse::<QAHistoryResponse>::error(500, &e)),
+        } else {
+            match state
+                .qa_service
+                .get_qa_history_paged(offset, page_size)
+                .await
+            {
+                Ok(history) => match state.qa_service.get_qa_history_count().await {
+                    Ok(total) => (history, total as i32),
+                    Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e)),
+                },
+                Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e)),
+            }
+        };
+
+        Json(ApiResponse::success(QAHistoryResponse { history, total }, "Success"))
+    }
+
+    /// DELETE /api/v1/qa/history/{id} - 删除单条问答历史
+    pub async fn delete_history(
+        State(state): State<AppState>,
+        Path(id): Path<Uuid>,
+    ) -> Json<ApiResponse<String>> {
+        match state.qa_service.delete_qa_history(id).await {
+            Ok(true) => Json(ApiResponse::success("删除成功".to_string(), "Success")),
+            Ok(false) => Json(ApiResponse::<String>::error(404, "记录不存在")),
+            Err(e) => Json(ApiResponse::<String>::error(500, &e)),
+        }
+    }
+
+    /// POST /api/v1/qa/history/batch-delete - 批量删除问答历史
+    pub async fn batch_delete_history(
+        State(state): State<AppState>,
+        Json(req): Json<BatchDeleteRequest>,
+    ) -> Json<ApiResponse<BatchDeleteResponse>> {
+        match state.qa_service.batch_delete_qa_history(&req.ids).await {
+            Ok(count) => Json(ApiResponse::success(
+                BatchDeleteResponse {
+                    deleted_count: count as i32,
+                    message: format!("成功删除 {} 条记录", count),
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<BatchDeleteResponse>::error(500, &e)),
         }
     }
 

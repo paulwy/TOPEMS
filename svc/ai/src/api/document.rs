@@ -163,21 +163,126 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/v1/documents/:id/extract - 提取文档关键信息
+    /// POST /api/v1/documents/:id/extract - 提取文档关键信息（增强版）
     pub async fn extract(
-        State(_state): State<AppState>,
+        State(state): State<AppState>,
         Path(id): Path<Uuid>,
         Json(req): Json<ExtractDocumentRequest>,
     ) -> Json<ApiResponse<ExtractDocumentResponse>> {
-        // 这里需要调用 AI 服务提取关键信息
-        Json(ApiResponse::success(
-            ExtractDocumentResponse {
-                document_id: id,
-                extract_type: req.extract_type,
-                result: serde_json::json!({}),
-            },
-            "Success",
-        ))
+        match state.document_service.get_document(id).await {
+            Ok(Some(doc)) => {
+                let chunks = match state.document_service.get_document_chunks(id).await {
+                    Ok(c) => c,
+                    Err(e) => {
+                        return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("获取文档分块失败: {}", e)));
+                    }
+                };
+
+                if chunks.is_empty() {
+                    return Json(ApiResponse::<ExtractDocumentResponse>::error(400, "文档内容为空"));
+                }
+
+                let content = chunks
+                    .into_iter()
+                    .map(|c| c.content)
+                    .collect::<Vec<_>>()
+                    .join("\n");
+
+                let config = match state.document_service.get_qa_config() {
+                    Some(c) => c,
+                    None => {
+                        return Json(ApiResponse::<ExtractDocumentResponse>::error(500, "文档问答配置未初始化"));
+                    }
+                };
+
+                let result = match req.extract_type.as_str() {
+                    "keywords" => {
+                        let prompt = format!(
+                            "请从以下文档中提取关键词。返回 JSON 格式：{{\"keywords\": [\"关键词1\", \"关键词2\", ...]}}\n\n文档内容：\n{}",
+                            content
+                        );
+                        match state.document_service.call_ai_api(config, &prompt).await {
+                            Ok(response) => {
+                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
+                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                            }
+                            Err(e) => {
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                            }
+                        }
+                    }
+                    "summary" => {
+                        let prompt = format!(
+                            "请为以下文档生成摘要。返回 JSON 格式：{{\"summary\": \"摘要内容\"}}\n\n文档内容：\n{}",
+                            content
+                        );
+                        match state.document_service.call_ai_api(config, &prompt).await {
+                            Ok(response) => {
+                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
+                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                            }
+                            Err(e) => {
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                            }
+                        }
+                    }
+                    "entities" => {
+                        let prompt = format!(
+                            "请从以下文档中提取实体（人名、地名、组织、时间、数字等）。返回 JSON 格式：{{\"entities\": [{{\"text\": \"实体\", \"type\": \"类型\"}}]}}\n\n文档内容：\n{}",
+                            content
+                        );
+                        match state.document_service.call_ai_api(config, &prompt).await {
+                            Ok(response) => {
+                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
+                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                            }
+                            Err(e) => {
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                            }
+                        }
+                    }
+                    "topics" => {
+                        let prompt = format!(
+                            "请分析以下文档的主题。返回 JSON 格式：{{\"topics\": [\"主题1\", \"主题2\", ...]}}\n\n文档内容：\n{}",
+                            content
+                        );
+                        match state.document_service.call_ai_api(config, &prompt).await {
+                            Ok(response) => {
+                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
+                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                            }
+                            Err(e) => {
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                            }
+                        }
+                    }
+                    "structure" => {
+                        let lines: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
+                        serde_json::json!({
+                            "title": doc.title,
+                            "filename": doc.filename,
+                            "file_size": doc.file_size,
+                            "mime_type": doc.mime_type,
+                            "line_count": lines.len(),
+                            "word_count": content.split_whitespace().count(),
+                            "status": doc.status,
+                        })
+                    }
+                    _ => serde_json::json!({ "error": "不支持的提取类型" }),
+                };
+
+                Json(ApiResponse::success(
+                    ExtractDocumentResponse {
+                        document_id: id,
+                        extract_type: req.extract_type,
+                        result,
+                    },
+                    "Success",
+                ))
+            }
+            Ok(None) => Json(ApiResponse::<ExtractDocumentResponse>::error(404, "文档不存在")),
+            Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::error(500, &e)),
+        }
     }
 
     /// POST /api/v1/documents/vectorize-from-file - 从 File 服务向量化文档
@@ -208,17 +313,79 @@ impl DocumentApi {
 
     /// POST /api/v1/documents/:id/summarize - 生成文档摘要
     pub async fn summarize(
-        State(_state): State<AppState>,
+        State(state): State<AppState>,
         Path(id): Path<Uuid>,
-        Json(_req): Json<SummarizeDocumentRequest>,
+        Json(req): Json<SummarizeDocumentRequest>,
     ) -> Json<ApiResponse<SummarizeDocumentResponse>> {
-        // 这里需要调用 AI 服务生成摘要
-        Json(ApiResponse::success(
-            SummarizeDocumentResponse {
-                document_id: id,
-                summary: "文档摘要".to_string(),
-            },
-            "Success",
-        ))
+        match state
+            .document_service
+            .generate_document_summary(id, req.max_length)
+            .await
+        {
+            Ok(summary) => Json(ApiResponse::success(
+                SummarizeDocumentResponse {
+                    document_id: id,
+                    summary,
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<SummarizeDocumentResponse>::error(500, &e)),
+        }
+    }
+
+    /// POST /api/v1/documents/:id/key-points - 提取文档关键点
+    pub async fn extract_key_points(
+        State(state): State<AppState>,
+        Path(id): Path<Uuid>,
+        Json(req): Json<ExtractKeyPointsRequest>,
+    ) -> Json<ApiResponse<ExtractKeyPointsResponse>> {
+        match state
+            .document_service
+            .extract_document_key_points(id, req.max_points)
+            .await
+        {
+            Ok(points) => Json(ApiResponse::success(
+                ExtractKeyPointsResponse {
+                    document_id: id,
+                    key_points: points,
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<ExtractKeyPointsResponse>::error(500, &e)),
+        }
+    }
+
+    /// POST /api/v1/documents/qa - 文档问答
+    pub async fn document_qa(
+        State(state): State<AppState>,
+        Json(req): Json<DocumentQAQuestionRequest>,
+    ) -> Json<ApiResponse<DocumentQAAnswerResponse>> {
+        let top_k = req.top_k.unwrap_or(5);
+        
+        match state
+            .document_service
+            .ask_document_qa(&req.question, req.document_ids.as_deref(), top_k)
+            .await
+        {
+            Ok(result) => Json(ApiResponse::success(
+                DocumentQAAnswerResponse {
+                    answer: result.answer,
+                    confidence: result.confidence,
+                    sources: result
+                        .sources
+                        .into_iter()
+                        .map(|s| DocumentQASourceResponse {
+                            document_id: s.document_id,
+                            document_title: s.document_title,
+                            chunk_content: s.chunk_content,
+                            similarity: s.similarity,
+                        })
+                        .collect(),
+                    follow_up_questions: result.follow_up_questions,
+                },
+                "Success",
+            )),
+            Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::error(500, &e)),
+        }
     }
 }

@@ -1,6 +1,6 @@
 /**
  * TOPEMS Plugin Loader
- * 
+ *
  * 前端插件动态加载器，支持 SystemJS 模块加载
  */
 
@@ -37,7 +37,7 @@ export interface MenuConfig {
 
 export interface LoadedPlugin {
   manifest: PluginManifest;
-  module: System.Module;
+  module: any;
   routes: RouteConfig[];
   menus: MenuConfig[];
 }
@@ -52,12 +52,12 @@ export interface PluginLoadOptions {
 class PluginLoader {
   private plugins: Map<string, LoadedPlugin> = new Map();
   private options: PluginLoadOptions;
-  private system: System;
+  private system: any;
 
   constructor(options: PluginLoadOptions) {
     this.options = options;
-    this.system = window.System;
-    
+    this.system = (window as any).System;
+
     // 初始化 SystemJS
     this.initSystem();
   }
@@ -68,11 +68,11 @@ class PluginLoader {
       baseURL: this.options.baseUrl,
       defaultJSExtensions: true,
       map: {
-        '@': this.options.baseUrl,
+        "@": this.options.baseUrl,
       },
       packages: {
-        '': {
-          defaultExtension: 'js',
+        "": {
+          defaultExtension: "js",
         },
       },
     });
@@ -81,7 +81,10 @@ class PluginLoader {
   /**
    * 加载单个插件
    */
-  async loadPlugin(pluginCode: string, manifestUrl: string): Promise<LoadedPlugin> {
+  async loadPlugin(
+    pluginCode: string,
+    manifestUrl: string,
+  ): Promise<LoadedPlugin> {
     // 如果已加载，直接返回
     if (this.plugins.has(pluginCode)) {
       return this.plugins.get(pluginCode)!;
@@ -93,9 +96,11 @@ class PluginLoader {
       // 加载插件清单
       const response = await fetch(manifestUrl);
       if (!response.ok) {
-        throw new Error(`Failed to load plugin manifest: ${response.statusText}`);
+        throw new Error(
+          `Failed to load plugin manifest: ${response.statusText}`,
+        );
       }
-      
+
       const manifest: PluginManifest = await response.json();
 
       // 加载主模块
@@ -125,9 +130,11 @@ class PluginLoader {
   /**
    * 批量加载插件
    */
-  async loadPlugins(plugins: Array<{ code: string; manifestUrl: string }>): Promise<LoadedPlugin[]> {
+  async loadPlugins(
+    plugins: Array<{ code: string; manifestUrl: string }>,
+  ): Promise<LoadedPlugin[]> {
     const results: LoadedPlugin[] = [];
-    
+
     for (const plugin of plugins) {
       try {
         const loaded = await this.loadPlugin(plugin.code, plugin.manifestUrl);
@@ -136,7 +143,7 @@ class PluginLoader {
         console.error(`Failed to load plugin ${plugin.code}:`, error);
       }
     }
-    
+
     return results;
   }
 
@@ -177,14 +184,14 @@ class PluginLoader {
    * 获取所有路由
    */
   getAllRoutes(): RouteConfig[] {
-    return this.getAllPlugins().flatMap(p => p.routes);
+    return this.getAllPlugins().flatMap((p) => p.routes);
   }
 
   /**
    * 获取所有菜单
    */
   getAllMenus(): MenuConfig[] {
-    return this.getAllPlugins().flatMap(p => p.menus);
+    return this.getAllPlugins().flatMap((p) => p.menus);
   }
 
   /**
@@ -216,7 +223,7 @@ export class RouteManager {
   }
 
   addRoutes(plugin: string, routes: RouteConfig[]): void {
-    routes.forEach(route => this.addRoute(plugin, route));
+    routes.forEach((route) => this.addRoute(plugin, route));
   }
 
   removeRoutes(plugin: string): void {
@@ -245,7 +252,7 @@ export class MenuManager {
   }
 
   addMenus(plugin: string, menus: MenuConfig[]): void {
-    menus.forEach(menu => this.addMenu(plugin, menu));
+    menus.forEach((menu) => this.addMenu(plugin, menu));
   }
 
   removeMenus(plugin: string): void {
@@ -291,29 +298,31 @@ export const routeManager = new RouteManager();
 export const menuManager = new MenuManager();
 
 // 插件清单验证
-export function validateManifest(manifest: unknown): manifest is PluginManifest {
-  if (!manifest || typeof manifest !== 'object') {
+export function validateManifest(
+  manifest: unknown,
+): manifest is PluginManifest {
+  if (!manifest || typeof manifest !== "object") {
     return false;
   }
 
   const m = manifest as Record<string, unknown>;
-  
-  if (!m.plugin || typeof m.plugin !== 'object') {
+
+  if (!m.plugin || typeof m.plugin !== "object") {
     return false;
   }
 
   const plugin = m.plugin as Record<string, unknown>;
-  
-  if (typeof plugin.code !== 'string' || !plugin.code) {
+
+  if (typeof plugin.code !== "string" || !plugin.code) {
     return false;
   }
-  if (typeof plugin.name !== 'string' || !plugin.name) {
+  if (typeof plugin.name !== "string" || !plugin.name) {
     return false;
   }
-  if (typeof plugin.version !== 'string' || !plugin.version) {
+  if (typeof plugin.version !== "string" || !plugin.version) {
     return false;
   }
-  if (typeof plugin.main !== 'string' || !plugin.main) {
+  if (typeof plugin.main !== "string" || !plugin.main) {
     return false;
   }
 
@@ -321,20 +330,24 @@ export function validateManifest(manifest: unknown): manifest is PluginManifest 
 }
 
 // 体积检查
-export function checkBundleSize(bytes: number, warnThreshold = 500 * 1024, errorThreshold = 1024 * 1024): 'ok' | 'warning' | 'error' {
+export function checkBundleSize(
+  bytes: number,
+  warnThreshold = 500 * 1024,
+  errorThreshold = 1024 * 1024,
+): "ok" | "warning" | "error" {
   if (bytes > errorThreshold) {
-    return 'error';
+    return "error";
   }
   if (bytes > warnThreshold) {
-    return 'warning';
+    return "warning";
   }
-  return 'ok';
+  return "ok";
 }
 
 // 异步 Script 加载器（备用）
 export async function loadScript(url: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = url;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error(`Failed to load script: ${url}`));

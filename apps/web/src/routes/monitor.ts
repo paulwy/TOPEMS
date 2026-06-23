@@ -4,13 +4,42 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const MonitorPage = lazy(() => import("../pages/system/MonitorPage"));
+const MonitorDashboardPage = lazy(
+  () => import("../pages/monitor/MonitorDashboardPage"),
+);
+const MonitorMetricsPage = lazy(
+  () => import("../pages/monitor/MonitorMetricsPage"),
+);
+const MonitorAlertsPage = lazy(
+  () => import("../pages/monitor/MonitorAlertsPage"),
+);
 
 export const monitorRoutes: RouteConfig[] = [
   {
     path: "/monitor",
-    element: MonitorPage,
-    requiredPermissions: ["iam:system_read"],
+    element: MonitorDashboardPage,
+    requiredPermissions: [],
+    module: "monitor",
+    action: "read",
+  },
+  {
+    path: "/monitor/dashboard",
+    element: MonitorDashboardPage,
+    requiredPermissions: [],
+    module: "monitor",
+    action: "read",
+  },
+  {
+    path: "/monitor/metrics",
+    element: MonitorMetricsPage,
+    requiredPermissions: [],
+    module: "monitor",
+    action: "read",
+  },
+  {
+    path: "/monitor/alerts",
+    element: MonitorAlertsPage,
+    requiredPermissions: [],
     module: "monitor",
     action: "read",
   },

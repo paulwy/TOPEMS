@@ -1,9 +1,17 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { Box, IconButton, Typography, Avatar, Badge, Tooltip,  } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Typography,
+  Avatar,
+  Badge,
+  Tooltip,
+} from "@mui/material";
 import { Button } from "@/components/ui/Button";
 import { Bell, ChevronDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { topNavItems, type NavItem } from "../../config/navigation";
+import { topNavItems } from "../../config/navigation";
+import type { NavigationItem } from "../../config/navigation-v2";
 import { ModeToggle } from "../ModeToggle";
 import { NavDropdown } from "./NavDropdown";
 import { MobileNav } from "./MobileNav";
@@ -31,21 +39,24 @@ const menuModuleMapping: Record<string, string> = {
 };
 
 interface TopNavProps {
-  onNavHover?: (event: React.MouseEvent<HTMLElement>, item: NavItem) => void;
+  onNavHover?: (
+    event: React.MouseEvent<HTMLElement>,
+    item: NavigationItem,
+  ) => void;
   onNavLeave?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isPluginInstalled, loading } = useInstalledPlugins();
+  const { isPluginInstalled, isLoading } = useInstalledPlugins();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
+  const [openMenu, setOpenMenu] = useState<NavigationItem | null>(null);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 过滤后的导航菜单（根据插件安装状态）
-  const filteredNavItems = useMemo(() => {
+  const filteredNavigationItems = useMemo(() => {
     return topNavItems.filter((item) => {
       // 首页始终显示
       if (item.path === "/dashboard") return true;
@@ -57,7 +68,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   }, [isPluginInstalled]);
 
   const handleNavHover = useCallback(
-    (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
+    (event: React.MouseEvent<HTMLElement>, item: NavigationItem) => {
       if (item.children) {
         setAnchorEl(event.currentTarget);
         setOpenMenu(item);
@@ -85,7 +96,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   }, []);
 
   const handleNavClick = useCallback(
-    (item: NavItem) => {
+    (item: NavigationItem) => {
       if (item.children) {
         if (openMenu?.label === item.label) {
           setAnchorEl(null);
@@ -100,7 +111,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
     [navigate, openMenu],
   );
 
-  const renderNavItem = (item: NavItem) => {
+  const renderNavigationItem = (item: NavigationItem) => {
     const isActive =
       item.path === location.pathname ||
       (item.path && location.pathname.startsWith(item.path + "/"));
@@ -223,7 +234,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
             overflow: "auto",
           }}
         >
-          {filteredNavItems.map((item) => renderNavItem(item))}
+          {filteredNavigationItems.map((item) => renderNavigationItem(item))}
         </Box>
 
         {/* 右侧工具 */}

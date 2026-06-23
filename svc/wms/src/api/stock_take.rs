@@ -1,19 +1,54 @@
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
-use chrono::Utc;
-use serde::Deserialize;
+use chrono::{NaiveDateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use uuid::Uuid;
 
-use crate::models::{CreateStockTakeItemRequest, CreateStockTakeRequest, StockTake, StockTakeItem, UpdateStockTakeItemRequest, UpdateStockTakeRequest};
+use crate::models::{CreateStockTakeItemRequest, CreateStockTakeRequest, StockTake, UpdateStockTakeItemRequest, UpdateStockTakeRequest};
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{ApiResponse, PaginationParams, api_error};
+use topems_shared::{ApiResponse, api_error};
+
+fn stock_take_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
+    serde_json::json!({
+        "id": row.try_get::<Uuid, _>("id").ok(),
+        "stock_take_number": row.try_get::<String, _>("stock_take_number").ok(),
+        "warehouse_id": row.try_get::<Uuid, _>("warehouse_id").ok(),
+        "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
+        "status": row.try_get::<String, _>("status").ok(),
+        "description": row.try_get::<Option<String>, _>("description").ok(),
+        "created_by": row.try_get::<Option<String>, _>("created_by").ok(),
+        "created_at": row.try_get::<NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
+        "started_at": row.try_get::<Option<NaiveDateTime>, _>("started_at").ok().and_then(|t| t.map(|t| t.to_string())),
+        "completed_at": row.try_get::<Option<NaiveDateTime>, _>("completed_at").ok().and_then(|t| t.map(|t| t.to_string())),
+        "adjusted_at": row.try_get::<Option<NaiveDateTime>, _>("adjusted_at").ok().and_then(|t| t.map(|t| t.to_string())),
+    })
+}
+
+fn stock_take_item_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
+    serde_json::json!({
+        "id": row.try_get::<Uuid, _>("id").ok(),
+        "line_number": row.try_get::<i32, _>("line_number").ok(),
+        "material_code": row.try_get::<String, _>("material_code").ok(),
+        "material_name": row.try_get::<String, _>("material_name").ok(),
+        "specification": row.try_get::<Option<String>, _>("specification").ok(),
+        "batch_number": row.try_get::<Option<String>, _>("batch_number").ok(),
+        "system_quantity": row.try_get::<f64, _>("system_quantity").ok(),
+        "counted_quantity": row.try_get::<Option<f64>, _>("counted_quantity").ok(),
+        "discrepancy_quantity": row.try_get::<Option<f64>, _>("discrepancy_quantity").ok(),
+        "discrepancy_type": row.try_get::<Option<String>, _>("discrepancy_type").ok(),
+        "discrepancy_reason": row.try_get::<Option<String>, _>("discrepancy_reason").ok(),
+        "unit": row.try_get::<String, _>("unit").ok(),
+        "status": row.try_get::<Option<String>, _>("status").ok(),
+    })
+}
 
 #[derive(Debug, Deserialize)]
 pub struct StockTakePaginationParams {
@@ -22,6 +57,14 @@ pub struct StockTakePaginationParams {
     pub search: Option<String>,
     pub status: Option<String>,
     pub warehouse_id: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CountItemRequest {
+    pub item_id: Uuid,
+    pub counted_quantity: f64,
+    pub discrepancy_reason: Option<String>,
+    pub remarks: Option<String>,
 }
 
 pub fn create_routes<S>() -> Router<S>
@@ -34,7 +77,10 @@ where
         .route("/api/v1/stock-takes/{id}", get(get_stock_take).put(update_stock_take).delete(delete_stock_take))
         .route("/api/v1/stock-takes/{id}/items", get(list_stock_take_items).post(create_stock_take_item))
         .route("/api/v1/stock-takes/{id}/items/{item_id}", get(get_stock_take_item).put(update_stock_take_item).delete(delete_stock_take_item))
+        .route("/api/v1/stock-takes/{id}/start", post(start_stock_take))
+        .route("/api/v1/stock-takes/{id}/count", post(count_stock_take))
         .route("/api/v1/stock-takes/{id}/complete", post(complete_stock_take))
+        .route("/api/v1/stock-takes/{id}/adjust", post(adjust_stock_take))
 }
 
 async fn list_stock_takes(
@@ -54,13 +100,18 @@ async fn list_stock_takes(
     let status_filter = params.status.clone();
     let warehouse_id = params.warehouse_id;
 
-    let result = sqlx::query_as::<_, StockTake>(
+    let result = sqlx::query(
         r#"
-        SELECT id, warehouse_id, location_id, stock_take_number, status, start_time, end_time, remarks, created_at, updated_at
-        FROM stock_takes
+        SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
+               stock_take_number, stock_take_type, status, planned_date, actual_date,
+               total_items, counted_items, discrepancy_items, total_quantity, counted_quantity,
+               discrepancy_quantity, discrepancy_value, accuracy_rate,
+               approval_status, adjustment_status, remarks, created_at, updated_at
+        FROM wms.stock_takes
         WHERE ($1::text IS NULL OR stock_take_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR warehouse_id = $3)
+          AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#,
@@ -77,10 +128,11 @@ async fn list_stock_takes(
         Ok(stock_takes) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM stock_takes
+                SELECT COUNT(*) FROM wms.stock_takes
                 WHERE ($1::text IS NULL OR stock_take_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
+                  AND deleted_at IS NULL
                 "#,
             )
             .bind(&search_pattern)
@@ -90,10 +142,11 @@ async fn list_stock_takes(
             .await;
 
             let total = count_result.unwrap_or(0);
+            let stock_takes_json: Vec<serde_json::Value> = stock_takes.iter().map(stock_take_row_to_json).collect();
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "stock_takes": stock_takes,
+                    "stock_takes": stock_takes_json,
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -124,16 +177,19 @@ async fn create_stock_take(
 
     let result = sqlx::query_as::<_, StockTake>(
         r#"
-        INSERT INTO stock_takes (id, warehouse_id, location_id, stock_take_number, status, start_time, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
-        RETURNING id, warehouse_id, location_id, stock_take_number, status, start_time, end_time, remarks, created_at, updated_at
+        INSERT INTO wms.stock_takes (id, organization_id, stock_take_number, stock_take_type, 
+                                     warehouse_id, location_id, status, planned_date, 
+                                     remarks, created_at, updated_at)
+        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'full', $3, $4, 'planned', $5, $6, $7, $8)
+        RETURNING id, warehouse_id, location_id, stock_take_number, status, 
+                  planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(&req.stock_take_number)
     .bind(&req.warehouse_id)
     .bind(&req.location_id)
-    .bind(&req.stock_take_number)
-    .bind(now)
+    .bind(now.date_naive())
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
@@ -184,15 +240,19 @@ async fn get_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<StockTake>> {
+) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {},
         Err(e) => return e,
     }
-    let result = sqlx::query_as::<_, StockTake>(
+    let result = sqlx::query(
         r#"
-        SELECT id, warehouse_id, location_id, stock_take_number, status, start_time, end_time, remarks, created_at, updated_at
-        FROM stock_takes WHERE id = $1
+        SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
+               stock_take_number, stock_take_type, status, planned_date, actual_date,
+               total_items, counted_items, discrepancy_items, total_quantity, counted_quantity,
+               discrepancy_quantity, discrepancy_value, accuracy_rate,
+               approval_status, adjustment_status, remarks, created_at, updated_at
+        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -200,7 +260,10 @@ async fn get_stock_take(
     .await;
 
     match result {
-        Ok(Some(stock_take)) => Json(ApiResponse::success(stock_take, "获取盘点成功")),
+        Ok(Some(stock_take)) => {
+            let stock_take_json = stock_take_row_to_json(&stock_take);
+            Json(ApiResponse::success(stock_take_json, "获取盘点成功"))
+        }
         Ok(None) => Json(api_error(404, "盘点不存在")),
         Err(e) => {
             tracing::error!("获取盘点失败: {}", e);
@@ -224,7 +287,9 @@ async fn update_stock_take(
     
     let existing = sqlx::query_as::<_, StockTake>(
         r#"
-        SELECT id, warehouse_id, location_id, stock_take_number, status, start_time, end_time, remarks, created_at, updated_at FROM stock_takes WHERE id = $1
+        SELECT id, warehouse_id, location_id, stock_take_number, status, 
+               planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at 
+        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -246,10 +311,11 @@ async fn update_stock_take(
 
     let result = sqlx::query_as::<_, StockTake>(
         r#"
-        UPDATE stock_takes SET
-            warehouse_id = $2, location_id = $3, status = $4, end_time = $5, remarks = $6, updated_at = $7
-        WHERE id = $1
-        RETURNING id, warehouse_id, location_id, stock_take_number, status, start_time, end_time, remarks, created_at, updated_at
+        UPDATE wms.stock_takes SET
+            warehouse_id = $2, location_id = $3, status = $4, actual_date = $5, remarks = $6, updated_at = $7
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id, warehouse_id, location_id, stock_take_number, status, 
+                  planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -312,7 +378,7 @@ async fn delete_stock_take(
         Ok(_) => {},
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM stock_takes WHERE id = $1")
+    let result = sqlx::query(r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
         .bind(id)
         .execute(&state.db)
         .await;
@@ -362,6 +428,124 @@ async fn delete_stock_take(
     response
 }
 
+async fn start_stock_take(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    let now = Utc::now();
+
+    let tx = state.db.begin().await.map_err(|e| {
+        tracing::error!("开启事务失败: {}", e);
+        Json(api_error(500, "开启事务失败"))
+    });
+
+    let mut tx = match tx {
+        Ok(t) => t,
+        Err(e) => return e,
+    };
+
+    let _ = sqlx::query(
+        r#"
+        UPDATE wms.stock_takes SET
+            status = 'in_progress', actual_date = $1, updated_at = $1
+        WHERE id = $2 AND status = 'planned' AND deleted_at IS NULL
+        "#,
+    )
+    .bind(now.date_naive())
+    .bind(id)
+    .execute(&mut *tx)
+    .await;
+
+    let warehouse_id_result = sqlx::query_scalar::<_, Uuid>(
+        r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1"#
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await;
+
+    if let Ok(warehouse_id) = warehouse_id_result {
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, line_number,
+                                              material_code, material_name, specification,
+                                              batch_number, location_id, system_quantity, unit,
+                                              quality_status, created_at, updated_at)
+            SELECT uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', $1, ROW_NUMBER() OVER (ORDER BY i.material_code),
+                   i.material_code, i.material_name, i.specification,
+                   i.batch_number, i.location_id, i.quantity, i.unit,
+                   i.quality_status, NOW(), NOW()
+            FROM wms.inventory i
+            WHERE i.warehouse_id = $2 AND i.deleted_at IS NULL
+            "#,
+        )
+        .bind(id)
+        .bind(warehouse_id)
+        .execute(&mut *tx)
+        .await;
+    }
+
+    if tx.commit().await.is_err() {
+        return Json(api_error(500, "开始盘点失败"));
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
+               stock_take_number, stock_take_type, status, planned_date, actual_date,
+               total_items, counted_items, discrepancy_items, remarks, created_at, updated_at
+        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg, response_data) = match result {
+        Ok(stock_take) => {
+            let stock_take_json = stock_take_row_to_json(&stock_take);
+            (
+                Json(ApiResponse::success(stock_take_json.clone(), "盘点已开始")),
+                "success",
+                None,
+                Some(stock_take_json),
+            )
+        }
+        Err(e) => {
+            tracing::error!("获取盘点失败: {}", e);
+            (
+                Json(api_error(500, "开始盘点失败")),
+                "error",
+                Some(e.to_string()),
+                None,
+            )
+        }
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "stock_take".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
 async fn list_stock_take_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -372,12 +556,18 @@ async fn list_stock_take_items(
         Err(e) => return e,
     }
 
-    let result = sqlx::query_as::<_, StockTakeItem>(
+    let result = sqlx::query(
         r#"
-        SELECT id, stock_take_id, inventory_item_id, expected_quantity, actual_quantity, variance, status, remarks, created_at, updated_at
-        FROM stock_take_items
-        WHERE stock_take_id = $1
-        ORDER BY created_at ASC
+        SELECT id, stock_take_id, line_number, material_code, material_name, specification,
+               batch_number, location_id, location_code, location_name,
+               system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+               unit, unit_price, discrepancy_value, quality_status,
+               counter, counting_time, recount_required, recount_quantity,
+               discrepancy_reason, discrepancy_notes, adjustment_required, adjustment_quantity,
+               adjustment_status, notes as remarks, created_at, updated_at
+        FROM wms.stock_take_items
+        WHERE stock_take_id = $1 AND deleted_at IS NULL
+        ORDER BY line_number ASC
         "#,
     )
     .bind(id)
@@ -387,15 +577,20 @@ async fn list_stock_take_items(
     match result {
         Ok(items) => {
             let total = items.len() as i64;
-            let variance_sum: f64 = items.iter().filter_map(|i| i.variance).sum();
-            let completed_count = items.iter().filter(|i| i.status == "completed").count() as i64;
+            let completed_count = items.iter()
+                .filter(|i| i.try_get::<Option<f64>, _>("counted_quantity").ok().flatten().is_some())
+                .count() as i64;
+            let discrepancy_count = items.iter()
+                .filter(|i| i.try_get::<Option<String>, _>("discrepancy_type").ok().flatten() != Some("none".to_string()))
+                .count() as i64;
 
+            let items_json: Vec<serde_json::Value> = items.iter().map(stock_take_item_row_to_json).collect();
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items_json,
                     "total": total,
                     "completed_count": completed_count,
-                    "total_variance": variance_sum
+                    "discrepancy_count": discrepancy_count,
                 }),
                 "获取盘点明细成功",
             ))
@@ -413,7 +608,7 @@ async fn create_stock_take_item(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<CreateStockTakeItemRequest>,
-) -> Json<ApiResponse<StockTakeItem>> {
+) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {},
         Err(e) => return e,
@@ -428,48 +623,66 @@ async fn create_stock_take_item(
         None
     };
 
-    let status = if req.actual_quantity.is_some() { "completed" } else { "pending" };
+    let discrepancy_type = if let Some(v) = variance {
+        if v > 0.0 { Some("over".to_string()) }
+        else if v < 0.0 { Some("under".to_string()) }
+        else { Some("none".to_string()) }
+    } else {
+        None
+    };
 
-    let result = sqlx::query_as::<_, StockTakeItem>(
+    let result = sqlx::query(
         r#"
-        INSERT INTO stock_take_items (id, stock_take_id, inventory_item_id, expected_quantity, actual_quantity, variance, status, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, stock_take_id, inventory_item_id, expected_quantity, actual_quantity, variance, status, remarks, created_at, updated_at
+        INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, material_code, 
+                                          material_name, specification, batch_number, location_id,
+                                          system_quantity, counted_quantity, discrepancy_quantity,
+                                          discrepancy_type, unit, unit_price, discrepancy_value,
+                                          notes, created_at, updated_at)
+        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
+                  system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+                  unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
         "#,
     )
     .bind(item_id)
     .bind(id)
-    .bind(&req.inventory_item_id)
+    .bind(&req.inventory_item_id.to_string())
+    .bind("")
+    .bind(&req.remarks)
+    .bind(None::<String>)
+    .bind(None::<Uuid>)
     .bind(req.expected_quantity)
-    .bind(&req.actual_quantity)
+    .bind(req.actual_quantity)
     .bind(variance)
-    .bind(status)
+    .bind(discrepancy_type)
+    .bind("")
+    .bind(None::<f64>)
+    .bind(None::<f64>)
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(item) => (
-            Json(ApiResponse::success(item.clone(), "盘点明细创建成功")),
-            "success",
-            None
-        ),
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(item) => {
+            let item_json = stock_take_item_row_to_json(item);
+            (
+                Json(ApiResponse::success(item_json.clone(), "盘点明细创建成功")),
+                "success",
+                None,
+                Some(item_json)
+            )
+        },
         Err(e) => {
             tracing::error!("创建盘点明细失败: {}", e);
             (
                 Json(api_error(500, "盘点明细创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
+                None
             )
         }
-    };
-
-    let response_data = if let Ok(item) = &result {
-        serde_json::to_value(item).ok()
-    } else {
-        None
     };
 
     log_audit_event(
@@ -490,19 +703,98 @@ async fn create_stock_take_item(
     response
 }
 
+async fn count_stock_take(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(items): Json<Vec<CountItemRequest>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    let request_data = serde_json::to_value(&items).ok();
+    let now = Utc::now();
+
+    let tx = state.db.begin().await.map_err(|e| {
+        tracing::error!("开启事务失败: {}", e);
+        Json(api_error(500, "开启事务失败"))
+    });
+
+    let mut tx = match tx {
+        Ok(t) => t,
+        Err(e) => return e,
+    };
+
+    for item in &items {
+        let system_qty_result = sqlx::query_scalar::<_, f64>(
+            r#"SELECT system_quantity FROM wms.stock_take_items WHERE id = $1"#
+        )
+        .bind(item.item_id)
+        .fetch_one(&mut *tx)
+        .await;
+
+        if let Ok(system_qty) = system_qty_result {
+            let discrepancy = item.counted_quantity - system_qty;
+            let discrepancy_type = if discrepancy > 0.0 { "over" }
+                else if discrepancy < 0.0 { "under" }
+                else { "none" };
+
+            let _ = sqlx::query(
+                r#"
+                UPDATE wms.stock_take_items SET
+                    counted_quantity = $1,
+                    discrepancy_quantity = $2,
+                    discrepancy_type = $3,
+                    discrepancy_reason = $4,
+                    notes = $5,
+                    counting_time = $6,
+                    updated_at = $6
+                WHERE id = $7 AND deleted_at IS NULL
+                "#,
+            )
+            .bind(item.counted_quantity)
+            .bind(discrepancy)
+            .bind(discrepancy_type)
+            .bind(&item.discrepancy_reason)
+            .bind(&item.remarks)
+            .bind(now)
+            .bind(item.item_id)
+            .execute(&mut *tx)
+            .await;
+        }
+    }
+
+    if tx.commit().await.is_err() {
+        return Json(api_error(500, "盘点计数失败"));
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({ "message": "盘点计数完成" }),
+        "盘点计数成功",
+    ))
+}
+
 async fn get_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<StockTakeItem>> {
+) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {},
         Err(e) => return e,
     }
-    let result = sqlx::query_as::<_, StockTakeItem>(
+    let result = sqlx::query(
         r#"
-        SELECT id, stock_take_id, inventory_item_id, expected_quantity, actual_quantity, variance, status, remarks, created_at, updated_at
-        FROM stock_take_items WHERE stock_take_id = $1 AND id = $2
+        SELECT id, stock_take_id, line_number, material_code, material_name, specification,
+               batch_number, location_id, location_code, location_name,
+               system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+               unit, unit_price, discrepancy_value, quality_status,
+               counter, counting_time, recount_required, recount_quantity,
+               discrepancy_reason, discrepancy_notes, adjustment_required, adjustment_quantity,
+               adjustment_status, notes as remarks, created_at, updated_at
+        FROM wms.stock_take_items WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -511,7 +803,10 @@ async fn get_stock_take_item(
     .await;
 
     match result {
-        Ok(Some(item)) => Json(ApiResponse::success(item, "获取盘点明细成功")),
+        Ok(Some(item)) => {
+            let item_json = stock_take_item_row_to_json(&item);
+            Json(ApiResponse::success(item_json, "获取盘点明细成功"))
+        }
         Ok(None) => Json(api_error(404, "盘点明细不存在")),
         Err(e) => {
             tracing::error!("获取盘点明细失败: {}", e);
@@ -526,16 +821,18 @@ async fn update_stock_take_item(
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
     Json(req): Json<UpdateStockTakeItemRequest>,
-) -> Json<ApiResponse<StockTakeItem>> {
+) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {},
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
     
-    let existing = sqlx::query_as::<_, StockTakeItem>(
+    let existing = sqlx::query(
         r#"
-        SELECT id, stock_take_id, inventory_item_id, expected_quantity, actual_quantity, variance, status, remarks, created_at, updated_at FROM stock_take_items WHERE stock_take_id = $1 AND id = $2
+        SELECT id, stock_take_id, system_quantity, counted_quantity, discrepancy_quantity, 
+               discrepancy_type, status, notes FROM wms.stock_take_items 
+        WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -549,29 +846,40 @@ async fn update_stock_take_item(
         Err(e) => return Json(api_error(500, &format!("查询盘点明细失败: {}", e))),
     };
 
-    let actual_quantity = req.actual_quantity.or(existing.actual_quantity);
+    let system_qty = existing.try_get::<f64, _>("system_quantity").unwrap_or(0.0);
+    let actual_quantity = req.actual_quantity.or_else(|| existing.try_get::<Option<f64>, _>("counted_quantity").ok().flatten());
     let variance = if let Some(actual) = actual_quantity {
-        Some(actual - existing.expected_quantity)
+        Some(actual - system_qty)
     } else {
         None
     };
+    let discrepancy_type = if let Some(v) = variance {
+        if v > 0.0 { "over".to_string() }
+        else if v < 0.0 { "under".to_string() }
+        else { "none".to_string() }
+    } else {
+        existing.try_get::<String, _>("discrepancy_type").unwrap_or("none".to_string())
+    };
     let status = req.status.unwrap_or_else(|| {
-        if actual_quantity.is_some() { "completed".to_string() } else { existing.status }
+        if actual_quantity.is_some() { "completed".to_string() } else { "pending".to_string() }
     });
-    let remarks = req.remarks.or(existing.remarks);
+    let remarks = req.remarks.or_else(|| existing.try_get::<Option<String>, _>("notes").ok().flatten());
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, StockTakeItem>(
+    let result = sqlx::query(
         r#"
-        UPDATE stock_take_items SET
-            actual_quantity = $2, variance = $3, status = $4, remarks = $5, updated_at = $6
-        WHERE stock_take_id = $7 AND id = $8
-        RETURNING id, stock_take_id, inventory_item_id, expected_quantity, actual_quantity, variance, status, remarks, created_at, updated_at
+        UPDATE wms.stock_take_items SET
+            counted_quantity = $1, discrepancy_quantity = $2, discrepancy_type = $3, 
+            status = $4, notes = $5, updated_at = $6
+        WHERE stock_take_id = $7 AND id = $8 AND deleted_at IS NULL
+        RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
+                  system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+                  unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
         "#,
     )
-    .bind(id)
-    .bind(&actual_quantity)
+    .bind(actual_quantity)
     .bind(variance)
+    .bind(discrepancy_type)
     .bind(&status)
     .bind(&remarks)
     .bind(now)
@@ -580,26 +888,25 @@ async fn update_stock_take_item(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(item) => (
-            Json(ApiResponse::success(item.clone(), "盘点明细更新成功")),
-            "success",
-            None
-        ),
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(item) => {
+            let item_json = stock_take_item_row_to_json(item);
+            (
+                Json(ApiResponse::success(item_json.clone(), "盘点明细更新成功")),
+                "success",
+                None,
+                Some(item_json)
+            )
+        },
         Err(e) => {
             tracing::error!("更新盘点明细失败: {}", e);
             (
                 Json(api_error(500, "盘点明细更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
+                None
             )
         }
-    };
-
-    let response_data = if let Ok(item) = &result {
-        serde_json::to_value(item).ok()
-    } else {
-        None
     };
 
     log_audit_event(
@@ -630,7 +937,7 @@ async fn delete_stock_take_item(
         Ok(_) => {},
         Err(e) => return e,
     }
-    let result = sqlx::query("DELETE FROM stock_take_items WHERE stock_take_id = $1 AND id = $2")
+    let result = sqlx::query(r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL"#)
         .bind(id)
         .bind(item_id)
         .execute(&state.db)
@@ -686,47 +993,122 @@ async fn complete_stock_take(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<StockTake>> {
+) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {},
         Err(e) => return e,
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, StockTake>(
+    let tx = state.db.begin().await.map_err(|e| {
+        tracing::error!("开启事务失败: {}", e);
+        Json(api_error(500, "开启事务失败"))
+    });
+
+    let mut tx = match tx {
+        Ok(t) => t,
+        Err(e) => return e,
+    };
+
+    let stats_result = sqlx::query(
         r#"
-        UPDATE stock_takes SET
-            status = 'completed', end_time = $2, updated_at = $3
-        WHERE id = $1
-        RETURNING id, warehouse_id, location_id, stock_take_number, status, start_time, end_time, remarks, created_at, updated_at
+        SELECT 
+            COUNT(*) as total_items,
+            COUNT(CASE WHEN counted_quantity IS NOT NULL THEN 1 END) as counted_items,
+            COUNT(CASE WHEN discrepancy_type != 'none' AND discrepancy_type IS NOT NULL THEN 1 END) as discrepancy_items,
+            SUM(system_quantity) as total_quantity,
+            SUM(counted_quantity) as counted_quantity,
+            SUM(CASE WHEN discrepancy_type IS NOT NULL THEN discrepancy_quantity ELSE 0 END) as discrepancy_quantity
+        FROM wms.stock_take_items
+        WHERE stock_take_id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
+    .fetch_one(&mut *tx)
+    .await;
+
+    let (total_items, counted_items, discrepancy_items, total_qty, counted_qty, discrepancy_qty) = match stats_result {
+        Ok(r) => (
+            r.try_get::<i64, _>("total_items").unwrap_or(0),
+            r.try_get::<i64, _>("counted_items").unwrap_or(0),
+            r.try_get::<i64, _>("discrepancy_items").unwrap_or(0),
+            r.try_get::<f64, _>("total_quantity").unwrap_or(0.0),
+            r.try_get::<f64, _>("counted_quantity").unwrap_or(0.0),
+            r.try_get::<f64, _>("discrepancy_quantity").unwrap_or(0.0),
+        ),
+        Err(_) => (0, 0, 0, 0.0, 0.0, 0.0),
+    };
+
+    let accuracy_rate = if total_items > 0 {
+        (counted_items as f64 / total_items as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let _ = sqlx::query(
+        r#"
+        UPDATE wms.stock_takes SET
+            status = 'completed',
+            total_items = $1,
+            counted_items = $2,
+            discrepancy_items = $3,
+            total_quantity = $4,
+            counted_quantity = $5,
+            discrepancy_quantity = $6,
+            accuracy_rate = $7,
+            updated_at = $8
+        WHERE id = $9 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(total_items)
+    .bind(counted_items)
+    .bind(discrepancy_items)
+    .bind(total_qty)
+    .bind(counted_qty)
+    .bind(discrepancy_qty)
+    .bind(accuracy_rate)
     .bind(now)
-    .bind(now)
+    .bind(id)
+    .execute(&mut *tx)
+    .await;
+
+    if tx.commit().await.is_err() {
+        return Json(api_error(500, "完成盘点失败"));
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
+               stock_take_number, stock_take_type, status, planned_date, actual_date,
+               total_items, counted_items, discrepancy_items, total_quantity, counted_quantity,
+               discrepancy_quantity, discrepancy_value, accuracy_rate,
+               approval_status, adjustment_status, remarks, created_at, updated_at
+        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(stock_take) => (
-            Json(ApiResponse::success(stock_take.clone(), "盘点完成成功")),
-            "success",
-            None
-        ),
+    let (response, status_str, error_msg, response_data) = match result {
+        Ok(stock_take) => {
+            let stock_take_json = stock_take_row_to_json(&stock_take);
+            (
+                Json(ApiResponse::success(stock_take_json.clone(), "盘点完成")),
+                "success",
+                None,
+                Some(stock_take_json),
+            )
+        }
         Err(e) => {
-            tracing::error!("完成盘点失败: {}", e);
+            tracing::error!("获取盘点失败: {}", e);
             (
                 Json(api_error(500, "完成盘点失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
+                None,
             )
         }
-    };
-
-    let response_data = if let Ok(stock_take) = &result {
-        serde_json::to_value(stock_take).ok()
-    } else {
-        None
     };
 
     log_audit_event(
@@ -741,8 +1123,97 @@ async fn complete_stock_take(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
+}
+
+async fn adjust_stock_take(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
+    let now = Utc::now();
+
+    let tx = state.db.begin().await.map_err(|e| {
+        tracing::error!("开启事务失败: {}", e);
+        Json(api_error(500, "开启事务失败"))
+    });
+
+    let mut tx = match tx {
+        Ok(t) => t,
+        Err(e) => return e,
+    };
+
+    let discrepancies = sqlx::query(
+        r#"
+        SELECT material_code, batch_number, discrepancy_quantity
+        FROM wms.stock_take_items
+        WHERE stock_take_id = $1 AND discrepancy_type != 'none' AND discrepancy_type IS NOT NULL
+          AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .fetch_all(&mut *tx)
+    .await;
+
+    if let Ok(items) = discrepancies {
+        for item in items {
+            let material_code: String = item.try_get("material_code").unwrap_or_default();
+            let batch_number: Option<String> = item.try_get("batch_number").ok();
+            let discrepancy_qty: f64 = item.try_get("discrepancy_quantity").unwrap_or(0.0);
+
+            if discrepancy_qty != 0.0 {
+                let _ = sqlx::query(
+                    r#"
+                    UPDATE wms.inventory SET
+                        quantity = quantity + $1,
+                        available_quantity = available_quantity + $1,
+                        updated_at = $2
+                    WHERE organization_id = '00000000-0000-0000-0000-000000000001'
+                      AND material_code = $3
+                      AND ($4::text IS NULL OR batch_number = $4)
+                      AND deleted_at IS NULL
+                    "#,
+                )
+                .bind(discrepancy_qty)
+                .bind(now)
+                .bind(&material_code)
+                .bind(batch_number)
+                .execute(&mut *tx)
+                .await;
+            }
+        }
+    }
+
+    let _ = sqlx::query(
+        r#"
+        UPDATE wms.stock_takes SET
+            adjustment_status = 'completed',
+            adjusted_by = 'system',
+            adjustment_date = $1,
+            updated_at = $1
+        WHERE id = $2 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(now.date_naive())
+    .bind(id)
+    .execute(&mut *tx)
+    .await;
+
+    if tx.commit().await.is_err() {
+        return Json(api_error(500, "库存调整失败"));
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({ "message": "库存调整完成" }),
+        "库存调整成功",
+    ))
 }

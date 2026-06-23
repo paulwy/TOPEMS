@@ -1,4 +1,16 @@
-import { Card, CardContent, Typography, Box, Chip, Grid, Container, Skeleton, Divider, Paper, LinearProgress,  } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Chip,
+  Grid,
+  Container,
+  Skeleton,
+  Divider,
+  Paper,
+  LinearProgress,
+} from "@mui/material";
 import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -15,29 +27,15 @@ import {
   Mail,
   Clock,
 } from "lucide-react";
-import { useNotification } from "@/hooks/useNotification";
+import { useAppStore } from "@/store";
 import { logger } from "@/utils/logger";
-
-interface Opportunity {
-  id: string;
-  name: string;
-  customer_id: string;
-  customer_name: string;
-  contact_id?: string;
-  contact_name?: string;
-  amount: number;
-  stage: string;
-  probability: number;
-  expected_close_date: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
+import type { Opportunity } from "@/api/modules/crm/crm";
+import { crmApi } from "@/api/modules/crm/crm";
 
 const OpportunityDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { addNotification } = useAppStore();
 
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,24 +49,23 @@ const OpportunityDetailPage: React.FC = () => {
   const loadOpportunity = async (opportunityId: string) => {
     setLoading(true);
     try {
-      // Mock data for now
-      setOpportunity({
-        id: opportunityId,
-        name: "企业数字化转型项目",
-        customer_id: "1",
-        customer_name: "示例科技有限公司",
-        contact_name: "张经理",
-        amount: 500000,
-        stage: "negotiation",
-        probability: 60,
-        expected_close_date: "2026-07-15",
-        description: "客户希望进行全面的数字化转型，包括ERP系统升级、数据中台建设等",
-        created_at: "2026-06-01",
-        updated_at: "2026-06-20",
-      });
+      const response = await crmApi.opportunities.get(opportunityId);
+      if (response.success && response.data) {
+        setOpportunity(response.data);
+      } else {
+        addNotification({
+          type: "error",
+          title: "加载失败",
+          message: response.message || "无法加载商机信息",
+        });
+      }
     } catch (err) {
       logger.error("Failed to load opportunity:", err);
-      error("加载商机信息失败");
+      addNotification({
+        type: "error",
+        title: "加载失败",
+        message: "无法加载商机信息",
+      });
     } finally {
       setLoading(false);
     }
@@ -76,14 +73,28 @@ const OpportunityDetailPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!id || !window.confirm("确定要删除此商机吗？")) return;
-    success("商机删除成功");
-    navigate("/crm/opportunities");
+    try {
+      await crmApi.opportunities.delete(id);
+      addNotification({
+        type: "success",
+        title: "删除成功",
+        message: "商机已删除",
+      });
+      navigate("/crm/opportunities");
+    } catch (err) {
+      logger.error("Failed to delete opportunity:", err);
+      addNotification({
+        type: "error",
+        title: "删除失败",
+        message: "无法删除商机",
+      });
+    }
   };
 
   const getStageLabel = (stage: string) => {
     const stages: Record<string, string> = {
-      lead: "线索",
-      qualification: "资格确认",
+      prospecting: "线索",
+      qualified: "资格确认",
       proposal: "方案报价",
       negotiation: "谈判审核",
       closed_won: "赢单",
@@ -93,9 +104,12 @@ const OpportunityDetailPage: React.FC = () => {
   };
 
   const getStageColor = (stage: string) => {
-    const colors: Record<string, "default" | "primary" | "success" | "warning" | "error"> = {
-      lead: "default",
-      qualification: "primary",
+    const colors: Record<
+      string,
+      "default" | "primary" | "success" | "warning" | "error"
+    > = {
+      prospecting: "default",
+      qualified: "primary",
       proposal: "primary",
       negotiation: "warning",
       closed_won: "success",
@@ -104,16 +118,22 @@ const OpportunityDetailPage: React.FC = () => {
     return colors[stage] || "default";
   };
 
-  const formatMoney = (amount: number) => {
+  const formatMoney = (amount?: number) => {
+    if (!amount) return "-";
     return new Intl.NumberFormat("zh-CN", {
       style: "currency",
       currency: "CNY",
     }).format(amount);
   };
 
-  const formatDate = (date: string) => {
+  const formatDate = (date?: string) => {
     if (!date) return "-";
     return new Date(date).toLocaleDateString("zh-CN");
+  };
+
+  const formatDateTime = (date?: string) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleString("zh-CN");
   };
 
   if (loading) {
@@ -129,7 +149,11 @@ const OpportunityDetailPage: React.FC = () => {
       <Container maxWidth="lg" sx={{ py: 3 }}>
         <Paper sx={{ p: 4, textAlign: "center" }}>
           <Typography color="text.secondary">商机不存在或已被删除</Typography>
-          <Button variant="outlined" sx={{ mt: 2 }} onClick={() => navigate("/crm/opportunities")}>
+          <Button
+            variant="outlined"
+            sx={{ mt: 2 }}
+            onClick={() => navigate("/crm/opportunities")}
+          >
             返回商机列表
           </Button>
         </Paper>
@@ -139,9 +163,14 @@ const OpportunityDetailPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 3 }}>
-      {/* 页面头部 */}
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button
               variant="text"
@@ -179,50 +208,95 @@ const OpportunityDetailPage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* 基本信息 */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               基本信息
             </Typography>
-            <Chip label={getStageLabel(opportunity.stage)} color={getStageColor(opportunity.stage)} size="small" />
+            <Chip
+              label={getStageLabel(opportunity.stage)}
+              color={getStageColor(opportunity.stage)}
+              size="small"
+            />
           </Box>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <TrendingUp style={{ width: 18, height: 18, color: "grey.500" }} />
+                <TrendingUp
+                  style={{ width: 18, height: 18, color: "grey.500" }}
+                />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">商机金额</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatMoney(opportunity.amount)}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    商机金额
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {formatMoney(opportunity.value)}
+                  </Typography>
                 </Box>
               </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Building2 style={{ width: 18, height: 18, color: "grey.500" }} />
+                <Building2
+                  style={{ width: 18, height: 18, color: "grey.500" }}
+                />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">客户名称</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>{opportunity.customer_name}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    客户ID
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {opportunity.customer_id || "-"}
+                  </Typography>
                 </Box>
               </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <User style={{ width: 18, height: 18, color: "grey.500" }} />
+                <Calendar
+                  style={{ width: 18, height: 18, color: "grey.500" }}
+                />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">联系人</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>{opportunity.contact_name || "-"}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    预计成交日期
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {formatDate(opportunity.close_date)}
+                  </Typography>
                 </Box>
               </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Calendar style={{ width: 18, height: 18, color: "grey.500" }} />
+                <Clock style={{ width: 18, height: 18, color: "grey.500" }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">预计成交日期</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDate(opportunity.expected_close_date)}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    创建时间
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {formatDateTime(opportunity.created_at)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Clock style={{ width: 18, height: 18, color: "grey.500" }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    更新时间
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {formatDateTime(opportunity.updated_at)}
+                  </Typography>
                 </Box>
               </Box>
             </Grid>
@@ -230,7 +304,6 @@ const OpportunityDetailPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* 成交概率 */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
@@ -240,25 +313,36 @@ const OpportunityDetailPage: React.FC = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <LinearProgress
               variant="determinate"
-              value={opportunity.probability}
+              value={opportunity.probability || 0}
               sx={{ flex: 1, height: 10, borderRadius: 5 }}
             />
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {opportunity.probability}%
+              {opportunity.probability || 0}%
             </Typography>
           </Box>
+          {opportunity.probability !== undefined && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                加权预期金额:{" "}
+                {formatMoney(
+                  opportunity.value
+                    ? (opportunity.value * (opportunity.probability / 100))
+                    : undefined
+                )}
+              </Typography>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
-      {/* 描述 */}
       <Card>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-            商机描述
+            备注信息
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <Typography variant="body2" color="text.secondary">
-            {opportunity.description || "暂无描述"}
+            {opportunity.notes || "暂无备注"}
           </Typography>
         </CardContent>
       </Card>

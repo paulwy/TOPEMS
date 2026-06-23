@@ -75,7 +75,7 @@ const HRM: ServiceConfig = {
     display_name: '人力资源管理',
     description: '公司、部门、职位、员工、合同、考勤、薪资、绩效、培训、招聘、请假、薪资调整、审计日志',
     schema: 'hrm',
-    port: 8011,
+    port: 8020,
     tables: [
         {
             name: 'companies',
@@ -497,7 +497,7 @@ const CRM: ServiceConfig = {
     display_name: '客户关系管理',
     description: '客户、联系人、商机、交互、标签、审计日志',
     schema: 'crm',
-    port: 8012,
+    port: 8029,
     tables: [
         {
             name: 'customers',

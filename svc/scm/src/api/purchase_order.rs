@@ -38,7 +38,7 @@ async fn list_orders(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         r#"
         SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
-        FROM purchase_orders
+        FROM scm.purchase_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -56,7 +56,7 @@ async fn list_orders(
         Ok(orders) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM purchase_orders
+                SELECT COUNT(*) FROM scm.purchase_orders
                 WHERE ($1::text IS NULL OR order_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -96,7 +96,7 @@ async fn create_order(
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         r#"
-        INSERT INTO purchase_orders (id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at)
+        INSERT INTO scm.purchase_orders (id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
         RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         "#,
@@ -161,7 +161,7 @@ async fn get_order(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         r#"
         SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
-        FROM purchase_orders WHERE id = $1
+        FROM scm.purchase_orders WHERE id = $1
         "#,
     )
     .bind(id)
@@ -187,7 +187,7 @@ async fn update_order(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM purchase_orders WHERE id = $1",
+        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -208,7 +208,7 @@ async fn update_order(
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         r#"
-        UPDATE purchase_orders SET
+        UPDATE scm.purchase_orders SET
             supplier_id = $2, delivery_date = $3, total_amount = $4, status = $5, remarks = $6, updated_at = $7
         WHERE id = $1
         RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at

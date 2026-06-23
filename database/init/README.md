@@ -440,8 +440,8 @@ ALTER EXTENSION vector UPDATE;
 |------|------|--------|
 | unified-core | 8000 | unified_core, public |
 | erp | 8010 | plugin_erp, public |
-| hrm | 8011 | plugin_hrm, public |
-| crm | 8012 | plugin_crm, public |
+| hrm | 8020 | plugin_hrm, public |
+| crm | 8029 | plugin_crm, public |
 | ai | 8062 | plugin_ai, public |
 
 ---

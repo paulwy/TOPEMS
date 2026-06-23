@@ -45,7 +45,7 @@ async fn list_evaluations(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
         SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
-        FROM supplier_evaluations
+        FROM scm.supplier_evaluations
         WHERE ($1::uuid IS NULL OR supplier_id = $1)
         ORDER BY evaluation_date DESC
         LIMIT $2 OFFSET $3
@@ -61,7 +61,7 @@ async fn list_evaluations(
         Ok(evaluations) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM supplier_evaluations
+                SELECT COUNT(*) FROM scm.supplier_evaluations
                 WHERE ($1::uuid IS NULL OR supplier_id = $1)
                 "#,
             )
@@ -99,7 +99,7 @@ async fn create_evaluation(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        INSERT INTO supplier_evaluations (id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at)
+        INSERT INTO scm.supplier_evaluations (id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
         "#,
@@ -170,7 +170,7 @@ async fn get_evaluation(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
         SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
-        FROM supplier_evaluations WHERE id = $1
+        FROM scm.supplier_evaluations WHERE id = $1
         "#,
     )
     .bind(id)
@@ -196,7 +196,7 @@ async fn update_evaluation(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        "SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at FROM supplier_evaluations WHERE id = $1",
+        "SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -219,7 +219,7 @@ async fn update_evaluation(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        UPDATE supplier_evaluations SET
+        UPDATE scm.supplier_evaluations SET
             quality_score = $2, delivery_score = $3, service_score = $4, price_score = $5, overall_score = $6, comments = $7, evaluator = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at

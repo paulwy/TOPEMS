@@ -150,7 +150,7 @@ services:
       <<: *common-env
       SEARCH_PATH: hrm, shared, public
     ports:
-      - "8011:8011"
+      - "8020:8020"
     networks:
       - topems-network
     depends_on:
@@ -169,7 +169,7 @@ services:
       <<: *common-env
       SEARCH_PATH: crm, shared, public
     ports:
-      - "8007:8007"
+      - "8029:8029"
     networks:
       - topems-network
     depends_on:
@@ -209,7 +209,7 @@ services:
       <<: *common-env
       SEARCH_PATH: srm, shared, public
     ports:
-      - "8054:8054"
+      - "8042:8042"
     networks:
       - topems-network
     depends_on:
@@ -249,7 +249,7 @@ services:
       <<: *common-env
       SEARCH_PATH: pm, shared, public
     ports:
-      - "8001:8001"
+      - "8023:8023"
     networks:
       - topems-network
     depends_on:
@@ -289,7 +289,7 @@ services:
       <<: *common-env
       SEARCH_PATH: mes, shared, public
     ports:
-      - "8058:8058"
+      - "8030:8030"
     networks:
       - topems-network
     depends_on:
@@ -348,7 +348,7 @@ services:
       <<: *common-env
       SEARCH_PATH: ehs, shared, public
     ports:
-      - "8056:8056"
+      - "8052:8052"
     networks:
       - topems-network
     depends_on:

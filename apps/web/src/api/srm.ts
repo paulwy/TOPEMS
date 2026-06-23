@@ -178,6 +178,73 @@ export interface SrmDetailedStatistics {
   contract_by_status: StatusCount[];
 }
 
+export interface SupplierPerformance {
+  supplier_id: string;
+  supplier_name: string;
+  total_orders: number;
+  total_amount: number;
+  avg_quality_score?: number;
+  avg_delivery_score?: number;
+  avg_service_score?: number;
+  avg_price_score?: number;
+  avg_overall_score?: number;
+  on_time_delivery_rate?: number;
+  defect_rate?: number;
+  last_evaluation_date?: string;
+  evaluation_count: number;
+}
+
+export interface ScoringDimension {
+  id: string;
+  name: string;
+  code: string;
+  weight: number;
+  min_score: number;
+  max_score: number;
+  description?: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateScoringDimensionRequest {
+  name: string;
+  code: string;
+  weight: number;
+  min_score: number;
+  max_score: number;
+  description?: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
+export interface PerformanceSummary {
+  total_suppliers: number;
+  evaluated_suppliers: number;
+  evaluation_rate: number;
+  avg_overall_score: number;
+  top_supplier?: { name: string; avg_score: number };
+  bottom_supplier?: { name: string; avg_score: number };
+  category_scores: {
+    category: string;
+    avg_score: number;
+    supplier_count: number;
+  }[];
+}
+
+export interface ScoreLevelDistribution {
+  level: string;
+  label: string;
+  count: number;
+}
+
+export interface ScoreLevelDefinitions {
+  level: string;
+  range: string;
+  description: string;
+}
+
 export const srmApi = {
   // Suppliers
   listSuppliers: async (): Promise<ApiResponse<Supplier[]>> => {
@@ -306,6 +373,102 @@ export const srmApi = {
   > => {
     return apiClient.srm.get<SupplierWithStats[]>(
       "/api/srm/suppliers-with-stats",
+    );
+  },
+
+  // Scoring Dimensions
+  listScoringDimensions: async (): Promise<ApiResponse<ScoringDimension[]>> => {
+    return apiClient.srm.get<ScoringDimension[]>("/api/srm/scoring-dimensions");
+  },
+  listActiveScoringDimensions: async (): Promise<
+    ApiResponse<ScoringDimension[]>
+  > => {
+    return apiClient.srm.get<ScoringDimension[]>(
+      "/api/srm/scoring-dimensions/active",
+    );
+  },
+  getScoringDimension: async (
+    id: string,
+  ): Promise<ApiResponse<ScoringDimension>> => {
+    return apiClient.srm.get<ScoringDimension>(
+      `/api/srm/scoring-dimensions/${id}`,
+    );
+  },
+  createScoringDimension: async (
+    data: CreateScoringDimensionRequest,
+  ): Promise<ApiResponse<ScoringDimension>> => {
+    return apiClient.srm.post<ScoringDimension>(
+      "/api/srm/scoring-dimensions",
+      data,
+    );
+  },
+  updateScoringDimension: async (
+    id: string,
+    data: CreateScoringDimensionRequest,
+  ): Promise<ApiResponse<ScoringDimension>> => {
+    return apiClient.srm.put<ScoringDimension>(
+      `/api/srm/scoring-dimensions/${id}`,
+      data,
+    );
+  },
+  deleteScoringDimension: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.srm.delete<boolean>(`/api/srm/scoring-dimensions/${id}`);
+  },
+
+  // Performance Reports
+  getPerformanceReports: async (
+    params?: Record<string, any>,
+  ): Promise<
+    ApiResponse<{
+      performances: SupplierPerformance[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
+    const query = new URLSearchParams(params).toString();
+    return apiClient.srm.get(
+      `/api/srm/performance/reports${query ? `?${query}` : ""}`,
+    );
+  },
+  getPerformanceReport: async (id: string): Promise<ApiResponse<any>> => {
+    return apiClient.srm.get(`/api/srm/performance/reports/${id}`);
+  },
+  getPerformanceSummary: async (): Promise<ApiResponse<PerformanceSummary>> => {
+    return apiClient.srm.get<PerformanceSummary>(
+      "/api/srm/performance/summary",
+    );
+  },
+  getScoreLevelDistribution: async (): Promise<
+    ApiResponse<{
+      distribution: ScoreLevelDistribution[];
+      level_definitions: ScoreLevelDefinitions[];
+    }>
+  > => {
+    return apiClient.srm.get("/api/srm/performance/score-level-distribution");
+  },
+  getTopSuppliers: async (): Promise<
+    ApiResponse<{
+      top_by_score: SupplierPerformance[];
+      top_by_orders: SupplierPerformance[];
+    }>
+  > => {
+    return apiClient.srm.get("/api/srm/performance/top-suppliers");
+  },
+  getPerformanceTrend: async (params?: {
+    supplier_id?: string;
+    period?: string;
+  }): Promise<ApiResponse<any>> => {
+    const query = new URLSearchParams(params).toString();
+    return apiClient.srm.get(
+      `/api/srm/performance/trend${query ? `?${query}` : ""}`,
+    );
+  },
+  compareSupplierPerformance: async (
+    supplier_ids: string[],
+  ): Promise<ApiResponse<any>> => {
+    return apiClient.srm.get(
+      `/api/srm/performance/compare?supplier_ids=${supplier_ids.join(",")}`,
     );
   },
 

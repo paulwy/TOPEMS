@@ -115,25 +115,29 @@ async fn main() {
         .route("/api/qms/standards", post(modules::qms::quality_standard::create_standard))
         .route("/api/qms/standards/{id}", get(modules::qms::quality_standard::get_standard))
         .route("/api/qms/standards/{id}", put(modules::qms::quality_standard::update_standard))
+        .route("/api/qms/standards/{id}", delete(modules::qms::quality_standard::delete_standard))
+        .route("/api/qms/standards/{id}/revisions", get(modules::qms::quality_standard::list_revisions))
+        .route("/api/qms/standards/{id}/revisions", post(modules::qms::quality_standard::create_revision))
         // Quality Inspections/Checks
         .route("/api/qms/checks", get(modules::qms::quality_inspection::list_inspections))
         .route("/api/qms/checks", post(modules::qms::quality_inspection::create_inspection))
         .route("/api/qms/checks/{id}", get(modules::qms::quality_inspection::get_inspection))
         .route("/api/qms/checks/{id}", put(modules::qms::quality_inspection::update_inspection))
+        .route("/api/qms/checks/{id}", delete(modules::qms::quality_inspection::delete_inspection))
+        .route("/api/qms/checks/{id}/assign", post(modules::qms::quality_inspection::assign_inspection))
+        .route("/api/qms/checks/{id}/submit", post(modules::qms::quality_inspection::submit_result))
+        .route("/api/qms/checks/{id}/audit", post(modules::qms::quality_inspection::audit_inspection))
+        .route("/api/qms/checks/{id}/rework", post(modules::qms::quality_inspection::rework_inspection))
+        .route("/api/qms/checks/{id}/results", get(modules::qms::quality_inspection::get_inspection_results))
+        .route("/api/qms/checks/{id}/audits", get(modules::qms::quality_inspection::get_inspection_audits))
         // Quality Issues
         .route("/api/qms/issues", get(modules::qms::quality_issue::list_issues))
         .route("/api/qms/issues", post(modules::qms::quality_issue::create_issue))
         .route("/api/qms/issues/{id}", get(modules::qms::quality_issue::get_issue))
         .route("/api/qms/issues/{id}", put(modules::qms::quality_issue::update_issue))
+        .route("/api/qms/issues/{id}", delete(modules::qms::quality_issue::delete_issue))
         // Dashboard
         .route("/api/qms/dashboard", get(modules::qms::dashboard::get_dashboard_stats))
-        // Quality Standards (additional routes)
-        .route("/api/qms/standards/{id}", delete(modules::qms::quality_standard::delete_standard))
-        .route("/api/qms/standards/{id}/revisions", get(modules::qms::quality_standard::list_revisions))
-        // Quality Inspections/Checks (additional routes)
-        .route("/api/qms/checks/{id}", delete(modules::qms::quality_inspection::delete_inspection))
-        // Quality Issues (additional routes)
-        .route("/api/qms/issues/{id}", delete(modules::qms::quality_issue::delete_issue))
         // Quality Improvements/Corrective Actions
         .route("/api/qms/improvements", get(modules::qms::corrective_action::list_actions))
         .route("/api/qms/improvements", post(modules::qms::corrective_action::create_action))
@@ -149,6 +153,13 @@ async fn main() {
         .route("/api/qms/audit-tasks/{id}/complete", put(modules::qms::audit::complete_audit_task))
         // Audit Findings
         .route("/api/qms/audit-findings", get(modules::qms::audit::list_audit_findings))
+        // Data Sync
+        .route("/api/qms/sync-records", get(modules::qms::data_sync::list_sync_records))
+        .route("/api/qms/sync-records/{id}", get(modules::qms::data_sync::get_sync_record))
+        .route("/api/qms/sync-records/{id}", delete(modules::qms::data_sync::delete_sync_record))
+        .route("/api/qms/sync-records/{id}/retry", post(modules::qms::data_sync::retry_sync))
+        .route("/api/qms/sync/inspection-to-lims", post(modules::qms::data_sync::sync_inspection_to_lims))
+        .route("/api/qms/sync/issue-to-ehs", post(modules::qms::data_sync::sync_issue_to_ehs))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))

@@ -13,7 +13,7 @@ export const IconWrapper = styled(
     ({ icon: IconComponent, size = 24, sx, style, ...props }, ref) => {
       return (
         <IconComponent
-          ref={ref as React.Ref<SVGSVGElement>}
+          ref={ref as any}
           size={size}
           style={{
             width: sx?.width || size,

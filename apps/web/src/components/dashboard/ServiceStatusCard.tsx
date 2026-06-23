@@ -7,7 +7,7 @@ interface ServiceStatusCardProps {
   service: string;
   port: number;
   status: boolean;
-  icon: React.ComponentType<SvgIconProps>;
+  icon: React.ComponentType<any>;
 }
 
 const statusColors = {

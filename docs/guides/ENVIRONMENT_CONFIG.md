@@ -49,40 +49,57 @@ REDIS_PORT=6379
 ENVIRONMENT=development
 ```
 
-### 服务端口配置
+### 服务端口配置（与 config/services.yaml 保持一致）
 
 ```env
-# 核心服务
+# 核心服务 (统一承载于 unified-core: 8000)
+CORE_PORT=8000
 IAM_PORT=8000
+DOC_PORT=8000
+FILE_PORT=8000
+FLOW_PORT=8000
+MAIL_PORT=8000
+IM_PORT=8000
+NOTIFICATION_PORT=8000
 
-# 业务服务 (8010-8019)
+# 经营管理服务 (8010-8019)
 ERP_PORT=8010
-HRM_PORT=8011
-CRM_PORT=8012
 
-# 制造服务 (8030)
-MANUFACTURING_PORT=8030
+# 协同办公服务 (8020-8029)
+HRM_PORT=8020
+PM_PORT=8023
+CRM_PORT=8029
+
+# 生产制造服务 (8030-8039)
+MES_PORT=8030
+PDM_PORT=8031
 
 # 供应链服务 (8040-8049)
 SCM_PORT=8040
-WMS_PORT=8042
-PM_PORT=8046
+WMS_PORT=8041
+SRM_PORT=8042
 
-# 辅助服务 (8050-8059)
-AI_PORT=8050
-QUALITY_ASSURANCE_PORT=8052
-GIS_PORT=8054
-MOBILE_PORT=8056
-RS_PORT=8058
+# 质量/研发服务 (8050-8059)
+QMS_PORT=8050
+LIMS_PORT=8051
+EHS_PORT=8052
+RS_PORT=8053
 
-# 扩展服务 (8060-8069)
-SRM_PORT=8060
-MONITOR_PORT=8064
-PORTAL_PORT=8066
-INTEGRATION_PORT=8068
+# 数据分析/门户服务 (8060-8069)
+BI_PORT=8060
+REPORT_PORT=8061
+MONITOR_PORT=8062
+PORTAL_PORT=8063
+AI_PORT=8064
 
-# 数据分析服务
-ANALYTICS_PORT=8044
+# 基础设施服务 (8070-8079)
+MOBILE_PORT=8070
+GIS_PORT=8071
+INTEGRATION_PORT=8072
+
+# 下游服务 URL
+CORE_SERVICE_URL=http://localhost:8000
+AI_SERVICE_URL=http://localhost:8064
 ```
 
 ### 可选配置项
@@ -97,6 +114,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
 # 文件上传配置
+STORAGE_LOCAL_PATH=./storage/files
 UPLOAD_PATH=./uploads
 MAX_UPLOAD_SIZE=10
 MAX_FILE_SIZE=104857600
@@ -112,6 +130,13 @@ SMTP_PORT=465
 SMTP_USERNAME=topmap@163.com
 SMTP_PASSWORD=your_smtp_password
 SMTP_FROM_ADDRESS=topmap@163.com
+
+# AI 服务配置 (Ollama)
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:7b-instruct
+OLLAMA_VECTOR_DIMENSION=3584
+EMBEDDING_MODEL=nomic-embed-text
 ```
 
 ## 开发环境配置
@@ -154,37 +179,39 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 
 # === 服务端口配置 ===
-# 核心服务
+CORE_PORT=8000
 IAM_PORT=8000
-
-# 业务服务
+DOC_PORT=8000
+FILE_PORT=8000
+FLOW_PORT=8000
+MAIL_PORT=8000
+IM_PORT=8000
+NOTIFICATION_PORT=8000
 ERP_PORT=8010
-HRM_PORT=8011
-CRM_PORT=8012
-
-# 制造服务
-MANUFACTURING_PORT=8030
-
-# 供应链服务
+HRM_PORT=8020
+PM_PORT=8023
+CRM_PORT=8029
+MES_PORT=8030
+PDM_PORT=8031
 SCM_PORT=8040
-WMS_PORT=8042
-PM_PORT=8046
+WMS_PORT=8041
+SRM_PORT=8042
+QMS_PORT=8050
+LIMS_PORT=8051
+EHS_PORT=8052
+RS_PORT=8053
+BI_PORT=8060
+REPORT_PORT=8061
+MONITOR_PORT=8062
+PORTAL_PORT=8063
+AI_PORT=8064
+MOBILE_PORT=8070
+GIS_PORT=8071
+INTEGRATION_PORT=8072
 
-# 辅助服务
-AI_PORT=8050
-QUALITY_ASSURANCE_PORT=8052
-GIS_PORT=8054
-MOBILE_PORT=8056
-RS_PORT=8058
-
-# 扩展服务
-SRM_PORT=8060
-MONITOR_PORT=8064
-PORTAL_PORT=8066
-INTEGRATION_PORT=8068
-
-# 数据分析服务
-ANALYTICS_PORT=8044
+# === 服务 URL ===
+CORE_SERVICE_URL=http://localhost:8000
+AI_SERVICE_URL=http://localhost:8064
 
 # === 前端配置 ===
 FRONTEND_PORT=3000
@@ -202,30 +229,33 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
 # === 文件上传配置 ===
+STORAGE_LOCAL_PATH=./storage/files
 UPLOAD_PATH=./uploads
 MAX_UPLOAD_SIZE=10
 MAX_FILE_SIZE=104857600
+
+# === AI 配置 ===
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:7b-instruct
 ```
 
 ### 启动开发环境
 
 ```bash
-# 1. 启动数据库
+# 1. 启动数据库和 Redis (使用 Docker)
 cd docker
-docker-compose up -d
+docker-compose up -d postgres redis
 cd ..
 
-# 2. 验证环境变量
-./scripts/manage-services.sh validate-env
+# 2. 使用统一脚本启动服务
+./scripts/topems.sh start
 
-# 3. 启动核心服务
-./scripts/manage-services.sh start-core
+# 3. 查看服务状态
+./scripts/topems.sh status
 
-# 4. 启动所有服务
-./scripts/manage-services.sh start-all
-
-# 5. 查看服务状态
-./scripts/manage-services.sh status
+# 4. 停止服务
+./scripts/topems.sh stop
 ```
 
 ### 开发环境特性
@@ -233,8 +263,6 @@ cd ..
 - 详细的调试日志输出
 - 热重载支持
 - 完整的错误堆栈跟踪
-- 数据库自动回滚功能
-- 测试数据自动生成
 - CORS 允许本地开发地址
 
 ## 测试环境配置
@@ -289,9 +317,8 @@ cargo test
 cargo test --test integration
 
 # 运行前端测试
-cd frontend
+cd apps/web
 npm run test
-npm run e2e
 ```
 
 ## 生产环境配置
@@ -354,10 +381,10 @@ CSRF_PROTECTION=true
 
 ```bash
 # 1. 验证环境变量
-./scripts/manage-services.sh validate-env
+./scripts/topems.sh validate-env
 
 # 2. 初始化数据库
-bash scripts/setup-db.sh
+cargo run --bin unified-core-service -- --migrate
 
 # 3. 启动服务
 ./scripts/deploy.sh
@@ -369,15 +396,16 @@ bash scripts/setup-db.sh
 
 ```bash
 # 验证环境变量配置
-./scripts/manage-services.sh validate-env
+./scripts/topems.sh validate-env
 
 # 检查服务健康状态
-./scripts/manage-services.sh status
+./scripts/topems.sh status
 
 # 健康检查
 curl http://localhost:8000/health
-curl http://localhost:8001/health
-# ... 其他服务
+curl http://localhost:8010/health
+curl http://localhost:8020/health
+curl http://localhost:8064/health
 ```
 
 ### 手动验证
@@ -391,8 +419,6 @@ redis-cli ping
 
 # 检查服务端口占用
 lsof -i :8000
-lsof -i :8001
-# ... 其他端口
 ```
 
 ## 前端环境变量
@@ -405,32 +431,32 @@ VITE_API_BASE_URL=/api
 VITE_API_TIMEOUT=60000
 
 # 服务 URL 配置
-VITE_IAM_SERVICE_URL=/iam
-VITE_DOC_SERVICE_URL=/doc
-VITE_PM_SERVICE_URL=/pm
-VITE_NOTIFICATION_SERVICE_URL=/notification
-VITE_INTEGRATION_SERVICE_URL=/integration
-VITE_PORTAL_SERVICE_URL=/portal
-VITE_FLOW_SERVICE_URL=/flow
-VITE_ERP_SERVICE_URL=/erp
-VITE_HRM_SERVICE_URL=/hrm
-VITE_CRM_SERVICE_URL=/crm
-VITE_AI_SERVICE_URL=/ai
-VITE_RS_SERVICE_URL=/rs
-VITE_LIMS_SERVICE_URL=/lims
-VITE_PDM_SERVICE_URL=/pdm
-VITE_MES_SERVICE_URL=/mes
-VITE_QMS_SERVICE_URL=/qms
-VITE_EHS_SERVICE_URL=/ehs
-VITE_SCM_SERVICE_URL=/scm
-VITE_SRM_SERVICE_URL=/srm
-VITE_WMS_SERVICE_URL=/wms
-VITE_GIS_SERVICE_URL=/gis
-VITE_IM_SERVICE_URL=/im
-VITE_BI_SERVICE_URL=/bi
-VITE_REPORT_SERVICE_URL=/report
-VITE_MAIL_SERVICE_URL=/mail
-VITE_MOBILE_SERVICE_URL=/mobile
+VITE_IAM_SERVICE_URL=/api/iam
+VITE_DOC_SERVICE_URL=/api/doc
+VITE_PM_SERVICE_URL=/api/pm
+VITE_NOTIFICATION_SERVICE_URL=/api/notification
+VITE_INTEGRATION_SERVICE_URL=/api/integration
+VITE_PORTAL_SERVICE_URL=/api/portal
+VITE_FLOW_SERVICE_URL=/api/flow
+VITE_ERP_SERVICE_URL=/api/erp
+VITE_HRM_SERVICE_URL=/api/hrm
+VITE_CRM_SERVICE_URL=/api/crm
+VITE_AI_SERVICE_URL=/api/ai
+VITE_RS_SERVICE_URL=/api/rs
+VITE_LIMS_SERVICE_URL=/api/lims
+VITE_PDM_SERVICE_URL=/api/pdm
+VITE_MES_SERVICE_URL=/api/mes
+VITE_QMS_SERVICE_URL=/api/qms
+VITE_EHS_SERVICE_URL=/api/ehs
+VITE_SCM_SERVICE_URL=/api/scm
+VITE_SRM_SERVICE_URL=/api/srm
+VITE_WMS_SERVICE_URL=/api/wms
+VITE_GIS_SERVICE_URL=/api/gis
+VITE_IM_SERVICE_URL=/api/comm
+VITE_BI_SERVICE_URL=/api/bi
+VITE_REPORT_SERVICE_URL=/api/report
+VITE_MAIL_SERVICE_URL=/api/mail
+VITE_MOBILE_SERVICE_URL=/api/mobile
 
 # WebSocket 配置
 VITE_WS_URL=ws://localhost:8000
@@ -441,35 +467,13 @@ VITE_WS_MAX_RECONNECT_ATTEMPTS=10
 VITE_ENABLE_DEBUG_MODE=false
 VITE_ENABLE_HOT_RELOAD=false
 VITE_ENABLE_API_DOCS=false
-VITE_OAUTH_GITHUB_ENABLED=false
-VITE_OAUTH_GOOGLE_ENABLED=false
-VITE_ENABLE_DARK_MODE=false
 
 # 上传配置
 VITE_MAX_UPLOAD_SIZE=104857600
-VITE_ALLOWED_FILE_TYPES=
-
-# 日志配置
-VITE_LOG_LEVEL=info
-VITE_ENABLE_ERROR_TRACKING=false
 
 # 主题配置
 VITE_DEFAULT_THEME=light
 VITE_DEFAULT_LOCALE=zh-CN
-VITE_FALLBACK_LOCALE=en-US
-VITE_SUPPORTED_LOCALES=zh-CN,en-US
-
-# 分析配置
-VITE_ENABLE_ANALYTICS=false
-VITE_ANALYTICS_ID=
-
-# 安全配置
-VITE_CSRF_TOKEN_URL=/api/csrf-token
-VITE_SESSION_TIMEOUT=120
-
-# 第三方服务
-VITE_SENTRY_DSN=
-VITE_GA_TRACKING_ID=
 ```
 
 ## 常见问题
@@ -481,7 +485,7 @@ VITE_GA_TRACKING_ID=
 lsof -i :8000
 
 # 强制清理端口
-./scripts/manage-services.sh start iam --force
+./scripts/topems.sh start --force
 ```
 
 ### 环境变量不生效
@@ -489,9 +493,6 @@ lsof -i :8000
 ```bash
 # 确保 .env 文件在正确位置
 ls -la .env
-
-# 重新加载环境变量
-source .env
 
 # 验证变量值
 echo $JWT_SECRET
@@ -511,13 +512,13 @@ psql $DATABASE_URL
 
 ```bash
 # 查看服务日志
-./scripts/manage-services.sh logs iam
+./scripts/topems.sh logs
 
 # 检查端口占用
 lsof -i :8000
 
 # 重启服务
-./scripts/manage-services.sh restart iam
+./scripts/topems.sh restart
 ```
 
 ## 最佳实践
