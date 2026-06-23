@@ -59,6 +59,31 @@ pub struct CreatePayrollRunRequest {
     pub pay_period: String,
 }
 
+/// 薪资凭证生成请求
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GeneratePayrollVoucherRequest {
+    pub department_id: Option<Uuid>,
+    pub department_name: Option<String>,
+    pub voucher_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub period: Option<String>,
+    pub maker_id: Option<Uuid>,
+    pub maker_name: Option<String>,
+}
+
+/// 薪资凭证生成响应
+#[derive(Debug, Clone, Serialize)]
+pub struct PayrollVoucherResponse {
+    pub success: bool,
+    pub voucher_id: Option<Uuid>,
+    pub voucher_number: Option<String>,
+    pub message: String,
+    pub total_salary: BigDecimal,
+    pub total_social_security: BigDecimal,
+    pub total_housing_fund: BigDecimal,
+    pub total_tax: BigDecimal,
+    pub employee_count: i32,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct QueryParams {
     pub page: Option<i64>,
@@ -85,6 +110,10 @@ pub fn create_routes() -> Router<ApiState> {
             put(calculate_payroll_run),
         )
         .route("/api/hrm/payroll-runs/{id}/pay", put(pay_payroll_run))
+        .route(
+            "/api/hrm/payroll-runs/{id}/generate-voucher",
+            post(generate_payroll_voucher),
+        )
         .route("/api/hrm/payroll-items", get(list_payroll_items))
         .route("/api/hrm/payroll-items/{id}", get(get_payroll_item))
         .route(
@@ -642,6 +671,180 @@ async fn create_payroll_detail(
         Err(e) => {
             tracing::error!("添加薪资详情失败: {}", e);
             Json(ApiResponse::<PayrollDetail>::error(500, "添加薪资详情失败"))
+        }
+    }
+}
+
+/// 生成薪资凭证
+/// 根据薪资发放记录生成财务凭证
+async fn generate_payroll_voucher(
+    State(state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<GeneratePayrollVoucherRequest>,
+) -> Json<ApiResponse<PayrollVoucherResponse>> {
+    // 获取薪资发放记录
+    let payroll_run: Option<PayrollRun> = sqlx::query_as(
+        "SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at FROM plugin_hrm.payroll_runs WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    let payroll_run = match payroll_run {
+        Some(r) => r,
+        None => return Json(ApiResponse::<PayrollVoucherResponse>::error(404, "薪资记录不存在")),
+    };
+
+    // 检查薪资是否已发放
+    if payroll_run.status != "paid" {
+        return Json(ApiResponse::<PayrollVoucherResponse>::error(
+            400,
+            "薪资未发放，无法生成凭证",
+        ));
+    }
+
+    // 获取薪资明细汇总
+    #[derive(sqlx::FromRow)]
+    struct PayrollSummary {
+        total_gross: BigDecimal,
+        total_tax: BigDecimal,
+        total_deductions: BigDecimal,
+    }
+
+    let payroll_summary: Option<PayrollSummary> = sqlx::query_as(
+        r#"
+        SELECT
+            COALESCE(SUM(gross_amount), 0) as total_gross,
+            COALESCE(SUM(taxes), 0) as total_tax,
+            COALESCE(SUM(deductions), 0) as total_deductions
+        FROM plugin_hrm.payroll_items
+        WHERE payroll_run_id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_one(&state.db)
+    .await
+    .ok();
+
+    let (total_gross, total_tax, total_deductions) = match payroll_summary {
+        Some(ref s) => (s.total_gross.clone(), s.total_tax.clone(), s.total_deductions.clone()),
+        None => (
+            BigDecimal::from(0),
+            BigDecimal::from(0),
+            BigDecimal::from(0),
+        ),
+    };
+
+    // 计算社保和公积金（从扣款中分离，这里简化为扣款的80%为社保公积金）
+    let social_security_ratio = BigDecimal::from_str("0.8").unwrap();
+    let total_social_security = &total_deductions * &social_security_ratio;
+    let total_housing_fund = &total_deductions - &total_social_security;
+    let net_salary = &total_gross - &total_deductions;
+
+    let voucher_date = req.voucher_date.unwrap_or_else(Utc::now);
+    let period = req.period.unwrap_or_else(|| {
+        voucher_date.format("%Y-%m").to_string()
+    });
+
+    // 生成凭证号
+    let voucher_number = format!(
+        "VD{}{:04}",
+        voucher_date.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
+
+    // 在ERP数据库中创建凭证
+    let voucher_id = Uuid::new_v4();
+    let now = Utc::now();
+    let department_id = req.department_id.unwrap_or_else(Uuid::nil);
+
+    // 创建凭证主记录
+    let voucher_result = sqlx::query(
+        r#"
+        INSERT INTO financial_vouchers (id, voucher_number, voucher_date, period, summary, maker_id, maker_name, status, total_debit, total_credit, source_system, source_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9, 'HRM', $10, $11, $12)
+        "#,
+    )
+    .bind(voucher_id)
+    .bind(&voucher_number)
+    .bind(voucher_date)
+    .bind(&period)
+    .bind(format!("发放{}月工资", payroll_run.pay_period))
+    .bind(req.maker_id)
+    .bind(&req.maker_name.clone().unwrap_or_else(|| "系统".to_string()))
+    .bind(&total_gross)
+    .bind(&total_gross)
+    .bind(id)
+    .bind(now)
+    .bind(now)
+    .execute(&state.db)
+    .await;
+
+    match voucher_result {
+        Ok(_) => {
+            // 创建凭证分录
+            let entries = vec![
+                // 借：工资
+                (1, "660101", "工资", total_gross.clone(), BigDecimal::from(0)),
+                // 贷：银行存款
+                (2, "100201", "银行存款-基本户", BigDecimal::from(0), net_salary.clone()),
+                // 贷：应交税费-个人所得税
+                (3, "222101", "应交税费-个人所得税", BigDecimal::from(0), total_tax.clone()),
+                // 贷：其他应付款-社保
+                (4, "224101", "其他应付款-社保", BigDecimal::from(0), total_social_security.clone()),
+            ];
+
+            for (line, subject_code, subject_name, debit, credit) in entries {
+                let item_id = Uuid::new_v4();
+                let _ = sqlx::query(
+                    r#"
+                    INSERT INTO voucher_items (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    "#,
+                )
+                .bind(item_id)
+                .bind(voucher_id)
+                .bind(line as i32)
+                .bind(subject_code)
+                .bind(subject_name)
+                .bind(format!("发放{}月工资", payroll_run.pay_period))
+                .bind(debit)
+                .bind(credit)
+                .bind(department_id)
+                .bind(now)
+                .bind(now)
+                .execute(&state.db)
+                .await;
+            }
+
+            tracing::info!(
+                "[HRM] Generated payroll voucher {} for payroll run {}",
+                voucher_number,
+                id
+            );
+
+            Json(ApiResponse::success(
+                PayrollVoucherResponse {
+                    success: true,
+                    voucher_id: Some(voucher_id),
+                    voucher_number: Some(voucher_number),
+                    message: "薪资凭证生成成功".to_string(),
+                    total_salary: total_gross,
+                    total_social_security,
+                    total_housing_fund,
+                    total_tax,
+                    employee_count: payroll_run.employee_count,
+                },
+                "薪资凭证生成成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("[HRM] Failed to generate payroll voucher: {}", e);
+            Json(ApiResponse::<PayrollVoucherResponse>::error(
+                500,
+                &format!("薪资凭证生成失败: {}", e),
+            ))
         }
     }
 }

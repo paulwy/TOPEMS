@@ -1,13 +1,5 @@
-import {
-  Button,
-  TextField,
-  FormLabel,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  CircularProgress,
-} from "@mui/material";
+import { TextField, FormLabel, Card, CardContent, CardHeader, Typography, CircularProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState } from "react";
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from "lucide-react";

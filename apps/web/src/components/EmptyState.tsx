@@ -1,6 +1,7 @@
 import React from "react";
 import { FileText, Inbox, Search, Folder, AlertTriangle } from "lucide-react";
-import { Button, Box, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 interface EmptyStateProps {
   icon?: "file" | "folder" | "search" | "inbox";

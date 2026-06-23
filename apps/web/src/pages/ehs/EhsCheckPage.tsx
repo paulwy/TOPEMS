@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { apiLogger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  Typography,
-} from "@mui/material";
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Plus, Eye, ClipboardCheck, User, MapPin } from "lucide-react";
 import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { ehsApi } from "@/api/ehs";

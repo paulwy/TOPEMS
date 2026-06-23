@@ -5,11 +5,8 @@ import { federation } from '@module-federation/vite'
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
-// Deployment mode: 'module-federation' | 'static' | 'hybrid'
-// Default to 'static' in development to avoid cross-origin Module Federation issues
 const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
 
-// Remote entry URL for Module Federation
 const getRemoteEntryUrl = () => {
   const env = loadEnv('', process.cwd(), '');
   if (DEPLOYMENT_MODE === 'static') {
@@ -40,10 +37,8 @@ const createServiceProxyConfig = (serviceName: string, target: string, skipRewri
   }
 });
 
-// Check if we should enable Module Federation
 const enableMF = DEPLOYMENT_MODE !== 'static';
 
-// Build plugins array based on deployment mode
 const plugins = [react()];
 
 if (enableMF) {
@@ -129,7 +124,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // In static mode, externalize remote module imports
         external: DEPLOYMENT_MODE === 'static' ? [
           'topems_core',
           /^topems_core\/.*/,
@@ -157,29 +151,6 @@ export default defineConfig({
       allow: ['..'],
     },
     proxy: {
-      // ================================================================================
-      // API 代理配置说明
-      // --------------------------------------------------------------------------------
-      // Vite 开发服务器代理配置，将前端请求转发到后端服务
-      //
-      // 【模式一：标准服务模式】适用于独立服务（CRM、ERP、HRM、Flow、BI、MES等）
-      //   前端调用: apiClient.{service}.get('/api/{service}/{resource}')
-      //   服务 baseURL: /{service} (来自 runtime.ts services.{service})
-      //   请求 URL:     /{service}/api/{service}/{resource}
-      //   rewrite 规则: 简单去除 /{service} 前缀
-      //   示例: /flow/api/flow/approvals -> /api/flow/approvals
-      //
-      // 【模式二：核心平台模式】适用于集成在核心平台的服务（Doc、File、Mail等）
-      //   前端调用: apiClient.{service}.get('/api/{path}')
-      //   服务 baseURL: /{service} (来自 runtime.ts services.{service})
-      //   请求 URL:     /{service}/api/{path}
-      //   rewrite 规则: 添加核心平台前缀 /api/core/{service}/
-      //   示例: /doc/api/documents -> /api/core/doc/documents
-      //
-      // 【代理顺序重要】特定路径必须放在通用路径之前！
-      // ================================================================================
-
-      // ========== [核心平台] 统一核心服务代理 ==========
       '/core/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -200,7 +171,6 @@ export default defineConfig({
         ws: true,
       },
       
-      // ========== [已整合] 通讯服务 ==========
       '/comm/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -221,8 +191,6 @@ export default defineConfig({
         ws: true,
       },
       
-      // ========== [IAM 服务代理] ==========
-      // IAM 登录专用路由（必须在 /iam/api 之前）
       '/iam/api/iam/auth/login': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -268,104 +236,123 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1'),
       },
-      
-      // ========== BI 服务代理 (需要放在 /api 通用代理之前) ==========
-      '/bi/api': createServiceProxyConfig('bi', 'http://localhost:8060'),
-      '/bi/health': createServiceProxyConfig('bi', 'http://localhost:8060'),
 
-      // ========== [已整合] 制造服务代理 ==========
-      '/mfg/api': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mfg/, '/api/mfg'),
-      },
-      '/manufacturing/api': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
-      '/manufacturing/health': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
-      '/mes': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mes/, ''),
-      },
-      '/pdm': {
-        target: 'http://localhost:8031',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/pdm/, ''),
-      },
-      
-      // ========== [已拆分] 质量管控服务代理 ==========
-      // QMS: 8050, LIMS: 8051, EHS: 8052
-      '/qms': {
-        target: 'http://localhost:8050',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/qms/, ''),
-      },
-      '/lims': {
-        target: 'http://localhost:8051',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/lims/, ''),
-      },
-      '/ehs': {
-
-      // 通用路由
       '/health': { target: 'http://localhost:8000', changeOrigin: true },
       '/api': { target: 'http://localhost:8000', changeOrigin: true },
-      
-      // ========== HRM 服务代理 ==========
-      // 规则: /hrm/api/hrm/{resource} -> /api/hrm/{resource}
+
+      '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
+      '/erp/health': createServiceProxyConfig('erp', 'http://localhost:8010'),
+
       '/hrm/api/hrm/': {
         target: 'http://localhost:8020',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/hrm\/api\/hrm\//, '/api/hrm/'),
       },
       '/hrm/health': createServiceProxyConfig('hrm', 'http://localhost:8020'),
-      
-      // ========== 其他业务服务代理 ==========
-      '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8000'),
-      '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8072'),
-      '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8072'),
-      '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
-      '/erp/health': createServiceProxyConfig('erp', 'http://localhost:8010'),
+
+      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8022'),
+      '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8022'),
+
       '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8029'),
       '/crm/health': createServiceProxyConfig('crm', 'http://localhost:8029'),
-      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8000'),
-      '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8000'),
-      '/rs/api': createServiceProxyConfig('rs', 'http://localhost:8053'),
-      '/rs/health': createServiceProxyConfig('rs', 'http://localhost:8053'),
-      
+
+      '/mes': {
+        target: 'http://localhost:8030',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/mes/, ''),
+      },
+      '/mes/api': createServiceProxyConfig('mes', 'http://localhost:8030'),
+      '/mes/health': createServiceProxyConfig('mes', 'http://localhost:8030'),
+
+      '/pdm': {
+        target: 'http://localhost:8031',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/pdm/, ''),
+      },
+      '/pdm/api': createServiceProxyConfig('pdm', 'http://localhost:8031'),
+      '/pdm/health': createServiceProxyConfig('pdm', 'http://localhost:8031'),
+
+      '/scm/api': createServiceProxyConfig('scm', 'http://localhost:8040'),
+      '/scm/health': createServiceProxyConfig('scm', 'http://localhost:8040'),
+
+      '/wms/api': createServiceProxyConfig('wms', 'http://localhost:8041'),
+      '/wms/health': createServiceProxyConfig('wms', 'http://localhost:8041'),
+
+      '/srm/api': createServiceProxyConfig('srm', 'http://localhost:8042'),
+      '/srm/health': createServiceProxyConfig('srm', 'http://localhost:8042'),
+
+      '/qms': {
+        target: 'http://localhost:8050',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/qms/, ''),
+      },
+      '/qms/api': createServiceProxyConfig('qms', 'http://localhost:8050'),
+      '/qms/health': createServiceProxyConfig('qms', 'http://localhost:8050'),
+
+      '/lims': {
+        target: 'http://localhost:8051',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/lims/, ''),
+      },
+      '/lims/api': createServiceProxyConfig('lims', 'http://localhost:8051'),
+      '/lims/health': createServiceProxyConfig('lims', 'http://localhost:8051'),
+
+      '/ehs': {
         target: 'http://localhost:8052',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/ehs/, ''),
       },
-      
-      '/scm/api': createServiceProxyConfig('scm', 'http://localhost:8040'),
-      '/scm/health': createServiceProxyConfig('scm', 'http://localhost:8040'),
-      '/srm/api': createServiceProxyConfig('srm', 'http://localhost:8060'),
-      '/srm/health': createServiceProxyConfig('srm', 'http://localhost:8060'),
-      '/wms/api': createServiceProxyConfig('wms', 'http://localhost:8042'),
-      '/wms/health': createServiceProxyConfig('wms', 'http://localhost:8042'),
-      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8001'),
-      '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8001'),
-      '/unified-core/api': createServiceProxyConfig('unified-core', 'http://localhost:8000'),
-      '/unified-core/health': createServiceProxyConfig('unified-core', 'http://localhost:8000'),
-      '/master/api': createServiceProxyConfig('master', 'http://localhost:8000'),
-      '/master/health': createServiceProxyConfig('master', 'http://localhost:8000'),
-      '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8054'),
-      '/gis/health': createServiceProxyConfig('gis', 'http://localhost:8054'),
+      '/ehs/api': createServiceProxyConfig('ehs', 'http://localhost:8052'),
+      '/ehs/health': createServiceProxyConfig('ehs', 'http://localhost:8052'),
+
+      '/rs/api': createServiceProxyConfig('rs', 'http://localhost:8053'),
+      '/rs/health': createServiceProxyConfig('rs', 'http://localhost:8053'),
+
+      '/bi/api': createServiceProxyConfig('bi', 'http://localhost:8060'),
+      '/bi/health': createServiceProxyConfig('bi', 'http://localhost:8060'),
+
       '/report': {
         target: 'http://localhost:8061',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/report/, ''),
       },
-      '/mobile/api': createServiceProxyConfig('mobile', 'http://localhost:8056'),
-      '/mobile/health': createServiceProxyConfig('mobile', 'http://localhost:8056'),
+      '/report/api': createServiceProxyConfig('report', 'http://localhost:8061'),
+      '/report/health': createServiceProxyConfig('report', 'http://localhost:8061'),
+
       '/monitor/api': createServiceProxyConfig('monitor', 'http://localhost:8062'),
       '/monitor/health': createServiceProxyConfig('monitor', 'http://localhost:8062'),
+
       '/portal/api': createServiceProxyConfig('portal', 'http://localhost:8063'),
       '/portal/health': createServiceProxyConfig('portal', 'http://localhost:8063'),
+
+      '/mobile/api': createServiceProxyConfig('mobile', 'http://localhost:8070'),
+      '/mobile/health': createServiceProxyConfig('mobile', 'http://localhost:8070'),
+
+      '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8071'),
+      '/gis/health': createServiceProxyConfig('gis', 'http://localhost:8071'),
+
+      '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8072'),
+      '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8072'),
+
       '/migration/api': createServiceProxyConfig('migration', 'http://localhost:8787'),
       '/migration/health': createServiceProxyConfig('migration', 'http://localhost:8787'),
-      '/quality-assurance/api': createServiceProxyConfig('quality-assurance', 'http://localhost:8052'),
-      '/quality-assurance/health': createServiceProxyConfig('quality-assurance', 'http://localhost:8052'),
+
+      '/master/api': createServiceProxyConfig('master', 'http://localhost:8000'),
+      '/master/health': createServiceProxyConfig('master', 'http://localhost:8000'),
+
+      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8000'),
+      '/ai/health': createServiceProxyConfig('ai', 'http://localhost:8000'),
+
+      '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8000'),
+
+      '/manufacturing/api': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
+      '/manufacturing/health': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
+
+      '/mfg/api': {
+        target: 'http://localhost:8030',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/mfg/, '/api/mfg'),
+      },
     },
   },
 });

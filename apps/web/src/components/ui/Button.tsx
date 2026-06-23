@@ -1,12 +1,9 @@
 import React from "react";
-import type { ButtonProps as MuiButtonProps } from "@mui/material";
-import { Button as MuiButton } from "@mui/material";
+import { Button as MuiButton, ButtonProps as MuiButtonProps } from "@mui/material";
 
-export interface ButtonProps extends MuiButtonProps {
-  type?: "button" | "submit" | "reset";
-}
+export type { MuiButtonProps as ButtonProps };
 
-export const Button: React.FC<ButtonProps> = ({
+export const Button: React.FC<MuiButtonProps> = ({
   type = "button",
   ...props
 }) => {

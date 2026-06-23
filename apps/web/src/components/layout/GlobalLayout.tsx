@@ -1,22 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { logger } from "@/utils/logger";
-import {
-  Box,
-  Button,
-  IconButton,
-  Typography,
-  Tabs,
-  Tab,
-  Popover,
-  Avatar,
-  Badge,
-  Tooltip,
-  useTheme,
-  useMediaQuery,
-  Fade,
-  Menu,
-  MenuItem,
-} from "@mui/material";
+import { Box, IconButton, Typography, Tabs, Tab, Popover, Avatar, Badge, Tooltip, useTheme, useMediaQuery, Fade, Menu, MenuItem,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   Home,
   Users,

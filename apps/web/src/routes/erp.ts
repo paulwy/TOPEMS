@@ -1,4 +1,5 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
 import type { RouteConfig } from "./utils";
 import { lazyWithRetry } from "./utils";
 
@@ -79,11 +80,26 @@ const CompanyStructurePage = lazy(
 const OpeningBalancePage = lazy(
   () => import("../pages/finance/OpeningBalancePage"),
 );
-
 const ERPHomePage = lazy(() => import("../pages/erp/DashboardPage"));
+
+// SRM/CRM 页面复用
+const SrmOrderPage = lazy(() => import("../pages/srm/SrmOrderPage"));
+const CrmOpportunityPage = lazy(
+  () => import("../pages/crm/OpportunityManagementPage"),
+);
+const CrmCustomerPage = lazy(
+  () => import("../pages/crm/CustomerManagementPage"),
+);
 export const erpRoutes: RouteConfig[] = [
   {
     path: "/erp",
+    element: ERPHomePage,
+    requiredPermissions: ["erp:read"],
+    module: "erp",
+    action: "read",
+  },
+  {
+    path: "/erp/dashboard",
     element: ERPHomePage,
     requiredPermissions: ["erp:read"],
     module: "erp",
@@ -263,5 +279,43 @@ export const erpRoutes: RouteConfig[] = [
     requiredPermissions: ["erp:admin"],
     module: "erp",
     action: "admin",
+  },
+  // 采购管理路由 (复用 SRM 采购订单页面)
+  {
+    path: "/erp/purchase/order",
+    element: SrmOrderPage,
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  {
+    path: "/erp/purchase/receipt",
+    element: SrmOrderPage,
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  // 销售管理路由 (复用 CRM 页面)
+  {
+    path: "/erp/sales/order",
+    element: CrmOpportunityPage,
+    requiredPermissions: ["crm:read"],
+    module: "crm",
+    action: "read",
+  },
+  {
+    path: "/erp/sales/delivery",
+    element: CrmOpportunityPage,
+    requiredPermissions: ["crm:read"],
+    module: "crm",
+    action: "read",
+  },
+  // 客户管理路由 (复用 CRM 页面)
+  {
+    path: "/erp/customer",
+    element: CrmCustomerPage,
+    requiredPermissions: ["crm:read"],
+    module: "crm",
+    action: "read",
   },
 ];

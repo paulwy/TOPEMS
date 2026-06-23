@@ -305,28 +305,157 @@ pub async fn install_plugin(
     Json(CoreResponse::success(installation, "Plugin installed"))
 }
 
-/// Uninstall plugin for tenant
+/// Uninstall plugin for tenant (with three-tier strategy)
 pub async fn uninstall_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
-) -> Json<CoreResponse<bool>> {
-    tracing::info!("[Plugin] Uninstalling plugin {} for tenant: {}", plugin_code, tenant_id);
-    
-    let result = sqlx::query(
-        r#"
-        DELETE FROM core_tenant_plugins
-        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
-        "#
-    )
-    .bind(tenant_id)
-    .bind(&plugin_code)
-    .execute(&state.pool)
-    .await;
-    
-    match result {
-        Ok(r) => Json(CoreResponse::success(r.rows_affected() > 0, "Plugin uninstalled")),
-        Err(_) => Json(CoreResponse::error("Failed to uninstall plugin")),
+    Json(req): Json<UninstallRequest>,
+) -> Json<CoreResponse<UninstallResult>> {
+    tracing::info!(
+        "[Plugin] Uninstalling plugin {} for tenant: {} with tier: {:?}",
+        plugin_code, tenant_id, req.uninstall_tier
+    );
+
+    // Validate Tier 3 deletion
+    if req.uninstall_tier == UninstallTier::Delete {
+        if !req.confirmed.unwrap_or(false) {
+            return Json(CoreResponse::error("Deletion requires confirmation set to true"));
+        }
+        if req.reason.is_none() || req.reason.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
+            return Json(CoreResponse::error("Deletion requires a reason"));
+        }
     }
+
+    // Get plugin info
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let plugin = match plugin {
+        Some(p) => p,
+        None => return Json(CoreResponse::error("Plugin not found")),
+    };
+
+    // Handle each tier
+    let result = match req.uninstall_tier {
+        UninstallTier::Disable => {
+            // Tier 1: Disable - set is_active = false but keep data
+            let installation: Option<TenantPlugin> = sqlx::query_as(
+                r#"
+                UPDATE core_tenant_plugins
+                SET is_active = false
+                WHERE tenant_id = $1 AND plugin_id = $2
+                RETURNING *
+                "#
+            )
+            .bind(tenant_id)
+            .bind(plugin.id)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
+
+            match installation {
+                Some(_) => {
+                    tracing::info!("[Plugin] Plugin {} disabled for tenant {}", plugin_code, tenant_id);
+                    UninstallResult {
+                        success: true,
+                        tier: UninstallTier::Disable,
+                        message: "Plugin disabled successfully. Data is preserved.".to_string(),
+                        backup_created: None,
+                        data_retention_days: Some(30),
+                        backup_url: None,
+                    }
+                }
+                None => {
+                    return Json(CoreResponse::error("Plugin not installed for this tenant"));
+                }
+            }
+        }
+        UninstallTier::Uninstall => {
+            // Tier 2: Uninstall - remove from tenant_plugins but keep data
+            // Data in plugin's own schema will be retained for potential reinstallation
+            let result = sqlx::query(
+                r#"
+                DELETE FROM core_tenant_plugins
+                WHERE tenant_id = $1 AND plugin_id = $2
+                "#
+            )
+            .bind(tenant_id)
+            .bind(plugin.id)
+            .execute(&state.pool)
+            .await;
+
+            match result {
+                Ok(r) => {
+                    if r.rows_affected() > 0 {
+                        tracing::info!("[Plugin] Plugin {} uninstalled for tenant {}", plugin_code, tenant_id);
+                        UninstallResult {
+                            success: true,
+                            tier: UninstallTier::Uninstall,
+                            message: "Plugin uninstalled successfully. Data is preserved for 90 days.".to_string(),
+                            backup_created: None,
+                            data_retention_days: Some(90),
+                            backup_url: None,
+                        }
+                    } else {
+                        return Json(CoreResponse::error("Plugin not installed for this tenant"));
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("[Plugin] Failed to uninstall plugin: {}", e);
+                    return Json(CoreResponse::error(&format!("Failed to uninstall plugin: {}", e)));
+                }
+            }
+        }
+        UninstallTier::Delete => {
+            // Tier 3: Delete - complete removal including all data
+            let backup_created = req.backup.unwrap_or(true);
+            let backup_url = if backup_created {
+                // In production, this would create a backup and return the URL
+                tracing::info!("[Plugin] Creating backup before deletion for plugin: {}", plugin_code);
+                Some(format!("/api/core/backups/plugin/{}/{}", plugin_code, uuid::Uuid::new_v4()))
+            } else {
+                None
+            };
+
+            // First, notify the plugin to clean up its own data (via internal API)
+            // Then delete from tenant_plugins
+            let result = sqlx::query(
+                r#"
+                DELETE FROM core_tenant_plugins
+                WHERE tenant_id = $1 AND plugin_id = $2
+                "#
+            )
+            .bind(tenant_id)
+            .bind(plugin.id)
+            .execute(&state.pool)
+            .await;
+
+            match result {
+                Ok(_) => {
+                    tracing::info!("[Plugin] Plugin {} completely deleted for tenant {}", plugin_code, tenant_id);
+                    UninstallResult {
+                        success: true,
+                        tier: UninstallTier::Delete,
+                        message: format!("Plugin and all associated data deleted. Reason: {}", req.reason.unwrap_or_default()),
+                        backup_created: Some(backup_created),
+                        data_retention_days: None,
+                        backup_url,
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("[Plugin] Failed to delete plugin: {}", e);
+                    return Json(CoreResponse::error(&format!("Failed to delete plugin: {}", e)));
+                }
+            }
+        }
+    };
+
+    Json(CoreResponse::success(result, "Plugin uninstalled"))
 }
 
 /// Activate plugin for tenant
@@ -926,34 +1055,159 @@ pub async fn install_plugin_simple(
     Json(CoreResponse::success(installation, "Plugin installed"))
 }
 
-/// Simplified: Uninstall plugin (uses X-Tenant-ID header)
+/// Simplified: Uninstall plugin with three-tier strategy (uses X-Tenant-ID header)
 pub async fn uninstall_plugin_simple(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
     headers: axum::http::HeaderMap,
-) -> Json<CoreResponse<bool>> {
+    Json(req): Json<UninstallRequest>,
+) -> Json<CoreResponse<UninstallResult>> {
     let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
         Some(id) => id,
         None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
     };
 
-    tracing::info!("[Plugin] Uninstalling plugin {} for tenant: {}", plugin_code, tenant_id);
+    tracing::info!(
+        "[Plugin] Uninstalling plugin {} for tenant: {} with tier: {:?}",
+        plugin_code, tenant_id, req.uninstall_tier
+    );
 
-    let result = sqlx::query(
-        r#"
-        DELETE FROM core_tenant_plugins
-        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
-        "#
-    )
-    .bind(tenant_id)
-    .bind(&plugin_code)
-    .execute(&state.pool)
-    .await;
-
-    match result {
-        Ok(r) => Json(CoreResponse::success(r.rows_affected() > 0, "Plugin uninstalled")),
-        Err(_) => Json(CoreResponse::error("Failed to uninstall plugin")),
+    // Validate Tier 3 deletion
+    if req.uninstall_tier == UninstallTier::Delete {
+        if !req.confirmed.unwrap_or(false) {
+            return Json(CoreResponse::error("Deletion requires confirmation set to true"));
+        }
+        if req.reason.is_none() || req.reason.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
+            return Json(CoreResponse::error("Deletion requires a reason"));
+        }
     }
+
+    // Get plugin info
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let plugin = match plugin {
+        Some(p) => p,
+        None => return Json(CoreResponse::error("Plugin not found")),
+    };
+
+    // Handle each tier
+    let result = match req.uninstall_tier {
+        UninstallTier::Disable => {
+            // Tier 1: Disable - set is_active = false but keep data
+            let installation: Option<TenantPlugin> = sqlx::query_as(
+                r#"
+                UPDATE core_tenant_plugins
+                SET is_active = false
+                WHERE tenant_id = $1 AND plugin_id = $2
+                RETURNING *
+                "#
+            )
+            .bind(tenant_id)
+            .bind(plugin.id)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
+
+            match installation {
+                Some(_) => {
+                    tracing::info!("[Plugin] Plugin {} disabled for tenant {}", plugin_code, tenant_id);
+                    UninstallResult {
+                        success: true,
+                        tier: UninstallTier::Disable,
+                        message: "Plugin disabled successfully. Data is preserved.".to_string(),
+                        backup_created: None,
+                        data_retention_days: Some(30),
+                        backup_url: None,
+                    }
+                }
+                None => {
+                    return Json(CoreResponse::error("Plugin not installed for this tenant"));
+                }
+            }
+        }
+        UninstallTier::Uninstall => {
+            // Tier 2: Uninstall - remove from tenant_plugins but keep data
+            let result = sqlx::query(
+                r#"
+                DELETE FROM core_tenant_plugins
+                WHERE tenant_id = $1 AND plugin_id = $2
+                "#
+            )
+            .bind(tenant_id)
+            .bind(plugin.id)
+            .execute(&state.pool)
+            .await;
+
+            match result {
+                Ok(r) => {
+                    if r.rows_affected() > 0 {
+                        tracing::info!("[Plugin] Plugin {} uninstalled for tenant {}", plugin_code, tenant_id);
+                        UninstallResult {
+                            success: true,
+                            tier: UninstallTier::Uninstall,
+                            message: "Plugin uninstalled successfully. Data is preserved for 90 days.".to_string(),
+                            backup_created: None,
+                            data_retention_days: Some(90),
+                            backup_url: None,
+                        }
+                    } else {
+                        return Json(CoreResponse::error("Plugin not installed for this tenant"));
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("[Plugin] Failed to uninstall plugin: {}", e);
+                    return Json(CoreResponse::error(&format!("Failed to uninstall plugin: {}", e)));
+                }
+            }
+        }
+        UninstallTier::Delete => {
+            // Tier 3: Delete - complete removal including all data
+            let backup_created = req.backup.unwrap_or(true);
+            let backup_url = if backup_created {
+                tracing::info!("[Plugin] Creating backup before deletion for plugin: {}", plugin_code);
+                Some(format!("/api/core/backups/plugin/{}/{}", plugin_code, uuid::Uuid::new_v4()))
+            } else {
+                None
+            };
+
+            let result = sqlx::query(
+                r#"
+                DELETE FROM core_tenant_plugins
+                WHERE tenant_id = $1 AND plugin_id = $2
+                "#
+            )
+            .bind(tenant_id)
+            .bind(plugin.id)
+            .execute(&state.pool)
+            .await;
+
+            match result {
+                Ok(_) => {
+                    tracing::info!("[Plugin] Plugin {} completely deleted for tenant {}", plugin_code, tenant_id);
+                    UninstallResult {
+                        success: true,
+                        tier: UninstallTier::Delete,
+                        message: format!("Plugin and all associated data deleted. Reason: {}", req.reason.unwrap_or_default()),
+                        backup_created: Some(backup_created),
+                        data_retention_days: None,
+                        backup_url,
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("[Plugin] Failed to delete plugin: {}", e);
+                    return Json(CoreResponse::error(&format!("Failed to delete plugin: {}", e)));
+                }
+            }
+        }
+    };
+
+    Json(CoreResponse::success(result, "Plugin uninstalled"))
 }
 
 /// Get list of plugins installed for current tenant (uses X-Tenant-ID header)

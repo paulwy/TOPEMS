@@ -1,12 +1,6 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  IconButton,
-  Paper,
-} from "@mui/material";
+import { Box, Typography, TextField, IconButton, Paper,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { X, Download } from "lucide-react";
 
 export interface ExportOptionsProps {

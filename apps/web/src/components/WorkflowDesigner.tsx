@@ -1,13 +1,6 @@
 import React, { useState, useRef, type ChangeEvent } from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  FormLabel,
-  Divider,
-  Paper,
-} from "@mui/material";
+import { Box, Typography, TextField, FormLabel, Divider, Paper,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from "lucide-react";
 
 // --- Types ---

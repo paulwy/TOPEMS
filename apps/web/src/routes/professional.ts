@@ -68,6 +68,9 @@ const ExternalErpMappingPage = lazy(
 const ExternalErpConnectionsPage = lazy(
   () => import("../pages/integration/ExternalErpConnectionsPage"),
 );
+const ConversionRulesPage = lazy(
+  () => import("../pages/integration/ConversionRulesPage"),
+);
 
 const LimsSampleDetailPage = lazy(
   () => import("../pages/lims/LimsSampleDetailPage"),
@@ -437,6 +440,13 @@ export const professionalRoutes: RouteConfig[] = [
   {
     path: "/integration/events",
     element: IntegrationEventsPage,
+    requiredPermissions: [],
+    module: "integration",
+    action: "read",
+  },
+  {
+    path: "/integration/rules",
+    element: ConversionRulesPage,
     requiredPermissions: [],
     module: "integration",
     action: "read",

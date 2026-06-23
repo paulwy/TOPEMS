@@ -12,17 +12,8 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  Button,
-  Menu,
-  MenuItem,
-  Skeleton,
-  Typography,
-  Chip,
-} from "@mui/material";
+import { Card, CardHeader, CardContent, Menu, MenuItem, Skeleton, Typography, Chip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 type ChartType = "bar" | "line" | "area" | "pie";
 

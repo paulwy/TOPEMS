@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Sparkles, ChevronRight, Activity } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 

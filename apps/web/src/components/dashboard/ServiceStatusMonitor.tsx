@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import type { SvgIconProps } from "@mui/material";
-import { Box, Typography, Button, Chip } from "@mui/material";
+import { Box, Typography, Chip } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   Activity,
   CircleDot,

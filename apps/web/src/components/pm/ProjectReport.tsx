@@ -7,7 +7,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
-import { Button } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,

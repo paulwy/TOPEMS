@@ -4,6 +4,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
+use reqwest::Client;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -16,6 +17,70 @@ macro_rules! log_audit {
     };
 }
 use super::ApiState;
+
+// Finance Core 审批 API 辅助函数
+async fn call_finance_core_approval(
+    doc_type: &str,
+    doc_id: Uuid,
+    doc_no: &str,
+    action: &str,  // "submit", "approve", "reject", "cancel"
+    username: &str,
+    rejection_reason: Option<&str>,
+    comment: Option<&str>,
+) -> Result<(), String> {
+    let client = Client::new();
+    let finance_core_url = std::env::var("FINANCE_CORE_URL")
+        .unwrap_or_else(|_| "http://localhost:8000".to_string());
+
+    let relative_path = match action {
+        "submit" => "/api/core/finance/approvals/submit",
+        "approve" => "/api/core/finance/approvals/approve",
+        "reject" => "/api/core/finance/approvals/reject",
+        "cancel" => "/api/core/finance/approvals/cancel",
+        _ => return Err(format!("Unknown action: {}", action)),
+    };
+
+    let url = format!("{}{}", finance_core_url, relative_path);
+
+    let body = match action {
+        "submit" => serde_json::json!({
+            "doc_type": doc_type,
+            "doc_id": doc_id,
+            "doc_no": doc_no
+        }),
+        "approve" => serde_json::json!([
+            doc_type,
+            doc_id.to_string(),
+            {"comment": comment}
+        ]),
+        "reject" => serde_json::json!([
+            doc_type,
+            doc_id.to_string(),
+            {"reason": rejection_reason, "comment": comment}
+        ]),
+        "cancel" => serde_json::json!([
+            doc_type,
+            doc_id.to_string()
+        ]),
+        _ => return Err(format!("Unknown action: {}", action)),
+    };
+
+    let response = client
+        .post(&url)
+        .header("Content-Type", "application/json")
+        // 注意：这里需要添加认证 header，实际使用时应该传递 token
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to call Finance Core: {}", e))?;
+
+    if response.status().is_success() {
+        Ok(())
+    } else {
+        let status = response.status();
+        Err(format!("Finance Core returned error: {}", status))
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -89,6 +154,10 @@ pub fn create_routes() -> Router<ApiState> {
         .route(
             "/api/erp/consolidation/reports/{reportId}/approve",
             post(approve_report),
+        )
+        .route(
+            "/api/erp/consolidation/reports/{reportId}/submit",
+            post(submit_report),
         )
         .route(
             "/api/erp/consolidation/reports/{reportId}/publish",
@@ -1019,11 +1088,122 @@ async fn get_report_lines(
     }
 }
 
+async fn submit_report(
+    State(state): State<ApiState>,
+    Path(report_id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<ConsolidationReport>> {
+    let username = headers
+        .get("x-username")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("system");
+
+    // 调用 Finance Core 统一审批 API 提交审批
+    // 注意：username 通过 header 传递给 Finance Core 用于审批记录
+    let _ = username;
+
+    // 获取报表信息
+    let report_result = sqlx::query_as::<_, ConsolidationReport>(
+        "SELECT * FROM plugin_erp.consolidation_reports WHERE id = $1",
+    )
+    .bind(report_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let report = match report_result {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "合并报表不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询失败: {}", e))),
+    };
+
+    // 调用 Finance Core 统一审批 API 提交审批
+    if let Err(e) = call_finance_core_approval(
+        "consolidation_report",
+        report_id,
+        &report.report_no,
+        "submit",
+        username,
+        None,
+        None,
+    ).await {
+        tracing::warn!("调用 Finance Core 审批失败: {}", e);
+    }
+
+    // 更新本地审批状态为待审批
+    let result = sqlx::query_as::<_, ConsolidationReport>(
+        r#"
+        UPDATE plugin_erp.consolidation_reports
+        SET approval_status = 'pending'
+        WHERE id = $1
+        RETURNING *
+        "#,
+    )
+    .bind(report_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(report) => {
+            log_audit!(
+                &state.db,
+                "submit",
+                "consolidation_report",
+                Some(report_id),
+                &headers
+            );
+            Json(ApiResponse::success(report, "提交审批成功"))
+        }
+        Err(e) => {
+            tracing::error!("提交审批失败: {}", e);
+            Json(api_error(500, "提交审批失败"))
+        }
+    }
+}
+
 async fn approve_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ConsolidationReport>> {
+    // 获取用户名用于 Finance Core 审批
+    let username = headers
+        .get("x-username")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("system");
+
+    // 调用 Finance Core 统一审批 API 提交审批
+    // 注意：username 通过 header 传递给 Finance Core 用于审批记录
+    let _ = username;
+
+    // 先获取报表信息
+    let report_result = sqlx::query_as::<_, ConsolidationReport>(
+        "SELECT * FROM plugin_erp.consolidation_reports WHERE id = $1",
+    )
+    .bind(report_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let report = match report_result {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(api_error(404, "合并报表不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询失败: {}", e))),
+    };
+
+    // 调用 Finance Core 统一审批 API
+    if let Err(e) = call_finance_core_approval(
+        "consolidation_report",
+        report_id,
+        &report.report_no,
+        "approve",
+        username,
+        None,
+        None,
+    ).await {
+        tracing::warn!("调用 Finance Core 审批失败: {}", e);
+        // 继续执行本地审批，不阻塞流程
+    }
+
+    // 更新本地审批状态
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         UPDATE plugin_erp.consolidation_reports

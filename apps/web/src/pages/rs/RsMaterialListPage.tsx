@@ -1,25 +1,7 @@
 import { Grid } from "@/components/Grid";
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  Button,
-  TextField,
-  InputAdornment,
-  Chip,
-  Card,
-  CardContent,
-  Stack,
-} from "@mui/material";
+import { Box, Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, Paper, TextField, InputAdornment, Chip, Card, CardContent, Stack,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Search, Package, Plus } from "lucide-react";
 
 interface Material {

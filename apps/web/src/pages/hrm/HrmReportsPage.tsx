@@ -1,14 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Box,
-  Tabs,
-  Tab,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
 import {
   Users,

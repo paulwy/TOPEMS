@@ -107,6 +107,7 @@ async fn main() {
         // Production Order
         .route("/api/mes/orders", get(modules::mes::production_order::list_production_orders))
         .route("/api/mes/orders", post(modules::mes::production_order::create_production_order))
+        .route("/api/mes/orders/from-erp", post(modules::mes::production_order::create_from_erp))
         .route("/api/mes/orders/{id}", get(modules::mes::production_order::get_production_order))
         .route("/api/mes/orders/{id}", put(modules::mes::production_order::update_production_order))
         .route("/api/mes/orders/{id}", delete(modules::mes::production_order::delete_production_order))

@@ -2,19 +2,8 @@ import React, { useState, useEffect } from "react";
 import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../../store";
 
-import {
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Box,
-} from "@mui/material";
+import { TextField, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Box,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 interface EditEmployeeFormProps {
   open: boolean;

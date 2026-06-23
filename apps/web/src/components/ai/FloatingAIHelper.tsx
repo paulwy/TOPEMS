@@ -1,21 +1,6 @@
 import React, { useState, useCallback } from "react";
-import {
-  Box,
-  IconButton,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Fab,
-  Popover,
-  Divider,
-  Chip,
-  InputAdornment,
-  useTheme,
-  useMediaQuery,
-  Fade,
-  Zoom,
-} from "@mui/material";
+import { Box, IconButton, Paper, Typography, TextField, Fab, Popover, Divider, Chip, InputAdornment, useTheme, useMediaQuery, Fade, Zoom,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   Sparkles,
   MessageSquare,

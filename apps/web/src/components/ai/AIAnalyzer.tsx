@@ -11,15 +11,8 @@ import {
   Users,
   Tag,
 } from "lucide-react";
-import {
-  Button,
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  TextField,
-  Chip,
-} from "@mui/material";
+import { Card, CardContent, Box, Typography, TextField, Chip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { aiApi } from "../../api/ai";
 import { logger } from "@/utils/logger";

@@ -1,11 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, Chip, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type { ReactNode } from "react";
 import React from "react";
 import { usePermission } from "../hooks/usePermission";

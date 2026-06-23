@@ -17,22 +17,8 @@ import { useAppStore } from "../../store";
 import { ListPageTemplate, type ColumnDef } from "@/components/templates";
 import { ModeToggle } from "@/components/ModeToggle";
 
-import {
-  Button,
-  Box,
-  Typography,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  IconButton,
-} from "@mui/material";
+import { Box, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip, IconButton,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 interface AssetManagementPageProps {
   onNavigate?: (page: string) => void;

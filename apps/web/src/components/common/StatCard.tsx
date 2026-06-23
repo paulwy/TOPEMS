@@ -4,21 +4,8 @@
  * 提供基类组件和多种特化组件，支持丰富的交互和动画效果
  */
 import React, { useEffect, useState, useRef } from "react";
-import {
-  Box,
-  Typography,
-  Card,
-  CardHeader,
-  CardContent,
-  Button,
-  Menu,
-  MenuItem,
-  Skeleton,
-  Chip,
-  IconButton,
-  Tooltip,
-  LinearProgress,
-} from "@mui/material";
+import { Box, Typography, Card, CardHeader, CardContent, Menu, MenuItem, Skeleton, Chip, IconButton, Tooltip, LinearProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   TrendingUp,
   TrendingDown,

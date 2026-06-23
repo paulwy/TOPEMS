@@ -1,19 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  Box,
-  Typography,
-  Chip,
-  Paper,
-  IconButton,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tooltip,
-  Stack,
-  TextField,
-} from "@mui/material";
+import { Box, Typography, Chip, Paper, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip, Stack, TextField,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Plus, Eye, Check, X, GitPullRequest, Clock, User } from "lucide-react";
 import {
   ListPageTemplate,

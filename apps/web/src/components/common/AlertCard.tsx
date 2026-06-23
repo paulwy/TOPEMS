@@ -4,17 +4,8 @@
  * 支持卡片模式和面板模式，多种样式变体，操作按钮等
  */
 import React from "react";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  IconButton,
-  Divider,
-  Alert,
-  AlertTitle,
-} from "@mui/material";
+import { Box, Typography, Card, CardContent, IconButton, Divider, Alert, AlertTitle,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   AlertTriangle,
   AlertCircle,

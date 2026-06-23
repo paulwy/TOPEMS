@@ -10,3 +10,4 @@ pub mod communication;
 pub mod tenant;
 pub mod billing;
 pub mod plugin;
+pub mod finance;

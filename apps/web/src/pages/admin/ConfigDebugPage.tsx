@@ -1,12 +1,6 @@
 import React from "react";
-import {
-  Button,
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-} from "@mui/material";
+import { Chip, Card, CardContent, CardHeader, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Settings, Database, Code, Server } from "lucide-react";
 import config from "../../config/runtime";
 

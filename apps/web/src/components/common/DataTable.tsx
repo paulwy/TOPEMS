@@ -5,23 +5,8 @@
  * 增强特性：列配置持久化、行展开功能、虚拟滚动支持
  */
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Menu,
-  MenuItem,
-  Divider,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Button,
-  Checkbox,
-  Tooltip,
-  Skeleton,
-} from "@mui/material";
+import { Box, Typography, IconButton, Menu, MenuItem, Divider, Table, TableBody, TableCell, TableHead, TableRow, Checkbox, Tooltip, Skeleton,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   Search,
   Filter,

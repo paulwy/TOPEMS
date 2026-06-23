@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Image, Download, FileImage, Copy, Check } from "lucide-react";
-import { Button, Menu, MenuItem } from "@mui/material";
+import { Menu, MenuItem } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { logger } from "@/utils/logger";
 
 interface ChartExportProps {

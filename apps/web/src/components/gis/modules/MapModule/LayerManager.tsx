@@ -9,7 +9,8 @@ import {
   Info,
   Pencil,
 } from "lucide-react";
-import { Box, Button, Typography, Paper, IconButton } from "@mui/material";
+import { Box, Typography, Paper, IconButton } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 interface LayerToggleProps {
   label: string;

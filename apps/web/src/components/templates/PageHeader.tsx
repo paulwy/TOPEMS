@@ -1,22 +1,6 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Breadcrumbs,
-  Link,
-  Button,
-  IconButton,
-  Tooltip,
-  Paper,
-  Divider,
-  Skeleton,
-  TextField,
-  Tabs,
-  Tab,
-  Chip,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
+import { Box, Typography, Breadcrumbs, Link, IconButton, Tooltip, Paper, Divider, Skeleton, TextField, Tabs, Tab, Chip, useTheme, useMediaQuery,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   ChevronRight,
   ArrowLeft,

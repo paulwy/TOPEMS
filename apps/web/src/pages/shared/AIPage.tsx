@@ -1,17 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  TextField,
-  Menu,
-  MenuItem,
-  Tabs,
-  Tab,
-  Box,
-  Typography,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, TextField, Menu, MenuItem, Tabs, Tab, Box, Typography,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   Bot,
   Send,

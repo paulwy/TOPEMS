@@ -31,6 +31,9 @@ once_cell.workspace = true
 lopdf.workspace = true
 pdf-extract.workspace = true
 
+# DOCX/XLSX 解析
+zip.workspace = true
+
 # 异步 trait
 async-trait.workspace = true
 

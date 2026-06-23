@@ -945,3 +945,81 @@ pub struct UpgradeHistory {
     pub error_message: Option<String>,
     pub rollback_from: Option<String>,
 }
+
+// ============================================================================
+// Three-Tier Uninstall Types (三级卸载策略)
+// ============================================================================
+
+/// 三级卸载策略
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum UninstallTier {
+    /// Tier 1: 禁用 - 停止使用但保留数据
+    Disable,
+    /// Tier 2: 卸载 - 移除插件运行但保留数据
+    Uninstall,
+    /// Tier 3: 删除 - 完全移除包括所有数据
+    Delete,
+}
+
+impl std::fmt::Display for UninstallTier {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            UninstallTier::Disable => write!(f, "disable"),
+            UninstallTier::Uninstall => write!(f, "uninstall"),
+            UninstallTier::Delete => write!(f, "delete"),
+        }
+    }
+}
+
+/// 卸载请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UninstallRequest {
+    #[serde(rename = "uninstall_tier")]
+    pub uninstall_tier: UninstallTier,
+    /// 是否创建数据备份
+    pub backup: Option<bool>,
+    /// 删除确认（Tier 3 需要）
+    pub confirmed: Option<bool>,
+    /// 删除原因（Tier 3 必须）
+    pub reason: Option<String>,
+}
+
+/// 卸载结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UninstallResult {
+    pub success: bool,
+    pub tier: UninstallTier,
+    pub message: String,
+    #[serde(rename = "backup_created")]
+    pub backup_created: Option<bool>,
+    #[serde(rename = "data_retention_days")]
+    pub data_retention_days: Option<i32>,
+    #[serde(rename = "backup_url")]
+    pub backup_url: Option<String>,
+}
+
+/// 卸载状态查询
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UninstallStatus {
+    pub plugin_code: String,
+    pub tier: UninstallTier,
+    pub status: String,  // 'pending', 'in_progress', 'completed', 'failed'
+    pub progress_percent: Option<i32>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub error_message: Option<String>,
+}
+
+/// 插件数据备份信息
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginBackup {
+    pub id: uuid::Uuid,
+    pub plugin_code: String,
+    pub version: String,
+    pub backup_type: String,  // 'full', 'schema', 'data'
+    pub file_path: String,
+    pub file_size: i64,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: Option<DateTime<Utc>>,
+}

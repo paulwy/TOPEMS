@@ -1,15 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Grid,
-  Container,
-  Skeleton,
-  Divider,
-  Paper,
-} from "@mui/material";
+import { Card, CardContent, Typography, Box, Grid, Container, Skeleton, Divider, Paper,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {

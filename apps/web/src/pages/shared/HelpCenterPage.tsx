@@ -13,10 +13,15 @@ import {
   Eye,
   ThumbsUp,
   Clock,
+  ExternalLink,
 } from "lucide-react";
-import { Box, Typography, Button, Tabs, Tab, Chip } from "@mui/material";
+import { Box, Typography, Tabs, Tab, Chip } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
+
+// 内网文档中心地址（可配置）
+const DOCS_CENTER_URL = import.meta.env.VITE_DOCS_CENTER_URL || "http://localhost:8080";
 
 interface HelpArticle {
   id: string;
@@ -398,7 +403,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
             gap: 2,
           }}
         >
@@ -409,6 +414,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
               iconBg: "#dbeafe",
               title: "使用文档",
               desc: "详细的功能说明",
+              onClick: () => window.open(DOCS_CENTER_URL, "_blank"),
             },
             {
               icon: Video,
@@ -424,10 +430,19 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
               title: "在线客服",
               desc: "7x24 小时支持",
             },
+            {
+              icon: ExternalLink,
+              iconColor: "#dc2626",
+              iconBg: "#fee2e2",
+              title: "内网文档中心",
+              desc: "完整用户手册",
+              onClick: () => window.open(DOCS_CENTER_URL, "_blank"),
+            },
           ].map((item, idx) => (
             <Button
               key={idx}
               variant="contained"
+              onClick={item.onClick}
               sx={{
                 bgcolor: "background.paper",
                 borderRadius: 2,

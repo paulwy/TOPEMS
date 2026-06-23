@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Check, RefreshCw } from "lucide-react";
-import {
-  Button,
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  TextField,
-} from "@mui/material";
+import { Card, CardContent, Box, Typography, TextField,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { AIGenerateModal } from "./AIGenerateModal";
 import type { CodeGenerateContext } from "@/types/ai";
 

@@ -1,20 +1,7 @@
 import React, { useState } from "react";
 import type { BoxProps } from "@mui/material";
-import {
-  Box,
-  Paper,
-  Typography,
-  Tabs,
-  Tab,
-  Button,
-  IconButton,
-  Tooltip,
-  Divider,
-  Skeleton,
-  Chip,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
+import { Box, Paper, Typography, Tabs, Tab, IconButton, Tooltip, Divider, Skeleton, Chip, useTheme, useMediaQuery,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   ArrowLeft,
   Edit,

@@ -21,30 +21,8 @@ import type { Approval, WorkflowInstance } from "@/api/flow";
 import { flowApi, ApprovalRecord } from "@/api/flow";
 import { useAppStore } from "../../store";
 import { apiLogger } from "@/utils/logger";
-import {
-  Button,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Box,
-  Stack,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormLabel,
-  IconButton,
-  Tabs,
-  Tab,
-  Divider,
-} from "@mui/material";
+import { TextField, Chip, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Box, Stack, Typography, FormControl, InputLabel, Select, MenuItem, FormLabel, IconButton, Tabs, Tab, Divider,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 const FlowApprovalPage: React.FC = () => {
   const navigate = useNavigate();

@@ -1,4 +1,5 @@
-import { Button, Box } from "@mui/material";
+import { Box } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React from "react";
 
 import {

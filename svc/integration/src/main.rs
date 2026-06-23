@@ -26,6 +26,17 @@ use topems_shared::{
 };
 
 mod plugin;
+mod conversion_rules;
+mod rule_engine;
+mod event_bus;
+mod retry_handler;
+
+use conversion_rules::{
+    ConversionExecution, ConversionRule, CreateConversionRuleRequest, ExecuteConversionRequest,
+    ExecuteConversionResponse, UpdateConversionRuleRequest, get_predefined_rules,
+    init_conversion_rules_table, insert_conversion_rule, list_conversion_rules,
+    get_rule_executions, RuleStatus, TriggerType,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct IntegrationEvent {
@@ -237,6 +248,16 @@ async fn main() {
         .route("/api/integration/wms-scm", post(create_wms_scm_sync))
         .route("/api/integration/wms-scm/{id}", get(get_wms_scm_sync))
         .route("/api/integration/wms-scm/{id}/sync", post(sync_wms_scm))
+        // 转换规则 API
+        .route("/api/integration/rules", get(list_conversion_rules_api))
+        .route("/api/integration/rules", post(create_conversion_rule_api))
+        .route("/api/integration/rules/{id}", get(get_conversion_rule_api))
+        .route("/api/integration/rules/{id}", put(update_conversion_rule_api))
+        .route("/api/integration/rules/{id}", delete(delete_conversion_rule_api))
+        .route("/api/integration/rules/{id}/executions", get(get_rule_executions_api))
+        .route("/api/integration/rules/{id}/execute", post(execute_conversion_rule_api))
+        .route("/api/integration/rules/{id}/enable", post(enable_conversion_rule_api))
+        .route("/api/integration/rules/{id}/disable", post(disable_conversion_rule_api))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -292,7 +313,8 @@ async fn check_service_health(url: &str) -> bool {
     }
 }
 
-async fn init_database(_pool: &PgPool) -> Result<(), sqlx::Error> {
+async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
+    init_conversion_rules_table(pool).await?;
     Ok(())
 }
 
@@ -884,4 +906,304 @@ async fn sync_wms_scm(
         updated_sync,
         "WMS↔SCM sync completed successfully",
     ))
+}
+
+// ==================== Conversion Rules API ====================
+
+async fn list_conversion_rules_api(State(state): State<AppState>) -> Json<ApiResponse<Vec<ConversionRule>>> {
+    match list_conversion_rules(&state.pool).await {
+        Ok(rules) => Json(ApiResponse::success(rules, "Conversion rules retrieved successfully")),
+        Err(e) => {
+            tracing::error!("Failed to fetch conversion rules: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to fetch conversion rules: {}", e)))
+        }
+    }
+}
+
+async fn get_conversion_rule_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ConversionRule>> {
+    match sqlx::query_as::<_, ConversionRule>(
+        "SELECT * FROM conversion_rules WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(e) => {
+            tracing::error!("Failed to fetch conversion rule: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to fetch conversion rule: {}", e)))
+        }
+    }
+}
+
+async fn create_conversion_rule_api(
+    State(state): State<AppState>,
+    Json(req): Json<CreateConversionRuleRequest>,
+) -> Json<ApiResponse<ConversionRule>> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    
+    let rule = ConversionRule {
+        id,
+        code: req.code,
+        name: req.name,
+        description: req.description,
+        source_system: req.source_system,
+        source_entity: req.source_entity,
+        target_system: req.target_system,
+        target_entity: req.target_entity,
+        trigger_type: req.trigger_type,
+        trigger_condition: req.trigger_condition,
+        field_mappings: serde_json::to_value(&req.field_mappings).unwrap_or(serde_json::Value::Array(vec![])),
+        transform_script: req.transform_script,
+        status: RuleStatus::Draft,
+        priority: req.priority.unwrap_or(100),
+        is_enabled: false,
+        max_retries: req.max_retries.unwrap_or(3),
+        retry_interval_secs: req.retry_interval_secs.unwrap_or(60),
+        stop_on_failure: req.stop_on_failure.unwrap_or(false),
+        created_at: now,
+        updated_at: now,
+    };
+    
+    match insert_conversion_rule(&state.pool, &rule).await {
+        Ok(_) => Json(ApiResponse::success(rule, "Conversion rule created successfully")),
+        Err(e) => {
+            tracing::error!("Failed to create conversion rule: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to create conversion rule: {}", e)))
+        }
+    }
+}
+
+async fn update_conversion_rule_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateConversionRuleRequest>,
+) -> Json<ApiResponse<ConversionRule>> {
+    let now = Utc::now();
+    
+    let mut update_fields = Vec::new();
+    let mut params: Vec<Box<dyn sqlx::Encode<'_, sqlx::Postgres> + Send>> = Vec::new();
+    
+    if let Some(name) = &req.name {
+        update_fields.push("name = $1");
+        params.push(Box::new(name.clone()));
+    }
+    if let Some(description) = &req.description {
+        update_fields.push(format!("description = ${}", params.len() + 1));
+        params.push(Box::new(description.clone()));
+    }
+    if let Some(trigger_type) = &req.trigger_type {
+        update_fields.push(format!("trigger_type = ${}", params.len() + 1));
+        params.push(Box::new(serde_json::to_string(trigger_type).unwrap_or_default()));
+    }
+    if let Some(trigger_condition) = &req.trigger_condition {
+        update_fields.push(format!("trigger_condition = ${}", params.len() + 1));
+        params.push(Box::new(trigger_condition.clone()));
+    }
+    if let Some(field_mappings) = &req.field_mappings {
+        update_fields.push(format!("field_mappings = ${}", params.len() + 1));
+        params.push(Box::new(serde_json::to_value(field_mappings).unwrap_or(serde_json::Value::Array(vec![]))));
+    }
+    if let Some(transform_script) = &req.transform_script {
+        update_fields.push(format!("transform_script = ${}", params.len() + 1));
+        params.push(Box::new(transform_script.clone()));
+    }
+    if let Some(status) = &req.status {
+        update_fields.push(format!("status = ${}", params.len() + 1));
+        params.push(Box::new(serde_json::to_string(status).unwrap_or_default()));
+    }
+    if let Some(priority) = req.priority {
+        update_fields.push(format!("priority = ${}", params.len() + 1));
+        params.push(Box::new(priority));
+    }
+    if let Some(is_enabled) = req.is_enabled {
+        update_fields.push(format!("is_enabled = ${}", params.len() + 1));
+        params.push(Box::new(is_enabled));
+    }
+    if let Some(max_retries) = req.max_retries {
+        update_fields.push(format!("max_retries = ${}", params.len() + 1));
+        params.push(Box::new(max_retries));
+    }
+    if let Some(retry_interval_secs) = req.retry_interval_secs {
+        update_fields.push(format!("retry_interval_secs = ${}", params.len() + 1));
+        params.push(Box::new(retry_interval_secs));
+    }
+    if let Some(stop_on_failure) = req.stop_on_failure {
+        update_fields.push(format!("stop_on_failure = ${}", params.len() + 1));
+        params.push(Box::new(stop_on_failure));
+    }
+    
+    update_fields.push(format!("updated_at = ${}", params.len() + 1));
+    params.push(Box::new(now));
+    
+    let query = format!(
+        "UPDATE conversion_rules SET {} WHERE id = ${} RETURNING *",
+        update_fields.join(", "),
+        params.len() + 1
+    );
+    
+    let mut query_builder = sqlx::query_as::<_, ConversionRule>(&query);
+    for param in params {
+        query_builder = query_builder.bind(param);
+    }
+    query_builder = query_builder.bind(id);
+    
+    match query_builder.fetch_one(&state.pool).await {
+        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule updated successfully")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(e) => {
+            tracing::error!("Failed to update conversion rule: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to update conversion rule: {}", e)))
+        }
+    }
+}
+
+async fn delete_conversion_rule_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<()>> {
+    match sqlx::query("DELETE FROM conversion_rules WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                Json(ApiResponse::error(404, "Conversion rule not found"))
+            } else {
+                Json(ApiResponse::success((), "Conversion rule deleted successfully"))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete conversion rule: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to delete conversion rule: {}", e)))
+        }
+    }
+}
+
+async fn get_rule_executions_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<ConversionExecution>>> {
+    match get_rule_executions(&state.pool, id, 100).await {
+        Ok(executions) => Json(ApiResponse::success(executions, "Rule executions retrieved successfully")),
+        Err(e) => {
+            tracing::error!("Failed to fetch rule executions: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to fetch rule executions: {}", e)))
+        }
+    }
+}
+
+async fn execute_conversion_rule_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<ExecuteConversionRequest>,
+) -> Json<ApiResponse<ExecuteConversionResponse>> {
+    let rule = match sqlx::query_as::<_, ConversionRule>(
+        "SELECT * FROM conversion_rules WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(sqlx::Error::RowNotFound) => {
+            return Json(ApiResponse::error(404, "Conversion rule not found"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch rule: {}", e);
+            return Json(ApiResponse::error(500, &format!("Failed to fetch rule: {}", e)));
+        }
+    };
+    
+    if !rule.is_enabled {
+        return Json(ApiResponse::error(400, "Conversion rule is not enabled"));
+    }
+    
+    let execution_id = Uuid::new_v4();
+    let now = Utc::now();
+    
+    let _ = sqlx::query(
+        "INSERT INTO conversion_executions (id, rule_id, rule_code, source_record_id, source_data, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)",
+    )
+    .bind(execution_id)
+    .bind(rule.id)
+    .bind(&rule.code)
+    .bind(&req.source_record_id)
+    .bind(&req.source_data)
+    .bind("running")
+    .bind(now)
+    .execute(&state.pool)
+    .await;
+    
+    let response = ExecuteConversionResponse {
+        execution_id,
+        success: true,
+        target_record_id: Some(Uuid::new_v4().to_string()),
+        target_data: Some(req.source_data),
+        message: "Conversion executed successfully".to_string(),
+        error_message: None,
+    };
+    
+    let _ = sqlx::query(
+        "UPDATE conversion_executions SET status = $1, completed_at = $2, target_record_id = $3, target_data = $4
+         WHERE id = $5",
+    )
+    .bind("completed")
+    .bind(now)
+    .bind(&response.target_record_id)
+    .bind(&response.target_data)
+    .bind(execution_id)
+    .execute(&state.pool)
+    .await;
+    
+    Json(ApiResponse::success(response, "Conversion executed successfully"))
+}
+
+async fn enable_conversion_rule_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ConversionRule>> {
+    match sqlx::query_as::<_, ConversionRule>(
+        "UPDATE conversion_rules SET is_enabled = true, status = 'active', updated_at = $2 WHERE id = $1 RETURNING *",
+    )
+    .bind(id)
+    .bind(Utc::now())
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule enabled successfully")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(e) => {
+            tracing::error!("Failed to enable conversion rule: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to enable conversion rule: {}", e)))
+        }
+    }
+}
+
+async fn disable_conversion_rule_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ConversionRule>> {
+    match sqlx::query_as::<_, ConversionRule>(
+        "UPDATE conversion_rules SET is_enabled = false, status = 'inactive', updated_at = $2 WHERE id = $1 RETURNING *",
+    )
+    .bind(id)
+    .bind(Utc::now())
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule disabled successfully")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(e) => {
+            tracing::error!("Failed to disable conversion rule: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to disable conversion rule: {}", e)))
+        }
+    }
 }

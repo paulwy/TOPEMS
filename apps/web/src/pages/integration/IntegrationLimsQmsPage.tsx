@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { integrationApi } from "@/api/integration";
 import type { LimsQmsSync, CreateLimsQmsSyncRequest } from "@/api/integration";
 import { logger } from "@/utils/logger";

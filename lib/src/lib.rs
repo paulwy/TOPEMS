@@ -14,6 +14,7 @@ pub mod health;
 pub mod hrm;
 pub mod logging;
 pub mod messaging;
+pub mod migration;
 pub mod monitoring;
 pub mod notification;
 pub mod ollama_client;
@@ -164,3 +165,6 @@ pub mod ollama {
 // File 服务客户端模块
 pub mod file_client;
 pub use file_client::{FileServiceClient, UploadResponse};
+
+// Migration SDK 模块
+pub use migration::{MigrationHistory, MigrationResult, MigrationSDK, MigrationStatus};

@@ -35,26 +35,8 @@ import type { OrganizationFilterValue } from "@/components/ui/OrganizationFilter
 import OrganizationFilter from "@/components/ui/OrganizationFilter";
 import { StatsChart } from "@/components/StatsChart";
 
-import {
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-  Box,
-  Typography,
-  Stack,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+import { TextField, FormControl, InputLabel, Select, MenuItem, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Box, Typography, Stack, IconButton, Tooltip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { ModeToggle } from "@/components/ModeToggle";
 import { DashboardTemplate } from "@/components/templates/DashboardTemplate";
 

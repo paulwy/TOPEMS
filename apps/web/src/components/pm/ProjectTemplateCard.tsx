@@ -1,11 +1,5 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Button,
-  Typography,
-  Chip,
-} from "@mui/material";
+import { Card, CardContent, CardHeader, Typography, Chip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React from "react";
 
 import { Clock, Tag, ArrowRight } from "lucide-react";

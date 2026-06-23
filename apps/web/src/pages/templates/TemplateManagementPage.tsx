@@ -24,26 +24,8 @@ import {
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/NotificationContainer";
 import { apiLogger } from "@/utils/logger";
-import {
-  Box,
-  Button,
-  Typography,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
-  IconButton,
-  Tabs,
-  Tab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
-} from "@mui/material";
+import { Box, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Card, CardContent, IconButton, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Chip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 const TemplateManagementPage: React.FC = () => {
   const navigate = useNavigate();

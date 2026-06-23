@@ -1868,6 +1868,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // 问答 API - 使用 QaApi 模块
         .route("/api/ai/qa/ask", post(QaApi::ask))
         .route("/api/ai/qa/ask-with-context", post(QaApi::ask_with_context))
+        .route("/api/ai/qa/ask-structured", post(QaApi::ask_structured))
+        .route("/api/ai/qa/ask-conversation", post(QaApi::ask_conversation))
+        .route("/api/ai/qa/classify", post(QaApi::classify))
         .route("/api/ai/qa/history", get(QaApi::history))
         .route("/api/ai/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API

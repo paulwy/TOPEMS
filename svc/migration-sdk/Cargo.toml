@@ -1,0 +1,44 @@
+[package]
+name = "migration-sdk"
+version = "0.1.0"
+edition = "2021"
+resolver = "2"
+description = "TOPEMS Migration SDK - 插件数据库迁移工具"
+license = "MIT"
+
+[workspace]
+
+[dependencies]
+# 数据库 - 仅使用 postgres 特性避免 sqlite 冲突
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "uuid", "chrono", "rust_decimal", "derive"] }
+tokio = { version = "1", features = ["full"] }
+
+# Redis 分布式锁
+redis = { version = "0.24", features = ["tokio-comp"] }
+
+# 序列化
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 日志
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# UUID
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# 时间
+chrono = { version = "0.4", features = ["serde"] }
+
+# 错误处理
+thiserror = "1"
+anyhow = "1"
+
+# 异步
+async-trait = "0.1"
+
+# 哈希
+sha2 = "0.10"
+
+[dev-dependencies]
+tokio-test = "0.4"

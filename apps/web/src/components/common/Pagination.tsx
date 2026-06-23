@@ -1,12 +1,5 @@
-import {
-  Box,
-  Typography,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from "@mui/material";
+import { Box, Typography, Select, MenuItem, FormControl, InputLabel,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   ChevronLeft,
   ChevronRight,

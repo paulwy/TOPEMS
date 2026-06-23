@@ -10,14 +10,8 @@ import {
   Calendar,
   User,
 } from "lucide-react";
-import {
-  Button,
-  Chip,
-  Box,
-  Typography,
-  Tooltip,
-  IconButton,
-} from "@mui/material";
+import { Chip, Box, Typography, Tooltip, IconButton,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   ListPageTemplate,
   type ColumnDef,

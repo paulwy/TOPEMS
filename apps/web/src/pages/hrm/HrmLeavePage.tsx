@@ -11,22 +11,8 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import {
-  Button,
-  TextField,
-  Card,
-  CardContent,
-  Typography,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle,
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { TextField, Card, CardContent, Typography, Dialog, DialogContent, DialogActions, DialogTitle, Box, FormControl, InputLabel, Select, MenuItem,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import {
   ListPageTemplate,
   StatCard,

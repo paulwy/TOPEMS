@@ -103,6 +103,7 @@ async fn main() {
     modules::tenant::init_database(&pool).await.expect("Failed to init tenant database");
     modules::billing::init_database(&pool).await.expect("Failed to init billing database");
     modules::plugin::init_database(&pool).await.expect("Failed to init plugin database");
+    modules::finance::service::FinanceService::new(std::sync::Arc::new(pool.clone())).init().await.expect("Failed to init finance database");
     if let Err(e) = modules::ai::init_database(&pool).await {
         tracing::warn!("⚠️ AI module database init failed: {}. AI features may be limited.", e);
     }
@@ -365,6 +366,35 @@ async fn main() {
         .route("/api/core/plugins/upgrade/batch", post(modules::plugin::handlers::batch_upgrade))
         .route("/api/core/plugins/{plugin_code}/upgrade/history", get(modules::plugin::handlers::get_upgrade_history))
 
+        // ===== Finance Routes (/api/core/finance/*) =====
+        .route("/api/core/finance/accounts", post(modules::finance::handlers::create_account))
+        .route("/api/core/finance/accounts", get(modules::finance::handlers::list_accounts))
+        .route("/api/core/finance/accounts/{account_id}", get(modules::finance::handlers::get_account))
+        .route("/api/core/finance/accounts/code/{code}", get(modules::finance::handlers::get_account_by_code))
+        .route("/api/core/finance/vouchers", post(modules::finance::handlers::create_voucher))
+        .route("/api/core/finance/vouchers", get(modules::finance::handlers::list_vouchers))
+        .route("/api/core/finance/vouchers/{voucher_id}", get(modules::finance::handlers::get_voucher))
+        .route("/api/core/finance/vouchers/{voucher_id}/submit", post(modules::finance::handlers::submit_voucher))
+        .route("/api/core/finance/vouchers/{voucher_id}/approve", post(modules::finance::handlers::approve_voucher))
+        .route("/api/core/finance/vouchers/{voucher_id}/post", post(modules::finance::handlers::post_voucher))
+        .route("/api/core/finance/ledger", get(modules::finance::handlers::get_ledger))
+        .route("/api/core/finance/trial-balance/{period}", get(modules::finance::handlers::get_trial_balance))
+        .route("/api/core/finance/balance-sheet/{period}", get(modules::finance::handlers::get_balance_sheet))
+        .route("/api/core/finance/income-statement/{period}", get(modules::finance::handlers::get_income_statement))
+        .route("/api/core/finance/periods/{year}/{month}/open", post(modules::finance::handlers::open_period))
+        .route("/api/core/finance/periods/{year}/{month}/close", post(modules::finance::handlers::close_period))
+        // 辅助核算
+        .route("/api/core/finance/aux-accounts", post(modules::finance::handlers::create_aux_account))
+        .route("/api/core/finance/aux-accounts", get(modules::finance::handlers::list_aux_accounts))
+        .route("/api/core/finance/aux-ledger", get(modules::finance::handlers::get_aux_ledger))
+        .route("/api/core/finance/aux-balance", get(modules::finance::handlers::get_aux_balance))
+        // 财务报表
+        .route("/api/core/finance/cash-flow/{period}", get(modules::finance::handlers::get_cash_flow))
+        // 批量操作
+        .route("/api/core/finance/vouchers/batch/submit", post(modules::finance::handlers::batch_submit_vouchers))
+        .route("/api/core/finance/vouchers/batch/approve", post(modules::finance::handlers::batch_approve_vouchers))
+        .route("/api/core/finance/vouchers/batch/post", post(modules::finance::handlers::batch_post_vouchers))
+
         // ===== AI Routes (/api/core/ai/*) =====
         .route("/api/core/ai/chat", post(modules::ai::chat))
         .route("/api/core/ai/generate", post(modules::ai::generate))
@@ -511,7 +541,8 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
             "doc": "active",
             "flow": "active",
             "file": "active",
-            "communication": "active"
+            "communication": "active",
+            "finance": "active"
         },
         "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
         "timestamp": chrono::Utc::now().to_rfc3339(),

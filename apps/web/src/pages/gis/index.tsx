@@ -13,17 +13,8 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import {
-  Box,
-  Paper,
-  Stack,
-  Chip,
-  Typography,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Button,
-} from "@mui/material";
+import { Box, Paper, Stack, Chip, Typography, Alert, Snackbar, CircularProgress,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type {
   DevicePoint,
   Pipeline,

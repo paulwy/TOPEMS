@@ -15,15 +15,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  Chip,
-} from "@mui/material";
+import { Box, Typography, TextField, Select, MenuItem, Chip,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type { ReportData, ReportTypeInfo } from "@/api/report";
 import { reportApi } from "@/api/report";
 import ReportBuilder from "./ReportBuilder";

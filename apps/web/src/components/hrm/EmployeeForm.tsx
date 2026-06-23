@@ -8,16 +8,8 @@ import {
 } from "../ai";
 import type { CompletionItem } from "@/types/ai";
 
-import {
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  InputAdornment,
-} from "@mui/material";
+import { TextField, FormControl, InputLabel, Select, MenuItem, Box, InputAdornment,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { Send } from "lucide-react";
 
 interface EmployeeFormProps {

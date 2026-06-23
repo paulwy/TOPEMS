@@ -1,5 +1,4 @@
 use axum::{extract::State, Json};
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
@@ -22,6 +21,7 @@ struct UserRow {
     full_name: Option<String>,
     status: String,
     is_superuser: bool,
+    tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -56,7 +56,7 @@ pub async fn login(
     tracing::info!("IAM auth login called with username: {}", username);
 
     let user = match sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, password_hash, email, full_name, status, is_superuser FROM core_users WHERE username = $1",
+        "SELECT id, username, password_hash, email, full_name, status, is_superuser, tenant_id FROM core_users WHERE username = $1",
     )
     .bind(username)
     .fetch_optional(&state.pool)
@@ -154,7 +154,7 @@ pub async fn login(
         iat: now.timestamp() as usize,
         email: Some(user.email.clone()),
         department: None,
-        tenant_id: None,
+        tenant_id: user.tenant_id.map(|t| t.to_string()),
     };
     
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
@@ -248,7 +248,7 @@ pub async fn register(
 
     // 检查用户名是否已存在
     match sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, password_hash, email, full_name, status, is_superuser FROM core_users WHERE username = $1",
+        "SELECT id, username, password_hash, email, full_name, status, is_superuser, tenant_id FROM core_users WHERE username = $1",
     )
     .bind(username)
     .fetch_optional(&state.pool)
@@ -276,7 +276,7 @@ pub async fn register(
 
     // 检查邮箱是否已存在
     match sqlx::query_as::<_, UserRow>(
-        "SELECT id, username, password_hash, email, full_name, status, is_superuser FROM core_users WHERE email = $1",
+        "SELECT id, username, password_hash, email, full_name, status, is_superuser, tenant_id FROM core_users WHERE email = $1",
     )
     .bind(email)
     .fetch_optional(&state.pool)

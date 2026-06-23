@@ -13,33 +13,8 @@ import {
   Beaker,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  Button,
-  IconButton,
-  TextField,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Card,
-  CardContent,
-  Snackbar,
-  Alert,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Divider,
-  Tooltip,
-  LinearProgress,
-  Avatar,
-  Stack,
-} from "@mui/material";
+import { Box, Container, Paper, Typography, IconButton, TextField, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent, Snackbar, Alert, MenuItem, Select, FormControl, InputLabel, Divider, Tooltip, LinearProgress, Avatar, Stack,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import type {
   Instrument,
   CreateInstrumentRequest,

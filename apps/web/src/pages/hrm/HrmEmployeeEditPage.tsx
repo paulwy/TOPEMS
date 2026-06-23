@@ -1,20 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  TextField,
-  InputLabel,
-  FormControl,
-  Select,
-  MenuItem,
-  Grid,
-  Avatar,
-  Container,
-  CircularProgress,
-  Skeleton,
-} from "@mui/material";
+import { Card, CardContent, Typography, Box, TextField, InputLabel, FormControl, Select, MenuItem, Grid, Avatar, Container, CircularProgress, Skeleton,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Save, X } from "lucide-react";

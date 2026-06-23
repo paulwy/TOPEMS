@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Moon, Sun, Monitor } from "lucide-react";
-import { Button, Menu, MenuItem } from "@mui/material";
+import { Menu, MenuItem } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 import { useAppStore } from "@/store";
 
 export function ModeToggle() {

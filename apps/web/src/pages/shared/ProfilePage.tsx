@@ -24,28 +24,8 @@ import { authApi, type User as UserType, type AccessLog } from "@/api/iam";
 import { useAppStore } from "../../store";
 import { useAuth } from "../../hooks/useAuth";
 
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Card,
-  CardContent,
-  CardHeader,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Avatar,
-  Switch,
-  FormControlLabel,
-  Chip,
-  Tabs,
-  Tab,
-  IconButton,
-  CircularProgress,
-  Divider,
-} from "@mui/material";
+import { Box, TextField, Typography, Card, CardContent, CardHeader, Dialog, DialogTitle, DialogContent, DialogActions, Avatar, Switch, FormControlLabel, Chip, Tabs, Tab, IconButton, CircularProgress, Divider,  } from "@mui/material";
+import { Button } from "@/components/ui/Button";
 
 interface ActivityItem {
   id: string;
