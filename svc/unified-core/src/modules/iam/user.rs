@@ -170,6 +170,44 @@ pub async fn change_password(
     }))
 }
 
+pub async fn get_preferences(
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("IAM user get_preferences called for user: {}", claims.sub);
+    
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取用户偏好设置成功",
+        "data": {
+            "notification_settings": {
+                "email_notifications": true,
+                "push_notifications": true,
+                "sms_notifications": false,
+                "daily_digest": true
+            },
+            "shortcuts": [
+                {"id": "1", "title": "仪表盘", "icon": "Activity", "path": "/dashboard"},
+                {"id": "2", "title": "文档中心", "icon": "FileText", "path": "/documents"}
+            ],
+            "language": "zh-CN",
+            "timezone": "Asia/Shanghai"
+        }
+    }))
+}
+
+pub async fn update_preferences(
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("IAM user update_preferences called for user: {} with payload: {:?}", claims.sub, payload);
+    
+    Json(serde_json::json!({
+        "success": true,
+        "message": "保存用户偏好设置成功",
+        "data": payload
+    }))
+}
+
 pub async fn get_current_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -13,7 +13,7 @@ import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '
 import { wmsApi } from '@/api/shared/wms';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { EmptyState } from '@/components/EmptyState';
+import { EmptyState } from '@/components/mui/EmptyState';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import {

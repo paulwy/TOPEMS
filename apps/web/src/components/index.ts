@@ -107,62 +107,27 @@ export { default as ExportButton } from './export/ExportButton';
 // 认证组件
 export { LoginFormV2 } from './auth/LoginFormV2';
 
-// ===== @deprecated 重复组件导出 (指向规范版本) =====
-// 请使用上方对应的规范版本组件
-// 以下组件存在于根目录，作为兼容性别名导出
+// 权限验证组件
+export {
+  withPermission,
+  RequirePermission,
+  PermissionGuard,
+  ModulePermissionGuard,
+  ConditionalRender,
+} from './PermissionComponents';
+export type {
+  WithPermissionOptions,
+  RequirePermissionProps,
+  PermissionGuardProps,
+  ModulePermissionGuardProps,
+  ConditionalRenderProps,
+} from './PermissionComponents';
 
-// EmptyState: 使用 mui/EmptyState
-import DeprecatedEmptyStateComponent from './EmptyState';
-export const DeprecatedEmptyState = DeprecatedEmptyStateComponent;
-export const DeprecatedErrorState = DeprecatedEmptyStateComponent;
-
-// ChartCard: 使用 bi/ChartCard
-import { ChartCard as DeprecatedChartCardComponent } from './ChartCard';
-export const DeprecatedChartCard = DeprecatedChartCardComponent;
-
-// BISkeleton: 使用 bi/BISkeleton
-// 注意: BISkeleton 默认导出是一个对象，包含多个 skeleton 组件
-import BISkeletonExports from './BISkeleton';
-export const DeprecatedBISkeleton = BISkeletonExports;
-export const DeprecatedMetricCardSkeleton = BISkeletonExports.MetricCardSkeleton;
-export const DeprecatedChartCardSkeleton = BISkeletonExports.ChartCardSkeleton;
-export const DeprecatedModuleCardSkeleton = BISkeletonExports.ModuleCardSkeleton;
-
-// ExportModal: 使用 export/ExportModal
-import DeprecatedExportModalComponent from './ExportModal';
-export const DeprecatedExportModal = DeprecatedExportModalComponent;
-
-// ExportButton: 使用 export/ExportButton
-import DeprecatedExportButtonComponent from './ExportButton';
-export const DeprecatedExportButton = DeprecatedExportButtonComponent;
-
-// LoginFormV2: 使用 auth/LoginFormV2
-import { LoginFormV2 as DeprecatedLoginFormV2Component } from './LoginFormV2';
-export const DeprecatedLoginFormV2 = DeprecatedLoginFormV2Component;
-
-// MobileNav: 使用 layout/MobileNav
-import DeprecatedMobileNavComponent from './MobileNav';
-export const DeprecatedMobileNav = DeprecatedMobileNavComponent;
-
-// MobileHeader: 使用 layout/MobileHeader
-import DeprecatedMobileHeaderComponent from './MobileHeader';
-export const DeprecatedMobileHeader = DeprecatedMobileHeaderComponent;
-
-// Toast: 使用 ui/toast 或 notification/Toast
-import DeprecatedToastComponent, {
-  ToastContainer as DeprecatedToastContainerComponent,
-} from './Toast';
-export const DeprecatedToast = DeprecatedToastComponent;
-export const DeprecatedToastContainer = DeprecatedToastContainerComponent;
-
-// ImportExportModal: 独立的导入导出模态框组件
-import ImportExportModalComponent from './ImportExportModal';
-export const ImportExportModal = ImportExportModalComponent;
-
-// WorkflowDesigner: 保留独立组件
-import WorkflowDesignerComponent from './WorkflowDesigner';
-export const WorkflowDesigner = WorkflowDesignerComponent;
-
-// ===== 模板组件 =====
-import TemplateEmptyStateComponent from './templates/EmptyState';
-export const TemplateEmptyState = TemplateEmptyStateComponent;
+// ===== 访问日志组件 =====
+export {
+  AccessLogger,
+  useAccessLogger,
+  PageAccessLogger,
+  ActionLogger,
+} from './AccessLogger';
+export type { AccessLogEntry } from './AccessLogger';

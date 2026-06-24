@@ -805,14 +805,19 @@ async fn get_evaluation_statistics(
     .fetch_one(&state.db)
     .await;
 
+    let total = total_result.unwrap_or(0);
+    let completed = completed_result.unwrap_or(0);
+    let pending = pending_result.unwrap_or(0);
+    let supplier_count = supplier_count_result.unwrap_or(0);
+    let avg_score = avg_score_result.ok().map(|v| (v * 100.0).round() / 100.0);
     let statistics = serde_json::json!({
-        "total_evaluations": total_result.unwrap_or(0),
-        "completed_evaluations": completed_result.unwrap_or(0),
-        "pending_evaluations": pending_result.unwrap_or(0),
-        "avg_overall_score": avg_score_result.map(|v| (v * 100.0).round() / 100.0),
-        "evaluated_supplier_count": supplier_count_result.unwrap_or(0),
-        "completion_rate": if total_result.unwrap_or(0) > 0 {
-            ((completed_result.unwrap_or(0) as f64 / total_result.unwrap_or(0) as f64) * 100.0).round() / 100.0
+        "total_evaluations": total,
+        "completed_evaluations": completed,
+        "pending_evaluations": pending,
+        "avg_overall_score": avg_score,
+        "evaluated_supplier_count": supplier_count,
+        "completion_rate": if total > 0 {
+            ((completed as f64 / total as f64) * 100.0).round() / 100.0
         } else {
             0.0
         }

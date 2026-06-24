@@ -375,6 +375,19 @@ pluginAxios.interceptors.request.use((config) => {
   return config;
 });
 
+pluginAxios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // For plugin API, 401 is expected when not authenticated - don't trigger logout
+    // The PluginContext already checks isAuthenticated before calling this API
+    if (error.response?.status === 401) {
+      // Just log a debug message, don't clear token or redirect
+      console.debug('Plugin API returned 401 - user may not have plugin:read permission');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export interface PluginCategory {
   id: string;
   name: string;

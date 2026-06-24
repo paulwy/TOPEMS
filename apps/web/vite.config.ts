@@ -15,13 +15,11 @@ const REMOTE_MODULES = [
   { name: 'topems_core', port: 3001, description: 'Core Module' },
   { name: 'topems_hrm', port: 3002, description: 'HRM Module' },
   { name: 'topems_crm', port: 3003, description: 'CRM Module' },
-  { name: 'topems_pm', port: 3004, description: 'Project Management' },
-  { name: 'topems_fin', port: 3005, description: 'Finance Module' },
-  { name: 'topems_sc', port: 3006, description: 'Supply Chain' },
-  { name: 'topems_qms', port: 3007, description: 'Quality Management' },
+  { name: 'topems_finance', port: 3004, description: 'Finance Module' },
+  { name: 'topems_pm', port: 3005, description: 'Project Management' },
+  { name: 'topems_mes', port: 3006, description: 'Manufacturing Execution' },
+  { name: 'topems_scm', port: 3007, description: 'Supply Chain' },
   { name: 'topems_bi', port: 3008, description: 'Business Intelligence' },
-  { name: 'topems_mes', port: 3009, description: 'Manufacturing Execution' },
-  { name: 'topems_wms', port: 3010, description: 'Warehouse Management' },
 ];
 
 const getRemoteEntryUrl = (moduleName: string): string | undefined => {
@@ -191,6 +189,8 @@ export default defineConfig({
       '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
       '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
+      '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
+      '@topems/shared-constants': path.resolve(__dirname, '../../packages/shared-constants/src'),
       'react-transition-group': path.resolve(__dirname, '../../node_modules/react-transition-group'),
       'react-transition-group/cjs': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs'),
       'react-transition-group/TransitionGroupContext': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs/TransitionGroupContext.js'),

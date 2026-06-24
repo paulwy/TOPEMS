@@ -18,35 +18,31 @@ const navItems = [
   { id: 'ehs', label: '安全', icon: GitBranch },
   { id: 'srm', label: '供应商', icon: Users },
   { id: 'pdm', label: '生产', icon: Factory },
-  { id: 'lims', label: '检测', icon: BarChart3 },
+  { id: 'bi', label: '报表', icon: BarChart3 },
 ];
 
 const MobileNav: React.FC<MobileNavProps> = ({ currentPage, onNavigate }) => {
   return (
-    <div className='mobile-menu mobile-only'>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '4px',
-        }}
-      >
+    <nav className='fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden'>
+      <div className='flex justify-around items-center h-16'>
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
           return (
             <button
               key={item.id}
-              onClick={() => onNavigate(`/${item.id}`)}
-              className={`mobile-nav-item ${isActive ? 'active' : 'inactive'}`}
+              onClick={() => onNavigate(item.id)}
+              className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+                isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               <Icon size={20} />
-              <span style={{ fontSize: '12px', marginTop: '2px' }}>{item.label}</span>
+              <span className='text-xs mt-1'>{item.label}</span>
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };
 

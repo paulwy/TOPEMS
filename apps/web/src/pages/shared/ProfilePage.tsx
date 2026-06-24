@@ -174,7 +174,25 @@ const ProfilePage: React.FC = () => {
     initialized.current = true;
     loadUserProfile();
     loadActivities();
-  }, [loadUserProfile, loadActivities]);
+    
+    authApi.getPreferences().then((res) => {
+      if (res.success && res.data) {
+        if (res.data.shortcuts && setShortcuts) {
+          setShortcuts(res.data.shortcuts.map((s) => ({
+            id: s.id,
+            title: s.title,
+            path: s.path,
+            icon: (s as any).icon || 'Circle',
+          })));
+        }
+        if (res.data.notification_settings && setNotificationSettings) {
+          setNotificationSettings(res.data.notification_settings);
+        }
+      }
+    }).catch((err) => {
+      apiLogger.error('加载用户偏好设置失败', err);
+    });
+  }, [loadUserProfile, loadActivities, setShortcuts, setNotificationSettings]);
 
   const handleAvatarUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {

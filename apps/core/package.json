@@ -17,6 +17,8 @@
     "@mui/icons-material": "^6.5.0",
     "@mui/material": "^6.5.0",
     "@mui/x-tree-view": "^9.4.0",
+    "@topems/shared-constants": "^1.0.0",
+    "@topems/shared-hooks": "^1.0.0",
     "@topems/shared-types": "^1.0.0",
     "@topems/shared-utils": "^1.0.0",
     "axios": "^1.6.8",

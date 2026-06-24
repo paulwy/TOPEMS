@@ -45,7 +45,7 @@ import type {
 import { reportApi } from '@/api/report';
 import ReportBuilder from './ReportBuilder';
 import ReportViewer from './ReportViewer';
-import ExportModal from '../../components/ExportModal';
+import ExportModal from '@/components/export/ExportModal';
 import { apiLogger } from '@/utils/logger';
 
 const ReportPage: React.FC = () => {

@@ -1,0 +1,1 @@
+export { useHrmStore } from './hrmStore';

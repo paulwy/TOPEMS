@@ -3,6 +3,7 @@ import axios from 'axios';
 import config, { isProduction, isDevelopment } from '../config/runtime';
 import { createLogger, apiLogger } from '../utils/logger';
 import { API_TIMEOUT } from '@/constants/timeouts';
+import { csrfRequestInterceptor, csrfResponseInterceptor, initCsrfProtection } from '@/components/security';
 
 const logger = createLogger('ApiClient');
 
@@ -181,8 +182,9 @@ class ApiClient {
   private clients: Record<string, TypedAxiosInstance> = {};
 
   constructor() {
+    initCsrfProtection();
+    
     Object.entries(config.services).forEach(([name, baseURL]) => {
-      // 使用统一的超时配置常量
       const timeout = name === 'ai' ? API_TIMEOUT.AI : config.api.timeout;
       const client = axios.create({
         baseURL,
@@ -216,7 +218,6 @@ class ApiClient {
           const url = config.url || '';
           const baseURL = config.baseURL || '';
 
-          // Debug log for hrm requests
           if (baseURL.includes('/hrm') || url.includes('/hrm') || url.includes('positions')) {
             apiLogger.debug(`[HRM API Request]`, {
               url: `${baseURL}${url}`,
@@ -229,7 +230,6 @@ class ApiClient {
             });
           }
 
-          // Debug log for notification requests
           if (baseURL.includes('notification') || url.includes('/api/notifications')) {
             apiLogger.debug(`[Notification API Request]`, {
               url: `${baseURL}${url}`,
@@ -239,14 +239,13 @@ class ApiClient {
             });
           }
 
-          // 只对非公开路径添加认证头
           if (token && !config.headers['Authorization'] && !isPublicPath(url)) {
             config.headers['Authorization'] = `Bearer ${token}`;
           }
-          return config;
+
+          return csrfRequestInterceptor(config);
         },
         (error) => {
-          // 不输出健康检查的请求错误
           const isHealthCheck = error.config?.url?.includes('/health');
           if (!isHealthCheck) {
             logger.error('Request error:', error);
@@ -267,6 +266,8 @@ class ApiClient {
               data: response.data,
             });
           }
+          
+          csrfResponseInterceptor(response);
           return response.data;
         },
         (error) => {

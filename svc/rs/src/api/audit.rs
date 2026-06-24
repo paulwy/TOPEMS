@@ -277,19 +277,18 @@ async fn export_audit_logs(
                 Utc::now().format("%Y%m%d_%H%M%S")
             );
             
-            let headers = [
-                ("Content-Type", "text/csv; charset=utf-8"),
-                ("Content-Disposition", &format!("attachment; filename=\"{}\"", filename)),
-            ];
+            let mut headers = HeaderMap::new();
+            headers.insert("Content-Type", HeaderValue::from_static("text/csv; charset=utf-8"));
+            headers.insert(
+                "Content-Disposition",
+                HeaderValue::from_str(&format!("attachment; filename=\"{}\"", filename)).unwrap(),
+            );
             
-            Ok((headers, csv_content))
+            (headers, csv_content).into_response()
         }
         Err(e) => {
             tracing::error!("导出审计日志失败: {}", e);
-            Err((
-                [("Content-Type", "application/json")],
-                serde_json::to_string(&ApiResponse::<serde_json::Value>::error(500, "导出审计日志失败")).unwrap(),
-            ))
+            Json(ApiResponse::<serde_json::Value>::error(500, "导出审计日志失败")).into_response()
         }
     }
 }

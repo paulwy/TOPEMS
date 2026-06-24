@@ -42,7 +42,7 @@ import {
   Divider,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { EmptyState } from '@/components/EmptyState';
+import { EmptyState } from '@/components/mui/EmptyState';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { Grid } from '@/components/Grid';
 

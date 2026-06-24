@@ -478,8 +478,8 @@ pub async fn auth_middleware(
         return next.run(req).await;
     }
 
-    // Allow GET requests for plugin browsing (public)
-    if path == "/api/core/plugins" || path == "/api/core/plugins/my" || path.starts_with("/api/core/plugins/") {
+    // Allow GET requests for plugin browsing (public) - but NOT /my which requires auth
+    if path == "/api/core/plugins" || (path.starts_with("/api/core/plugins/") && path != "/api/core/plugins/my") {
         let method = req.method().as_str();
         if method == "GET" {
             return next.run(req).await;
