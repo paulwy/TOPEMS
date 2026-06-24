@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Box } from "@mui/material";
+import React, { useState, useEffect, useRef } from 'react';
+import { Box } from '@mui/material';
 
 interface LazyImageProps {
   src: string;
@@ -15,28 +15,40 @@ interface LazyImageProps {
 const DefaultPlaceholder = () => (
   <Box
     sx={{
-      backgroundColor: "#e5e7eb",
-      borderRadius: "4px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      width: "100%",
-      height: "100%",
+      backgroundColor: '#e5e7eb',
+      borderRadius: '4px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+      height: '100%',
     }}
   >
     <svg
-      width="32"
-      height="32"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#9ca3af"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      width='32'
+      height='32'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='#9ca3af'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
     >
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-      <polyline points="21 15 16 10 5 21" />
+      <rect
+        x='3'
+        y='3'
+        width='18'
+        height='18'
+        rx='2'
+        ry='2'
+      />
+      <circle
+        cx='8.5'
+        cy='8.5'
+        r='1.5'
+        fill='currentColor'
+      />
+      <polyline points='21 15 16 10 5 21' />
     </svg>
   </Box>
 );
@@ -44,7 +56,7 @@ const DefaultPlaceholder = () => (
 export const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
-  className = "",
+  className = '',
   style = {},
   placeholder = <DefaultPlaceholder />,
   fallbackSrc,
@@ -65,15 +77,15 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const imgElement = entry.target as HTMLImageElement;
-            imgElement.src = imgElement.dataset.src || "";
+            imgElement.src = imgElement.dataset.src || '';
             observerRef.current?.unobserve(imgElement);
           }
         });
       },
       {
-        rootMargin: "100px",
+        rootMargin: '100px',
         threshold: 0.1,
-      },
+      }
     );
 
     observerRef.current.observe(img);
@@ -106,16 +118,19 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   }
 
   return (
-    <Box className={className} sx={style}>
+    <Box
+      className={className}
+      sx={style}
+    >
       {!isLoaded && placeholder}
       <img
         ref={imgRef}
         data-src={src}
         alt={alt}
         style={{
-          display: isLoaded ? "block" : "none",
-          width: "100%",
-          height: "auto",
+          display: isLoaded ? 'block' : 'none',
+          width: '100%',
+          height: 'auto',
           ...style,
         }}
         onLoad={handleLoad}

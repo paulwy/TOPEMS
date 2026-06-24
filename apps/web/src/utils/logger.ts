@@ -4,7 +4,7 @@
  * 使用方法：import logger from "@/utils/logger";
  */
 
-export type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface LoggerOptions {
   level?: LogLevel;
@@ -39,10 +39,10 @@ const LOG_LEVELS: Record<LogLevel, number> = {
  */
 function createLogger(name: string, options: LoggerOptions = {}): Logger {
   const {
-    level = "info",
+    level = 'info',
     enableTimestamp = true,
     enableConsole = true,
-    prefix = "",
+    prefix = '',
     context = {},
   } = options;
 
@@ -66,7 +66,7 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
       parts.push(`[${name}]`);
     }
 
-    return parts.join(" ");
+    return parts.join(' ');
   }
 
   function shouldLog(level: LogLevel): boolean {
@@ -75,26 +75,26 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
 
   const logger = {
     debug: (...args: any[]) => {
-      if (shouldLog("debug") && enableConsole) {
-        console.debug(formatMessage("debug"), ...args);
+      if (shouldLog('debug') && enableConsole) {
+        console.debug(formatMessage('debug'), ...args);
       }
     },
 
     info: (...args: any[]) => {
-      if (shouldLog("info") && enableConsole) {
-        console.info(formatMessage("info"), ...args);
+      if (shouldLog('info') && enableConsole) {
+        console.info(formatMessage('info'), ...args);
       }
     },
 
     warn: (...args: any[]) => {
-      if (shouldLog("warn") && enableConsole) {
-        console.warn(formatMessage("warn"), ...args);
+      if (shouldLog('warn') && enableConsole) {
+        console.warn(formatMessage('warn'), ...args);
       }
     },
 
     error: (...args: any[]) => {
-      if (shouldLog("error") && enableConsole) {
-        console.error(formatMessage("error"), ...args);
+      if (shouldLog('error') && enableConsole) {
+        console.error(formatMessage('error'), ...args);
       }
     },
 
@@ -113,7 +113,7 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
      * 记录表格
      */
     table: (data: any) => {
-      if (enableConsole && shouldLog("debug")) {
+      if (enableConsole && shouldLog('debug')) {
         console.table(data);
       }
     },
@@ -122,7 +122,7 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
      * 记录时间
      */
     time: (label: string) => {
-      if (enableConsole && shouldLog("debug")) {
+      if (enableConsole && shouldLog('debug')) {
         console.time(label);
       }
     },
@@ -131,7 +131,7 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
      * 结束时间记录
      */
     timeEnd: (label: string) => {
-      if (enableConsole && shouldLog("debug")) {
+      if (enableConsole && shouldLog('debug')) {
         console.timeEnd(label);
       }
     },
@@ -163,22 +163,22 @@ export { createLogger };
 export default createLogger;
 
 // 导出预设的日志记录器
-export const logger = createLogger("App", {
-  level: import.meta.env.PROD ? "error" : "debug",
+export const logger = createLogger('App', {
+  level: import.meta.env.PROD ? 'error' : 'debug',
   enableTimestamp: true,
 });
 
-export const apiLogger = createLogger("API", {
-  level: import.meta.env.PROD ? "warn" : "info",
-  prefix: "API",
+export const apiLogger = createLogger('API', {
+  level: import.meta.env.PROD ? 'warn' : 'info',
+  prefix: 'API',
 });
 
-export const authLogger = createLogger("Auth", {
-  level: import.meta.env.PROD ? "error" : "info",
-  prefix: "AUTH",
+export const authLogger = createLogger('Auth', {
+  level: import.meta.env.PROD ? 'error' : 'info',
+  prefix: 'AUTH',
 });
 
-export const errorLogger = createLogger("Error", {
-  level: "error",
-  prefix: "ERROR",
+export const errorLogger = createLogger('Error', {
+  level: 'error',
+  prefix: 'ERROR',
 });

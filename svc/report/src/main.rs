@@ -105,6 +105,8 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/api/plugins/info", get(modules::report::report_plugin::get_plugin_info))
+        .route("/api/plugins/health", get(modules::report::report_plugin::plugin_health_check))
         .route("/api", get(|| get_api_info_handler("report-service")))
         .route("/api/info", get(|| get_api_info_handler("report-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));

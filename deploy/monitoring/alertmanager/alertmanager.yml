@@ -1,29 +1,141 @@
 global:
   resolve_timeout: 5m
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@topems.com'
+  smtp_auth_username: 'alertmanager@topems.com'
+  smtp_auth_password: 'your-smtp-password'
 
+# 告警模板
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# 路由树
 route:
-  group_by: ['alertname', 'job']
+  # 根路由配置
+  receiver: 'default-receiver'
+  group_by: ['alertname', 'cluster', 'service']
   group_wait: 10s
   group_interval: 10s
-  repeat_interval: 1h
-  receiver: 'webhook'
+  repeat_interval: 4h
+  # 允许告警被抑制的最大时间
+  moderation: 5m
+  
+  # 嵌套路由 - 按严重级别分流
+  routes:
+    # Critical 级别 - 立即通知
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 0s
+      repeat_interval: 1h
+      continue: true
 
+    # Warning 级别 - 正常通知
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      group_wait: 30s
+      repeat_interval: 4h
+
+    # Info 级别 - 静默通知
+    - match:
+        severity: info
+      receiver: 'info-receiver'
+      group_wait: 1m
+      repeat_interval: 8h
+
+# 接收器定义
 receivers:
-  - name: 'webhook'
+  # 默认接收器（webhook）
+  - name: 'default-receiver'
     webhook_configs:
-      - url: 'http://localhost:8080/webhook'
+      - url: 'http://topems-portal:8080/webhook/alertmanager'
+        send_resolved: true
+        max_alerts: 100
 
-  - name: 'email'
+  # Critical 接收器 - 飞书 + 短信 + 电话
+  - name: 'critical-receiver'
+    # 飞书通知
+    webhook_configs:
+      - url: 'http://topems-portal:8080/webhook/feishu'
+        send_resolved: true
+        max_alerts: 10
+    # 邮件通知
     email_configs:
-      - to: 'admin@example.com'
-        from: 'alertmanager@example.com'
-        smarthost: 'smtp.example.com:587'
-        auth_username: 'alertmanager'
-        auth_password: 'password'
+      - to: 'oncall@topems.com,devops@topems.com'
+        send_resolved: true
+        headers:
+          X-Priority: '1'
+    # Slack通知
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alert-critical'
+        send_resolved: true
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.content" . }}'
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
 
+  # Warning 接收器 - 飞书 + 邮件
+  - name: 'warning-receiver'
+    webhook_configs:
+      - url: 'http://topems-portal:8080/webhook/feishu'
+        send_resolved: true
+        max_alerts: 50
+    email_configs:
+      - to: 'devops@topems.com'
+        send_resolved: true
+        headers:
+          X-Priority: '3'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alert-warning'
+        send_resolved: true
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.content" . }}'
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+
+  # Info 接收器 - 仅邮件
+  - name: 'info-receiver'
+    email_configs:
+      - to: 'devops@topems.com'
+        send_resolved: true
+        headers:
+          X-Priority: '5'
+
+# 告警抑制规则
+# 当更严重的告警触发时，抑制较轻的同类告警
 inhibit_rules:
+  # Critical 抑制 Warning
   - source_match:
       severity: 'critical'
     target_match:
       severity: 'warning'
-    equal: ['alertname', 'job']
+    equal: ['alertname', 'instance']
+
+  # Warning 抑制 Info
+  - source_match:
+      severity: 'warning'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'instance']
+
+  # 服务down抑制该服务所有其他告警
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['job']
+
+  # 数据库连接池耗尽抑制慢查询
+  - source_match:
+      alertname: 'DatabasePoolCritical'
+    target_match:
+      alertname: 'SlowDatabaseQueries'
+    equal: ['instance']
+
+  # Redis内存耗尽抑制其他Redis告警
+  - source_match:
+      alertname: 'RedisCriticalMemoryUsage'
+    target_match_re:
+      alertname: 'Redis.*'
+    equal: ['instance']

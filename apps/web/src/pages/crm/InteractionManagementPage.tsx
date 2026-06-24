@@ -1,34 +1,42 @@
-import { Chip, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Box,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
+import {
+  Chip,
+  Typography,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
 import type {
   Interaction,
   CreateInteractionRequest,
   UpdateInteractionRequest,
-} from "@/api/modules/crm/crm";
-import { crmApi } from "@/api/modules/crm/crm";
-import { useAppStore } from "@/store";
-import { logger } from "@/utils/logger";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
-import type { RowAction, FilterConfig } from "@/components/mui";
+} from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/modules/crm/crm';
+import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
+import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import type { RowAction, FilterConfig } from '@/components/mui';
 
 const InteractionManagementPage: React.FC = () => {
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [typeFilter, setTypeFilter] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [selectedInteraction, setSelectedInteraction] =
-    useState<Interaction | null>(null);
+  const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
   const [formData, setFormData] = useState<CreateInteractionRequest>({
-    type: "call",
-    subject: "",
-    content: "",
-    scheduled_at: "",
-    notes: "",
+    type: 'call',
+    subject: '',
+    content: '',
+    scheduled_at: '',
+    notes: '',
   });
 
   const { addNotification } = useAppStore();
@@ -51,11 +59,11 @@ const InteractionManagementPage: React.FC = () => {
         setInteractions(response.data.items || []);
       }
     } catch (error) {
-      logger.error("加载交互记录列表失败:", error);
+      logger.error('加载交互记录列表失败:', error);
       addNotification({
-        type: "error",
-        title: "加载失败",
-        message: "无法加载交互记录列表",
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载交互记录列表',
       });
     } finally {
       setLoading(false);
@@ -68,50 +76,50 @@ const InteractionManagementPage: React.FC = () => {
       if (selectedInteraction) {
         await crmApi.interactions.update(
           selectedInteraction.id,
-          formData as UpdateInteractionRequest,
+          formData as UpdateInteractionRequest
         );
         addNotification({
-          type: "success",
-          title: "更新成功",
-          message: "交互记录已更新",
+          type: 'success',
+          title: '更新成功',
+          message: '交互记录已更新',
         });
       } else {
         await crmApi.interactions.create(formData);
         addNotification({
-          type: "success",
-          title: "创建成功",
-          message: "新交互记录已创建",
+          type: 'success',
+          title: '创建成功',
+          message: '新交互记录已创建',
         });
       }
       setShowDialog(false);
       resetForm();
       loadInteractions();
     } catch (error) {
-      logger.error("操作失败:", error);
+      logger.error('操作失败:', error);
       addNotification({
-        type: "error",
-        title: "操作失败",
-        message: selectedInteraction ? "更新交互记录失败" : "创建交互记录失败",
+        type: 'error',
+        title: '操作失败',
+        message: selectedInteraction ? '更新交互记录失败' : '创建交互记录失败',
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("确定要删除这条交互记录吗?")) return;
+    if (!window.confirm('确定要删除这条交互记录吗?')) return;
     try {
       await crmApi.interactions.delete(id);
       addNotification({
-        type: "success",
-        title: "删除成功",
-        message: "交互记录已删除",
+        type: 'success',
+        title: '删除成功',
+        message: '交互记录已删除',
       });
       loadInteractions();
     } catch (error) {
-      logger.error("删除失败:", error);
+      logger.error('删除失败:', error);
       addNotification({
-        type: "error",
-        title: "删除失败",
-        message: "无法删除交互记录",
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除交互记录',
       });
     }
   };
@@ -122,10 +130,10 @@ const InteractionManagementPage: React.FC = () => {
       customer_id: interaction.customer_id,
       contact_id: interaction.contact_id,
       type: interaction.type,
-      subject: interaction.subject || "",
-      content: interaction.content || "",
-      scheduled_at: interaction.scheduled_at || "",
-      notes: "",
+      subject: interaction.subject || '',
+      content: interaction.content || '',
+      scheduled_at: interaction.scheduled_at || '',
+      notes: '',
     });
     setShowDialog(true);
   };
@@ -138,11 +146,11 @@ const InteractionManagementPage: React.FC = () => {
   const resetForm = () => {
     setSelectedInteraction(null);
     setFormData({
-      type: "call",
-      subject: "",
-      content: "",
-      scheduled_at: "",
-      notes: "",
+      type: 'call',
+      subject: '',
+      content: '',
+      scheduled_at: '',
+      notes: '',
     });
   };
 
@@ -151,24 +159,23 @@ const InteractionManagementPage: React.FC = () => {
       string,
       {
         label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      call: { label: "电话", color: "default" },
-      email: { label: "邮件", color: "secondary" },
-      meeting: { label: "会议", color: "primary" },
-      visit: { label: "拜访", color: "info" },
-      other: { label: "其他", color: "default" },
+      call: { label: '电话', color: 'default' },
+      email: { label: '邮件', color: 'secondary' },
+      meeting: { label: '会议', color: 'primary' },
+      visit: { label: '拜访', color: 'info' },
+      other: { label: '其他', color: 'default' },
     };
-    const t = typeMap[type] || { label: type, color: "default" };
-    return <Chip size="small" color={t.color} label={t.label} />;
+    const t = typeMap[type] || { label: type, color: 'default' };
+    return (
+      <Chip
+        size='small'
+        color={t.color}
+        label={t.label}
+      />
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -176,103 +183,101 @@ const InteractionManagementPage: React.FC = () => {
       string,
       {
         label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      scheduled: { label: "已计划", color: "info" },
-      completed: { label: "已完成", color: "success" },
-      cancelled: { label: "已取消", color: "error" },
+      scheduled: { label: '已计划', color: 'info' },
+      completed: { label: '已完成', color: 'success' },
+      cancelled: { label: '已取消', color: 'error' },
     };
-    const s = statusMap[status] || { label: status, color: "default" };
-    return <Chip size="small" color={s.color} label={s.label} />;
+    const s = statusMap[status] || { label: status, color: 'default' };
+    return (
+      <Chip
+        size='small'
+        color={s.color}
+        label={s.label}
+      />
+    );
   };
 
   const columns = useMemo<ColumnDef<Interaction>[]>(
     () => [
       {
-        id: "subject",
-        label: "主题",
+        id: 'subject',
+        label: '主题',
         render: (row) => (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            {row.subject || "-"}
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
+            {row.subject || '-'}
           </Typography>
         ),
       },
       {
-        id: "type",
-        label: "类型",
+        id: 'type',
+        label: '类型',
         render: (row) => getTypeBadge(row.type),
       },
       {
-        id: "scheduled_at",
-        label: "计划时间",
+        id: 'scheduled_at',
+        label: '计划时间',
         render: (row) =>
-          row.scheduled_at
-            ? new Date(row.scheduled_at).toLocaleString("zh-CN")
-            : "-",
+          row.scheduled_at ? new Date(row.scheduled_at).toLocaleString('zh-CN') : '-',
       },
       {
-        id: "completed_at",
-        label: "完成时间",
+        id: 'completed_at',
+        label: '完成时间',
         render: (row) =>
-          row.completed_at
-            ? new Date(row.completed_at).toLocaleString("zh-CN")
-            : "-",
+          row.completed_at ? new Date(row.completed_at).toLocaleString('zh-CN') : '-',
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    [],
+    []
   );
 
   const rowActions = useMemo<RowAction<Interaction>[]>(
     () => [
       {
-        label: "查看",
+        label: '查看',
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: (row) => handleEdit(row),
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error",
+        color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这条交互记录吗?",
+        confirmMessage: '确定要删除这条交互记录吗?',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
-        id: "type",
-        label: "类型",
-        type: "select",
+        id: 'type',
+        label: '类型',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "call", label: "电话" },
-          { value: "email", label: "邮件" },
-          { value: "meeting", label: "会议" },
-          { value: "visit", label: "拜访" },
-          { value: "other", label: "其他" },
+          { value: '', label: '全部' },
+          { value: 'call', label: '电话' },
+          { value: 'email', label: '邮件' },
+          { value: 'meeting', label: '会议' },
+          { value: 'visit', label: '拜访' },
+          { value: 'other', label: '其他' },
         ],
         value: typeFilter,
         onChange: (value) => {
@@ -280,14 +285,14 @@ const InteractionManagementPage: React.FC = () => {
         },
       },
       {
-        id: "status",
-        label: "状态",
-        type: "select",
+        id: 'status',
+        label: '状态',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "scheduled", label: "已计划" },
-          { value: "completed", label: "已完成" },
-          { value: "cancelled", label: "已取消" },
+          { value: '', label: '全部' },
+          { value: 'scheduled', label: '已计划' },
+          { value: 'completed', label: '已完成' },
+          { value: 'cancelled', label: '已取消' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -295,22 +300,22 @@ const InteractionManagementPage: React.FC = () => {
         },
       },
     ],
-    [typeFilter, statusFilter],
+    [typeFilter, statusFilter]
   );
 
   return (
     <>
       <ListPageTemplate<Interaction>
-        title="交互记录管理"
-        subtitle="管理客户交互记录，包括电话、邮件、会议、拜访等"
+        title='交互记录管理'
+        subtitle='管理客户交互记录，包括电话、邮件、会议、拜访等'
         backButton={{
-          href: "/dashboard",
+          href: '/dashboard',
         }}
         columns={columns}
         data={interactions}
         loading={loading}
         searchable
-        searchPlaceholder="搜索交互主题..."
+        searchPlaceholder='搜索交互主题...'
         searchValue={searchTerm}
         onSearch={(value) => {
           setSearchTerm(value);
@@ -319,13 +324,13 @@ const InteractionManagementPage: React.FC = () => {
         rowActions={rowActions}
         actions={[
           {
-            label: "新增交互",
+            label: '新增交互',
             icon: <Plus size={18} />,
             onClick: () => {
               resetForm();
               setShowDialog(true);
             },
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
       />
@@ -333,63 +338,56 @@ const InteractionManagementPage: React.FC = () => {
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
-        <DialogTitle>
-          {selectedInteraction ? "编辑交互记录" : "新增交互记录"}
-        </DialogTitle>
+        <DialogTitle>{selectedInteraction ? '编辑交互记录' : '新增交互记录'}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 2,
               }}
             >
               <TextField
-                label="主题"
+                label='主题'
                 value={formData.subject}
-                onChange={(e) =>
-                  setFormData({ ...formData, subject: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 fullWidth
               />
               <TextField
-                label="内容"
+                label='内容'
                 multiline
                 rows={3}
                 value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 fullWidth
               />
               <TextField
-                label="计划时间"
-                type="datetime-local"
+                label='计划时间'
+                type='datetime-local'
                 value={formData.scheduled_at}
-                onChange={(e) =>
-                  setFormData({ ...formData, scheduled_at: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
                 fullWidth
               />
               <TextField
-                label="备注"
+                label='备注'
                 multiline
                 rows={2}
                 value={formData.notes}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 fullWidth
               />
             </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               保存
             </Button>
           </DialogActions>
@@ -399,7 +397,7 @@ const InteractionManagementPage: React.FC = () => {
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>交互记录详情</DialogTitle>
@@ -407,73 +405,84 @@ const InteractionManagementPage: React.FC = () => {
           <DialogContent>
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 2,
               }}
             >
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   主题
                 </Typography>
-                <Typography sx={{ fontWeight: "medium" }}>
-                  {selectedInteraction.subject || "-"}
+                <Typography sx={{ fontWeight: 'medium' }}>
+                  {selectedInteraction.subject || '-'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   类型
                 </Typography>
-                <Box sx={{ mt: 0.5 }}>
-                  {getTypeBadge(selectedInteraction.type)}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getTypeBadge(selectedInteraction.type)}</Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   内容
                 </Typography>
-                <Typography>{selectedInteraction.content || "-"}</Typography>
+                <Typography>{selectedInteraction.content || '-'}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   计划时间
                 </Typography>
                 <Typography>
                   {selectedInteraction.scheduled_at
-                    ? new Date(selectedInteraction.scheduled_at).toLocaleString(
-                        "zh-CN",
-                      )
-                    : "-"}
+                    ? new Date(selectedInteraction.scheduled_at).toLocaleString('zh-CN')
+                    : '-'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   完成时间
                 </Typography>
                 <Typography>
                   {selectedInteraction.completed_at
-                    ? new Date(selectedInteraction.completed_at).toLocaleString(
-                        "zh-CN",
-                      )
-                    : "-"}
+                    ? new Date(selectedInteraction.completed_at).toLocaleString('zh-CN')
+                    : '-'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   状态
                 </Typography>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(selectedInteraction.status)}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedInteraction.status)}</Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   创建时间
                 </Typography>
                 <Typography>
-                  {new Date(selectedInteraction.created_at).toLocaleString(
-                    "zh-CN",
-                  )}
+                  {new Date(selectedInteraction.created_at).toLocaleString('zh-CN')}
                 </Typography>
               </Box>
             </Box>

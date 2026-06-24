@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -29,7 +29,7 @@ import {
   IconButton,
   Tooltip,
   Alert,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Plus as PlusIcon,
   Edit as EditIcon,
@@ -38,7 +38,7 @@ import {
   History as HistoryIcon,
   Check as CheckIcon,
   X as XIcon,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   reportApi,
   type ReportSchedule,
@@ -48,12 +48,12 @@ import {
   type ScheduleType,
   type ScheduleStatus,
   type ScheduleExecutionRecord,
-} from "@/api/report";
+} from '@/api/report';
 
 const SCHEDULE_TYPE_OPTIONS: { value: ScheduleType; label: string }[] = [
-  { value: "cron", label: "Cron表达式" },
-  { value: "interval", label: "时间间隔" },
-  { value: "one_time", label: "一次性" },
+  { value: 'cron', label: 'Cron表达式' },
+  { value: 'interval', label: '时间间隔' },
+  { value: 'one_time', label: '一次性' },
 ];
 
 const SCHEDULE_STATUS_OPTIONS: {
@@ -61,34 +61,28 @@ const SCHEDULE_STATUS_OPTIONS: {
   label: string;
   color: string;
 }[] = [
-  { value: "active", label: "运行中", color: "success" },
-  { value: "paused", label: "已暂停", color: "warning" },
-  { value: "completed", label: "已完成", color: "info" },
-  { value: "failed", label: "执行失败", color: "error" },
+  { value: 'active', label: '运行中', color: 'success' },
+  { value: 'paused', label: '已暂停', color: 'warning' },
+  { value: 'completed', label: '已完成', color: 'info' },
+  { value: 'failed', label: '执行失败', color: 'error' },
 ];
 
 const ReportSchedulePage: React.FC = () => {
   const [schedules, setSchedules] = useState<ReportSchedule[]>([]);
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [currentSchedule, setCurrentSchedule] = useState<ReportSchedule | null>(
-    null,
-  );
+  const [currentSchedule, setCurrentSchedule] = useState<ReportSchedule | null>(null);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [executionHistory, setExecutionHistory] = useState<
-    ScheduleExecutionRecord[]
-  >([]);
+  const [executionHistory, setExecutionHistory] = useState<ScheduleExecutionRecord[]>([]);
 
-  const [formData, setFormData] = useState<
-    CreateScheduleRequest | UpdateScheduleRequest
-  >({
-    name: "",
-    template_id: "",
-    schedule_type: "cron",
-    schedule_expression: "",
+  const [formData, setFormData] = useState<CreateScheduleRequest | UpdateScheduleRequest>({
+    name: '',
+    template_id: '',
+    schedule_type: 'cron',
+    schedule_expression: '',
     recipients: [],
   });
 
@@ -99,16 +93,16 @@ const ReportSchedulePage: React.FC = () => {
 
   const fetchSchedules = async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const response = await reportApi.listSchedules();
       if (response.success && response.data) {
         setSchedules(response.data);
       } else {
-        setError(response.message || "获取定时任务列表失败");
+        setError(response.message || '获取定时任务列表失败');
       }
     } catch (err) {
-      setError("获取定时任务列表失败");
+      setError('获取定时任务列表失败');
     } finally {
       setLoading(false);
     }
@@ -121,7 +115,7 @@ const ReportSchedulePage: React.FC = () => {
         setTemplates(response.data);
       }
     } catch (err) {
-      console.error("获取报表模板失败", err);
+      console.error('获取报表模板失败', err);
     }
   };
 
@@ -129,10 +123,10 @@ const ReportSchedulePage: React.FC = () => {
     setEditMode(false);
     setCurrentSchedule(null);
     setFormData({
-      name: "",
-      template_id: "",
-      schedule_type: "cron",
-      schedule_expression: "",
+      name: '',
+      template_id: '',
+      schedule_type: 'cron',
+      schedule_expression: '',
       recipients: [],
     });
     setDialogOpen(true);
@@ -154,10 +148,10 @@ const ReportSchedulePage: React.FC = () => {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setFormData({
-      name: "",
-      template_id: "",
-      schedule_type: "cron",
-      schedule_expression: "",
+      name: '',
+      template_id: '',
+      schedule_type: 'cron',
+      schedule_expression: '',
       recipients: [],
     });
   };
@@ -175,88 +169,84 @@ const ReportSchedulePage: React.FC = () => {
   const handleAddRecipient = () => {
     setFormData((prev) => ({
       ...prev,
-      recipients: [...(prev.recipients || []), ""],
+      recipients: [...(prev.recipients || []), ''],
     }));
   };
 
   const handleRemoveRecipient = (index: number) => {
-    const newRecipients = (formData.recipients || []).filter(
-      (_, i) => i !== index,
-    );
+    const newRecipients = (formData.recipients || []).filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, recipients: newRecipients }));
   };
 
   const handleSubmit = async () => {
-    setError("");
+    setError('');
     try {
       if (editMode && currentSchedule) {
         const response = await reportApi.updateSchedule(
           currentSchedule.id,
-          formData as UpdateScheduleRequest,
+          formData as UpdateScheduleRequest
         );
         if (response.success) {
           setDialogOpen(false);
           fetchSchedules();
         } else {
-          setError(response.message || "更新定时任务失败");
+          setError(response.message || '更新定时任务失败');
         }
       } else {
-        const response = await reportApi.createSchedule(
-          formData as CreateScheduleRequest,
-        );
+        const response = await reportApi.createSchedule(formData as CreateScheduleRequest);
         if (response.success) {
           setDialogOpen(false);
           fetchSchedules();
         } else {
-          setError(response.message || "创建定时任务失败");
+          setError(response.message || '创建定时任务失败');
         }
       }
     } catch (err) {
-      setError(editMode ? "更新定时任务失败" : "创建定时任务失败");
+      setError(editMode ? '更新定时任务失败' : '创建定时任务失败');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("确定要删除这个定时任务吗？")) return;
-    setError("");
+    if (!window.confirm('确定要删除这个定时任务吗？')) return;
+    setError('');
     try {
       const response = await reportApi.deleteSchedule(id);
       if (response.success) {
         fetchSchedules();
       } else {
-        setError(response.message || "删除定时任务失败");
+        setError(response.message || '删除定时任务失败');
       }
     } catch (err) {
-      setError("删除定时任务失败");
+      setError('删除定时任务失败');
     }
   };
 
   const handleExecute = async (id: string) => {
-    setError("");
+    setError('');
     try {
       const response = await reportApi.executeSchedule(id);
       if (response.success) {
         fetchSchedules();
       } else {
-        setError(response.message || "执行定时任务失败");
+        setError(response.message || '执行定时任务失败');
       }
     } catch (err) {
-      setError("执行定时任务失败");
+      setError('执行定时任务失败');
     }
   };
 
   const handleViewHistory = async (id: string) => {
-    setError("");
+    setError('');
     try {
       const response = await reportApi.getExecutionHistory(id);
       if (response.success && response.data) {
         setExecutionHistory(response.data);
         setHistoryDialogOpen(true);
       } else {
-        setError(response.message || "获取执行历史失败");
+        setError(response.message || '获取执行历史失败');
       }
     } catch (err) {
-      setError("获取执行历史失败");
+      setError('获取执行历史失败');
     }
   };
 
@@ -266,7 +256,7 @@ const ReportSchedulePage: React.FC = () => {
       <Chip
         label={statusInfo?.label || status}
         color={statusInfo?.color as any}
-        size="small"
+        size='small'
       />
     );
   };
@@ -276,25 +266,35 @@ const ReportSchedulePage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
+    <Container
+      maxWidth='xl'
+      sx={{ py: 3 }}
+    >
       <Box
         sx={{
           mb: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <div>
-          <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
+          <Typography
+            variant='h4'
+            sx={{ fontWeight: 'bold' }}
+            gutterBottom
+          >
             定时任务管理
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             管理报表定时任务，支持 Cron 表达式、时间间隔和一次性任务
           </Typography>
         </div>
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<PlusIcon />}
           onClick={handleOpenCreateDialog}
         >
@@ -303,7 +303,10 @@ const ReportSchedulePage: React.FC = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert
+          severity='error'
+          sx={{ mb: 3 }}
+        >
           {error}
         </Alert>
       )}
@@ -327,28 +330,33 @@ const ReportSchedulePage: React.FC = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      <Typography variant="body1">加载中...</Typography>
+                    <TableCell
+                      colSpan={8}
+                      align='center'
+                    >
+                      <Typography variant='body1'>加载中...</Typography>
                     </TableCell>
                   </TableRow>
                 ) : schedules.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      <Typography variant="body1">暂无定时任务</Typography>
+                    <TableCell
+                      colSpan={8}
+                      align='center'
+                    >
+                      <Typography variant='body1'>暂无定时任务</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
                   schedules.map((schedule) => (
                     <TableRow key={schedule.id}>
                       <TableCell>{schedule.name}</TableCell>
+                      <TableCell>{schedule.template_name || schedule.template_id}</TableCell>
+                      <TableCell>{getScheduleTypeLabel(schedule.schedule_type)}</TableCell>
                       <TableCell>
-                        {schedule.template_name || schedule.template_id}
-                      </TableCell>
-                      <TableCell>
-                        {getScheduleTypeLabel(schedule.schedule_type)}
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" noWrap>
+                        <Typography
+                          variant='body2'
+                          noWrap
+                        >
                           {schedule.schedule_expression}
                         </Typography>
                       </TableCell>
@@ -356,48 +364,51 @@ const ReportSchedulePage: React.FC = () => {
                       <TableCell>{schedule.run_count}</TableCell>
                       <TableCell>
                         {schedule.last_run_at ? (
-                          <Typography variant="body2">
+                          <Typography variant='body2'>
                             {new Date(schedule.last_run_at).toLocaleString()}
                           </Typography>
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             从未执行
                           </Typography>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", gap: 1 }}>
-                          <Tooltip title="执行">
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Tooltip title='执行'>
                             <IconButton
-                              size="small"
-                              color="primary"
+                              size='small'
+                              color='primary'
                               onClick={() => handleExecute(schedule.id)}
                             >
                               <PlayIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="查看历史">
+                          <Tooltip title='查看历史'>
                             <IconButton
-                              size="small"
-                              color="info"
+                              size='small'
+                              color='info'
                               onClick={() => handleViewHistory(schedule.id)}
                             >
                               <HistoryIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="编辑">
+                          <Tooltip title='编辑'>
                             <IconButton
-                              size="small"
-                              color="warning"
+                              size='small'
+                              color='warning'
                               onClick={() => handleOpenEditDialog(schedule)}
                             >
                               <EditIcon />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="删除">
+                          <Tooltip title='删除'>
                             <IconButton
-                              size="small"
-                              color="error"
+                              size='small'
+                              color='error'
                               onClick={() => handleDelete(schedule.id)}
                             >
                               <DeleteIcon />
@@ -417,98 +428,102 @@ const ReportSchedulePage: React.FC = () => {
       <Dialog
         open={dialogOpen}
         onClose={handleCloseDialog}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
-        <DialogTitle>{editMode ? "编辑定时任务" : "新建定时任务"}</DialogTitle>
+        <DialogTitle>{editMode ? '编辑定时任务' : '新建定时任务'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
-              label="任务名称"
+              label='任务名称'
               value={formData.name as string}
-              onChange={(e) => handleFormChange("name", e.target.value)}
+              onChange={(e) => handleFormChange('name', e.target.value)}
               fullWidth
               required
             />
-            <FormControl fullWidth required>
+            <FormControl
+              fullWidth
+              required
+            >
               <InputLabel>报表模板</InputLabel>
               <Select
-                value={
-                  (formData as CreateScheduleRequest).template_id as string
-                }
-                onChange={(e) =>
-                  handleFormChange("template_id", e.target.value)
-                }
-                label="报表模板"
+                value={(formData as CreateScheduleRequest).template_id as string}
+                onChange={(e) => handleFormChange('template_id', e.target.value)}
+                label='报表模板'
               >
                 {templates.map((template) => (
-                  <MenuItem key={template.id} value={template.id}>
+                  <MenuItem
+                    key={template.id}
+                    value={template.id}
+                  >
                     {template.name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl fullWidth required>
+            <FormControl
+              fullWidth
+              required
+            >
               <InputLabel>调度类型</InputLabel>
               <Select
-                value={
-                  (formData as CreateScheduleRequest)
-                    .schedule_type as ScheduleType
-                }
-                onChange={(e) =>
-                  handleFormChange("schedule_type", e.target.value)
-                }
-                label="调度类型"
+                value={(formData as CreateScheduleRequest).schedule_type as ScheduleType}
+                onChange={(e) => handleFormChange('schedule_type', e.target.value)}
+                label='调度类型'
               >
                 {SCHEDULE_TYPE_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                  >
                     {option.label}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <TextField
-              label="执行表达式"
+              label='执行表达式'
               value={formData.schedule_expression as string}
-              onChange={(e) =>
-                handleFormChange("schedule_expression", e.target.value)
-              }
+              onChange={(e) => handleFormChange('schedule_expression', e.target.value)}
               fullWidth
               required
               helperText={
-                (formData as CreateScheduleRequest).schedule_type === "cron"
-                  ? "例如: 0 0 8 * * * (每天早上8点)"
-                  : (formData as CreateScheduleRequest).schedule_type ===
-                      "interval"
-                    ? "例如: 1 hour (每小时)"
-                    : "例如: 2024-01-15 08:00:00"
+                (formData as CreateScheduleRequest).schedule_type === 'cron'
+                  ? '例如: 0 0 8 * * * (每天早上8点)'
+                  : (formData as CreateScheduleRequest).schedule_type === 'interval'
+                    ? '例如: 1 hour (每小时)'
+                    : '例如: 2024-01-15 08:00:00'
               }
             />
             <Box>
-              <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ mb: 2 }}
+              >
                 接收人邮箱
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {(formData.recipients as string[]).map((recipient, index) => (
-                  <Box key={index} sx={{ display: "flex", gap: 1 }}>
+                  <Box
+                    key={index}
+                    sx={{ display: 'flex', gap: 1 }}
+                  >
                     <TextField
                       label={`接收人 ${index + 1}`}
                       value={recipient}
-                      onChange={(e) =>
-                        handleRecipientChange(index, e.target.value)
-                      }
+                      onChange={(e) => handleRecipientChange(index, e.target.value)}
                       fullWidth
                     />
                     <IconButton
                       onClick={() => handleRemoveRecipient(index)}
-                      color="error"
+                      color='error'
                     >
                       <XIcon />
                     </IconButton>
                   </Box>
                 ))}
                 <Button
-                  variant="outlined"
+                  variant='outlined'
                   startIcon={<PlusIcon />}
                   onClick={handleAddRecipient}
                   sx={{ mt: 1 }}
@@ -521,8 +536,11 @@ const ReportSchedulePage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editMode ? "保存" : "创建"}
+          <Button
+            onClick={handleSubmit}
+            variant='contained'
+          >
+            {editMode ? '保存' : '创建'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -530,7 +548,7 @@ const ReportSchedulePage: React.FC = () => {
       <Dialog
         open={historyDialogOpen}
         onClose={() => setHistoryDialogOpen(false)}
-        maxWidth="lg"
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle>执行历史</DialogTitle>
@@ -549,42 +567,50 @@ const ReportSchedulePage: React.FC = () => {
               <TableBody>
                 {executionHistory.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <Typography variant="body1">暂无执行记录</Typography>
+                    <TableCell
+                      colSpan={5}
+                      align='center'
+                    >
+                      <Typography variant='body1'>暂无执行记录</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
                   executionHistory.map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell>
-                        {new Date(record.started_at).toLocaleString()}
-                      </TableCell>
+                      <TableCell>{new Date(record.started_at).toLocaleString()}</TableCell>
                       <TableCell>
                         <Chip
                           label={record.status}
-                          color={
-                            record.status === "completed" ? "success" : "error"
-                          }
-                          size="small"
+                          color={record.status === 'completed' ? 'success' : 'error'}
+                          size='small'
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" noWrap>
-                          {record.output_path || "-"}
+                        <Typography
+                          variant='body2'
+                          noWrap
+                        >
+                          {record.output_path || '-'}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="error">
-                          {record.error_message || "-"}
+                        <Typography
+                          variant='body2'
+                          color='error'
+                        >
+                          {record.error_message || '-'}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         {record.completed_at ? (
-                          <Typography variant="body2">
+                          <Typography variant='body2'>
                             {new Date(record.completed_at).toLocaleString()}
                           </Typography>
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             执行中
                           </Typography>
                         )}

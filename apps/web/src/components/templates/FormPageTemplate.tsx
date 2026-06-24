@@ -1,8 +1,32 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
-import type { BoxProps } from "@mui/material";
-import { Box, Paper, Typography, TextField, IconButton, Tooltip, Divider, Skeleton, Alert, Collapse, useTheme, useMediaQuery, FormControl, FormLabel, FormHelperText, Snackbar, Alert as MuiAlert, Slide, Chip, Badge, LinearProgress, Tab, Tabs,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Grid } from "@/components/Grid";
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import type { BoxProps } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  IconButton,
+  Tooltip,
+  Divider,
+  Skeleton,
+  Alert,
+  Collapse,
+  useTheme,
+  useMediaQuery,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  Snackbar,
+  Alert as MuiAlert,
+  Slide,
+  Chip,
+  Badge,
+  LinearProgress,
+  Tab,
+  Tabs,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Grid } from '@/components/Grid';
 import {
   Save,
   X,
@@ -22,7 +46,7 @@ import {
   GripVertical,
   Plus,
   Minus,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   useForm,
   Controller,
@@ -31,14 +55,14 @@ import {
   type FieldValues,
   type UseFormReturn,
   type FieldErrors,
-} from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod";
-import type { BreadcrumbItem } from "./PageHeader";
-import { PageHeader } from "./PageHeader";
-import FileUpload from "../common/FileUpload";
-import ImageUpload from "../common/ImageUpload";
-import { logger } from "@/utils/logger";
+} from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
+import type { BreadcrumbItem } from './PageHeader';
+import { PageHeader } from './PageHeader';
+import FileUpload from '../common/FileUpload';
+import ImageUpload from '../common/ImageUpload';
+import { logger } from '@/utils/logger';
 
 // ============ 类型定义 ============
 
@@ -52,19 +76,19 @@ export interface FormField {
   label: string;
   /** 字段类型 */
   type:
-    | "text"
-    | "number"
-    | "email"
-    | "password"
-    | "textarea"
-    | "select"
-    | "date"
-    | "checkbox"
-    | "switch"
-    | "autocomplete"
-    | "file"
-    | "image"
-    | "group";
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'password'
+    | 'textarea'
+    | 'select'
+    | 'date'
+    | 'checkbox'
+    | 'switch'
+    | 'autocomplete'
+    | 'file'
+    | 'image'
+    | 'group';
   /** 占位符文本 */
   placeholder?: string;
   /** 是否必填 */
@@ -134,7 +158,7 @@ export interface FormSection {
   /** 区块图标 */
   icon?: React.ReactNode;
   /** 区块标签颜色 */
-  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
+  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
 }
 
 /**
@@ -146,24 +170,11 @@ export interface FieldDependency {
   /** 目标字段名称 */
   targetField: string;
   /** 联动类型 */
-  type:
-    | "visibility"
-    | "options"
-    | "value"
-    | "required"
-    | "disabled"
-    | "editable";
+  type: 'visibility' | 'options' | 'value' | 'required' | 'disabled' | 'editable';
   /** 触发条件 */
   condition: {
     /** 条件类型 */
-    type:
-      | "equals"
-      | "notEquals"
-      | "contains"
-      | "notEmpty"
-      | "empty"
-      | "greaterThan"
-      | "lessThan";
+    type: 'equals' | 'notEquals' | 'contains' | 'notEmpty' | 'empty' | 'greaterThan' | 'lessThan';
     /** 条件值 */
     value?: any;
   };
@@ -193,7 +204,7 @@ export interface ValidationToast {
   /** 提示消息 */
   message: string;
   /** 提示类型 */
-  type: "success" | "warning" | "error" | "info";
+  type: 'success' | 'warning' | 'error' | 'info';
   /** 关联的字段名称 */
   field?: string;
 }
@@ -234,7 +245,7 @@ export interface VersionConfig {
 /**
  * 表单页模板属性
  */
-export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
+export interface FormPageTemplateProps extends Omit<BoxProps, 'onSubmit'> {
   // 页面信息
   title: string;
   subtitle?: string;
@@ -288,7 +299,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
   /** 是否显示表单进度条 */
   showProgress?: boolean;
   /** 表单模式 */
-  mode?: "create" | "edit" | "view";
+  mode?: 'create' | 'edit' | 'view';
   /** 权限配置 */
   permissions?: {
     canEdit?: boolean;
@@ -302,9 +313,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
 /**
  * 从localStorage读取草稿
  */
-const loadDrafts = (
-  key: string,
-): Array<{ data: Record<string, any>; timestamp: number }> => {
+const loadDrafts = (key: string): Array<{ data: Record<string, any>; timestamp: number }> => {
   try {
     const stored = localStorage.getItem(`form:draft:${key}`);
     if (stored) {
@@ -319,11 +328,7 @@ const loadDrafts = (
 /**
  * 保存草稿到localStorage
  */
-const saveDraft = (
-  key: string,
-  data: Record<string, any>,
-  maxDrafts: number = 5,
-): void => {
+const saveDraft = (key: string, data: Record<string, any>, maxDrafts: number = 5): void => {
   try {
     const drafts = loadDrafts(key);
     drafts.unshift({ data, timestamp: Date.now() });
@@ -396,9 +401,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   onSubmit,
   onCancel,
   onReset,
-  submitText = "保存",
-  cancelText = "取消",
-  resetText = "重置",
+  submitText = '保存',
+  cancelText = '取消',
+  resetText = '重置',
   columns = 3,
   stickyFooter = true,
   headerContent,
@@ -413,23 +418,19 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   versionConfig,
   showGroupTabs = false,
   showProgress = false,
-  mode = "edit",
+  mode = 'edit',
   permissions = { canEdit: true, canDelete: false, canViewHistory: false },
   ...props
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(
-      sections.filter((s) => s.defaultExpanded !== false).map((s) => s.id),
-    ),
+    new Set(sections.filter((s) => s.defaultExpanded !== false).map((s) => s.id))
   );
 
   // 字段可见性状态
-  const [fieldVisibility, setFieldVisibility] = useState<
-    Record<string, boolean>
-  >(() => {
+  const [fieldVisibility, setFieldVisibility] = useState<Record<string, boolean>>(() => {
     const visibility: Record<string, boolean> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -455,9 +456,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   });
 
   // 动态必填状态
-  const [dynamicRequired, setDynamicRequired] = useState<
-    Record<string, boolean>
-  >(() => {
+  const [dynamicRequired, setDynamicRequired] = useState<Record<string, boolean>>(() => {
     const required: Record<string, boolean> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -470,9 +469,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   });
 
   // 动态禁用状态
-  const [dynamicDisabled, setDynamicDisabled] = useState<
-    Record<string, boolean>
-  >(() => {
+  const [dynamicDisabled, setDynamicDisabled] = useState<Record<string, boolean>>(() => {
     const disabled: Record<string, boolean> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -485,9 +482,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   });
 
   // 动态可编辑状态
-  const [dynamicEditable, setDynamicEditable] = useState<
-    Record<string, boolean>
-  >(() => {
+  const [dynamicEditable, setDynamicEditable] = useState<Record<string, boolean>>(() => {
     const editable: Record<string, boolean> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -498,25 +493,21 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   });
 
   // 验证提示状态
-  const [validationHint, setValidationHint] = useState<ValidationToast | null>(
-    null,
-  );
+  const [validationHint, setValidationHint] = useState<ValidationToast | null>(null);
   const [showHint, setShowHint] = useState(false);
 
   // 草稿状态
-  const [drafts, setDrafts] = useState<
-    Array<{ data: Record<string, any>; timestamp: number }>
-  >([]);
+  const [drafts, setDrafts] = useState<Array<{ data: Record<string, any>; timestamp: number }>>([]);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
 
   // 当前分组标签
-  const [currentGroup, setCurrentGroup] = useState<string>("all");
+  const [currentGroup, setCurrentGroup] = useState<string>('all');
 
   // 表单初始化
   const methods = useForm({
     resolver: schema ? (zodResolver(schema as any) as any) : undefined,
     defaultValues: defaultValues || {},
-    mode: "onBlur",
+    mode: 'onBlur',
   });
 
   const {
@@ -537,19 +528,15 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     if (!showProgress) return 0;
 
     const allFields = sections.flatMap((s) => s.fields);
-    const requiredFields = allFields.filter(
-      (f) => f.required || dynamicRequired[f.name],
-    );
+    const requiredFields = allFields.filter((f) => f.required || dynamicRequired[f.name]);
     if (requiredFields.length === 0) return 100;
 
     const filledRequiredFields = requiredFields.filter((f) => {
       const value = formValues[f.name];
-      return value !== undefined && value !== null && value !== "";
+      return value !== undefined && value !== null && value !== '';
     });
 
-    return Math.round(
-      (filledRequiredFields.length / requiredFields.length) * 100,
-    );
+    return Math.round((filledRequiredFields.length / requiredFields.length) * 100);
   }, [sections, formValues, dynamicRequired, showProgress]);
 
   // 获取所有分组
@@ -581,11 +568,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
   // 自动保存草稿
   useEffect(() => {
-    if (
-      !draftConfig?.enabled ||
-      !draftConfig.storageKey ||
-      !draftConfig.autoSaveInterval
-    ) {
+    if (!draftConfig?.enabled || !draftConfig.storageKey || !draftConfig.autoSaveInterval) {
       return;
     }
 
@@ -611,49 +594,43 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
       let conditionMet = false;
 
       switch (dep.condition.type) {
-        case "equals":
+        case 'equals':
           conditionMet = sourceValue === dep.condition.value;
           break;
-        case "notEquals":
+        case 'notEquals':
           conditionMet = sourceValue !== dep.condition.value;
           break;
-        case "contains":
+        case 'contains':
           conditionMet = Array.isArray(sourceValue)
             ? sourceValue.includes(dep.condition.value)
             : String(sourceValue).includes(String(dep.condition.value));
           break;
-        case "notEmpty":
-          conditionMet =
-            sourceValue !== undefined &&
-            sourceValue !== null &&
-            sourceValue !== "";
+        case 'notEmpty':
+          conditionMet = sourceValue !== undefined && sourceValue !== null && sourceValue !== '';
           break;
-        case "empty":
-          conditionMet =
-            sourceValue === undefined ||
-            sourceValue === null ||
-            sourceValue === "";
+        case 'empty':
+          conditionMet = sourceValue === undefined || sourceValue === null || sourceValue === '';
           break;
-        case "greaterThan":
+        case 'greaterThan':
           conditionMet = Number(sourceValue) > Number(dep.condition.value);
           break;
-        case "lessThan":
+        case 'lessThan':
           conditionMet = Number(sourceValue) < Number(dep.condition.value);
           break;
       }
 
       if (conditionMet) {
         switch (dep.type) {
-          case "visibility":
+          case 'visibility':
             setFieldVisibility((prev) => ({
               ...prev,
               [dep.targetField]: dep.effect.visible ?? true,
             }));
             break;
-          case "options":
+          case 'options':
             if (dep.effect.options) {
               const newOptions =
-                typeof dep.effect.options === "function"
+                typeof dep.effect.options === 'function'
                   ? dep.effect.options(sourceValue)
                   : dep.effect.options;
               setDynamicOptions((prev) => ({
@@ -662,35 +639,35 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               }));
             }
             break;
-          case "value":
+          case 'value':
             if (dep.effect.value) {
               const newValue =
-                typeof dep.effect.value === "function"
+                typeof dep.effect.value === 'function'
                   ? dep.effect.value(sourceValue)
                   : dep.effect.value;
               setValue(dep.targetField, newValue);
             }
             break;
-          case "required":
+          case 'required':
             setDynamicRequired((prev) => ({
               ...prev,
               [dep.targetField]: dep.effect.required ?? false,
             }));
             break;
-          case "disabled":
+          case 'disabled':
             setDynamicDisabled((prev) => ({
               ...prev,
               [dep.targetField]: dep.effect.disabled ?? false,
             }));
             break;
-          case "editable":
+          case 'editable':
             setDynamicEditable((prev) => ({
               ...prev,
               [dep.targetField]: dep.effect.editable ?? true,
             }));
             break;
         }
-      } else if (dep.type === "visibility" && dep.effect.visible === false) {
+      } else if (dep.type === 'visibility' && dep.effect.visible === false) {
         setFieldVisibility((prev) => ({
           ...prev,
           [dep.targetField]: true,
@@ -708,7 +685,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   const displayValidationHint = useCallback((toast: ValidationToast) => {
     setValidationHint(toast);
     setShowHint(true);
-    if (toast.type === "success" || toast.type === "info") {
+    if (toast.type === 'success' || toast.type === 'info') {
       setTimeout(() => setShowHint(false), 3000);
     }
   }, []);
@@ -727,9 +704,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
         // 显示成功提示
         if (validationToasts.length > 0) {
-          const successToast = validationToasts.find(
-            (t) => t.type === "success",
-          );
+          const successToast = validationToasts.find((t) => t.type === 'success');
           if (successToast) {
             displayValidationHint(successToast);
           }
@@ -743,20 +718,14 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           setDrafts([]);
         }
       } catch (err) {
-        const errorToast = validationToasts.find((t) => t.type === "error");
+        const errorToast = validationToasts.find((t) => t.type === 'error');
         if (errorToast) {
           displayValidationHint(errorToast);
         }
-        logger.error("Form submit error:", err);
+        logger.error('Form submit error:', err);
       }
     },
-    [
-      onSubmit,
-      fieldVisibility,
-      validationToasts,
-      displayValidationHint,
-      draftConfig,
-    ],
+    [onSubmit, fieldVisibility, validationToasts, displayValidationHint, draftConfig]
   );
 
   // 处理重置
@@ -778,10 +747,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
       setShowDraftDialog(false);
       displayValidationHint({
         message: `已加载草稿（保存于 ${new Date(draft.timestamp).toLocaleString()}）`,
-        type: "info",
+        type: 'info',
       });
     },
-    [reset, displayValidationHint],
+    [reset, displayValidationHint]
   );
 
   // 切换区块展开
@@ -800,10 +769,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   // 获取字段验证错误消息
   const getErrorMessage = (fieldName: string, field: FormField): string => {
     const fieldError = errors[fieldName];
-    if (!fieldError) return "";
+    if (!fieldError) return '';
 
     const error = fieldError as any;
-    let message = error?.message || "验证失败";
+    let message = error?.message || '验证失败';
 
     // 使用自定义验证消息
     if (customValidationMessages[fieldName]) {
@@ -821,11 +790,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     }
 
     // 检查分组过滤
-    if (
-      showGroupTabs &&
-      currentGroup !== "all" &&
-      field.group !== currentGroup
-    ) {
+    if (showGroupTabs && currentGroup !== 'all' && field.group !== currentGroup) {
       return null;
     }
 
@@ -834,12 +799,8 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     const isRequired = dynamicRequired[field.name] || field.required;
     const options = dynamicOptions[field.name] || field.options;
     const isDisabled =
-      dynamicDisabled[field.name] ||
-      field.disabled ||
-      submitting ||
-      mode === "view";
-    const isEditable =
-      dynamicEditable[field.name] && permissions.canEdit && mode !== "view";
+      dynamicDisabled[field.name] || field.disabled || submitting || mode === 'view';
+    const isEditable = dynamicEditable[field.name] && permissions.canEdit && mode !== 'view';
 
     const commonProps = {
       label: field.label,
@@ -847,17 +808,23 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
       disabled: isDisabled || !isEditable,
       error: !!fieldError,
       helperText: errorMessage || field.helperText,
-      size: "small" as const,
+      size: 'small' as const,
       fullWidth: true,
     };
 
     return (
-      <Box key={field.name} sx={{ position: "relative" }}>
+      <Box
+        key={field.name}
+        sx={{ position: 'relative' }}
+      >
         {field.tooltip && (
-          <Tooltip title={field.tooltip} placement="top">
+          <Tooltip
+            title={field.tooltip}
+            placement='top'
+          >
             <IconButton
-              size="small"
-              sx={{ position: "absolute", top: 0, right: 0 }}
+              size='small'
+              sx={{ position: 'absolute', top: 0, right: 0 }}
             >
               <Info style={{ width: 16, height: 16 }} />
             </IconButton>
@@ -866,11 +833,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
         {dirtyFields[field.name] && (
           <Chip
-            label="已修改"
-            size="small"
-            color="primary"
+            label='已修改'
+            size='small'
+            color='primary'
             sx={{
-              position: "absolute",
+              position: 'absolute',
               top: -8,
               right: field.tooltip ? 32 : 0,
             }}
@@ -880,13 +847,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         <Controller
           name={field.name}
           control={control}
-          defaultValue={field.defaultValue || ""}
+          defaultValue={field.defaultValue || ''}
           rules={{
             required: isRequired ? `${field.label}不能为空` : false,
           }}
           render={({ field: controllerField }) => {
             switch (field.type) {
-              case "textarea":
+              case 'textarea':
                 return (
                   <TextField
                     {...commonProps}
@@ -897,7 +864,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   />
                 );
 
-              case "select":
+              case 'select':
                 return (
                   <TextField
                     {...commonProps}
@@ -905,36 +872,37 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     select
                     required={isRequired}
                   >
-                    <option value="">请选择</option>
+                    <option value=''>请选择</option>
                     {options?.map((option) => (
-                      <option key={option.value} value={option.value}>
+                      <option
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </option>
                     ))}
                   </TextField>
                 );
 
-              case "number":
+              case 'number':
                 return (
                   <TextField
                     {...commonProps}
                     {...controllerField}
-                    type="number"
+                    type='number'
                     required={isRequired}
                     onChange={(e) =>
-                      controllerField.onChange(
-                        e.target.value === "" ? "" : Number(e.target.value),
-                      )
+                      controllerField.onChange(e.target.value === '' ? '' : Number(e.target.value))
                     }
                   />
                 );
 
-              case "date":
+              case 'date':
                 return (
                   <TextField
                     {...commonProps}
                     {...controllerField}
-                    type="date"
+                    type='date'
                     required={isRequired}
                     slotProps={{
                       inputLabel: { shrink: true },
@@ -942,35 +910,38 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   />
                 );
 
-              case "email":
+              case 'email':
                 return (
                   <TextField
                     {...commonProps}
                     {...controllerField}
-                    type="email"
-                    autoComplete="email"
+                    type='email'
+                    autoComplete='email'
                     required={isRequired}
                   />
                 );
 
-              case "password":
+              case 'password':
                 return (
                   <TextField
                     {...commonProps}
                     {...controllerField}
-                    type="password"
-                    autoComplete="new-password"
+                    type='password'
+                    autoComplete='new-password'
                     required={isRequired}
                   />
                 );
 
-              case "switch":
+              case 'switch':
                 return (
                   <FormControl error={!!fieldError}>
                     <FormLabel>
                       {field.label}
                       {isRequired && (
-                        <Typography component="span" color="error">
+                        <Typography
+                          component='span'
+                          color='error'
+                        >
                           *
                         </Typography>
                       )}
@@ -983,29 +954,28 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                         render={({ field: switchField }) => (
                           <Switch
                             checked={switchField.value || false}
-                            onChange={(e) =>
-                              switchField.onChange(e.target.checked)
-                            }
+                            onChange={(e) => switchField.onChange(e.target.checked)}
                             disabled={isDisabled}
                           />
                         )}
                       />
                     </Box>
                     {(errorMessage || field.helperText) && (
-                      <FormHelperText>
-                        {errorMessage || field.helperText}
-                      </FormHelperText>
+                      <FormHelperText>{errorMessage || field.helperText}</FormHelperText>
                     )}
                   </FormControl>
                 );
 
-              case "checkbox":
+              case 'checkbox':
                 return (
                   <FormControl error={!!fieldError}>
                     <FormLabel>
                       {field.label}
                       {isRequired && (
-                        <Typography component="span" color="error">
+                        <Typography
+                          component='span'
+                          color='error'
+                        >
                           *
                         </Typography>
                       )}
@@ -1018,29 +988,28 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                         render={({ field: checkboxField }) => (
                           <Checkbox
                             checked={checkboxField.value || false}
-                            onChange={(e) =>
-                              checkboxField.onChange(e.target.checked)
-                            }
+                            onChange={(e) => checkboxField.onChange(e.target.checked)}
                             disabled={isDisabled}
                           />
                         )}
                       />
                     </Box>
                     {(errorMessage || field.helperText) && (
-                      <FormHelperText>
-                        {errorMessage || field.helperText}
-                      </FormHelperText>
+                      <FormHelperText>{errorMessage || field.helperText}</FormHelperText>
                     )}
                   </FormControl>
                 );
 
-              case "file":
+              case 'file':
                 return (
                   <Box>
-                    <FormLabel sx={{ mb: 1, display: "block" }}>
+                    <FormLabel sx={{ mb: 1, display: 'block' }}>
                       {field.label}
                       {isRequired && (
-                        <Typography component="span" color="error">
+                        <Typography
+                          component='span'
+                          color='error'
+                        >
                           *
                         </Typography>
                       )}
@@ -1068,13 +1037,16 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   </Box>
                 );
 
-              case "image":
+              case 'image':
                 return (
                   <Box>
-                    <FormLabel sx={{ mb: 1, display: "block" }}>
+                    <FormLabel sx={{ mb: 1, display: 'block' }}>
                       {field.label}
                       {isRequired && (
-                        <Typography component="span" color="error">
+                        <Typography
+                          component='span'
+                          color='error'
+                        >
                           *
                         </Typography>
                       )}
@@ -1100,7 +1072,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   </Box>
                 );
 
-              case "autocomplete":
+              case 'autocomplete':
                 return (
                   <TextField
                     {...commonProps}
@@ -1108,9 +1080,12 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     select
                     required={isRequired}
                   >
-                    <option value="">请选择</option>
+                    <option value=''>请选择</option>
                     {options?.map((option) => (
-                      <option key={option.value} value={option.value}>
+                      <option
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </option>
                     ))}
@@ -1139,52 +1114,60 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     return (
       <Paper
         key={section.id}
-        sx={{ borderRadius: 2, mb: 3, overflow: "hidden" }}
+        sx={{ borderRadius: 2, mb: 3, overflow: 'hidden' }}
       >
         {/* 区块标题 */}
         <Box
           sx={{
             p: 2,
             borderBottom: 1,
-            borderColor: "divider",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            cursor: section.collapsible ? "pointer" : "default",
-            bgcolor: section.color ? `${section.color}.lighter` : "inherit",
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: section.collapsible ? 'pointer' : 'default',
+            bgcolor: section.color ? `${section.color}.lighter` : 'inherit',
           }}
           onClick={() => section.collapsible && toggleSection(section.id)}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {section.icon && (
               <Box
                 sx={{
-                  color: section.color ? `${section.color}.main` : "inherit",
+                  color: section.color ? `${section.color}.main` : 'inherit',
                 }}
               >
                 {section.icon}
               </Box>
             )}
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
                 {section.title}
-                {section.fields.some(
-                  (f) => dynamicRequired[f.name] || f.required,
-                ) && (
-                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                {section.fields.some((f) => dynamicRequired[f.name] || f.required) && (
+                  <Typography
+                    component='span'
+                    color='error'
+                    sx={{ ml: 0.5 }}
+                  >
                     *
                   </Typography>
                 )}
               </Typography>
               {section.description && (
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {section.description}
                 </Typography>
               )}
             </Box>
           </Box>
           {section.collapsible && (
-            <IconButton size="small">
+            <IconButton size='small'>
               {isExpanded ? (
                 <ChevronUp style={{ width: 18, height: 18 }} />
               ) : (
@@ -1198,7 +1181,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         <Collapse in={isExpanded}>
           <Box sx={{ p: 3 }}>
             {loading ? (
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
@@ -1206,7 +1192,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     size={{ xs: 12, sm: 6 }}
                   >
                     <Skeleton
-                      variant="rectangular"
+                      variant='rectangular'
                       height={56}
                       sx={{ borderRadius: 1 }}
                     />
@@ -1214,7 +1200,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 ))}
               </Grid>
             ) : (
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
@@ -1242,9 +1231,16 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         onChange={(e, newValue) => setCurrentGroup(newValue)}
         sx={{ mb: 2 }}
       >
-        <Tab label="全部" value="all" />
+        <Tab
+          label='全部'
+          value='all'
+        />
         {groups.map((group) => (
-          <Tab key={group} label={group} value={group} />
+          <Tab
+            key={group}
+            label={group}
+            value={group}
+          />
         ))}
       </Tabs>
     );
@@ -1258,29 +1254,32 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
       <Box sx={{ mb: 3 }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             mb: 1,
           }}
         >
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             表单填写进度
           </Typography>
           <Typography
-            variant="body2"
+            variant='body2'
             sx={{
-              fontWeight: "bold",
-              color: formProgress === 100 ? "success.main" : "primary.main",
+              fontWeight: 'bold',
+              color: formProgress === 100 ? 'success.main' : 'primary.main',
             }}
           >
             {formProgress}%
           </Typography>
         </Box>
         <LinearProgress
-          variant="determinate"
+          variant='determinate'
           value={formProgress}
-          color={formProgress === 100 ? "success" : "primary"}
+          color={formProgress === 100 ? 'success' : 'primary'}
           sx={{ borderRadius: 1, height: 8 }}
         />
       </Box>
@@ -1294,8 +1293,8 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     return (
       <Tooltip title={`有 ${drafts.length} 个草稿可恢复`}>
         <Button
-          variant="outlined"
-          size="small"
+          variant='outlined'
+          size='small'
           onClick={() => setShowDraftDialog(true)}
           startIcon={<FileText style={{ width: 16, height: 16 }} />}
         >
@@ -1311,33 +1310,39 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
       sx={{
         p: 2,
         borderRadius: 2,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         gap: 2,
-        position: stickyFooter ? "sticky" : "static",
-        bottom: stickyFooter ? 0 : "auto",
+        position: stickyFooter ? 'sticky' : 'static',
+        bottom: stickyFooter ? 0 : 'auto',
         zIndex: 10,
         mt: 3,
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {isDirty && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             有未保存的更改
           </Typography>
         )}
         {showValidationHints && Object.keys(errors).length > 0 && (
-          <Tooltip title="表单存在验证错误">
+          <Tooltip title='表单存在验证错误'>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                color: "error.main",
+                display: 'flex',
+                alignItems: 'center',
+                color: 'error.main',
               }}
             >
               <AlertCircle style={{ width: 16, height: 16 }} />
-              <Typography variant="caption" sx={{ ml: 0.5 }}>
+              <Typography
+                variant='caption'
+                sx={{ ml: 0.5 }}
+              >
                 {Object.keys(errors).length}个字段存在错误
               </Typography>
             </Box>
@@ -1345,19 +1350,19 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         )}
         {renderDraftButton()}
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {mode === "view" && permissions.canEdit && (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {mode === 'view' && permissions.canEdit && (
           <Button
-            variant="outlined"
+            variant='outlined'
             onClick={() => {}}
             startIcon={<Unlock style={{ width: 16, height: 16 }} />}
           >
             编辑
           </Button>
         )}
-        {mode !== "view" && onCancel && (
+        {mode !== 'view' && onCancel && (
           <Button
-            variant="outlined"
+            variant='outlined'
             onClick={onCancel}
             disabled={submitting}
             startIcon={<X style={{ width: 16, height: 16 }} />}
@@ -1365,9 +1370,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             {cancelText}
           </Button>
         )}
-        {mode !== "view" && onReset && (
+        {mode !== 'view' && onReset && (
           <Button
-            variant="text"
+            variant='text'
             onClick={handleReset}
             disabled={submitting || !isDirty}
             startIcon={<RotateCcw style={{ width: 16, height: 16 }} />}
@@ -1375,20 +1380,24 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             {resetText}
           </Button>
         )}
-        {mode !== "view" && (
+        {mode !== 'view' && (
           <Button
-            type="submit"
-            variant="contained"
+            type='submit'
+            variant='contained'
             disabled={submitting || loading}
             startIcon={
               submitting ? (
-                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton
+                  variant='circular'
+                  width={16}
+                  height={16}
+                />
               ) : (
                 <Save style={{ width: 16, height: 16 }} />
               )
             }
           >
-            {submitting ? "保存中..." : submitText}
+            {submitting ? '保存中...' : submitText}
           </Button>
         )}
       </Box>
@@ -1417,11 +1426,14 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         {/* 错误提示 */}
         {error && (
           <Alert
-            severity="error"
+            severity='error'
             sx={{ mb: 3 }}
             icon={<AlertCircle style={{ width: 20, height: 20 }} />}
             action={
-              <IconButton size="small" onClick={() => {}}>
+              <IconButton
+                size='small'
+                onClick={() => {}}
+              >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>
             }
@@ -1433,11 +1445,14 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         {/* 成功提示 */}
         {success && (
           <Alert
-            severity="success"
+            severity='success'
             sx={{ mb: 3 }}
             icon={<CheckCircle style={{ width: 20, height: 20 }} />}
             action={
-              <IconButton size="small" onClick={() => {}}>
+              <IconButton
+                size='small'
+                onClick={() => {}}
+              >
                 <X style={{ width: 16, height: 16 }} />
               </IconButton>
             }
@@ -1461,19 +1476,19 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           autoHideDuration={3000}
           onClose={() => setShowHint(false)}
           anchorOrigin={{
-            vertical: "top" as const,
-            horizontal: "center" as const,
+            vertical: 'top' as const,
+            horizontal: 'center' as const,
           }}
         >
           <MuiAlert
-            severity={validationHint?.type || "info"}
+            severity={validationHint?.type || 'info'}
             onClose={() => setShowHint(false)}
             icon={
-              validationHint?.type === "success" ? (
+              validationHint?.type === 'success' ? (
                 <CheckCircle style={{ width: 20, height: 20 }} />
-              ) : validationHint?.type === "warning" ? (
+              ) : validationHint?.type === 'warning' ? (
                 <AlertTriangle style={{ width: 20, height: 20 }} />
-              ) : validationHint?.type === "error" ? (
+              ) : validationHint?.type === 'error' ? (
                 <AlertCircle style={{ width: 20, height: 20 }} />
               ) : (
                 <Info style={{ width: 20, height: 20 }} />
@@ -1486,8 +1501,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
         {/* 草稿选择对话框 */}
         {showDraftDialog && (
-          <Paper sx={{ p: 3, maxWidth: 400, mx: "auto", mt: 2 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+          <Paper sx={{ p: 3, maxWidth: 400, mx: 'auto', mt: 2 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ mb: 2, fontWeight: 600 }}
+            >
               选择草稿
             </Typography>
             {drafts.map((draft, index) => (
@@ -1497,24 +1515,27 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   p: 2,
                   mb: 1,
                   borderRadius: 1,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  cursor: "pointer",
-                  "&:hover": {
-                    bgcolor: "action.hover",
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
                   },
                 }}
                 onClick={() => handleLoadDraft(draft)}
               >
-                <Typography variant="body2">草稿 #{index + 1}</Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant='body2'>草稿 #{index + 1}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {new Date(draft.timestamp).toLocaleString()}
                 </Typography>
               </Box>
             ))}
             <Button
               fullWidth
-              variant="outlined"
+              variant='outlined'
               onClick={() => setShowDraftDialog(false)}
             >
               关闭
@@ -1527,6 +1548,6 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 };
 
 // 导入 Switch 和 Checkbox（从 MUI 导入）
-import { Switch, Checkbox } from "@mui/material";
+import { Switch, Checkbox } from '@mui/material';
 
 export default FormPageTemplate;

@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
-import type { Notification } from "@/api/notification";
-import { getNotifications, getUnreadCount } from "@/api/notification";
-import { logger } from "@/utils/logger";
+import { useState, useCallback, useEffect } from 'react';
+import type { Notification } from '@/api/notification';
+import { getNotifications, getUnreadCount } from '@/api/notification';
+import { logger } from '@/utils/logger';
 
 interface NotificationState {
   notifications: Notification[];
@@ -34,7 +34,7 @@ export const useNotificationState = (enabled = true) => {
       setState((prev) => ({
         ...prev,
         loading: false,
-        error: "Failed to fetch notifications",
+        error: 'Failed to fetch notifications',
       }));
     }
   }, []);
@@ -50,12 +50,12 @@ export const useNotificationState = (enabled = true) => {
       }
     } catch (error: any) {
       if (
-        error.code !== "ERR_CANCELED" &&
-        error.code !== "ECONNABORTED" &&
-        error.name !== "AbortError" &&
+        error.code !== 'ERR_CANCELED' &&
+        error.code !== 'ECONNABORTED' &&
+        error.name !== 'AbortError' &&
         error.response?.status !== 401
       ) {
-        logger.error("Failed to fetch unread count:", error);
+        logger.error('Failed to fetch unread count:', error);
       }
     }
   }, []);
@@ -64,29 +64,20 @@ export const useNotificationState = (enabled = true) => {
     setState((prev) => ({
       ...prev,
       notifications: [notification, ...prev.notifications],
-      unreadCount: notification.is_read
-        ? prev.unreadCount
-        : prev.unreadCount + 1,
+      unreadCount: notification.is_read ? prev.unreadCount : prev.unreadCount + 1,
     }));
   }, []);
 
   const updateNotification = useCallback((notification: Notification) => {
     setState((prev) => {
-      const oldNotification = prev.notifications.find(
-        (n) => n.id === notification.id,
-      );
+      const oldNotification = prev.notifications.find((n) => n.id === notification.id);
       const wasUnread = oldNotification && !oldNotification.is_read;
       const isUnread = !notification.is_read;
 
       return {
         ...prev,
-        notifications: prev.notifications.map((n) =>
-          n.id === notification.id ? notification : n,
-        ),
-        unreadCount:
-          wasUnread && !isUnread
-            ? Math.max(0, prev.unreadCount - 1)
-            : prev.unreadCount,
+        notifications: prev.notifications.map((n) => (n.id === notification.id ? notification : n)),
+        unreadCount: wasUnread && !isUnread ? Math.max(0, prev.unreadCount - 1) : prev.unreadCount,
       };
     });
   }, []);

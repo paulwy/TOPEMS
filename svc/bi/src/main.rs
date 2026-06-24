@@ -121,7 +121,7 @@ async fn main() {
         .route("/api/bi/dashboard/{id}/share", post(modules::bi::dashboard::create_share_link))
         .route("/api/bi/dashboard/{id}/shares", get(modules::bi::dashboard::list_share_links))
         .route("/api/bi/dashboard/share/{share_id}", get(modules::bi::dashboard::get_shared_dashboard))
-        .route("/api/bi/dashboard/share/{id}", delete(modules::bi::dashboard::delete_share_link))
+        .route("/api/bi/dashboard/share/{share_id}", delete(modules::bi::dashboard::delete_share_link))
         // Dashboard Export/Import
         .route("/api/bi/dashboard/{id}/export", get(modules::bi::dashboard::export_dashboard))
         .route("/api/bi/dashboard/import", post(modules::bi::dashboard::import_dashboard))

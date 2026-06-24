@@ -1,14 +1,9 @@
 // modules/shared/GisContext.tsx
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  type ReactNode,
-} from "react";
-import type { MapModuleConfig } from "../MapModule/types";
-import type { TrackRecord } from "../TrackModule/types";
-import type { EvidenceRecord } from "../EvidenceModule/types";
-import type { SyncStatus, ToolMode, DrawFeature } from "./types";
+import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+import type { MapModuleConfig } from '../MapModule/types';
+import type { TrackRecord } from '../TrackModule/types';
+import type { EvidenceRecord } from '../EvidenceModule/types';
+import type { SyncStatus, ToolMode, DrawFeature } from './types';
 
 // State Interface
 export interface GisState {
@@ -20,7 +15,7 @@ export interface GisState {
     storage: boolean;
   };
   toolMode: ToolMode;
-  mapType: "osm" | "amap";
+  mapType: 'osm' | 'amap';
 
   // 测量状态
   measurePoints: [number, number][];
@@ -43,7 +38,7 @@ export interface GisState {
 
   // 热力图状态
   showHeatmap: boolean;
-  heatmapMode: "density" | "status";
+  heatmapMode: 'density' | 'status';
 
   // 3D视图状态
   show3DView: boolean;
@@ -60,44 +55,44 @@ export interface GisState {
 
 // Action Types
 type GisAction =
-  | { type: "SET_MAP_CONFIG"; payload: Partial<MapModuleConfig> }
-  | { type: "SET_MAP_TYPE"; payload: "osm" | "amap" }
-  | { type: "TOGGLE_LAYER"; payload: "devices" | "pipelines" | "storage" }
+  | { type: 'SET_MAP_CONFIG'; payload: Partial<MapModuleConfig> }
+  | { type: 'SET_MAP_TYPE'; payload: 'osm' | 'amap' }
+  | { type: 'TOGGLE_LAYER'; payload: 'devices' | 'pipelines' | 'storage' }
   | {
-      type: "SET_LAYER_VISIBILITY";
-      payload: { layer: "devices" | "pipelines" | "storage"; visible: boolean };
+      type: 'SET_LAYER_VISIBILITY';
+      payload: { layer: 'devices' | 'pipelines' | 'storage'; visible: boolean };
     }
-  | { type: "SET_TOOL_MODE"; payload: ToolMode }
-  | { type: "SET_MEASURE_POINTS"; payload: [number, number][] }
-  | { type: "SET_MEASURE_RESULT"; payload: string }
-  | { type: "CLEAR_MEASURE" }
-  | { type: "ADD_DRAW_FEATURE"; payload: DrawFeature }
-  | { type: "SET_DRAW_FEATURES"; payload: DrawFeature[] }
-  | { type: "SET_CURRENT_DRAWING"; payload: DrawFeature | null }
-  | { type: "CLEAR_DRAWINGS" }
-  | { type: "SET_ACTIVE_TRACK"; payload: TrackRecord | null }
-  | { type: "SET_PLAYING"; payload: boolean }
-  | { type: "SET_PLAYBACK_SPEED"; payload: number }
-  | { type: "SET_SHOW_TRACK_PANEL"; payload: boolean }
-  | { type: "ADD_EVIDENCE"; payload: EvidenceRecord }
-  | { type: "SET_EVIDENCE_RECORDS"; payload: EvidenceRecord[] }
-  | { type: "SET_CAPTURE_IN_PROGRESS"; payload: boolean }
-  | { type: "SET_SHOW_EVIDENCE_PANEL"; payload: boolean }
-  | { type: "SET_SHOW_HEATMAP"; payload: boolean }
-  | { type: "SET_HEATMAP_MODE"; payload: "density" | "status" }
-  | { type: "SET_SHOW_3D_VIEW"; payload: boolean }
-  | { type: "SET_OFFLINE_MODE"; payload: boolean }
-  | { type: "SET_SYNC_STATUS"; payload: SyncStatus }
-  | { type: "SET_SHOW_DETAILS_PANEL"; payload: boolean }
-  | { type: "SET_SHOW_LAYER_PANEL"; payload: boolean }
-  | { type: "SET_SELECTED_ITEM"; payload: { item: unknown; show: boolean } };
+  | { type: 'SET_TOOL_MODE'; payload: ToolMode }
+  | { type: 'SET_MEASURE_POINTS'; payload: [number, number][] }
+  | { type: 'SET_MEASURE_RESULT'; payload: string }
+  | { type: 'CLEAR_MEASURE' }
+  | { type: 'ADD_DRAW_FEATURE'; payload: DrawFeature }
+  | { type: 'SET_DRAW_FEATURES'; payload: DrawFeature[] }
+  | { type: 'SET_CURRENT_DRAWING'; payload: DrawFeature | null }
+  | { type: 'CLEAR_DRAWINGS' }
+  | { type: 'SET_ACTIVE_TRACK'; payload: TrackRecord | null }
+  | { type: 'SET_PLAYING'; payload: boolean }
+  | { type: 'SET_PLAYBACK_SPEED'; payload: number }
+  | { type: 'SET_SHOW_TRACK_PANEL'; payload: boolean }
+  | { type: 'ADD_EVIDENCE'; payload: EvidenceRecord }
+  | { type: 'SET_EVIDENCE_RECORDS'; payload: EvidenceRecord[] }
+  | { type: 'SET_CAPTURE_IN_PROGRESS'; payload: boolean }
+  | { type: 'SET_SHOW_EVIDENCE_PANEL'; payload: boolean }
+  | { type: 'SET_SHOW_HEATMAP'; payload: boolean }
+  | { type: 'SET_HEATMAP_MODE'; payload: 'density' | 'status' }
+  | { type: 'SET_SHOW_3D_VIEW'; payload: boolean }
+  | { type: 'SET_OFFLINE_MODE'; payload: boolean }
+  | { type: 'SET_SYNC_STATUS'; payload: SyncStatus }
+  | { type: 'SET_SHOW_DETAILS_PANEL'; payload: boolean }
+  | { type: 'SET_SHOW_LAYER_PANEL'; payload: boolean }
+  | { type: 'SET_SELECTED_ITEM'; payload: { item: unknown; show: boolean } };
 
 // Initial State
 const initialState: GisState = {
   mapConfig: {
     center: [31.2304, 121.4737],
     zoom: 14,
-    tileSource: "osm",
+    tileSource: 'osm',
     offlineEnabled: false,
   },
   visibleLayers: {
@@ -105,10 +100,10 @@ const initialState: GisState = {
     pipelines: true,
     storage: true,
   },
-  toolMode: "select",
-  mapType: "osm",
+  toolMode: 'select',
+  mapType: 'osm',
   measurePoints: [],
-  measureResult: "",
+  measureResult: '',
   drawFeatures: [],
   currentDrawing: null,
   activeTrack: null,
@@ -119,7 +114,7 @@ const initialState: GisState = {
   captureInProgress: false,
   showEvidencePanel: false,
   showHeatmap: false,
-  heatmapMode: "density",
+  heatmapMode: 'density',
   show3DView: false,
   offlineMode: false,
   syncStatus: null,
@@ -131,11 +126,11 @@ const initialState: GisState = {
 // Reducer
 export function gisReducer(state: GisState, action: GisAction): GisState {
   switch (action.type) {
-    case "SET_MAP_CONFIG":
+    case 'SET_MAP_CONFIG':
       return { ...state, mapConfig: { ...state.mapConfig, ...action.payload } };
-    case "SET_MAP_TYPE":
+    case 'SET_MAP_TYPE':
       return { ...state, mapType: action.payload };
-    case "TOGGLE_LAYER":
+    case 'TOGGLE_LAYER':
       return {
         ...state,
         visibleLayers: {
@@ -143,7 +138,7 @@ export function gisReducer(state: GisState, action: GisAction): GisState {
           [action.payload]: !state.visibleLayers[action.payload],
         },
       };
-    case "SET_LAYER_VISIBILITY":
+    case 'SET_LAYER_VISIBILITY':
       return {
         ...state,
         visibleLayers: {
@@ -151,59 +146,59 @@ export function gisReducer(state: GisState, action: GisAction): GisState {
           [action.payload.layer]: action.payload.visible,
         },
       };
-    case "SET_TOOL_MODE":
+    case 'SET_TOOL_MODE':
       return { ...state, toolMode: action.payload };
-    case "SET_MEASURE_POINTS":
+    case 'SET_MEASURE_POINTS':
       return { ...state, measurePoints: action.payload };
-    case "SET_MEASURE_RESULT":
+    case 'SET_MEASURE_RESULT':
       return { ...state, measureResult: action.payload };
-    case "CLEAR_MEASURE":
-      return { ...state, measurePoints: [], measureResult: "" };
-    case "ADD_DRAW_FEATURE":
+    case 'CLEAR_MEASURE':
+      return { ...state, measurePoints: [], measureResult: '' };
+    case 'ADD_DRAW_FEATURE':
       return {
         ...state,
         drawFeatures: [...state.drawFeatures, action.payload],
       };
-    case "SET_DRAW_FEATURES":
+    case 'SET_DRAW_FEATURES':
       return { ...state, drawFeatures: action.payload };
-    case "SET_CURRENT_DRAWING":
+    case 'SET_CURRENT_DRAWING':
       return { ...state, currentDrawing: action.payload };
-    case "CLEAR_DRAWINGS":
+    case 'CLEAR_DRAWINGS':
       return { ...state, drawFeatures: [], currentDrawing: null };
-    case "SET_ACTIVE_TRACK":
+    case 'SET_ACTIVE_TRACK':
       return { ...state, activeTrack: action.payload };
-    case "SET_PLAYING":
+    case 'SET_PLAYING':
       return { ...state, isPlaying: action.payload };
-    case "SET_PLAYBACK_SPEED":
+    case 'SET_PLAYBACK_SPEED':
       return { ...state, playbackSpeed: action.payload };
-    case "SET_SHOW_TRACK_PANEL":
+    case 'SET_SHOW_TRACK_PANEL':
       return { ...state, showTrackPanel: action.payload };
-    case "ADD_EVIDENCE":
+    case 'ADD_EVIDENCE':
       return {
         ...state,
         evidenceRecords: [...state.evidenceRecords, action.payload],
       };
-    case "SET_EVIDENCE_RECORDS":
+    case 'SET_EVIDENCE_RECORDS':
       return { ...state, evidenceRecords: action.payload };
-    case "SET_CAPTURE_IN_PROGRESS":
+    case 'SET_CAPTURE_IN_PROGRESS':
       return { ...state, captureInProgress: action.payload };
-    case "SET_SHOW_EVIDENCE_PANEL":
+    case 'SET_SHOW_EVIDENCE_PANEL':
       return { ...state, showEvidencePanel: action.payload };
-    case "SET_SHOW_HEATMAP":
+    case 'SET_SHOW_HEATMAP':
       return { ...state, showHeatmap: action.payload };
-    case "SET_HEATMAP_MODE":
+    case 'SET_HEATMAP_MODE':
       return { ...state, heatmapMode: action.payload };
-    case "SET_SHOW_3D_VIEW":
+    case 'SET_SHOW_3D_VIEW':
       return { ...state, show3DView: action.payload };
-    case "SET_OFFLINE_MODE":
+    case 'SET_OFFLINE_MODE':
       return { ...state, offlineMode: action.payload };
-    case "SET_SYNC_STATUS":
+    case 'SET_SYNC_STATUS':
       return { ...state, syncStatus: action.payload };
-    case "SET_SHOW_DETAILS_PANEL":
+    case 'SET_SHOW_DETAILS_PANEL':
       return { ...state, showDetailsPanel: action.payload };
-    case "SET_SHOW_LAYER_PANEL":
+    case 'SET_SHOW_LAYER_PANEL':
       return { ...state, showLayerPanel: action.payload };
-    case "SET_SELECTED_ITEM":
+    case 'SET_SELECTED_ITEM':
       return {
         ...state,
         selectedItem: action.payload.item,
@@ -228,27 +223,20 @@ interface GisProviderProps {
   initialState?: Partial<GisState>;
 }
 
-export function GisProvider({
-  children,
-  initialState: customState,
-}: GisProviderProps) {
+export function GisProvider({ children, initialState: customState }: GisProviderProps) {
   const [state, dispatch] = useReducer(gisReducer, {
     ...initialState,
     ...customState,
   });
 
-  return (
-    <GisContext.Provider value={{ state, dispatch }}>
-      {children}
-    </GisContext.Provider>
-  );
+  return <GisContext.Provider value={{ state, dispatch }}>{children}</GisContext.Provider>;
 }
 
 // Hook
 export function useGisContext() {
   const context = useContext(GisContext);
   if (!context) {
-    throw new Error("useGisContext must be used within a GisProvider");
+    throw new Error('useGisContext must be used within a GisProvider');
   }
   return context;
 }

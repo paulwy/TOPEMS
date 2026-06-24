@@ -15,6 +15,45 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
+  # ================================================
+  # Consul 服务发现配置
+  # ================================================
+  - job_name: 'consul-services'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        datacenter: dc1
+        services:
+          - topems-erp
+          - topems-hrm
+          - topems-pm
+          - topems-crm
+          - topems-mes
+          - topems-pdm
+          - topems-scm
+          - topems-wms
+          - topems-srm
+          - topems-qms
+          - topems-lims
+          - topems-ehs
+          - topems-rs
+          - topems-bi
+          - topems-report
+          - topems-monitor
+          - topems-portal
+          - topems-ai
+          - topems-mobile
+          - topems-gis
+          - topems-integration
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__meta_consul_service_name]
+        target_label: job
+      - source_labels: [__meta_consul_service_address]
+        target_label: instance
+      - source_labels: [__meta_consul_service_port]
+        target_label: __meta_consul_service_port
+        replacement: '${1}:${2}'
+
   - job_name: 'topems-iam'
     static_configs:
       - targets: ['host.docker.internal:8000']

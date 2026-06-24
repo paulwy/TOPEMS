@@ -1,0 +1,80 @@
+# Consul Deployment Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consul
+  namespace: topems
+  labels:
+    app: consul
+    suite: infrastructure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consul
+  template:
+    metadata:
+      labels:
+        app: consul
+        suite: infrastructure
+    spec:
+      containers:
+      - name: consul
+        image: consul:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - "agent"
+        - "-server"
+        - "-ui"
+        - "-bootstrap-expect=1"
+        - "-data-dir=/consul/data"
+        - "-bind=0.0.0.0"
+        - "-client=0.0.0.0"
+        - "-log-level=info"
+        ports:
+        - containerPort: 8500
+          name: http
+        - containerPort: 8600
+          name: dns
+          protocol: UDP
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        volumeMounts:
+        - name: consul-data
+          mountPath: /consul/data
+        livenessProbe:
+          exec:
+            command: ["consul", "members"]
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command: ["consul", "members"]
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: consul-data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul-service
+  namespace: topems
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8500
+    targetPort: 8500
+    name: http
+  - port: 8600
+    targetPort: 8600
+    name: dns
+    protocol: UDP
+  selector:
+    app: consul

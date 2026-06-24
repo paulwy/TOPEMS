@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   FileText,
@@ -8,12 +8,12 @@ import {
   BarChart3,
   Activity,
   ArrowRight,
-} from "lucide-react";
-import { DashboardTemplate } from "@/components/templates";
-import type { StatCard, ChartCard, QuickAction } from "@/components/templates";
-import BarChartComponent from "../../components/charts/BarChart";
-import LineChartComponent from "../../components/charts/LineChart";
-import PieChartComponent from "../../components/charts/PieChart";
+} from 'lucide-react';
+import { DashboardTemplate } from '@/components/templates';
+import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
+import BarChartComponent from '../../components/charts/BarChart';
+import LineChartComponent from '../../components/charts/LineChart';
+import PieChartComponent from '../../components/charts/PieChart';
 
 const iconMap: Record<string, React.ReactNode> = {
   TrendingUp: <TrendingUp size={24} />,
@@ -23,33 +23,33 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const barData = [
-  { name: "1月", value: 4000 },
-  { name: "2月", value: 3000 },
-  { name: "3月", value: 5000 },
-  { name: "4月", value: 4500 },
-  { name: "5月", value: 6000 },
-  { name: "6月", value: 5500 },
+  { name: '1月', value: 4000 },
+  { name: '2月', value: 3000 },
+  { name: '3月', value: 5000 },
+  { name: '4月', value: 4500 },
+  { name: '5月', value: 6000 },
+  { name: '6月', value: 5500 },
 ];
 const pieData = [
-  { name: "原材料", value: 45 },
-  { name: "成品", value: 35 },
-  { name: "半成品", value: 20 },
+  { name: '原材料', value: 45 },
+  { name: '成品', value: 35 },
+  { name: '半成品', value: 20 },
 ];
 const lineData = [
-  { name: "周一", value: 120 },
-  { name: "周二", value: 130 },
-  { name: "周三", value: 110 },
-  { name: "周四", value: 140 },
-  { name: "周五", value: 160 },
-  { name: "周六", value: 90 },
-  { name: "周日", value: 80 },
+  { name: '周一', value: 120 },
+  { name: '周二', value: 130 },
+  { name: '周三', value: 110 },
+  { name: '周四', value: 140 },
+  { name: '周五', value: 160 },
+  { name: '周六', value: 90 },
+  { name: '周日', value: 80 },
 ];
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return "上午好";
-  if (hour < 18) return "下午好";
-  return "晚上好";
+  if (hour < 12) return '上午好';
+  if (hour < 18) return '下午好';
+  return '晚上好';
 };
 
 export const DashboardPage: React.FC = () => {
@@ -63,93 +63,105 @@ export const DashboardPage: React.FC = () => {
 
   const stats: StatCard[] = [
     {
-      id: "total-assets",
-      title: "总资产",
-      value: "¥12,580,000",
+      id: 'total-assets',
+      title: '总资产',
+      value: '¥12,580,000',
       icon: iconMap.TrendingUp,
       change: 8.5,
-      changeLabel: "% vs 上周期",
-      color: "success",
+      changeLabel: '% vs 上周期',
+      color: 'success',
     },
     {
-      id: "monthly-income",
-      title: "本月收入",
-      value: "¥2,340,000",
+      id: 'monthly-income',
+      title: '本月收入',
+      value: '¥2,340,000',
       icon: iconMap.Wallet,
       change: 12,
-      changeLabel: "% vs 上周期",
-      color: "info",
+      changeLabel: '% vs 上周期',
+      color: 'info',
     },
     {
-      id: "inventory-total",
-      title: "库存总量",
-      value: "15,680",
+      id: 'inventory-total',
+      title: '库存总量',
+      value: '15,680',
       icon: iconMap.Package,
       change: -3,
-      changeLabel: "% vs 上周期",
-      color: "warning",
+      changeLabel: '% vs 上周期',
+      color: 'warning',
     },
     {
-      id: "pending-orders",
-      title: "待审批订单",
-      value: "23",
+      id: 'pending-orders',
+      title: '待审批订单',
+      value: '23',
       icon: iconMap.FileText,
       change: 5,
-      changeLabel: "vs 上周期",
-      color: "primary",
+      changeLabel: 'vs 上周期',
+      color: 'primary',
     },
   ];
 
   const charts: ChartCard[] = [
     {
-      id: "data-overview",
-      title: "数据概览",
-      chart: <BarChartComponent data={barData} xKey="name" yKey="value" />,
+      id: 'data-overview',
+      title: '数据概览',
+      chart: (
+        <BarChartComponent
+          data={barData}
+          xKey='name'
+          yKey='value'
+        />
+      ),
       height: 300,
     },
     {
-      id: "trend-analysis",
-      title: "趋势分析",
-      chart: <LineChartComponent data={lineData} xKey="name" yKey="value" />,
+      id: 'trend-analysis',
+      title: '趋势分析',
+      chart: (
+        <LineChartComponent
+          data={lineData}
+          xKey='name'
+          yKey='value'
+        />
+      ),
       height: 300,
     },
   ];
 
   const quickActions: QuickAction[] = [
     {
-      id: "create-purchase-order",
-      label: "新建采购订单",
+      id: 'create-purchase-order',
+      label: '新建采购订单',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate("/erp/purchasing/create"),
+      onClick: () => navigate('/erp/purchasing/create'),
     },
     {
-      id: "view-financial-reports",
-      label: "查看财务报表",
+      id: 'view-financial-reports',
+      label: '查看财务报表',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate("/erp/finance/reports"),
+      onClick: () => navigate('/erp/finance/reports'),
     },
     {
-      id: "inventory-stocktake",
-      label: "库存盘点",
+      id: 'inventory-stocktake',
+      label: '库存盘点',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate("/erp/inventory/stocktake"),
+      onClick: () => navigate('/erp/inventory/stocktake'),
     },
     {
-      id: "sales-data-analysis",
-      label: "销售数据分析",
+      id: 'sales-data-analysis',
+      label: '销售数据分析',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate("/erp/sales/analysis"),
+      onClick: () => navigate('/erp/sales/analysis'),
     },
   ];
 
   return (
     <DashboardTemplate
-      title="企业资源管理"
+      title='企业资源管理'
       subtitle={`${getGreeting()}，财务管理与库存概览`}
       stats={stats}
       charts={charts}
       quickActions={quickActions}
-      quickActionsTitle="快捷操作"
+      quickActionsTitle='快捷操作'
       loading={loading}
     />
   );

@@ -1,5 +1,5 @@
-import { useCallback, useState, useMemo, useRef, useEffect } from "react";
-import type { AxiosInstance, AxiosRequestConfig } from "axios";
+import { useCallback, useState, useMemo, useRef, useEffect } from 'react';
+import type { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 export interface UseCrudOptions<T> {
   api: AxiosInstance;
@@ -11,11 +11,7 @@ export interface UseCrudOptions<T> {
   autoFetch?: boolean;
 }
 
-export interface UseCrudResult<
-  T,
-  TCreate = Omit<T, "id">,
-  TUpdate = Partial<T>,
-> {
+export interface UseCrudResult<T, TCreate = Omit<T, 'id'>, TUpdate = Partial<T>> {
   data: T[];
   loading: boolean;
   error: string | null;
@@ -43,7 +39,7 @@ interface CacheEntry<T> {
 
 export function useCrud<
   T extends { id?: string | number },
-  TCreate = Omit<T, "id">,
+  TCreate = Omit<T, 'id'>,
   TUpdate = Partial<T>,
 >({
   api,
@@ -74,16 +70,12 @@ export function useCrud<
 
   const handleError = useCallback(
     (err: any) => {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        err?.toString() ||
-        "操作失败";
+      const message = err?.response?.data?.message || err?.message || err?.toString() || '操作失败';
       setError(message);
       onError?.(err);
       return Promise.reject(err);
     },
-    [onError],
+    [onError]
   );
 
   const clearCache = useCallback(() => {
@@ -121,8 +113,7 @@ export function useCrud<
 
         const response = await api.get(basePath, config);
 
-        const responseData =
-          response.data?.items || response.data?.data || response.data;
+        const responseData = response.data?.items || response.data?.data || response.data;
         const responseTotal = response.data?.total || 0;
 
         if (cacheTime > 0) {
@@ -138,7 +129,7 @@ export function useCrud<
 
         return responseData;
       } catch (err: any) {
-        if (err.code !== "ERR_CANCELED") {
+        if (err.code !== 'ERR_CANCELED') {
           return handleError(err);
         }
         return data;
@@ -148,7 +139,7 @@ export function useCrud<
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [api, basePath, page, pageSize, cacheTime, handleError],
+    [api, basePath, page, pageSize, cacheTime, handleError]
   );
 
   useEffect(() => {
@@ -176,7 +167,7 @@ export function useCrud<
         setError(null);
         return response.data?.data || response.data;
       } catch (err: any) {
-        if (err.code !== "ERR_CANCELED") {
+        if (err.code !== 'ERR_CANCELED') {
           return handleError(err);
         }
         throw err;
@@ -185,7 +176,7 @@ export function useCrud<
         abortControllerRef.current = null;
       }
     },
-    [api, basePath, handleError],
+    [api, basePath, handleError]
   );
 
   const create = useCallback(
@@ -197,7 +188,7 @@ export function useCrud<
         setData((prev) => [...prev, newItem]);
         setError(null);
         clearCache();
-        onSuccess?.("创建成功");
+        onSuccess?.('创建成功');
         return newItem;
       } catch (err) {
         return handleError(err);
@@ -205,7 +196,7 @@ export function useCrud<
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess, clearCache],
+    [api, basePath, handleError, onSuccess, clearCache]
   );
 
   const update = useCallback(
@@ -217,7 +208,7 @@ export function useCrud<
         setData((prev) => prev.map((d) => (d.id === id ? updatedItem : d)));
         setError(null);
         clearCache();
-        onSuccess?.("更新成功");
+        onSuccess?.('更新成功');
         return updatedItem;
       } catch (err) {
         return handleError(err);
@@ -225,7 +216,7 @@ export function useCrud<
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess, clearCache],
+    [api, basePath, handleError, onSuccess, clearCache]
   );
 
   const deleteItem = useCallback(
@@ -236,14 +227,14 @@ export function useCrud<
         setData((prev) => prev.filter((d) => d.id !== id));
         setError(null);
         clearCache();
-        onSuccess?.("删除成功");
+        onSuccess?.('删除成功');
       } catch (err) {
         return handleError(err);
       } finally {
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess, clearCache],
+    [api, basePath, handleError, onSuccess, clearCache]
   );
 
   const bulkDelete = useCallback(
@@ -251,9 +242,7 @@ export function useCrud<
       setLoading(true);
       try {
         await api.post(`${basePath}/bulk-delete`, { ids });
-        setData((prev) =>
-          prev.filter((d) => !ids.includes(d.id as string | number)),
-        );
+        setData((prev) => prev.filter((d) => !ids.includes(d.id as string | number)));
         setError(null);
         clearCache();
         onSuccess?.(`已删除 ${ids.length} 条记录`);
@@ -263,7 +252,7 @@ export function useCrud<
         setLoading(false);
       }
     },
-    [api, basePath, handleError, onSuccess, clearCache],
+    [api, basePath, handleError, onSuccess, clearCache]
   );
 
   const refresh = useCallback(() => {
@@ -279,7 +268,7 @@ export function useCrud<
       setPage,
       setPageSize,
     }),
-    [page, pageSize, total],
+    [page, pageSize, total]
   );
 
   return {

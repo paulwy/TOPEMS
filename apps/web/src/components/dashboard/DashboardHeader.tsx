@@ -1,19 +1,17 @@
-import React from "react";
-import { Box, Typography, IconButton } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Clock, LogOut, Zap } from "lucide-react";
-import { NotificationBell } from "../notifications";
-import { ModeToggle } from "../ModeToggle";
-import { useAuth } from "../../hooks/useAuth";
-import { useRole } from "../../hooks/useRole";
+import React from 'react';
+import { Box, Typography, IconButton } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Clock, LogOut, Zap } from 'lucide-react';
+import { NotificationBell } from '../notifications';
+import { ModeToggle } from '../ModeToggle';
+import { useAuth } from '../../hooks/useAuth';
+import { useRole } from '../../hooks/useRole';
 
 interface DashboardHeaderProps {
   onLogout?: () => void;
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-  onLogout,
-}) => {
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) => {
   const { user } = useAuth();
   const { getRoleName } = useRole();
   const [currentTime, setCurrentTime] = React.useState(new Date());
@@ -27,12 +25,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   return (
     <Box
-      component="header"
+      component='header'
       sx={{
-        backgroundColor: "rgba(30, 41, 59, 0.8)",
-        backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-        position: "sticky",
+        backgroundColor: 'rgba(30, 41, 59, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        position: 'sticky',
         top: 0,
         zIndex: 50,
       }}
@@ -40,54 +38,52 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       <Box
         sx={{
           maxWidth: 1280,
-          mx: "auto",
+          mx: 'auto',
           px: { xs: 2, sm: 3, lg: 4 },
         }}
       >
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             height: 64,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  background:
-                    "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
                   borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   boxShadow: 3,
                 }}
               >
-                <Zap style={{ width: 20, height: 20, color: "white" }} />
+                <Zap style={{ width: 20, height: 20, color: 'white' }} />
               </Box>
               <Box>
                 <Typography
                   sx={{
-                    fontSize: "1.25rem",
+                    fontSize: '1.25rem',
                     fontWeight: 700,
-                    background:
-                      "linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    background: 'linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                   }}
                 >
                   TOPEMS
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "0.75rem",
-                    color: "#94a3b8",
-                    display: { xs: "none", md: "inline" },
+                    fontSize: '0.75rem',
+                    color: '#94a3b8',
+                    display: { xs: 'none', md: 'inline' },
                   }}
                 >
                   化工新材料数字化平台
@@ -96,24 +92,24 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </Box>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
             <Box
               sx={{
-                display: { xs: "none", md: "flex" },
-                alignItems: "center",
+                display: { xs: 'none', md: 'flex' },
+                alignItems: 'center',
                 gap: 2,
-                fontSize: "0.875rem",
-                color: "#94a3b8",
+                fontSize: '0.875rem',
+                color: '#94a3b8',
               }}
             >
               <Clock style={{ width: 16, height: 16 }} />
               <Typography
-                component="span"
-                sx={{ fontSize: "0.875rem", color: "#94a3b8" }}
+                component='span'
+                sx={{ fontSize: '0.875rem', color: '#94a3b8' }}
               >
-                {currentTime.toLocaleTimeString("zh-CN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
+                {currentTime.toLocaleTimeString('zh-CN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
                 })}
               </Typography>
             </Box>
@@ -123,38 +119,35 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 3,
                 pl: 4,
-                borderLeft: "1px solid rgba(255, 255, 255, 0.1)",
+                borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
               <Box
                 sx={{
                   width: 36,
                   height: 36,
-                  background:
-                    "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  fontSize: "0.875rem",
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '0.875rem',
                   fontWeight: 600,
                   boxShadow: 3,
                 }}
               >
-                {user?.username?.charAt(0).toUpperCase() || "U"}
+                {user?.username?.charAt(0).toUpperCase() || 'U'}
               </Box>
-              <Box sx={{ display: { xs: "none", md: "block" } }}>
-                <Typography
-                  sx={{ fontSize: "0.875rem", fontWeight: 500, color: "white" }}
-                >
+              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'white' }}>
                   {user?.full_name || user?.username}
                 </Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                   {getRoleName()}
                 </Typography>
               </Box>
@@ -165,14 +158,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               sx={{
                 p: 2.5,
                 borderRadius: 2,
-                color: "#cbd5e1",
-                transition: "all",
-                "&:hover": {
-                  backgroundColor: "rgba(239, 68, 68, 0.1)",
-                  color: "#f87171",
+                color: '#cbd5e1',
+                transition: 'all',
+                '&:hover': {
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: '#f87171',
                 },
               }}
-              title="退出登录"
+              title='退出登录'
             >
               <LogOut style={{ width: 20, height: 20 }} />
             </IconButton>

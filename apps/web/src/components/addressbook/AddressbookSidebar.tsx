@@ -1,18 +1,11 @@
-import React, { useState } from "react";
-import {
-  Users,
-  Building,
-  User,
-  Folder,
-  ChevronRight,
-  ChevronDown,
-} from "lucide-react";
-import type { DepartmentNode } from "../../types/addressbook";
+import React, { useState } from 'react';
+import { Users, Building, User, Folder, ChevronRight, ChevronDown } from 'lucide-react';
+import type { DepartmentNode } from '../../types/addressbook';
 
 interface AddressbookSidebarProps {
   departments: DepartmentNode[];
-  selectedType: "all" | "EMPLOYEE" | "DEPARTMENT" | "COMPANY";
-  onTypeSelect: (_type: "all" | "EMPLOYEE" | "DEPARTMENT" | "COMPANY") => void;
+  selectedType: 'all' | 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
+  onTypeSelect: (_type: 'all' | 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY') => void;
   selectedDepartment: string | null;
   onDepartmentSelect: (_id: string | null) => void;
 }
@@ -24,9 +17,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
   selectedDepartment,
   onDepartmentSelect,
 }) => {
-  const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(
-    new Set(),
-  );
+  const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set());
 
   const toggleDepartment = (id: string) => {
     const newExpanded = new Set(expandedDepartments);
@@ -38,38 +29,38 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
     setExpandedDepartments(newExpanded);
   };
 
-  const renderDepartmentNode = (
-    node: DepartmentNode,
-    level: number = 0,
-  ): React.ReactNode => {
+  const renderDepartmentNode = (node: DepartmentNode, level: number = 0): React.ReactNode => {
     const hasChildren = node.children.length > 0;
     const isExpanded = expandedDepartments.has(node.id);
     const isSelected = selectedDepartment === node.id;
 
     return (
-      <div key={node.id} style={{ userSelect: "none" }}>
+      <div
+        key={node.id}
+        style={{ userSelect: 'none' }}
+      >
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 8,
-            padding: "8px 12px",
+            padding: '8px 12px',
             paddingLeft: level * 16 + 12,
             fontSize: 14,
-            cursor: "pointer",
+            cursor: 'pointer',
             borderRadius: 4,
-            backgroundColor: isSelected ? "#eff6ff" : "transparent",
-            color: isSelected ? "#1d4ed8" : "#334155",
+            backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+            color: isSelected ? '#1d4ed8' : '#334155',
           }}
           onClick={() => onDepartmentSelect(isSelected ? null : node.id)}
           onMouseEnter={(e) => {
             if (!isSelected) {
-              e.currentTarget.style.backgroundColor = "#f1f5f9";
+              e.currentTarget.style.backgroundColor = '#f1f5f9';
             }
           }}
           onMouseLeave={(e) => {
             if (!isSelected) {
-              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.backgroundColor = 'transparent';
             }
           }}
         >
@@ -82,15 +73,15 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
               style={{
                 padding: 4,
                 borderRadius: 4,
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e2e8f0";
+                e.currentTarget.style.backgroundColor = '#e2e8f0';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               {isExpanded ? (
@@ -105,92 +96,83 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
           <Folder sx={{ width: 16, height: 16, flexShrink: 0 }} />
           <span
             style={{
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {node.name}
           </span>
         </div>
         {hasChildren && isExpanded && (
-          <div>
-            {node.children.map((child) =>
-              renderDepartmentNode(child, level + 1),
-            )}
-          </div>
+          <div>{node.children.map((child) => renderDepartmentNode(child, level + 1))}</div>
         )}
       </div>
     );
   };
 
   const typeFilters = [
-    { id: "all", label: "全部", icon: Users },
-    { id: "EMPLOYEE", label: "员工", icon: User },
-    { id: "DEPARTMENT", label: "部门", icon: Folder },
-    { id: "COMPANY", label: "公司", icon: Building },
+    { id: 'all', label: '全部', icon: Users },
+    { id: 'EMPLOYEE', label: '员工', icon: User },
+    { id: 'DEPARTMENT', label: '部门', icon: Folder },
+    { id: 'COMPANY', label: '公司', icon: Building },
   ];
 
   return (
     <div
       style={{
         width: 256,
-        backgroundColor: "white",
-        borderRight: "1px solid #e2e8f0",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
+        backgroundColor: 'white',
+        borderRight: '1px solid #e2e8f0',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <div style={{ padding: 16, borderBottom: "1px solid #e2e8f0" }}>
-        <h2
-          style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: 0 }}
-        >
-          通讯录
-        </h2>
+      <div style={{ padding: 16, borderBottom: '1px solid #e2e8f0' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', margin: 0 }}>通讯录</h2>
       </div>
 
       {/* 类型筛选 */}
-      <div style={{ padding: 16, borderBottom: "1px solid #e2e8f0" }}>
+      <div style={{ padding: 16, borderBottom: '1px solid #e2e8f0' }}>
         <h3
           style={{
             fontSize: 14,
             fontWeight: 500,
-            color: "#64748b",
+            color: '#64748b',
             marginBottom: 12,
           }}
         >
           分类
         </h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {typeFilters.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => onTypeSelect(id as any)}
               style={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 8,
-                padding: "8px 12px",
+                padding: '8px 12px',
                 fontSize: 14,
                 borderRadius: 6,
-                border: "none",
-                cursor: "pointer",
-                backgroundColor:
-                  selectedType === id ? "#eff6ff" : "transparent",
-                color: selectedType === id ? "#1d4ed8" : "#334155",
-                transition: "colors 0.2s",
-                width: "100%",
-                textAlign: "left",
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: selectedType === id ? '#eff6ff' : 'transparent',
+                color: selectedType === id ? '#1d4ed8' : '#334155',
+                transition: 'colors 0.2s',
+                width: '100%',
+                textAlign: 'left',
               }}
               onMouseEnter={(e) => {
                 if (selectedType !== id) {
-                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                  e.currentTarget.style.backgroundColor = '#f1f5f9';
                 }
               }}
               onMouseLeave={(e) => {
                 if (selectedType !== id) {
-                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }
               }}
             >
@@ -202,44 +184,43 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
       </div>
 
       {/* 部门树 */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
         <h3
           style={{
             fontSize: 14,
             fontWeight: 500,
-            color: "#64748b",
+            color: '#64748b',
             marginBottom: 12,
           }}
         >
           组织架构
         </h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <button
             onClick={() => onDepartmentSelect(null)}
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
-              padding: "8px 12px",
+              padding: '8px 12px',
               fontSize: 14,
               borderRadius: 6,
-              border: "none",
-              cursor: "pointer",
-              backgroundColor:
-                selectedDepartment === null ? "#eff6ff" : "transparent",
-              color: selectedDepartment === null ? "#1d4ed8" : "#334155",
-              transition: "colors 0.2s",
-              width: "100%",
-              textAlign: "left",
+              border: 'none',
+              cursor: 'pointer',
+              backgroundColor: selectedDepartment === null ? '#eff6ff' : 'transparent',
+              color: selectedDepartment === null ? '#1d4ed8' : '#334155',
+              transition: 'colors 0.2s',
+              width: '100%',
+              textAlign: 'left',
             }}
             onMouseEnter={(e) => {
               if (selectedDepartment !== null) {
-                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                e.currentTarget.style.backgroundColor = '#f1f5f9';
               }
             }}
             onMouseLeave={(e) => {
               if (selectedDepartment !== null) {
-                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.backgroundColor = 'transparent';
               }
             }}
           >

@@ -1,14 +1,47 @@
-import React, {
-  useState,
-  useCallback,
-  useMemo,
-  useEffect,
-  useRef,
-} from "react";
-import type { BoxProps } from "@mui/material";
-import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, TableSortLabel, Typography, IconButton, Tooltip, Checkbox, Skeleton, TextField, InputAdornment, Chip, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Collapse, useTheme, useMediaQuery, Popover, Switch, List, ListItem, OutlinedInput, Select, FormControl, InputLabel, FormControlLabel, Breadcrumbs, Link, ButtonGroup,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { EmptyState, ErrorEmptyState } from "../mui/EmptyState";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import type { BoxProps } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  TableSortLabel,
+  Typography,
+  IconButton,
+  Tooltip,
+  Checkbox,
+  Skeleton,
+  TextField,
+  InputAdornment,
+  Chip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Collapse,
+  useTheme,
+  useMediaQuery,
+  Popover,
+  Switch,
+  List,
+  ListItem,
+  OutlinedInput,
+  Select,
+  FormControl,
+  InputLabel,
+  FormControlLabel,
+  Breadcrumbs,
+  Link,
+  ButtonGroup,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { EmptyState, ErrorEmptyState } from '../mui/EmptyState';
 import {
   Search,
   Filter,
@@ -30,11 +63,11 @@ import {
   Check,
   X,
   RotateCcw,
-} from "lucide-react";
-import { Link as RouterLink } from "react-router-dom";
+} from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 
 // 从 FilterBar 导入 FilterConfig 类型以确保类型一致
-import type { FilterConfig } from "../mui/FilterBar";
+import type { FilterConfig } from '../mui/FilterBar';
 
 // ============ 类型定义 ============
 
@@ -56,7 +89,7 @@ export interface ColumnDef<T = any> {
   /** 最小宽度 */
   minWidth?: number;
   /** 文本对齐方式 */
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   /** 是否可排序 */
   sortable?: boolean;
   /** 自定义单元格渲染 */
@@ -80,7 +113,7 @@ export interface FilterOption {
 }
 
 // 使用从 FilterBar 导入的 FilterConfig
-export type { FilterConfig } from "../mui/FilterBar";
+export type { FilterConfig } from '../mui/FilterBar';
 
 /**
  * 行操作接口
@@ -96,7 +129,7 @@ export interface RowAction<T = any> {
   /** 跳转链接 */
   href?: string;
   /** 按钮颜色 */
-  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
+  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
   /** 条件显示 */
   show?: (row: T) => boolean;
   /** 是否显示分隔线 */
@@ -139,7 +172,7 @@ export interface BatchAction {
   /** 操作图标 */
   icon?: React.ReactNode;
   /** 按钮颜色 */
-  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
+  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
   /** 点击回调 */
   onClick?: () => void;
   /** 是否需要确认 */
@@ -186,8 +219,8 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
   // 排序
   sortable?: boolean;
   defaultSortBy?: string;
-  defaultSortOrder?: "asc" | "desc";
-  onSort?: (sortBy: string, sortOrder: "asc" | "desc") => void;
+  defaultSortOrder?: 'asc' | 'desc';
+  onSort?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 
   // 分页
   pagination?: {
@@ -220,7 +253,7 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
     label: string;
     icon?: React.ReactNode;
     onClick?: () => void;
-    variant?: "contained" | "outlined" | "text";
+    variant?: 'contained' | 'outlined' | 'text';
   }>;
   rowActions?: RowAction<T>[];
   /**
@@ -348,11 +381,11 @@ export function ListPageTemplate<T>({
   selection,
   sortable,
   defaultSortBy,
-  defaultSortOrder = "asc",
+  defaultSortOrder = 'asc',
   onSort,
   pagination,
   searchable,
-  searchPlaceholder = "搜索...",
+  searchPlaceholder = '搜索...',
   searchValue,
   onSearch,
   globalSearch,
@@ -365,7 +398,7 @@ export function ListPageTemplate<T>({
   onRefresh,
   batchActions = [],
   showBatchActionBar = true,
-  emptyMessage = "暂无数据",
+  emptyMessage = '暂无数据',
   emptyIcon,
   headerContent,
   footerContent,
@@ -377,23 +410,22 @@ export function ListPageTemplate<T>({
   defaultColumnConfig = [],
   onColumnConfigChange,
   persistColumnConfig = false,
-  columnConfigStorageKey = "default",
+  columnConfigStorageKey = 'default',
   showRowNumber = false,
   // 排除自定义属性的剩余props
   ...props
 }: ListPageTemplateProps<T>) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const [sortBy, setSortBy] = useState(defaultSortBy || "");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(defaultSortOrder);
-  const [searchInput, setSearchInput] = useState(searchValue || "");
+  const [sortBy, setSortBy] = useState(defaultSortBy || '');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(defaultSortOrder);
+  const [searchInput, setSearchInput] = useState(searchValue || '');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRow, setSelectedRow] = useState<T | null>(null);
 
   // 行展开状态
-  const [expandedIds, setExpandedIds] =
-    useState<(string | number)[]>(defaultExpandedIds);
+  const [expandedIds, setExpandedIds] = useState<(string | number)[]>(defaultExpandedIds);
 
   // 列配置状态
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
@@ -414,8 +446,7 @@ export function ListPageTemplate<T>({
   });
 
   // 列配置 Popover 状态
-  const [columnConfigAnchor, setColumnConfigAnchor] =
-    useState<HTMLElement | null>(null);
+  const [columnConfigAnchor, setColumnConfigAnchor] = useState<HTMLElement | null>(null);
 
   // 列配置持久化
   useEffect(() => {
@@ -429,10 +460,8 @@ export function ListPageTemplate<T>({
     if (!columnConfigurable) return columns;
 
     const sortedColumns = [...columns].sort((a, b) => {
-      const orderA =
-        columnConfig.find((c) => c.id === a.id)?.order ?? a.order ?? 0;
-      const orderB =
-        columnConfig.find((c) => c.id === b.id)?.order ?? b.order ?? 0;
+      const orderA = columnConfig.find((c) => c.id === a.id)?.order ?? a.order ?? 0;
+      const orderB = columnConfig.find((c) => c.id === b.id)?.order ?? b.order ?? 0;
       return orderA - orderB;
     });
 
@@ -448,13 +477,12 @@ export function ListPageTemplate<T>({
   // 处理排序
   const handleSort = useCallback(
     (columnId: string) => {
-      const newOrder =
-        sortBy === columnId && sortOrder === "asc" ? "desc" : "asc";
+      const newOrder = sortBy === columnId && sortOrder === 'asc' ? 'desc' : 'asc';
       setSortBy(columnId);
       setSortOrder(newOrder);
       onSort?.(columnId, newOrder);
     },
-    [sortBy, sortOrder, onSort],
+    [sortBy, sortOrder, onSort]
   );
 
   // 处理选择
@@ -467,7 +495,7 @@ export function ListPageTemplate<T>({
         effectiveOnSelectionChange?.([]);
       }
     },
-    [data, getRowId, effectiveOnSelectionChange],
+    [data, getRowId, effectiveOnSelectionChange]
   );
 
   const handleSelectRow = useCallback(
@@ -478,7 +506,7 @@ export function ListPageTemplate<T>({
         : [...effectiveSelectedIds, rowId];
       effectiveOnSelectionChange?.(newSelected);
     },
-    [effectiveSelectedIds, getRowId, effectiveOnSelectionChange],
+    [effectiveSelectedIds, getRowId, effectiveOnSelectionChange]
   );
 
   // 处理搜索
@@ -488,18 +516,15 @@ export function ListPageTemplate<T>({
       setSearchInput(value);
       onSearch?.(value);
     },
-    [onSearch],
+    [onSearch]
   );
 
   // 处理行操作菜单
-  const handleRowActionClick = useCallback(
-    (event: React.MouseEvent<HTMLElement>, row: T) => {
-      event.stopPropagation();
-      setAnchorEl(event.currentTarget);
-      setSelectedRow(row);
-    },
-    [],
-  );
+  const handleRowActionClick = useCallback((event: React.MouseEvent<HTMLElement>, row: T) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setSelectedRow(row);
+  }, []);
 
   const handleRowActionClose = useCallback(() => {
     setAnchorEl(null);
@@ -513,7 +538,7 @@ export function ListPageTemplate<T>({
       }
       handleRowActionClose();
     },
-    [selectedRow, handleRowActionClose],
+    [selectedRow, handleRowActionClose]
   );
 
   // 处理行展开
@@ -526,19 +551,19 @@ export function ListPageTemplate<T>({
       setExpandedIds(newExpanded);
       onExpandedChange?.(newExpanded);
     },
-    [expandedIds, getRowId, onExpandedChange],
+    [expandedIds, getRowId, onExpandedChange]
   );
 
   // 处理列配置变化
   const handleColumnVisibilityChange = useCallback(
     (columnId: string, visible: boolean) => {
       const newConfig = columnConfig.map((col) =>
-        col.id === columnId ? { ...col, visible } : col,
+        col.id === columnId ? { ...col, visible } : col
       );
       setColumnConfig(newConfig);
       onColumnConfigChange?.(newConfig);
     },
-    [columnConfig, onColumnConfigChange],
+    [columnConfig, onColumnConfigChange]
   );
 
   // 重置列配置
@@ -559,23 +584,20 @@ export function ListPageTemplate<T>({
       <TableRow>
         {selectable && (
           <TableCell
-            padding="checkbox"
+            padding='checkbox'
             sx={{
               width: 48,
-              position: "sticky",
+              position: 'sticky',
               left: 0,
               zIndex: 2,
-              bgcolor: "grey.50",
+              bgcolor: 'grey.50',
             }}
           >
             <Checkbox
               indeterminate={
-                effectiveSelectedIds.length > 0 &&
-                effectiveSelectedIds.length < data.length
+                effectiveSelectedIds.length > 0 && effectiveSelectedIds.length < data.length
               }
-              checked={
-                data.length > 0 && effectiveSelectedIds.length === data.length
-              }
+              checked={data.length > 0 && effectiveSelectedIds.length === data.length}
               onChange={handleSelectAll}
             />
           </TableCell>
@@ -584,25 +606,30 @@ export function ListPageTemplate<T>({
           <TableCell
             sx={{
               width: 60,
-              position: selectable ? "sticky" : "relative",
+              position: selectable ? 'sticky' : 'relative',
               left: selectable ? 48 : 0,
               zIndex: 2,
-              bgcolor: "grey.50",
+              bgcolor: 'grey.50',
             }}
           >
             #
           </TableCell>
         )}
-        {expandable && <TableCell padding="checkbox" sx={{ width: 48 }} />}
+        {expandable && (
+          <TableCell
+            padding='checkbox'
+            sx={{ width: 48 }}
+          />
+        )}
         {visibleColumns.map((column) => (
           <TableCell
             key={column.id}
-            align={column.align || "left"}
+            align={column.align || 'left'}
             width={column.width}
             sx={{
               minWidth: column.minWidth,
               fontWeight: 600,
-              whiteSpace: "nowrap",
+              whiteSpace: 'nowrap',
             }}
           >
             {column.renderHeader ? (
@@ -610,7 +637,7 @@ export function ListPageTemplate<T>({
             ) : sortable && column.sortable !== false ? (
               <TableSortLabel
                 active={sortBy === column.id}
-                direction={sortBy === column.id ? sortOrder : "asc"}
+                direction={sortBy === column.id ? sortOrder : 'asc'}
                 onClick={() => handleSort(column.id)}
               >
                 {column.label || column.header}
@@ -621,15 +648,21 @@ export function ListPageTemplate<T>({
           </TableCell>
         ))}
         {rowActions && rowActions.length > 0 && (
-          <TableCell align="right" sx={{ width: 80 }}>
+          <TableCell
+            align='right'
+            sx={{ width: 80 }}
+          >
             操作
           </TableCell>
         )}
         {columnConfigurable && (
-          <TableCell align="right" sx={{ width: 48 }}>
-            <Tooltip title="配置列">
+          <TableCell
+            align='right'
+            sx={{ width: 48 }}
+          >
+            <Tooltip title='配置列'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => setColumnConfigAnchor(e.currentTarget)}
               >
                 <Columns3 style={{ width: 18, height: 18 }} />
@@ -643,7 +676,7 @@ export function ListPageTemplate<T>({
 
   // 渲染展开行内容
   const renderExpandedRow = (row: T, index: number) => {
-    if (typeof expandable === "function") {
+    if (typeof expandable === 'function') {
       return expandable(row, index);
     }
     return null;
@@ -655,28 +688,45 @@ export function ListPageTemplate<T>({
       return Array.from({ length: 5 }).map((_, index) => (
         <TableRow key={index}>
           {selectable && (
-            <TableCell padding="checkbox">
-              <Skeleton variant="rectangular" width={20} height={20} />
+            <TableCell padding='checkbox'>
+              <Skeleton
+                variant='rectangular'
+                width={20}
+                height={20}
+              />
             </TableCell>
           )}
           {showRowNumber && (
             <TableCell>
-              <Skeleton variant="text" width={30} />
+              <Skeleton
+                variant='text'
+                width={30}
+              />
             </TableCell>
           )}
           {expandable && (
-            <TableCell padding="checkbox">
-              <Skeleton variant="rectangular" width={20} height={20} />
+            <TableCell padding='checkbox'>
+              <Skeleton
+                variant='rectangular'
+                width={20}
+                height={20}
+              />
             </TableCell>
           )}
           {visibleColumns.map((column) => (
             <TableCell key={column.id}>
-              <Skeleton variant="text" width="80%" />
+              <Skeleton
+                variant='text'
+                width='80%'
+              />
             </TableCell>
           ))}
           {rowActions && rowActions.length > 0 && (
             <TableCell>
-              <Skeleton variant="text" width={60} />
+              <Skeleton
+                variant='text'
+                width={60}
+              />
             </TableCell>
           )}
           {columnConfigurable && <TableCell />}
@@ -696,10 +746,13 @@ export function ListPageTemplate<T>({
               (rowActions ? 1 : 0) +
               (columnConfigurable ? 1 : 0)
             }
-            align="center"
+            align='center'
             sx={{ py: 8 }}
           >
-            <ErrorEmptyState error={error} onRetry={onRefresh} />
+            <ErrorEmptyState
+              error={error}
+              onRetry={onRefresh}
+            />
           </TableCell>
         </TableRow>
       );
@@ -717,13 +770,13 @@ export function ListPageTemplate<T>({
               (rowActions ? 1 : 0) +
               (columnConfigurable ? 1 : 0)
             }
-            align="center"
+            align='center'
             sx={{ py: 8 }}
           >
             <EmptyState
               icon={emptyIcon}
               title={emptyMessage}
-              description="暂无数据，点击添加按钮创建新记录"
+              description='暂无数据，点击添加按钮创建新记录'
             />
           </TableCell>
         </TableRow>
@@ -742,20 +795,20 @@ export function ListPageTemplate<T>({
             selected={isSelected}
             onClick={() => onRowClick?.(row)}
             sx={{
-              cursor: onRowClick ? "pointer" : "default",
-              "&:hover": {
-                backgroundColor: "action.hover",
+              cursor: onRowClick ? 'pointer' : 'default',
+              '&:hover': {
+                backgroundColor: 'action.hover',
               },
             }}
           >
             {selectable && (
               <TableCell
-                padding="checkbox"
+                padding='checkbox'
                 sx={{
-                  position: "sticky",
+                  position: 'sticky',
                   left: 0,
                   zIndex: 1,
-                  bgcolor: "inherit",
+                  bgcolor: 'inherit',
                 }}
               >
                 <Checkbox
@@ -770,21 +823,19 @@ export function ListPageTemplate<T>({
             {showRowNumber && (
               <TableCell
                 sx={{
-                  position: selectable ? "sticky" : "relative",
+                  position: selectable ? 'sticky' : 'relative',
                   left: selectable ? 48 : 0,
                   zIndex: 1,
-                  bgcolor: "inherit",
+                  bgcolor: 'inherit',
                 }}
               >
-                {pagination
-                  ? pagination.page * pagination.pageSize + index + 1
-                  : index + 1}
+                {pagination ? pagination.page * pagination.pageSize + index + 1 : index + 1}
               </TableCell>
             )}
             {expandable && (
-              <TableCell padding="checkbox">
+              <TableCell padding='checkbox'>
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={(e) => {
                     e.stopPropagation();
                     handleExpandRow(row);
@@ -794,25 +845,28 @@ export function ListPageTemplate<T>({
                     style={{
                       width: 18,
                       height: 18,
-                      transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                      transition: "transform 0.2s",
+                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
                     }}
                   />
                 </IconButton>
               </TableCell>
             )}
             {visibleColumns.map((column) => (
-              <TableCell key={column.id} align={column.align || "left"}>
+              <TableCell
+                key={column.id}
+                align={column.align || 'left'}
+              >
                 {column.render
                   ? column.render(row, index)
                   : String((row as Record<string, unknown>)[column.id])}
               </TableCell>
             ))}
             {rowActions && rowActions.length > 0 && (
-              <TableCell align="right">
+              <TableCell align='right'>
                 {isMobile ? (
                   <IconButton
-                    size="small"
+                    size='small'
                     onClick={(e) => handleRowActionClick(e, row)}
                   >
                     <MoreHorizontal style={{ width: 18, height: 18 }} />
@@ -820,35 +874,34 @@ export function ListPageTemplate<T>({
                 ) : (
                   <Box
                     sx={{
-                      display: "flex",
-                      justifyContent: "flex-end",
+                      display: 'flex',
+                      justifyContent: 'flex-end',
                       gap: 0.5,
                     }}
                   >
                     {rowActions.slice(0, 3).map((action, actionIndex) => {
                       if (action.show && !action.show(row)) return null;
                       return (
-                        <Tooltip key={actionIndex} title={action.label}>
+                        <Tooltip
+                          key={actionIndex}
+                          title={action.label}
+                        >
                           <IconButton
-                            size="small"
+                            size='small'
                             onClick={(e) => {
                               e.stopPropagation();
                               action.onClick?.(row);
                             }}
                             color={action.color}
                           >
-                            {action.icon || (
-                              <MoreHorizontal
-                                style={{ width: 16, height: 16 }}
-                              />
-                            )}
+                            {action.icon || <MoreHorizontal style={{ width: 16, height: 16 }} />}
                           </IconButton>
                         </Tooltip>
                       );
                     })}
                     {rowActions.length > 3 && (
                       <IconButton
-                        size="small"
+                        size='small'
                         onClick={(e) => handleRowActionClick(e, row)}
                       >
                         <MoreHorizontal style={{ width: 16, height: 16 }} />
@@ -873,10 +926,12 @@ export function ListPageTemplate<T>({
                 }
                 sx={{ py: 0 }}
               >
-                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                  <Box sx={{ py: 2, px: 1 }}>
-                    {renderExpandedRow(row, index)}
-                  </Box>
+                <Collapse
+                  in={isExpanded}
+                  timeout='auto'
+                  unmountOnExit
+                >
+                  <Box sx={{ py: 2, px: 1 }}>{renderExpandedRow(row, index)}</Box>
                 </Collapse>
               </TableCell>
             </TableRow>
@@ -892,19 +947,15 @@ export function ListPageTemplate<T>({
 
     return (
       <TablePagination
-        component="div"
+        component='div'
         count={pagination.total}
         page={pagination.page}
         onPageChange={(_, page) => pagination.onPageChange(page)}
         rowsPerPage={pagination.pageSize}
-        onRowsPerPageChange={(e) =>
-          pagination.onPageSizeChange?.(Number(e.target.value))
-        }
+        onRowsPerPageChange={(e) => pagination.onPageSizeChange?.(Number(e.target.value))}
         rowsPerPageOptions={[10, 20, 50, 100]}
-        labelRowsPerPage="每页行数"
-        labelDisplayedRows={({ from, to, count }) =>
-          `${from}-${to} 共 ${count} 条`
-        }
+        labelRowsPerPage='每页行数'
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} 共 ${count} 条`}
       />
     );
   };
@@ -912,9 +963,9 @@ export function ListPageTemplate<T>({
   // 渲染筛选器
   const renderFilter = (filter: FilterConfig) => {
     const commonProps = {
-      size: "small" as const,
+      size: 'small' as const,
       label: filter.label,
-      value: filter.value || (filter.type === "multiselect" ? [] : ""),
+      value: filter.value || (filter.type === 'multiselect' ? [] : ''),
       onChange: (e: any) => {
         filter.onChange?.(e.target.value, filter);
         onFilterChange?.({ [filter.id]: e.target.value });
@@ -923,25 +974,27 @@ export function ListPageTemplate<T>({
     };
 
     switch (filter.type) {
-      case "multiselect":
+      case 'multiselect':
         return (
-          <FormControl key={filter.id} size="small" sx={{ minWidth: 180 }}>
+          <FormControl
+            key={filter.id}
+            size='small'
+            sx={{ minWidth: 180 }}
+          >
             <InputLabel>{filter.label}</InputLabel>
             <Select
               {...commonProps}
               multiple
               input={<OutlinedInput label={filter.label} />}
               renderValue={(selected) => (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value: any) => {
-                    const option = filter.options?.find(
-                      (opt) => opt.value === value,
-                    );
+                    const option = filter.options?.find((opt) => opt.value === value);
                     return (
                       <Chip
                         key={value}
                         label={option?.label || value}
-                        size="small"
+                        size='small'
                       />
                     );
                   })}
@@ -950,13 +1003,13 @@ export function ListPageTemplate<T>({
             >
               {filter.searchable && (
                 <TextField
-                  size="small"
-                  placeholder="搜索..."
+                  size='small'
+                  placeholder='搜索...'
                   sx={{ px: 1, my: 1, minWidth: 150 }}
                   slotProps={{
                     input: {
                       startAdornment: (
-                        <InputAdornment position="start">
+                        <InputAdornment position='start'>
                           <Search style={{ width: 16, height: 16 }} />
                         </InputAdornment>
                       ),
@@ -965,10 +1018,11 @@ export function ListPageTemplate<T>({
                 />
               )}
               {filter.options?.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  <Checkbox
-                    checked={commonProps.value.includes(option.value)}
-                  />
+                <MenuItem
+                  key={option.value}
+                  value={option.value}
+                >
+                  <Checkbox checked={commonProps.value.includes(option.value)} />
                   <ListItemText primary={option.label} />
                 </MenuItem>
               ))}
@@ -976,16 +1030,16 @@ export function ListPageTemplate<T>({
           </FormControl>
         );
 
-      case "text":
+      case 'text':
         return (
           <TextField
             key={filter.id}
             {...commonProps}
-            placeholder="搜索..."
+            placeholder='搜索...'
             slotProps={{
               input: {
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <Search style={{ width: 18, height: 18 }} />
                   </InputAdornment>
                 ),
@@ -994,12 +1048,12 @@ export function ListPageTemplate<T>({
           />
         );
 
-      case "date":
+      case 'date':
         return (
           <TextField
             key={filter.id}
             {...commonProps}
-            type="date"
+            type='date'
             slotProps={{
               inputLabel: { shrink: true },
             }}
@@ -1008,10 +1062,17 @@ export function ListPageTemplate<T>({
 
       default:
         return (
-          <TextField key={filter.id} {...commonProps} select>
-            <MenuItem value="">全部</MenuItem>
+          <TextField
+            key={filter.id}
+            {...commonProps}
+            select
+          >
+            <MenuItem value=''>全部</MenuItem>
             {filter.options?.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+              <MenuItem
+                key={option.value}
+                value={option.value}
+              >
                 {option.label}
               </MenuItem>
             ))}
@@ -1027,16 +1088,16 @@ export function ListPageTemplate<T>({
     return (
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 2,
           mb: 2,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         {(searchable || globalSearch) && (
           <TextField
-            size="small"
+            size='small'
             placeholder={globalSearch?.placeholder || searchPlaceholder}
             value={searchInput}
             onChange={handleSearch}
@@ -1044,7 +1105,7 @@ export function ListPageTemplate<T>({
             slotProps={{
               input: {
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <Search style={{ width: 18, height: 18 }} />
                   </InputAdornment>
                 ),
@@ -1056,8 +1117,11 @@ export function ListPageTemplate<T>({
         {filters?.map((filter) => renderFilter(filter))}
 
         {onRefresh && (
-          <Tooltip title="刷新">
-            <IconButton size="small" onClick={onRefresh}>
+          <Tooltip title='刷新'>
+            <IconButton
+              size='small'
+              onClick={onRefresh}
+            >
               <RefreshCw style={{ width: 18, height: 18 }} />
             </IconButton>
           </Tooltip>
@@ -1068,19 +1132,12 @@ export function ListPageTemplate<T>({
 
   // 渲染批量操作栏
   const renderBatchActionBar = () => {
-    if (
-      !showBatchActionBar ||
-      !selectable ||
-      effectiveSelectedIds.length === 0
-    ) {
+    if (!showBatchActionBar || !selectable || effectiveSelectedIds.length === 0) {
       return null;
     }
 
     const availableActions = batchActions.filter((action) => {
-      if (
-        action.minSelected &&
-        effectiveSelectedIds.length < action.minSelected
-      ) {
+      if (action.minSelected && effectiveSelectedIds.length < action.minSelected) {
         return false;
       }
       if (action.showWhenSelected === false) {
@@ -1092,27 +1149,27 @@ export function ListPageTemplate<T>({
     return (
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 2,
           mb: 2,
           p: 2,
-          bgcolor: "primary.50",
+          bgcolor: 'primary.50',
           borderRadius: 1,
-          border: "1px solid",
-          borderColor: "primary.200",
+          border: '1px solid',
+          borderColor: 'primary.200',
         }}
       >
         <Typography
-          variant="body2"
-          sx={{ fontWeight: 500, color: "primary.main" }}
+          variant='body2'
+          sx={{ fontWeight: 500, color: 'primary.main' }}
         >
           已选择 {effectiveSelectedIds.length} 条记录
         </Typography>
 
         <Button
-          size="small"
-          variant="outlined"
+          size='small'
+          variant='outlined'
           onClick={() => effectiveOnSelectionChange?.([])}
           startIcon={<X size={16} />}
         >
@@ -1120,11 +1177,14 @@ export function ListPageTemplate<T>({
         </Button>
 
         {availableActions.length > 0 && (
-          <ButtonGroup size="small" variant="outlined">
+          <ButtonGroup
+            size='small'
+            variant='outlined'
+          >
             {availableActions.map((action, index) => (
               <Button
                 key={index}
-                color={action.color || "primary"}
+                color={action.color || 'primary'}
                 startIcon={action.icon}
                 onClick={action.onClick}
               >
@@ -1147,29 +1207,32 @@ export function ListPageTemplate<T>({
         anchorEl={columnConfigAnchor}
         onClose={() => setColumnConfigAnchor(null)}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
+          vertical: 'bottom',
+          horizontal: 'right',
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
+          vertical: 'top',
+          horizontal: 'right',
         }}
         sx={{ minWidth: 280 }}
       >
         <Box sx={{ p: 2, minWidth: 280, maxWidth: 350 }}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               mb: 2,
             }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
+            >
               配置列显示
             </Typography>
             <Button
-              size="small"
+              size='small'
               onClick={handleResetColumnConfig}
               startIcon={<RotateCcw size={14} />}
             >
@@ -1178,31 +1241,32 @@ export function ListPageTemplate<T>({
           </Box>
 
           <Typography
-            variant="body2"
-            color="text.secondary"
+            variant='body2'
+            color='text.secondary'
             sx={{ mb: 2, fontSize: 12 }}
           >
             选择要显示的列
           </Typography>
 
-          <List dense sx={{ maxHeight: 300, overflow: "auto" }}>
+          <List
+            dense
+            sx={{ maxHeight: 300, overflow: 'auto' }}
+          >
             {columns.map((column) => {
               const config = columnConfig.find((c) => c.id === column.id);
               const isVisible = config ? config.visible : true;
 
               return (
-                <ListItem key={column.id} sx={{ paddingY: 0.5 }}>
+                <ListItem
+                  key={column.id}
+                  sx={{ paddingY: 0.5 }}
+                >
                   <FormControlLabel
                     control={
                       <Switch
                         checked={isVisible}
-                        onChange={(e) =>
-                          handleColumnVisibilityChange(
-                            column.id,
-                            e.target.checked,
-                          )
-                        }
-                        size="small"
+                        onChange={(e) => handleColumnVisibilityChange(column.id, e.target.checked)}
+                        size='small'
                       />
                     }
                     label={column.label || column.header || column.id}
@@ -1215,9 +1279,9 @@ export function ListPageTemplate<T>({
 
           <Divider sx={{ my: 2 }} />
 
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              size="small"
+              size='small'
               fullWidth
               onClick={() => {
                 const allVisible = columns.map((col) => ({
@@ -1232,7 +1296,7 @@ export function ListPageTemplate<T>({
               全选
             </Button>
             <Button
-              size="small"
+              size='small'
               fullWidth
               onClick={() => {
                 const allHidden = columns.map((col) => ({
@@ -1261,34 +1325,37 @@ export function ListPageTemplate<T>({
             px: { xs: 2, sm: 3 },
             py: 2,
             borderBottom: 1,
-            borderColor: "divider",
-            bgcolor: "background.paper",
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
           }}
         >
           {/* 面包屑导航 */}
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <Breadcrumbs separator={<ChevronRight size={14} />} sx={{ mb: 1 }}>
+            <Breadcrumbs
+              separator={<ChevronRight size={14} />}
+              sx={{ mb: 1 }}
+            >
               {breadcrumbs.map((crumb, index) =>
                 crumb.href ? (
                   <Link
                     key={index}
                     component={RouterLink}
                     to={crumb.href}
-                    color="inherit"
-                    underline="hover"
-                    sx={{ fontSize: "0.875rem" }}
+                    color='inherit'
+                    underline='hover'
+                    sx={{ fontSize: '0.875rem' }}
                   >
                     {crumb.label}
                   </Link>
                 ) : (
                   <Typography
                     key={index}
-                    color="text.primary"
-                    sx={{ fontSize: "0.875rem" }}
+                    color='text.primary'
+                    sx={{ fontSize: '0.875rem' }}
                   >
                     {crumb.label}
                   </Typography>
-                ),
+                )
               )}
             </Breadcrumbs>
           )}
@@ -1296,23 +1363,23 @@ export function ListPageTemplate<T>({
           {/* 标题栏 */}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
               gap: 2,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               {/* 返回按钮 */}
               {backButton && (
-                <Tooltip title="返回">
+                <Tooltip title='返回'>
                   <IconButton
                     onClick={backButton.onClick}
-                    component={backButton.href ? RouterLink : "button"}
+                    component={backButton.href ? RouterLink : 'button'}
                     to={backButton.href}
-                    size="small"
-                    sx={{ bgcolor: "action.hover" }}
+                    size='small'
+                    sx={{ bgcolor: 'action.hover' }}
                   >
                     <ArrowLeft size={18} />
                   </IconButton>
@@ -1323,16 +1390,16 @@ export function ListPageTemplate<T>({
               <Box>
                 {title && (
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 600, color: "text.primary" }}
+                    variant='h5'
+                    sx={{ fontWeight: 600, color: 'text.primary' }}
                   >
                     {title}
                   </Typography>
                 )}
                 {subtitle && (
                   <Typography
-                    variant="body2"
-                    color="text.secondary"
+                    variant='body2'
+                    color='text.secondary'
                     sx={{ mt: 0.25 }}
                   >
                     {subtitle}
@@ -1343,11 +1410,14 @@ export function ListPageTemplate<T>({
 
             {/* 操作按钮 */}
             {actions && actions.length > 0 && (
-              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 {/* 刷新按钮 */}
                 {onRefresh && (
-                  <Tooltip title="刷新">
-                    <IconButton onClick={onRefresh} size="small">
+                  <Tooltip title='刷新'>
+                    <IconButton
+                      onClick={onRefresh}
+                      size='small'
+                    >
                       <RefreshCw size={18} />
                     </IconButton>
                   </Tooltip>
@@ -1356,11 +1426,11 @@ export function ListPageTemplate<T>({
                 {actions.map((action, index) => (
                   <Button
                     key={index}
-                    variant={action.variant || "contained"}
-                    size="small"
+                    variant={action.variant || 'contained'}
+                    size='small'
                     startIcon={action.icon}
                     onClick={action.onClick}
-                    sx={{ whiteSpace: "nowrap" }}
+                    sx={{ whiteSpace: 'nowrap' }}
                   >
                     {action.label}
                   </Button>
@@ -1381,7 +1451,10 @@ export function ListPageTemplate<T>({
       {headerContent}
 
       {/* 表格 */}
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+      <TableContainer
+        component={Paper}
+        sx={{ borderRadius: 2 }}
+      >
         <Table>
           {renderTableHead()}
           <TableBody>{renderTableBody()}</TableBody>
@@ -1402,17 +1475,14 @@ export function ListPageTemplate<T>({
         onClose={handleRowActionClose}
       >
         {rowActions?.map((action, index) => {
-          if (action.show && selectedRow && !action.show(selectedRow))
-            return null;
+          if (action.show && selectedRow && !action.show(selectedRow)) return null;
 
           return (
             <React.Fragment key={index}>
               {action.divider && <Divider />}
               <MenuItem onClick={() => handleRowAction(action)}>
                 {action.icon && (
-                  <ListItemIcon sx={{ color: `${action.color}.main` }}>
-                    {action.icon}
-                  </ListItemIcon>
+                  <ListItemIcon sx={{ color: `${action.color}.main` }}>{action.icon}</ListItemIcon>
                 )}
                 <ListItemText>{action.label}</ListItemText>
               </MenuItem>
@@ -1424,4 +1494,5 @@ export function ListPageTemplate<T>({
   );
 }
 
-export default ListPageTemplate;
+const MemoizedListPageTemplate = React.memo(ListPageTemplate) as typeof ListPageTemplate;
+export default MemoizedListPageTemplate;

@@ -1,24 +1,38 @@
-import { TextField, FormControl, FormLabel, FormHelperText, Card, CardContent, CardHeader, Checkbox, Box,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+/**
+ * @deprecated 此组件已弃用，请使用 @/components/auth/LoginFormV2 中的 LoginFormV2 组件
+ * 该组件将保留作为向后兼容，预计在未来的版本中移除
+ */
+import {
+  TextField,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  Card,
+  CardContent,
+  CardHeader,
+  Checkbox,
+  Box,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
 
-import { logger } from "@/utils/logger";
-import { useAppStore } from "@/store";
-import { isDevelopment } from "../config/runtime";
+import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
+import { isDevelopment } from '../config/runtime';
 
 // 登录表单验证 schema
 const loginFormSchema = z.object({
   username: z
     .string()
-    .min(1, { message: "用户名不能为空" })
-    .max(20, { message: "用户名不能超过20个字符" })
-    .regex(/^[a-zA-Z0-9]+$/, { message: "用户名只能包含字母和数字" }),
-  password: z.string().min(6, { message: "密码至少需要6个字符" }),
+    .min(1, { message: '用户名不能为空' })
+    .max(20, { message: '用户名不能超过20个字符' })
+    .regex(/^[a-zA-Z0-9]+$/, { message: '用户名只能包含字母和数字' }),
+  password: z.string().min(6, { message: '密码至少需要6个字符' }),
   rememberMe: z.boolean().default(false).optional(),
 });
 
@@ -41,8 +55,8 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      username: "",
-      password: "",
+      username: '',
+      password: '',
       rememberMe: false,
     },
   });
@@ -55,9 +69,9 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
       if (isRegister) {
         // 注册功能由管理员管理
         addNotification({
-          title: "提示",
-          message: "注册功能已关闭，请联系管理员获取账号",
-          type: "info",
+          title: '提示',
+          message: '注册功能已关闭，请联系管理员获取账号',
+          type: 'info',
         });
         return;
       }
@@ -68,22 +82,22 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
       } else {
         // 这里可以添加默认的登录逻辑
         // 示例：简单的登录成功模拟
-        logger.info("登录表单提交:", values);
+        logger.info('登录表单提交:', values);
 
         // 模拟登录成功
         addNotification({
-          title: "成功",
-          message: "登录成功",
-          type: "success",
+          title: '成功',
+          message: '登录成功',
+          type: 'success',
         });
-        navigate("/dashboard");
+        navigate('/dashboard');
       }
     } catch (error: any) {
-      logger.error("登录错误:", error);
+      logger.error('登录错误:', error);
       addNotification({
-        title: "错误",
-        message: error.message || "登录失败",
-        type: "error",
+        title: '错误',
+        message: error.message || '登录失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -93,36 +107,34 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
       }}
       className={className}
     >
-      <Card sx={{ width: "100%", maxWidth: 448, mx: 2 }}>
+      <Card sx={{ width: '100%', maxWidth: 448, mx: 2 }}>
         <CardHeader
-          sx={{ textAlign: "center", pt: 4 }}
+          sx={{ textAlign: 'center', pt: 4 }}
           title={
             <Box>
               <Box
                 sx={{
-                  fontSize: "1.875rem",
-                  fontWeight: "bold",
-                  color: "primary.main",
+                  fontSize: '1.875rem',
+                  fontWeight: 'bold',
+                  color: 'primary.main',
                   mb: 1,
                 }}
               >
                 TOPEMS
               </Box>
-              <Box
-                sx={{ fontSize: "0.875rem", color: "text.secondary", mb: 2 }}
-              >
+              <Box sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 2 }}>
                 企业数字化平台
               </Box>
-              <Box sx={{ fontSize: "1.5rem", fontWeight: 600, pt: 2 }}>
-                {isRegister ? "用户注册" : "用户登录"}
+              <Box sx={{ fontSize: '1.5rem', fontWeight: 600, pt: 2 }}>
+                {isRegister ? '用户注册' : '用户登录'}
               </Box>
             </Box>
           }
@@ -130,23 +142,21 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
         <CardContent>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            style={{ display: "flex", flexDirection: "column", gap: 24 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
           >
             {/* 用户名 */}
             <Controller
-              name="username"
+              name='username'
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl error={!!fieldState.error}>
                   <FormLabel>用户名</FormLabel>
                   <TextField
                     {...field}
-                    placeholder="请输入用户名"
-                    size="small"
+                    placeholder='请输入用户名'
+                    size='small'
                     error={!!fieldState.error}
-                    helperText={
-                      fieldState.error?.message || "字母或数字组合，最多20位"
-                    }
+                    helperText={fieldState.error?.message || '字母或数字组合，最多20位'}
                   />
                 </FormControl>
               )}
@@ -155,16 +165,16 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
             {/* 邮箱 (仅注册时显示) */}
             {isRegister && (
               <Controller
-                name="username"
+                name='username'
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <FormControl error={!!fieldState.error}>
                     <FormLabel>邮箱</FormLabel>
                     <TextField
                       {...field}
-                      type="email"
-                      placeholder="请输入邮箱"
-                      size="small"
+                      type='email'
+                      placeholder='请输入邮箱'
+                      size='small'
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
                     />
@@ -175,35 +185,35 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
 
             {/* 密码 */}
             <Controller
-              name="password"
+              name='password'
               control={form.control}
               render={({ field, fieldState }) => (
                 <FormControl error={!!fieldState.error}>
                   <FormLabel>密码</FormLabel>
-                  <Box sx={{ position: "relative" }}>
+                  <Box sx={{ position: 'relative' }}>
                     <TextField
                       {...field}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="请输入密码"
-                      size="small"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder='请输入密码'
+                      size='small'
                       error={!!fieldState.error}
                       helperText={fieldState.error?.message}
-                      sx={{ width: "100%", pr: 5 }}
+                      sx={{ width: '100%', pr: 5 }}
                     />
                     <Box
-                      component="button"
-                      type="button"
+                      component='button'
+                      type='button'
                       onClick={() => setShowPassword(!showPassword)}
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         right: 12,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "text.secondary",
-                        "&:hover": { color: "text.primary" },
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'text.secondary',
+                        '&:hover': { color: 'text.primary' },
                       }}
                     >
                       {showPassword ? (
@@ -220,26 +230,18 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
             {/* 记住我 */}
             {!isRegister && (
               <Controller
-                name="rememberMe"
+                name='rememberMe'
                 control={form.control}
                 render={({ field }) => (
-                  <Box
-                    sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}
-                  >
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <Checkbox
                       checked={field.value || false}
                       onChange={field.onChange}
-                      size="small"
+                      size='small'
                     />
                     <Box>
-                      <FormLabel
-                        sx={{ fontSize: "0.875rem", cursor: "pointer" }}
-                      >
-                        记住我
-                      </FormLabel>
-                      <FormHelperText sx={{ m: 0 }}>
-                        在本设备上保持登录状态
-                      </FormHelperText>
+                      <FormLabel sx={{ fontSize: '0.875rem', cursor: 'pointer' }}>记住我</FormLabel>
+                      <FormHelperText sx={{ m: 0 }}>在本设备上保持登录状态</FormHelperText>
                     </Box>
                   </Box>
                 )}
@@ -248,12 +250,12 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
 
             {/* 提交按钮 */}
             <Button
-              type="submit"
-              variant="contained"
+              type='submit'
+              variant='contained'
               disabled={loading}
-              sx={{ width: "100%" }}
+              sx={{ width: '100%' }}
             >
-              {loading ? "处理中..." : isRegister ? "注册" : "登录"}
+              {loading ? '处理中...' : isRegister ? '注册' : '登录'}
             </Button>
           </form>
         </CardContent>
@@ -262,26 +264,26 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
             pb: 4,
             pt: 2,
             px: 3,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             gap: 2,
           }}
         >
-          <Box sx={{ textAlign: "center" }}>
+          <Box sx={{ textAlign: 'center' }}>
             <Box
-              component="button"
-              type="button"
+              component='button'
+              type='button'
               onClick={() => setIsRegister(!isRegister)}
               sx={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "primary.main",
-                fontSize: "0.875rem",
-                "&:hover": { textDecoration: "underline" },
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'primary.main',
+                fontSize: '0.875rem',
+                '&:hover': { textDecoration: 'underline' },
               }}
             >
-              {isRegister ? "已有账号？立即登录" : "没有账号？立即注册"}
+              {isRegister ? '已有账号？立即登录' : '没有账号？立即注册'}
             </Box>
           </Box>
 
@@ -291,15 +293,15 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
               sx={{
                 pt: 2,
                 borderTop: 1,
-                borderColor: "divider",
-                width: "100%",
+                borderColor: 'divider',
+                width: '100%',
               }}
             >
               <Box
                 sx={{
-                  fontSize: "0.75rem",
-                  color: "text.secondary",
-                  textAlign: "center",
+                  fontSize: '0.75rem',
+                  color: 'text.secondary',
+                  textAlign: 'center',
                 }}
               >
                 演示账号: admin / admin123 (管理员) | user / user123 (普通员工)

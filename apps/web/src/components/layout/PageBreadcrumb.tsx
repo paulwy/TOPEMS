@@ -1,7 +1,7 @@
-import React from "react";
-import { Box, Breadcrumbs, Link, Typography } from "@mui/material";
-import { Home, ChevronRight } from "lucide-react";
-import { Link as RouterLink } from "react-router-dom";
+import React from 'react';
+import { Box, Breadcrumbs, Link, Typography } from '@mui/material';
+import { Home, ChevronRight } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 
 // ============ 类型定义 ============
 
@@ -38,7 +38,7 @@ export interface PageBreadcrumbProps {
 export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
   items,
   showHome = true,
-  homeHref = "/",
+  homeHref = '/',
   onHomeClick,
   separator,
   maxItems = 8,
@@ -48,22 +48,18 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
     <ChevronRight style={{ width: 16, height: 16, opacity: 0.5 }} />
   );
 
-  const renderBreadcrumbItem = (
-    item: BreadcrumbItem,
-    index: number,
-    isLast: boolean,
-  ) => {
+  const renderBreadcrumbItem = (item: BreadcrumbItem, index: number, isLast: boolean) => {
     // 最后一项不可点击
     if (isLast || (!item.href && !item.onClick)) {
       return (
         <Typography
           key={index}
-          color="text.primary"
+          color='text.primary'
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 0.5,
-            fontSize: "0.875rem",
+            fontSize: '0.875rem',
             fontWeight: isLast ? 500 : 400,
           }}
         >
@@ -77,19 +73,19 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
     return (
       <Link
         key={index}
-        component={item.href ? RouterLink : "button"}
+        component={item.href ? RouterLink : 'button'}
         to={item.href}
         onClick={item.onClick}
-        color="inherit"
-        underline="hover"
+        color='inherit'
+        underline='hover'
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 0.5,
-          fontSize: "0.875rem",
-          cursor: "pointer",
-          "&:hover": {
-            color: "primary.main",
+          fontSize: '0.875rem',
+          cursor: 'pointer',
+          '&:hover': {
+            color: 'primary.main',
           },
         }}
       >
@@ -106,23 +102,23 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
   if (showHome) {
     breadcrumbItems.push(
       <Link
-        key="home"
-        component={homeHref ? RouterLink : "button"}
+        key='home'
+        component={homeHref ? RouterLink : 'button'}
         to={homeHref}
         onClick={onHomeClick}
-        color="inherit"
-        underline="hover"
+        color='inherit'
+        underline='hover'
         sx={{
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          "&:hover": {
-            color: "primary.main",
+          display: 'flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          '&:hover': {
+            color: 'primary.main',
           },
         }}
       >
         <Home style={{ width: 16, height: 16 }} />
-      </Link>,
+      </Link>
     );
   }
 
@@ -139,8 +135,8 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
         maxItems={maxItems}
         itemsAfterCollapse={2}
         sx={{
-          "& .MuiBreadcrumbs-ol": {
-            flexWrap: "nowrap",
+          '& .MuiBreadcrumbs-ol': {
+            flexWrap: 'nowrap',
           },
         }}
       >

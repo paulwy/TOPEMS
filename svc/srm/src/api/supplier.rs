@@ -17,6 +17,7 @@ use crate::models::{
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared::database::{analyze_query, QueryLogger};
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
@@ -117,6 +118,20 @@ async fn list_suppliers(
         sort_field, order_clause
     );
 
+    // 分析查询性能
+    let query_analysis = analyze_query(&query);
+    if query_analysis.needs_optimization() {
+        tracing::warn!(
+            query = %query,
+            score = query_analysis.score,
+            issues = ?query_analysis.issues,
+            "⚠️ 查询需要优化"
+        );
+    }
+
+    // 记录查询执行时间
+    let query_logger = QueryLogger::new(&query);
+
     let result = sqlx::query_as::<_, Supplier>(&query)
         .bind(&search_pattern)
         .bind(&status_filter)
@@ -128,6 +143,8 @@ async fn list_suppliers(
 
     match result {
         Ok(suppliers) => {
+            query_logger.finish(Some(suppliers.len() as u64));
+
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.suppliers
@@ -137,6 +154,7 @@ async fn list_suppliers(
                 "#,
             );
 
+            let count_logger = QueryLogger::new(&count_query);
             let count_result = sqlx::query_scalar::<_, i64>(&count_query)
                 .bind(&search_pattern)
                 .bind(&status_filter)
@@ -144,6 +162,7 @@ async fn list_suppliers(
                 .fetch_one(&state.db)
                 .await;
 
+            count_logger.finish(Some(1));
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(
@@ -515,32 +534,14 @@ async fn get_supplier_performance(
         Err(e) => return e,
     }
 
-    // 获取供应商基本信息
-    let supplier = sqlx::query_as::<_, Supplier>(
+    // 并行执行三个独立查询，避免顺序执行造成的延迟
+    let supplier_query = sqlx::query_as::<_, Supplier>(
         "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1",
     )
     .bind(id)
-    .fetch_optional(&state.db)
-    .await;
+    .fetch_optional(&state.db);
 
-    let supplier = match supplier {
-        Ok(Some(s)) => s,
-        Ok(None) => {
-            return Json(ApiResponse::<SupplierPerformance>::error(
-                404,
-                "供应商不存在",
-            ))
-        }
-        Err(_) => {
-            return Json(ApiResponse::<SupplierPerformance>::error(
-                500,
-                "查询供应商失败",
-            ))
-        }
-    };
-
-    // 获取订单统计
-    let order_stats = sqlx::query_as::<_, (i64, Option<f64>)>(
+    let order_stats_query = sqlx::query_as::<_, (i64, Option<f64>)>(
         r#"
         SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
         FROM srm.purchase_orders
@@ -548,14 +549,9 @@ async fn get_supplier_performance(
         "#,
     )
     .bind(id)
-    .fetch_one(&state.db)
-    .await;
+    .fetch_one(&state.db);
 
-    let (total_orders, total_amount) = order_stats.unwrap_or((0, Some(0.0)));
-    let total_amount = total_amount.unwrap_or(0.0);
-
-    // 获取评估统计
-    let eval_stats = sqlx::query_as::<
+    let eval_stats_query = sqlx::query_as::<
         _,
         (
             Option<f64>,
@@ -581,8 +577,30 @@ async fn get_supplier_performance(
         "#,
     )
     .bind(id)
-    .fetch_one(&state.db)
-    .await;
+    .fetch_one(&state.db);
+
+    // 并行执行所有查询
+    let (supplier_result, order_stats, eval_stats) =
+        tokio::join!(supplier_query, order_stats_query, eval_stats_query);
+
+    let supplier = match supplier_result {
+        Ok(Some(s)) => s,
+        Ok(None) => {
+            return Json(ApiResponse::<SupplierPerformance>::error(
+                404,
+                "供应商不存在",
+            ))
+        }
+        Err(_) => {
+            return Json(ApiResponse::<SupplierPerformance>::error(
+                500,
+                "查询供应商失败",
+            ))
+        }
+    };
+
+    let (total_orders, total_amount) = order_stats.unwrap_or((0, Some(0.0)));
+    let total_amount = total_amount.unwrap_or(0.0);
 
     let (
         avg_quality,

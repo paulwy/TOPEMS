@@ -5,17 +5,52 @@ kind: Kustomization
 namespace: topems
 
 resources:
+  # Base resources
   - base/namespace.yaml
   - base/configmap.yaml
+  - base/postgres.yaml
+  - base/redis.yaml
+  - base/rabbitmq.yaml
+  - base/consul.yaml
   - base/monitoring.yaml
   - base/grafana-dashboard.yaml
+  - base/ingress.yaml
+  
+  # Core services
+  - services/unified-core.yaml
+  
+  # Management services
+  - services/erp.yaml
+  - services/hrm.yaml
+  - services/pm.yaml
+  - services/crm.yaml
+  
+  # Manufacturing services
   - services/mes.yaml
   - services/pdm.yaml
+  
+  # Supply chain services
+  - services/scm.yaml
+  - services/wms.yaml
+  - services/srm.yaml
+  
+  # Quality services
   - services/qms.yaml
   - services/lims.yaml
   - services/ehs.yaml
+  - services/rs.yaml
+  
+  # Analytics services
   - services/bi.yaml
   - services/report.yaml
+  - services/monitor.yaml
+  - services/portal.yaml
+  - services/ai.yaml
+  
+  # Infrastructure services
+  - services/mobile.yaml
+  - services/gis.yaml
+  - services/integration.yaml
 
 # Common labels
 commonLabels:
@@ -25,17 +60,70 @@ commonLabels:
 
 # Images (override for different environments)
 images:
+  # Infrastructure
+  - name: postgres
+    newTag: latest
+  - name: redis
+    newTag: latest
+  - name: rabbitmq
+    newTag: management
+  - name: consul
+    newTag: latest
+  
+  # Core services
+  - name: topems/unified-core
+    newTag: latest
+  
+  # Management services
+  - name: topems/erp
+    newTag: latest
+  - name: topems/hrm
+    newTag: latest
+  - name: topems/pm
+    newTag: latest
+  - name: topems/crm
+    newTag: latest
+  
+  # Manufacturing services
   - name: topems/mes
     newTag: latest
   - name: topems/pdm
     newTag: latest
+  
+  # Supply chain services
+  - name: topems/scm
+    newTag: latest
+  - name: topems/wms
+    newTag: latest
+  - name: topems/srm
+    newTag: latest
+  
+  # Quality services
   - name: topems/qms
     newTag: latest
   - name: topems/lims
     newTag: latest
   - name: topems/ehs
     newTag: latest
+  - name: topems/rs
+    newTag: latest
+  
+  # Analytics services
   - name: topems/bi
     newTag: latest
   - name: topems/report
+    newTag: latest
+  - name: topems/monitor
+    newTag: latest
+  - name: topems/portal
+    newTag: latest
+  - name: topems/ai
+    newTag: latest
+  
+  # Infrastructure services
+  - name: topems/mobile
+    newTag: latest
+  - name: topems/gis
+    newTag: latest
+  - name: topems/integration
     newTag: latest

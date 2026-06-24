@@ -1,0 +1,71 @@
+# AI Service - Kubernetes Deployment and Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai
+  namespace: topems
+  labels:
+    app: ai
+    suite: analytics
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai
+  template:
+    metadata:
+      labels:
+        app: ai
+        suite: analytics
+    spec:
+      containers:
+      - name: ai
+        image: topems/ai:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8064
+          name: http
+        envFrom:
+        - configMapRef:
+            name: topems-config
+        - secretRef:
+            name: topems-secrets
+        env:
+        - name: AI_PORT
+          value: "8064"
+        - name: CONSUL_URL
+          value: "http://consul-service:8500"
+        - name: OLLAMA_BASE_URL
+          value: "http://ollama-service:11434/v1"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "4000m"
+            memory: "8Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8064
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8064
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: topems
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8064
+    targetPort: 8064
+  selector:
+    app: ai

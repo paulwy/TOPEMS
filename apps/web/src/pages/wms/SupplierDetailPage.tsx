@@ -1,13 +1,22 @@
-import { Card, CardContent, CardHeader, Chip, Typography, Box, Table, TableBody, TableCell, TableHead, TableRow, Paper,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  Chip,
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Paper,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Truck,
-  Mail,
-  Phone,
-  AlertCircle,
   Edit2,
   FileText,
   DollarSign,
@@ -16,12 +25,12 @@ import {
   Wallet,
   TrendingUp,
   Clock,
-} from "lucide-react";
-import { scmApi } from "@/api/modules/scm/scm";
-import { useNotification } from "@/hooks/useNotification";
-import type { Supplier } from "@/api/modules/scm/scm";
-import { apiLogger } from "@/utils/logger";
-import { DetailPageTemplate, type SectionConfig } from "@/components/templates";
+} from 'lucide-react';
+import { scmApi } from '@/api/scm';
+import { useNotification } from '@/hooks/useNotification';
+import type { Supplier } from '@/api/scm';
+import { apiLogger } from '@/utils/logger';
+import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 
 const SupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,314 +56,414 @@ const SupplierDetailPage: React.FC = () => {
         setSupplier(res.data);
       }
     } catch (err) {
-      apiLogger.error("Failed to load supplier:", err);
-      error("加载供应商信息失败");
+      apiLogger.error('Failed to load supplier:', err);
+      error('加载供应商信息失败');
     } finally {
       setLoading(false);
     }
   };
 
   const formatCurrency = (amount?: number) => {
-    if (!amount) return "¥0";
-    return new Intl.NumberFormat("zh-CN", {
-      style: "currency",
-      currency: "CNY",
+    if (!amount) return '¥0';
+    return new Intl.NumberFormat('zh-CN', {
+      style: 'currency',
+      currency: 'CNY',
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString("zh-CN");
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('zh-CN');
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      {
-        label: string;
-        variant: "default" | "secondary" | "destructive" | "outline";
-      }
-    > = {
-      active: { label: "活跃", variant: "default" },
-      inactive: { label: "非活跃", variant: "secondary" },
-      blocked: { label: "已冻结", variant: "destructive" },
+    const statusMap: Record<string, { label: string; color: 'success' | 'error' | 'default' }> = {
+      active: { label: '活跃', color: 'success' },
+      inactive: { label: '非活跃', color: 'default' },
+      blocked: { label: '已冻结', color: 'error' },
     };
-    const s = statusMap[status] || { label: status, variant: "outline" };
+    const s = statusMap[status] || { label: status, color: 'default' };
     return (
       <Chip
-        size="small"
-        variant={s.variant === "outline" ? "outlined" : "filled"}
+        size='small'
         label={s.label}
+        color={s.color}
       />
     );
   };
 
   const statsData = [
     {
-      label: "应付账款",
+      label: '应付账款',
       value: formatCurrency(0),
       icon: CreditCard,
-      color: "primary",
     },
     {
-      label: "逾期应付",
+      label: '逾期应付',
       value: formatCurrency(0),
       icon: Clock,
-      color: "error",
     },
     {
-      label: "累计采购",
+      label: '累计采购',
       value: formatCurrency(0),
       icon: TrendingUp,
-      color: "success",
     },
     {
-      label: "累计付款",
+      label: '累计付款',
       value: formatCurrency(0),
       icon: Wallet,
-      color: "warning",
     },
   ];
 
-  const basicInfoItems = [
-    { label: "供应商名称", value: supplier?.name },
-    { label: "简称", value: supplier?.short_name || "-" },
-    { label: "联系人", value: supplier?.contact_name || "-" },
-    { label: "联系电话", value: supplier?.contact_phone || "-" },
-    { label: "邮箱", value: supplier?.email || "-" },
-    { label: "银行账户", value: supplier?.bank_account || "-" },
-    { label: "地址", value: supplier?.address || "-" },
-    { label: "税号", value: supplier?.tax_number || "-" },
-    { label: "状态", value: getStatusBadge(supplier?.status || "") },
-  ];
-
-  const paymentTermsItems = [
-    { label: "付款方式", value: "-" },
-    { label: "付款期限", value: "-" },
-    { label: "信用额度", value: "-" },
-  ];
-
-  const payableOverviewItems = [
-    { label: "应付账款", value: formatCurrency(0), color: "warning.main" },
-    { label: "逾期应付", value: formatCurrency(0), color: "error.main" },
-    { label: "平均付款天数", value: "0 天" },
-    { label: "最后交易日期", value: "-" },
-  ];
-
-  const transactionStatsItems = [
-    { label: "累计采购", value: formatCurrency(0), color: "success.main" },
-    { label: "累计付款", value: formatCurrency(0), color: "info.main" },
-    { label: "应付余额", value: formatCurrency(0), color: "warning.main" },
-  ];
-
-  const bankInfoItems = [
-    { label: "开户银行", value: "-" },
-    { label: "银行账号", value: supplier?.bank_account || "-" },
-    { label: "税号", value: supplier?.tax_number || "-" },
-    {
-      label: "供应商状态",
-      value: supplier?.status === "active" ? "正常" : supplier?.status || "-",
-    },
-  ];
-
-  const invoiceColumns = [
-    { id: "invoice_no", label: "发票号" },
-    { id: "amount", label: "金额", align: "right" as const },
-    { id: "tax_amount", label: "税额", align: "right" as const },
-    { id: "total", label: "价税合计", align: "right" as const },
-    { id: "invoice_date", label: "发票日期" },
-    { id: "due_date", label: "到期日" },
-    { id: "status", label: "状态" },
-  ];
-
-  const paymentColumns = [
-    { id: "payment_no", label: "付款单号" },
-    { id: "amount", label: "付款金额", align: "right" as const },
-    { id: "method", label: "付款方式" },
-    { id: "date", label: "付款日期" },
-    { id: "status", label: "状态" },
-  ];
-
-  const footerInfoItems = [
-    {
-      label: "创建时间",
-      value: supplier?.created_at
-        ? new Date(supplier.created_at).toLocaleString()
-        : "-",
-    },
-    {
-      label: "更新时间",
-      value: supplier?.updated_at
-        ? new Date(supplier.updated_at).toLocaleString()
-        : "-",
-    },
-    {
-      label: "供应商ID",
-      value: supplier?.id ? `${supplier.id.substring(0, 8)}...` : "-",
-    },
-    { label: "状态", value: getStatusBadge(supplier?.status || "") },
-  ];
-
-  const renderGridItem = (item: { label: string; value: React.ReactNode }) => (
-    <Box key={item.label}>
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-        {item.label}
-      </Typography>
-      <Typography sx={{ fontWeight: 500 }}>{item.value}</Typography>
-    </Box>
-  );
-
-  const renderListItem = (item: {
-    label: string;
-    value: string;
-    color?: string;
-  }) => (
-    <Box
-      key={item.label}
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        py: 1,
-        borderBottom: 1,
-        borderColor: "divider",
-      }}
-    >
-      <Typography sx={{ color: "text.secondary" }}>{item.label}</Typography>
-      <Typography sx={{ fontWeight: 500, color: item.color }}>
-        {item.value}
-      </Typography>
-    </Box>
-  );
-
-  const renderTable = (
-    columns: {
-      id: string;
-      label: string;
-      align?: "left" | "center" | "right";
-    }[],
-  ) => (
-    <Table>
-      <TableHead>
-        <TableRow>
-          {columns.map((col) => (
-            <TableCell key={col.id} align={col.align}>
-              {col.label}
-            </TableCell>
-          ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        <TableRow>
-          <TableCell
-            colSpan={columns.length}
-            sx={{ textAlign: "center", py: 6, color: "text.secondary" }}
+  // 基本信息 Tab 内容
+  const basicInfoSection: SectionConfig = {
+    id: 'basic-info',
+    title: '基本信息',
+    content: (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
           >
-            暂无数据
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-  );
+            供应商名称
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.name}</Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            简称
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.short_name || '-'}</Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            状态
+          </Typography>
+          <Box sx={{ mt: 0.5 }}>{getStatusBadge(supplier?.status || '')}</Box>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            联系人
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.contact_name || '-'}</Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            联系电话
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.contact_phone || '-'}</Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            邮箱
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.email || '-'}</Typography>
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            地址
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.address || '-'}</Typography>
+        </Box>
+      </Box>
+    ),
+  };
 
-  const sections: SectionConfig[] = [
-    {
-      id: "basic-info",
-      title: "基本信息",
-      content: (
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-            gap: 2,
-          }}
-        >
-          {basicInfoItems.map(renderGridItem)}
+  // 银行账户信息 Section
+  const bankInfoSection: SectionConfig = {
+    id: 'bank-info',
+    title: '银行账户信息',
+    content: (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            银行账户
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.bank_account || '-'}</Typography>
         </Box>
-      ),
-    },
-    {
-      id: "payment-terms",
-      title: "付款条款",
-      content: <Box>{paymentTermsItems.map(renderListItem)}</Box>,
-    },
-    {
-      id: "payable-overview",
-      title: "应付款概览",
-      content: <Box>{payableOverviewItems.map(renderListItem)}</Box>,
-    },
-    {
-      id: "transaction-stats",
-      title: "交易统计",
-      content: <Box>{transactionStatsItems.map(renderListItem)}</Box>,
-    },
-    {
-      id: "bank-info",
-      title: "银行账户信息",
-      content: <Box>{bankInfoItems.map(renderListItem)}</Box>,
-    },
-    {
-      id: "purchase-invoices",
-      title: "采购发票列表",
-      content: <Box sx={{ p: 0 }}>{renderTable(invoiceColumns)}</Box>,
-    },
-    {
-      id: "payment-records",
-      title: "付款记录列表",
-      content: <Box sx={{ p: 0 }}>{renderTable(paymentColumns)}</Box>,
-    },
-    {
-      id: "footer-info",
-      title: "",
-      content: (
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" },
-            gap: 2,
-          }}
-        >
-          {footerInfoItems.map((item, index) => (
-            <Box
-              key={index}
-              sx={{ bgcolor: "action.hover", borderRadius: 1, p: 2 }}
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            税号
+          </Typography>
+          <Typography sx={{ fontWeight: 500 }}>{supplier?.tax_number || '-'}</Typography>
+        </Box>
+      </Box>
+    ),
+  };
+
+  // 时间信息 Section
+  const timeInfoSection: SectionConfig = {
+    id: 'time-info',
+    title: '时间信息',
+    content: (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            创建时间
+          </Typography>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
+            {supplier?.created_at ? new Date(supplier.created_at).toLocaleString() : '-'}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            更新时间
+          </Typography>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
+            {supplier?.updated_at ? new Date(supplier.updated_at).toLocaleString() : '-'}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            供应商ID
+          </Typography>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
+            {supplier?.id ? `${supplier.id.substring(0, 8)}...` : '-'}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography
+            variant='caption'
+            sx={{ color: 'text.secondary' }}
+          >
+            状态
+          </Typography>
+          <Box sx={{ mt: 0.5 }}>{getStatusBadge(supplier?.status || '')}</Box>
+        </Box>
+      </Box>
+    ),
+  };
+
+  // 基本信息 Tab
+  const basicInfoTab: TabConfig = {
+    id: 'basic-info',
+    label: '基本信息',
+    icon: <Truck size={16} />,
+    content: (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Paper sx={{ borderRadius: 2 }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
             >
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                {item.label}
-              </Typography>
-              <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
-                {item.value}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      ),
-    },
+              基本信息
+            </Typography>
+          </Box>
+          <Box sx={{ p: 3 }}>{basicInfoSection.content}</Box>
+        </Paper>
+        <Paper sx={{ borderRadius: 2 }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              银行账户信息
+            </Typography>
+          </Box>
+          <Box sx={{ p: 3 }}>{bankInfoSection.content}</Box>
+        </Paper>
+        <Paper sx={{ borderRadius: 2 }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              时间信息
+            </Typography>
+          </Box>
+          <Box sx={{ p: 3 }}>{timeInfoSection.content}</Box>
+        </Paper>
+      </Box>
+    ),
+  };
+
+  // 评估记录 Tab
+  const evaluationsTab: TabConfig = {
+    id: 'evaluations',
+    label: '评估记录',
+    icon: <FileText size={16} />,
+    badge: 0,
+    content: (
+      <Paper sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>评估日期</TableCell>
+              <TableCell>质量评分</TableCell>
+              <TableCell>交期评分</TableCell>
+              <TableCell>服务评分</TableCell>
+              <TableCell>价格评分</TableCell>
+              <TableCell>综合评分</TableCell>
+              <TableCell>评估人</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell
+                colSpan={7}
+                sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
+              >
+                暂无评估记录
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </Paper>
+    ),
+  };
+
+  // 交易历史 Tab
+  const transactionHistoryTab: TabConfig = {
+    id: 'transactions',
+    label: '交易历史',
+    icon: <DollarSign size={16} />,
+    badge: 0,
+    content: (
+      <Paper sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>订单号</TableCell>
+              <TableCell>订单日期</TableCell>
+              <TableCell align='right'>订单金额</TableCell>
+              <TableCell>状态</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
+              >
+                暂无交易记录
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </Paper>
+    ),
+  };
+
+  // 付款记录 Tab
+  const paymentRecordsTab: TabConfig = {
+    id: 'payments',
+    label: '付款记录',
+    icon: <Receipt size={16} />,
+    badge: 0,
+    content: (
+      <Paper sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>付款单号</TableCell>
+              <TableCell align='right'>付款金额</TableCell>
+              <TableCell>付款方式</TableCell>
+              <TableCell>付款日期</TableCell>
+              <TableCell>状态</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell
+                colSpan={5}
+                sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
+              >
+                暂无付款记录
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </Paper>
+    ),
+  };
+
+  const tabs: TabConfig[] = [
+    basicInfoTab,
+    evaluationsTab,
+    transactionHistoryTab,
+    paymentRecordsTab,
   ];
 
   if (!loading && !supplier) {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          bgcolor: "slate.50",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100vh',
+          bgcolor: 'slate.50',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
-          <AlertCircle
-            sx={{
-              width: 48,
-              height: 48,
-              color: "grey.400",
-              mx: "auto",
-              mb: 1.5,
-            }}
-          />
-          <Typography sx={{ color: "grey.500" }}>供应商不存在</Typography>
-          <Button onClick={() => navigate("/srm/suppliers")} sx={{ mt: 2 }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography sx={{ color: 'grey.500' }}>供应商不存在</Typography>
+          <Button
+            onClick={() => navigate('/scm/suppliers')}
+            sx={{ mt: 2 }}
+          >
             返回列表
           </Button>
         </Box>
@@ -364,11 +473,11 @@ const SupplierDetailPage: React.FC = () => {
 
   return (
     <DetailPageTemplate
-      title="供应商详情"
-      subtitle="查看和编辑供应商档案信息"
+      title='供应商详情'
+      subtitle='查看和编辑供应商档案信息'
       loading={loading}
-      backHref="/srm/suppliers"
-      onBack={() => navigate("/srm/suppliers")}
+      backHref='/scm/suppliers'
+      onBack={() => navigate('/scm/suppliers')}
       onEdit={() => setIsEditing(!isEditing)}
       infoCard={
         supplier
@@ -376,11 +485,9 @@ const SupplierDetailPage: React.FC = () => {
               avatar: <Truck sx={{ width: 32, height: 32 }} />,
               title: supplier.name,
               subtitle: supplier.short_name,
-              tags: [
-                supplier.contact_name,
-                supplier.contact_phone,
-                supplier.email,
-              ].filter((tag): tag is string => Boolean(tag)),
+              tags: [supplier.contact_name, supplier.contact_phone, supplier.email].filter(
+                (tag): tag is string => Boolean(tag)
+              ),
               stats: statsData.map((stat) => ({
                 label: stat.label,
                 value: stat.value,
@@ -388,7 +495,7 @@ const SupplierDetailPage: React.FC = () => {
             }
           : undefined
       }
-      sections={sections}
+      tabs={tabs}
     />
   );
 };

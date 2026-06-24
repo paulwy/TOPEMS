@@ -1,9 +1,9 @@
-import { Menu, MenuItem, Box } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Globe } from "lucide-react";
-import { SUPPORTED_LANGUAGES, type LanguageCode } from "../i18n";
+import { Menu, MenuItem, Box } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Globe } from 'lucide-react';
+import { SUPPORTED_LANGUAGES, type LanguageCode } from '../i18n';
 
 const LanguageSelector: React.FC = () => {
   const { i18n } = useTranslation();
@@ -12,7 +12,7 @@ const LanguageSelector: React.FC = () => {
 
   const handleChangeLanguage = (code: LanguageCode) => {
     i18n.changeLanguage(code);
-    localStorage.setItem("language", code);
+    localStorage.setItem('language', code);
     setAnchorEl(null);
   };
 
@@ -27,8 +27,8 @@ const LanguageSelector: React.FC = () => {
   return (
     <>
       <Button
-        variant="text"
-        size="small"
+        variant='text'
+        size='small'
         onClick={handleMenuOpen}
         sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
       >
@@ -39,12 +39,12 @@ const LanguageSelector: React.FC = () => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
+          vertical: 'bottom',
+          horizontal: 'right',
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
+          vertical: 'top',
+          horizontal: 'right',
         }}
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
@@ -53,27 +53,23 @@ const LanguageSelector: React.FC = () => {
             onClick={() => handleChangeLanguage(lang.code)}
             selected={currentLang === lang.code}
             sx={{
-              backgroundColor:
-                currentLang === lang.code ? "action.selected" : "inherit",
-              "&:hover": {
-                backgroundColor:
-                  currentLang === lang.code
-                    ? "action.selected"
-                    : "action.hover",
+              backgroundColor: currentLang === lang.code ? 'action.selected' : 'inherit',
+              '&:hover': {
+                backgroundColor: currentLang === lang.code ? 'action.selected' : 'action.hover',
               },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box
                 sx={{
                   width: 24,
                   height: 24,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   fontSize: 12,
-                  fontWeight: "bold",
-                  backgroundColor: "#f5f5f5",
+                  fontWeight: 'bold',
+                  backgroundColor: '#f5f5f5',
                   borderRadius: 0.5,
                 }}
               >
@@ -82,8 +78,8 @@ const LanguageSelector: React.FC = () => {
               <span>{lang.name}</span>
               {currentLang === lang.code && (
                 <Box
-                  component="span"
-                  sx={{ ml: 1, fontSize: 12, color: "text.disabled" }}
+                  component='span'
+                  sx={{ ml: 1, fontSize: 12, color: 'text.disabled' }}
                 >
                   ✓
                 </Box>

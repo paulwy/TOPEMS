@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
-export type NotificationType = "success" | "error" | "info" | "warning";
+export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
 export interface Notification {
   id: string;
@@ -32,7 +32,7 @@ export function useNotification() {
 
       return id;
     },
-    [],
+    []
   );
 
   const hideNotification = useCallback((id: string) => {
@@ -41,37 +41,37 @@ export function useNotification() {
 
   const success = useCallback(
     (message: string, duration?: number) => {
-      return showNotification("success", message, duration);
+      return showNotification('success', message, duration);
     },
-    [showNotification],
+    [showNotification]
   );
 
   const error = useCallback(
     (message: string, duration?: number) => {
-      return showNotification("error", message, duration);
+      return showNotification('error', message, duration);
     },
-    [showNotification],
+    [showNotification]
   );
 
   const info = useCallback(
     (message: string, duration?: number) => {
-      return showNotification("info", message, duration);
+      return showNotification('info', message, duration);
     },
-    [showNotification],
+    [showNotification]
   );
 
   const warning = useCallback(
     (message: string, duration?: number) => {
-      return showNotification("warning", message, duration);
+      return showNotification('warning', message, duration);
     },
-    [showNotification],
+    [showNotification]
   );
 
   const addNotification = useCallback(
     (options: NotificationOptions) => {
       return showNotification(options.type, options.message, options.duration);
     },
-    [showNotification],
+    [showNotification]
   );
 
   const result = {

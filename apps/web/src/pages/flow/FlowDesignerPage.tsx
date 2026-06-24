@@ -1,7 +1,17 @@
-import React, { useState, useMemo } from "react";
-import { logger } from "@/utils/logger";
-import { Box, Card, CardContent, Divider, Drawer, IconButton, Stack, TextField, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useMemo } from 'react';
+import { logger } from '@/utils/logger';
+import {
+  Box,
+  Card,
+  CardContent,
+  Divider,
+  Drawer,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   Play,
   Save,
@@ -15,11 +25,11 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface FlowNode {
   id: string;
-  type: "start" | "end" | "task" | "approval" | "condition";
+  type: 'start' | 'end' | 'task' | 'approval' | 'condition';
   label: string;
   x: number;
   y: number;
@@ -34,31 +44,31 @@ interface FlowEdge {
 }
 
 const mockNodes: FlowNode[] = [
-  { id: "start-1", type: "start", label: "开始", x: 100, y: 200 },
-  { id: "task-1", type: "task", label: "填写申请", x: 250, y: 200 },
-  { id: "approval-1", type: "approval", label: "部门审批", x: 400, y: 200 },
-  { id: "condition-1", type: "condition", label: "金额判断", x: 550, y: 200 },
-  { id: "approval-2", type: "approval", label: "经理审批", x: 700, y: 100 },
-  { id: "approval-3", type: "approval", label: "财务审批", x: 700, y: 300 },
-  { id: "end-1", type: "end", label: "结束", x: 850, y: 200 },
+  { id: 'start-1', type: 'start', label: '开始', x: 100, y: 200 },
+  { id: 'task-1', type: 'task', label: '填写申请', x: 250, y: 200 },
+  { id: 'approval-1', type: 'approval', label: '部门审批', x: 400, y: 200 },
+  { id: 'condition-1', type: 'condition', label: '金额判断', x: 550, y: 200 },
+  { id: 'approval-2', type: 'approval', label: '经理审批', x: 700, y: 100 },
+  { id: 'approval-3', type: 'approval', label: '财务审批', x: 700, y: 300 },
+  { id: 'end-1', type: 'end', label: '结束', x: 850, y: 200 },
 ];
 
 const mockEdges: FlowEdge[] = [
-  { id: "e1", source: "start-1", target: "task-1" },
-  { id: "e2", source: "task-1", target: "approval-1" },
-  { id: "e3", source: "approval-1", target: "condition-1" },
-  { id: "e4", source: "condition-1", target: "approval-2", label: "≤5000" },
-  { id: "e5", source: "condition-1", target: "approval-3", label: ">5000" },
-  { id: "e6", source: "approval-2", target: "end-1" },
-  { id: "e7", source: "approval-3", target: "end-1" },
+  { id: 'e1', source: 'start-1', target: 'task-1' },
+  { id: 'e2', source: 'task-1', target: 'approval-1' },
+  { id: 'e3', source: 'approval-1', target: 'condition-1' },
+  { id: 'e4', source: 'condition-1', target: 'approval-2', label: '≤5000' },
+  { id: 'e5', source: 'condition-1', target: 'approval-3', label: '>5000' },
+  { id: 'e6', source: 'approval-2', target: 'end-1' },
+  { id: 'e7', source: 'approval-3', target: 'end-1' },
 ];
 
 const nodeTypes = [
-  { type: "start", label: "开始", icon: Play, color: "#16a34a" },
-  { type: "end", label: "结束", icon: Square, color: "#dc2626" },
-  { type: "task", label: "任务", icon: Circle, color: "#8b5cf6" },
-  { type: "approval", label: "审批", icon: Diamond, color: "#f59e0b" },
-  { type: "condition", label: "条件", icon: Diamond, color: "#3b82f6" },
+  { type: 'start', label: '开始', icon: Play, color: '#16a34a' },
+  { type: 'end', label: '结束', icon: Square, color: '#dc2626' },
+  { type: 'task', label: '任务', icon: Circle, color: '#8b5cf6' },
+  { type: 'approval', label: '审批', icon: Diamond, color: '#f59e0b' },
+  { type: 'condition', label: '条件', icon: Diamond, color: '#3b82f6' },
 ];
 
 const FlowDesignerPage: React.FC = () => {
@@ -74,87 +84,103 @@ const FlowDesignerPage: React.FC = () => {
   };
 
   const handleSave = () => {
-    logger.info("保存流程图", nodes, edges);
+    logger.info('保存流程图', nodes, edges);
   };
 
   const handlePreview = () => {
-    logger.info("预览流程");
+    logger.info('预览流程');
   };
 
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Card
         sx={{
           borderRadius: 0,
-          borderBottom: "1px solid",
-          borderColor: "divider",
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <CardContent sx={{ p: 2 }}>
           <Stack
-            direction="row"
-            sx={{ alignItems: "center", justifyContent: "space-between" }}
+            direction='row'
+            sx={{ alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+            <Stack
+              direction='row'
+              spacing={2}
+              sx={{ alignItems: 'center' }}
+            >
               <Button
-                variant="text"
+                variant='text'
                 startIcon={<ChevronLeft size={20} />}
-                sx={{ color: "grey.600" }}
+                sx={{ color: 'grey.600' }}
               >
                 返回
               </Button>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 700 }}
+                >
                   流程设计器
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   设计工作流程和审批节点
                 </Typography>
               </Box>
             </Stack>
-            <Stack direction="row" spacing={2}>
+            <Stack
+              direction='row'
+              spacing={2}
+            >
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<Settings size={16} />}
                 onClick={() => setZoom(100)}
               >
                 重置
               </Button>
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<ZoomOut size={16} />}
                 onClick={() => setZoom(Math.max(50, zoom - 10))}
               >
                 缩小
               </Button>
               <Typography
-                variant="body2"
-                sx={{ minWidth: 60, textAlign: "center", alignSelf: "center" }}
+                variant='body2'
+                sx={{ minWidth: 60, textAlign: 'center', alignSelf: 'center' }}
               >
                 {zoom}%
               </Typography>
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<ZoomIn size={16} />}
                 onClick={() => setZoom(Math.min(200, zoom + 10))}
               >
                 放大
               </Button>
-              <Button variant="outlined" startIcon={<Maximize size={16} />}>
+              <Button
+                variant='outlined'
+                startIcon={<Maximize size={16} />}
+              >
                 适应画布
               </Button>
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<Play size={16} />}
                 onClick={handlePreview}
               >
                 预览
               </Button>
               <Button
-                variant="contained"
+                variant='contained'
                 startIcon={<Save size={16} />}
                 onClick={handleSave}
-                sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" } }}
+                sx={{ bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}
               >
                 保存
               </Button>
@@ -163,17 +189,20 @@ const FlowDesignerPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Box sx={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Card
           sx={{
             width: 240,
             borderRadius: 0,
-            borderRight: "1px solid",
-            borderColor: "divider",
+            borderRight: '1px solid',
+            borderColor: 'divider',
           }}
         >
           <CardContent sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               流程节点
             </Typography>
             <Stack spacing={1}>
@@ -183,17 +212,17 @@ const FlowDesignerPage: React.FC = () => {
                   <Box
                     key={nodeType.type}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1.5,
                       p: 1.5,
                       borderRadius: 1,
-                      border: "1px solid",
-                      borderColor: "divider",
-                      cursor: "grab",
-                      "&:hover": {
-                        borderColor: "primary.light",
-                        bgcolor: "grey.50",
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      cursor: 'grab',
+                      '&:hover': {
+                        borderColor: 'primary.light',
+                        bgcolor: 'grey.50',
                       },
                     }}
                   >
@@ -203,14 +232,17 @@ const FlowDesignerPage: React.FC = () => {
                         height: 32,
                         borderRadius: 1,
                         bgcolor: nodeType.color,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Icon size={16} color="white" />
+                      <Icon
+                        size={16}
+                        color='white'
+                      />
                     </Box>
-                    <Typography variant="body2">{nodeType.label}</Typography>
+                    <Typography variant='body2'>{nodeType.label}</Typography>
                   </Box>
                 );
               })}
@@ -218,10 +250,16 @@ const FlowDesignerPage: React.FC = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               节点属性
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               点击画布上的节点可编辑其属性
             </Typography>
           </CardContent>
@@ -230,18 +268,18 @@ const FlowDesignerPage: React.FC = () => {
         <Box
           sx={{
             flex: 1,
-            bgcolor: "grey.100",
-            overflow: "auto",
-            position: "relative",
+            bgcolor: 'grey.100',
+            overflow: 'auto',
+            position: 'relative',
           }}
         >
           <Box
             sx={{
               width: 1200,
               height: 800,
-              position: "relative",
+              position: 'relative',
               transform: `scale(${zoom / 100})`,
-              transformOrigin: "top left",
+              transformOrigin: 'top left',
             }}
           >
             {nodes.map((node) => (
@@ -249,52 +287,49 @@ const FlowDesignerPage: React.FC = () => {
                 key={node.id}
                 onClick={() => handleNodeClick(node)}
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   left: node.x,
                   top: node.y,
                   px: 3,
                   py: 2,
                   bgcolor:
-                    node.type === "start"
-                      ? "#16a34a"
-                      : node.type === "end"
-                        ? "#dc2626"
-                        : node.type === "approval"
-                          ? "#f59e0b"
-                          : node.type === "condition"
-                            ? "#3b82f6"
-                            : "white",
+                    node.type === 'start'
+                      ? '#16a34a'
+                      : node.type === 'end'
+                        ? '#dc2626'
+                        : node.type === 'approval'
+                          ? '#f59e0b'
+                          : node.type === 'condition'
+                            ? '#3b82f6'
+                            : 'white',
                   color:
-                    node.type === "start" ||
-                    node.type === "end" ||
-                    node.type === "approval" ||
-                    node.type === "condition"
-                      ? "white"
-                      : "grey.800",
+                    node.type === 'start' ||
+                    node.type === 'end' ||
+                    node.type === 'approval' ||
+                    node.type === 'condition'
+                      ? 'white'
+                      : 'grey.800',
                   borderRadius: 1,
-                  border:
-                    node.type === "start" || node.type === "end"
-                      ? "none"
-                      : "2px solid",
+                  border: node.type === 'start' || node.type === 'end' ? 'none' : '2px solid',
                   borderColor:
-                    node.type === "start"
-                      ? "#16a34a"
-                      : node.type === "end"
-                        ? "#dc2626"
-                        : node.type === "approval"
-                          ? "#f59e0b"
-                          : node.type === "condition"
-                            ? "#3b82f6"
-                            : "grey.300",
-                  cursor: "pointer",
-                  "&:hover": {
+                    node.type === 'start'
+                      ? '#16a34a'
+                      : node.type === 'end'
+                        ? '#dc2626'
+                        : node.type === 'approval'
+                          ? '#f59e0b'
+                          : node.type === 'condition'
+                            ? '#3b82f6'
+                            : 'grey.300',
+                  cursor: 'pointer',
+                  '&:hover': {
                     boxShadow: 3,
                   },
                 }}
               >
                 <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 500, textAlign: "center" }}
+                  variant='body2'
+                  sx={{ fontWeight: 500, textAlign: 'center' }}
                 >
                   {node.label}
                 </Typography>
@@ -315,31 +350,30 @@ const FlowDesignerPage: React.FC = () => {
                 <Box
                   key={edge.id}
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     left: sourceX,
                     top: Math.min(sourceY, targetY) + 10,
                     width: Math.sqrt(
-                      Math.pow(targetX - sourceX, 2) +
-                        Math.pow(targetY - sourceY, 2),
+                      Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2)
                     ),
                     height: 2,
-                    bgcolor: "grey.400",
+                    bgcolor: 'grey.400',
                     transform: `rotate(${Math.atan2(targetY - sourceY, targetX - sourceX)}rad)`,
-                    transformOrigin: "left center",
+                    transformOrigin: 'left center',
                   }}
                 >
                   {edge.label && (
                     <Box
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         top: -12,
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        bgcolor: "white",
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        bgcolor: 'white',
                         px: 1,
                       }}
                     >
-                      <Typography variant="caption">{edge.label}</Typography>
+                      <Typography variant='caption'>{edge.label}</Typography>
                     </Box>
                   )}
                 </Box>
@@ -349,16 +383,19 @@ const FlowDesignerPage: React.FC = () => {
         </Box>
 
         <Drawer
-          anchor="right"
+          anchor='right'
           open={showProperties}
           onClose={() => setShowProperties(false)}
         >
           <Box sx={{ width: 320, p: 3 }}>
             <Stack
-              direction="row"
-              sx={{ alignItems: "center", justifyContent: "space-between" }}
+              direction='row'
+              sx={{ alignItems: 'center', justifyContent: 'space-between' }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600 }}
+              >
                 属性配置
               </Typography>
               <IconButton onClick={() => setShowProperties(false)}>
@@ -371,82 +408,94 @@ const FlowDesignerPage: React.FC = () => {
             {selectedNode && (
               <Stack spacing={3}>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "grey.500", mb: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500', mb: 1 }}
+                  >
                     节点ID
                   </Typography>
-                  <Typography variant="body1">{selectedNode.id}</Typography>
+                  <Typography variant='body1'>{selectedNode.id}</Typography>
                 </Box>
 
                 <Box>
-                  <Typography variant="body2" sx={{ color: "grey.500", mb: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500', mb: 1 }}
+                  >
                     节点类型
                   </Typography>
-                  <Typography variant="body1">{selectedNode.type}</Typography>
+                  <Typography variant='body1'>{selectedNode.type}</Typography>
                 </Box>
 
                 <TextField
                   fullWidth
-                  size="small"
-                  label="节点名称"
+                  size='small'
+                  label='节点名称'
                   defaultValue={selectedNode.label}
                 />
 
                 <TextField
                   fullWidth
-                  size="small"
-                  label="节点描述"
+                  size='small'
+                  label='节点描述'
                   multiline
                   rows={3}
-                  defaultValue=""
+                  defaultValue=''
                 />
 
-                {selectedNode.type === "approval" && (
+                {selectedNode.type === 'approval' && (
                   <>
                     <TextField
                       fullWidth
-                      size="small"
-                      label="审批人"
-                      defaultValue=""
+                      size='small'
+                      label='审批人'
+                      defaultValue=''
                     />
                     <TextField
                       fullWidth
-                      size="small"
-                      label="审批类型"
+                      size='small'
+                      label='审批类型'
                       select
-                      defaultValue="single"
+                      defaultValue='single'
                     >
-                      <option value="single">单人审批</option>
-                      <option value="counter">会签审批</option>
-                      <option value="or">或签审批</option>
+                      <option value='single'>单人审批</option>
+                      <option value='counter'>会签审批</option>
+                      <option value='or'>或签审批</option>
                     </TextField>
                     <TextField
                       fullWidth
-                      size="small"
-                      label="超时时间（小时）"
-                      type="number"
+                      size='small'
+                      label='超时时间（小时）'
+                      type='number'
                       defaultValue={24}
                     />
                   </>
                 )}
 
-                {selectedNode.type === "condition" && (
+                {selectedNode.type === 'condition' && (
                   <TextField
                     fullWidth
-                    size="small"
-                    label="条件表达式"
-                    placeholder="例如: amount > 5000"
-                    defaultValue=""
+                    size='small'
+                    label='条件表达式'
+                    placeholder='例如: amount > 5000'
+                    defaultValue=''
                   />
                 )}
 
-                <Stack direction="row" spacing={2}>
-                  <Button variant="outlined" fullWidth>
+                <Stack
+                  direction='row'
+                  spacing={2}
+                >
+                  <Button
+                    variant='outlined'
+                    fullWidth
+                  >
                     取消
                   </Button>
                   <Button
-                    variant="contained"
+                    variant='contained'
                     fullWidth
-                    sx={{ bgcolor: "#8b5cf6" }}
+                    sx={{ bgcolor: '#8b5cf6' }}
                   >
                     保存
                   </Button>

@@ -3,8 +3,8 @@
  * 提供与金蝶、用友、SAP等外部ERP系统的集成接口
  */
 
-import { apiClient, downloadBlob } from "./client";
-import config from "../config/runtime";
+import { apiClient, downloadBlob } from './client';
+import config from '../config/runtime';
 import type {
   KingdeeConnectionConfig,
   YonyouConnectionConfig,
@@ -22,7 +22,7 @@ import type {
   VoucherSyncRequest,
   InvoiceSyncRequest,
   ConnectionTestRequest,
-} from "../types/external-erp";
+} from '../types/external-erp';
 
 // ============================================
 // 一、连接配置管理
@@ -40,7 +40,7 @@ export const externalErpApi = {
     page?: number;
     page_size?: number;
   }) =>
-    apiClient.integration.get("/api/integration/external-erp/connections", {
+    apiClient.integration.get('/api/integration/external-erp/connections', {
       params,
     }),
 
@@ -48,76 +48,55 @@ export const externalErpApi = {
    * 获取连接详情
    */
   getConnection: (id: string) =>
-    apiClient.integration.get(
-      `/api/integration/external-erp/connections/${id}`,
-    ),
+    apiClient.integration.get(`/api/integration/external-erp/connections/${id}`),
 
   /**
    * 创建连接配置
    */
   createConnection: (data: {
-    type: "kingdee" | "yonyou" | "sap";
+    type: 'kingdee' | 'yonyou' | 'sap';
     name: string;
     api_url: string;
     app_key?: string;
     app_secret?: string;
-    sync_direction?: "import" | "export" | "bidirectional";
-    sync_mode?: "realtime" | "scheduled" | "manual";
+    sync_direction?: 'import' | 'export' | 'bidirectional';
+    sync_mode?: 'realtime' | 'scheduled' | 'manual';
     company_mappings?: CompanyMapping[];
-  }) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/connections",
-      data,
-    ),
+  }) => apiClient.integration.post('/api/integration/external-erp/connections', data),
 
   /**
    * 更新连接配置
    */
   updateConnection: (
     id: string,
-    data: Partial<
-      KingdeeConnectionConfig | YonyouConnectionConfig | SapConnectionConfig
-    >,
-  ) =>
-    apiClient.integration.put(
-      `/api/integration/external-erp/connections/${id}`,
-      data,
-    ),
+    data: Partial<KingdeeConnectionConfig | YonyouConnectionConfig | SapConnectionConfig>
+  ) => apiClient.integration.put(`/api/integration/external-erp/connections/${id}`, data),
 
   /**
    * 删除连接配置
    */
   deleteConnection: (id: string) =>
-    apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${id}`,
-    ),
+    apiClient.integration.delete(`/api/integration/external-erp/connections/${id}`),
 
   /**
    * 启用/禁用连接
    */
   toggleConnection: (id: string, enabled: boolean) =>
-    apiClient.integration.put(
-      `/api/integration/external-erp/connections/${id}/toggle`,
-      { enabled },
-    ),
+    apiClient.integration.put(`/api/integration/external-erp/connections/${id}/toggle`, {
+      enabled,
+    }),
 
   /**
    * 测试连接
    */
   testConnection: (data: ConnectionTestRequest) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/connections/test",
-      data,
-    ),
+    apiClient.integration.post('/api/integration/external-erp/connections/test', data),
 
   /**
    * 同步连接状态
    */
   syncConnectionStatus: (id: string) =>
-    apiClient.integration.post(
-      `/api/integration/external-erp/connections/${id}/sync-status`,
-      {},
-    ),
+    apiClient.integration.post(`/api/integration/external-erp/connections/${id}/sync-status`, {}),
 
   // -------- 公司映射 --------
 
@@ -126,7 +105,7 @@ export const externalErpApi = {
    */
   getCompanyMappings: (configId: string) =>
     apiClient.integration.get(
-      `/api/integration/external-erp/connections/${configId}/company-mappings`,
+      `/api/integration/external-erp/connections/${configId}/company-mappings`
     ),
 
   /**
@@ -135,20 +114,16 @@ export const externalErpApi = {
   addCompanyMapping: (configId: string, mapping: CompanyMapping) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/company-mappings`,
-      mapping,
+      mapping
     ),
 
   /**
    * 更新公司映射
    */
-  updateCompanyMapping: (
-    configId: string,
-    mappingId: string,
-    mapping: Partial<CompanyMapping>,
-  ) =>
+  updateCompanyMapping: (configId: string, mappingId: string, mapping: Partial<CompanyMapping>) =>
     apiClient.integration.put(
       `/api/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`,
-      mapping,
+      mapping
     ),
 
   /**
@@ -156,7 +131,7 @@ export const externalErpApi = {
    */
   deleteCompanyMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`
     ),
 
   // -------- 科目映射 --------
@@ -169,36 +144,29 @@ export const externalErpApi = {
     params?: {
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/account-mappings`,
-      { params },
+      { params }
     ),
 
   /**
    * 批量导入科目映射
    */
-  importAccountMappings: (
-    configId: string,
-    data: Partial<AccountMappingRule>[],
-  ) =>
+  importAccountMappings: (configId: string, data: Partial<AccountMappingRule>[]) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/account-mappings/batch`,
-      { mappings: data },
+      { mappings: data }
     ),
 
   /**
    * 更新科目映射
    */
-  updateAccountMapping: (
-    configId: string,
-    mappingId: string,
-    data: Partial<AccountMappingRule>,
-  ) =>
+  updateAccountMapping: (configId: string, mappingId: string, data: Partial<AccountMappingRule>) =>
     apiClient.integration.put(
       `/api/integration/external-erp/connections/${configId}/account-mappings/${mappingId}`,
-      data,
+      data
     ),
 
   /**
@@ -206,7 +174,7 @@ export const externalErpApi = {
    */
   deleteAccountMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/account-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/account-mappings/${mappingId}`
     ),
 
   /**
@@ -215,7 +183,7 @@ export const externalErpApi = {
   autoMatchAccountMappings: (configId: string) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/account-mappings/auto-match`,
-      {},
+      {}
     ),
 
   // -------- 客户映射 --------
@@ -228,23 +196,20 @@ export const externalErpApi = {
     params?: {
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/customer-mappings`,
-      { params },
+      { params }
     ),
 
   /**
    * 批量导入客户映射
    */
-  importCustomerMappings: (
-    configId: string,
-    data: Partial<CustomerMappingRule>[],
-  ) =>
+  importCustomerMappings: (configId: string, data: Partial<CustomerMappingRule>[]) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/customer-mappings/batch`,
-      { mappings: data },
+      { mappings: data }
     ),
 
   /**
@@ -253,11 +218,11 @@ export const externalErpApi = {
   updateCustomerMapping: (
     configId: string,
     mappingId: string,
-    data: Partial<CustomerMappingRule>,
+    data: Partial<CustomerMappingRule>
   ) =>
     apiClient.integration.put(
       `/api/integration/external-erp/connections/${configId}/customer-mappings/${mappingId}`,
-      data,
+      data
     ),
 
   /**
@@ -265,7 +230,7 @@ export const externalErpApi = {
    */
   deleteCustomerMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/customer-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/customer-mappings/${mappingId}`
     ),
 
   // -------- 供应商映射 --------
@@ -278,23 +243,20 @@ export const externalErpApi = {
     params?: {
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/supplier-mappings`,
-      { params },
+      { params }
     ),
 
   /**
    * 批量导入供应商映射
    */
-  importSupplierMappings: (
-    configId: string,
-    data: Partial<SupplierMappingRule>[],
-  ) =>
+  importSupplierMappings: (configId: string, data: Partial<SupplierMappingRule>[]) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/supplier-mappings/batch`,
-      { mappings: data },
+      { mappings: data }
     ),
 
   /**
@@ -303,11 +265,11 @@ export const externalErpApi = {
   updateSupplierMapping: (
     configId: string,
     mappingId: string,
-    data: Partial<SupplierMappingRule>,
+    data: Partial<SupplierMappingRule>
   ) =>
     apiClient.integration.put(
       `/api/integration/external-erp/connections/${configId}/supplier-mappings/${mappingId}`,
-      data,
+      data
     ),
 
   /**
@@ -315,7 +277,7 @@ export const externalErpApi = {
    */
   deleteSupplierMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/supplier-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/supplier-mappings/${mappingId}`
     ),
 
   // -------- 项目映射 --------
@@ -328,36 +290,29 @@ export const externalErpApi = {
     params?: {
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/project-mappings`,
-      { params },
+      { params }
     ),
 
   /**
    * 批量导入项目映射
    */
-  importProjectMappings: (
-    configId: string,
-    data: Partial<ProjectMappingRule>[],
-  ) =>
+  importProjectMappings: (configId: string, data: Partial<ProjectMappingRule>[]) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/project-mappings/batch`,
-      { mappings: data },
+      { mappings: data }
     ),
 
   /**
    * 更新项目映射
    */
-  updateProjectMapping: (
-    configId: string,
-    mappingId: string,
-    data: Partial<ProjectMappingRule>,
-  ) =>
+  updateProjectMapping: (configId: string, mappingId: string, data: Partial<ProjectMappingRule>) =>
     apiClient.integration.put(
       `/api/integration/external-erp/connections/${configId}/project-mappings/${mappingId}`,
-      data,
+      data
     ),
 
   /**
@@ -365,7 +320,7 @@ export const externalErpApi = {
    */
   deleteProjectMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/project-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/project-mappings/${mappingId}`
     ),
 
   // -------- 部门映射 --------
@@ -378,23 +333,20 @@ export const externalErpApi = {
     params?: {
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/department-mappings`,
-      { params },
+      { params }
     ),
 
   /**
    * 批量导入部门映射
    */
-  importDepartmentMappings: (
-    configId: string,
-    data: Partial<DepartmentMappingRule>[],
-  ) =>
+  importDepartmentMappings: (configId: string, data: Partial<DepartmentMappingRule>[]) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/department-mappings/batch`,
-      { mappings: data },
+      { mappings: data }
     ),
 
   /**
@@ -403,11 +355,11 @@ export const externalErpApi = {
   updateDepartmentMapping: (
     configId: string,
     mappingId: string,
-    data: Partial<DepartmentMappingRule>,
+    data: Partial<DepartmentMappingRule>
   ) =>
     apiClient.integration.put(
       `/api/integration/external-erp/connections/${configId}/department-mappings/${mappingId}`,
-      data,
+      data
     ),
 
   /**
@@ -415,7 +367,7 @@ export const externalErpApi = {
    */
   deleteDepartmentMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/department-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/department-mappings/${mappingId}`
     ),
 
   // -------- 员工映射 --------
@@ -428,23 +380,20 @@ export const externalErpApi = {
     params?: {
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/employee-mappings`,
-      { params },
+      { params }
     ),
 
   /**
    * 批量导入员工映射
    */
-  importEmployeeMappings: (
-    configId: string,
-    data: Partial<EmployeeMappingRule>[],
-  ) =>
+  importEmployeeMappings: (configId: string, data: Partial<EmployeeMappingRule>[]) =>
     apiClient.integration.post(
       `/api/integration/external-erp/connections/${configId}/employee-mappings/batch`,
-      { mappings: data },
+      { mappings: data }
     ),
 
   /**
@@ -453,11 +402,11 @@ export const externalErpApi = {
   updateEmployeeMapping: (
     configId: string,
     mappingId: string,
-    data: Partial<EmployeeMappingRule>,
+    data: Partial<EmployeeMappingRule>
   ) =>
     apiClient.integration.put(
       `/api/integration/external-erp/connections/${configId}/employee-mappings/${mappingId}`,
-      data,
+      data
     ),
 
   /**
@@ -465,7 +414,7 @@ export const externalErpApi = {
    */
   deleteEmployeeMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/employee-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/employee-mappings/${mappingId}`
     ),
 
   // ============================================
@@ -476,28 +425,19 @@ export const externalErpApi = {
    * 同步科目
    */
   syncAccounts: (data: AccountSyncRequest) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/accounts",
-      data,
-    ),
+    apiClient.integration.post('/api/integration/external-erp/sync/accounts', data),
 
   /**
    * 同步客户
    */
   syncCustomers: (data: CustomerSyncRequest) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/customers",
-      data,
-    ),
+    apiClient.integration.post('/api/integration/external-erp/sync/customers', data),
 
   /**
    * 同步供应商
    */
   syncSuppliers: (data: SupplierSyncRequest) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/suppliers",
-      data,
-    ),
+    apiClient.integration.post('/api/integration/external-erp/sync/suppliers', data),
 
   /**
    * 同步供应商
@@ -507,11 +447,7 @@ export const externalErpApi = {
     project_ids?: string[];
     company_id?: string;
     force_sync?: boolean;
-  }) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/projects",
-      data,
-    ),
+  }) => apiClient.integration.post('/api/integration/external-erp/sync/projects', data),
 
   /**
    * 同步部门
@@ -521,11 +457,7 @@ export const externalErpApi = {
     department_ids?: string[];
     company_id?: string;
     force_sync?: boolean;
-  }) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/departments",
-      data,
-    ),
+  }) => apiClient.integration.post('/api/integration/external-erp/sync/departments', data),
 
   /**
    * 同步员工
@@ -535,48 +467,31 @@ export const externalErpApi = {
     employee_ids?: string[];
     company_id?: string;
     force_sync?: boolean;
-  }) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/employees",
-      data,
-    ),
+  }) => apiClient.integration.post('/api/integration/external-erp/sync/employees', data),
 
   /**
    * 同步凭证
    */
   syncVouchers: (data: VoucherSyncRequest) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/vouchers",
-      data,
-    ),
+    apiClient.integration.post('/api/integration/external-erp/sync/vouchers', data),
 
   /**
    * 同步发票
    */
   syncInvoices: (data: InvoiceSyncRequest) =>
-    apiClient.integration.post(
-      "/api/integration/external-erp/sync/invoices",
-      data,
-    ),
+    apiClient.integration.post('/api/integration/external-erp/sync/invoices', data),
 
   /**
    * 全量同步
    */
-  fullSync: (data: {
-    config_id: string;
-    company_id?: string;
-    sync_modules?: string[];
-  }) =>
-    apiClient.integration.post("/api/integration/external-erp/sync/full", data),
+  fullSync: (data: { config_id: string; company_id?: string; sync_modules?: string[] }) =>
+    apiClient.integration.post('/api/integration/external-erp/sync/full', data),
 
   /**
    * 取消同步
    */
   cancelSync: (logId: string) =>
-    apiClient.integration.post(
-      `/api/integration/external-erp/sync/${logId}/cancel`,
-      {},
-    ),
+    apiClient.integration.post(`/api/integration/external-erp/sync/${logId}/cancel`, {}),
 
   // ============================================
   // 三、同步日志
@@ -594,7 +509,7 @@ export const externalErpApi = {
     page?: number;
     page_size?: number;
   }) =>
-    apiClient.integration.get("/api/integration/external-erp/sync-logs", {
+    apiClient.integration.get('/api/integration/external-erp/sync-logs', {
       params,
     }),
 
@@ -602,9 +517,7 @@ export const externalErpApi = {
    * 获取同步日志详情
    */
   getSyncLog: (logId: string) =>
-    apiClient.integration.get(
-      `/api/integration/external-erp/sync-logs/${logId}`,
-    ),
+    apiClient.integration.get(`/api/integration/external-erp/sync-logs/${logId}`),
 
   /**
    * 获取同步统计
@@ -614,11 +527,11 @@ export const externalErpApi = {
     params?: {
       start_date?: string;
       end_date?: string;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/sync-statistics`,
-      { params },
+      { params }
     ),
 
   // ============================================
@@ -634,11 +547,11 @@ export const externalErpApi = {
       keyword?: string;
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/preview/accounts`,
-      { params },
+      { params }
     ),
 
   /**
@@ -650,11 +563,11 @@ export const externalErpApi = {
       keyword?: string;
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/preview/customers`,
-      { params },
+      { params }
     ),
 
   /**
@@ -666,11 +579,11 @@ export const externalErpApi = {
       keyword?: string;
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/preview/suppliers`,
-      { params },
+      { params }
     ),
 
   /**
@@ -683,11 +596,11 @@ export const externalErpApi = {
       period_to?: string;
       page?: number;
       page_size?: number;
-    },
+    }
   ) =>
     apiClient.integration.get(
       `/api/integration/external-erp/connections/${configId}/preview/vouchers`,
-      { params },
+      { params }
     ),
 
   // ============================================
@@ -703,16 +616,10 @@ export const externalErpApi = {
     status?: string;
     start_date?: string;
     end_date?: string;
-    format: "csv" | "xlsx";
+    format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.integration as any).defaults?.baseURL ||
-      config.services.integration;
-    return downloadBlob(
-      baseURL,
-      "/api/integration/external-erp/export/sync-logs",
-      { params },
-    );
+    const baseURL = (apiClient.integration as any).defaults?.baseURL || config.services.integration;
+    return downloadBlob(baseURL, '/api/integration/external-erp/export/sync-logs', { params });
   },
 
   /**
@@ -720,23 +627,11 @@ export const externalErpApi = {
    */
   exportMappingRules: async (params: {
     config_id: string;
-    mapping_type:
-      | "account"
-      | "customer"
-      | "supplier"
-      | "project"
-      | "department"
-      | "employee";
-    format: "csv" | "xlsx";
+    mapping_type: 'account' | 'customer' | 'supplier' | 'project' | 'department' | 'employee';
+    format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.integration as any).defaults?.baseURL ||
-      config.services.integration;
-    return downloadBlob(
-      baseURL,
-      "/api/integration/external-erp/export/mappings",
-      { params },
-    );
+    const baseURL = (apiClient.integration as any).defaults?.baseURL || config.services.integration;
+    return downloadBlob(baseURL, '/api/integration/external-erp/export/mappings', { params });
   },
 };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   LineChart,
   Line,
@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
+} from 'recharts';
 
 interface LineChartProps {
   data: any[];
@@ -23,10 +23,10 @@ interface LineChartProps {
 export const LineChartComponent: React.FC<LineChartProps> = ({
   data,
   title,
-  xKey = "name",
-  yKey = "value",
+  xKey = 'name',
+  yKey = 'value',
   yKeys,
-  color = "#3b82f6",
+  color = '#3b82f6',
   height = 200,
 }) => {
   const series = yKeys || [{ key: yKey, name: yKey, color }];
@@ -34,27 +34,34 @@ export const LineChartComponent: React.FC<LineChartProps> = ({
   return (
     <div>
       {title && (
-        <h4 style={{ marginBottom: "16px", color: "#1e293b", fontWeight: 600 }}>
-          {title}
-        </h4>
+        <h4 style={{ marginBottom: '16px', color: '#1e293b', fontWeight: 600 }}>{title}</h4>
       )}
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer
+        width='100%'
+        height={height}
+      >
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey={xKey} tick={{ fill: "#64748b", fontSize: 12 }} />
-          <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+          <CartesianGrid
+            strokeDasharray='3 3'
+            stroke='#e2e8f0'
+          />
+          <XAxis
+            dataKey={xKey}
+            tick={{ fill: '#64748b', fontSize: 12 }}
+          />
+          <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "12px",
+              backgroundColor: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '12px',
             }}
           />
           {series.map((item) => (
             <Line
               key={item.key}
-              type="monotone"
+              type='monotone'
               dataKey={item.key}
               name={item.name}
               stroke={item.color || color}

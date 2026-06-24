@@ -1,7 +1,7 @@
 use axum::{
-    extract::{FromRef, Path, Query, State},
+    extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
@@ -12,6 +12,8 @@ use uuid::Uuid;
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};
 
 fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
@@ -64,7 +66,7 @@ where
             get(list_inventory).post(create_inventory),
         )
         .route(
-            "/api/v1/inventory/{id}",
+            "/api/wms/inventory/{id}",
             get(get_inventory)
                 .put(update_inventory)
                 .delete(delete_inventory),
@@ -75,8 +77,13 @@ where
 
 async fn list_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InventoryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -148,9 +155,14 @@ async fn list_inventory(
 
 async fn create_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -225,8 +237,13 @@ async fn create_inventory(
 
 async fn get_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 
@@ -257,10 +274,15 @@ async fn get_inventory(
 
 async fn update_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateInventoryItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
 
     let existing_result = sqlx::query(
@@ -363,9 +385,14 @@ async fn update_inventory(
 
 async fn delete_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query(r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
         .bind(id)
         .execute(&state.db)
@@ -419,7 +446,12 @@ async fn delete_inventory(
 
 async fn list_low_stock_inventory(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 
@@ -455,8 +487,13 @@ async fn list_low_stock_inventory(
 
 async fn list_inventory_by_warehouse(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(warehouse_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 

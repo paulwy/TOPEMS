@@ -22,6 +22,7 @@ use serde::Serialize;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
+use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
@@ -80,6 +81,7 @@ async fn main() -> Result<()> {
         .route("/api/v1/metrics", get(get_metrics))
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
+        .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",
             get(move || async move {
@@ -126,6 +128,10 @@ async fn main() -> Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(api::openapi::WmsApiDoc::openapi())
 }
 
 async fn health_check(

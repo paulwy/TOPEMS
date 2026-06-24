@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
-import { CssBaseline } from "@mui/material";
-import { useAppStore } from "@/store";
-import { createCustomTheme } from "@/theme";
+import * as React from 'react';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+import { useAppStore } from '@/store';
+import { createCustomTheme } from '@/theme';
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -13,13 +13,11 @@ type ThemeProviderProps = {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const theme = useAppStore((state) => state.theme);
 
-  const [muiMode, setMuiMode] = React.useState<"light" | "dark">("light");
+  const [muiMode, setMuiMode] = React.useState<'light' | 'dark'>('light');
 
-  const getActiveTheme = (): "light" | "dark" => {
-    if (theme === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
+  const getActiveTheme = (): 'light' | 'dark' => {
+    if (theme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     return theme;
   };
@@ -30,32 +28,32 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     updateDOM(activeTheme);
 
     const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      if (theme === "system") {
-        const newTheme = e.matches ? "dark" : "light";
+      if (theme === 'system') {
+        const newTheme = e.matches ? 'dark' : 'light';
         setMuiMode(newTheme);
         updateDOM(newTheme);
       }
     };
 
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQuery.addEventListener("change", handleSystemThemeChange);
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
 
     return () => {
-      mediaQuery.removeEventListener("change", handleSystemThemeChange);
+      mediaQuery.removeEventListener('change', handleSystemThemeChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
 
-  const updateDOM = (newTheme: "light" | "dark") => {
+  const updateDOM = (newTheme: 'light' | 'dark') => {
     const root = window.document.documentElement;
 
-    if (newTheme === "dark") {
-      root.classList.add("dark");
+    if (newTheme === 'dark') {
+      root.classList.add('dark');
     } else {
-      root.classList.remove("dark");
+      root.classList.remove('dark');
     }
 
-    root.setAttribute("data-theme", newTheme);
+    root.setAttribute('data-theme', newTheme);
   };
 
   const muiTheme = createCustomTheme(muiMode);

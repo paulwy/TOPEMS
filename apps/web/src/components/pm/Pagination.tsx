@@ -1,13 +1,8 @@
-import { Box } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React from "react";
+import { Box } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React from 'react';
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface PaginationProps {
   currentPage: number;
@@ -30,53 +25,38 @@ const Pagination: React.FC<PaginationProps> = ({
     }
   } else {
     if (currentPage <= 3) {
-      pages.push(1, 2, 3, 4, "...", totalPages);
+      pages.push(1, 2, 3, 4, '...', totalPages);
     } else if (currentPage >= totalPages - 2) {
-      pages.push(
-        1,
-        "...",
-        totalPages - 3,
-        totalPages - 2,
-        totalPages - 1,
-        totalPages,
-      );
+      pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
     } else {
-      pages.push(
-        1,
-        "...",
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-        "...",
-        totalPages,
-      );
+      pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
     }
   }
 
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "4px",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '4px',
       }}
     >
       <Button
-        variant="outlined"
-        size="small"
+        variant='outlined'
+        size='small'
         disabled={disabled || currentPage === 1}
         onClick={() => onPageChange(1)}
-        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
+        sx={{ minWidth: '32px', height: '32px', padding: '4px' }}
       >
         <ChevronsLeft size={16} />
       </Button>
       <Button
-        variant="outlined"
-        size="small"
+        variant='outlined'
+        size='small'
         disabled={disabled || currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
+        sx={{ minWidth: '32px', height: '32px', padding: '4px' }}
       >
         <ChevronLeft size={16} />
       </Button>
@@ -84,20 +64,20 @@ const Pagination: React.FC<PaginationProps> = ({
       {pages.map((page, index) => (
         <Button
           key={index}
-          variant={page === currentPage ? "contained" : "outlined"}
-          size="small"
-          disabled={disabled || typeof page === "string"}
-          onClick={() => typeof page === "number" && onPageChange(page)}
+          variant={page === currentPage ? 'contained' : 'outlined'}
+          size='small'
+          disabled={disabled || typeof page === 'string'}
+          onClick={() => typeof page === 'number' && onPageChange(page)}
           sx={
             page === currentPage
               ? {
-                  minWidth: "36px",
-                  height: "32px",
-                  backgroundColor: "#2563eb",
-                  "&:hover": { backgroundColor: "#2563eb" },
-                  color: "white",
+                  minWidth: '36px',
+                  height: '32px',
+                  backgroundColor: '#2563eb',
+                  '&:hover': { backgroundColor: '#2563eb' },
+                  color: 'white',
                 }
-              : { minWidth: "36px", height: "32px" }
+              : { minWidth: '36px', height: '32px' }
           }
         >
           {page}
@@ -105,20 +85,20 @@ const Pagination: React.FC<PaginationProps> = ({
       ))}
 
       <Button
-        variant="outlined"
-        size="small"
+        variant='outlined'
+        size='small'
         disabled={disabled || currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
+        sx={{ minWidth: '32px', height: '32px', padding: '4px' }}
       >
         <ChevronRight size={16} />
       </Button>
       <Button
-        variant="outlined"
-        size="small"
+        variant='outlined'
+        size='small'
         disabled={disabled || currentPage === totalPages}
         onClick={() => onPageChange(totalPages)}
-        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
+        sx={{ minWidth: '32px', height: '32px', padding: '4px' }}
       >
         <ChevronsRight size={16} />
       </Button>

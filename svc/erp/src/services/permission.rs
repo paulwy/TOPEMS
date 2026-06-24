@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use sqlx::PgPool;
 use topems_shared::auth::Claims;
 use topems_shared::permission::check_resource_permission;
@@ -8,39 +6,48 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ModulePermission {
-    EmployeeRead,
-    EmployeeWrite,
-    DepartmentRead,
-    DepartmentWrite,
-    CompanyRead,
-    CompanyWrite,
-    FinanceRead,
-    FinanceWrite,
+    // 资产管理权限
     AssetRead,
     AssetWrite,
+    // 财务管理权限
+    FinanceRead,
+    FinanceWrite,
+    // 凭证管理权限
+    VoucherRead,
+    VoucherWrite,
+    VoucherAudit,
+    VoucherPost,
+    // 固定资产权限
+    FixedAssetRead,
+    FixedAssetWrite,
+    FixedAssetDepreciate,
+    // 报表权限
+    ReportRead,
+    // 完整权限
     All,
 }
 
 impl std::fmt::Display for ModulePermission {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ModulePermission::EmployeeRead => write!(f, "erp:read"),
-            ModulePermission::EmployeeWrite => write!(f, "erp:write"),
-            ModulePermission::DepartmentRead => write!(f, "erp:read"),
-            ModulePermission::DepartmentWrite => write!(f, "erp:write"),
-            ModulePermission::CompanyRead => write!(f, "erp:read"),
-            ModulePermission::CompanyWrite => write!(f, "erp:write"),
-            ModulePermission::FinanceRead => write!(f, "erp:read"),
-            ModulePermission::FinanceWrite => write!(f, "erp:write"),
-            ModulePermission::AssetRead => write!(f, "erp:read"),
-            ModulePermission::AssetWrite => write!(f, "erp:write"),
+            ModulePermission::AssetRead => write!(f, "erp:asset:read"),
+            ModulePermission::AssetWrite => write!(f, "erp:asset:write"),
+            ModulePermission::FinanceRead => write!(f, "erp:finance:read"),
+            ModulePermission::FinanceWrite => write!(f, "erp:finance:write"),
+            ModulePermission::VoucherRead => write!(f, "erp:voucher:read"),
+            ModulePermission::VoucherWrite => write!(f, "erp:voucher:write"),
+            ModulePermission::VoucherAudit => write!(f, "erp:voucher:audit"),
+            ModulePermission::VoucherPost => write!(f, "erp:voucher:post"),
+            ModulePermission::FixedAssetRead => write!(f, "erp:fixed_asset:read"),
+            ModulePermission::FixedAssetWrite => write!(f, "erp:fixed_asset:write"),
+            ModulePermission::FixedAssetDepreciate => write!(f, "erp:fixed_asset:depreciate"),
+            ModulePermission::ReportRead => write!(f, "erp:report:read"),
             ModulePermission::All => write!(f, "erp:admin"),
         }
     }
 }
 
 pub async fn check_permission<T>(
-    _db: &PgPool,
     claims: &Claims,
     permission: &ModulePermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {

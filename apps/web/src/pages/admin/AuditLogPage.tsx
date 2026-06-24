@@ -1,6 +1,24 @@
-import { Card, CardContent, Chip, Typography, Box, TextField, FormControl, InputLabel, Select, MenuItem, IconButton,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  Chip,
+  Typography,
+  Box,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Paper,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Clock,
   Search,
@@ -12,27 +30,27 @@ import {
   FlaskConical,
   Filter,
   RefreshCw,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import type { AuditLog as LimsAuditLog } from "@/api/lims";
-import { auditLimsApi } from "@/api/lims";
-import type { AuditLog as RsAuditLog } from "@/api/rs";
-import { auditRsApi } from "@/api/rs";
-import { useAppStore } from "../../store";
-import { apiLogger } from "@/utils/logger";
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type FilterConfig,
-} from "@/components/templates";
+  Download,
+  Eye,
+  Calendar,
+  X,
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import type { AuditLog as LimsAuditLog } from '@/api/lims';
+import { auditLimsApi } from '@/api/lims';
+import type { AuditLog as RsAuditLog } from '@/api/rs';
+import { auditRsApi } from '@/api/rs';
+import { useAppStore } from '../../store';
+import { apiLogger } from '@/utils/logger';
+import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 
-import { ModeToggle } from "@/components/ModeToggle";
+import { ModeToggle } from '@/components/ModeToggle';
 
 interface AuditLogPageProps {
   onNavigate?: (page: string) => void;
 }
 
-type AuditLogSource = "lims" | "rs";
+type AuditLogSource = 'lims' | 'rs';
 type AuditLog = LimsAuditLog | RsAuditLog;
 
 const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
@@ -41,31 +59,41 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
 
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterAction, setFilterAction] = useState<string>("all");
-  const [filterEntityType, setFilterEntityType] = useState<string>("all");
-  const [source, setSource] = useState<AuditLogSource>("lims");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterAction, setFilterAction] = useState<string>('all');
+  const [filterEntityType, setFilterEntityType] = useState<string>('all');
+  const [source, setSource] = useState<AuditLogSource>('lims');
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [exporting, setExporting] = useState(false);
   const pageSize = 20;
 
   const loadLogs = async () => {
     setLoading(true);
     try {
-      const api = source === "lims" ? auditLimsApi : auditRsApi;
+      const api = source === 'lims' ? auditLimsApi : auditRsApi;
       const params: any = {
         page: currentPage,
         page_size: pageSize,
       };
-      if (filterStatus !== "all") {
+      if (filterStatus !== 'all') {
         params.status = filterStatus;
       }
-      if (filterAction !== "all") {
+      if (filterAction !== 'all') {
         params.action = filterAction;
       }
-      if (filterEntityType !== "all") {
+      if (filterEntityType !== 'all') {
         params.entity_type = filterEntityType;
+      }
+      if (startDate) {
+        params.start_date = startDate;
+      }
+      if (endDate) {
+        params.end_date = endDate;
       }
       const response = await api.listAuditLogs(params);
       if (response.success && response.data) {
@@ -76,59 +104,114 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         setTotal(0);
       }
     } catch (error: any) {
-      apiLogger.error("加载审计日志失败:", error);
+      apiLogger.error('加载审计日志失败:', error);
       setLogs([]);
       addNotification({
-        title: "加载失败",
-        message: error.message || "加载审计日志失败",
-        type: "error",
+        title: '加载失败',
+        message: error.message || '加载审计日志失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const api = source === 'lims' ? auditLimsApi : auditRsApi;
+      const params: any = {};
+      if (filterStatus !== 'all') {
+        params.status = filterStatus;
+      }
+      if (filterAction !== 'all') {
+        params.action = filterAction;
+      }
+      if (filterEntityType !== 'all') {
+        params.entity_type = filterEntityType;
+      }
+      if (startDate) {
+        params.start_date = startDate;
+      }
+      if (endDate) {
+        params.end_date = endDate;
+      }
+      const blob = await api.exportAuditLogs(params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      addNotification({
+        title: '导出成功',
+        message: '审计日志已导出',
+        type: 'success',
+      });
+    } catch (error: any) {
+      apiLogger.error('导出审计日志失败:', error);
+      addNotification({
+        title: '导出失败',
+        message: error.message || '导出审计日志失败',
+        type: 'error',
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleViewDetail = (log: AuditLog) => {
+    setSelectedLog(log);
+  };
+
+  const clearDateFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    setCurrentPage(1);
+  };
+
   useEffect(() => {
     loadLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, currentPage, filterStatus, filterAction, filterEntityType]);
+  }, [source, currentPage, filterStatus, filterAction, filterEntityType, startDate, endDate]);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<
       string,
       {
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
         label: string;
       }
     > = {
-      success: { color: "success", label: "成功" },
-      partial: { color: "warning", label: "部分成功" },
-      error: { color: "error", label: "失败" },
+      success: { color: 'success', label: '成功' },
+      partial: { color: 'warning', label: '部分成功' },
+      error: { color: 'error', label: '失败' },
     };
     const config = badges[status] || {
-      color: "default",
+      color: 'default' as const,
       label: status,
     };
-    return <Chip size="small" color={config.color} label={config.label} />;
+    return (
+      <Chip
+        size='small'
+        color={config.color}
+        label={config.label}
+      />
+    );
   };
 
   const formatAction = (action: string) => {
     const map: Record<string, string> = {
-      batch_create: "批量创建",
-      batch_delete: "批量删除",
-      export: "导出",
-      import: "导入",
-      create: "创建",
-      update: "更新",
-      delete: "删除",
-      read: "读取",
+      batch_create: '批量创建',
+      batch_delete: '批量删除',
+      export: '导出',
+      import: '导入',
+      create: '创建',
+      update: '更新',
+      delete: '删除',
+      read: '读取',
     };
     return map[action] || action;
   };
@@ -137,138 +220,161 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
-      (log.user_name?.toLowerCase() || "").includes(query) ||
-      (log.user_id?.toLowerCase() || "").includes(query) ||
-      (log.action?.toLowerCase() || "").includes(query) ||
-      (log.entity_type?.toLowerCase() || "").includes(query) ||
-      (log.ip_address?.toLowerCase() || "").includes(query)
+      (log.user_name?.toLowerCase() || '').includes(query) ||
+      (log.user_id?.toLowerCase() || '').includes(query) ||
+      (log.action?.toLowerCase() || '').includes(query) ||
+      (log.entity_type?.toLowerCase() || '').includes(query) ||
+      (log.ip_address?.toLowerCase() || '').includes(query)
     );
   });
 
-  const uniqueActions = Array.from(
-    new Set(logs.map((log) => log.action)),
-  ).sort();
-  const uniqueEntityTypes = Array.from(
-    new Set(logs.map((log) => log.entity_type)),
-  ).sort();
+  const uniqueActions = Array.from(new Set(logs.map((log) => log.action))).sort();
+  const uniqueEntityTypes = Array.from(new Set(logs.map((log) => log.entity_type))).sort();
 
   const columns: ColumnDef<AuditLog>[] = useMemo(
     () => [
       {
-        id: "created_at",
-        label: "时间",
+        id: 'created_at',
+        label: '时间',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
-            {new Date(row.created_at).toLocaleString("zh-CN")}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {new Date(row.created_at).toLocaleString('zh-CN')}
           </Typography>
         ),
       },
       {
-        id: "user",
-        label: "用户",
+        id: 'user',
+        label: '用户',
         render: (row) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box
               sx={{
                 width: 32,
                 height: 32,
-                borderRadius: "50%",
-                bgcolor: "primary.light",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                borderRadius: '50%',
+                bgcolor: 'primary.light',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <User size={16} color="#1976d2" />
+              <User
+                size={16}
+                color='#1976d2'
+              />
             </Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {row.user_name || row.user_id || "-"}
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              {row.user_name || row.user_id || '-'}
             </Typography>
           </Box>
         ),
       },
       {
-        id: "action",
-        label: "操作",
-        render: (row) => (
-          <Typography variant="body2">{formatAction(row.action)}</Typography>
-        ),
+        id: 'action',
+        label: '操作',
+        render: (row) => <Typography variant='body2'>{formatAction(row.action)}</Typography>,
       },
       {
-        id: "entity_type",
-        label: "实体类型",
+        id: 'entity_type',
+        label: '实体类型',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.entity_type}
           </Typography>
         ),
       },
       {
-        id: "ip_address",
-        label: "IP地址",
+        id: 'ip_address',
+        label: 'IP地址',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
-            {row.ip_address || "-"}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {row.ip_address || '-'}
           </Typography>
         ),
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
       {
-        id: "details",
-        label: "详情",
+        id: 'details',
+        label: '详情',
         render: (row) => (
           <Box sx={{ maxWidth: 200 }}>
             {row.error_message && (
               <Typography
-                variant="body2"
-                sx={{ fontSize: "0.75rem", color: "error.main" }}
+                variant='body2'
+                sx={{ fontSize: '0.75rem', color: 'error.main' }}
               >
                 {row.error_message}
               </Typography>
             )}
             {!row.error_message && row.request_details && (
               <Typography
-                variant="body2"
+                variant='body2'
                 sx={{
-                  fontSize: "0.75rem",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  fontSize: '0.75rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                {JSON.stringify(row.request_details)}
+                {typeof row.request_details === 'string'
+                  ? row.request_details
+                  : JSON.stringify(row.request_details)}
               </Typography>
             )}
-            {!row.error_message && !row.request_details && "-"}
+            {!row.error_message && !row.request_details && '-'}
           </Box>
         ),
       },
+      {
+        id: 'actions',
+        label: '操作',
+        render: (row) => (
+          <IconButton
+            size='small'
+            onClick={() => handleViewDetail(row)}
+            title='查看详情'
+          >
+            <Eye size={16} />
+          </IconButton>
+        ),
+      },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   const filters: FilterConfig[] = useMemo(
     () => [
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         options: [
-          { value: "all", label: "全部状态" },
-          { value: "success", label: "成功" },
-          { value: "partial", label: "部分成功" },
-          { value: "error", label: "失败" },
+          { value: 'all', label: '全部状态' },
+          { value: 'success', label: '成功' },
+          { value: 'partial', label: '部分成功' },
+          { value: 'error', label: '失败' },
         ],
       },
       {
-        id: "action",
-        label: "操作",
+        id: 'action',
+        label: '操作',
         options: [
-          { value: "all", label: "全部操作" },
+          { value: 'all', label: '全部操作' },
           ...uniqueActions.map((action) => ({
             value: action,
             label: formatAction(action),
@@ -276,16 +382,15 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         ],
       },
       {
-        id: "entity_type",
-        label: "实体",
+        id: 'entity_type',
+        label: '实体',
         options: [
-          { value: "all", label: "全部实体" },
+          { value: 'all', label: '全部实体' },
           ...uniqueEntityTypes.map((type) => ({ value: type, label: type })),
         ],
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [uniqueActions, uniqueEntityTypes],
+    [uniqueActions, uniqueEntityTypes]
   );
 
   const handleFilterChange = (filters: Record<string, any>) => {
@@ -302,74 +407,94 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       {/* 顶部导航 */}
       <Box
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <IconButton onClick={() => navigate("/dashboard")}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <IconButton onClick={() => navigate('/dashboard')}>
                 <ChevronLeft />
               </IconButton>
               <Box>
                 <Typography
-                  variant="h5"
+                  variant='h5'
                   sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 1,
                   }}
                 >
-                  <Shield size={28} color="#1976d2" />
+                  <Shield
+                    size={28}
+                    color='#1976d2'
+                  />
                   安全审计
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   访问日志、操作审计
                 </Typography>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <ModeToggle />
               <Box
                 sx={{
-                  display: "flex",
-                  bgcolor: "grey.100",
+                  display: 'flex',
+                  bgcolor: 'grey.100',
                   borderRadius: 2,
                   p: 0.5,
                 }}
               >
                 <Button
-                  size="small"
-                  variant={source === "lims" ? "contained" : "text"}
-                  onClick={() => setSource("lims")}
+                  size='small'
+                  variant={source === 'lims' ? 'contained' : 'text'}
+                  onClick={() => {
+                    setSource('lims');
+                    setCurrentPage(1);
+                  }}
                   startIcon={<FileText size={16} />}
                 >
                   LIMS
                 </Button>
                 <Button
-                  size="small"
-                  variant={source === "rs" ? "contained" : "text"}
-                  onClick={() => setSource("rs")}
+                  size='small'
+                  variant={source === 'rs' ? 'contained' : 'text'}
+                  onClick={() => {
+                    setSource('rs');
+                    setCurrentPage(1);
+                  }}
                   startIcon={<FlaskConical size={16} />}
                 >
                   RS
                 </Button>
               </Box>
               <Button
-                variant="contained"
+                variant='contained'
+                onClick={handleExport}
+                disabled={exporting}
+                startIcon={<Download size={16} />}
+              >
+                {exporting ? '导出中...' : '导出'}
+              </Button>
+              <Button
+                variant='contained'
                 onClick={loadLogs}
                 startIcon={<RefreshCw size={16} />}
               >
@@ -380,16 +505,74 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
+      {/* 时间范围筛选 */}
+      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 2 }}>
+        <Card>
+          <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Calendar
+                size={18}
+                color='#666'
+              />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                时间范围:
+              </Typography>
+            </Box>
+            <TextField
+              label='开始时间'
+              type='datetime-local'
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setCurrentPage(1);
+              }}
+              sx={{ width: 220 }}
+              InputLabelProps={{ shrink: true }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              至
+            </Typography>
+            <TextField
+              label='结束时间'
+              type='datetime-local'
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setCurrentPage(1);
+              }}
+              sx={{ width: 220 }}
+              InputLabelProps={{ shrink: true }}
+            />
+            {(startDate || endDate) && (
+              <Button
+                variant='text'
+                color='error'
+                onClick={clearDateFilters}
+                startIcon={<X size={14} />}
+              >
+                清除时间筛选
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 2 }}>
         <Card>
           <CardContent sx={{ p: 0 }}>
             <ListPageTemplate
-              title="审计日志"
+              title='审计日志'
               subtitle={`共 ${total} 条记录`}
               data={filteredLogs}
               columns={columns}
               loading={loading}
-              searchPlaceholder="搜索用户名、操作、实体类型、IP..."
+              searchPlaceholder='搜索用户名、操作、实体类型、IP...'
               searchValue={searchQuery}
               onSearch={setSearchQuery}
               filters={filters}
@@ -405,12 +588,334 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 total: total,
                 onPageChange: setCurrentPage,
               }}
-              emptyIcon={<Clock size={48} color="#9e9e9e" />}
-              emptyMessage="暂无审计日志"
+              emptyIcon={
+                <Clock
+                  size={48}
+                  color='#9e9e9e'
+                />
+              }
+              emptyMessage='暂无审计日志'
             />
           </CardContent>
         </Card>
       </Box>
+
+      {/* 详情弹窗 */}
+      <Dialog
+        open={!!selectedLog}
+        onClose={() => setSelectedLog(null)}
+        maxWidth='lg'
+        fullWidth
+      >
+        <DialogTitle
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Activity
+              size={24}
+              color='#1976d2'
+            />
+            <Typography variant='h6'>审计日志详情</Typography>
+          </Box>
+          <IconButton onClick={() => setSelectedLog(null)}>
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {selectedLog && (
+            <Grid
+              container
+              spacing={3}
+            >
+              <Grid
+                item
+                xs={6}
+              >
+                <Paper sx={{ p: 3 }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    gutterBottom
+                  >
+                    基本信息
+                  </Typography>
+                  <Grid
+                    container
+                    spacing={2}
+                  >
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          ID:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.id}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          操作:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {formatAction(selectedLog.action)}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          实体类型:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.entity_type}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          实体ID:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.entity_id || '-'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          状态:
+                        </Typography>
+                        {getStatusBadge(selectedLog.status)}
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+              <Grid
+                item
+                xs={6}
+              >
+                <Paper sx={{ p: 3 }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    gutterBottom
+                  >
+                    用户信息
+                  </Typography>
+                  <Grid
+                    container
+                    spacing={2}
+                  >
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          用户ID:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.user_id || '-'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          用户名:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.user_name || '-'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          IP地址:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.ip_address || '-'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={12}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          创建时间:
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {new Date(selectedLog.created_at).toLocaleString('zh-CN')}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+              {selectedLog.error_message && (
+                <Grid
+                  item
+                  xs={12}
+                >
+                  <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
+                    <Typography
+                      variant='subtitle2'
+                      color='error.main'
+                      gutterBottom
+                    >
+                      错误信息
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='error.main'
+                    >
+                      {selectedLog.error_message}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
+              {selectedLog.request_details && (
+                <Grid
+                  item
+                  xs={12}
+                >
+                  <Paper sx={{ p: 3 }}>
+                    <Typography
+                      variant='subtitle2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
+                      请求详情
+                    </Typography>
+                    <pre
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-all',
+                        fontSize: '0.875rem',
+                        color: '#333',
+                      }}
+                    >
+                      {typeof selectedLog.request_details === 'string'
+                        ? selectedLog.request_details
+                        : JSON.stringify(selectedLog.request_details, null, 2)}
+                    </pre>
+                  </Paper>
+                </Grid>
+              )}
+              {selectedLog.response_details && (
+                <Grid
+                  item
+                  xs={12}
+                >
+                  <Paper sx={{ p: 3 }}>
+                    <Typography
+                      variant='subtitle2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
+                      响应详情
+                    </Typography>
+                    <pre
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-all',
+                        fontSize: '0.875rem',
+                        color: '#333',
+                      }}
+                    >
+                      {typeof selectedLog.response_details === 'string'
+                        ? selectedLog.response_details
+                        : JSON.stringify(selectedLog.response_details, null, 2)}
+                    </pre>
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSelectedLog(null)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

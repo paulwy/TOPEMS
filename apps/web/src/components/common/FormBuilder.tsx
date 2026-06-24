@@ -1,24 +1,37 @@
-import React, { useCallback } from "react";
-import { TextField, Select, MenuItem, FormControl, FormControlLabel, FormLabel, Checkbox, Card, CardContent, CardHeader, InputLabel, Box,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
+import React, { useCallback } from 'react';
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Checkbox,
+  Card,
+  CardContent,
+  CardHeader,
+  InputLabel,
+  Box,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 export interface FormFieldConfig {
   name: string;
   label: string;
   type:
-    | "text"
-    | "email"
-    | "password"
-    | "number"
-    | "textarea"
-    | "select"
-    | "checkbox"
-    | "date"
-    | "file";
+    | 'text'
+    | 'email'
+    | 'password'
+    | 'number'
+    | 'textarea'
+    | 'select'
+    | 'checkbox'
+    | 'date'
+    | 'file';
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -50,8 +63,8 @@ export interface FormBuilderConfig {
 export default function FormBuilder({
   fields,
   onSubmit,
-  submitLabel = "提交",
-  resetLabel = "重置",
+  submitLabel = '提交',
+  resetLabel = '重置',
   showReset = true,
   title,
   initialValues = {},
@@ -60,8 +73,7 @@ export default function FormBuilder({
   const [values, setValues] = React.useState<Record<string, any>>(() => {
     const initial: Record<string, any> = {};
     fields.forEach((field) => {
-      initial[field.name] =
-        initialValues[field.name] ?? field.defaultValue ?? "";
+      initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? '';
     });
     return initial;
   });
@@ -70,40 +82,36 @@ export default function FormBuilder({
 
   const handleChange = useCallback((name: string, value: any) => {
     setValues((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
   }, []);
 
-  const validateField = useCallback(
-    (field: FormFieldConfig, value: any): string => {
-      if (field.required && !value) {
-        return `${field.label}为必填项`;
+  const validateField = useCallback((field: FormFieldConfig, value: any): string => {
+    if (field.required && !value) {
+      return `${field.label}为必填项`;
+    }
+    if (field.validation) {
+      const { minLength, maxLength, min, max, pattern, custom } = field.validation;
+      if (minLength && value.length < minLength) {
+        return `${field.label}长度不能少于${minLength}个字符`;
       }
-      if (field.validation) {
-        const { minLength, maxLength, min, max, pattern, custom } =
-          field.validation;
-        if (minLength && value.length < minLength) {
-          return `${field.label}长度不能少于${minLength}个字符`;
-        }
-        if (maxLength && value.length > maxLength) {
-          return `${field.label}长度不能超过${maxLength}个字符`;
-        }
-        if (min !== undefined && Number(value) < min) {
-          return `${field.label}不能小于${min}`;
-        }
-        if (max !== undefined && Number(value) > max) {
-          return `${field.label}不能大于${max}`;
-        }
-        if (pattern && !pattern.test(value)) {
-          return `${field.label}格式不正确`;
-        }
-        if (custom) {
-          return custom(value) || "";
-        }
+      if (maxLength && value.length > maxLength) {
+        return `${field.label}长度不能超过${maxLength}个字符`;
       }
-      return "";
-    },
-    [],
-  );
+      if (min !== undefined && Number(value) < min) {
+        return `${field.label}不能小于${min}`;
+      }
+      if (max !== undefined && Number(value) > max) {
+        return `${field.label}不能大于${max}`;
+      }
+      if (pattern && !pattern.test(value)) {
+        return `${field.label}格式不正确`;
+      }
+      if (custom) {
+        return custom(value) || '';
+      }
+    }
+    return '';
+  }, []);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -121,14 +129,13 @@ export default function FormBuilder({
 
       await onSubmit(values);
     },
-    [fields, values, validateField, onSubmit],
+    [fields, values, validateField, onSubmit]
   );
 
   const handleReset = useCallback(() => {
     const initial: Record<string, any> = {};
     fields.forEach((field) => {
-      initial[field.name] =
-        initialValues[field.name] ?? field.defaultValue ?? "";
+      initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? '';
     });
     setValues(initial);
     setErrors({});
@@ -142,10 +149,10 @@ export default function FormBuilder({
       const error = errors[field.name];
 
       switch (field.type) {
-        case "text":
-        case "email":
-        case "password":
-        case "number":
+        case 'text':
+        case 'email':
+        case 'password':
+        case 'number':
           return (
             <TextField
               key={field.name}
@@ -160,10 +167,10 @@ export default function FormBuilder({
               error={!!error}
               helperText={error}
               fullWidth
-              size="small"
+              size='small'
             />
           );
-        case "textarea":
+        case 'textarea':
           return (
             <TextField
               key={field.name}
@@ -179,15 +186,15 @@ export default function FormBuilder({
               fullWidth
               multiline
               rows={4}
-              size="small"
+              size='small'
             />
           );
-        case "select":
+        case 'select':
           return (
             <FormControl
               key={field.name}
               fullWidth
-              size="small"
+              size='small'
               required={isRequired}
               disabled={isDisabled}
               error={!!error}
@@ -200,14 +207,17 @@ export default function FormBuilder({
                 onChange={(e) => handleChange(field.name, e.target.value)}
               >
                 {(field.options || []).map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
+                  <MenuItem
+                    key={opt.value}
+                    value={opt.value}
+                  >
                     {opt.label}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
           );
-        case "checkbox":
+        case 'checkbox':
           return (
             <FormControlLabel
               key={field.name}
@@ -221,9 +231,12 @@ export default function FormBuilder({
               label={field.label}
             />
           );
-        case "date":
+        case 'date':
           return (
-            <LocalizationProvider key={field.name} dateAdapter={AdapterDayjs}>
+            <LocalizationProvider
+              key={field.name}
+              dateAdapter={AdapterDayjs}
+            >
               <DatePicker
                 label={field.label}
                 value={value ? dayjs(value) : null}
@@ -233,7 +246,7 @@ export default function FormBuilder({
                 disabled={isDisabled}
                 slotProps={{
                   textField: {
-                    size: "small",
+                    size: 'small',
                     fullWidth: true,
                     required: isRequired,
                     error: !!error,
@@ -243,17 +256,17 @@ export default function FormBuilder({
               />
             </LocalizationProvider>
           );
-        case "file":
+        case 'file':
           return (
             <Button
               key={field.name}
-              variant="outlined"
-              component="label"
+              variant='outlined'
+              component='label'
               disabled={isDisabled}
             >
               {field.label}
               <input
-                type="file"
+                type='file'
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -275,13 +288,13 @@ export default function FormBuilder({
           return null;
       }
     },
-    [values, errors, handleChange],
+    [values, errors, handleChange]
   );
 
   const renderForm = () => {
     if (fields.length === 1 || colCount === 1) {
       return (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {fields.map((field) => (
             <Box key={field.name}>{renderField(field)}</Box>
           ))}
@@ -292,7 +305,7 @@ export default function FormBuilder({
     return (
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gap: 2,
           gridTemplateColumns: `repeat(${colCount}, 1fr)`,
         }}
@@ -313,17 +326,24 @@ export default function FormBuilder({
     <Card>
       {title && <CardHeader title={title} />}
       <CardContent>
-        <form onSubmit={handleSubmit} onReset={handleReset}>
+        <form
+          onSubmit={handleSubmit}
+          onReset={handleReset}
+        >
           {renderForm()}
-          <Box
-            sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 3 }}
-          >
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
             {showReset && (
-              <Button type="reset" variant="outlined">
+              <Button
+                type='reset'
+                variant='outlined'
+              >
                 {resetLabel}
               </Button>
             )}
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               {submitLabel}
             </Button>
           </Box>

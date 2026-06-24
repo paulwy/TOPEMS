@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
+  const previousValueRef = useRef(value);
 
   useEffect(() => {
+    // Skip if value hasn't changed to avoid unnecessary updates
+    if (Object.is(value, previousValueRef.current)) {
+      return;
+    }
+    previousValueRef.current = value;
+
     const timer = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
@@ -16,20 +23,44 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-export function useDebouncedCallback<
-  T extends (...args: Parameters<T>) => ReturnType<T>,
->(callback: T, delay: number): (...args: Parameters<T>) => void {
-  const debouncedRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+export function useDebouncedValue<T>(value: T, delay: number): T {
+  return useDebounce(value, delay);
+}
 
-  return (...args: Parameters<T>) => {
-    if (debouncedRef.current) {
-      clearTimeout(debouncedRef.current);
-    }
+export function useDebouncedCallback<T extends (...args: Parameters<T>) => ReturnType<T>>(
+  callback: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  const callbackRef = useRef(callback);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-    debouncedRef.current = setTimeout(() => {
-      callback(...args);
-    }, delay);
-  };
+  // Update callback ref on each render to avoid stale closures
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  return useMemo(
+    () =>
+      (...args: Parameters<T>) => {
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current);
+        }
+
+        debounceRef.current = setTimeout(() => {
+          callbackRef.current(...args);
+        }, delay);
+      },
+    [delay]
+  );
 }
 
 export default useDebounce;

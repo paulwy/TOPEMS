@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus,
   Search,
@@ -13,51 +13,78 @@ import {
   RefreshCw,
   Clock,
   FileTextIcon,
-} from "lucide-react";
-import type { Contract, ContractRenewal, Employee } from "@/api/hrm";
-import { contractApi, contractRenewalApi, employeeApi } from "@/api/hrm";
-import type { PaginatedResult } from "@/api/hrm";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction } from "@/components/mui";
-import { StatCard } from "@/components/mui/StatCard";
+} from 'lucide-react';
+import type { Contract, ContractRenewal, Employee } from '@/api/hrm';
+import { contractApi, contractRenewalApi, employeeApi } from '@/api/hrm';
+import type { PaginatedResult } from '@/api/hrm';
+import { ListPageTemplate } from '@/components/mui';
+import type { ColumnDef, RowAction } from '@/components/mui';
+import { StatCard } from '@/components/mui/StatCard';
 
-import { Card, CardContent, CardHeader, Typography, Box, Stack, Chip, TextField, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, FormControlLabel, Tabs, Tab, IconButton, Tooltip, Divider, FormLabel, Alert, Snackbar,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { FileUpload } from "@/components/common";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  FormControlLabel,
+  Tabs,
+  Tab,
+  IconButton,
+  Tooltip,
+  Divider,
+  FormLabel,
+  Alert,
+  Snackbar,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { FileUpload } from '@/components/common';
 
 const contractTypes = [
-  { value: "labor", label: "劳动合同" },
-  { value: "probation", label: "试用期合同" },
-  { value: "part-time", label: "兼职合同" },
-  { value: "project", label: "项目合同" },
-  { value: "consulting", label: "咨询合同" },
+  { value: 'labor', label: '劳动合同' },
+  { value: 'probation', label: '试用期合同' },
+  { value: 'part-time', label: '兼职合同' },
+  { value: 'project', label: '项目合同' },
+  { value: 'consulting', label: '咨询合同' },
 ];
 
 const statusMap: Record<
   string,
-  { text: string; color: "success" | "error" | "default" | "warning" }
+  { text: string; color: 'success' | 'error' | 'default' | 'warning' }
 > = {
-  active: { text: "生效中", color: "success" },
-  expired: { text: "已到期", color: "error" },
-  terminated: { text: "已终止", color: "default" },
-  pending: { text: "待审批", color: "warning" },
+  active: { text: '生效中', color: 'success' },
+  expired: { text: '已到期', color: 'error' },
+  terminated: { text: '已终止', color: 'default' },
+  pending: { text: '待审批', color: 'warning' },
 };
 
 const renewalStatusMap: Record<
   string,
-  { text: string; color: "success" | "error" | "default" | "warning" | "info" }
+  { text: string; color: 'success' | 'error' | 'default' | 'warning' | 'info' }
 > = {
-  pending: { text: "待审批", color: "warning" },
-  approved: { text: "已批准", color: "success" },
-  rejected: { text: "已拒绝", color: "error" },
-  executed: { text: "已执行", color: "info" },
+  pending: { text: '待审批', color: 'warning' },
+  approved: { text: '已批准', color: 'success' },
+  rejected: { text: '已拒绝', color: 'error' },
+  executed: { text: '已执行', color: 'info' },
 };
 
 const renewalTypes = [
-  { value: "regular", label: "常规续签" },
-  { value: "promotion", label: "升职续签" },
-  { value: "demotion", label: "降职续签" },
-  { value: "transfer", label: "调岗续签" },
+  { value: 'regular', label: '常规续签' },
+  { value: 'promotion', label: '升职续签' },
+  { value: 'demotion', label: '降职续签' },
+  { value: 'transfer', label: '调岗续签' },
 ];
 
 interface FormState {
@@ -94,8 +121,8 @@ export default function ContractManagementPage() {
     page_size: 20,
   });
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [showExpiringOnly, setShowExpiringOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -108,42 +135,40 @@ export default function ContractManagementPage() {
   });
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState<"create" | "edit" | "view">(
-    "create",
-  );
+  const [modalType, setModalType] = useState<'create' | 'edit' | 'view'>('create');
   const [currentContract, setCurrentContract] = useState<Contract | null>(null);
   const [formState, setFormState] = useState<FormState>({
-    employee_id: "",
-    contract_no: "",
-    contract_type: "",
-    party_a_name: "",
-    party_a_contact: "",
-    party_b_name: "",
-    party_b_contact: "",
-    start_date: "",
-    end_date: "",
-    salary: "",
-    probation_period_days: "",
-    reminder_days: "30",
-    contract_file_path: "",
-    notes: "",
+    employee_id: '',
+    contract_no: '',
+    contract_type: '',
+    party_a_name: '',
+    party_a_contact: '',
+    party_b_name: '',
+    party_b_contact: '',
+    start_date: '',
+    end_date: '',
+    salary: '',
+    probation_period_days: '',
+    reminder_days: '30',
+    contract_file_path: '',
+    notes: '',
   });
 
   const [renewModalVisible, setRenewModalVisible] = useState(false);
   const [renewFormState, setRenewFormState] = useState<RenewFormState>({
-    renewal_type: "regular",
-    new_start_date: "",
-    new_end_date: "",
-    new_salary: "",
-    renewal_reason: "",
+    renewal_type: 'regular',
+    new_start_date: '',
+    new_end_date: '',
+    new_salary: '',
+    renewal_reason: '',
   });
-  const [renewContractId, setRenewContractId] = useState("");
+  const [renewContractId, setRenewContractId] = useState('');
 
   const [renewals, setRenewals] = useState<ContractRenewal[]>([]);
   const [showRenewals, setShowRenewals] = useState(false);
 
   const [notification, setNotification] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     message: string;
   } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -152,12 +177,9 @@ export default function ContractManagementPage() {
   } | null>(null);
   const [contractAttachments, setContractAttachments] = useState<string[]>([]);
 
-  const showNotification = useCallback(
-    (type: "success" | "error", message: string) => {
-      setNotification({ type, message });
-    },
-    [],
-  );
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+  }, []);
 
   const showConfirm = useCallback((title: string, onConfirm: () => void) => {
     setConfirmDialog({ title, onConfirm });
@@ -188,27 +210,19 @@ export default function ContractManagementPage() {
         if (result.code === 0 && result.data) {
           setData(result.data);
           // 计算即将到期统计
-          const expiringCount = result.data.items.filter((c) =>
-            hasExpiringSoon(c.end_date),
-          ).length;
+          const expiringCount = result.data.items.filter((c) => hasExpiringSoon(c.end_date)).length;
           setStats((prev) => ({ ...prev, expiring: expiringCount }));
         } else {
-          showNotification("error", result.message || "获取即将到期合同失败");
+          showNotification('error', result.message || '获取即将到期合同失败');
         }
       } else {
         const result = await contractApi.list(params);
         if (result.code === 0 && result.data) {
           setData(result.data);
           // 计算各项统计
-          const activeCount = result.data.items.filter(
-            (c) => c.status === "active",
-          ).length;
-          const expiredCount = result.data.items.filter(
-            (c) => c.status === "expired",
-          ).length;
-          const expiringCount = result.data.items.filter((c) =>
-            hasExpiringSoon(c.end_date),
-          ).length;
+          const activeCount = result.data.items.filter((c) => c.status === 'active').length;
+          const expiredCount = result.data.items.filter((c) => c.status === 'expired').length;
+          const expiringCount = result.data.items.filter((c) => hasExpiringSoon(c.end_date)).length;
           setStats({
             total: result.data.total,
             active: activeCount,
@@ -216,11 +230,11 @@ export default function ContractManagementPage() {
             expiring: expiringCount,
           });
         } else {
-          showNotification("error", result.message || "获取合同列表失败");
+          showNotification('error', result.message || '获取合同列表失败');
         }
       }
     } catch (error) {
-      showNotification("error", "获取合同列表失败");
+      showNotification('error', '获取合同列表失败');
     } finally {
       setLoading(false);
     }
@@ -233,7 +247,7 @@ export default function ContractManagementPage() {
         setEmployees(result.data.items);
       }
     } catch (error) {
-      showNotification("error", "获取员工列表失败");
+      showNotification('error', '获取员工列表失败');
     }
   };
 
@@ -243,55 +257,53 @@ export default function ContractManagementPage() {
   };
 
   const handleCreate = () => {
-    setModalType("create");
+    setModalType('create');
     setCurrentContract(null);
     setFormState({
-      employee_id: "",
-      contract_no: "",
-      contract_type: "",
-      party_a_name: "",
-      party_a_contact: "",
-      party_b_name: "",
-      party_b_contact: "",
-      start_date: "",
-      end_date: "",
-      salary: "",
-      probation_period_days: "",
-      reminder_days: "30",
-      contract_file_path: "",
-      notes: "",
+      employee_id: '',
+      contract_no: '',
+      contract_type: '',
+      party_a_name: '',
+      party_a_contact: '',
+      party_b_name: '',
+      party_b_contact: '',
+      start_date: '',
+      end_date: '',
+      salary: '',
+      probation_period_days: '',
+      reminder_days: '30',
+      contract_file_path: '',
+      notes: '',
     });
     setContractAttachments([]);
     setModalVisible(true);
   };
 
   const handleEdit = (contract: Contract) => {
-    setModalType("edit");
+    setModalType('edit');
     setCurrentContract(contract);
     setFormState({
-      employee_id: contract.employee_id || "",
-      contract_no: contract.contract_no || "",
-      contract_type: contract.contract_type || "",
-      party_a_name: contract.party_a_name || "",
-      party_a_contact: contract.party_a_contact || "",
-      party_b_name: contract.party_b_name || "",
-      party_b_contact: contract.party_b_contact || "",
-      start_date: contract.start_date || "",
-      end_date: contract.end_date || "",
-      salary: contract.salary?.toString() || "",
-      probation_period_days: contract.probation_period_days?.toString() || "",
-      reminder_days: contract.reminder_days?.toString() || "30",
-      contract_file_path: contract.contract_file_path || "",
-      notes: contract.notes || "",
+      employee_id: contract.employee_id || '',
+      contract_no: contract.contract_no || '',
+      contract_type: contract.contract_type || '',
+      party_a_name: contract.party_a_name || '',
+      party_a_contact: contract.party_a_contact || '',
+      party_b_name: contract.party_b_name || '',
+      party_b_contact: contract.party_b_contact || '',
+      start_date: contract.start_date || '',
+      end_date: contract.end_date || '',
+      salary: contract.salary?.toString() || '',
+      probation_period_days: contract.probation_period_days?.toString() || '',
+      reminder_days: contract.reminder_days?.toString() || '30',
+      contract_file_path: contract.contract_file_path || '',
+      notes: contract.notes || '',
     });
-    setContractAttachments(
-      contract.contract_file_path ? [contract.contract_file_path] : [],
-    );
+    setContractAttachments(contract.contract_file_path ? [contract.contract_file_path] : []);
     setModalVisible(true);
   };
 
   const handleView = async (contract: Contract) => {
-    setModalType("view");
+    setModalType('view');
     setCurrentContract(contract);
     const result = await contractRenewalApi.list({ contract_id: contract.id });
     if (result.code === 0 && result.data) {
@@ -305,27 +317,27 @@ export default function ContractManagementPage() {
     try {
       const result = await contractApi.delete(id);
       if (result.code === 0) {
-        showNotification("success", "删除成功");
+        showNotification('success', '删除成功');
         loadData();
       } else {
-        showNotification("error", result.message || "删除失败");
+        showNotification('error', result.message || '删除失败');
       }
     } catch (error) {
-      showNotification("error", "删除失败");
+      showNotification('error', '删除失败');
     }
   };
 
   const handleSave = async () => {
     if (!formState.employee_id) {
-      showNotification("error", "请选择员工");
+      showNotification('error', '请选择员工');
       return;
     }
     if (!formState.contract_type) {
-      showNotification("error", "请选择合同类型");
+      showNotification('error', '请选择合同类型');
       return;
     }
     if (!formState.start_date) {
-      showNotification("error", "请选择开始日期");
+      showNotification('error', '请选择开始日期');
       return;
     }
 
@@ -335,72 +347,67 @@ export default function ContractManagementPage() {
       probation_period_days: formState.probation_period_days
         ? parseInt(formState.probation_period_days)
         : undefined,
-      reminder_days: formState.reminder_days
-        ? parseInt(formState.reminder_days)
-        : undefined,
+      reminder_days: formState.reminder_days ? parseInt(formState.reminder_days) : undefined,
     };
 
     try {
-      if (modalType === "create") {
+      if (modalType === 'create') {
         const result = await contractApi.create(values);
         if (result.code === 0) {
-          showNotification("success", "创建成功");
+          showNotification('success', '创建成功');
           setModalVisible(false);
           loadData();
         } else {
-          showNotification("error", result.message || "创建失败");
+          showNotification('error', result.message || '创建失败');
         }
       } else if (currentContract) {
         const result = await contractApi.update(currentContract.id, values);
         if (result.code === 0) {
-          showNotification("success", "更新成功");
+          showNotification('success', '更新成功');
           setModalVisible(false);
           loadData();
         } else {
-          showNotification("error", result.message || "更新失败");
+          showNotification('error', result.message || '更新失败');
         }
       }
     } catch (error) {
-      showNotification("error", "保存失败");
+      showNotification('error', '保存失败');
     }
   };
 
   const handleRenew = (contract: Contract) => {
     setRenewContractId(contract.id);
     setRenewFormState({
-      renewal_type: "regular",
-      new_start_date:
-        contract.end_date || new Date().toISOString().split("T")[0],
-      new_end_date: "",
-      new_salary: "",
-      renewal_reason: "",
+      renewal_type: 'regular',
+      new_start_date: contract.end_date || new Date().toISOString().split('T')[0],
+      new_end_date: '',
+      new_salary: '',
+      renewal_reason: '',
     });
     setRenewModalVisible(true);
   };
 
   const handleSubmitRenew = async () => {
     if (!renewFormState.new_start_date) {
-      showNotification("error", "请选择新合同开始日期");
+      showNotification('error', '请选择新合同开始日期');
       return;
     }
 
     const values = {
       ...renewFormState,
-      new_salary: renewFormState.new_salary
-        ? parseInt(renewFormState.new_salary)
-        : undefined,
+      new_salary: renewFormState.new_salary ? parseInt(renewFormState.new_salary) : undefined,
     };
 
     try {
       const result = await contractApi.renew(renewContractId, values);
       if (result.code === 0) {
-        showNotification("success", "续签申请提交成功");
+        showNotification('success', '续签申请提交成功');
         setRenewModalVisible(false);
       } else {
-        showNotification("error", result.message || "提交失败");
+        showNotification('error', result.message || '提交失败');
       }
     } catch (error) {
-      showNotification("error", "提交失败");
+      showNotification('error', '提交失败');
     }
   };
 
@@ -408,29 +415,29 @@ export default function ContractManagementPage() {
     try {
       const result = await contractRenewalApi.approve(id);
       if (result.code === 0) {
-        showNotification("success", "续签申请已批准");
+        showNotification('success', '续签申请已批准');
         loadData();
       } else {
-        showNotification("error", result.message || "操作失败");
+        showNotification('error', result.message || '操作失败');
       }
     } catch (error) {
-      showNotification("error", "操作失败");
+      showNotification('error', '操作失败');
     }
   };
 
   const handleRejectRenewal = async (id: string) => {
-    const reason = prompt("请输入拒绝理由：");
+    const reason = prompt('请输入拒绝理由：');
     if (!reason) return;
     try {
       const result = await contractRenewalApi.reject(id, reason);
       if (result.code === 0) {
-        showNotification("success", "续签申请已拒绝");
+        showNotification('success', '续签申请已拒绝');
         loadData();
       } else {
-        showNotification("error", result.message || "操作失败");
+        showNotification('error', result.message || '操作失败');
       }
     } catch (error) {
-      showNotification("error", "操作失败");
+      showNotification('error', '操作失败');
     }
   };
 
@@ -438,28 +445,26 @@ export default function ContractManagementPage() {
     try {
       const result = await contractRenewalApi.execute(id);
       if (result.code === 0) {
-        showNotification("success", "合同续签已执行");
+        showNotification('success', '合同续签已执行');
         loadData();
       } else {
-        showNotification("error", result.message || "操作失败");
+        showNotification('error', result.message || '操作失败');
       }
     } catch (error) {
-      showNotification("error", "操作失败");
+      showNotification('error', '操作失败');
     }
   };
 
   const getEmployeeName = (id?: string) => {
-    if (!id) return "-";
-    return employees.find((e) => e.id === id)?.name || "-";
+    if (!id) return '-';
+    return employees.find((e) => e.id === id)?.name || '-';
   };
 
   const getDaysUntilExpiry = (endDate?: string) => {
     if (!endDate) return null;
     const end = new Date(endDate);
     const now = new Date();
-    const diff = Math.ceil(
-      (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-    );
+    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     return diff;
   };
 
@@ -472,106 +477,123 @@ export default function ContractManagementPage() {
   const statCards = useMemo(
     () => [
       {
-        id: "total",
-        title: "合同总数",
+        id: 'total',
+        title: '合同总数',
         value: stats.total,
         icon: <FileText size={24} />,
-        color: "primary" as const,
+        color: 'primary' as const,
       },
       {
-        id: "active",
-        title: "生效中",
+        id: 'active',
+        title: '生效中',
         value: stats.active,
         icon: <Check size={24} />,
-        color: "success" as const,
+        color: 'success' as const,
       },
       {
-        id: "expiring",
-        title: "即将到期",
+        id: 'expiring',
+        title: '即将到期',
         value: stats.expiring,
         icon: <AlertCircle size={24} />,
-        color: "warning" as const,
+        color: 'warning' as const,
       },
       {
-        id: "expired",
-        title: "已到期",
+        id: 'expired',
+        title: '已到期',
         value: stats.expired,
         icon: <Clock size={24} />,
-        color: "error" as const,
+        color: 'error' as const,
       },
     ],
-    [stats],
+    [stats]
   );
 
   // 列定义
   const columns: ColumnDef<Contract>[] = useMemo(
     () => [
       {
-        id: "contract_no",
-        label: "合同编号",
+        id: 'contract_no',
+        label: '合同编号',
         width: 128,
         render: (row) => (
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <FileTextIcon size={16} style={{ color: "#3b82f6" }} />
-            <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
-              {row.contract_no || "-"}
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ alignItems: 'center' }}
+          >
+            <FileTextIcon
+              size={16}
+              style={{ color: '#3b82f6' }}
+            />
+            <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+              {row.contract_no || '-'}
             </Typography>
           </Stack>
         ),
       },
       {
-        id: "employee",
-        label: "员工",
+        id: 'employee',
+        label: '员工',
         render: (row) => getEmployeeName(row.employee_id),
       },
       {
-        id: "contract_type",
-        label: "合同类型",
+        id: 'contract_type',
+        label: '合同类型',
         render: (row) =>
-          contractTypes.find((t) => t.value === row.contract_type)?.label ||
-          row.contract_type,
+          contractTypes.find((t) => t.value === row.contract_type)?.label || row.contract_type,
       },
       {
-        id: "salary",
-        label: "薪资",
+        id: 'salary',
+        label: '薪资',
         width: 96,
-        render: (row) => (row.salary ? `${row.salary.toLocaleString()}` : "-"),
+        render: (row) => (row.salary ? `${row.salary.toLocaleString()}` : '-'),
       },
       {
-        id: "validity",
-        label: "有效期",
+        id: 'validity',
+        label: '有效期',
         width: 192,
         render: (row) => {
           const days = getDaysUntilExpiry(row.end_date);
           const isExpiringSoon = hasExpiringSoon(row.end_date);
           return (
             <Box>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <Calendar size={14} style={{ color: "#9ca3af" }} />
+              <Stack
+                direction='row'
+                spacing={1}
+                sx={{ alignItems: 'center' }}
+              >
+                <Calendar
+                  size={14}
+                  style={{ color: '#9ca3af' }}
+                />
                 <Typography
-                  variant="body2"
+                  variant='body2'
                   sx={{
-                    color: isExpiringSoon ? "warning.main" : "grey.600",
+                    color: isExpiringSoon ? 'warning.main' : 'grey.600',
                     fontWeight: isExpiringSoon ? 500 : 400,
                   }}
                 >
-                  {new Date(row.start_date).toLocaleDateString("zh-CN")} ~{" "}
-                  {row.end_date
-                    ? new Date(row.end_date).toLocaleDateString("zh-CN")
-                    : "无固定期限"}
+                  {new Date(row.start_date).toLocaleDateString('zh-CN')} ~{' '}
+                  {row.end_date ? new Date(row.end_date).toLocaleDateString('zh-CN') : '无固定期限'}
                 </Typography>
               </Stack>
               {isExpiringSoon && days !== null && (
                 <Stack
                   sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
                     mt: 0.5,
                   }}
                 >
-                  <AlertCircle size={12} style={{ color: "#ea580c" }} />
-                  <Typography variant="caption" sx={{ color: "warning.main" }}>
+                  <AlertCircle
+                    size={12}
+                    style={{ color: '#ea580c' }}
+                  />
+                  <Typography
+                    variant='caption'
+                    sx={{ color: 'warning.main' }}
+                  >
                     剩余{days}天到期
                   </Typography>
                 </Stack>
@@ -581,64 +603,67 @@ export default function ContractManagementPage() {
         },
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         width: 80,
         render: (row) => (
           <Chip
-            size="small"
+            size='small'
             label={statusMap[row.status]?.text || row.status}
-            color={statusMap[row.status]?.color || "default"}
+            color={statusMap[row.status]?.color || 'default'}
           />
         ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [employees],
+    [employees]
   );
 
   // 行操作
   const rowActions: RowAction<Contract>[] = useMemo(
     () => [
       {
-        label: "查看",
+        label: '查看',
         icon: <Eye size={16} />,
         onClick: handleView,
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit2 size={16} />,
         onClick: handleEdit,
       },
       {
-        label: "续签",
+        label: '续签',
         icon: <RefreshCw size={16} />,
-        color: "success",
-        show: (row) => row.status === "active",
+        color: 'success',
+        show: (row) => row.status === 'active',
         onClick: handleRenew,
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error",
+        color: 'error',
         confirm: true,
-        confirmMessage: "确定删除该合同吗?",
+        confirmMessage: '确定删除该合同吗?',
         onClick: (row) => handleDelete(row.id),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <Snackbar
         open={!!notification}
         autoHideDuration={3000}
         onClose={() => setNotification(null)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert severity={notification?.type} sx={{ width: "100%" }}>
+        <Alert
+          severity={notification?.type}
+          sx={{ width: '100%' }}
+        >
           {notification?.message}
         </Alert>
       </Snackbar>
@@ -646,15 +671,18 @@ export default function ContractManagementPage() {
       <Dialog
         open={!!confirmDialog}
         onClose={() => setConfirmDialog(null)}
-        maxWidth="sm"
+        maxWidth='sm'
       >
         <DialogTitle>{confirmDialog?.title}</DialogTitle>
         <DialogActions>
-          <Button color="inherit" onClick={() => setConfirmDialog(null)}>
+          <Button
+            color='inherit'
+            onClick={() => setConfirmDialog(null)}
+          >
             取消
           </Button>
           <Button
-            color="error"
+            color='error'
             onClick={() => {
               confirmDialog?.onConfirm();
               setConfirmDialog(null);
@@ -667,58 +695,64 @@ export default function ContractManagementPage() {
 
       <Box
         sx={{
-          bgcolor: "white",
+          bgcolor: 'white',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
           boxShadow: 1,
         }}
       >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 2 }}>
           {/* 面包屑导航 */}
           <Box sx={{ mb: 2 }}>
             <Typography
-              component="a"
-              href="/hrm"
+              component='a'
+              href='/hrm'
               sx={{
-                color: "text.secondary",
-                textDecoration: "none",
-                fontSize: "0.875rem",
-                "&:hover": {
-                  color: "primary.main",
-                  textDecoration: "underline",
+                color: 'text.secondary',
+                textDecoration: 'none',
+                fontSize: '0.875rem',
+                '&:hover': {
+                  color: 'primary.main',
+                  textDecoration: 'underline',
                 },
               }}
             >
               人力资源
             </Typography>
-            <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+            <Typography
+              component='span'
+              sx={{ mx: 1, color: 'text.disabled' }}
+            >
               /
             </Typography>
             <Typography
-              component="span"
-              sx={{ color: "text.primary", fontSize: "0.875rem" }}
+              component='span'
+              sx={{ color: 'text.primary', fontSize: '0.875rem' }}
             >
               合同管理
             </Typography>
           </Box>
 
           <Stack
-            direction="row"
-            sx={{ alignItems: "center", justifyContent: "space-between" }}
+            direction='row'
+            sx={{ alignItems: 'center', justifyContent: 'space-between' }}
           >
             <Box>
               <Typography
-                variant="h6"
-                sx={{ fontWeight: 600, color: "grey.900" }}
+                variant='h6'
+                sx={{ fontWeight: 600, color: 'grey.900' }}
               >
                 合同管理
               </Typography>
-              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.500', mt: 0.5 }}
+              >
                 管理员工合同信息，包括合同创建、到期提醒和续签流程
               </Typography>
             </Box>
             <Button
-              variant="contained"
+              variant='contained'
               onClick={handleCreate}
               startIcon={<Plus size={18} />}
             >
@@ -728,21 +762,24 @@ export default function ContractManagementPage() {
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+      <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
         {/* 统计卡片 */}
         <Box sx={{ mb: 3 }}>
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
+                xs: 'repeat(2, 1fr)',
+                md: 'repeat(4, 1fr)',
               },
               gap: 2,
             }}
           >
             {statCards.map((stat) => (
-              <StatCard key={stat.id} {...stat} />
+              <StatCard
+                key={stat.id}
+                {...stat}
+              />
             ))}
           </Box>
         </Box>
@@ -761,7 +798,7 @@ export default function ContractManagementPage() {
               onPageChange: setCurrentPage,
             }}
             searchable
-            searchPlaceholder="搜索合同编号或员工姓名"
+            searchPlaceholder='搜索合同编号或员工姓名'
             searchValue={searchText}
             onSearch={(value) => {
               setSearchText(value);
@@ -769,26 +806,26 @@ export default function ContractManagementPage() {
             }}
             filters={[
               {
-                id: "status",
-                label: "状态",
-                type: "select",
+                id: 'status',
+                label: '状态',
+                type: 'select',
                 options: [
-                  { label: "全部状态", value: "" },
-                  { label: "生效中", value: "active" },
-                  { label: "已到期", value: "expired" },
-                  { label: "已终止", value: "terminated" },
+                  { label: '全部状态', value: '' },
+                  { label: '生效中', value: 'active' },
+                  { label: '已到期', value: 'expired' },
+                  { label: '已终止', value: 'terminated' },
                 ],
                 value: statusFilter,
               },
               {
-                id: "expiring",
-                label: "仅显示即将到期",
-                type: "select",
+                id: 'expiring',
+                label: '仅显示即将到期',
+                type: 'select',
                 options: [
-                  { label: "全部", value: "false" },
-                  { label: "30天内到期", value: "true" },
+                  { label: '全部', value: 'false' },
+                  { label: '30天内到期', value: 'true' },
                 ],
-                value: showExpiringOnly ? "true" : "false",
+                value: showExpiringOnly ? 'true' : 'false',
               },
             ]}
             onFilterChange={(filters) => {
@@ -796,18 +833,18 @@ export default function ContractManagementPage() {
                 setStatusFilter(filters.status as string);
               }
               if (filters.expiring !== undefined) {
-                setShowExpiringOnly(filters.expiring === "true");
+                setShowExpiringOnly(filters.expiring === 'true');
               }
               setCurrentPage(1);
             }}
             actions={[
               {
-                label: "刷新",
+                label: '刷新',
                 icon: <RefreshCw size={16} />,
                 onClick: loadData,
               },
             ]}
-            emptyMessage="暂无合同数据"
+            emptyMessage='暂无合同数据'
           />
         </Card>
       </Box>
@@ -815,26 +852,26 @@ export default function ContractManagementPage() {
       <Dialog
         open={modalVisible}
         onClose={() => setModalVisible(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>
-          {modalType === "create"
-            ? "新建合同"
-            : modalType === "edit"
-              ? "编辑合同"
-              : "合同详情"}
+          {modalType === 'create' ? '新建合同' : modalType === 'edit' ? '编辑合同' : '合同详情'}
         </DialogTitle>
         <DialogContent dividers>
-          {modalType !== "view" ? (
+          {modalType !== 'view' ? (
             <Stack spacing={2}>
               <Box>
                 <FormLabel>员工 *</FormLabel>
-                <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                <FormControl
+                  fullWidth
+                  size='small'
+                  sx={{ mt: 1 }}
+                >
                   <InputLabel>员工</InputLabel>
                   <Select
                     value={formState.employee_id}
-                    label="员工"
+                    label='员工'
                     onChange={(e) =>
                       setFormState((s) => ({
                         ...s,
@@ -842,9 +879,12 @@ export default function ContractManagementPage() {
                       }))
                     }
                   >
-                    <MenuItem value="">请选择员工</MenuItem>
+                    <MenuItem value=''>请选择员工</MenuItem>
                     {employees.map((e) => (
-                      <MenuItem key={e.id} value={e.id}>
+                      <MenuItem
+                        key={e.id}
+                        value={e.id}
+                      >
                         {e.name}
                       </MenuItem>
                     ))}
@@ -853,8 +893,8 @@ export default function ContractManagementPage() {
               </Box>
 
               <TextField
-                label="合同编号"
-                size="small"
+                label='合同编号'
+                size='small'
                 fullWidth
                 value={formState.contract_no}
                 onChange={(e) =>
@@ -863,17 +903,21 @@ export default function ContractManagementPage() {
                     contract_no: e.target.value,
                   }))
                 }
-                disabled={modalType === "create"}
-                placeholder={modalType === "create" ? "自动生成" : ""}
+                disabled={modalType === 'create'}
+                placeholder={modalType === 'create' ? '自动生成' : ''}
               />
 
               <Box>
                 <FormLabel>合同类型 *</FormLabel>
-                <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                <FormControl
+                  fullWidth
+                  size='small'
+                  sx={{ mt: 1 }}
+                >
                   <InputLabel>合同类型</InputLabel>
                   <Select
                     value={formState.contract_type}
-                    label="合同类型"
+                    label='合同类型'
                     onChange={(e) =>
                       setFormState((s) => ({
                         ...s,
@@ -881,9 +925,12 @@ export default function ContractManagementPage() {
                       }))
                     }
                   >
-                    <MenuItem value="">请选择合同类型</MenuItem>
+                    <MenuItem value=''>请选择合同类型</MenuItem>
                     {contractTypes.map((t) => (
-                      <MenuItem key={t.value} value={t.value}>
+                      <MenuItem
+                        key={t.value}
+                        value={t.value}
+                      >
                         {t.label}
                       </MenuItem>
                     ))}
@@ -891,10 +938,13 @@ export default function ContractManagementPage() {
                 </FormControl>
               </Box>
 
-              <Stack direction="row" spacing={2}>
+              <Stack
+                direction='row'
+                spacing={2}
+              >
                 <TextField
-                  label="甲方名称"
-                  size="small"
+                  label='甲方名称'
+                  size='small'
                   fullWidth
                   value={formState.party_a_name}
                   onChange={(e) =>
@@ -903,11 +953,11 @@ export default function ContractManagementPage() {
                       party_a_name: e.target.value,
                     }))
                   }
-                  placeholder="公司名称"
+                  placeholder='公司名称'
                 />
                 <TextField
-                  label="甲方联系人"
-                  size="small"
+                  label='甲方联系人'
+                  size='small'
                   fullWidth
                   value={formState.party_a_contact}
                   onChange={(e) =>
@@ -916,14 +966,17 @@ export default function ContractManagementPage() {
                       party_a_contact: e.target.value,
                     }))
                   }
-                  placeholder="联系人姓名"
+                  placeholder='联系人姓名'
                 />
               </Stack>
 
-              <Stack direction="row" spacing={2}>
+              <Stack
+                direction='row'
+                spacing={2}
+              >
                 <TextField
-                  label="乙方名称"
-                  size="small"
+                  label='乙方名称'
+                  size='small'
                   fullWidth
                   value={formState.party_b_name}
                   onChange={(e) =>
@@ -932,11 +985,11 @@ export default function ContractManagementPage() {
                       party_b_name: e.target.value,
                     }))
                   }
-                  placeholder="员工姓名"
+                  placeholder='员工姓名'
                 />
                 <TextField
-                  label="乙方联系人"
-                  size="small"
+                  label='乙方联系人'
+                  size='small'
                   fullWidth
                   value={formState.party_b_contact}
                   onChange={(e) =>
@@ -945,15 +998,18 @@ export default function ContractManagementPage() {
                       party_b_contact: e.target.value,
                     }))
                   }
-                  placeholder="员工联系方式"
+                  placeholder='员工联系方式'
                 />
               </Stack>
 
-              <Stack direction="row" spacing={2}>
+              <Stack
+                direction='row'
+                spacing={2}
+              >
                 <TextField
-                  label="开始日期 *"
-                  size="small"
-                  type="date"
+                  label='开始日期 *'
+                  size='small'
+                  type='date'
                   fullWidth
                   value={formState.start_date}
                   onChange={(e) =>
@@ -965,9 +1021,9 @@ export default function ContractManagementPage() {
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <TextField
-                  label="结束日期"
-                  size="small"
-                  type="date"
+                  label='结束日期'
+                  size='small'
+                  type='date'
                   fullWidth
                   value={formState.end_date}
                   onChange={(e) =>
@@ -976,27 +1032,28 @@ export default function ContractManagementPage() {
                       end_date: e.target.value,
                     }))
                   }
-                  placeholder="无固定期限"
+                  placeholder='无固定期限'
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Stack>
 
-              <Stack direction="row" spacing={2}>
+              <Stack
+                direction='row'
+                spacing={2}
+              >
                 <TextField
-                  label="薪资"
-                  size="small"
-                  type="number"
+                  label='薪资'
+                  size='small'
+                  type='number'
                   fullWidth
                   value={formState.salary}
-                  onChange={(e) =>
-                    setFormState((s) => ({ ...s, salary: e.target.value }))
-                  }
-                  placeholder="0"
+                  onChange={(e) => setFormState((s) => ({ ...s, salary: e.target.value }))}
+                  placeholder='0'
                 />
                 <TextField
-                  label="试用期(天)"
-                  size="small"
-                  type="number"
+                  label='试用期(天)'
+                  size='small'
+                  type='number'
                   fullWidth
                   value={formState.probation_period_days}
                   onChange={(e) =>
@@ -1005,12 +1062,12 @@ export default function ContractManagementPage() {
                       probation_period_days: e.target.value,
                     }))
                   }
-                  placeholder="0"
+                  placeholder='0'
                 />
                 <TextField
-                  label="提前提醒天数"
-                  size="small"
-                  type="number"
+                  label='提前提醒天数'
+                  size='small'
+                  type='number'
                   fullWidth
                   value={formState.reminder_days}
                   onChange={(e) =>
@@ -1019,58 +1076,61 @@ export default function ContractManagementPage() {
                       reminder_days: e.target.value,
                     }))
                   }
-                  placeholder="30"
+                  placeholder='30'
                 />
               </Stack>
 
               <Box>
-                <FormLabel sx={{ mb: 1, display: "block" }}>合同附件</FormLabel>
+                <FormLabel sx={{ mb: 1, display: 'block' }}>合同附件</FormLabel>
                 <FileUpload
                   value={contractAttachments}
                   onChange={setContractAttachments}
-                  accept={[".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"]}
+                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
                   maxCount={5}
                   maxSize={20}
                   maxTotalSize={50}
-                  uploadText="上传合同附件"
+                  uploadText='上传合同附件'
                 />
               </Box>
 
               <TextField
-                label="备注"
-                size="small"
+                label='备注'
+                size='small'
                 fullWidth
                 multiline
                 rows={3}
                 value={formState.notes}
-                onChange={(e) =>
-                  setFormState((s) => ({ ...s, notes: e.target.value }))
-                }
-                placeholder="备注信息"
+                onChange={(e) => setFormState((s) => ({ ...s, notes: e.target.value }))}
+                placeholder='备注信息'
               />
             </Stack>
           ) : (
             <Box>
               {currentContract && (
                 <Stack spacing={2}>
-                  <Stack direction="row" spacing={2}>
-                    <Card
-                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
-                    >
+                  <Stack
+                    direction='row'
+                    spacing={2}
+                  >
+                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500' }}
+                        >
                           合同编号
                         </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
-                          {currentContract.contract_no || "-"}
+                          {currentContract.contract_no || '-'}
                         </Typography>
                       </CardContent>
                     </Card>
-                    <Card
-                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
-                    >
+                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500' }}
+                        >
                           员工
                         </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
@@ -1079,60 +1139,63 @@ export default function ContractManagementPage() {
                       </CardContent>
                     </Card>
                   </Stack>
-                  <Stack direction="row" spacing={2}>
-                    <Card
-                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
-                    >
+                  <Stack
+                    direction='row'
+                    spacing={2}
+                  >
+                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500' }}
+                        >
                           合同类型
                         </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
-                          {contractTypes.find(
-                            (t) => t.value === currentContract.contract_type,
-                          )?.label || currentContract.contract_type}
+                          {contractTypes.find((t) => t.value === currentContract.contract_type)
+                            ?.label || currentContract.contract_type}
                         </Typography>
                       </CardContent>
                     </Card>
-                    <Card
-                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
-                    >
+                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500' }}
+                        >
                           状态
                         </Typography>
                         <Chip
-                          size="small"
-                          label={
-                            statusMap[currentContract.status]?.text ||
-                            currentContract.status
-                          }
-                          color={
-                            statusMap[currentContract.status]?.color ||
-                            "default"
-                          }
+                          size='small'
+                          label={statusMap[currentContract.status]?.text || currentContract.status}
+                          color={statusMap[currentContract.status]?.color || 'default'}
                         />
                       </CardContent>
                     </Card>
                   </Stack>
-                  <Stack direction="row" spacing={2}>
-                    <Card
-                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
-                    >
+                  <Stack
+                    direction='row'
+                    spacing={2}
+                  >
+                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500' }}
+                        >
                           薪资
                         </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
-                          {currentContract.salary?.toLocaleString() || "-"}
+                          {currentContract.salary?.toLocaleString() || '-'}
                         </Typography>
                       </CardContent>
                     </Card>
-                    <Card
-                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
-                    >
+                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500' }}
+                        >
                           试用期
                         </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
@@ -1141,59 +1204,64 @@ export default function ContractManagementPage() {
                       </CardContent>
                     </Card>
                   </Stack>
-                  <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                  <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
                     <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
                         有效期
                       </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
-                        {new Date(
-                          currentContract.start_date,
-                        ).toLocaleDateString("zh-CN")}
-                        ~{" "}
+                        {new Date(currentContract.start_date).toLocaleDateString('zh-CN')}~{' '}
                         {currentContract.end_date
-                          ? new Date(
-                              currentContract.end_date,
-                            ).toLocaleDateString("zh-CN")
-                          : "无固定期限"}
+                          ? new Date(currentContract.end_date).toLocaleDateString('zh-CN')
+                          : '无固定期限'}
                       </Typography>
                     </CardContent>
                   </Card>
-                  <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                  <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
                     <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
                         甲方信息
                       </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
-                        {currentContract.party_a_name || "-"}
+                        {currentContract.party_a_name || '-'}
                       </Typography>
-                      <Typography variant="body2">
-                        {currentContract.party_a_contact || "-"}
+                      <Typography variant='body2'>
+                        {currentContract.party_a_contact || '-'}
                       </Typography>
                     </CardContent>
                   </Card>
-                  <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                  <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
                     <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
                         乙方信息
                       </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
-                        {currentContract.party_b_name || "-"}
+                        {currentContract.party_b_name || '-'}
                       </Typography>
-                      <Typography variant="body2">
-                        {currentContract.party_b_contact || "-"}
+                      <Typography variant='body2'>
+                        {currentContract.party_b_contact || '-'}
                       </Typography>
                     </CardContent>
                   </Card>
                   {currentContract.notes && (
-                    <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                    <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500' }}
+                        >
                           备注
                         </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {currentContract.notes}
-                        </Typography>
+                        <Typography sx={{ fontWeight: 500 }}>{currentContract.notes}</Typography>
                       </CardContent>
                     </Card>
                   )}
@@ -1201,16 +1269,10 @@ export default function ContractManagementPage() {
               )}
 
               {showRenewals && (
-                <Box
-                  sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}
-                >
-                  <Typography sx={{ fontWeight: 500, mb: 1.5 }}>
-                    续签记录
-                  </Typography>
+                <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                  <Typography sx={{ fontWeight: 500, mb: 1.5 }}>续签记录</Typography>
                   {renewals.length === 0 ? (
-                    <Typography
-                      sx={{ color: "grey.500", textAlign: "center", py: 2 }}
-                    >
+                    <Typography sx={{ color: 'grey.500', textAlign: 'center', py: 2 }}>
                       暂无续签记录
                     </Typography>
                   ) : (
@@ -1218,117 +1280,101 @@ export default function ContractManagementPage() {
                       {renewals.map((renewal) => (
                         <Card
                           key={renewal.id}
-                          sx={{ border: 1, borderColor: "divider" }}
+                          sx={{ border: 1, borderColor: 'divider' }}
                         >
                           <CardContent sx={{ p: 1.5 }}>
                             <Stack
                               sx={{
-                                display: "flex",
-                                flexDirection: "row",
-                                justifyContent: "space-between",
-                                alignItems: "flex-start",
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                alignItems: 'flex-start',
                                 mb: 1,
                               }}
                             >
                               <Box>
                                 <Typography sx={{ fontWeight: 500 }}>
-                                  {renewalTypes.find(
-                                    (t) => t.value === renewal.renewal_type,
-                                  )?.label || renewal.renewal_type}
+                                  {renewalTypes.find((t) => t.value === renewal.renewal_type)
+                                    ?.label || renewal.renewal_type}
                                 </Typography>
                                 <Typography
-                                  variant="body2"
-                                  sx={{ color: "grey.500", ml: 1 }}
+                                  variant='body2'
+                                  sx={{ color: 'grey.500', ml: 1 }}
                                 >
-                                  {new Date(renewal.created_at).toLocaleString(
-                                    "zh-CN",
-                                  )}
+                                  {new Date(renewal.created_at).toLocaleString('zh-CN')}
                                 </Typography>
                               </Box>
                               <Chip
-                                size="small"
-                                label={
-                                  renewalStatusMap[renewal.status]?.text ||
-                                  renewal.status
-                                }
-                                color={
-                                  renewalStatusMap[renewal.status]?.color ||
-                                  "default"
-                                }
+                                size='small'
+                                label={renewalStatusMap[renewal.status]?.text || renewal.status}
+                                color={renewalStatusMap[renewal.status]?.color || 'default'}
                               />
                             </Stack>
                             <Typography
-                              variant="body2"
-                              sx={{ color: "grey.600", mb: 1 }}
+                              variant='body2'
+                              sx={{ color: 'grey.600', mb: 1 }}
                             >
-                              新合同期限:{" "}
-                              {new Date(
-                                renewal.new_start_date,
-                              ).toLocaleDateString("zh-CN")}{" "}
-                              ~{" "}
+                              新合同期限:{' '}
+                              {new Date(renewal.new_start_date).toLocaleDateString('zh-CN')} ~{' '}
                               {renewal.new_end_date
-                                ? new Date(
-                                    renewal.new_end_date,
-                                  ).toLocaleDateString("zh-CN")
-                                : "无固定期限"}
+                                ? new Date(renewal.new_end_date).toLocaleDateString('zh-CN')
+                                : '无固定期限'}
                             </Typography>
                             {renewal.new_salary && (
                               <Typography
-                                variant="body2"
-                                sx={{ color: "grey.600", mb: 1 }}
+                                variant='body2'
+                                sx={{ color: 'grey.600', mb: 1 }}
                               >
                                 新薪资: {renewal.new_salary.toLocaleString()}
                               </Typography>
                             )}
                             {renewal.renewal_reason && (
                               <Typography
-                                variant="body2"
-                                sx={{ color: "grey.600", mb: 1 }}
+                                variant='body2'
+                                sx={{ color: 'grey.600', mb: 1 }}
                               >
                                 续签原因: {renewal.renewal_reason}
                               </Typography>
                             )}
                             {renewal.rejection_reason && (
                               <Typography
-                                variant="body2"
-                                sx={{ color: "error.main" }}
+                                variant='body2'
+                                sx={{ color: 'error.main' }}
                               >
                                 拒绝理由: {renewal.rejection_reason}
                               </Typography>
                             )}
-                            <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
-                              {renewal.status === "pending" && (
+                            <Stack
+                              direction='row'
+                              spacing={1}
+                              sx={{ mt: 1.5 }}
+                            >
+                              {renewal.status === 'pending' && (
                                 <>
                                   <Button
-                                    size="small"
-                                    variant="contained"
-                                    onClick={() =>
-                                      handleApproveRenewal(renewal.id)
-                                    }
+                                    size='small'
+                                    variant='contained'
+                                    onClick={() => handleApproveRenewal(renewal.id)}
                                     startIcon={<Check size={12} />}
                                   >
                                     批准
                                   </Button>
                                   <Button
-                                    size="small"
-                                    color="error"
-                                    variant="contained"
-                                    onClick={() =>
-                                      handleRejectRenewal(renewal.id)
-                                    }
+                                    size='small'
+                                    color='error'
+                                    variant='contained'
+                                    onClick={() => handleRejectRenewal(renewal.id)}
                                     startIcon={<X size={12} />}
                                   >
                                     拒绝
                                   </Button>
                                 </>
                               )}
-                              {renewal.status === "approved" && (
+                              {renewal.status === 'approved' && (
                                 <Button
-                                  size="small"
-                                  variant="outlined"
-                                  onClick={() =>
-                                    handleExecuteRenewal(renewal.id)
-                                  }
+                                  size='small'
+                                  variant='outlined'
+                                  onClick={() => handleExecuteRenewal(renewal.id)}
                                   startIcon={<RefreshCw size={12} />}
                                 >
                                   执行续签
@@ -1346,25 +1392,31 @@ export default function ContractManagementPage() {
           )}
         </DialogContent>
         <DialogActions>
-          {modalType !== "view" ? (
+          {modalType !== 'view' ? (
             <>
-              <Button color="inherit" onClick={() => setModalVisible(false)}>
+              <Button
+                color='inherit'
+                onClick={() => setModalVisible(false)}
+              >
                 取消
               </Button>
-              <Button variant="contained" onClick={handleSave}>
-                {modalType === "create" ? "创建" : "保存"}
+              <Button
+                variant='contained'
+                onClick={handleSave}
+              >
+                {modalType === 'create' ? '创建' : '保存'}
               </Button>
             </>
           ) : (
             <>
               <Button
-                color="inherit"
+                color='inherit'
                 onClick={() => setShowRenewals(!showRenewals)}
               >
-                {showRenewals ? "隐藏续签记录" : "查看续签记录"}
+                {showRenewals ? '隐藏续签记录' : '查看续签记录'}
               </Button>
               <Button
-                variant="contained"
+                variant='contained'
                 onClick={() => setModalVisible(false)}
               >
                 关闭
@@ -1377,19 +1429,26 @@ export default function ContractManagementPage() {
       <Dialog
         open={renewModalVisible}
         onClose={() => setRenewModalVisible(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>合同续签申请</DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack
+            spacing={2}
+            sx={{ pt: 1 }}
+          >
             <Box>
               <FormLabel>续签类型 *</FormLabel>
-              <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+              <FormControl
+                fullWidth
+                size='small'
+                sx={{ mt: 1 }}
+              >
                 <InputLabel>续签类型</InputLabel>
                 <Select
                   value={renewFormState.renewal_type}
-                  label="续签类型"
+                  label='续签类型'
                   onChange={(e) =>
                     setRenewFormState((s) => ({
                       ...s,
@@ -1398,7 +1457,10 @@ export default function ContractManagementPage() {
                   }
                 >
                   {renewalTypes.map((t) => (
-                    <MenuItem key={t.value} value={t.value}>
+                    <MenuItem
+                      key={t.value}
+                      value={t.value}
+                    >
                       {t.label}
                     </MenuItem>
                   ))}
@@ -1406,11 +1468,14 @@ export default function ContractManagementPage() {
               </FormControl>
             </Box>
 
-            <Stack direction="row" spacing={2}>
+            <Stack
+              direction='row'
+              spacing={2}
+            >
               <TextField
-                label="新合同开始日期 *"
-                size="small"
-                type="date"
+                label='新合同开始日期 *'
+                size='small'
+                type='date'
                 fullWidth
                 value={renewFormState.new_start_date}
                 onChange={(e) =>
@@ -1422,9 +1487,9 @@ export default function ContractManagementPage() {
                 slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
-                label="新合同结束日期"
-                size="small"
-                type="date"
+                label='新合同结束日期'
+                size='small'
+                type='date'
                 fullWidth
                 value={renewFormState.new_end_date}
                 onChange={(e) =>
@@ -1433,15 +1498,15 @@ export default function ContractManagementPage() {
                     new_end_date: e.target.value,
                   }))
                 }
-                placeholder="无固定期限"
+                placeholder='无固定期限'
                 slotProps={{ inputLabel: { shrink: true } }}
               />
             </Stack>
 
             <TextField
-              label="新薪资"
-              size="small"
-              type="number"
+              label='新薪资'
+              size='small'
+              type='number'
               fullWidth
               value={renewFormState.new_salary}
               onChange={(e) =>
@@ -1450,12 +1515,12 @@ export default function ContractManagementPage() {
                   new_salary: e.target.value,
                 }))
               }
-              placeholder="不修改请留空"
+              placeholder='不修改请留空'
             />
 
             <TextField
-              label="续签原因"
-              size="small"
+              label='续签原因'
+              size='small'
               fullWidth
               multiline
               rows={3}
@@ -1466,15 +1531,21 @@ export default function ContractManagementPage() {
                   renewal_reason: e.target.value,
                 }))
               }
-              placeholder="请说明续签原因"
+              placeholder='请说明续签原因'
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button color="inherit" onClick={() => setRenewModalVisible(false)}>
+          <Button
+            color='inherit'
+            onClick={() => setRenewModalVisible(false)}
+          >
             取消
           </Button>
-          <Button variant="contained" onClick={handleSubmitRenew}>
+          <Button
+            variant='contained'
+            onClick={handleSubmitRenew}
+          >
             提交申请
           </Button>
         </DialogActions>

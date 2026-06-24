@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import type { AlertProps } from "@mui/material";
-import { Snackbar, Alert, IconButton } from "@mui/material";
-import { X } from "lucide-react";
+import * as React from 'react';
+import type { AlertProps } from '@mui/material';
+import { Snackbar, Alert, IconButton } from '@mui/material';
+import { X } from 'lucide-react';
 
 type ToastProps = {
   id: string;
@@ -11,32 +11,21 @@ type ToastProps = {
   onOpenChange?: (open: boolean) => void;
   title?: React.ReactNode;
   description?: React.ReactNode;
-  variant?: "default" | "destructive" | "success" | "warning";
+  variant?: 'default' | 'destructive' | 'success' | 'warning';
 };
 
 const Toast = React.forwardRef<React.ComponentRef<typeof Snackbar>, ToastProps>(
-  (
-    {
-      id,
-      open,
-      onOpenChange,
-      title,
-      description,
-      variant = "default",
-      ...props
-    },
-    ref,
-  ) => {
-    const getSeverity = (): AlertProps["severity"] => {
+  ({ id, open, onOpenChange, title, description, variant = 'default', ...props }, ref) => {
+    const getSeverity = (): AlertProps['severity'] => {
       switch (variant) {
-        case "destructive":
-          return "error";
-        case "success":
-          return "success";
-        case "warning":
-          return "warning";
+        case 'destructive':
+          return 'error';
+        case 'success':
+          return 'success';
+        case 'warning':
+          return 'warning';
         default:
-          return "info";
+          return 'info';
       }
     };
 
@@ -46,13 +35,16 @@ const Toast = React.forwardRef<React.ComponentRef<typeof Snackbar>, ToastProps>(
         open={open}
         onClose={() => onOpenChange?.(false)}
         autoHideDuration={6000}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         {...props}
       >
         <Alert
           severity={getSeverity()}
           action={
-            <IconButton size="small" onClick={() => onOpenChange?.(false)}>
+            <IconButton
+              size='small'
+              onClick={() => onOpenChange?.(false)}
+            >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>
           }
@@ -62,15 +54,15 @@ const Toast = React.forwardRef<React.ComponentRef<typeof Snackbar>, ToastProps>(
           }}
         >
           {title && <strong>{title}</strong>}
-          {title && description && " "}
+          {title && description && ' '}
           {description}
         </Alert>
       </Snackbar>
     );
-  },
+  }
 );
 
-Toast.displayName = "Toast";
+Toast.displayName = 'Toast';
 
 type ToastActionElement = React.ReactElement;
 

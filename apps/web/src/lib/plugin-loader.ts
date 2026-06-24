@@ -68,11 +68,11 @@ class PluginLoader {
       baseURL: this.options.baseUrl,
       defaultJSExtensions: true,
       map: {
-        "@": this.options.baseUrl,
+        '@': this.options.baseUrl,
       },
       packages: {
-        "": {
-          defaultExtension: "js",
+        '': {
+          defaultExtension: 'js',
         },
       },
     });
@@ -81,10 +81,7 @@ class PluginLoader {
   /**
    * 加载单个插件
    */
-  async loadPlugin(
-    pluginCode: string,
-    manifestUrl: string,
-  ): Promise<LoadedPlugin> {
+  async loadPlugin(pluginCode: string, manifestUrl: string): Promise<LoadedPlugin> {
     // 如果已加载，直接返回
     if (this.plugins.has(pluginCode)) {
       return this.plugins.get(pluginCode)!;
@@ -96,9 +93,7 @@ class PluginLoader {
       // 加载插件清单
       const response = await fetch(manifestUrl);
       if (!response.ok) {
-        throw new Error(
-          `Failed to load plugin manifest: ${response.statusText}`,
-        );
+        throw new Error(`Failed to load plugin manifest: ${response.statusText}`);
       }
 
       const manifest: PluginManifest = await response.json();
@@ -131,7 +126,7 @@ class PluginLoader {
    * 批量加载插件
    */
   async loadPlugins(
-    plugins: Array<{ code: string; manifestUrl: string }>,
+    plugins: Array<{ code: string; manifestUrl: string }>
   ): Promise<LoadedPlugin[]> {
     const results: LoadedPlugin[] = [];
 
@@ -298,31 +293,29 @@ export const routeManager = new RouteManager();
 export const menuManager = new MenuManager();
 
 // 插件清单验证
-export function validateManifest(
-  manifest: unknown,
-): manifest is PluginManifest {
-  if (!manifest || typeof manifest !== "object") {
+export function validateManifest(manifest: unknown): manifest is PluginManifest {
+  if (!manifest || typeof manifest !== 'object') {
     return false;
   }
 
   const m = manifest as Record<string, unknown>;
 
-  if (!m.plugin || typeof m.plugin !== "object") {
+  if (!m.plugin || typeof m.plugin !== 'object') {
     return false;
   }
 
   const plugin = m.plugin as Record<string, unknown>;
 
-  if (typeof plugin.code !== "string" || !plugin.code) {
+  if (typeof plugin.code !== 'string' || !plugin.code) {
     return false;
   }
-  if (typeof plugin.name !== "string" || !plugin.name) {
+  if (typeof plugin.name !== 'string' || !plugin.name) {
     return false;
   }
-  if (typeof plugin.version !== "string" || !plugin.version) {
+  if (typeof plugin.version !== 'string' || !plugin.version) {
     return false;
   }
-  if (typeof plugin.main !== "string" || !plugin.main) {
+  if (typeof plugin.main !== 'string' || !plugin.main) {
     return false;
   }
 
@@ -333,21 +326,21 @@ export function validateManifest(
 export function checkBundleSize(
   bytes: number,
   warnThreshold = 500 * 1024,
-  errorThreshold = 1024 * 1024,
-): "ok" | "warning" | "error" {
+  errorThreshold = 1024 * 1024
+): 'ok' | 'warning' | 'error' {
   if (bytes > errorThreshold) {
-    return "error";
+    return 'error';
   }
   if (bytes > warnThreshold) {
-    return "warning";
+    return 'warning';
   }
-  return "ok";
+  return 'ok';
 }
 
 // 异步 Script 加载器（备用）
 export async function loadScript(url: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
+    const script = document.createElement('script');
     script.src = url;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error(`Failed to load script: ${url}`));

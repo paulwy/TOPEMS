@@ -1,19 +1,24 @@
-import React, { useState } from "react";
-import type { BoxProps } from "@mui/material";
-import { Box, Paper, Typography, Tabs, Tab, IconButton, Tooltip, Divider, Skeleton, Chip, useTheme, useMediaQuery,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState } from 'react';
+import type { BoxProps } from '@mui/material';
 import {
-  ArrowLeft,
-  Edit,
-  Delete,
-  Share2,
-  MoreHorizontal,
-  Printer,
-  Download,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import type { BreadcrumbItem, PageAction } from "./PageHeader";
-import { PageHeader } from "./PageHeader";
+  Box,
+  Paper,
+  Typography,
+  Tabs,
+  Tab,
+  IconButton,
+  Tooltip,
+  Divider,
+  Skeleton,
+  Chip,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { ArrowLeft, Edit, Delete, Share2, MoreHorizontal, Printer, Download } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import type { BreadcrumbItem, PageAction } from './PageHeader';
+import { PageHeader } from './PageHeader';
 
 // ============ 类型定义 ============
 
@@ -116,36 +121,36 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs?.[0]?.id || "");
+  const [activeTab, setActiveTab] = useState(defaultTab || tabs?.[0]?.id || '');
 
   // 默认操作按钮
   const defaultActions: PageAction[] = [];
   if (onEdit) {
     defaultActions.push({
-      label: "编辑",
+      label: '编辑',
       icon: <Edit style={{ width: 18, height: 18 }} />,
       onClick: onEdit,
-      variant: "outlined",
+      variant: 'outlined',
     });
   }
   if (onShare) {
     defaultActions.push({
-      label: "分享",
+      label: '分享',
       icon: <Share2 style={{ width: 18, height: 18 }} />,
       onClick: onShare,
-      variant: "text",
+      variant: 'text',
     });
   }
   if (onDelete) {
     defaultActions.push({
-      label: "删除",
+      label: '删除',
       icon: <Delete style={{ width: 18, height: 18 }} />,
       onClick: onDelete,
-      variant: "text",
-      color: "error",
+      variant: 'text',
+      color: 'error',
     });
   }
 
@@ -161,22 +166,22 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
           p: 3,
           mb: 3,
           borderRadius: 2,
-          background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-          color: "white",
+          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+          color: 'white',
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
           {infoCard.avatar && (
             <Box
               sx={{
                 width: 80,
                 height: 80,
                 borderRadius: 2,
-                overflow: "hidden",
-                bgcolor: "rgba(255,255,255,0.2)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                overflow: 'hidden',
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               {infoCard.avatar}
@@ -188,37 +193,41 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                 <Skeleton
                   width={150}
                   height={32}
-                  sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+                  sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
                 />
                 <Skeleton
                   width={100}
                   height={20}
-                  sx={{ bgcolor: "rgba(255,255,255,0.2)" }}
+                  sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}
                 />
               </>
             ) : (
               <>
-                <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 600, mb: 0.5 }}
+                >
                   {infoCard.title || title}
                 </Typography>
                 {infoCard.subtitle && (
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ opacity: 0.9 }}
+                  >
                     {infoCard.subtitle}
                   </Typography>
                 )}
                 {infoCard.tags && infoCard.tags.length > 0 && (
-                  <Box
-                    sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap" }}
-                  >
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                     {infoCard.tags.map((tag, index) => (
                       <Chip
                         key={index}
                         label={tag}
-                        size="small"
+                        size='small'
                         sx={{
-                          bgcolor: "rgba(255,255,255,0.2)",
-                          color: "white",
-                          fontSize: "0.75rem",
+                          bgcolor: 'rgba(255,255,255,0.2)',
+                          color: 'white',
+                          fontSize: '0.75rem',
                         }}
                       />
                     ))}
@@ -228,13 +237,22 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
             )}
           </Box>
           {infoCard.stats && infoCard.stats.length > 0 && (
-            <Box sx={{ display: "flex", gap: 3 }}>
+            <Box sx={{ display: 'flex', gap: 3 }}>
               {infoCard.stats.map((stat, index) => (
-                <Box key={index} sx={{ textAlign: "center" }}>
-                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                <Box
+                  key={index}
+                  sx={{ textAlign: 'center' }}
+                >
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700 }}
+                  >
                     {loading ? <Skeleton width={40} /> : stat.value}
                   </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                  <Typography
+                    variant='caption'
+                    sx={{ opacity: 0.8 }}
+                  >
                     {stat.label}
                   </Typography>
                 </Box>
@@ -255,11 +273,11 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
         <Tabs
           value={activeTab}
           onChange={(_, value) => setActiveTab(value)}
-          variant={isMobile ? "scrollable" : "standard"}
-          scrollButtons={isMobile ? "auto" : false}
+          variant={isMobile ? 'scrollable' : 'standard'}
+          scrollButtons={isMobile ? 'auto' : false}
           sx={{
             borderBottom: 1,
-            borderColor: "divider",
+            borderColor: 'divider',
             px: 2,
           }}
         >
@@ -268,28 +286,26 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
               key={tab.id}
               value={tab.id}
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {tab.icon}
                   {tab.label}
                   {tab.badge !== undefined && (
                     <Chip
                       label={tab.badge}
-                      size="small"
-                      color="primary"
-                      sx={{ height: 20, fontSize: "0.7rem" }}
+                      size='small'
+                      color='primary'
+                      sx={{ height: 20, fontSize: '0.7rem' }}
                     />
                   )}
                 </Box>
               }
               disabled={tab.disabled}
-              sx={{ textTransform: "none" }}
+              sx={{ textTransform: 'none' }}
             />
           ))}
         </Tabs>
 
-        <Box sx={{ p: 3 }}>
-          {tabs.find((tab) => tab.id === activeTab)?.content}
-        </Box>
+        <Box sx={{ p: 3 }}>{tabs.find((tab) => tab.id === activeTab)?.content}</Box>
       </Paper>
     );
   };
@@ -299,14 +315,23 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
     if (!sections || sections.length === 0) return null;
 
     return sections.map((section, index) => (
-      <Paper key={section.id || index} sx={{ borderRadius: 2, mb: 3 }}>
+      <Paper
+        key={section.id || index}
+        sx={{ borderRadius: 2, mb: 3 }}
+      >
         {section.title && (
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
               {section.title}
             </Typography>
             {section.description && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {section.description}
               </Typography>
             )}
@@ -330,7 +355,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
         sx={{
           borderRadius: 2,
           p: 3,
-          position: "sticky",
+          position: 'sticky',
           top: 80,
           width: sidebarWidth,
           flexShrink: 0,
@@ -377,9 +402,9 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
       {/* 主内容区域 */}
       <Box
         sx={{
-          display: "flex",
+          display: 'flex',
           gap: 3,
-          flexDirection: isMobile ? "column" : "row",
+          flexDirection: isMobile ? 'column' : 'row',
         }}
       >
         {/* 主内容 */}

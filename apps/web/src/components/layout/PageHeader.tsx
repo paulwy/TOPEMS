@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Box,
   Typography,
@@ -9,11 +9,11 @@ import {
   useTheme,
   useMediaQuery,
   Link,
-} from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { ArrowLeft, Search, Plus, ChevronRight } from "lucide-react";
-import { Link as RouterLink } from "react-router-dom";
-import { HelpButton } from "../common/HelpButton";
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { ArrowLeft, Search, Plus, ChevronRight } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
+import { HelpButton } from '../common/HelpButton';
 
 // ============ 类型定义 ============
 
@@ -33,9 +33,9 @@ export interface PageHeaderAction {
   /** 跳转链接 */
   href?: string;
   /** 按钮变体 */
-  variant?: "contained" | "outlined" | "text";
+  variant?: 'contained' | 'outlined' | 'text';
   /** 按钮颜色 */
-  color?: "primary" | "secondary" | "success" | "error" | "warning" | "info";
+  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
   /** 是否禁用 */
   disabled?: boolean;
   /** 是否加载中 */
@@ -120,13 +120,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   sx,
 }) => {
   // 兼容旧 API：showBack + onBack → backButton
-  const backButton =
-    backButtonProp || (showBack ? { onClick: onBack } : undefined);
+  const backButton = backButtonProp || (showBack ? { onClick: onBack } : undefined);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && searchBox?.onSearch) {
+    if (e.key === 'Enter' && searchBox?.onSearch) {
       searchBox.onSearch((e.target as HTMLInputElement).value);
     }
   };
@@ -134,10 +133,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: { xs: "flex-start", sm: "center" },
-        flexDirection: { xs: "column", sm: "row" },
-        justifyContent: "space-between",
+        display: 'flex',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between',
         gap: 2,
         mb: 3,
         ...sx,
@@ -145,23 +144,23 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     >
       {/* 面包屑导航 */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <Box sx={{ width: "100%", mb: 1 }}>
+        <Box sx={{ width: '100%', mb: 1 }}>
           {breadcrumbs.map((item, index) => {
             const isLast = index === breadcrumbs.length - 1;
             return (
               <span
                 key={index}
-                style={{ display: "inline-flex", alignItems: "center" }}
+                style={{ display: 'inline-flex', alignItems: 'center' }}
               >
                 {item.href ? (
                   <Link
                     component={RouterLink}
                     to={item.href}
-                    color="text.secondary"
+                    color='text.secondary'
                     sx={{
-                      textDecoration: "none",
-                      "&:hover": { textDecoration: "underline" },
-                      fontSize: "0.875rem",
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' },
+                      fontSize: '0.875rem',
                     }}
                   >
                     {item.icon}
@@ -169,8 +168,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   </Link>
                 ) : (
                   <Typography
-                    variant="body2"
-                    color={isLast ? "text.primary" : "text.secondary"}
+                    variant='body2'
+                    color={isLast ? 'text.primary' : 'text.secondary'}
                   >
                     {item.icon}
                     {item.label}
@@ -181,7 +180,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     style={{
                       width: 16,
                       height: 16,
-                      color: "#9ca3af",
+                      color: '#9ca3af',
                       marginLeft: 4,
                       marginRight: 4,
                     }}
@@ -194,20 +193,20 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       )}
 
       {/* 左侧：返回按钮 + 标题 */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {/* 返回按钮 */}
         {backButton && (
-          <Tooltip title={backButton.tooltip || "返回"}>
+          <Tooltip title={backButton.tooltip || '返回'}>
             <IconButton
-              size="small"
+              size='small'
               onClick={backButton.onClick}
-              component={backButton.href ? RouterLink : "button"}
+              component={backButton.href ? RouterLink : 'button'}
               to={backButton.href}
               sx={{
-                color: "text.secondary",
-                "&:hover": {
-                  color: "primary.main",
-                  backgroundColor: "action.hover",
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main',
+                  backgroundColor: 'action.hover',
                 },
               }}
             >
@@ -219,13 +218,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         {/* 标题和副标题 */}
         <Box>
           <Typography
-            variant={isMobile ? "h5" : "h4"}
+            variant={isMobile ? 'h5' : 'h4'}
             sx={{ fontWeight: 600, lineHeight: 1.3 }}
           >
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 0.5 }}
+            >
               {subtitle}
             </Typography>
           )}
@@ -235,31 +238,31 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {/* 右侧：搜索框 + 操作按钮 + 帮助按钮 */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 1.5,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         {/* 搜索框 */}
         {searchBox && (
           <TextField
-            size="small"
-            placeholder={searchBox.placeholder || "搜索..."}
+            size='small'
+            placeholder={searchBox.placeholder || '搜索...'}
             value={searchBox.value}
             onChange={(e) => searchBox.onChange?.(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             sx={{
-              minWidth: { xs: "100%", sm: 200 },
-              maxWidth: { xs: "100%", sm: 300 },
-              "& .MuiOutlinedInput-root": {
+              minWidth: { xs: '100%', sm: 200 },
+              maxWidth: { xs: '100%', sm: 300 },
+              '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
               },
             }}
             slotProps={{
               input: {
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <Search style={{ width: 18, height: 18, opacity: 0.5 }} />
                   </InputAdornment>
                 ),
@@ -271,14 +274,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         {/* 新建按钮 */}
         {createButton && (
           <Button
-            variant="contained"
-            color="primary"
+            variant='contained'
+            color='primary'
             startIcon={<Plus style={{ width: 18, height: 18 }} />}
             onClick={createButton.onClick}
             disabled={createButton.disabled}
-            size={isMobile ? "small" : "medium"}
+            size={isMobile ? 'small' : 'medium'}
           >
-            {createButton.label || "新建"}
+            {createButton.label || '新建'}
           </Button>
         )}
 
@@ -288,12 +291,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               const buttonContent = (
                 <Button
                   key={index}
-                  variant={action.variant || "outlined"}
-                  color={action.color || "primary"}
+                  variant={action.variant || 'outlined'}
+                  color={action.color || 'primary'}
                   startIcon={action.icon}
                   onClick={action.onClick}
                   disabled={action.disabled || action.loading}
-                  size={isMobile ? "small" : "medium"}
+                  size={isMobile ? 'small' : 'medium'}
                 >
                   {!isMobile && action.label}
                 </Button>
@@ -301,7 +304,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
               if (action.tooltip) {
                 return (
-                  <Tooltip key={index} title={action.tooltip}>
+                  <Tooltip
+                    key={index}
+                    title={action.tooltip}
+                  >
                     <span>{buttonContent}</span>
                   </Tooltip>
                 );
@@ -316,7 +322,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         {/* 帮助按钮 */}
         {helpContent && (
-          <HelpButton title={helpTitle} content={helpContent} size="small" />
+          <HelpButton
+            title={helpTitle}
+            content={helpContent}
+            size='small'
+          />
         )}
       </Box>
     </Box>

@@ -3,8 +3,8 @@
  * 项目管理与财务模块集成接口
  */
 
-import { apiClient, downloadBlob } from "./client";
-import config from "../config/runtime";
+import { apiClient, downloadBlob } from './client';
+import config from '../config/runtime';
 
 /**
  * 项目财务信息
@@ -13,7 +13,7 @@ export interface ProjectFinanceInfo {
   project_id: string;
   project_code: string;
   project_name: string;
-  project_type: "internal" | "external" | "investment";
+  project_type: 'internal' | 'external' | 'investment';
   cost_center_id: string;
   budget_amount: number;
   actual_cost: number;
@@ -25,7 +25,7 @@ export interface ProjectFinanceInfo {
   accounts_receivable: number;
   gross_profit: number;
   gross_margin: number;
-  status: "active" | "completed" | "suspended" | "cancelled";
+  status: 'active' | 'completed' | 'suspended' | 'cancelled';
 }
 
 /**
@@ -34,7 +34,7 @@ export interface ProjectFinanceInfo {
 export interface ProjectCostRecord {
   cost_id: string;
   project_id: string;
-  cost_type: "material" | "labor" | "expense" | "subcontract" | "other";
+  cost_type: 'material' | 'labor' | 'expense' | 'subcontract' | 'other';
   cost_category_id: string;
   cost_date: string;
   amount: number;
@@ -46,7 +46,7 @@ export interface ProjectCostRecord {
   employee_id?: string;
   description?: string;
   voucher_id?: string;
-  status: "pending" | "approved" | "invoiced" | "paid";
+  status: 'pending' | 'approved' | 'invoiced' | 'paid';
 }
 
 /**
@@ -56,9 +56,9 @@ export interface CostAllocationRule {
   rule_id: string;
   rule_name: string;
   project_id?: string;
-  project_type?: "internal" | "external" | "investment";
-  cost_type: "material" | "labor" | "expense" | "subcontract" | "other";
-  allocation_method: "by_amount" | "by_quantity" | "by_hours" | "by_percentage";
+  project_type?: 'internal' | 'external' | 'investment';
+  cost_type: 'material' | 'labor' | 'expense' | 'subcontract' | 'other';
+  allocation_method: 'by_amount' | 'by_quantity' | 'by_hours' | 'by_percentage';
   allocation_ratio: number;
   target_cost_center_id: string;
   target_expense_account_id: string;
@@ -73,7 +73,7 @@ export interface CostAllocationRule {
 export interface ProjectInvoice {
   invoice_id: string;
   project_id: string;
-  invoice_type: "progress" | "milestone" | "final";
+  invoice_type: 'progress' | 'milestone' | 'final';
   invoice_number: string;
   invoice_date: string;
   amount: number;
@@ -86,7 +86,7 @@ export interface ProjectInvoice {
   milestone_name?: string;
   completion_percentage?: number;
   voucher_id?: string;
-  status: "draft" | "issued" | "confirmed" | "paid" | "overdue";
+  status: 'draft' | 'issued' | 'confirmed' | 'paid' | 'overdue';
 }
 
 /**
@@ -161,7 +161,7 @@ export interface ProjectBudgetAnalysis {
   planned_value: number;
   schedule_performance_index: number;
   cost_performance_index: number;
-  budget_status: "on_track" | "over_budget" | "under_budget" | "critical";
+  budget_status: 'on_track' | 'over_budget' | 'under_budget' | 'critical';
 }
 
 /**
@@ -170,7 +170,7 @@ export interface ProjectBudgetAnalysis {
 export interface ProjectCashPlan {
   plan_id: string;
   project_id: string;
-  plan_type: "collection" | "payment";
+  plan_type: 'collection' | 'payment';
   plan_date: string;
   amount: number;
   currency: string;
@@ -179,7 +179,7 @@ export interface ProjectCashPlan {
   actual_date?: string;
   actual_amount?: number;
   variance: number;
-  status: "planned" | "confirmed" | "completed" | "delayed";
+  status: 'planned' | 'confirmed' | 'completed' | 'delayed';
 }
 
 export interface GetProjectFinanceInfoParams {
@@ -229,9 +229,9 @@ export interface GetProjectBudgetAnalysisParams {
 export interface CreateCostAllocationRuleData {
   rule_name: string;
   project_id?: string;
-  project_type?: "internal" | "external" | "investment";
-  cost_type: "material" | "labor" | "expense" | "subcontract" | "other";
-  allocation_method: "by_amount" | "by_quantity" | "by_hours" | "by_percentage";
+  project_type?: 'internal' | 'external' | 'investment';
+  cost_type: 'material' | 'labor' | 'expense' | 'subcontract' | 'other';
+  allocation_method: 'by_amount' | 'by_quantity' | 'by_hours' | 'by_percentage';
   allocation_ratio: number;
   target_cost_center_id: string;
   target_expense_account_id: string;
@@ -241,11 +241,7 @@ export interface CreateCostAllocationRuleData {
 
 export interface UpdateCostAllocationRuleData {
   rule_name?: string;
-  allocation_method?:
-    | "by_amount"
-    | "by_quantity"
-    | "by_hours"
-    | "by_percentage";
+  allocation_method?: 'by_amount' | 'by_quantity' | 'by_hours' | 'by_percentage';
   allocation_ratio?: number;
   target_cost_center_id?: string;
   target_expense_account_id?: string;
@@ -256,7 +252,7 @@ export interface UpdateCostAllocationRuleData {
 
 export interface CreateProjectInvoiceData {
   project_id: string;
-  invoice_type: "progress" | "milestone" | "final";
+  invoice_type: 'progress' | 'milestone' | 'final';
   invoice_date: string;
   amount: number;
   tax_amount: number;
@@ -275,12 +271,12 @@ export interface UpdateProjectInvoiceData {
   billing_period?: string;
   milestone_name?: string;
   completion_percentage?: number;
-  status?: "draft" | "issued" | "confirmed" | "paid" | "overdue";
+  status?: 'draft' | 'issued' | 'confirmed' | 'paid' | 'overdue';
 }
 
 export interface CreateProjectCashPlanData {
   project_id: string;
-  plan_type: "collection" | "payment";
+  plan_type: 'collection' | 'payment';
   plan_date: string;
   amount: number;
   currency?: string;
@@ -295,7 +291,7 @@ export interface UpdateProjectCashPlanData {
   description?: string;
   actual_date?: string;
   actual_amount?: number;
-  status?: "planned" | "confirmed" | "completed" | "delayed";
+  status?: 'planned' | 'confirmed' | 'completed' | 'delayed';
 }
 
 export interface GenerateProjectVoucherParams {
@@ -303,7 +299,7 @@ export interface GenerateProjectVoucherParams {
   cost_record_ids?: string[];
   invoice_ids?: string[];
   voucher_date: string;
-  voucher_type: "cost" | "revenue" | "receivable" | "payment";
+  voucher_type: 'cost' | 'revenue' | 'receivable' | 'payment';
 }
 
 export const pmFinanceApi = {
@@ -313,10 +309,10 @@ export const pmFinanceApi = {
 
   // 项目成本记录
   getProjectCostRecords: (params?: GetProjectCostRecordsParams) =>
-    apiClient.pm.get("/api/pm/cost-records", { params }),
+    apiClient.pm.get('/api/pm/cost-records', { params }),
 
   createProjectCostRecord: (data: Partial<ProjectCostRecord>) =>
-    apiClient.pm.post("/api/pm/cost-records", data),
+    apiClient.pm.post('/api/pm/cost-records', data),
 
   updateProjectCostRecord: (costId: string, data: Partial<ProjectCostRecord>) =>
     apiClient.pm.put(`/api/pm/cost-records/${costId}`, data),
@@ -325,7 +321,7 @@ export const pmFinanceApi = {
     apiClient.pm.delete(`/api/pm/cost-records/${costId}`),
 
   batchDeleteProjectCostRecords: (costIds: string[]) =>
-    apiClient.pm.post("/api/pm/cost-records/batch-delete", {
+    apiClient.pm.post('/api/pm/cost-records/batch-delete', {
       cost_ids: costIds,
     }),
 
@@ -333,21 +329,19 @@ export const pmFinanceApi = {
     apiClient.pm.post(`/api/pm/cost-records/${costId}/approve`),
 
   batchApproveProjectCostRecords: (costIds: string[]) =>
-    apiClient.pm.post("/api/pm/cost-records/batch-approve", {
+    apiClient.pm.post('/api/pm/cost-records/batch-approve', {
       cost_ids: costIds,
     }),
 
   // 成本归集规则
   getCostAllocationRules: (params?: GetCostAllocationRulesParams) =>
-    apiClient.pm.get("/api/pm/cost-allocation-rules", { params }),
+    apiClient.pm.get('/api/pm/cost-allocation-rules', { params }),
 
   createCostAllocationRule: (data: CreateCostAllocationRuleData) =>
-    apiClient.pm.post("/api/pm/cost-allocation-rules", data),
+    apiClient.pm.post('/api/pm/cost-allocation-rules', data),
 
-  updateCostAllocationRule: (
-    ruleId: string,
-    data: UpdateCostAllocationRuleData,
-  ) => apiClient.pm.put(`/api/pm/cost-allocation-rules/${ruleId}`, data),
+  updateCostAllocationRule: (ruleId: string, data: UpdateCostAllocationRuleData) =>
+    apiClient.pm.put(`/api/pm/cost-allocation-rules/${ruleId}`, data),
 
   deleteCostAllocationRule: (ruleId: string) =>
     apiClient.pm.delete(`/api/pm/cost-allocation-rules/${ruleId}`),
@@ -364,19 +358,17 @@ export const pmFinanceApi = {
 
   // 项目发票
   getProjectInvoices: (params?: GetProjectInvoicesParams) =>
-    apiClient.pm.get("/api/pm/invoices", { params }),
+    apiClient.pm.get('/api/pm/invoices', { params }),
 
-  getProjectInvoice: (invoiceId: string) =>
-    apiClient.pm.get(`/api/pm/invoices/${invoiceId}`),
+  getProjectInvoice: (invoiceId: string) => apiClient.pm.get(`/api/pm/invoices/${invoiceId}`),
 
   createProjectInvoice: (data: CreateProjectInvoiceData) =>
-    apiClient.pm.post("/api/pm/invoices", data),
+    apiClient.pm.post('/api/pm/invoices', data),
 
   updateProjectInvoice: (invoiceId: string, data: UpdateProjectInvoiceData) =>
     apiClient.pm.put(`/api/pm/invoices/${invoiceId}`, data),
 
-  deleteProjectInvoice: (invoiceId: string) =>
-    apiClient.pm.delete(`/api/pm/invoices/${invoiceId}`),
+  deleteProjectInvoice: (invoiceId: string) => apiClient.pm.delete(`/api/pm/invoices/${invoiceId}`),
 
   issueProjectInvoice: (invoiceId: string) =>
     apiClient.pm.post(`/api/pm/invoices/${invoiceId}/issue`),
@@ -386,36 +378,32 @@ export const pmFinanceApi = {
 
   // 项目财务汇总
   getProjectFinancialSummary: (params: GetProjectFinancialSummaryParams) =>
-    apiClient.pm.get("/api/pm/reports/financial-summary", { params }),
+    apiClient.pm.get('/api/pm/reports/financial-summary', { params }),
 
   getProjectIncomeStatement: (params: { project_id: string; period: string }) =>
-    apiClient.pm.get("/api/pm/reports/income-statement", { params }),
+    apiClient.pm.get('/api/pm/reports/income-statement', { params }),
 
   getProjectBudgetAnalysis: (params: GetProjectBudgetAnalysisParams) =>
-    apiClient.pm.get("/api/pm/reports/budget-analysis", { params }),
+    apiClient.pm.get('/api/pm/reports/budget-analysis', { params }),
 
   getProjectCashPlan: (projectId: string) =>
     apiClient.pm.get(`/api/pm/projects/${projectId}/cash-plan`),
 
   createProjectCashPlan: (data: CreateProjectCashPlanData) =>
-    apiClient.pm.post("/api/pm/cash-plan", data),
+    apiClient.pm.post('/api/pm/cash-plan', data),
 
   updateProjectCashPlan: (planId: string, data: UpdateProjectCashPlanData) =>
     apiClient.pm.put(`/api/pm/cash-plan/${planId}`, data),
 
-  deleteProjectCashPlan: (planId: string) =>
-    apiClient.pm.delete(`/api/pm/cash-plan/${planId}`),
+  deleteProjectCashPlan: (planId: string) => apiClient.pm.delete(`/api/pm/cash-plan/${planId}`),
 
   // 生成项目凭证
   generateProjectVoucher: (params: GenerateProjectVoucherParams) =>
-    apiClient.pm.post("/api/pm/vouchers/generate", params),
+    apiClient.pm.post('/api/pm/vouchers/generate', params),
 
   // 批量生成凭证
-  batchGenerateProjectVouchers: (
-    projectIds: string[],
-    voucherType: "cost" | "revenue",
-  ) =>
-    apiClient.pm.post("/api/pm/vouchers/batch-generate", {
+  batchGenerateProjectVouchers: (projectIds: string[], voucherType: 'cost' | 'revenue') =>
+    apiClient.pm.post('/api/pm/vouchers/batch-generate', {
       project_ids: projectIds,
       voucher_type: voucherType,
     }),
@@ -427,11 +415,10 @@ export const pmFinanceApi = {
     start_date?: string;
     end_date?: string;
     status?: string;
-    format: "csv" | "xlsx";
+    format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.pm as any).defaults?.baseURL || config.services.pm;
-    return downloadBlob(baseURL, "/api/pm/cost-records/export", {
+    const baseURL = (apiClient.pm as any).defaults?.baseURL || config.services.pm;
+    return downloadBlob(baseURL, '/api/pm/cost-records/export', {
       params,
     });
   },
@@ -442,11 +429,10 @@ export const pmFinanceApi = {
     status?: string;
     start_date?: string;
     end_date?: string;
-    format: "csv" | "xlsx";
+    format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.pm as any).defaults?.baseURL || config.services.pm;
-    return downloadBlob(baseURL, "/api/pm/invoices/export", { params });
+    const baseURL = (apiClient.pm as any).defaults?.baseURL || config.services.pm;
+    return downloadBlob(baseURL, '/api/pm/invoices/export', { params });
   },
 };
 

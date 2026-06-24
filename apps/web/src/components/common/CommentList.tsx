@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from "react";
-import { Box, Typography, Avatar, TextField, Chip, Divider, Paper,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Send, ThumbsUp, MoreHorizontal, Reply, User } from "lucide-react";
+import React, { useState, useCallback } from 'react';
+import { Box, Typography, Avatar, TextField, Chip, Divider, Paper } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Send, ThumbsUp, MoreHorizontal, Reply, User } from 'lucide-react';
 
 export interface Comment {
   id: string;
@@ -34,71 +34,85 @@ const CommentItem: React.FC<{
   allowReply?: boolean;
   allowLike?: boolean;
   depth?: number;
-}> = ({
-  comment,
-  onLike,
-  onReply,
-  allowReply = true,
-  allowLike = true,
-  depth = 0,
-}) => {
-  const [replyText, setReplyText] = useState("");
+}> = ({ comment, onLike, onReply, allowReply = true, allowLike = true, depth = 0 }) => {
+  const [replyText, setReplyText] = useState('');
   const [showReply, setShowReply] = useState(false);
 
   const handleReply = useCallback(() => {
     if (replyText.trim() && onReply) {
       onReply(comment.id, replyText.trim());
-      setReplyText("");
+      setReplyText('');
       setShowReply(false);
     }
   }, [replyText, comment.id, onReply]);
 
   return (
     <Box sx={{ pl: depth * 2, py: 2 }}>
-      <Box sx={{ display: "flex", gap: 2 }}>
+      <Box sx={{ display: 'flex', gap: 2 }}>
         <Avatar sx={{ width: 40, height: 40, flexShrink: 0 }}>
           {comment.author.avatar ? (
-            <img src={comment.author.avatar} alt="" />
+            <img
+              src={comment.author.avatar}
+              alt=''
+            />
           ) : (
             <User size={20} />
           )}
         </Avatar>
         <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 600 }}
+            >
               {comment.author.name}
             </Typography>
-            <Typography variant="caption" color="text.disabled">
+            <Typography
+              variant='caption'
+              color='text.disabled'
+            >
               {comment.createdAt}
             </Typography>
           </Box>
-          <Typography variant="body2" sx={{ mt: 0.5 }}>
+          <Typography
+            variant='body2'
+            sx={{ mt: 0.5 }}
+          >
             {comment.content}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
             {allowLike && (
               <Button
-                size="small"
+                size='small'
                 onClick={() => onLike?.(comment.id)}
-                sx={{ p: 0, minWidth: "auto", gap: 0.5 }}
+                sx={{ p: 0, minWidth: 'auto', gap: 0.5 }}
               >
                 <ThumbsUp
                   size={14}
-                  sx={{ color: comment.liked ? "#3b82f6" : "text.secondary" }}
+                  sx={{ color: comment.liked ? '#3b82f6' : 'text.secondary' }}
                 />
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary' }}
+                >
                   {comment.likes || 0}
                 </Typography>
               </Button>
             )}
             {allowReply && (
               <Button
-                size="small"
+                size='small'
                 onClick={() => setShowReply(!showReply)}
-                sx={{ p: 0, minWidth: "auto", gap: 0.5 }}
+                sx={{ p: 0, minWidth: 'auto', gap: 0.5 }}
               >
-                <Reply size={14} sx={{ color: "text.secondary" }} />
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                <Reply
+                  size={14}
+                  sx={{ color: 'text.secondary' }}
+                />
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'text.secondary' }}
+                >
                   回复
                 </Typography>
               </Button>
@@ -106,18 +120,18 @@ const CommentItem: React.FC<{
           </Box>
 
           {showReply && (
-            <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
+            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
               <TextField
-                size="small"
-                placeholder="写下你的回复..."
+                size='small'
+                placeholder='写下你的回复...'
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleReply()}
+                onKeyDown={(e) => e.key === 'Enter' && handleReply()}
                 sx={{ flex: 1 }}
               />
               <Button
-                variant="contained"
-                size="small"
+                variant='contained'
+                size='small'
                 onClick={handleReply}
                 disabled={!replyText.trim()}
                 startIcon={<Send size={14} />}
@@ -157,38 +171,41 @@ export const CommentList: React.FC<CommentListProps> = ({
   allowLike = true,
   allowAdd = true,
 }) => {
-  const [newComment, setNewComment] = useState("");
+  const [newComment, setNewComment] = useState('');
 
   const handleAddComment = useCallback(() => {
     if (newComment.trim() && onAddComment) {
       onAddComment(newComment.trim());
-      setNewComment("");
+      setNewComment('');
     }
   }, [newComment, onAddComment]);
 
   return (
-    <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
+    <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
       {allowAdd && (
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
             添加评论
           </Typography>
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <Avatar sx={{ width: 40, height: 40, flexShrink: 0 }}>
               <User size={20} />
             </Avatar>
-            <Box sx={{ flex: 1, display: "flex", gap: 1 }}>
+            <Box sx={{ flex: 1, display: 'flex', gap: 1 }}>
               <TextField
-                size="small"
-                placeholder="写下你的评论..."
+                size='small'
+                placeholder='写下你的评论...'
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
                 sx={{ flex: 1 }}
               />
               <Button
-                variant="contained"
-                size="small"
+                variant='contained'
+                size='small'
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
                 startIcon={<Send size={14} />}
@@ -200,10 +217,13 @@ export const CommentList: React.FC<CommentListProps> = ({
         </Box>
       )}
 
-      <Box sx={{ maxHeight: 600, overflowY: "auto" }}>
+      <Box sx={{ maxHeight: 600, overflowY: 'auto' }}>
         {comments.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               暂无评论，快来发表第一条评论吧
             </Typography>
           </Box>

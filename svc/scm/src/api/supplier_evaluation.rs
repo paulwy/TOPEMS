@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{delete, get},
     Json, Router,
 };
 use chrono::Utc;
@@ -13,7 +13,8 @@ use crate::api::audit::log_audit_event;
 use crate::models::{
     CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
 };
-use topems_shared::{api_error, ApiResponse};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::{api_error, auth::Claims, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct SupplierEvaluationQueryParams {
@@ -29,15 +30,20 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_evaluations).post(create_evaluation),
         )
         .route(
-            "/api/v1/evaluations/{id}",
-            get(get_evaluation).put(update_evaluation),
+            "/api/scm/evaluations/{id}",
+            get(get_evaluation).put(update_evaluation).delete(delete_evaluation),
         )
 }
 
 async fn list_evaluations(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierEvaluationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -90,9 +96,14 @@ async fn list_evaluations(
 
 async fn create_evaluation(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -165,8 +176,13 @@ async fn create_evaluation(
 
 async fn get_evaluation(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
         SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
@@ -189,10 +205,15 @@ async fn get_evaluation(
 
 async fn update_evaluation(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
@@ -271,6 +292,67 @@ async fn update_evaluation(
         None,
         None,
         request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn delete_evaluation(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let result = sqlx::query("DELETE FROM scm.supplier_evaluations WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "供应商评估删除成功")),
+            "success",
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "供应商评估不存在")),
+            "error",
+            Some("供应商评估不存在".to_string()),
+        ),
+        Err(e) => {
+            tracing::error!("删除供应商评估失败: {}", e);
+            (
+                Json(api_error(500, "供应商评估删除失败")),
+                "error",
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "supplier_evaluation".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
         response_data,
         status_str.to_string(),
         error_msg,

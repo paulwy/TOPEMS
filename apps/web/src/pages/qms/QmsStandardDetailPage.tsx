@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { apiLogger } from "@/utils/logger";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { apiLogger } from '@/utils/logger';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   FileText,
@@ -11,17 +11,22 @@ import {
   Plus,
   Download,
   Upload,
-} from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Box, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-
+} from 'lucide-react';
 import {
-  DetailPageTemplate,
-  ListPageTemplate,
-  type ColumnDef,
-} from "@/components/templates";
-import { qmsApi } from "@/api/qms";
-import type { QualityStandard, StandardRevision } from "@/api/qms";
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
+  Box,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+
+import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { qmsApi } from '@/api/qms';
+import type { QualityStandard, StandardRevision } from '@/api/qms';
 
 const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,13 +37,13 @@ const QmsStandardDetailPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    code: "",
-    description: "",
-    version: "",
-    status: "active",
-    category: "",
-    effective_date: "",
+    title: '',
+    code: '',
+    description: '',
+    version: '',
+    status: 'active',
+    category: '',
+    effective_date: '',
   });
 
   useEffect(() => {
@@ -59,15 +64,15 @@ const QmsStandardDetailPage: React.FC = () => {
         setStandard(standardRes.data as QualityStandard);
         const data = standardRes.data as QualityStandard;
         setFormData({
-          title: data.title || "",
-          code: data.code || "",
-          description: data.description || "",
-          version: data.version || "",
-          status: data.status || "active",
-          category: data.category || "",
+          title: data.title || '',
+          code: data.code || '',
+          description: data.description || '',
+          version: data.version || '',
+          status: data.status || 'active',
+          category: data.category || '',
           effective_date: data.effective_date
-            ? new Date(data.effective_date).toISOString().split("T")[0]
-            : "",
+            ? new Date(data.effective_date).toISOString().split('T')[0]
+            : '',
         });
       }
 
@@ -79,7 +84,7 @@ const QmsStandardDetailPage: React.FC = () => {
         setRevisions(revisionsArray);
       }
     } catch (error) {
-      apiLogger.error("加载质量标准详情失败:", error);
+      apiLogger.error('加载质量标准详情失败:', error);
     } finally {
       setLoading(false);
     }
@@ -87,38 +92,38 @@ const QmsStandardDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
-      active: { color: "bg-green-100 text-green-700", label: "有效" },
-      有效: { color: "bg-green-100 text-green-700", label: "有效" },
-      draft: { color: "bg-yellow-100 text-yellow-700", label: "草稿" },
-      草稿: { color: "bg-yellow-100 text-yellow-700", label: "草稿" },
-      expired: { color: "bg-red-100 text-red-700", label: "已过期" },
-      已过期: { color: "bg-red-100 text-red-700", label: "已过期" },
-      archived: { color: "bg-gray-100 text-gray-700", label: "已归档" },
-      已归档: { color: "bg-gray-100 text-gray-700", label: "已归档" },
+      active: { color: 'bg-green-100 text-green-700', label: '有效' },
+      有效: { color: 'bg-green-100 text-green-700', label: '有效' },
+      draft: { color: 'bg-yellow-100 text-yellow-700', label: '草稿' },
+      草稿: { color: 'bg-yellow-100 text-yellow-700', label: '草稿' },
+      expired: { color: 'bg-red-100 text-red-700', label: '已过期' },
+      已过期: { color: 'bg-red-100 text-red-700', label: '已过期' },
+      archived: { color: 'bg-gray-100 text-gray-700', label: '已归档' },
+      已归档: { color: 'bg-gray-100 text-gray-700', label: '已归档' },
     };
     const item = statusMap[status] || {
-      color: "bg-gray-100 text-gray-700",
+      color: 'bg-gray-100 text-gray-700',
       label: status,
     };
     return (
       <Chip
         label={item.label}
-        size="small"
+        size='small'
         sx={{
-          backgroundColor: item.color.includes("green")
-            ? "#dcfce7"
-            : item.color.includes("yellow")
-              ? "#fef9c3"
-              : item.color.includes("red")
-                ? "#fee2e2"
-                : "#f3f4f6",
-          color: item.color.includes("green")
-            ? "#15803d"
-            : item.color.includes("yellow")
-              ? "#a16207"
-              : item.color.includes("red")
-                ? "#b91c1c"
-                : "#4b5563",
+          backgroundColor: item.color.includes('green')
+            ? '#dcfce7'
+            : item.color.includes('yellow')
+              ? '#fef9c3'
+              : item.color.includes('red')
+                ? '#fee2e2'
+                : '#f3f4f6',
+          color: item.color.includes('green')
+            ? '#15803d'
+            : item.color.includes('yellow')
+              ? '#a16207'
+              : item.color.includes('red')
+                ? '#b91c1c'
+                : '#4b5563',
         }}
       />
     );
@@ -134,7 +139,7 @@ const QmsStandardDetailPage: React.FC = () => {
         version: formData.version,
         status: formData.status,
         category: formData.category,
-        content: standard.content || "",
+        content: standard.content || '',
         effective_date: formData.effective_date,
       });
       if (response.success) {
@@ -142,15 +147,15 @@ const QmsStandardDetailPage: React.FC = () => {
         loadStandardDetail(standard.id);
       }
     } catch (error) {
-      apiLogger.error("更新质量标准失败:", error);
+      apiLogger.error('更新质量标准失败:', error);
     }
   };
 
   const handleCreateRevision = async () => {
     if (!standard) return;
     try {
-      const newVersion = formData.version || standard.version || "1.0";
-      const [major, minor] = newVersion.split(".").map(Number);
+      const newVersion = formData.version || standard.version || '1.0';
+      const [major, minor] = newVersion.split('.').map(Number);
       const nextVersion = `${major}.${minor + 1}`;
 
       const response = await qmsApi.createStandard({
@@ -160,53 +165,49 @@ const QmsStandardDetailPage: React.FC = () => {
         description: `升级至版本 ${nextVersion}`,
         category: standard.category,
         content: standard.content,
-        status: "draft",
-        effective_date: new Date().toISOString().split("T")[0],
+        status: 'draft',
+        effective_date: new Date().toISOString().split('T')[0],
       });
       if (response.success) {
         setShowRevisionModal(false);
-        navigate("/qms/standards");
+        navigate('/qms/standards');
       }
     } catch (error) {
-      apiLogger.error("创建版本失败:", error);
+      apiLogger.error('创建版本失败:', error);
     }
   };
 
   const revisionColumns: ColumnDef<StandardRevision>[] = [
     {
-      id: "version",
-      label: "版本号",
+      id: 'version',
+      label: '版本号',
       render: (row) => (
         <Chip
           label={`v${row.version}`}
-          size="small"
-          sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
+          size='small'
+          sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }}
         />
       ),
     },
     {
-      id: "description",
-      label: "变更说明",
+      id: 'description',
+      label: '变更说明',
       render: (row) => row.description,
     },
     {
-      id: "created_at",
-      label: "创建时间",
+      id: 'created_at',
+      label: '创建时间',
       render: (row) => (
-        <span>
-          {row.created_at
-            ? new Date(row.created_at).toLocaleString("zh-CN")
-            : "-"}
-        </span>
+        <span>{row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-'}</span>
       ),
     },
     {
-      id: "created_by",
-      label: "创建人",
+      id: 'created_by',
+      label: '创建人',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <User sx={{ width: 16, height: 16 }} />
-          <span>{row.created_by || "-"}</span>
+          <span>{row.created_by || '-'}</span>
         </Box>
       ),
     },
@@ -216,36 +217,48 @@ const QmsStandardDetailPage: React.FC = () => {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
+        <Box sx={{ textAlign: 'center' }}>
           <Box
             sx={{
               width: 64,
               height: 64,
-              color: "#ef4444",
-              mx: "auto",
+              color: '#ef4444',
+              mx: 'auto',
               mb: 2,
             }}
-            component="svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
+            component='svg'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
             strokeWidth={2}
           >
-            <circle cx={12} cy={12} r={10} />
-            <line x1={12} y1={8} x2={12} y2={12} />
-            <line x1={12} y1={16} x2={12.01} y2={16} />
+            <circle
+              cx={12}
+              cy={12}
+              r={10}
+            />
+            <line
+              x1={12}
+              y1={8}
+              x2={12}
+              y2={12}
+            />
+            <line
+              x1={12}
+              y1={16}
+              x2={12.01}
+              y2={16}
+            />
           </Box>
-          <Typography sx={{ color: "#475569", mb: 2 }}>
-            质量标准不存在或已被删除
-          </Typography>
-          <Button onClick={() => navigate("/qms")}>返回列表</Button>
+          <Typography sx={{ color: '#475569', mb: 2 }}>质量标准不存在或已被删除</Typography>
+          <Button onClick={() => navigate('/qms')}>返回列表</Button>
         </Box>
       </Box>
     );
@@ -254,41 +267,44 @@ const QmsStandardDetailPage: React.FC = () => {
   return (
     <>
       <DetailPageTemplate
-        title="质量标准详情"
-        subtitle="Quality Standard Detail"
-        backHref="/qms"
-        onBack={() => navigate("/qms")}
+        title='质量标准详情'
+        subtitle='Quality Standard Detail'
+        backHref='/qms'
+        onBack={() => navigate('/qms')}
         onEdit={() => setShowEditModal(true)}
         loading={loading}
         infoCard={{
           title: standard?.name,
           subtitle: standard?.code || standard?.id,
           tags: [
-            standard?.status === "active" ? "有效" : standard?.status || "",
-            `v${standard?.version || "1.0"}`,
+            standard?.status === 'active' ? '有效' : standard?.status || '',
+            `v${standard?.version || '1.0'}`,
           ].filter(Boolean),
           stats: [
-            { label: "版本", value: `v${standard?.version || "1.0"}` },
-            { label: "分类", value: standard?.category || "-" },
+            { label: '版本', value: `v${standard?.version || '1.0'}` },
+            { label: '分类', value: standard?.category || '-' },
           ],
         }}
         sidebar={
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
               操作
             </Typography>
             <Button
               fullWidth
-              sx={{ justifyContent: "flex-start" }}
-              variant="outlined"
+              sx={{ justifyContent: 'flex-start' }}
+              variant='outlined'
               startIcon={<Download sx={{ width: 16, height: 16 }} />}
             >
               下载标准文档
             </Button>
             <Button
               fullWidth
-              sx={{ justifyContent: "flex-start" }}
-              variant="outlined"
+              sx={{ justifyContent: 'flex-start' }}
+              variant='outlined'
               startIcon={<Upload sx={{ width: 16, height: 16 }} />}
             >
               上传新版本文件
@@ -297,22 +313,22 @@ const QmsStandardDetailPage: React.FC = () => {
         }
         tabs={[
           {
-            id: "info",
-            label: "标准信息",
+            id: 'info',
+            label: '标准信息',
             icon: <FileText style={{ width: 16, height: 16 }} />,
             content: (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <Box
                   sx={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     gap: 2,
                   }}
                 >
                   <Box>
                     <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
+                      variant='body2'
+                      sx={{ color: 'text.secondary' }}
                     >
                       标准编号
                     </Typography>
@@ -322,72 +338,76 @@ const QmsStandardDetailPage: React.FC = () => {
                   </Box>
                   <Box>
                     <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
+                      variant='body2'
+                      sx={{ color: 'text.secondary' }}
                     >
                       状态
                     </Typography>
-                    <Box sx={{ mt: 0.5 }}>
-                      {getStatusBadge(standard?.status || "")}
-                    </Box>
+                    <Box sx={{ mt: 0.5 }}>{getStatusBadge(standard?.status || '')}</Box>
                   </Box>
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     标准名称
                   </Typography>
-                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
-                    {standard?.name}
-                  </Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{standard?.name}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     分类
                   </Typography>
-                  <Typography sx={{ mt: 0.5 }}>
-                    {standard?.category || "-"}
-                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>{standard?.category || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     生效日期
                   </Typography>
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 0.5,
                       mt: 0.5,
                     }}
                   >
                     <Calendar sx={{ width: 16, height: 16 }} />
                     {standard?.effective_date
-                      ? new Date(standard.effective_date).toLocaleDateString(
-                          "zh-CN",
-                        )
-                      : "-"}
+                      ? new Date(standard.effective_date).toLocaleDateString('zh-CN')
+                      : '-'}
                   </Box>
                 </Box>
-                <Box sx={{ borderTop: 1, borderColor: "divider", pt: 3 }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     标准描述
                   </Typography>
                   <Typography
                     sx={{
                       mt: 1,
-                      fontSize: "0.875rem",
+                      fontSize: '0.875rem',
                       lineHeight: 1.6,
                     }}
                   >
-                    {standard?.description || "暂无描述"}
+                    {standard?.description || '暂无描述'}
                   </Typography>
                 </Box>
               </Box>
             ),
           },
           {
-            id: "history",
-            label: "版本历史",
+            id: 'history',
+            label: '版本历史',
             icon: <FileCheck style={{ width: 16, height: 16 }} />,
             badge: revisions.length,
             content:
@@ -404,21 +424,19 @@ const QmsStandardDetailPage: React.FC = () => {
                   }}
                 />
               ) : (
-                <Box
-                  sx={{ textAlign: "center", py: 6, color: "text.secondary" }}
-                >
+                <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
                   <FileText
                     style={{
                       width: 64,
                       height: 64,
-                      margin: "0 auto 16px auto",
+                      margin: '0 auto 16px auto',
                       opacity: 0.5,
                     }}
                   />
                   <Typography>暂无版本记录</Typography>
                   <Button
-                    variant="outlined"
-                    size="small"
+                    variant='outlined'
+                    size='small'
                     sx={{ mt: 2 }}
                     onClick={() => setShowRevisionModal(true)}
                     startIcon={<Plus style={{ width: 12, height: 12 }} />}
@@ -431,10 +449,10 @@ const QmsStandardDetailPage: React.FC = () => {
         ]}
         actions={[
           {
-            label: "新建版本",
+            label: '新建版本',
             icon: <Plus style={{ width: 16, height: 16 }} />,
             onClick: () => setShowRevisionModal(true),
-            variant: "outlined",
+            variant: 'outlined',
           },
         ]}
       />
@@ -442,51 +460,47 @@ const QmsStandardDetailPage: React.FC = () => {
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
-        maxWidth="lg"
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle>编辑质量标准</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Box
-              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
-            >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>
                 <Box
-                  component="label"
+                  component='label'
                   sx={{
-                    display: "block",
+                    display: 'block',
                     mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
                   }}
                 >
                   标准编号 *
                 </Box>
                 <TextField
-                  size="small"
+                  size='small'
                   fullWidth
                   value={formData.code}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, code: e.target.value }))
-                  }
-                  placeholder="请输入标准编号"
+                  onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
+                  placeholder='请输入标准编号'
                 />
               </Box>
               <Box>
                 <Box
-                  component="label"
+                  component='label'
                   sx={{
-                    display: "block",
+                    display: 'block',
                     mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
                   }}
                 >
                   版本号
                 </Box>
                 <TextField
-                  size="small"
+                  size='small'
                   fullWidth
                   value={formData.version}
                   onChange={(e) =>
@@ -495,49 +509,45 @@ const QmsStandardDetailPage: React.FC = () => {
                       version: e.target.value,
                     }))
                   }
-                  placeholder="如 1.0"
+                  placeholder='如 1.0'
                 />
               </Box>
             </Box>
             <Box>
               <Box
-                component="label"
+                component='label'
                 sx={{
-                  display: "block",
+                  display: 'block',
                   mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
                 }}
               >
                 标准名称 *
               </Box>
               <TextField
-                size="small"
+                size='small'
                 fullWidth
                 value={formData.title}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, title: e.target.value }))
-                }
-                placeholder="请输入标准名称"
+                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder='请输入标准名称'
               />
             </Box>
-            <Box
-              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
-            >
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>
                 <Box
-                  component="label"
+                  component='label'
                   sx={{
-                    display: "block",
+                    display: 'block',
                     mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
                   }}
                 >
                   分类
                 </Box>
                 <TextField
-                  size="small"
+                  size='small'
                   fullWidth
                   value={formData.category}
                   onChange={(e) =>
@@ -546,55 +556,53 @@ const QmsStandardDetailPage: React.FC = () => {
                       category: e.target.value,
                     }))
                   }
-                  placeholder="请输入分类"
+                  placeholder='请输入分类'
                 />
               </Box>
               <Box>
                 <Box
-                  component="label"
+                  component='label'
                   sx={{
-                    display: "block",
+                    display: 'block',
                     mb: 0.5,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
                   }}
                 >
                   状态
                 </Box>
                 <select
                   value={formData.status}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, status: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
                   style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
                   }}
                 >
-                  <option value="active">有效</option>
-                  <option value="draft">草稿</option>
-                  <option value="expired">已过期</option>
-                  <option value="archived">已归档</option>
+                  <option value='active'>有效</option>
+                  <option value='draft'>草稿</option>
+                  <option value='expired'>已过期</option>
+                  <option value='archived'>已归档</option>
                 </select>
               </Box>
             </Box>
             <Box>
               <Box
-                component="label"
+                component='label'
                 sx={{
-                  display: "block",
+                  display: 'block',
                   mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
                 }}
               >
                 生效日期
               </Box>
               <TextField
-                type="date"
-                size="small"
+                type='date'
+                size='small'
                 fullWidth
                 value={formData.effective_date}
                 onChange={(e) =>
@@ -607,12 +615,12 @@ const QmsStandardDetailPage: React.FC = () => {
             </Box>
             <Box>
               <Box
-                component="label"
+                component='label'
                 sx={{
-                  display: "block",
+                  display: 'block',
                   mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
                 }}
               >
                 描述
@@ -625,24 +633,30 @@ const QmsStandardDetailPage: React.FC = () => {
                     description: e.target.value,
                   }))
                 }
-                placeholder="请输入标准描述..."
+                placeholder='请输入标准描述...'
                 style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                  resize: "none",
-                  height: "96px",
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0',
+                  resize: 'none',
+                  height: '96px',
                 }}
               />
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowEditModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowEditModal(false)}
+          >
             取消
           </Button>
-          <Button variant="contained" onClick={handleUpdateStandard}>
+          <Button
+            variant='contained'
+            onClick={handleUpdateStandard}
+          >
             保存更改
           </Button>
         </DialogActions>
@@ -651,44 +665,50 @@ const QmsStandardDetailPage: React.FC = () => {
       <Dialog
         open={showRevisionModal}
         onClose={() => setShowRevisionModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>新建版本</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-              <Box component="span" sx={{ color: "text.secondary" }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Box
+                component='span'
+                sx={{ color: 'text.secondary' }}
+              >
                 当前版本:
               </Box>
-              <Box component="span" sx={{ fontWeight: 500 }}>
+              <Box
+                component='span'
+                sx={{ fontWeight: 500 }}
+              >
                 {standard?.version}
               </Box>
             </Box>
-            <Box sx={{ color: "text.secondary", mt: 2 }}>
+            <Box sx={{ color: 'text.secondary', mt: 2 }}>
               创建新版本后，版本号将自动递增（如 1.0 → 1.1）
             </Box>
             <Box sx={{ mt: 2 }}>
               <Box
-                component="label"
+                component='label'
                 sx={{
-                  display: "block",
+                  display: 'block',
                   mb: 0.5,
-                  fontSize: "0.875rem",
-                  color: "text.secondary",
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
                 }}
               >
                 变更说明
               </Box>
               <textarea
-                placeholder="请描述本次版本变更的内容..."
+                placeholder='请描述本次版本变更的内容...'
                 style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                  resize: "none",
-                  height: "96px",
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0',
+                  resize: 'none',
+                  height: '96px',
                 }}
               />
             </Box>
@@ -696,17 +716,17 @@ const QmsStandardDetailPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button
-            variant="outlined"
+            variant='outlined'
             onClick={() => setShowRevisionModal(false)}
           >
             取消
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={handleCreateRevision}
             sx={{
-              backgroundColor: "#7c3aed",
-              "&:hover": { backgroundColor: "#6d28d9" },
+              backgroundColor: '#7c3aed',
+              '&:hover': { backgroundColor: '#6d28d9' },
             }}
           >
             创建版本

@@ -1,35 +1,31 @@
-import React, { useState, useEffect } from "react";
-import { apiLogger } from "@/utils/logger";
-import { ArrowLeft, Save } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { FileUpload } from "@/components/common";
-import type { Project } from "@/api/pm";
-import { pmApi } from "@/api/pm";
+import React, { useState, useEffect } from 'react';
+import { apiLogger } from '@/utils/logger';
+import { ArrowLeft, Save } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { FileUpload } from '@/components/common';
+import type { Project } from '@/api/pm';
+import { pmApi } from '@/api/pm';
 import {
   AICodeGenerator,
   AITextOptimizer,
   AIDataCompleter,
   AIFormValidator,
-} from "@/components/ai";
-import type {
-  CompleteRequest,
-  ValidateRequest,
-  CompletionItem,
-} from "@/types/ai";
+} from '@/components/ai';
+import type { CompleteRequest, ValidateRequest, CompletionItem } from '@/types/ai';
 
 const CONTRACT_TYPES = [
-  { value: "construction", label: "工程合同" },
-  { value: "service", label: "服务合同" },
-  { value: "purchase", label: "采购合同" },
-  { value: "sales", label: "销售合同" },
+  { value: 'construction', label: '工程合同' },
+  { value: 'service', label: '服务合同' },
+  { value: 'purchase', label: '采购合同' },
+  { value: 'sales', label: '销售合同' },
 ];
 
 const CONTRACT_CATEGORIES = [
-  { value: "main", label: "主合同" },
-  { value: "supplement", label: "补充协议" },
-  { value: "service_level", label: "服务协议" },
+  { value: 'main', label: '主合同' },
+  { value: 'supplement', label: '补充协议' },
+  { value: 'service_level', label: '服务协议' },
 ];
 
 const PmContractCreatePage: React.FC = () => {
@@ -43,20 +39,20 @@ const PmContractCreatePage: React.FC = () => {
   const [contractAttachments, setContractAttachments] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
-    project_id: "",
-    contract_code: "",
-    contract_name: "",
-    contract_type: "construction",
-    contract_category: "main",
-    party_a_name: "",
-    party_b_name: "",
+    project_id: '',
+    contract_code: '',
+    contract_name: '',
+    contract_type: 'construction',
+    contract_category: 'main',
+    party_a_name: '',
+    party_b_name: '',
     amount: 0,
-    currency: "CNY",
+    currency: 'CNY',
     tax_rate: 13,
-    signing_date: "",
-    effective_date: "",
-    end_date: "",
-    description: "",
+    signing_date: '',
+    effective_date: '',
+    end_date: '',
+    description: '',
   });
 
   useEffect(() => {
@@ -70,7 +66,7 @@ const PmContractCreatePage: React.FC = () => {
         setProjects(response.data);
       }
     } catch (error) {
-      apiLogger.error("Failed to load projects", error);
+      apiLogger.error('Failed to load projects', error);
     }
   };
 
@@ -80,10 +76,10 @@ const PmContractCreatePage: React.FC = () => {
     try {
       const response = await pmApi.contracts.create(formData);
       if (response.success) {
-        navigate("/pm/contracts");
+        navigate('/pm/contracts');
       }
     } catch (error) {
-      apiLogger.error("Failed to create contract", error);
+      apiLogger.error('Failed to create contract', error);
     } finally {
       setLoading(false);
     }
@@ -98,9 +94,7 @@ const PmContractCreatePage: React.FC = () => {
     setShowTextOptimizer(false);
   };
 
-  const handleApplyCompletion = (
-    completions: Record<string, CompletionItem>,
-  ) => {
+  const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
     const dataToUpdate: Record<string, any> = {};
     Object.entries(completions).forEach(([key, item]) => {
       dataToUpdate[key] = item.value;
@@ -112,78 +106,73 @@ const PmContractCreatePage: React.FC = () => {
   return (
     <div
       style={{
-        padding: "1.5rem",
-        backgroundColor: "#f9fafb",
-        minHeight: "100vh",
+        padding: '1.5rem',
+        backgroundColor: '#f9fafb',
+        minHeight: '100vh',
       }}
     >
-      <div
-        style={{ maxWidth: "56rem", marginLeft: "auto", marginRight: "auto" }}
-      >
+      <div style={{ maxWidth: '56rem', marginLeft: 'auto', marginRight: 'auto' }}>
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-            marginBottom: "1.5rem",
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            marginBottom: '1.5rem',
           }}
         >
           <Button
-            onClick={() => navigate("/pm/contracts")}
+            onClick={() => navigate('/pm/contracts')}
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              color: "#4b5563",
-              "&:hover": { color: "#111827" },
-              transition: "color 0.15s",
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: '#4b5563',
+              '&:hover': { color: '#111827' },
+              transition: 'color 0.15s',
             }}
           >
-            <ArrowLeft sx={{ width: "1.25rem", height: "1.25rem" }} />
+            <ArrowLeft sx={{ width: '1.25rem', height: '1.25rem' }} />
           </Button>
           <div>
             <h1
               style={{
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                color: "#111827",
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: '#111827',
               }}
             >
               创建合同
             </h1>
-            <p style={{ color: "#6b7280" }}>填写合同基本信息</p>
+            <p style={{ color: '#6b7280' }}>填写合同基本信息</p>
           </div>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "0.5rem",
-              boxShadow:
-                "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-              padding: "1.5rem",
+              backgroundColor: '#ffffff',
+              borderRadius: '0.5rem',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+              padding: '1.5rem',
             }}
           >
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1rem',
                 }}
               >
                 <h2
                   style={{
-                    fontSize: "1.125rem",
-                    fontWeight: "600",
-                    color: "#111827",
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#111827',
                   }}
                 >
                   基本信息
@@ -192,19 +181,19 @@ const PmContractCreatePage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-                  gap: "1rem",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
+                  gap: '1rem',
                 }}
               >
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     关联项目
@@ -218,17 +207,20 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   >
-                    <option value="">请选择项目</option>
+                    <option value=''>请选择项目</option>
                     {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
+                      <option
+                        key={project.id}
+                        value={project.id}
+                      >
                         {project.name}
                       </option>
                     ))}
@@ -238,31 +230,31 @@ const PmContractCreatePage: React.FC = () => {
                 <div>
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "0.25rem",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     <label
                       style={{
-                        display: "block",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                        color: "#374151",
+                        display: 'block',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        color: '#374151',
                       }}
                     >
                       合同编号
                     </label>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => setShowCodeGenerator(true)}
                       style={{
-                        color: "#2563eb",
-                        fontSize: "0.875rem",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
+                        color: '#2563eb',
+                        fontSize: '0.875rem',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
                         padding: 0,
                       }}
                     >
@@ -270,7 +262,7 @@ const PmContractCreatePage: React.FC = () => {
                     </button>
                   </div>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.contract_code}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -278,14 +270,14 @@ const PmContractCreatePage: React.FC = () => {
                         contract_code: e.target.value,
                       }))
                     }
-                    placeholder="请输入合同编号"
+                    placeholder='请输入合同编号'
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -293,25 +285,25 @@ const PmContractCreatePage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-                  gap: "1rem",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
+                  gap: '1rem',
                 }}
               >
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     合同名称
                   </label>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.contract_name}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -319,14 +311,14 @@ const PmContractCreatePage: React.FC = () => {
                         contract_name: e.target.value,
                       }))
                     }
-                    placeholder="请输入合同名称"
+                    placeholder='请输入合同名称'
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -334,11 +326,11 @@ const PmContractCreatePage: React.FC = () => {
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     合同类型
@@ -352,16 +344,19 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   >
                     {CONTRACT_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
+                      <option
+                        key={type.value}
+                        value={type.value}
+                      >
                         {type.label}
                       </option>
                     ))}
@@ -372,11 +367,11 @@ const PmContractCreatePage: React.FC = () => {
               <div>
                 <label
                   style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "0.25rem",
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '0.25rem',
                   }}
                 >
                   合同类别
@@ -390,16 +385,19 @@ const PmContractCreatePage: React.FC = () => {
                     }))
                   }
                   style={{
-                    width: "100%",
-                    padding: "0.5rem 0.75rem",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "0.5rem",
-                    outline: "none",
-                    boxShadow: "0 0 0 2px #3b82f6",
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    outline: 'none',
+                    boxShadow: '0 0 0 2px #3b82f6',
                   }}
                 >
                   {CONTRACT_CATEGORIES.map((category) => (
-                    <option key={category.value} value={category.value}>
+                    <option
+                      key={category.value}
+                      value={category.value}
+                    >
                       {category.label}
                     </option>
                   ))}
@@ -409,24 +407,24 @@ const PmContractCreatePage: React.FC = () => {
 
             <div
               style={{
-                borderTop: "1px solid #e5e7eb",
-                paddingTop: "1rem",
-                marginTop: "1.5rem",
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '1rem',
+                marginTop: '1.5rem',
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1rem',
                 }}
               >
                 <h2
                   style={{
-                    fontSize: "1.125rem",
-                    fontWeight: "600",
-                    color: "#111827",
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#111827',
                   }}
                 >
                   合同双方
@@ -435,25 +433,25 @@ const PmContractCreatePage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-                  gap: "1rem",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
+                  gap: '1rem',
                 }}
               >
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     甲方
                   </label>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.party_a_name}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -461,14 +459,14 @@ const PmContractCreatePage: React.FC = () => {
                         party_a_name: e.target.value,
                       }))
                     }
-                    placeholder="请输入甲方名称"
+                    placeholder='请输入甲方名称'
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -476,17 +474,17 @@ const PmContractCreatePage: React.FC = () => {
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     乙方
                   </label>
                   <input
-                    type="text"
+                    type='text'
                     value={formData.party_b_name}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -494,14 +492,14 @@ const PmContractCreatePage: React.FC = () => {
                         party_b_name: e.target.value,
                       }))
                     }
-                    placeholder="请输入乙方名称"
+                    placeholder='请输入乙方名称'
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -510,24 +508,24 @@ const PmContractCreatePage: React.FC = () => {
 
             <div
               style={{
-                borderTop: "1px solid #e5e7eb",
-                paddingTop: "1rem",
-                marginTop: "1.5rem",
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '1rem',
+                marginTop: '1.5rem',
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1rem',
                 }}
               >
                 <h2
                   style={{
-                    fontSize: "1.125rem",
-                    fontWeight: "600",
-                    color: "#111827",
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#111827',
                   }}
                 >
                   金额与时间
@@ -536,25 +534,25 @@ const PmContractCreatePage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-                  gap: "1rem",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
+                  gap: '1rem',
                 }}
               >
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     合同金额
                   </label>
                   <input
-                    type="number"
+                    type='number'
                     value={formData.amount}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -562,14 +560,14 @@ const PmContractCreatePage: React.FC = () => {
                         amount: Number(e.target.value),
                       }))
                     }
-                    placeholder="请输入合同金额"
+                    placeholder='请输入合同金额'
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -577,17 +575,17 @@ const PmContractCreatePage: React.FC = () => {
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     税率 (%)
                   </label>
                   <input
-                    type="number"
+                    type='number'
                     value={formData.tax_rate}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -595,14 +593,14 @@ const PmContractCreatePage: React.FC = () => {
                         tax_rate: Number(e.target.value),
                       }))
                     }
-                    placeholder="请输入税率"
+                    placeholder='请输入税率'
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -610,11 +608,11 @@ const PmContractCreatePage: React.FC = () => {
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     货币
@@ -628,43 +626,43 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   >
-                    <option value="CNY">人民币</option>
-                    <option value="USD">美元</option>
-                    <option value="EUR">欧元</option>
+                    <option value='CNY'>人民币</option>
+                    <option value='USD'>美元</option>
+                    <option value='EUR'>欧元</option>
                   </select>
                 </div>
               </div>
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-                  gap: "1rem",
-                  marginTop: "1rem",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
+                  gap: '1rem',
+                  marginTop: '1rem',
                 }}
               >
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     签约日期
                   </label>
                   <input
-                    type="date"
+                    type='date'
                     value={formData.signing_date}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -673,12 +671,12 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -686,17 +684,17 @@ const PmContractCreatePage: React.FC = () => {
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     生效日期
                   </label>
                   <input
-                    type="date"
+                    type='date'
                     value={formData.effective_date}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -705,12 +703,12 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -718,17 +716,17 @@ const PmContractCreatePage: React.FC = () => {
                 <div>
                   <label
                     style={{
-                      display: "block",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      color: "#374151",
-                      marginBottom: "0.25rem",
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.25rem',
                     }}
                   >
                     结束日期
                   </label>
                   <input
-                    type="date"
+                    type='date'
                     value={formData.end_date}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -737,12 +735,12 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     style={{
-                      width: "100%",
-                      padding: "0.5rem 0.75rem",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "0.5rem",
-                      outline: "none",
-                      boxShadow: "0 0 0 2px #3b82f6",
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      outline: 'none',
+                      boxShadow: '0 0 0 2px #3b82f6',
                     }}
                   />
                 </div>
@@ -751,72 +749,72 @@ const PmContractCreatePage: React.FC = () => {
 
             <div
               style={{
-                borderTop: "1px solid #e5e7eb",
-                paddingTop: "1rem",
-                marginTop: "1.5rem",
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '1rem',
+                marginTop: '1.5rem',
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1rem',
                 }}
               >
                 <h2
                   style={{
-                    fontSize: "1.125rem",
-                    fontWeight: "600",
-                    color: "#111827",
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#111827',
                   }}
                 >
                   合同描述
                 </h2>
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
                   }}
                 >
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setShowTextOptimizer(true)}
                     style={{
-                      color: "#2563eb",
-                      fontSize: "0.875rem",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
+                      color: '#2563eb',
+                      fontSize: '0.875rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
                       padding: 0,
                     }}
                   >
                     AI 优化
                   </button>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setShowDataCompleter(true)}
                     style={{
-                      color: "#2563eb",
-                      fontSize: "0.875rem",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
+                      color: '#2563eb',
+                      fontSize: '0.875rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
                       padding: 0,
                     }}
                   >
                     AI 补全
                   </button>
                   <button
-                    type="button"
+                    type='button'
                     onClick={() => setShowValidator(true)}
                     style={{
-                      color: "#2563eb",
-                      fontSize: "0.875rem",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
+                      color: '#2563eb',
+                      fontSize: '0.875rem',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
                       padding: 0,
                     }}
                   >
@@ -833,39 +831,39 @@ const PmContractCreatePage: React.FC = () => {
                     description: e.target.value,
                   }))
                 }
-                placeholder="请输入合同描述..."
+                placeholder='请输入合同描述...'
                 rows={6}
                 style={{
-                  width: "100%",
-                  padding: "0.5rem 0.75rem",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "0.5rem",
-                  outline: "none",
-                  boxShadow: "0 0 0 2px #3b82f6",
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  outline: 'none',
+                  boxShadow: '0 0 0 2px #3b82f6',
                 }}
               />
             </div>
 
             <div
               style={{
-                borderTop: "1px solid #e5e7eb",
-                paddingTop: "1rem",
-                marginTop: "1.5rem",
+                borderTop: '1px solid #e5e7eb',
+                paddingTop: '1rem',
+                marginTop: '1.5rem',
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1rem',
                 }}
               >
                 <h2
                   style={{
-                    fontSize: "1.125rem",
-                    fontWeight: "600",
-                    color: "#111827",
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#111827',
                   }}
                 >
                   合同附件
@@ -876,59 +874,48 @@ const PmContractCreatePage: React.FC = () => {
                 <FileUpload
                   value={contractAttachments}
                   onChange={setContractAttachments}
-                  accept={[
-                    ".pdf",
-                    ".doc",
-                    ".docx",
-                    ".jpg",
-                    ".jpeg",
-                    ".png",
-                    ".xls",
-                    ".xlsx",
-                  ]}
+                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.xls', '.xlsx']}
                   maxCount={10}
                   maxSize={50}
                   maxTotalSize={200}
-                  uploadText="上传合同附件"
+                  uploadText='上传合同附件'
                 />
               </Box>
             </div>
           </div>
 
-          <div
-            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
-          >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
-              type="submit"
+              type='submit'
               disabled={loading}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.75rem 1.5rem",
-                backgroundColor: "#2563eb",
-                color: "#ffffff",
-                borderRadius: "0.5rem",
-                border: "none",
-                cursor: "pointer",
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
                 opacity: loading ? 0.5 : 1,
-                transition: "background-color 0.15s",
+                transition: 'background-color 0.15s',
               }}
             >
-              <Save style={{ width: "1rem", height: "1rem" }} />
-              {loading ? "创建中..." : "创建合同"}
+              <Save style={{ width: '1rem', height: '1rem' }} />
+              {loading ? '创建中...' : '创建合同'}
             </button>
             <button
-              type="button"
-              onClick={() => navigate("/pm/contracts")}
+              type='button'
+              onClick={() => navigate('/pm/contracts')}
               style={{
-                padding: "0.75rem 1.5rem",
-                border: "1px solid #d1d5db",
-                color: "#374151",
-                borderRadius: "0.5rem",
-                backgroundColor: "transparent",
-                cursor: "pointer",
-                transition: "background-color 0.15s",
+                padding: '0.75rem 1.5rem',
+                border: '1px solid #d1d5db',
+                color: '#374151',
+                borderRadius: '0.5rem',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s',
               }}
             >
               取消
@@ -941,7 +928,7 @@ const PmContractCreatePage: React.FC = () => {
         <AICodeGenerator
           isOpen={showCodeGenerator}
           onClose={() => setShowCodeGenerator(false)}
-          context={{ entityType: "contract", name: formData.contract_name }}
+          context={{ entityType: 'contract', name: formData.contract_name }}
           onSelect={handleCodeSelected}
         />
       )}
@@ -950,7 +937,7 @@ const PmContractCreatePage: React.FC = () => {
         <AITextOptimizer
           isOpen={showTextOptimizer}
           onClose={() => setShowTextOptimizer(false)}
-          context={{ textType: "clause", name: formData.contract_name }}
+          context={{ textType: 'clause', name: formData.contract_name }}
           originalText={formData.description}
           onOptimized={handleTextOptimized}
         />
@@ -963,8 +950,8 @@ const PmContractCreatePage: React.FC = () => {
           completeRequest={{
             partialData: formData,
             context: {
-              module: "pm",
-              entityType: "contract",
+              module: 'pm',
+              entityType: 'contract',
             },
           }}
           onApplyCompletion={handleApplyCompletion}
@@ -978,8 +965,8 @@ const PmContractCreatePage: React.FC = () => {
           validateRequest={{
             data: formData,
             context: {
-              module: "pm",
-              entityType: "contract",
+              module: 'pm',
+              entityType: 'contract',
             },
           }}
         />

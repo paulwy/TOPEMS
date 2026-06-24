@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -9,8 +9,8 @@ import {
   Avatar,
   Chip,
   CircularProgress,
-} from "@mui/material";
-import { Search, User, X, Check } from "lucide-react";
+} from '@mui/material';
+import { Search, User, X, Check } from 'lucide-react';
 
 export interface User {
   id: string;
@@ -36,7 +36,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
   value,
   onChange,
   multiple = false,
-  placeholder = "选择用户",
+  placeholder = '选择用户',
   disabled = false,
   loading = false,
   users = [],
@@ -44,7 +44,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
   allowClear = true,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   useEffect(() => {
     onSearch?.(searchKeyword);
@@ -54,15 +54,15 @@ export const UserSelect: React.FC<UserSelectProps> = ({
     (event: React.MouseEvent<HTMLElement>) => {
       if (!disabled) {
         setAnchorEl(event.currentTarget);
-        setSearchKeyword("");
+        setSearchKeyword('');
       }
     },
-    [disabled],
+    [disabled]
   );
 
   const handleClose = useCallback(() => {
     setAnchorEl(null);
-    setSearchKeyword("");
+    setSearchKeyword('');
   }, []);
 
   const handleSelect = useCallback(
@@ -80,7 +80,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         handleClose();
       }
     },
-    [value, multiple, onChange, handleClose],
+    [value, multiple, onChange, handleClose]
   );
 
   const handleClear = useCallback(() => {
@@ -95,19 +95,19 @@ export const UserSelect: React.FC<UserSelectProps> = ({
       }
       return (value as User).id === user.id;
     },
-    [value, multiple],
+    [value, multiple]
   );
 
   const displayValue = multiple
-    ? (value as User[])?.map((u) => u.name).join(", ")
+    ? (value as User[])?.map((u) => u.name).join(', ')
     : (value as User)?.name;
 
   return (
     <Box>
       <TextField
         fullWidth
-        size="small"
-        value={displayValue || ""}
+        size='small'
+        value={displayValue || ''}
         placeholder={placeholder}
         onClick={handleClick}
         disabled={disabled}
@@ -115,11 +115,11 @@ export const UserSelect: React.FC<UserSelectProps> = ({
           input: {
             readOnly: true,
             endAdornment: (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {allowClear && value && (
                   <Chip
-                    size="small"
-                    label="清除"
+                    size='small'
+                    label='清除'
                     onDelete={handleClear}
                     sx={{ minWidth: 0, height: 24 }}
                   />
@@ -134,12 +134,12 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        slotProps={{ paper: { sx: { maxHeight: 400, width: "400px" } } }}
+        slotProps={{ paper: { sx: { maxHeight: 400, width: '400px' } } }}
       >
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <TextField
-            size="small"
-            placeholder="搜索用户..."
+            size='small'
+            placeholder='搜索用户...'
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             slotProps={{
@@ -156,12 +156,12 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         </Box>
 
         {loading ? (
-          <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
+          <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
             <CircularProgress size={24} />
           </Box>
         ) : users.length === 0 ? (
           <MenuItem disabled>
-            <ListItemText primary="暂无匹配用户" />
+            <ListItemText primary='暂无匹配用户' />
           </MenuItem>
         ) : (
           users.map((user) => (
@@ -169,11 +169,14 @@ export const UserSelect: React.FC<UserSelectProps> = ({
               key={user.id}
               onClick={() => handleSelect(user)}
               selected={isSelected(user)}
-              sx={{ display: "flex", alignItems: "center", gap: 2 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
             >
               <Avatar sx={{ width: 36, height: 36 }}>
                 {user.avatar ? (
-                  <img src={user.avatar} alt="" />
+                  <img
+                    src={user.avatar}
+                    alt=''
+                  />
                 ) : (
                   <User size={18} />
                 )}

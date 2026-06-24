@@ -1,2 +1,2 @@
-export { ResponsiveHeader } from "./ResponsiveHeader";
-export { default } from "./ResponsiveHeader";
+export { ResponsiveHeader } from './ResponsiveHeader';
+export { default } from './ResponsiveHeader';

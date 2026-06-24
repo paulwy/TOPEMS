@@ -1,9 +1,9 @@
 // modules/TrackModule/TrackPlayer.tsx
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Play, Pause, Square, SkipBack, SkipForward } from "lucide-react";
-import { Box, Typography, Paper, IconButton, Slider, Grid,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import type { TrackRecord, TrackStatistics } from "./types";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Play, Pause, Square, SkipBack, SkipForward } from 'lucide-react';
+import { Box, Typography, Paper, IconButton, Slider, Grid } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import type { TrackRecord, TrackStatistics } from './types';
 
 interface TrackPlayerProps {
   track: TrackRecord | null;
@@ -68,7 +68,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
       setCurrentIndex(index);
       onSeek(index);
     },
-    [track, onSeek],
+    [track, onSeek]
   );
 
   // Reset on track change
@@ -80,38 +80,36 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
     return (
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           height: 64,
-          bgcolor: "#f9fafb",
+          bgcolor: '#f9fafb',
           borderRadius: 2,
         }}
       >
-        <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>
-          请选择设备轨迹
-        </Typography>
+        <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>请选择设备轨迹</Typography>
       </Box>
     );
   }
 
-  const progress =
-    track.points.length > 1
-      ? (currentIndex / (track.points.length - 1)) * 100
-      : 0;
+  const progress = track.points.length > 1 ? (currentIndex / (track.points.length - 1)) * 100 : 0;
 
   return (
     <Paper sx={{ borderRadius: 2, boxShadow: 2, p: 4 }}>
       {/* Track Info */}
       <Box sx={{ mb: 4 }}>
         <Typography
-          variant="subtitle1"
-          sx={{ fontWeight: 600, color: "#111827" }}
+          variant='subtitle1'
+          sx={{ fontWeight: 600, color: '#111827' }}
         >
           {track.device_name}
         </Typography>
-        <Typography variant="body2" sx={{ color: "#6b7280" }}>
-          {new Date(track.start_time).toLocaleString()} -{" "}
+        <Typography
+          variant='body2'
+          sx={{ color: '#6b7280' }}
+        >
+          {new Date(track.start_time).toLocaleString()} -{' '}
           {new Date(track.end_time).toLocaleString()}
         </Typography>
       </Box>
@@ -120,19 +118,19 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
       <Box
         sx={{
           height: 8,
-          bgcolor: "#e5e7eb",
-          borderRadius: "50%",
-          cursor: "pointer",
+          bgcolor: '#e5e7eb',
+          borderRadius: '50%',
+          cursor: 'pointer',
           mb: 4,
         }}
         onClick={handleProgressClick}
       >
         <Box
           sx={{
-            height: "100%",
-            bgcolor: "#2563eb",
-            borderRadius: "50%",
-            transition: "all",
+            height: '100%',
+            bgcolor: '#2563eb',
+            borderRadius: '50%',
+            transition: 'all',
             width: `${progress}%`,
           }}
         />
@@ -141,50 +139,62 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
       {/* Controls */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton
             onClick={() => setCurrentIndex(0)}
-            sx={{ p: 2, "&:hover": { bgcolor: "#f3f4f6" } }}
-            title="跳到开始"
+            sx={{ p: 2, '&:hover': { bgcolor: '#f3f4f6' } }}
+            title='跳到开始'
           >
-            <SkipBack size={20} style={{ color: "#4b5563" }} />
+            <SkipBack
+              size={20}
+              style={{ color: '#4b5563' }}
+            />
           </IconButton>
           <IconButton
             onClick={isPlaying ? onPause : onPlay}
             sx={{
               p: 3,
-              bgcolor: "#2563eb",
-              color: "white",
-              "&:hover": { bgcolor: "#1d4ed8" },
+              bgcolor: '#2563eb',
+              color: 'white',
+              '&:hover': { bgcolor: '#1d4ed8' },
             }}
-            title={isPlaying ? "暂停" : "播放"}
+            title={isPlaying ? '暂停' : '播放'}
           >
             {isPlaying ? <Pause size={20} /> : <Play size={20} />}
           </IconButton>
           <IconButton
             onClick={onStop}
-            sx={{ p: 2, "&:hover": { bgcolor: "#f3f4f6" } }}
-            title="停止"
+            sx={{ p: 2, '&:hover': { bgcolor: '#f3f4f6' } }}
+            title='停止'
           >
-            <Square size={20} style={{ color: "#4b5563" }} />
+            <Square
+              size={20}
+              style={{ color: '#4b5563' }}
+            />
           </IconButton>
           <IconButton
             onClick={() => setCurrentIndex(track.points.length - 1)}
-            sx={{ p: 2, "&:hover": { bgcolor: "#f3f4f6" } }}
-            title="跳到结尾"
+            sx={{ p: 2, '&:hover': { bgcolor: '#f3f4f6' } }}
+            title='跳到结尾'
           >
-            <SkipForward size={20} style={{ color: "#4b5563" }} />
+            <SkipForward
+              size={20}
+              style={{ color: '#4b5563' }}
+            />
           </IconButton>
         </Box>
 
         {/* Speed Control */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="body2" sx={{ color: "#6b7280" }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography
+            variant='body2'
+            sx={{ color: '#6b7280' }}
+          >
             速度:
           </Typography>
           {speedOptions.map((speed) => (
@@ -194,14 +204,14 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
               sx={{
                 px: 2,
                 py: 1,
-                fontSize: "0.875rem",
+                fontSize: '0.875rem',
                 borderRadius: 1,
-                bgcolor: playbackSpeed === speed ? "#2563eb" : "#f1f5f9",
-                color: playbackSpeed === speed ? "white" : "#4b5563",
-                "&:hover": {
-                  bgcolor: playbackSpeed === speed ? "#2563eb" : "#e5e7eb",
+                bgcolor: playbackSpeed === speed ? '#2563eb' : '#f1f5f9',
+                color: playbackSpeed === speed ? 'white' : '#4b5563',
+                '&:hover': {
+                  bgcolor: playbackSpeed === speed ? '#2563eb' : '#e5e7eb',
                 },
-                textTransform: "none",
+                textTransform: 'none',
               }}
             >
               {speed}x
@@ -212,31 +222,43 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
 
       {/* Statistics */}
       {statistics && (
-        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: "#e5e7eb" }}>
-          <Grid container spacing={4}>
+        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: '#e5e7eb' }}>
+          <Grid
+            container
+            spacing={4}
+          >
             <Grid size={4}>
-              <Typography variant="caption" sx={{ color: "#6b7280" }}>
+              <Typography
+                variant='caption'
+                sx={{ color: '#6b7280' }}
+              >
                 总距离
               </Typography>
-              <Typography sx={{ fontWeight: 500, color: "#111827" }}>
+              <Typography sx={{ fontWeight: 500, color: '#111827' }}>
                 {statistics.total_distance < 1000
                   ? `${statistics.total_distance.toFixed(0)} 米`
                   : `${(statistics.total_distance / 1000).toFixed(2)} 公里`}
               </Typography>
             </Grid>
             <Grid size={4}>
-              <Typography variant="caption" sx={{ color: "#6b7280" }}>
+              <Typography
+                variant='caption'
+                sx={{ color: '#6b7280' }}
+              >
                 平均速度
               </Typography>
-              <Typography sx={{ fontWeight: 500, color: "#111827" }}>
+              <Typography sx={{ fontWeight: 500, color: '#111827' }}>
                 {statistics.avg_speed.toFixed(1)} km/h
               </Typography>
             </Grid>
             <Grid size={4}>
-              <Typography variant="caption" sx={{ color: "#6b7280" }}>
+              <Typography
+                variant='caption'
+                sx={{ color: '#6b7280' }}
+              >
                 最大速度
               </Typography>
-              <Typography sx={{ fontWeight: 500, color: "#111827" }}>
+              <Typography sx={{ fontWeight: 500, color: '#111827' }}>
                 {statistics.max_speed.toFixed(1)} km/h
               </Typography>
             </Grid>
@@ -246,15 +268,18 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
 
       {/* Current Position */}
       {currentPosition && (
-        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: "#e5e7eb" }}>
-          <Typography variant="caption" sx={{ color: "#6b7280" }}>
+        <Box sx={{ mt: 4, pt: 4, borderTop: 1, borderColor: '#e5e7eb' }}>
+          <Typography
+            variant='caption'
+            sx={{ color: '#6b7280' }}
+          >
             当前位置
           </Typography>
           <Typography
             sx={{
-              fontFamily: "monospace",
-              fontSize: "0.875rem",
-              color: "#374151",
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+              color: '#374151',
             }}
           >
             {currentPosition[0].toFixed(6)}, {currentPosition[1].toFixed(6)}

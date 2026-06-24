@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -13,8 +13,8 @@ import {
   Chip,
   useTheme,
   useMediaQuery,
-} from "@mui/material";
-import { Search, X, Clock, TrendingUp, History } from "lucide-react";
+} from '@mui/material';
+import { Search, X, Clock, TrendingUp, History } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -22,7 +22,7 @@ export interface SearchSuggestion {
   id: string;
   label: string;
   description?: string;
-  type?: "recent" | "suggestion" | "result";
+  type?: 'recent' | 'suggestion' | 'result';
   icon?: React.ReactNode;
 }
 
@@ -39,17 +39,17 @@ export interface SearchInputProps {
   loading?: boolean;
   debounceMs?: number;
   fullWidth?: boolean;
-  size?: "small" | "medium";
+  size?: 'small' | 'medium';
 }
 
 // ============ SearchInput 组件 ============
 
 export const SearchInput: React.FC<SearchInputProps> = ({
-  value = "",
+  value = '',
   onChange,
   onSearch,
   onClear,
-  placeholder = "搜索...",
+  placeholder = '搜索...',
   suggestions,
   recentSearches,
   showSuggestions = true,
@@ -57,17 +57,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   loading,
   debounceMs = 300,
   fullWidth = true,
-  size = "small",
+  size = 'small',
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [localValue, setLocalValue] = useState(value);
   const [showDropdown, setShowDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // 同步外部值
   useEffect(() => {
@@ -89,13 +87,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         onSearch?.(newValue);
       }, debounceMs);
     },
-    [onChange, onSearch, debounceMs],
+    [onChange, onSearch, debounceMs]
   );
 
   // 清除
   const handleClear = useCallback(() => {
-    setLocalValue("");
-    onChange?.("");
+    setLocalValue('');
+    onChange?.('');
     onClear?.();
   }, [onChange, onClear]);
 
@@ -110,13 +108,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   // 按键处理
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
+      if (e.key === 'Enter') {
         handleSubmit();
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         setShowDropdown(false);
       }
     },
-    [handleSubmit],
+    [handleSubmit]
   );
 
   // 点击建议项
@@ -127,7 +125,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       onSuggestionClick?.(suggestion);
       setShowDropdown(false);
     },
-    [onChange, onSuggestionClick],
+    [onChange, onSuggestionClick]
   );
 
   // 点击历史记录
@@ -138,32 +136,28 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       onSearch?.(search);
       setShowDropdown(false);
     },
-    [onChange, onSearch],
+    [onChange, onSearch]
   );
 
   // 点击外部关闭
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // 判断是否显示下拉
   const shouldShowDropdown =
-    showSuggestions &&
-    (localValue.length > 0 || (recentSearches && recentSearches.length > 0));
+    showSuggestions && (localValue.length > 0 || (recentSearches && recentSearches.length > 0));
 
   return (
     <Box
       ref={containerRef}
-      sx={{ position: "relative", width: fullWidth ? "100%" : "auto" }}
+      sx={{ position: 'relative', width: fullWidth ? '100%' : 'auto' }}
     >
       <TextField
         value={localValue}
@@ -174,7 +168,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         size={size}
         fullWidth={fullWidth}
         sx={{
-          "& .MuiOutlinedInput-root": {
+          '& .MuiOutlinedInput-root': {
             borderRadius: 2,
           },
         }}
@@ -185,14 +179,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         <Paper
           elevation={4}
           sx={{
-            position: "absolute",
-            top: "100%",
+            position: 'absolute',
+            top: '100%',
             left: 0,
             right: 0,
             mt: 0.5,
             zIndex: 1000,
             maxHeight: 400,
-            overflow: "auto",
+            overflow: 'auto',
             borderRadius: 2,
           }}
         >
@@ -201,56 +195,54 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             <>
               <Box sx={{ px: 2, py: 1 }}>
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ fontWeight: 500 }}
                 >
                   建议
                 </Typography>
               </Box>
-              <List disablePadding dense>
+              <List
+                disablePadding
+                dense
+              >
                 {suggestions.map((suggestion) => (
                   <ListItemButton
                     key={suggestion.id}
                     onClick={() => handleSuggestionClick(suggestion)}
                     sx={{
                       py: 1.5,
-                      "&:hover": { bgcolor: "action.hover" },
+                      '&:hover': { bgcolor: 'action.hover' },
                     }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 1.5,
-                        width: "100%",
+                        width: '100%',
                       }}
                     >
                       {suggestion.icon || (
-                        <TrendingUp
-                          style={{ width: 16, height: 16, opacity: 0.5 }}
-                        />
+                        <TrendingUp style={{ width: 16, height: 16, opacity: 0.5 }} />
                       )}
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2">
-                          {suggestion.label}
-                        </Typography>
+                        <Typography variant='body2'>{suggestion.label}</Typography>
                         {suggestion.description && (
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             {suggestion.description}
                           </Typography>
                         )}
                       </Box>
                       {suggestion.type && (
                         <Chip
-                          label={
-                            suggestion.type === "recent"
-                              ? "最近"
-                              : suggestion.type
-                          }
-                          size="small"
-                          variant="outlined"
-                          sx={{ fontSize: "0.7rem" }}
+                          label={suggestion.type === 'recent' ? '最近' : suggestion.type}
+                          size='small'
+                          variant='outlined'
+                          sx={{ fontSize: '0.7rem' }}
                         />
                       )}
                     </Box>
@@ -268,27 +260,30 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 sx={{
                   px: 2,
                   py: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
                 <Typography
-                  variant="caption"
-                  color="text.secondary"
+                  variant='caption'
+                  color='text.secondary'
                   sx={{ fontWeight: 500 }}
                 >
                   历史记录
                 </Typography>
               </Box>
-              <List disablePadding dense>
+              <List
+                disablePadding
+                dense
+              >
                 {recentSearches.slice(0, 5).map((search, index) => (
                   <ListItemButton
                     key={index}
                     onClick={() => handleRecentClick(search)}
                     sx={{
                       py: 1.5,
-                      "&:hover": { bgcolor: "action.hover" },
+                      '&:hover': { bgcolor: 'action.hover' },
                     }}
                   >
                     <History
@@ -299,7 +294,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                         opacity: 0.5,
                       }}
                     />
-                    <Typography variant="body2">{search}</Typography>
+                    <Typography variant='body2'>{search}</Typography>
                   </ListItemButton>
                 ))}
               </List>
@@ -308,8 +303,11 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
           {/* 空状态 */}
           {suggestions?.length === 0 && localValue && (
-            <Box sx={{ p: 3, textAlign: "center" }}>
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 未找到相关结果
               </Typography>
             </Box>

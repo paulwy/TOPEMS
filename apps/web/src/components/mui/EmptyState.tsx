@@ -1,6 +1,6 @@
-import React from "react";
-import { Box, Typography, Paper, useTheme } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React from 'react';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
 // ============ 类型定义 ============
 
@@ -27,7 +27,7 @@ export interface EmptyStateProps {
   onAction?: () => void;
 
   // 布局
-  align?: "center" | "left";
+  align?: 'center' | 'left';
   compact?: boolean;
 
   // 自定义
@@ -44,25 +44,24 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   action,
   actionLabel,
   onAction,
-  align = "center",
+  align = 'center',
   compact = false,
   children,
 }) => {
   const resolvedAction =
-    action ||
-    (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
+    action || (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
   const theme = useTheme();
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: align === "center" ? "center" : "flex-start",
-        justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: align === 'center' ? 'center' : 'flex-start',
+        justifyContent: 'center',
         py: compact ? 4 : 8,
         px: compact ? 2 : 4,
-        textAlign: align === "center" ? "center" : "left",
+        textAlign: align === 'center' ? 'center' : 'left',
       }}
     >
       {/* 图标 */}
@@ -70,26 +69,26 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         sx={{
           width: compact ? 64 : 80,
           height: compact ? 64 : 80,
-          borderRadius: "50%",
-          bgcolor: "action.hover",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          borderRadius: '50%',
+          bgcolor: 'action.hover',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           mb: compact ? 2 : 3,
         }}
       >
         {emoji ? (
-          <Typography variant={compact ? "h4" : "h3"}>{emoji}</Typography>
+          <Typography variant={compact ? 'h4' : 'h3'}>{emoji}</Typography>
         ) : icon ? (
-          <Box sx={{ color: "text.secondary" }}>{icon}</Box>
+          <Box sx={{ color: 'text.secondary' }}>{icon}</Box>
         ) : (
-          <Typography variant={compact ? "h4" : "h3"}>📋</Typography>
+          <Typography variant={compact ? 'h4' : 'h3'}>📋</Typography>
         )}
       </Box>
 
       {/* 标题 */}
       <Typography
-        variant={compact ? "subtitle1" : "h6"}
+        variant={compact ? 'subtitle1' : 'h6'}
         sx={{ fontWeight: 600, mb: compact ? 1 : 0.5 }}
       >
         {title}
@@ -98,8 +97,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {/* 描述 */}
       {description && (
         <Typography
-          variant="body2"
-          color="text.secondary"
+          variant='body2'
+          color='text.secondary'
           sx={{
             maxWidth: 400,
             mb: resolvedAction ? 2 : 0,
@@ -112,8 +111,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {/* 操作按钮 */}
       {resolvedAction && (
         <Button
-          variant="contained"
-          color="primary"
+          variant='contained'
+          color='primary'
           onClick={resolvedAction.onClick}
           href={resolvedAction.href}
           sx={{ mt: 1 }}
@@ -135,12 +134,12 @@ export const ListEmptyState: React.FC<{
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
-}> = ({ title = "暂无数据", description, actionLabel, onAction }) => (
+}> = ({ title = '暂无数据', description, actionLabel, onAction }) => (
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
-      emoji="📋"
+      emoji='📋'
       title={title}
-      description={description || "当前列表为空，没有可显示的内容"}
+      description={description || '当前列表为空，没有可显示的内容'}
       action={
         actionLabel
           ? {
@@ -161,17 +160,15 @@ export const SearchEmptyState: React.FC<{
 }> = ({ keyword, onClear }) => (
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
-      emoji="🔍"
-      title="未找到结果"
+      emoji='🔍'
+      title='未找到结果'
       description={
-        keyword
-          ? `未找到与"${keyword}"相关的内容，请尝试其他关键词`
-          : "未找到匹配的搜索结果"
+        keyword ? `未找到与"${keyword}"相关的内容，请尝试其他关键词` : '未找到匹配的搜索结果'
       }
       action={
         onClear
           ? {
-              label: "清除搜索",
+              label: '清除搜索',
               onClick: onClear,
             }
           : undefined
@@ -187,13 +184,13 @@ export const PermissionEmptyState: React.FC<{
 }> = ({ onRequest }) => (
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
-      emoji="🔒"
-      title="暂无权限"
-      description="您没有访问此页面的权限，请联系管理员申请权限"
+      emoji='🔒'
+      title='暂无权限'
+      description='您没有访问此页面的权限，请联系管理员申请权限'
       action={
         onRequest
           ? {
-              label: "申请权限",
+              label: '申请权限',
               onClick: onRequest,
             }
           : undefined
@@ -209,19 +206,16 @@ export interface ErrorEmptyStateProps {
   onRetry?: () => void;
 }
 
-export const ErrorEmptyState: React.FC<ErrorEmptyStateProps> = ({
-  error,
-  onRetry,
-}) => (
+export const ErrorEmptyState: React.FC<ErrorEmptyStateProps> = ({ error, onRetry }) => (
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
-      emoji="❌"
-      title="加载失败"
-      description={error || "数据加载失败，请稍后重试"}
+      emoji='❌'
+      title='加载失败'
+      description={error || '数据加载失败，请稍后重试'}
       action={
         onRetry
           ? {
-              label: "重新加载",
+              label: '重新加载',
               onClick: onRetry,
             }
           : undefined

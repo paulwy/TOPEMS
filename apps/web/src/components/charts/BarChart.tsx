@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   BarChart,
   Bar,
@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
+} from 'recharts';
 
 interface BarChartProps {
   data: any[];
@@ -25,10 +25,10 @@ interface BarChartProps {
 export const BarChartComponent: React.FC<BarChartProps> = ({
   data,
   title,
-  xKey = "name",
-  yKey = "value",
+  xKey = 'name',
+  yKey = 'value',
   yKeys,
-  color = "#3b82f6",
+  color = '#3b82f6',
   height = 200,
   barRadius = [4, 4, 0, 0],
 }) => {
@@ -37,21 +37,28 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
   return (
     <div>
       {title && (
-        <h4 style={{ marginBottom: "16px", color: "#1e293b", fontWeight: 600 }}>
-          {title}
-        </h4>
+        <h4 style={{ marginBottom: '16px', color: '#1e293b', fontWeight: 600 }}>{title}</h4>
       )}
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer
+        width='100%'
+        height={height}
+      >
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-          <XAxis dataKey={xKey} tick={{ fill: "#64748b", fontSize: 12 }} />
-          <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+          <CartesianGrid
+            strokeDasharray='3 3'
+            stroke='#e2e8f0'
+          />
+          <XAxis
+            dataKey={xKey}
+            tick={{ fill: '#64748b', fontSize: 12 }}
+          />
+          <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "12px",
+              backgroundColor: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '12px',
             }}
           />
           {series.map((item) => (
@@ -60,11 +67,7 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
               dataKey={item.key}
               name={item.name}
               fill={item.color || color}
-              radius={
-                Array.isArray(barRadius)
-                  ? barRadius
-                  : [barRadius, barRadius, 0, 0]
-              }
+              radius={Array.isArray(barRadius) ? barRadius : [barRadius, barRadius, 0, 0]}
             />
           ))}
         </BarChart>

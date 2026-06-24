@@ -44,11 +44,7 @@ export interface EmployeeFinance {
 /**
  * 工资发放状态
  */
-export type SalaryPaymentStatus =
-  | "pending"
-  | "processing"
-  | "completed"
-  | "failed";
+export type SalaryPaymentStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 /**
  * 工资条记录

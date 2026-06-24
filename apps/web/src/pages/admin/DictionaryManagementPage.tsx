@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Book,
   ChevronLeft,
@@ -13,38 +13,52 @@ import {
   Download,
   Upload,
   RefreshCw,
-} from "lucide-react";
+} from 'lucide-react';
+import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
+import { useAppStore } from '../../store';
+import { apiLogger } from '@/utils/logger';
 import {
-  dictTypeApi,
-  dictItemApi,
-  type DictType,
-  type DictItem,
-} from "@/api/system";
-import { useAppStore } from "../../store";
-import { apiLogger } from "@/utils/logger";
-import { Box, TextField, Typography, Card, CardContent, CardHeader, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip, IconButton, CircularProgress, Checkbox, Paper, Switch,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+  Box,
+  TextField,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  IconButton,
+  CircularProgress,
+  Checkbox,
+  Paper,
+  Switch,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
 interface DictionaryManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
 const categoryLabels: Record<string, string> = {
-  system: "系统字典",
-  business: "业务字典",
-  basic: "基础数据",
-  custom: "自定义字典",
+  system: '系统字典',
+  business: '业务字典',
+  basic: '基础数据',
+  custom: '自定义字典',
 };
 
 const statusLabels: Record<string, string> = {
-  active: "启用",
-  inactive: "禁用",
+  active: '启用',
+  inactive: '禁用',
 };
 
-const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
-  onNavigate,
-}) => {
+const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
@@ -54,7 +68,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
   const [loading, setLoading] = useState(true);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [showTypeModal, setShowTypeModal] = useState(false);
   const [showItemModal, setShowItemModal] = useState(false);
@@ -71,33 +85,22 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
   const [pageSize] = useState(10);
 
   const [newType, setNewType] = useState<Partial<DictType>>({
-    code: "",
-    name: "",
-    category: "business",
-    description: "",
-    status: "active",
+    code: '',
+    name: '',
+    category: 'business',
+    description: '',
+    status: 'active',
   });
 
   const [newItem, setNewItem] = useState<Partial<DictItem>>({
-    code: "",
-    name: "",
-    value: "",
+    code: '',
+    name: '',
+    value: '',
     sort_order: 0,
     parent_id: undefined,
   });
 
-  useEffect(() => {
-    loadDictTypes();
-  }, []);
-
-  useEffect(() => {
-    if (selectedType) {
-      loadDictItems(selectedType.id);
-      setSelectedItems([]);
-    }
-  }, [selectedType]);
-
-  const loadDictTypes = async () => {
+  const loadDictTypes = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -111,18 +114,18 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
         setDictTypes([]);
       }
     } catch (err: any) {
-      setError(err.message || "加载字典类型失败");
+      setError(err.message || '加载字典类型失败');
       addNotification({
-        title: "加载失败",
-        message: err.message || "加载字典类型失败",
-        type: "error",
+        title: '加载失败',
+        message: err.message || '加载字典类型失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification, selectedType]);
 
-  const loadDictItems = async (typeId: string) => {
+  const loadDictItems = useCallback(async (typeId: string) => {
     setItemsLoading(true);
     try {
       const res = await dictItemApi.list(typeId);
@@ -132,12 +135,23 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
         setDictItems([]);
       }
     } catch (err: any) {
-      apiLogger.error("加载字典项失败:", err);
+      apiLogger.error('加载字典项失败:', err);
       setDictItems([]);
     } finally {
       setItemsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadDictTypes();
+  }, [loadDictTypes]);
+
+  useEffect(() => {
+    if (selectedType) {
+      loadDictItems(selectedType.id);
+      setSelectedItems([]);
+    }
+  }, [selectedType, loadDictItems]);
 
   const handleCreateType = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,31 +159,31 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       const res = await dictTypeApi.create(newType);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "字典类型创建成功",
-          type: "success",
+          title: '成功',
+          message: '字典类型创建成功',
+          type: 'success',
         });
         setShowTypeModal(false);
         setNewType({
-          code: "",
-          name: "",
-          category: "business",
-          description: "",
-          status: "active",
+          code: '',
+          name: '',
+          category: 'business',
+          description: '',
+          status: 'active',
         });
         loadDictTypes();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "创建失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '创建失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "创建失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '创建失败',
+        type: 'error',
       });
     }
   };
@@ -181,25 +195,25 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       const res = await dictTypeApi.update(editingType.id, editingType);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "字典类型更新成功",
-          type: "success",
+          title: '成功',
+          message: '字典类型更新成功',
+          type: 'success',
         });
         setShowTypeModal(false);
         setEditingType(null);
         loadDictTypes();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "更新失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '更新失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "更新失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '更新失败',
+        type: 'error',
       });
     }
   };
@@ -209,9 +223,9 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       const res = await dictTypeApi.delete(id);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "字典类型删除成功",
-          type: "success",
+          title: '成功',
+          message: '字典类型删除成功',
+          type: 'success',
         });
         if (selectedType?.id === id) {
           setSelectedType(null);
@@ -219,16 +233,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
         loadDictTypes();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "删除失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '删除失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "删除失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '删除失败',
+        type: 'error',
       });
     }
   };
@@ -243,31 +257,31 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       });
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "字典项创建成功",
-          type: "success",
+          title: '成功',
+          message: '字典项创建成功',
+          type: 'success',
         });
         setShowItemModal(false);
         setNewItem({
-          code: "",
-          name: "",
-          value: "",
+          code: '',
+          name: '',
+          value: '',
           sort_order: dictItems.length,
           parent_id: undefined,
         });
         loadDictItems(selectedType.id);
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "创建失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '创建失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "创建失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '创建失败',
+        type: 'error',
       });
     }
   };
@@ -279,85 +293,91 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       const res = await dictItemApi.update(editingItem.id, editingItem);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "字典项更新成功",
-          type: "success",
+          title: '成功',
+          message: '字典项更新成功',
+          type: 'success',
         });
         setShowItemModal(false);
         setEditingItem(null);
         if (selectedType) loadDictItems(selectedType.id);
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "更新失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '更新失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "更新失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '更新失败',
+        type: 'error',
       });
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
-    try {
-      const res = await dictItemApi.delete(id);
-      if (res.success) {
+  const handleDeleteItem = useCallback(
+    async (id: string) => {
+      try {
+        const res = await dictItemApi.delete(id);
+        if (res.success) {
+          addNotification({
+            title: '成功',
+            message: '字典项删除成功',
+            type: 'success',
+          });
+          setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
+          if (selectedType) loadDictItems(selectedType.id);
+        } else {
+          addNotification({
+            title: '失败',
+            message: res.message || '删除失败',
+            type: 'error',
+          });
+        }
+      } catch (err: any) {
         addNotification({
-          title: "成功",
-          message: "字典项删除成功",
-          type: "success",
-        });
-        setSelectedItems(selectedItems.filter((itemId) => itemId !== id));
-        if (selectedType) loadDictItems(selectedType.id);
-      } else {
-        addNotification({
-          title: "失败",
-          message: res.message || "删除失败",
-          type: "error",
+          title: '失败',
+          message: err.message || '删除失败',
+          type: 'error',
         });
       }
-    } catch (err: any) {
-      addNotification({
-        title: "失败",
-        message: err.message || "删除失败",
-        type: "error",
-      });
-    }
-  };
+    },
+    [addNotification, selectedType, loadDictItems]
+  );
 
-  const handleToggleItemStatus = async (item: DictItem) => {
-    const newStatus = item.status === "active" ? "inactive" : "active";
-    try {
-      const res = await dictItemApi.update(item.id, {
-        ...item,
-        status: newStatus,
-      });
-      if (res.success) {
-        addNotification({
-          title: "成功",
-          message: `字典项已${newStatus === "active" ? "启用" : "禁用"}`,
-          type: "success",
+  const handleToggleItemStatus = useCallback(
+    async (item: DictItem) => {
+      const newStatus = item.status === 'active' ? 'inactive' : 'active';
+      try {
+        const res = await dictItemApi.update(item.id, {
+          ...item,
+          status: newStatus,
         });
-        if (selectedType) loadDictItems(selectedType.id);
-      } else {
+        if (res.success) {
+          addNotification({
+            title: '成功',
+            message: `字典项已${newStatus === 'active' ? '启用' : '禁用'}`,
+            type: 'success',
+          });
+          if (selectedType) loadDictItems(selectedType.id);
+        } else {
+          addNotification({
+            title: '失败',
+            message: res.message || '状态切换失败',
+            type: 'error',
+          });
+        }
+      } catch (err: any) {
         addNotification({
-          title: "失败",
-          message: res.message || "状态切换失败",
-          type: "error",
+          title: '失败',
+          message: err.message || '状态切换失败',
+          type: 'error',
         });
       }
-    } catch (err: any) {
-      addNotification({
-        title: "失败",
-        message: err.message || "状态切换失败",
-        type: "error",
-      });
-    }
-  };
+    },
+    [addNotification, selectedType, loadDictItems]
+  );
 
   const handleBatchDelete = async () => {
     if (selectedItems.length === 0) return;
@@ -366,17 +386,17 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
         await dictItemApi.delete(id);
       }
       addNotification({
-        title: "成功",
+        title: '成功',
         message: `成功删除 ${selectedItems.length} 个字典项`,
-        type: "success",
+        type: 'success',
       });
       setSelectedItems([]);
       if (selectedType) loadDictItems(selectedType.id);
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "批量删除失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '批量删除失败',
+        type: 'error',
       });
     }
   };
@@ -387,16 +407,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
     const exportData = dictItems.map((item) => ({
       code: item.code,
       name: item.name,
-      value: item.value || "",
+      value: item.value || '',
       sort_order: item.sort_order,
       status: item.status,
     }));
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
+      type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     a.download = `${selectedType.code}_items.json`;
     document.body.appendChild(a);
@@ -405,9 +425,9 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
     URL.revokeObjectURL(url);
 
     addNotification({
-      title: "成功",
-      message: "字典项导出成功",
-      type: "success",
+      title: '成功',
+      message: '字典项导出成功',
+      type: 'success',
     });
     setShowExportModal(false);
   };
@@ -423,9 +443,9 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
           const items = JSON.parse(event.target?.result as string);
           if (!Array.isArray(items)) {
             addNotification({
-              title: "失败",
-              message: "导入文件格式不正确",
-              type: "error",
+              title: '失败',
+              message: '导入文件格式不正确',
+              type: 'error',
             });
             return;
           }
@@ -437,32 +457,32 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
               name: item.name,
               value: item.value,
               sort_order: item.sort_order || 0,
-              status: item.status || "active",
+              status: item.status || 'active',
             });
           }
 
           addNotification({
-            title: "成功",
+            title: '成功',
             message: `成功导入 ${items.length} 个字典项`,
-            type: "success",
+            type: 'success',
           });
           setShowImportModal(false);
           setImportFile(null);
           if (selectedType) loadDictItems(selectedType.id);
         } catch (err: any) {
           addNotification({
-            title: "失败",
-            message: err.message || "导入失败",
-            type: "error",
+            title: '失败',
+            message: err.message || '导入失败',
+            type: 'error',
           });
         }
       };
       reader.readAsText(importFile);
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "导入失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '导入失败',
+        type: 'error',
       });
     }
   };
@@ -470,18 +490,18 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
   const filteredTypes = dictTypes.filter(
     (type) =>
       type.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      type.code.toLowerCase().includes(searchQuery.toLowerCase()),
+      type.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const groupedTypes = useMemo(() => {
     return filteredTypes.reduce(
       (acc, type) => {
-        const category = type.category || "custom";
+        const category = type.category || 'custom';
         if (!acc[category]) acc[category] = [];
         acc[category].push(type);
         return acc;
       },
-      {} as Record<string, DictType[]>,
+      {} as Record<string, DictType[]>
     );
   }, [filteredTypes]);
 
@@ -494,7 +514,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
     return dictItems.filter(
       (item) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.code.toLowerCase().includes(searchQuery.toLowerCase()),
+        item.code.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [dictItems, searchQuery]);
 
@@ -513,65 +533,76 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
   const columns: ColumnDef<DictItem>[] = useMemo(
     () => [
       {
-        id: "sort_order",
-        label: "排序",
+        id: 'sort_order',
+        label: '排序',
         width: 64,
         render: (item) => (
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {item.sort_order}
           </Typography>
         ),
       },
       {
-        id: "code",
-        label: "编码",
+        id: 'code',
+        label: '编码',
         render: (item) => (
-          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {item.code}
           </Typography>
         ),
       },
       {
-        id: "name",
-        label: "名称",
+        id: 'name',
+        label: '名称',
         sortable: true,
         render: (item) => (
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {item.parent_id && (
-              <Box component="span" sx={{ color: "text.disabled", mr: 0.5 }}>
+              <Box
+                component='span'
+                sx={{ color: 'text.disabled', mr: 0.5 }}
+              >
                 └─
               </Box>
             )}
-            <Typography variant="body2">{item.name}</Typography>
+            <Typography variant='body2'>{item.name}</Typography>
           </Box>
         ),
       },
       {
-        id: "value",
-        label: "值",
+        id: 'value',
+        label: '值',
         render: (item) => (
-          <Typography variant="body2" color="text.secondary">
-            {item.value || "-"}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {item.value || '-'}
           </Typography>
         ),
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         width: 96,
         render: (item) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Switch
-              checked={item.status === "active"}
+              checked={item.status === 'active'}
               onChange={() => handleToggleItemStatus(item)}
-              size="small"
+              size='small'
             />
             <Typography
-              variant="caption"
+              variant='caption'
               sx={{
                 fontWeight: 500,
-                color:
-                  item.status === "active" ? "success.main" : "text.disabled",
+                color: item.status === 'active' ? 'success.main' : 'text.disabled',
               }}
             >
               {statusLabels[item.status]}
@@ -580,21 +611,21 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
         ),
       },
       {
-        id: "actions",
-        label: "操作",
-        align: "right",
+        id: 'actions',
+        label: '操作',
+        align: 'right',
         width: 100,
         render: (item) => (
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 0.5,
-              justifyContent: "flex-end",
+              justifyContent: 'flex-end',
             }}
           >
             <IconButton
-              size="small"
+              size='small'
               onClick={(e) => {
                 e.stopPropagation();
                 setEditingItem(item);
@@ -604,11 +635,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
               <Edit size={16} />
             </IconButton>
             <IconButton
-              size="small"
-              color="error"
+              size='small'
+              color='error'
               onClick={(e) => {
                 e.stopPropagation();
-                if (confirm("确定要删除这个字典项吗？")) {
+                if (confirm('确定要删除这个字典项吗？')) {
                   handleDeleteItem(item.id);
                 }
               }}
@@ -619,66 +650,66 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [handleToggleItemStatus, handleDeleteItem],
+
+    [handleToggleItemStatus, handleDeleteItem]
   );
 
   // 筛选器定义
   const filters = useMemo(
     () => [
       {
-        id: "status",
-        label: "状态",
-        type: "select" as const,
+        id: 'status',
+        label: '状态',
+        type: 'select' as const,
         options: [
-          { label: "全部", value: "" },
-          { label: "启用", value: "active" },
-          { label: "禁用", value: "inactive" },
+          { label: '全部', value: '' },
+          { label: '启用', value: 'active' },
+          { label: '禁用', value: 'inactive' },
         ],
       },
     ],
-    [],
+    []
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <Box
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <IconButton onClick={() => navigate("/dashboard")}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <IconButton onClick={() => navigate('/dashboard')}>
                 <ChevronLeft size={20} />
               </IconButton>
               <Box>
                 <Typography
-                  variant="h5"
+                  variant='h5'
                   sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
                   <Book
                     size={28}
-                    style={{ marginRight: 12, color: "#2563eb" }}
+                    style={{ marginRight: 12, color: '#2563eb' }}
                   />
                   字典管理
                 </Typography>
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
+                  variant='body2'
+                  color='text.secondary'
                   sx={{ mt: 0.5 }}
                 >
                   管理系统字典、业务字典、基础数据字典
@@ -686,16 +717,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
               </Box>
             </Box>
             <Button
-              variant="contained"
+              variant='contained'
               startIcon={<Plus size={20} />}
               onClick={() => {
                 setEditingType(null);
                 setNewType({
-                  code: "",
-                  name: "",
-                  category: "business",
-                  description: "",
-                  status: "active",
+                  code: '',
+                  name: '',
+                  category: 'business',
+                  description: '',
+                  status: 'active',
                 });
                 setShowTypeModal(true);
               }}
@@ -707,41 +738,42 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       </Box>
 
       {error && (
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
-          <Paper
-            sx={{ bgcolor: "#fef2f2", borderColor: "#fecaca", p: 2, border: 1 }}
-          >
-            <Typography color="error">{error}</Typography>
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 2 }}>
+          <Paper sx={{ bgcolor: '#fef2f2', borderColor: '#fecaca', p: 2, border: 1 }}>
+            <Typography color='error'>{error}</Typography>
           </Paper>
         </Box>
       )}
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
-        <Box sx={{ display: "flex", gap: 3 }}>
+      <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
+        <Box sx={{ display: 'flex', gap: 3 }}>
           {/* 左侧字典类型列表 */}
           <Box sx={{ width: 320, flexShrink: 0 }}>
             <Card>
               <CardContent sx={{ p: 2 }}>
-                <Box sx={{ position: "relative", mb: 2 }}>
+                <Box sx={{ position: 'relative', mb: 2 }}>
                   <TextField
-                    type="text"
-                    placeholder="搜索字典类型..."
+                    type='text'
+                    placeholder='搜索字典类型...'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    size="small"
+                    size='small'
                     fullWidth
                     slotProps={{
                       input: {
                         startAdornment: (
                           <Box
-                            component="span"
+                            component='span'
                             sx={{
                               mr: 1,
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                             }}
                           >
-                            <Search size={16} style={{ color: "#9ca3af" }} />
+                            <Search
+                              size={16}
+                              style={{ color: '#9ca3af' }}
+                            />
                           </Box>
                         ),
                       },
@@ -750,34 +782,32 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                 </Box>
 
                 {loading ? (
-                  <Box sx={{ textAlign: "center", py: 4 }}>
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
                     <CircularProgress size={24} />
                   </Box>
                 ) : (
-                  <Box sx={{ maxHeight: 600, overflow: "auto" }}>
-                    <Box
-                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-                    >
+                  <Box sx={{ maxHeight: 600, overflow: 'auto' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {Object.entries(groupedTypes).map(([category, types]) => (
                         <Box key={category}>
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: 1,
                               mb: 1,
                             }}
                           >
                             <FolderOpen
                               size={16}
-                              style={{ color: "#6b7280" }}
+                              style={{ color: '#6b7280' }}
                             />
                             <Typography
-                              variant="caption"
+                              variant='caption'
                               sx={{
                                 fontWeight: 500,
-                                color: "text.secondary",
-                                textTransform: "uppercase",
+                                color: 'text.secondary',
+                                textTransform: 'uppercase',
                               }}
                             >
                               {categoryLabels[category] || category}
@@ -785,8 +815,8 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                           </Box>
                           <Box
                             sx={{
-                              display: "flex",
-                              flexDirection: "column",
+                              display: 'flex',
+                              flexDirection: 'column',
                               gap: 0.5,
                             }}
                           >
@@ -797,53 +827,47 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                                 sx={{
                                   p: 1.5,
                                   borderRadius: 1,
-                                  cursor: "pointer",
-                                  transition: "all 0.2s",
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
                                   border: 1,
                                   borderColor:
-                                    selectedType?.id === type.id
-                                      ? "primary.main"
-                                      : "transparent",
+                                    selectedType?.id === type.id ? 'primary.main' : 'transparent',
                                   bgcolor:
-                                    selectedType?.id === type.id
-                                      ? "primary.50"
-                                      : "transparent",
-                                  "&:hover": {
+                                    selectedType?.id === type.id ? 'primary.50' : 'transparent',
+                                  '&:hover': {
                                     bgcolor:
-                                      selectedType?.id === type.id
-                                        ? "primary.50"
-                                        : "action.hover",
+                                      selectedType?.id === type.id ? 'primary.50' : 'action.hover',
                                   },
                                 }}
                               >
                                 <Box
                                   sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
                                   }}
                                 >
                                   <Box
                                     sx={{
-                                      display: "flex",
-                                      alignItems: "center",
+                                      display: 'flex',
+                                      alignItems: 'center',
                                       gap: 1,
                                     }}
                                   >
                                     <Tag
                                       size={16}
-                                      style={{ color: "#9ca3af" }}
+                                      style={{ color: '#9ca3af' }}
                                     />
                                     <Box>
                                       <Typography
-                                        variant="body2"
+                                        variant='body2'
                                         sx={{ fontWeight: 500 }}
                                       >
                                         {type.name}
                                       </Typography>
                                       <Typography
-                                        variant="caption"
-                                        color="text.secondary"
+                                        variant='caption'
+                                        color='text.secondary'
                                       >
                                         {type.code}
                                       </Typography>
@@ -851,13 +875,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                                   </Box>
                                   <ChevronRight
                                     size={16}
-                                    style={{ color: "#9ca3af" }}
+                                    style={{ color: '#9ca3af' }}
                                   />
                                 </Box>
                                 <Chip
                                   label={statusLabels[type.status]}
-                                  size="small"
-                                  variant="outlined"
+                                  size='small'
+                                  variant='outlined'
                                   sx={{ mt: 1 }}
                                 />
                               </Box>
@@ -888,7 +912,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                   onPageChange: handlePageChange,
                 }}
                 searchable
-                searchPlaceholder="搜索字典项..."
+                searchPlaceholder='搜索字典项...'
                 searchValue={searchQuery}
                 onSearch={setSearchQuery}
                 filters={filters}
@@ -897,51 +921,51 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                 onSelectionChange={(ids) => setSelectedItems(ids.map(String))}
                 actions={[
                   {
-                    label: "导出",
+                    label: '导出',
                     icon: <Download size={16} />,
                     onClick: () => setShowExportModal(true),
-                    variant: "outlined",
+                    variant: 'outlined',
                   },
                   {
-                    label: "导入",
+                    label: '导入',
                     icon: <Upload size={16} />,
                     onClick: () => setShowImportModal(true),
-                    variant: "outlined",
+                    variant: 'outlined',
                   },
                   {
-                    label: "新增字典项",
+                    label: '新增字典项',
                     icon: <Plus size={16} />,
                     onClick: () => {
                       setEditingItem(null);
                       setNewItem({
-                        code: "",
-                        name: "",
-                        value: "",
+                        code: '',
+                        name: '',
+                        value: '',
                         sort_order: dictItems.length,
                         parent_id: undefined,
                       });
                       setShowItemModal(true);
                     },
-                    variant: "contained",
+                    variant: 'contained',
                   },
                 ]}
                 batchActions={[
                   {
-                    label: "批量删除",
+                    label: '批量删除',
                     icon: <Trash2 size={16} />,
-                    color: "error",
+                    color: 'error',
                     confirm: true,
                     confirmMessage: `确定要删除选中的 ${selectedItems.length} 个字典项吗？`,
                     onClick: handleBatchDelete,
                   },
                 ]}
                 onRefresh={() => selectedType && loadDictItems(selectedType.id)}
-                emptyMessage="暂无字典项"
+                emptyMessage='暂无字典项'
                 headerContent={
-                  <Box sx={{ display: "flex", gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
-                      variant="outlined"
-                      size="small"
+                      variant='outlined'
+                      size='small'
                       startIcon={<Edit size={16} />}
                       onClick={() => {
                         setEditingType(selectedType);
@@ -951,16 +975,12 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                       编辑类型
                     </Button>
                     <Button
-                      variant="outlined"
-                      size="small"
-                      color="error"
+                      variant='outlined'
+                      size='small'
+                      color='error'
                       startIcon={<Trash2 size={16} />}
                       onClick={() => {
-                        if (
-                          confirm(
-                            "确定要删除这个字典类型吗？所有字典项也会被删除！",
-                          )
-                        ) {
+                        if (confirm('确定要删除这个字典类型吗？所有字典项也会被删除！')) {
                           handleDeleteType(selectedType.id);
                         }
                       }}
@@ -972,15 +992,18 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
               />
             ) : (
               <Card>
-                <CardContent sx={{ p: 6, textAlign: "center" }}>
+                <CardContent sx={{ p: 6, textAlign: 'center' }}>
                   <Book
                     size={64}
-                    style={{ color: "#9ca3af", marginBottom: 16 }}
+                    style={{ color: '#9ca3af', marginBottom: 16 }}
                   />
-                  <Typography variant="h6" sx={{ mb: 1 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ mb: 1 }}
+                  >
                     请选择字典类型
                   </Typography>
-                  <Typography color="text.secondary">
+                  <Typography color='text.secondary'>
                     从左侧列表选择一个字典类型查看和管理字典项
                   </Typography>
                 </CardContent>
@@ -994,26 +1017,22 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       <Dialog
         open={showTypeModal}
         onClose={() => setShowTypeModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>
-          {editingType ? "编辑字典类型" : "新增字典类型"}
-        </DialogTitle>
+        <DialogTitle>{editingType ? '编辑字典类型' : '新增字典类型'}</DialogTitle>
         <Box
-          component="form"
+          component='form'
           onSubmit={editingType ? handleUpdateType : handleCreateType}
         >
           <DialogContent>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <TextField
                 fullWidth
-                label="编码 *"
+                label='编码 *'
                 required
                 disabled={!!editingType}
-                value={editingType?.code || newType.code || ""}
+                value={editingType?.code || newType.code || ''}
                 onChange={(e) => {
                   if (editingType) {
                     setEditingType({ ...editingType, code: e.target.value });
@@ -1021,14 +1040,14 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     setNewType({ ...newType, code: e.target.value });
                   }
                 }}
-                placeholder="如: status_type"
-                size="small"
+                placeholder='如: status_type'
+                size='small'
               />
               <TextField
                 fullWidth
-                label="名称 *"
+                label='名称 *'
                 required
-                value={editingType?.name || newType.name || ""}
+                value={editingType?.name || newType.name || ''}
                 onChange={(e) => {
                   if (editingType) {
                     setEditingType({ ...editingType, name: e.target.value });
@@ -1036,16 +1055,17 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     setNewType({ ...newType, name: e.target.value });
                   }
                 }}
-                placeholder="如: 状态类型"
-                size="small"
+                placeholder='如: 状态类型'
+                size='small'
               />
-              <FormControl size="small" fullWidth>
+              <FormControl
+                size='small'
+                fullWidth
+              >
                 <InputLabel>分类</InputLabel>
                 <Select
-                  value={
-                    editingType?.category || newType.category || "business"
-                  }
-                  label="分类"
+                  value={editingType?.category || newType.category || 'business'}
+                  label='分类'
                   onChange={(e) => {
                     if (editingType) {
                       setEditingType({
@@ -1057,16 +1077,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     }
                   }}
                 >
-                  <MenuItem value="system">系统字典</MenuItem>
-                  <MenuItem value="business">业务字典</MenuItem>
-                  <MenuItem value="basic">基础数据</MenuItem>
-                  <MenuItem value="custom">自定义字典</MenuItem>
+                  <MenuItem value='system'>系统字典</MenuItem>
+                  <MenuItem value='business'>业务字典</MenuItem>
+                  <MenuItem value='basic'>基础数据</MenuItem>
+                  <MenuItem value='custom'>自定义字典</MenuItem>
                 </Select>
               </FormControl>
               <TextField
                 fullWidth
-                label="描述"
-                value={editingType?.description || newType.description || ""}
+                label='描述'
+                value={editingType?.description || newType.description || ''}
                 onChange={(e) => {
                   if (editingType) {
                     setEditingType({
@@ -1079,28 +1099,27 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                 }}
                 multiline
                 rows={2}
-                size="small"
+                size='small'
               />
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
-                <Typography variant="body2">状态</Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {(editingType?.status || newType.status) === "active"
-                      ? "启用"
-                      : "禁用"}
+                <Typography variant='body2'>状态</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    {(editingType?.status || newType.status) === 'active' ? '启用' : '禁用'}
                   </Typography>
                   <Switch
-                    checked={
-                      (editingType?.status || newType.status) === "active"
-                    }
+                    checked={(editingType?.status || newType.status) === 'active'}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const status = e.target.checked ? "active" : "inactive";
+                      const status = e.target.checked ? 'active' : 'inactive';
                       if (editingType) {
                         setEditingType({ ...editingType, status });
                       } else {
@@ -1114,7 +1133,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
           </DialogContent>
           <DialogActions>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={() => {
                 setShowTypeModal(false);
                 setEditingType(null);
@@ -1122,8 +1141,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
             >
               取消
             </Button>
-            <Button type="submit" variant="contained">
-              {editingType ? "保存" : "创建"}
+            <Button
+              type='submit'
+              variant='contained'
+            >
+              {editingType ? '保存' : '创建'}
             </Button>
           </DialogActions>
         </Box>
@@ -1133,23 +1155,21 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       <Dialog
         open={showItemModal}
         onClose={() => setShowItemModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingItem ? "编辑字典项" : "新增字典项"}</DialogTitle>
+        <DialogTitle>{editingItem ? '编辑字典项' : '新增字典项'}</DialogTitle>
         <Box
-          component="form"
+          component='form'
           onSubmit={editingItem ? handleUpdateItem : handleCreateItem}
         >
           <DialogContent>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <TextField
                 fullWidth
-                label="编码 *"
+                label='编码 *'
                 required
-                value={editingItem?.code || newItem.code || ""}
+                value={editingItem?.code || newItem.code || ''}
                 onChange={(e) => {
                   if (editingItem) {
                     setEditingItem({ ...editingItem, code: e.target.value });
@@ -1157,14 +1177,14 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     setNewItem({ ...newItem, code: e.target.value });
                   }
                 }}
-                placeholder="如: active"
-                size="small"
+                placeholder='如: active'
+                size='small'
               />
               <TextField
                 fullWidth
-                label="名称 *"
+                label='名称 *'
                 required
-                value={editingItem?.name || newItem.name || ""}
+                value={editingItem?.name || newItem.name || ''}
                 onChange={(e) => {
                   if (editingItem) {
                     setEditingItem({ ...editingItem, name: e.target.value });
@@ -1172,13 +1192,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     setNewItem({ ...newItem, name: e.target.value });
                   }
                 }}
-                placeholder="如: 启用"
-                size="small"
+                placeholder='如: 启用'
+                size='small'
               />
               <TextField
                 fullWidth
-                label="值"
-                value={editingItem?.value || newItem.value || ""}
+                label='值'
+                value={editingItem?.value || newItem.value || ''}
                 onChange={(e) => {
                   if (editingItem) {
                     setEditingItem({ ...editingItem, value: e.target.value });
@@ -1186,13 +1206,13 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     setNewItem({ ...newItem, value: e.target.value });
                   }
                 }}
-                placeholder="可选，存储实际值"
-                size="small"
+                placeholder='可选，存储实际值'
+                size='small'
               />
               <TextField
                 fullWidth
-                label="排序"
-                type="number"
+                label='排序'
+                type='number'
                 value={editingItem?.sort_order || newItem.sort_order || 0}
                 onChange={(e) => {
                   const value = parseInt(e.target.value) || 0;
@@ -1202,13 +1222,16 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     setNewItem({ ...newItem, sort_order: value });
                   }
                 }}
-                size="small"
+                size='small'
               />
-              <FormControl size="small" fullWidth>
+              <FormControl
+                size='small'
+                fullWidth
+              >
                 <InputLabel>上级字典项</InputLabel>
                 <Select
-                  value={editingItem?.parent_id || newItem.parent_id || ""}
-                  label="上级字典项"
+                  value={editingItem?.parent_id || newItem.parent_id || ''}
+                  label='上级字典项'
                   onChange={(e) => {
                     const parentId = e.target.value || undefined;
                     if (editingItem) {
@@ -1218,11 +1241,14 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
                     }
                   }}
                 >
-                  <MenuItem value="">无（顶级）</MenuItem>
+                  <MenuItem value=''>无（顶级）</MenuItem>
                   {parentItems
                     .filter((item) => item.id !== editingItem?.id)
                     .map((item) => (
-                      <MenuItem key={item.id} value={item.id}>
+                      <MenuItem
+                        key={item.id}
+                        value={item.id}
+                      >
                         {item.name}
                       </MenuItem>
                     ))}
@@ -1231,22 +1257,25 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
               {editingItem && (
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <Typography variant="body2">状态</Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {editingItem.status === "active" ? "启用" : "禁用"}
+                  <Typography variant='body2'>状态</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {editingItem.status === 'active' ? '启用' : '禁用'}
                     </Typography>
                     <Switch
-                      checked={editingItem.status === "active"}
+                      checked={editingItem.status === 'active'}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setEditingItem({
                           ...editingItem,
-                          status: e.target.checked ? "active" : "inactive",
+                          status: e.target.checked ? 'active' : 'inactive',
                         });
                       }}
                     />
@@ -1257,7 +1286,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
           </DialogContent>
           <DialogActions>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={() => {
                 setShowItemModal(false);
                 setEditingItem(null);
@@ -1265,8 +1294,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
             >
               取消
             </Button>
-            <Button type="submit" variant="contained">
-              {editingItem ? "保存" : "创建"}
+            <Button
+              type='submit'
+              variant='contained'
+            >
+              {editingItem ? '保存' : '创建'}
             </Button>
           </DialogActions>
         </Box>
@@ -1276,20 +1308,29 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       <Dialog
         open={showExportModal}
         onClose={() => setShowExportModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>导出字典项</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             将当前字典类型的所有字典项导出为 JSON 文件。
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowExportModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowExportModal(false)}
+          >
             取消
           </Button>
-          <Button variant="contained" onClick={handleExport}>
+          <Button
+            variant='contained'
+            onClick={handleExport}
+          >
             确认导出
           </Button>
         </DialogActions>
@@ -1299,33 +1340,42 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({
       <Dialog
         open={showImportModal}
         onClose={() => setShowImportModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>导入字典项</DialogTitle>
-        <Box component="form" onSubmit={handleImport}>
+        <Box
+          component='form'
+          onSubmit={handleImport}
+        >
           <DialogContent>
             <Box sx={{ pt: 1 }}>
-              <Typography variant="body2" sx={{ mb: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ mb: 1 }}
+              >
                 选择 JSON 文件
               </Typography>
               <input
-                type="file"
-                accept=".json"
+                type='file'
+                accept='.json'
                 onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                style={{ width: "100%" }}
+                style={{ width: '100%' }}
               />
             </Box>
           </DialogContent>
           <DialogActions>
             <Button
-              variant="outlined"
-              type="button"
+              variant='outlined'
+              type='button'
               onClick={() => setShowImportModal(false)}
             >
               取消
             </Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               确认导入
             </Button>
           </DialogActions>

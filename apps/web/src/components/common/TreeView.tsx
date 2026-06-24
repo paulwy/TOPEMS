@@ -1,14 +1,6 @@
-import React, { useState, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Collapse,
-  Badge,
-  SxProps,
-  Theme,
-} from "@mui/material";
-import { ChevronRight, ChevronDown, Folder, File } from "lucide-react";
+import React, { useState, useCallback } from 'react';
+import { Box, Typography, IconButton, Collapse, Badge, SxProps, Theme } from '@mui/material';
+import { ChevronRight, ChevronDown, Folder, File } from 'lucide-react';
 
 export interface TreeNode {
   id: string;
@@ -25,7 +17,7 @@ export interface TreeViewProps {
   expanded?: string[];
   onSelect?: (node: TreeNode) => void;
   onExpand?: (nodeId: string) => void;
-  density?: "compact" | "normal" | "comfortable";
+  density?: 'compact' | 'normal' | 'comfortable';
 }
 
 interface TreeNodeItemProps {
@@ -35,25 +27,25 @@ interface TreeNodeItemProps {
   expanded: Set<string>;
   onSelect?: (node: TreeNode) => void;
   onToggle: (nodeId: string) => void;
-  density: "compact" | "normal" | "comfortable";
+  density: 'compact' | 'normal' | 'comfortable';
 }
 
 const densityStyles = {
   compact: {
-    padding: "4px 8px",
-    fontSize: "0.875rem",
+    padding: '4px 8px',
+    fontSize: '0.875rem',
     iconSize: 16,
     indent: 16,
   },
   normal: {
-    padding: "8px 12px",
-    fontSize: "1rem",
+    padding: '8px 12px',
+    fontSize: '1rem',
     iconSize: 20,
     indent: 24,
   },
   comfortable: {
-    padding: "12px 16px",
-    fontSize: "1.125rem",
+    padding: '12px 16px',
+    fontSize: '1.125rem',
     iconSize: 24,
     indent: 32,
   },
@@ -88,7 +80,7 @@ function TreeNodeItem({
         onToggle(node.id);
       }
     },
-    [node.id, isDisabled, hasChildren, onToggle],
+    [node.id, isDisabled, hasChildren, onToggle]
   );
 
   const getNodeIcon = () => {
@@ -117,29 +109,29 @@ function TreeNodeItem({
       <Box
         onClick={handleClick}
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 1,
           padding: styles.padding,
           paddingLeft: level * styles.indent + 12,
-          cursor: isDisabled ? "not-allowed" : "pointer",
-          backgroundColor: isSelected ? "action.selected" : "transparent",
+          cursor: isDisabled ? 'not-allowed' : 'pointer',
+          backgroundColor: isSelected ? 'action.selected' : 'transparent',
           opacity: isDisabled ? 0.5 : 1,
-          "&:hover": {
-            backgroundColor: isDisabled ? "transparent" : "action.hover",
+          '&:hover': {
+            backgroundColor: isDisabled ? 'transparent' : 'action.hover',
           },
-          transition: "background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)",
-          userSelect: "none",
+          transition: 'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+          userSelect: 'none',
         }}
       >
         <IconButton
-          size="small"
+          size='small'
           onClick={handleToggle}
           disabled={isDisabled || !hasChildren}
           sx={{
             padding: 0.5,
-            "&:hover": {
-              backgroundColor: "transparent",
+            '&:hover': {
+              backgroundColor: 'transparent',
             },
           }}
         >
@@ -148,8 +140,8 @@ function TreeNodeItem({
 
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 1,
             flex: 1,
             minWidth: 0,
@@ -157,22 +149,22 @@ function TreeNodeItem({
         >
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              color: "text.secondary",
+              display: 'flex',
+              alignItems: 'center',
+              color: 'text.secondary',
             }}
           >
             {getNodeIcon()}
           </Box>
 
           <Typography
-            variant="body2"
+            variant='body2'
             sx={{
               fontSize: styles.fontSize,
               flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {node.label}
@@ -181,12 +173,12 @@ function TreeNodeItem({
           {node.badge !== undefined && (
             <Badge
               badgeContent={node.badge}
-              color="primary"
+              color='primary'
               sx={{
-                "& .MuiBadge-badge": {
-                  fontSize: "0.75rem",
-                  height: "20px",
-                  minWidth: "20px",
+                '& .MuiBadge-badge': {
+                  fontSize: '0.75rem',
+                  height: '20px',
+                  minWidth: '20px',
                 },
               }}
             />
@@ -195,7 +187,11 @@ function TreeNodeItem({
       </Box>
 
       {hasChildren && (
-        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+        <Collapse
+          in={isExpanded}
+          timeout='auto'
+          unmountOnExit
+        >
           <Box>
             {node.children!.map((child) => (
               <TreeNodeItem
@@ -222,15 +218,13 @@ export default function TreeView({
   expanded: controlledExpanded,
   onSelect,
   onExpand,
-  density = "normal",
+  density = 'normal',
 }: TreeViewProps) {
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(
-    () => new Set(controlledExpanded || []),
+    () => new Set(controlledExpanded || [])
   );
 
-  const expanded = controlledExpanded
-    ? new Set(controlledExpanded)
-    : internalExpanded;
+  const expanded = controlledExpanded ? new Set(controlledExpanded) : internalExpanded;
 
   const handleToggle = useCallback(
     (nodeId: string) => {
@@ -249,16 +243,16 @@ export default function TreeView({
         onExpand?.(nodeId);
       }
     },
-    [controlledExpanded, onExpand],
+    [controlledExpanded, onExpand]
   );
 
   return (
     <Box
       sx={{
-        width: "100%",
-        overflow: "auto",
-        "& .MuiIconButton-root": {
-          color: "text.secondary",
+        width: '100%',
+        overflow: 'auto',
+        '& .MuiIconButton-root': {
+          color: 'text.secondary',
         },
       }}
     >

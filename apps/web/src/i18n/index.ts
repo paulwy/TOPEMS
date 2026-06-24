@@ -1,7 +1,7 @@
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-import enTranslation from "./locales/en.json";
-import zhTranslation from "./locales/zh.json";
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import enTranslation from './locales/en.json';
+import zhTranslation from './locales/zh.json';
 
 const resources = {
   en: {
@@ -12,10 +12,13 @@ const resources = {
   },
 };
 
+// 从 localStorage 读取保存的语言设置
+const savedLanguage = localStorage.getItem('language') || 'zh';
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: "zh",
-  fallbackLng: "zh",
+  lng: savedLanguage,
+  fallbackLng: 'zh',
   interpolation: {
     escapeValue: false,
   },
@@ -23,7 +26,7 @@ i18n.use(initReactI18next).init({
 
 export default i18n;
 export const SUPPORTED_LANGUAGES = [
-  { code: "zh", name: "中文", flag: "CN" },
-  { code: "en", name: "English", flag: "US" },
+  { code: 'zh', name: '中文', flag: 'CN' },
+  { code: 'en', name: 'English', flag: 'US' },
 ] as const;
-export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
+export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]['code'];

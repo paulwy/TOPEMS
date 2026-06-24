@@ -3,7 +3,7 @@
  * 提供常用的API数据获取和管理Hooks
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * API响应类型
@@ -47,7 +47,7 @@ export function useApi<T>(
     immediate?: boolean;
     onSuccess?: (data: T) => void;
     onError?: (error: Error) => void;
-  },
+  }
 ) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,7 @@ export function useApi<T>(
       onSuccess?.(result);
       return result;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+      const error = err instanceof Error ? err : new Error('Unknown error');
       setError(error);
       onError?.(error);
       throw error;
@@ -87,7 +87,7 @@ export function useApi<T>(
  */
 export function usePaginatedApi<T>(
   apiFunction: (params: PaginationParams) => Promise<PaginatedResponse<T>>,
-  initialParams: Partial<PaginationParams> = {},
+  initialParams: Partial<PaginationParams> = {}
 ) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,17 +111,17 @@ export function usePaginatedApi<T>(
       }));
       return response;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+      const error = err instanceof Error ? err : new Error('Unknown error');
       setError(error);
       throw error;
     } finally {
       setLoading(false);
     }
-  }, [apiFunction, params.page, params.pageSize]);
+  }, [apiFunction, params]);
 
   useEffect(() => {
     fetchData();
-  }, [params.page, params.pageSize]);
+  }, [fetchData]);
 
   const setPage = useCallback((page: number) => {
     setParams((prev) => ({ ...prev, page }));
@@ -157,7 +157,7 @@ export function useMutation<TData, TVariables = any>(
     onSuccess?: (data: TData, variables: TVariables) => void;
     onError?: (error: Error, variables: TVariables) => void;
     onSettled?: (data?: TData, error?: Error, variables?: TVariables) => void;
-  },
+  }
 ) {
   const [data, setData] = useState<TData | undefined>();
   const [loading, setLoading] = useState(false);
@@ -174,7 +174,7 @@ export function useMutation<TData, TVariables = any>(
         options?.onSettled?.(result, undefined, variables);
         return result;
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Unknown error");
+        const error = err instanceof Error ? err : new Error('Unknown error');
         setError(error);
         options?.onError?.(error, variables);
         options?.onSettled?.(undefined, error, variables);
@@ -183,7 +183,7 @@ export function useMutation<TData, TVariables = any>(
         setLoading(false);
       }
     },
-    [mutationFunction, options],
+    [mutationFunction, options]
   );
 
   const reset = useCallback(() => {
@@ -202,7 +202,7 @@ export function useInfiniteQuery<T>(
   options?: {
     initialPage?: number;
     threshold?: number;
-  },
+  }
 ) {
   const { initialPage = 1, threshold = 100 } = options || {};
 
@@ -233,20 +233,20 @@ export function useInfiniteQuery<T>(
                 setPage((p) => p + 1);
               }
             } catch (err) {
-              setError(err instanceof Error ? err : new Error("Unknown error"));
+              setError(err instanceof Error ? err : new Error('Unknown error'));
             } finally {
               setLoading(false);
             }
           }
         },
-        { rootMargin: `${threshold}px` },
+        { rootMargin: `${threshold}px` }
       );
 
       if (node) {
         observerRef.current.observe(node);
       }
     },
-    [loading, hasMore, page, queryFunction, threshold],
+    [loading, hasMore, page, queryFunction, threshold]
   );
 
   const data = pages.flat();
@@ -265,9 +265,9 @@ export function useInfiniteQuery<T>(
  */
 export function useDebouncedQuery<T>(
   queryFunction: (search: string) => Promise<T[]>,
-  debounceMs: number = 300,
+  debounceMs: number = 300
 ) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
 

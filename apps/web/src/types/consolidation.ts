@@ -10,7 +10,7 @@
 /**
  * 合并范围状态
  */
-export type ConsolidationScopeStatus = "active" | "inactive" | "draft";
+export type ConsolidationScopeStatus = 'active' | 'inactive' | 'draft';
 
 /**
  * 合并范围
@@ -21,7 +21,7 @@ export interface ConsolidationScope {
   code: string; // 合并范围编码
   description?: string; // 说明
   status: ConsolidationScopeStatus; // 状态
-  consolidation_method: "full" | "equity" | "proportional"; // 合并方法
+  consolidation_method: 'full' | 'equity' | 'proportional'; // 合并方法
   created_at: string;
   updated_at: string;
 }
@@ -38,7 +38,7 @@ export interface ConsolidationCompany {
   ownership_percentage: number; // 持股比例
   consolidation_percentage: number; // 合并比例
   is_parent: boolean; // 是否为母公司
-  control_type: "full_control" | "joint_venture" | "associate"; // 控制类型
+  control_type: 'full_control' | 'joint_venture' | 'associate'; // 控制类型
   minority_interest: number; // 少数股东权益
   created_at: string;
 }
@@ -51,7 +51,7 @@ export interface AddCompanyToScopeRequest {
   company_id: string;
   ownership_percentage: number;
   consolidation_percentage: number;
-  control_type: "full_control" | "joint_venture" | "associate";
+  control_type: 'full_control' | 'joint_venture' | 'associate';
 }
 
 // ============================================
@@ -62,18 +62,18 @@ export interface AddCompanyToScopeRequest {
  * 抵消规则类型
  */
 export type EliminationRuleType =
-  | "investment_in_subsidiary" // 投资抵消
-  | "intra_receivable_payable" // 内部往来抵消
-  | "intra_sales_purchase" // 内部购销抵消
-  | "intra_profit_loss" // 未实现利润抵消
-  | "intra_dividend" // 股利分配抵消
-  | "intra_loan" // 内部借款抵消
-  | "other"; // 其他
+  | 'investment_in_subsidiary' // 投资抵消
+  | 'intra_receivable_payable' // 内部往来抵消
+  | 'intra_sales_purchase' // 内部购销抵消
+  | 'intra_profit_loss' // 未实现利润抵消
+  | 'intra_dividend' // 股利分配抵消
+  | 'intra_loan' // 内部借款抵消
+  | 'other'; // 其他
 
 /**
  * 抵消规则状态
  */
-export type EliminationRuleStatus = "active" | "inactive" | "draft";
+export type EliminationRuleStatus = 'active' | 'inactive' | 'draft';
 
 /**
  * 抵消规则
@@ -88,7 +88,7 @@ export interface EliminationRule {
   status: EliminationRuleStatus; // 状态
 
   // 抵消方向
-  direction: "debit" | "credit" | "both";
+  direction: 'debit' | 'credit' | 'both';
 
   // 借方科目（投资抵消时使用）
   debit_account_codes?: string[]; // 如：对子公司投资 1512
@@ -134,7 +134,7 @@ export interface InternalTransaction {
   currency: string; // 币种
 
   // 抵消状态
-  elimination_status: "pending" | "eliminated" | "partial" | "not_applicable";
+  elimination_status: 'pending' | 'eliminated' | 'partial' | 'not_applicable';
   eliminated_amount: number; // 已抵消金额
   remaining_amount: number; // 剩余未抵消金额
 
@@ -153,20 +153,16 @@ export interface InternalTransaction {
  * 合并报表类型
  */
 export type ConsolidationReportType =
-  | "consolidated_balance_sheet" // 合并资产负债表
-  | "consolidated_income_statement" // 合并利润表
-  | "consolidated_cash_flow" // 合并现金流量表
-  | "consolidated_statement_changes" // 合并所有者权益变动表
-  | "elimination_work_sheet"; // 抵消工作底稿
+  | 'consolidated_balance_sheet' // 合并资产负债表
+  | 'consolidated_income_statement' // 合并利润表
+  | 'consolidated_cash_flow' // 合并现金流量表
+  | 'consolidated_statement_changes' // 合并所有者权益变动表
+  | 'elimination_work_sheet'; // 抵消工作底稿
 
 /**
  * 合并报表状态
  */
-export type ConsolidationReportStatus =
-  | "draft"
-  | "calculating"
-  | "completed"
-  | "published";
+export type ConsolidationReportStatus = 'draft' | 'calculating' | 'completed' | 'published';
 
 /**
  * 合并报表
@@ -206,7 +202,7 @@ export interface ConsolidationReport {
   归属于母公司净利润?: number;
 
   // 工作流状态
-  approval_status: "pending" | "approved" | "rejected";
+  approval_status: 'pending' | 'approved' | 'rejected';
   approved_by?: string;
   approved_at?: string;
 
@@ -359,11 +355,11 @@ export interface ConsolidationReportQueryParams {
  * 公司关系类型
  */
 export type CompanyRelationType =
-  | "parent" // 母公司
-  | "subsidiary" // 子公司
-  | "associate" // 联营公司
-  | "joint_venture" // 合营公司
-  | "branch"; // 分公司
+  | 'parent' // 母公司
+  | 'subsidiary' // 子公司
+  | 'associate' // 联营公司
+  | 'joint_venture' // 合营公司
+  | 'branch'; // 分公司
 
 /**
  * 公司关系
@@ -381,7 +377,7 @@ export interface CompanyRelation {
   control_percentage: number;
   effective_date: string;
   expiry_date?: string;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
 }
 
 /**
@@ -456,7 +452,7 @@ export interface CompanyStructureItem {
   control_percentage: number;
   effective_date: string;
   expiry_date?: string;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
 }
 
 /**
@@ -479,7 +475,7 @@ export interface UpdateCompanyRelationRequest {
   ownership_percentage?: number;
   control_percentage?: number;
   expiry_date?: string;
-  status?: "active" | "inactive";
+  status?: 'active' | 'inactive';
 }
 
 /**
@@ -488,7 +484,7 @@ export interface UpdateCompanyRelationRequest {
 export interface CompanyRelationQueryParams {
   company_id?: string;
   relation_type?: CompanyRelationType;
-  status?: "active" | "inactive";
+  status?: 'active' | 'inactive';
   keyword?: string;
   page?: number;
   page_size?: number;

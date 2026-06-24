@@ -1,11 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import {
-  Plugin,
-  TenantInstalledPlugin,
-  PLUGIN_REGISTRY,
-  checkAllPluginsHealth,
-  pluginApi,
-} from "@/api/plugin";
+import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { Plugin, TenantInstalledPlugin } from '@/api/plugin';
+import { PLUGIN_REGISTRY, checkAllPluginsHealth, pluginApi } from '@/api/plugin';
 
 export interface PluginContextType {
   installedPlugins: TenantInstalledPlugin[];
@@ -25,7 +21,7 @@ export interface PluginContextType {
 export const useInstalledPlugins = () => {
   const context = useContext(PluginContext);
   if (!context) {
-    throw new Error("useInstalledPlugins must be used within a PluginProvider");
+    throw new Error('useInstalledPlugins must be used within a PluginProvider');
   }
   return context;
 };
@@ -35,7 +31,7 @@ const PluginContext = createContext<PluginContextType | undefined>(undefined);
 export const usePlugins = () => {
   const context = useContext(PluginContext);
   if (!context) {
-    throw new Error("usePlugins must be used within a PluginProvider");
+    throw new Error('usePlugins must be used within a PluginProvider');
   }
   return context;
 };
@@ -46,7 +42,9 @@ interface PluginProviderProps {
 
 export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const [installedPlugins, setInstalledPlugins] = useState<TenantInstalledPlugin[]>([]);
-  const [pluginHealth, setPluginHealth] = useState<Record<string, { healthy: boolean; status?: string; latency?: number }>>({});
+  const [pluginHealth, setPluginHealth] = useState<
+    Record<string, { healthy: boolean; status?: string; latency?: number }>
+  >({});
   const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,7 +62,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
         setInstalledPlugins(installedRes.data);
       }
     } catch (error) {
-      console.error("Failed to fetch plugins:", error);
+      console.error('Failed to fetch plugins:', error);
     } finally {
       setIsLoading(false);
     }
@@ -76,38 +74,59 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [fetchPlugins]);
 
-  const installPlugin = useCallback(async (code: string) => {
-    await pluginApi.install(code);
-    await fetchPlugins();
-  }, [fetchPlugins]);
+  const installPlugin = useCallback(
+    async (code: string) => {
+      await pluginApi.install(code);
+      await fetchPlugins();
+    },
+    [fetchPlugins]
+  );
 
-  const uninstallPlugin = useCallback(async (code: string) => {
-    await pluginApi.uninstall(code);
-    await fetchPlugins();
-  }, [fetchPlugins]);
+  const uninstallPlugin = useCallback(
+    async (code: string) => {
+      await pluginApi.uninstall(code);
+      await fetchPlugins();
+    },
+    [fetchPlugins]
+  );
 
-  const enablePlugin = useCallback(async (code: string) => {
-    await pluginApi.enable(code);
-    await fetchPlugins();
-  }, [fetchPlugins]);
+  const enablePlugin = useCallback(
+    async (code: string) => {
+      await pluginApi.enable(code);
+      await fetchPlugins();
+    },
+    [fetchPlugins]
+  );
 
-  const disablePlugin = useCallback(async (code: string) => {
-    await pluginApi.disable(code);
-    await fetchPlugins();
-  }, [fetchPlugins]);
+  const disablePlugin = useCallback(
+    async (code: string) => {
+      await pluginApi.disable(code);
+      await fetchPlugins();
+    },
+    [fetchPlugins]
+  );
 
-  const isPluginInstalled = useCallback((code: string) => {
-    return installedPlugins.some((p) => p.plugin_code === code);
-  }, [installedPlugins]);
+  const isPluginInstalled = useCallback(
+    (code: string) => {
+      return installedPlugins.some((p) => p.plugin_code === code);
+    },
+    [installedPlugins]
+  );
 
-  const isPluginActive = useCallback((code: string) => {
-    const plugin = installedPlugins.find((p) => p.plugin_code === code);
-    return plugin?.is_active ?? false;
-  }, [installedPlugins]);
+  const isPluginActive = useCallback(
+    (code: string) => {
+      const plugin = installedPlugins.find((p) => p.plugin_code === code);
+      return plugin?.is_active ?? false;
+    },
+    [installedPlugins]
+  );
 
-  const isPluginHealthy = useCallback((code: string) => {
-    return pluginHealth[code]?.healthy ?? false;
-  }, [pluginHealth]);
+  const isPluginHealthy = useCallback(
+    (code: string) => {
+      return pluginHealth[code]?.healthy ?? false;
+    },
+    [pluginHealth]
+  );
 
   return (
     <PluginContext.Provider

@@ -34,6 +34,9 @@ pub mod tenant;
 pub mod validation;
 pub mod vector_store;
 
+// AI 客户端模块
+pub mod ai_client;
+
 pub use api_version::{
     api_prefix, create_api_info, create_api_info_router, default_versioned_router,
     get_api_info_handler, versioned_router, ApiInfo, ApiVersionInfo,
@@ -173,3 +176,10 @@ pub use file_client::{FileServiceClient, UploadResponse};
 
 // Migration SDK 模块
 pub use migration::{MigrationHistory, MigrationResult, MigrationSDK, MigrationStatus};
+
+// AI 客户端模块导出
+pub use ai_client::{
+    AIClient, AIClientError, AIModelConfig, AIProviderType, ChatCompletionRequest, 
+    ChatCompletionResponse, ChatMessage, EmbeddingRequest, EmbeddingResponse, 
+    UnifiedAIClient, create_client, get_supported_models,
+};

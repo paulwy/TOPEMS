@@ -1,9 +1,11 @@
 use axum::{
     extract::{Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, HeaderValue},
+    response::IntoResponse,
     routing::get,
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -15,6 +17,7 @@ pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
         .route("/api/rs/audit-logs", get(list_audit_logs))
         .route("/api/rs/audit-logs/{id}", get(get_audit_log))
+        .route("/api/rs/audit-logs/export", get(export_audit_logs))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -218,4 +221,115 @@ pub async fn log_audit_event(
     if let Err(e) = result {
         tracing::error!("记录审计日志失败: {}", e);
     }
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/rs/audit-logs/export",
+    tag = "audit",
+    params(
+        ("action" = Option<String>, Query, description = "操作类型"),
+        ("entity_type" = Option<String>, Query, description = "实体类型"),
+        ("user_id" = Option<String>, Query, description = "用户 ID"),
+        ("status" = Option<String>, Query, description = "操作状态"),
+        ("start_date" = Option<String>, Query, description = "开始时间"),
+        ("end_date" = Option<String>, Query, description = "结束时间")
+    ),
+    responses(
+        (status = 200, description = "导出审计日志成功"),
+        (status = 500, description = "服务器错误")
+    )
+)]
+async fn export_audit_logs(
+    State(state): State<super::ApiState>,
+    Query(params): Query<ListAuditLogsQuery>,
+) -> impl IntoResponse {
+    let result = sqlx::query_as::<_, AuditLog>(
+        r#"
+        SELECT id, action, entity_type, entity_id, entity_ids,
+               user_id, user_name, request_details, response_details,
+               status, error_message, ip_address, user_agent, created_at
+        FROM rs.audit_logs
+        WHERE ($1::text IS NULL OR action = $1)
+          AND ($2::text IS NULL OR entity_type = $2)
+          AND ($3::text IS NULL OR user_id = $3)
+          AND ($4::text IS NULL OR status = $4)
+          AND ($5::text IS NULL OR created_at >= $5::timestamptz)
+          AND ($6::text IS NULL OR created_at <= $6::timestamptz)
+        ORDER BY created_at DESC
+        "#,
+    )
+    .bind(&params.action)
+    .bind(&params.entity_type)
+    .bind(&params.user_id)
+    .bind(&params.status)
+    .bind(params.start_date)
+    .bind(params.end_date)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(logs) => {
+            let csv_content = generate_csv(&logs);
+            let filename = format!(
+                "audit_logs_{}.csv",
+                Utc::now().format("%Y%m%d_%H%M%S")
+            );
+            
+            let headers = [
+                ("Content-Type", "text/csv; charset=utf-8"),
+                ("Content-Disposition", &format!("attachment; filename=\"{}\"", filename)),
+            ];
+            
+            Ok((headers, csv_content))
+        }
+        Err(e) => {
+            tracing::error!("导出审计日志失败: {}", e);
+            Err((
+                [("Content-Type", "application/json")],
+                serde_json::to_string(&ApiResponse::error(500, "导出审计日志失败")).unwrap(),
+            ))
+        }
+    }
+}
+
+fn generate_csv(logs: &[AuditLog]) -> String {
+    let mut wtr = csv::WriterBuilder::new()
+        .delimiter(b',')
+        .quote_style(csv::QuoteStyle::Always)
+        .from_writer(vec![]);
+    
+    wtr.write_record(&[
+        "ID", "操作", "实体类型", "实体ID", "用户ID", "用户名", 
+        "状态", "错误信息", "IP地址", "创建时间", "请求详情", "响应详情"
+    ]).unwrap();
+    
+    for log in logs {
+        let request_details = log.request_details
+            .as_ref()
+            .and_then(|v| serde_json::to_string(v).ok())
+            .unwrap_or_default();
+        
+        let response_details = log.response_details
+            .as_ref()
+            .and_then(|v| serde_json::to_string(v).ok())
+            .unwrap_or_default();
+        
+        wtr.write_record(&[
+            log.id.to_string(),
+            log.action.clone(),
+            log.entity_type.clone(),
+            log.entity_id.map(|id| id.to_string()).unwrap_or_default(),
+            log.user_id.clone().unwrap_or_default(),
+            log.user_name.clone().unwrap_or_default(),
+            log.status.clone(),
+            log.error_message.clone().unwrap_or_default(),
+            log.ip_address.clone().unwrap_or_default(),
+            log.created_at.to_rfc3339(),
+            request_details,
+            response_details,
+        ]).unwrap();
+    }
+    
+    String::from_utf8(wtr.into_inner().unwrap()).unwrap()
 }

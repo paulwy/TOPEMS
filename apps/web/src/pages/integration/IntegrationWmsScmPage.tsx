@@ -1,391 +1,310 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { integrationApi } from "@/api/integration";
-import type { WmsScmSync, CreateWmsScmSyncRequest } from "@/api/integration";
-import { logger } from "@/utils/logger";
+/**
+ * WMS-SCM 集成页面
+ * 管理 WMS 库存与 SCM 供应的同步
+ */
+
+import React, { useState, useCallback } from 'react';
+import { Plus, RefreshCw, Eye, Trash2 } from 'lucide-react';
+import { Box, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+
+import {
+  ListPageTemplate,
+  FormPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from '@/components/templates';
+import { integrationApi } from '@/api/integration';
+import type { WmsScmSync, CreateWmsScmSyncRequest } from '@/api/integration';
+import { logger } from '@/utils/logger';
+
+// 状态配置
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+> = {
+  synced: { label: '已同步', color: 'success' },
+  pending: { label: '待同步', color: 'warning' },
+  failed: { label: '失败', color: 'error' },
+};
+
+// 表单字段配置
+const FORM_SECTIONS = [
+  {
+    id: 'basic',
+    title: '基本信息',
+    fields: [
+      {
+        name: 'wms_inventory_id',
+        label: 'WMS 库存 ID',
+        type: 'text',
+        required: true,
+        placeholder: '输入 WMS 库存 UUID',
+      },
+      {
+        name: 'item_name',
+        label: '物品名称',
+        type: 'text',
+        required: true,
+        placeholder: '输入物品名称',
+      },
+      {
+        name: 'quantity',
+        label: '数量',
+        type: 'number',
+        placeholder: '输入数量（可选）',
+      },
+      {
+        name: 'unit',
+        label: '单位',
+        type: 'text',
+        placeholder: '输入单位（可选）',
+      },
+    ],
+  },
+];
 
 const IntegrationWmsScmPage: React.FC = () => {
+  // 数据状态
   const [syncs, setSyncs] = useState<WmsScmSync[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ page: 0, pageSize: 10 });
+  const [searchValue, setSearchValue] = useState('');
 
-  const loadData = async () => {
+  // 弹窗状态
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingSync, setEditingSync] = useState<WmsScmSync | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // 加载数据
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await integrationApi.listWmsScmSyncs();
-      if (res.success && res.data !== undefined) setSyncs(res.data);
+      if (res.success && res.data !== undefined) {
+        setSyncs(res.data);
+      }
     } catch (error) {
-      logger.error("Error loading data:", error);
+      logger.error('Error loading WMS-SCM syncs:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
-  const showToast = (message: string) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  // 初始加载
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  // 筛选数据
+  const filteredData = React.useMemo(() => {
+    if (!searchValue) return syncs;
+    const keyword = searchValue.toLowerCase();
+    return syncs.filter(
+      (sync) =>
+        sync.item_name.toLowerCase().includes(keyword) ||
+        sync.wms_inventory_id.toLowerCase().includes(keyword)
+    );
+  }, [syncs, searchValue]);
+
+  // 表格列定义
+  const columns: ColumnDef<WmsScmSync>[] = [
+    {
+      id: 'item_name',
+      label: '物品名称',
+      sortable: true,
+      render: (row) => (
+        <Box>
+          <Box sx={{ fontWeight: 500, color: 'text.primary' }}>{row.item_name}</Box>
+          <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            ID: {row.wms_inventory_id.slice(0, 8)}...
+          </Box>
+        </Box>
+      ),
+    },
+    {
+      id: 'quantity',
+      label: '数量',
+      sortable: true,
+      render: (row) => (
+        <Box>
+          {row.quantity ?? '-'} {row.unit || ''}
+        </Box>
+      ),
+    },
+    {
+      id: 'sync_status',
+      label: '状态',
+      sortable: true,
+      render: (row) => {
+        const config = STATUS_CONFIG[row.sync_status] || STATUS_CONFIG.pending;
+        return (
+          <Chip
+            label={config.label}
+            color={config.color}
+            size='small'
+          />
+        );
+      },
+    },
+    {
+      id: 'last_synced_at',
+      label: '最后同步',
+      sortable: true,
+      render: (row) => (
+        <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+          {row.last_synced_at ? new Date(row.last_synced_at).toLocaleString('zh-CN') : '从未同步'}
+        </Box>
+      ),
+    },
+    {
+      id: 'created_at',
+      label: '创建时间',
+      sortable: true,
+      render: (row) => (
+        <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+          {new Date(row.created_at).toLocaleString('zh-CN')}
+        </Box>
+      ),
+    },
+  ];
+
+  // 行操作
+  const rowActions: RowAction<WmsScmSync>[] = [
+    {
+      label: '查看详情',
+      icon: <Eye size={14} />,
+      onClick: (row) => setEditingSync(row),
+    },
+    {
+      label: '同步',
+      icon: <RefreshCw size={14} />,
+      onClick: (row) => handleSync(row.id),
+      show: (row) => !row.synced,
+    },
+    {
+      label: '删除',
+      icon: <Trash2 size={14} />,
+      color: 'error',
+      onClick: (row) => handleDelete(row.id),
+    },
+  ];
+
+  // 处理创建提交
+  const handleSubmit = async (data: any) => {
     try {
-      const data: CreateWmsScmSyncRequest = {
-        wms_inventory_id: formData.get("wms_inventory_id") as string,
-        item_name: formData.get("item_name") as string,
-        quantity: formData.get("quantity")
-          ? parseFloat(formData.get("quantity") as string)
-          : undefined,
-        unit: (formData.get("unit") as string) || undefined,
-      };
-      await integrationApi.createWmsScmSync(data);
-      showToast("WMS-SCM sync created successfully");
-      e.currentTarget.reset();
+      setSubmitting(true);
+      if (editingSync) {
+        logger.warn('Update not implemented');
+      } else {
+        const request: CreateWmsScmSyncRequest = {
+          wms_inventory_id: data.wms_inventory_id,
+          item_name: data.item_name,
+          quantity: data.quantity ? parseFloat(data.quantity) : undefined,
+          unit: data.unit || undefined,
+        };
+        await integrationApi.createWmsScmSync(request);
+      }
+      handleCloseModal();
       loadData();
     } catch (error) {
-      logger.error("Error creating sync:", error);
-      showToast("Failed to create sync");
+      logger.error('Error saving sync:', error);
+      throw error;
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  // 处理同步
   const handleSync = async (id: string) => {
     try {
       await integrationApi.syncWmsScm(id);
-      showToast("WMS-SCM sync completed");
       loadData();
     } catch (error) {
-      logger.error("Error syncing:", error);
-      showToast("Failed to sync");
+      logger.error('Error syncing:', error);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "synced":
-        return { backgroundColor: "#dcfce7", color: "#166534" };
-      case "pending":
-        return { backgroundColor: "#fef9c3", color: "#854d0e" };
-      case "failed":
-        return { backgroundColor: "#fee2e2", color: "#991b1b" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#1f2937" };
+  // 处理删除
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定要删除此同步记录吗？')) return;
+    try {
+      logger.warn('Delete not implemented');
+    } catch (error) {
+      logger.error('Error deleting:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f9fafb",
-        }}
-      >
-        <Typography sx={{ color: "#4b5563" }}>加载中...</Typography>
-      </Box>
-    );
-  }
+  // 关闭弹窗
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setEditingSync(null);
+  };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f9fafb", p: 3 }}>
-      {toastMessage && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 2,
-            right: 2,
-            backgroundColor: "#2563eb",
-            color: "#ffffff",
-            px: 2,
-            py: 1,
-            borderRadius: 2,
-            boxShadow: 3,
-            zIndex: 50,
-          }}
-        >
-          {toastMessage}
-        </Box>
-      )}
+    <>
+      <ListPageTemplate
+        title='WMS ↔ SCM 同步'
+        subtitle='管理 WMS 库存与 SCM 供应的同步'
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: filteredData.length,
+          onPageChange: (page) => setPagination((p) => ({ ...p, page })),
+          onPageSizeChange: (pageSize) => setPagination({ page: 0, pageSize }),
+        }}
+        searchValue={searchValue}
+        onSearch={setSearchValue}
+        searchable
+        searchPlaceholder='搜索物品名称...'
+        actions={[
+          {
+            label: '新建同步',
+            icon: <Plus size={16} />,
+            onClick: () => setShowCreateModal(true),
+            variant: 'contained',
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={loadData}
+        emptyMessage='暂无 WMS-SCM 同步记录'
+      />
 
-      <Box sx={{ maxWidth: 1280, mx: "auto" }}>
-        <Typography
-          variant="h5"
-          sx={{ fontWeight: 700, color: "#111827", mb: 3 }}
-        >
-          📦 WMS ↔ SCM 同步
-        </Typography>
-
-        <Box
-          sx={{
-            backgroundColor: "#ffffff",
-            p: 3,
-            borderRadius: 2,
-            boxShadow: 1,
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 600, color: "#111827", mb: 2 }}
-          >
-            ➕ 创建 WMS ↔ SCM 同步
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleCreate}
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                WMS 库存 ID
-              </Typography>
-              <input
-                type="text"
-                name="wms_inventory_id"
-                required
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="输入 UUID"
-              />
-            </Box>
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                物品名称
-              </Typography>
-              <input
-                type="text"
-                name="item_name"
-                required
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="输入物品名称"
-              />
-            </Box>
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                数量
-              </Typography>
-              <input
-                type="number"
-                name="quantity"
-                step="0.01"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="可选"
-              />
-            </Box>
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                单位
-              </Typography>
-              <input
-                type="text"
-                name="unit"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="可选"
-              />
-            </Box>
-            <Box sx={{ gridColumn: "span 2" }}>
-              <Button
-                type="submit"
-                sx={{
-                  px: 3,
-                  py: 1,
-                  backgroundColor: "#16a34a",
-                  color: "#ffffff",
-                  borderRadius: 2,
-                  "&:hover": { backgroundColor: "#15803d" },
-                }}
-              >
-                创建同步
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            backgroundColor: "#ffffff",
-            p: 3,
-            borderRadius: 2,
-            boxShadow: 1,
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 600, color: "#111827", mb: 2 }}
-          >
-            📋 同步列表
-          </Typography>
-          <Box sx={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    物品名称
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    数量
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    单位
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    状态
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {syncs.map((sync) => (
-                  <tr
-                    key={sync.id}
-                    style={{ borderBottom: "1px solid #e5e7eb" }}
-                  >
-                    <td style={{ padding: "12px 16px" }}>{sync.item_name}</td>
-                    <td style={{ padding: "12px 16px" }}>
-                      {sync.quantity || "-"}
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>{sync.unit || "-"}</td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          fontSize: "0.875rem",
-                          ...getStatusColor(sync.sync_status),
-                        }}
-                      >
-                        {sync.sync_status}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      {!sync.synced && (
-                        <Button
-                          onClick={() => handleSync(sync.id)}
-                          sx={{
-                            px: 2,
-                            py: 0.5,
-                            backgroundColor: "#2563eb",
-                            color: "#ffffff",
-                            borderRadius: 1,
-                            fontSize: "0.875rem",
-                            "&:hover": { backgroundColor: "#1d4ed8" },
-                          }}
-                        >
-                          同步
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+      {/* 创建/编辑弹窗 */}
+      <Dialog
+        open={showCreateModal || !!editingSync}
+        onClose={handleCloseModal}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>{editingSync ? '查看同步详情' : '创建 WMS-SCM 同步'}</DialogTitle>
+        <DialogContent>
+          <FormPageTemplate
+            sections={FORM_SECTIONS}
+            defaultValues={editingSync || {}}
+            onSubmit={handleSubmit}
+            onCancel={handleCloseModal}
+            submitting={submitting}
+            columns={1}
+            submitText={editingSync ? '关闭' : '创建'}
+            mode={editingSync ? 'view' : 'edit'}
+          />
+        </DialogContent>
+        {!editingSync && (
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={handleCloseModal}
+            >
+              取消
+            </Button>
+          </DialogActions>
+        )}
+      </Dialog>
+    </>
   );
 };
 

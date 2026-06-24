@@ -24,6 +24,7 @@ use axum::{
 };
 use std::env;
 use std::time::Instant;
+use utoipa::OpenApi;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
@@ -115,6 +116,7 @@ async fn main() -> Result<()> {
     let health_router = Router::new()
         .route("/health", get(health_check))
         .route("/api/srm/health/detailed", get(health_check_detailed))
+        .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
@@ -584,4 +586,8 @@ async fn get_suppliers_with_stats(
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
+}
+
+async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(api::openapi::SrmApiDoc::openapi())
 }

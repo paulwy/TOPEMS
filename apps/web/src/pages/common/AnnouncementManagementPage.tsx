@@ -1,6 +1,24 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Tooltip, IconButton,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+  IconButton,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   Bell,
   Search,
@@ -11,22 +29,20 @@ import {
   AlertCircle,
   Calendar,
   User,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { announcementApi, type Announcement } from "@/api/erp";
-import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/DataTable";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { announcementApi, type Announcement } from '@/api/erp';
+import { useAppStore } from '../../store';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DataTable } from '@/components/DataTable';
 
-import { ModeToggle } from "@/components/ModeToggle";
+import { ModeToggle } from '@/components/ModeToggle';
 
 interface AnnouncementManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
-const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
-  onNavigate,
-}) => {
+const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
@@ -35,18 +51,15 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedAnnouncement, setSelectedAnnouncement] =
-    useState<Announcement | null>(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
 
-  const [newAnnouncement, setNewAnnouncement] = useState<Partial<Announcement>>(
-    {
-      title: "",
-      content: "",
-      author: "",
-      status: "draft",
-      priority: "normal",
-    },
-  );
+  const [newAnnouncement, setNewAnnouncement] = useState<Partial<Announcement>>({
+    title: '',
+    content: '',
+    author: '',
+    status: 'draft',
+    priority: 'normal',
+  });
 
   useEffect(() => {
     loadData();
@@ -62,11 +75,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         setAnnouncements(res.data.items || []);
       }
     } catch (err: any) {
-      setError(err.message || "加载数据失败");
+      setError(err.message || '加载数据失败');
       addNotification({
-        title: "加载失败",
-        message: "加载数据失败",
-        type: "error",
+        title: '加载失败',
+        message: '加载数据失败',
+        type: 'error',
       });
       setAnnouncements([]);
     } finally {
@@ -80,58 +93,58 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       const res = await announcementApi.create(newAnnouncement);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "公告创建成功",
-          type: "success",
+          title: '成功',
+          message: '公告创建成功',
+          type: 'success',
         });
         setShowCreateModal(false);
         setNewAnnouncement({
-          title: "",
-          content: "",
-          author: "",
-          status: "draft",
-          priority: "normal",
+          title: '',
+          content: '',
+          author: '',
+          status: 'draft',
+          priority: 'normal',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "创建公告失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '创建公告失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "创建公告失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '创建公告失败',
+        type: 'error',
       });
     }
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!confirm("确定要删除这条公告吗？")) return;
+    if (!confirm('确定要删除这条公告吗？')) return;
     try {
       const res = await announcementApi.delete(id);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "公告删除成功",
-          type: "success",
+          title: '成功',
+          message: '公告删除成功',
+          type: 'success',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "删除公告失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '删除公告失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "删除公告失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '删除公告失败',
+        type: 'error',
       });
     }
   };
@@ -140,31 +153,28 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
     e.preventDefault();
     if (!selectedAnnouncement) return;
     try {
-      const res = await announcementApi.update(
-        selectedAnnouncement.id,
-        selectedAnnouncement,
-      );
+      const res = await announcementApi.update(selectedAnnouncement.id, selectedAnnouncement);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "公告信息更新成功",
-          type: "success",
+          title: '成功',
+          message: '公告信息更新成功',
+          type: 'success',
         });
         setShowEditModal(false);
         setSelectedAnnouncement(null);
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "更新公告失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '更新公告失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "更新公告失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '更新公告失败',
+        type: 'error',
       });
     }
   };
@@ -174,23 +184,23 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       const res = await announcementApi.publish(id);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "公告发布成功",
-          type: "success",
+          title: '成功',
+          message: '公告发布成功',
+          type: 'success',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "发布公告失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '发布公告失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "发布公告失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '发布公告失败',
+        type: 'error',
       });
     }
   };
@@ -200,23 +210,23 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       const res = await announcementApi.unpublish(id);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "公告已下架",
-          type: "success",
+          title: '成功',
+          message: '公告已下架',
+          type: 'success',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "下架公告失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '下架公告失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "下架公告失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '下架公告失败',
+        type: 'error',
       });
     }
   };
@@ -224,27 +234,21 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   const getStatusBadge = (status: string) => {
     const colors: Record<
       string,
-      | "default"
-      | "primary"
-      | "secondary"
-      | "error"
-      | "info"
-      | "success"
-      | "warning"
+      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
     > = {
-      draft: "default",
-      published: "success",
-      archived: "default",
+      draft: 'default',
+      published: 'success',
+      archived: 'default',
     };
     const labels: Record<string, string> = {
-      draft: "草稿",
-      published: "已发布",
-      archived: "已归档",
+      draft: '草稿',
+      published: '已发布',
+      archived: '已归档',
     };
     return (
       <Chip
-        size="small"
-        color={colors[status] || "default"}
+        size='small'
+        color={colors[status] || 'default'}
         label={labels[status] || status}
       />
     );
@@ -253,30 +257,24 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   const getPriorityBadge = (priority?: string) => {
     const colors: Record<
       string,
-      | "default"
-      | "primary"
-      | "secondary"
-      | "error"
-      | "info"
-      | "success"
-      | "warning"
+      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
     > = {
-      low: "default",
-      normal: "info",
-      high: "warning",
-      urgent: "error",
+      low: 'default',
+      normal: 'info',
+      high: 'warning',
+      urgent: 'error',
     };
     const labels: Record<string, string> = {
-      low: "低",
-      normal: "普通",
-      high: "高",
-      urgent: "紧急",
+      low: '低',
+      normal: '普通',
+      high: '高',
+      urgent: '紧急',
     };
     return (
       <Chip
-        size="small"
-        color={colors[priority || "normal"] || "default"}
-        label={labels[priority || "normal"] || priority}
+        size='small'
+        color={colors[priority || 'normal'] || 'default'}
+        label={labels[priority || 'normal'] || priority}
       />
     );
   };
@@ -284,98 +282,98 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   const columns = useMemo<ColumnDef<Announcement>[]>(
     () => [
       {
-        accessorKey: "title",
-        header: "标题",
+        accessorKey: 'title',
+        header: '标题',
         cell: ({ row }) => (
-          <Box sx={{ fontWeight: "medium", color: "text.primary" }}>
-            {row.original.title}
-          </Box>
+          <Box sx={{ fontWeight: 'medium', color: 'text.primary' }}>{row.original.title}</Box>
         ),
       },
       {
-        accessorKey: "author",
-        header: "作者",
+        accessorKey: 'author',
+        header: '作者',
         cell: ({ row }) => (
-          <Box
-            sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem" }}
-          >
-            <User size={12} style={{ marginRight: 4, color: "#1976d2" }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem' }}>
+            <User
+              size={12}
+              style={{ marginRight: 4, color: '#1976d2' }}
+            />
             {row.original.author}
           </Box>
         ),
       },
       {
-        accessorKey: "priority",
-        header: "优先级",
+        accessorKey: 'priority',
+        header: '优先级',
         cell: ({ row }) => getPriorityBadge(row.original.priority),
       },
       {
-        accessorKey: "status",
-        header: "状态",
+        accessorKey: 'status',
+        header: '状态',
         cell: ({ row }) => getStatusBadge(row.original.status),
       },
       {
-        accessorKey: "publish_at",
-        header: "发布时间",
+        accessorKey: 'publish_at',
+        header: '发布时间',
         cell: ({ row }) => (
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: "0.875rem",
-              color: "text.secondary",
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: '0.875rem',
+              color: 'text.secondary',
             }}
           >
-            <Calendar size={12} style={{ marginRight: 4 }} />
-            {row.original.publish_at
-              ? new Date(row.original.publish_at).toLocaleString()
-              : "-"}
+            <Calendar
+              size={12}
+              style={{ marginRight: 4 }}
+            />
+            {row.original.publish_at ? new Date(row.original.publish_at).toLocaleString() : '-'}
           </Box>
         ),
       },
       {
-        accessorKey: "created_at",
-        header: "创建时间",
+        accessorKey: 'created_at',
+        header: '创建时间',
         cell: ({ row }) => (
-          <Box sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
+          <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
             {new Date(row.original.created_at).toLocaleDateString()}
           </Box>
         ),
       },
       {
-        id: "actions",
-        header: "操作",
+        id: 'actions',
+        header: '操作',
         cell: ({ row }) => {
           const announcement = row.original;
           return (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-              {announcement.status === "draft" && (
-                <Tooltip title="发布公告">
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+              {announcement.status === 'draft' && (
+                <Tooltip title='发布公告'>
                   <Button
-                    variant="text"
-                    size="small"
-                    sx={{ color: "success.main" }}
+                    variant='text'
+                    size='small'
+                    sx={{ color: 'success.main' }}
                     onClick={() => handlePublish(announcement.id)}
                   >
                     发布
                   </Button>
                 </Tooltip>
               )}
-              {announcement.status === "published" && (
-                <Tooltip title="下架公告">
+              {announcement.status === 'published' && (
+                <Tooltip title='下架公告'>
                   <Button
-                    variant="text"
-                    size="small"
-                    sx={{ color: "warning.main" }}
+                    variant='text'
+                    size='small'
+                    sx={{ color: 'warning.main' }}
                     onClick={() => handleUnpublish(announcement.id)}
                   >
                     下架
                   </Button>
                 </Tooltip>
               )}
-              <Tooltip title="编辑">
+              <Tooltip title='编辑'>
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={() => {
                     setSelectedAnnouncement(announcement);
                     setShowEditModal(true);
@@ -384,10 +382,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   <Edit size={16} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="删除">
+              <Tooltip title='删除'>
                 <IconButton
-                  size="small"
-                  sx={{ color: "error.main" }}
+                  size='small'
+                  sx={{ color: 'error.main' }}
                   onClick={() => handleDeleteAnnouncement(announcement.id)}
                 >
                   <Trash2 size={16} />
@@ -399,53 +397,59 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       {/* 顶部导航 */}
       <Box
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <IconButton onClick={() => navigate("/dashboard")}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <IconButton onClick={() => navigate('/dashboard')}>
                 <ChevronLeft />
               </IconButton>
               <Box>
                 <Typography
-                  variant="h5"
+                  variant='h5'
                   sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 1,
                   }}
                 >
-                  <Bell size={28} color="#1976d2" />
+                  <Bell
+                    size={28}
+                    color='#1976d2'
+                  />
                   公告管理
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   管理企业公告和通知
                 </Typography>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <ModeToggle />
               <Button
-                variant="contained"
+                variant='contained'
                 onClick={() => setShowCreateModal(true)}
                 startIcon={<Plus size={20} />}
               >
@@ -456,34 +460,36 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 4 }}>
         <Card>
           <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
+              <Box sx={{ p: 4, textAlign: 'center' }}>
                 <Box
                   sx={{
-                    display: "inline-block",
+                    display: 'inline-block',
                     width: 32,
                     height: 32,
                     border: 4,
-                    borderColor: "primary.main",
-                    borderTop: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
+                    borderColor: 'primary.main',
+                    borderTop: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
                   }}
                 />
-                <Typography sx={{ mt: 2, color: "text.secondary" }}>
-                  加载中...
-                </Typography>
+                <Typography sx={{ mt: 2, color: 'text.secondary' }}>加载中...</Typography>
               </Box>
             ) : error ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle size={48} color="#d32f2f" />
-                <Typography sx={{ color: "error.main", mt: 2 }}>
-                  {error}
-                </Typography>
-                <Button sx={{ mt: 2 }} onClick={loadData}>
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <AlertCircle
+                  size={48}
+                  color='#d32f2f'
+                />
+                <Typography sx={{ color: 'error.main', mt: 2 }}>{error}</Typography>
+                <Button
+                  sx={{ mt: 2 }}
+                  onClick={loadData}
+                >
                   重试
                 </Button>
               </Box>
@@ -491,8 +497,8 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
               <DataTable
                 columns={columns}
                 data={announcements}
-                searchPlaceholder="搜索公告标题、作者..."
-                searchKey="title"
+                searchPlaceholder='搜索公告标题、作者...'
+                searchKey='title'
               />
             )}
           </CardContent>
@@ -503,7 +509,7 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>新增公告</DialogTitle>
@@ -511,16 +517,16 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           <DialogContent>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 2,
                 pt: 1,
               }}
             >
               <TextField
-                label="标题 *"
+                label='标题 *'
                 required
-                value={newAnnouncement.title || ""}
+                value={newAnnouncement.title || ''}
                 onChange={(e) =>
                   setNewAnnouncement({
                     ...newAnnouncement,
@@ -532,8 +538,8 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
               <FormControl fullWidth>
                 <InputLabel>优先级</InputLabel>
                 <Select
-                  value={newAnnouncement.priority || "normal"}
-                  label="优先级"
+                  value={newAnnouncement.priority || 'normal'}
+                  label='优先级'
                   onChange={(e) =>
                     setNewAnnouncement({
                       ...newAnnouncement,
@@ -541,16 +547,16 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                     })
                   }
                 >
-                  <MenuItem value="low">低</MenuItem>
-                  <MenuItem value="normal">普通</MenuItem>
-                  <MenuItem value="high">高</MenuItem>
-                  <MenuItem value="urgent">紧急</MenuItem>
+                  <MenuItem value='low'>低</MenuItem>
+                  <MenuItem value='normal'>普通</MenuItem>
+                  <MenuItem value='high'>高</MenuItem>
+                  <MenuItem value='urgent'>紧急</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label="作者 *"
+                label='作者 *'
                 required
-                value={newAnnouncement.author || ""}
+                value={newAnnouncement.author || ''}
                 onChange={(e) =>
                   setNewAnnouncement({
                     ...newAnnouncement,
@@ -562,8 +568,8 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
               <FormControl fullWidth>
                 <InputLabel>状态</InputLabel>
                 <Select
-                  value={newAnnouncement.status || "draft"}
-                  label="状态"
+                  value={newAnnouncement.status || 'draft'}
+                  label='状态'
                   onChange={(e) =>
                     setNewAnnouncement({
                       ...newAnnouncement,
@@ -571,15 +577,15 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                     })
                   }
                 >
-                  <MenuItem value="draft">草稿</MenuItem>
-                  <MenuItem value="published">发布</MenuItem>
-                  <MenuItem value="archived">归档</MenuItem>
+                  <MenuItem value='draft'>草稿</MenuItem>
+                  <MenuItem value='published'>发布</MenuItem>
+                  <MenuItem value='archived'>归档</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label="发布时间"
-                type="datetime-local"
-                value={newAnnouncement.publish_at || ""}
+                label='发布时间'
+                type='datetime-local'
+                value={newAnnouncement.publish_at || ''}
                 onChange={(e) =>
                   setNewAnnouncement({
                     ...newAnnouncement,
@@ -589,9 +595,9 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                 fullWidth
               />
               <TextField
-                label="过期时间"
-                type="datetime-local"
-                value={newAnnouncement.expire_at || ""}
+                label='过期时间'
+                type='datetime-local'
+                value={newAnnouncement.expire_at || ''}
                 onChange={(e) =>
                   setNewAnnouncement({
                     ...newAnnouncement,
@@ -601,10 +607,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                 fullWidth
               />
               <TextField
-                label="内容"
+                label='内容'
                 multiline
                 rows={6}
-                value={newAnnouncement.content || ""}
+                value={newAnnouncement.content || ''}
                 onChange={(e) =>
                   setNewAnnouncement({
                     ...newAnnouncement,
@@ -612,13 +618,16 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   })
                 }
                 fullWidth
-                sx={{ gridColumn: "span 2" }}
+                sx={{ gridColumn: 'span 2' }}
               />
             </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               创建
             </Button>
           </DialogActions>
@@ -629,7 +638,7 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>编辑公告</DialogTitle>
@@ -638,14 +647,14 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
             <DialogContent>
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                   pt: 1,
                 }}
               >
                 <TextField
-                  label="标题 *"
+                  label='标题 *'
                   required
                   value={selectedAnnouncement.title}
                   onChange={(e) =>
@@ -659,8 +668,8 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                 <FormControl fullWidth>
                   <InputLabel>优先级</InputLabel>
                   <Select
-                    value={selectedAnnouncement.priority || "normal"}
-                    label="优先级"
+                    value={selectedAnnouncement.priority || 'normal'}
+                    label='优先级'
                     onChange={(e) =>
                       setSelectedAnnouncement({
                         ...selectedAnnouncement,
@@ -668,14 +677,14 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                       })
                     }
                   >
-                    <MenuItem value="low">低</MenuItem>
-                    <MenuItem value="normal">普通</MenuItem>
-                    <MenuItem value="high">高</MenuItem>
-                    <MenuItem value="urgent">紧急</MenuItem>
+                    <MenuItem value='low'>低</MenuItem>
+                    <MenuItem value='normal'>普通</MenuItem>
+                    <MenuItem value='high'>高</MenuItem>
+                    <MenuItem value='urgent'>紧急</MenuItem>
                   </Select>
                 </FormControl>
                 <TextField
-                  label="作者 *"
+                  label='作者 *'
                   required
                   value={selectedAnnouncement.author}
                   onChange={(e) =>
@@ -690,7 +699,7 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   <InputLabel>状态</InputLabel>
                   <Select
                     value={selectedAnnouncement.status}
-                    label="状态"
+                    label='状态'
                     onChange={(e) =>
                       setSelectedAnnouncement({
                         ...selectedAnnouncement,
@@ -698,15 +707,15 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                       })
                     }
                   >
-                    <MenuItem value="draft">草稿</MenuItem>
-                    <MenuItem value="published">发布</MenuItem>
-                    <MenuItem value="archived">归档</MenuItem>
+                    <MenuItem value='draft'>草稿</MenuItem>
+                    <MenuItem value='published'>发布</MenuItem>
+                    <MenuItem value='archived'>归档</MenuItem>
                   </Select>
                 </FormControl>
                 <TextField
-                  label="发布时间"
-                  type="datetime-local"
-                  value={selectedAnnouncement.publish_at || ""}
+                  label='发布时间'
+                  type='datetime-local'
+                  value={selectedAnnouncement.publish_at || ''}
                   onChange={(e) =>
                     setSelectedAnnouncement({
                       ...selectedAnnouncement,
@@ -716,9 +725,9 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   fullWidth
                 />
                 <TextField
-                  label="过期时间"
-                  type="datetime-local"
-                  value={selectedAnnouncement.expire_at || ""}
+                  label='过期时间'
+                  type='datetime-local'
+                  value={selectedAnnouncement.expire_at || ''}
                   onChange={(e) =>
                     setSelectedAnnouncement({
                       ...selectedAnnouncement,
@@ -728,10 +737,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   fullWidth
                 />
                 <TextField
-                  label="内容"
+                  label='内容'
                   multiline
                   rows={6}
-                  value={selectedAnnouncement.content || ""}
+                  value={selectedAnnouncement.content || ''}
                   onChange={(e) =>
                     setSelectedAnnouncement({
                       ...selectedAnnouncement,
@@ -739,7 +748,7 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                     })
                   }
                   fullWidth
-                  sx={{ gridColumn: "span 2" }}
+                  sx={{ gridColumn: 'span 2' }}
                 />
               </Box>
             </DialogContent>
@@ -752,7 +761,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
               >
                 取消
               </Button>
-              <Button type="submit" variant="contained">
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>

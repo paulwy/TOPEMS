@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Bell,
   Plus,
@@ -10,32 +10,27 @@ import {
   Archive,
   FileText,
   RefreshCw,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Box, Typography, Chip } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Chip } from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import type {
   NotificationTemplate,
   CreateTemplateRequest,
   UpdateTemplateRequest,
   TemplateStatusEnum,
   NotificationTypeEnum,
-} from "@/api/notification";
-import {
-  getTemplates,
-  createTemplate,
-  updateTemplate,
-  deleteTemplate,
-} from "@/api/notification";
-import { useNotification } from "@/hooks/useNotification";
-import { NotificationContainer } from "@/components/NotificationContainer";
-import { apiLogger } from "@/utils/logger";
+} from '@/api/notification';
+import { getTemplates, createTemplate, updateTemplate, deleteTemplate } from '@/api/notification';
+import { useNotification } from '@/hooks/useNotification';
+import { NotificationContainer } from '@/components/NotificationContainer';
+import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
   type ColumnDef,
   type RowAction,
   type FilterConfig,
-} from "@/components/templates";
+} from '@/components/templates';
 
 const NotificationTemplatesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,16 +38,13 @@ const NotificationTemplatesPage: React.FC = () => {
 
   const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<TemplateStatusEnum | "">(
-    "",
-  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<TemplateStatusEnum | ''>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<NotificationTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
@@ -80,7 +72,7 @@ const NotificationTemplatesPage: React.FC = () => {
         setTotal(response.data.total);
       }
     } catch (err) {
-      apiLogger.error("Error loading templates:", err);
+      apiLogger.error('Error loading templates:', err);
     } finally {
       setLoading(false);
     }
@@ -90,50 +82,50 @@ const NotificationTemplatesPage: React.FC = () => {
     try {
       const res = await createTemplate(data);
       if (res.success) {
-        success("模板创建成功");
+        success('模板创建成功');
         setShowCreateModal(false);
         loadTemplates();
       } else {
-        error(res.message || "创建失败");
+        error(res.message || '创建失败');
       }
     } catch (err: any) {
-      error(err.message || "创建失败");
+      error(err.message || '创建失败');
     }
   };
 
   const handleUpdateTemplate = async (
     id: string,
-    data: CreateTemplateRequest | UpdateTemplateRequest,
+    data: CreateTemplateRequest | UpdateTemplateRequest
   ) => {
     try {
       const updateData: UpdateTemplateRequest = { ...data, id };
       const res = await updateTemplate(id, updateData);
       if (res.success) {
-        success("模板更新成功");
+        success('模板更新成功');
         setShowEditModal(false);
         setSelectedTemplate(null);
         loadTemplates();
       } else {
-        error(res.message || "更新失败");
+        error(res.message || '更新失败');
       }
     } catch (err: any) {
-      error(err.message || "更新失败");
+      error(err.message || '更新失败');
     }
   };
 
   const handleDeleteTemplate = async (id: string) => {
-    if (!confirm("确定要删除这个模板吗？")) return;
+    if (!confirm('确定要删除这个模板吗？')) return;
 
     try {
       const res = await deleteTemplate(id);
       if (res.success) {
-        success("模板删除成功");
+        success('模板删除成功');
         loadTemplates();
       } else {
-        error(res.message || "删除失败");
+        error(res.message || '删除失败');
       }
     } catch (err: any) {
-      error(err.message || "删除失败");
+      error(err.message || '删除失败');
     }
   };
 
@@ -145,18 +137,18 @@ const NotificationTemplatesPage: React.FC = () => {
       const res = await updateTemplate(id, {
         id,
         status:
-          template.status === "active"
-            ? ("inactive" as TemplateStatusEnum)
-            : ("active" as TemplateStatusEnum),
+          template.status === 'active'
+            ? ('inactive' as TemplateStatusEnum)
+            : ('active' as TemplateStatusEnum),
       });
       if (res.success) {
-        success("模板状态更新成功");
+        success('模板状态更新成功');
         loadTemplates();
       } else {
-        error(res.message || "更新失败");
+        error(res.message || '更新失败');
       }
     } catch (err: any) {
-      error(err.message || "更新失败");
+      error(err.message || '更新失败');
     }
   };
 
@@ -167,55 +159,55 @@ const NotificationTemplatesPage: React.FC = () => {
       (t) =>
         t.name.toLowerCase().includes(query) ||
         t.description?.toLowerCase().includes(query) ||
-        t.title_template.toLowerCase().includes(query),
+        t.title_template.toLowerCase().includes(query)
     );
   }, [templates, debouncedSearch]);
 
   const getStatusBadge = (status: TemplateStatusEnum) => {
     switch (status) {
-      case "active":
+      case 'active':
         return (
           <Box
-            component="span"
+            component='span'
             sx={{
               px: 1,
               py: 0.5,
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
               borderRadius: 4,
-              bgcolor: "success.100",
-              color: "success.700",
+              bgcolor: 'success.100',
+              color: 'success.700',
             }}
           >
             启用
           </Box>
         );
-      case "inactive":
+      case 'inactive':
         return (
           <Box
-            component="span"
+            component='span'
             sx={{
               px: 1,
               py: 0.5,
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
               borderRadius: 4,
-              bgcolor: "grey.100",
-              color: "grey.700",
+              bgcolor: 'grey.100',
+              color: 'grey.700',
             }}
           >
             禁用
           </Box>
         );
-      case "deprecated":
+      case 'deprecated':
         return (
           <Box
-            component="span"
+            component='span'
             sx={{
               px: 1,
               py: 0.5,
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
               borderRadius: 4,
-              bgcolor: "error.100",
-              color: "error.700",
+              bgcolor: 'error.100',
+              color: 'error.700',
             }}
           >
             废弃
@@ -228,72 +220,75 @@ const NotificationTemplatesPage: React.FC = () => {
 
   const getTypeLabel = (type: NotificationTypeEnum) => {
     const labels: Record<NotificationTypeEnum, string> = {
-      system: "系统通知",
-      workflow: "审批通知",
-      reminder: "提醒通知",
-      alert: "告警通知",
-      message: "消息通知",
-      info: "信息通知",
-      success: "成功通知",
-      warning: "警告通知",
-      error: "错误通知",
+      system: '系统通知',
+      workflow: '审批通知',
+      reminder: '提醒通知',
+      alert: '告警通知',
+      message: '消息通知',
+      info: '信息通知',
+      success: '成功通知',
+      warning: '警告通知',
+      error: '错误通知',
     };
     return labels[type] || type;
   };
 
   const getTypeColor = (type: NotificationTypeEnum) => {
     const colors: Record<NotificationTypeEnum, { bg: string; text: string }> = {
-      system: { bg: "primary.100", text: "primary.700" },
-      workflow: { bg: "purple.100", text: "purple.700" },
-      reminder: { bg: "warning.100", text: "warning.700" },
-      alert: { bg: "error.100", text: "error.700" },
-      message: { bg: "success.100", text: "success.700" },
-      info: { bg: "info.100", text: "info.700" },
-      success: { bg: "success.100", text: "success.700" },
-      warning: { bg: "warning.100", text: "warning.700" },
-      error: { bg: "error.100", text: "error.700" },
+      system: { bg: 'primary.100', text: 'primary.700' },
+      workflow: { bg: 'purple.100', text: 'purple.700' },
+      reminder: { bg: 'warning.100', text: 'warning.700' },
+      alert: { bg: 'error.100', text: 'error.700' },
+      message: { bg: 'success.100', text: 'success.700' },
+      info: { bg: 'info.100', text: 'info.700' },
+      success: { bg: 'success.100', text: 'success.700' },
+      warning: { bg: 'warning.100', text: 'warning.700' },
+      error: { bg: 'error.100', text: 'error.700' },
     };
-    return colors[type] || { bg: "grey.100", text: "grey.700" };
+    return colors[type] || { bg: 'grey.100', text: 'grey.700' };
   };
 
   const columns: ColumnDef<NotificationTemplate>[] = useMemo(
     () => [
       {
-        id: "name",
-        label: "模板名称",
+        id: 'name',
+        label: '模板名称',
         render: (row) => (
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: "primary.100",
+                bgcolor: 'primary.100',
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 mr: 1.5,
               }}
             >
-              <Bell size={20} color="#1976d2" />
+              <Bell
+                size={20}
+                color='#1976d2'
+              />
             </Box>
             <Box>
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 500, color: "grey.900" }}
+                variant='body2'
+                sx={{ fontWeight: 500, color: 'grey.900' }}
               >
                 {row.name}
               </Typography>
               {row.description && (
                 <Typography
-                  variant="body2"
+                  variant='body2'
                   sx={{
-                    fontSize: "0.75rem",
-                    color: "grey.500",
+                    fontSize: '0.75rem',
+                    color: 'grey.500',
                     maxWidth: 200,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {row.description}
@@ -304,17 +299,17 @@ const NotificationTemplatesPage: React.FC = () => {
         ),
       },
       {
-        id: "notification_type",
-        label: "类型",
+        id: 'notification_type',
+        label: '类型',
         render: (row) => {
           const typeColor = getTypeColor(row.notification_type);
           return (
             <Box
-              component="span"
+              component='span'
               sx={{
                 px: 1,
                 py: 0.5,
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
                 borderRadius: 4,
                 ...typeColor,
               }}
@@ -325,17 +320,17 @@ const NotificationTemplatesPage: React.FC = () => {
         },
       },
       {
-        id: "title_template",
-        label: "标题模板",
+        id: 'title_template',
+        label: '标题模板',
         render: (row) => (
           <Typography
-            variant="body2"
+            variant='body2'
             sx={{
-              color: "grey.900",
+              color: 'grey.900',
               maxWidth: 200,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {row.title_template}
@@ -343,43 +338,49 @@ const NotificationTemplatesPage: React.FC = () => {
         ),
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
       {
-        id: "default_priority",
-        label: "优先级",
+        id: 'default_priority',
+        label: '优先级',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {(row.default_priority ?? 0) >= 4
-              ? "紧急"
+              ? '紧急'
               : (row.default_priority ?? 0) >= 3
-                ? "高"
+                ? '高'
                 : (row.default_priority ?? 0) >= 2
-                  ? "中"
-                  : "低"}
+                  ? '中'
+                  : '低'}
           </Typography>
         ),
       },
       {
-        id: "created_at",
-        label: "创建时间",
+        id: 'created_at',
+        label: '创建时间',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
-            {new Date(row.created_at).toLocaleDateString("zh-CN")}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {new Date(row.created_at).toLocaleDateString('zh-CN')}
           </Typography>
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+
+    []
   );
 
   const rowActions: RowAction<NotificationTemplate>[] = useMemo(
     () => [
       {
-        label: "预览",
+        label: '预览',
         icon: <Eye size={16} />,
         onClick: (row) => {
           setSelectedTemplate(row);
@@ -387,12 +388,12 @@ const NotificationTemplatesPage: React.FC = () => {
         },
       },
       {
-        label: "启用/禁用",
+        label: '启用/禁用',
         icon: <Archive size={16} />,
         onClick: (row) => handleToggleArchive(row.id),
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: (row) => {
           setSelectedTemplate(row);
@@ -400,34 +401,34 @@ const NotificationTemplatesPage: React.FC = () => {
         },
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error",
+        color: 'error',
         onClick: (row) => handleDeleteTemplate(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这个模板吗？",
+        confirmMessage: '确定要删除这个模板吗？',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   const filters: FilterConfig[] = useMemo(
     () => [
       {
-        id: "status",
-        label: "状态",
-        type: "select",
+        id: 'status',
+        label: '状态',
+        type: 'select',
         options: [
-          { value: "", label: "全部状态" },
-          { value: "active", label: "启用" },
-          { value: "inactive", label: "禁用" },
-          { value: "deprecated", label: "废弃" },
+          { value: '', label: '全部状态' },
+          { value: 'active', label: '启用' },
+          { value: 'inactive', label: '禁用' },
+          { value: 'deprecated', label: '废弃' },
         ],
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+
+    []
   );
 
   const handleFilterChange = useCallback((filters: Record<string, any>) => {
@@ -438,24 +439,24 @@ const NotificationTemplatesPage: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       <ListPageTemplate
-        title="通知模板管理"
-        subtitle="管理和配置通知消息模板"
+        title='通知模板管理'
+        subtitle='管理和配置通知消息模板'
         backButton={{
-          onClick: () => navigate("/notifications"),
+          onClick: () => navigate('/notifications'),
         }}
         columns={columns}
         data={filteredTemplates}
         loading={loading}
         getRowId={(row) => row.id}
         searchable
-        searchPlaceholder="搜索模板名称、描述..."
+        searchPlaceholder='搜索模板名称、描述...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         filters={filters}
@@ -471,16 +472,14 @@ const NotificationTemplatesPage: React.FC = () => {
         onRefresh={loadTemplates}
         actions={[
           {
-            label: "新增模板",
+            label: '新增模板',
             icon: <Plus size={16} />,
             onClick: () => setShowCreateModal(true),
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
-        emptyIcon={
-          <FileText style={{ width: 48, height: 48, color: "#9e9e9e" }} />
-        }
-        emptyMessage="暂无模板数据"
+        emptyIcon={<FileText style={{ width: 48, height: 48, color: '#9e9e9e' }} />}
+        emptyMessage='暂无模板数据'
       />
 
       {/* Create/Edit Modal */}
@@ -488,9 +487,7 @@ const NotificationTemplatesPage: React.FC = () => {
         <TemplateFormModal
           onClose={() => setShowCreateModal(false)}
           onSubmit={
-            handleCreateTemplate as (
-              data: CreateTemplateRequest | UpdateTemplateRequest,
-            ) => void
+            handleCreateTemplate as (data: CreateTemplateRequest | UpdateTemplateRequest) => void
           }
         />
       )}
@@ -527,17 +524,13 @@ interface TemplateFormModalProps {
   onSubmit: (data: CreateTemplateRequest | UpdateTemplateRequest) => void;
 }
 
-const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
-  template,
-  onClose,
-  onSubmit,
-}) => {
+const TemplateFormModal: React.FC<TemplateFormModalProps> = ({ template, onClose, onSubmit }) => {
   const [formData, setFormData] = useState<CreateTemplateRequest>({
-    name: template?.name || "",
-    description: template?.description || "",
-    notification_type: template?.notification_type || "system",
-    title_template: template?.title_template || "",
-    content_template: template?.content_template || "",
+    name: template?.name || '',
+    description: template?.description || '',
+    notification_type: template?.notification_type || 'system',
+    title_template: template?.title_template || '',
+    content_template: template?.content_template || '',
     data_schema: template?.data_schema || undefined,
     default_priority: template?.default_priority || 2,
   });
@@ -550,91 +543,92 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   return (
     <Box
       sx={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
-        bgcolor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         zIndex: 50,
         p: 2,
       }}
     >
       <Box
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderRadius: 3,
           boxShadow: 3,
-          width: "100%",
+          width: '100%',
           maxWidth: 800,
-          maxHeight: "90vh",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
-            {template ? "编辑模板" : "新增模板"}
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, color: 'grey.900' }}
+          >
+            {template ? '编辑模板' : '新增模板'}
           </Typography>
         </Box>
 
         <Box
-          component="form"
+          component='form'
           onSubmit={handleSubmit}
-          sx={{ flex: 1, overflowY: "auto", p: 3 }}
+          sx={{ flex: 1, overflowY: 'auto', p: 3 }}
         >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box
               sx={{
-                display: "grid",
+                display: 'grid',
                 gridTemplateColumns: {
-                  xs: "repeat(1, 1fr)",
-                  md: "repeat(2, 1fr)",
+                  xs: 'repeat(1, 1fr)',
+                  md: 'repeat(2, 1fr)',
                 },
                 gap: 2,
               }}
             >
               <Box>
                 <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                  variant='body2'
+                  sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
                 >
                   模板名称 *
                 </Typography>
                 <Box
-                  component="input"
-                  type="text"
+                  component='input'
+                  type='text'
                   required
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   sx={{
-                    width: "100%",
+                    width: '100%',
                     px: 1.5,
                     py: 1,
                     border: 1,
-                    borderColor: "grey.300",
+                    borderColor: 'grey.300',
                     borderRadius: 2,
-                    "&:focus": {
-                      outline: "none",
-                      borderColor: "primary.main",
+                    '&:focus': {
+                      outline: 'none',
+                      borderColor: 'primary.main',
                       boxShadow: 2,
                     },
                   }}
-                  placeholder="请输入模板名称"
+                  placeholder='请输入模板名称'
                 />
               </Box>
               <Box>
                 <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                  variant='body2'
+                  sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
                 >
                   通知类型 *
                 </Typography>
                 <Box
-                  component="select"
+                  component='select'
                   required
                   value={formData.notification_type}
                   onChange={(e) =>
@@ -644,139 +638,133 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                     })
                   }
                   sx={{
-                    width: "100%",
+                    width: '100%',
                     px: 1.5,
                     py: 1,
                     border: 1,
-                    borderColor: "grey.300",
+                    borderColor: 'grey.300',
                     borderRadius: 2,
-                    "&:focus": {
-                      outline: "none",
-                      borderColor: "primary.main",
+                    '&:focus': {
+                      outline: 'none',
+                      borderColor: 'primary.main',
                       boxShadow: 2,
                     },
                   }}
                 >
-                  <option value="system">系统通知</option>
-                  <option value="workflow">审批通知</option>
-                  <option value="reminder">提醒通知</option>
-                  <option value="alert">告警通知</option>
-                  <option value="message">消息通知</option>
+                  <option value='system'>系统通知</option>
+                  <option value='workflow'>审批通知</option>
+                  <option value='reminder'>提醒通知</option>
+                  <option value='alert'>告警通知</option>
+                  <option value='message'>消息通知</option>
                 </Box>
               </Box>
             </Box>
 
             <Box>
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                variant='body2'
+                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
               >
                 描述
               </Typography>
               <Box
-                component="textarea"
-                value={formData.description || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                component='textarea'
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   px: 1.5,
                   py: 1,
                   border: 1,
-                  borderColor: "grey.300",
+                  borderColor: 'grey.300',
                   borderRadius: 2,
-                  "&:focus": {
-                    outline: "none",
-                    borderColor: "primary.main",
+                  '&:focus': {
+                    outline: 'none',
+                    borderColor: 'primary.main',
                     boxShadow: 2,
                   },
                 }}
                 rows={2}
-                placeholder="请输入模板描述"
+                placeholder='请输入模板描述'
               />
             </Box>
 
             <Box>
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                variant='body2'
+                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
               >
                 标题模板 *
               </Typography>
               <Box
-                component="input"
-                type="text"
+                component='input'
+                type='text'
                 required
                 value={formData.title_template}
-                onChange={(e) =>
-                  setFormData({ ...formData, title_template: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, title_template: e.target.value })}
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   px: 1.5,
                   py: 1,
                   border: 1,
-                  borderColor: "grey.300",
+                  borderColor: 'grey.300',
                   borderRadius: 2,
-                  "&:focus": {
-                    outline: "none",
-                    borderColor: "primary.main",
+                  '&:focus': {
+                    outline: 'none',
+                    borderColor: 'primary.main',
                     boxShadow: 2,
                   },
                 }}
-                placeholder="请输入标题模板，使用 {{variable}} 格式定义变量"
+                placeholder='请输入标题模板，使用 {{variable}} 格式定义变量'
               />
             </Box>
 
             <Box>
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                variant='body2'
+                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
               >
                 内容模板 *
               </Typography>
               <Box
-                component="textarea"
+                component='textarea'
                 required
                 value={formData.content_template}
-                onChange={(e) =>
-                  setFormData({ ...formData, content_template: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, content_template: e.target.value })}
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   px: 1.5,
                   py: 1,
                   border: 1,
-                  borderColor: "grey.300",
+                  borderColor: 'grey.300',
                   borderRadius: 2,
-                  "&:focus": {
-                    outline: "none",
-                    borderColor: "primary.main",
+                  '&:focus': {
+                    outline: 'none',
+                    borderColor: 'primary.main',
                     boxShadow: 2,
                   },
-                  fontFamily: "monospace",
+                  fontFamily: 'monospace',
                 }}
                 rows={6}
-                placeholder="请输入内容模板，使用 {{variable}} 格式定义变量"
+                placeholder='请输入内容模板，使用 {{variable}} 格式定义变量'
               />
               <Typography
-                variant="body2"
-                sx={{ fontSize: "0.75rem", color: "grey.500", mt: 0.5 }}
+                variant='body2'
+                sx={{ fontSize: '0.75rem', color: 'grey.500', mt: 0.5 }}
               >
-                使用 {"{{variable}}"} 格式定义变量
+                使用 {'{{variable}}'} 格式定义变量
               </Typography>
             </Box>
 
             <Box>
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                variant='body2'
+                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
               >
                 默认优先级
               </Typography>
               <Box
-                component="select"
+                component='select'
                 value={formData.default_priority}
                 onChange={(e) =>
                   setFormData({
@@ -785,15 +773,15 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                   })
                 }
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   px: 1.5,
                   py: 1,
                   border: 1,
-                  borderColor: "grey.300",
+                  borderColor: 'grey.300',
                   borderRadius: 2,
-                  "&:focus": {
-                    outline: "none",
-                    borderColor: "primary.main",
+                  '&:focus': {
+                    outline: 'none',
+                    borderColor: 'primary.main',
                     boxShadow: 2,
                   },
                 }}
@@ -811,40 +799,40 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
           sx={{
             p: 3,
             borderTop: 1,
-            borderColor: "divider",
-            display: "flex",
-            justifyContent: "flex-end",
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'flex-end',
             gap: 1,
           }}
         >
           <Box
-            component="button"
-            type="button"
+            component='button'
+            type='button'
             onClick={onClose}
             sx={{
               px: 2,
               py: 1,
-              color: "grey.700",
-              bgcolor: "grey.100",
+              color: 'grey.700',
+              bgcolor: 'grey.100',
               borderRadius: 2,
-              "&:hover": { bgcolor: "grey.200" },
+              '&:hover': { bgcolor: 'grey.200' },
             }}
           >
             取消
           </Box>
           <Box
-            component="button"
+            component='button'
             onClick={handleSubmit}
             sx={{
               px: 2,
               py: 1,
-              bgcolor: "primary.main",
-              color: "white",
+              bgcolor: 'primary.main',
+              color: 'white',
               borderRadius: 2,
-              "&:hover": { bgcolor: "primary.dark" },
+              '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
-            {template ? "保存" : "创建"}
+            {template ? '保存' : '创建'}
           </Box>
         </Box>
       </Box>
@@ -858,21 +846,18 @@ interface TemplatePreviewModalProps {
   onClose: () => void;
 }
 
-const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
-  template,
-  onClose,
-}) => {
+const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, onClose }) => {
   const getTypeLabel = (type: NotificationTypeEnum) => {
     const labels: Record<NotificationTypeEnum, string> = {
-      system: "系统通知",
-      workflow: "审批通知",
-      reminder: "提醒通知",
-      alert: "告警通知",
-      message: "消息通知",
-      info: "信息通知",
-      success: "成功通知",
-      warning: "警告通知",
-      error: "错误通知",
+      system: '系统通知',
+      workflow: '审批通知',
+      reminder: '提醒通知',
+      alert: '告警通知',
+      message: '消息通知',
+      info: '信息通知',
+      success: '成功通知',
+      warning: '警告通知',
+      error: '错误通知',
     };
     return labels[type] || type;
   };
@@ -880,50 +865,53 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   return (
     <Box
       sx={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
-        bgcolor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         zIndex: 50,
         p: 2,
       }}
     >
       <Box
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderRadius: 3,
           boxShadow: 3,
-          width: "100%",
+          width: '100%',
           maxWidth: 900,
-          maxHeight: "90vh",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
+          maxHeight: '90vh',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, color: 'grey.900' }}
+          >
             模板预览
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
           <Box sx={{ mb: 3 }}>
             <Typography
-              variant="h6"
-              sx={{ fontWeight: 700, color: "grey.900", mb: 1 }}
+              variant='h6'
+              sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
             >
               {template.name}
             </Typography>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 2,
-                fontSize: "0.875rem",
-                color: "grey.500",
+                fontSize: '0.875rem',
+                color: 'grey.500',
               }}
             >
               <span>类型：{getTypeLabel(template.notification_type)}</span>
@@ -931,7 +919,10 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               <span>优先级：{template.default_priority}</span>
             </Box>
             {template.description && (
-              <Typography variant="body2" sx={{ mt: 1, color: "grey.600" }}>
+              <Typography
+                variant='body2'
+                sx={{ mt: 1, color: 'grey.600' }}
+              >
                 {template.description}
               </Typography>
             )}
@@ -939,27 +930,27 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
           <Box
             sx={{
-              bgcolor: "grey.50",
+              bgcolor: 'grey.50',
               borderRadius: 2,
               p: 3,
               border: 1,
-              borderColor: "grey.200",
+              borderColor: 'grey.200',
               mb: 2,
             }}
           >
             <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+              variant='body2'
+              sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
             >
               标题模板：
             </Typography>
             <Box
-              component="pre"
+              component='pre'
               sx={{
-                whiteSpace: "pre-wrap",
-                fontSize: "0.875rem",
-                color: "grey.700",
-                fontFamily: "monospace",
+                whiteSpace: 'pre-wrap',
+                fontSize: '0.875rem',
+                color: 'grey.700',
+                fontFamily: 'monospace',
               }}
             >
               {template.title_template}
@@ -968,26 +959,26 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
           <Box
             sx={{
-              bgcolor: "grey.50",
+              bgcolor: 'grey.50',
               borderRadius: 2,
               p: 3,
               border: 1,
-              borderColor: "grey.200",
+              borderColor: 'grey.200',
             }}
           >
             <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+              variant='body2'
+              sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
             >
               内容模板：
             </Typography>
             <Box
-              component="pre"
+              component='pre'
               sx={{
-                whiteSpace: "pre-wrap",
-                fontSize: "0.875rem",
-                color: "grey.700",
-                fontFamily: "monospace",
+                whiteSpace: 'pre-wrap',
+                fontSize: '0.875rem',
+                color: 'grey.700',
+                fontFamily: 'monospace',
               }}
             >
               {template.content_template}
@@ -997,19 +988,19 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           {template.data_schema && (
             <Box sx={{ mt: 3 }}>
               <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+                variant='body2'
+                sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
               >
                 数据模式：
               </Typography>
               <Box
-                component="pre"
+                component='pre'
                 sx={{
-                  whiteSpace: "pre-wrap",
-                  fontSize: "0.75rem",
-                  color: "grey.700",
-                  fontFamily: "monospace",
-                  bgcolor: "grey.50",
+                  whiteSpace: 'pre-wrap',
+                  fontSize: '0.75rem',
+                  color: 'grey.700',
+                  fontFamily: 'monospace',
+                  bgcolor: 'grey.50',
                   p: 2,
                   borderRadius: 2,
                 }}
@@ -1024,21 +1015,21 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           sx={{
             p: 3,
             borderTop: 1,
-            borderColor: "divider",
-            display: "flex",
-            justifyContent: "flex-end",
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'flex-end',
           }}
         >
           <Box
-            component="button"
+            component='button'
             onClick={onClose}
             sx={{
               px: 2,
               py: 1,
-              bgcolor: "grey.100",
-              color: "grey.700",
+              bgcolor: 'grey.100',
+              color: 'grey.700',
               borderRadius: 2,
-              "&:hover": { bgcolor: "grey.200" },
+              '&:hover': { bgcolor: 'grey.200' },
             }}
           >
             关闭
@@ -1051,15 +1042,15 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
 const getTypeLabel = (type: NotificationTypeEnum) => {
   const labels: Record<NotificationTypeEnum, string> = {
-    system: "系统通知",
-    workflow: "审批通知",
-    reminder: "提醒通知",
-    alert: "告警通知",
-    message: "消息通知",
-    info: "信息通知",
-    success: "成功通知",
-    warning: "警告通知",
-    error: "错误通知",
+    system: '系统通知',
+    workflow: '审批通知',
+    reminder: '提醒通知',
+    alert: '告警通知',
+    message: '消息通知',
+    info: '信息通知',
+    success: '成功通知',
+    warning: '警告通知',
+    error: '错误通知',
   };
   return labels[type] || type;
 };

@@ -18,6 +18,7 @@ use anyhow::Result;
 use axum::{extract::State, routing::get, Json, Router};
 use std::env;
 use std::time::Instant;
+use utoipa::OpenApi;
 
 use api::{plugin, ApiState};
 use axum_prometheus::PrometheusMetricLayer;
@@ -28,8 +29,9 @@ use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
     create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, RedisConfig,
-    RedisPool, RedisCacheService, ServiceHealth,
+    RedisPool as RedisPoolTrait, ServiceHealth,
 };
+use topems_shared::redis::RedisCacheService;
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 
@@ -81,7 +83,7 @@ async fn main() -> Result<()> {
                 max_connections: 20,
                 connect_timeout: Some(5),
             };
-            let redis_pool = RedisPool::new(&redis_config).await;
+            let redis_pool = RedisPoolTrait::new(&redis_config).await;
             match redis_pool {
                 Ok(pool) => {
                     let cache = Arc::new(RedisCacheService::new(Arc::new(pool)));
@@ -116,7 +118,8 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/metrics", get(move || async move { metric_handle.render() }))
         .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check));
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route("/api-docs/openapi.json", get(serve_openapi_json));
 
     let protected_routes = api::create_routes()
         .route("/api/v1/health/detailed", get(health_check_detailed))
@@ -235,4 +238,8 @@ async fn health_check_detailed(State(state): State<ApiState>) -> Json<ApiRespons
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
+}
+
+async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(api::openapi::ScmApiDoc::openapi())
 }

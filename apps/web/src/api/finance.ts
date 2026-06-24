@@ -3,7 +3,7 @@
  * 包含科目、凭证、应收应付、财务报表等API
  */
 
-import { apiClient, downloadBlob } from "./client";
+import { apiClient, downloadBlob } from './client';
 import type {
   Account,
   AccountBalance,
@@ -27,8 +27,8 @@ import type {
   PaginatedResult,
   ApiResponse,
   BatchOperationResult,
-} from "../types/erp-finance";
-import config from "../config/runtime";
+} from '../types/finance';
+import config from '../config/runtime';
 
 // 创建API客户端实例的基础配置
 const createApiClient = () => {
@@ -52,7 +52,7 @@ export const accountApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<Account>>> => {
-    return createApiClient().get("/api/finance/accounts", { params });
+    return createApiClient().get('/api/finance/accounts', { params });
   },
 
   /**
@@ -63,7 +63,7 @@ export const accountApi = {
     status?: string;
     include_disabled?: boolean;
   }): Promise<ApiResponse<Account[]>> => {
-    return createApiClient().get("/api/finance/accounts/tree", { params });
+    return createApiClient().get('/api/finance/accounts/tree', { params });
   },
 
   /**
@@ -77,16 +77,13 @@ export const accountApi = {
    * 创建科目
    */
   create: (data: Partial<Account>): Promise<ApiResponse<Account>> => {
-    return createApiClient().post("/api/finance/accounts", data);
+    return createApiClient().post('/api/finance/accounts', data);
   },
 
   /**
    * 更新科目
    */
-  update: (
-    id: string,
-    data: Partial<Account>,
-  ): Promise<ApiResponse<Account>> => {
+  update: (id: string, data: Partial<Account>): Promise<ApiResponse<Account>> => {
     return createApiClient().put(`/api/finance/accounts/${id}`, data);
   },
 
@@ -102,12 +99,9 @@ export const accountApi = {
    */
   batchCreateChildren: (
     parentId: string,
-    accounts: Partial<Account>[],
+    accounts: Partial<Account>[]
   ): Promise<ApiResponse<Account[]>> => {
-    return createApiClient().post(
-      `/api/finance/accounts/${parentId}/children-batch`,
-      { accounts },
-    );
+    return createApiClient().post(`/api/finance/accounts/${parentId}/children-batch`, { accounts });
   },
 
   /**
@@ -120,7 +114,7 @@ export const accountApi = {
     department_id?: string;
     project_id?: string;
   }): Promise<ApiResponse<AccountBalance[]>> => {
-    return createApiClient().get("/api/finance/accounts/balances", {
+    return createApiClient().get('/api/finance/accounts/balances', {
       params,
     });
   },
@@ -133,7 +127,7 @@ export const accountApi = {
     account_ids?: string[];
     company_id?: string;
   }): Promise<ApiResponse<AccountOpeningBalance[]>> => {
-    return createApiClient().get("/api/finance/accounts/opening-balances", {
+    return createApiClient().get('/api/finance/accounts/opening-balances', {
       params,
     });
   },
@@ -143,12 +137,9 @@ export const accountApi = {
    */
   setOpeningBalance: (
     accountId: string,
-    data: Partial<AccountOpeningBalance>,
+    data: Partial<AccountOpeningBalance>
   ): Promise<ApiResponse<AccountOpeningBalance>> => {
-    return createApiClient().post(
-      `/api/finance/accounts/${accountId}/opening-balance`,
-      data,
-    );
+    return createApiClient().post(`/api/finance/accounts/${accountId}/opening-balance`, data);
   },
 
   /**
@@ -159,10 +150,7 @@ export const accountApi = {
     to_period: string;
     company_id?: string;
   }): Promise<ApiResponse<void>> => {
-    return createApiClient().post(
-      "/api/finance/accounts/opening-balance/carry-forward",
-      params,
-    );
+    return createApiClient().post('/api/finance/accounts/opening-balance/carry-forward', params);
   },
 };
 
@@ -174,10 +162,8 @@ export const voucherApi = {
   /**
    * 获取凭证列表
    */
-  list: (
-    params?: VoucherQueryParams,
-  ): Promise<ApiResponse<PaginatedResult<Voucher>>> => {
-    return createApiClient().get("/api/finance/vouchers", { params });
+  list: (params?: VoucherQueryParams): Promise<ApiResponse<PaginatedResult<Voucher>>> => {
+    return createApiClient().get('/api/finance/vouchers', { params });
   },
 
   /**
@@ -197,19 +183,17 @@ export const voucherApi = {
   /**
    * 创建凭证
    */
-  create: (
-    data: CreateVoucherRequest,
-  ): Promise<ApiResponse<VoucherOperationResult>> => {
-    return createApiClient().post("/api/finance/vouchers", data);
+  create: (data: CreateVoucherRequest): Promise<ApiResponse<VoucherOperationResult>> => {
+    return createApiClient().post('/api/finance/vouchers', data);
   },
 
   /**
    * 批量创建凭证
    */
   batchCreate: (
-    vouchers: CreateVoucherRequest[],
+    vouchers: CreateVoucherRequest[]
   ): Promise<ApiResponse<{ results: VoucherOperationResult[] }>> => {
-    return createApiClient().post("/api/finance/vouchers/batch", {
+    return createApiClient().post('/api/finance/vouchers/batch', {
       vouchers,
     });
   },
@@ -219,7 +203,7 @@ export const voucherApi = {
    */
   update: (
     id: string,
-    data: Partial<CreateVoucherRequest>,
+    data: Partial<CreateVoucherRequest>
   ): Promise<ApiResponse<VoucherOperationResult>> => {
     return createApiClient().put(`/api/finance/vouchers/${id}`, data);
   },
@@ -235,7 +219,7 @@ export const voucherApi = {
    * 批量删除凭证
    */
   batchDelete: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return createApiClient().post("/api/finance/vouchers/batch-delete", {
+    return createApiClient().post('/api/finance/vouchers/batch-delete', {
       ids,
     });
   },
@@ -258,7 +242,7 @@ export const voucherApi = {
    * 批量审核凭证
    */
   batchApprove: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return createApiClient().post("/api/finance/vouchers/batch-approve", {
+    return createApiClient().post('/api/finance/vouchers/batch-approve', {
       ids,
     });
   },
@@ -281,7 +265,7 @@ export const voucherApi = {
    * 批量过账凭证
    */
   batchPost: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return createApiClient().post("/api/finance/vouchers/batch-post", {
+    return createApiClient().post('/api/finance/vouchers/batch-post', {
       ids,
     });
   },
@@ -289,10 +273,7 @@ export const voucherApi = {
   /**
    * 冲销凭证
    */
-  reverse: (
-    id: string,
-    reason?: string,
-  ): Promise<ApiResponse<VoucherOperationResult>> => {
+  reverse: (id: string, reason?: string): Promise<ApiResponse<VoucherOperationResult>> => {
     return createApiClient().post(`/api/finance/vouchers/${id}/reverse`, {
       reason,
     });
@@ -305,7 +286,7 @@ export const voucherApi = {
     period?: string;
     voucher_type?: string;
   }): Promise<ApiResponse<{ voucher_no: string }>> => {
-    return createApiClient().get("/api/finance/vouchers/next-no", {
+    return createApiClient().get('/api/finance/vouchers/next-no', {
       params,
     });
   },
@@ -317,14 +298,14 @@ export const voucherApi = {
     template_id: string;
     source_data: Record<string, any>;
   }): Promise<ApiResponse<Voucher>> => {
-    return createApiClient().post("/api/finance/vouchers/generate", params);
+    return createApiClient().post('/api/finance/vouchers/generate', params);
   },
 
   /**
    * 导入凭证
    */
   import: (
-    file: File,
+    file: File
   ): Promise<
     ApiResponse<{
       total: number;
@@ -334,9 +315,9 @@ export const voucherApi = {
     }>
   > => {
     const formData = new FormData();
-    formData.append("file", file);
-    return createApiClient().post("/api/finance/vouchers/import", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    formData.append('file', file);
+    return createApiClient().post('/api/finance/vouchers/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 
@@ -344,9 +325,8 @@ export const voucherApi = {
    * 导出凭证
    */
   export: async (params: VoucherQueryParams): Promise<Blob> => {
-    const baseURL =
-      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, "/api/finance/vouchers/export", {
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, '/api/finance/vouchers/export', {
       params,
     });
   },
@@ -366,22 +346,20 @@ export const receivablePayableApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<SalesInvoice>>> => {
-    return createApiClient().get("/api/erp/receivables", { params });
+    return createApiClient().get('/api/erp/receivables', { params });
   },
 
   getSalesInvoice: (id: string): Promise<ApiResponse<SalesInvoice>> => {
     return createApiClient().get(`/api/erp/receivables/${id}`);
   },
 
-  createSalesInvoice: (
-    data: Partial<SalesInvoice>,
-  ): Promise<ApiResponse<SalesInvoice>> => {
-    return createApiClient().post("/api/erp/receivables", data);
+  createSalesInvoice: (data: Partial<SalesInvoice>): Promise<ApiResponse<SalesInvoice>> => {
+    return createApiClient().post('/api/erp/receivables', data);
   },
 
   updateSalesInvoice: (
     id: string,
-    data: Partial<SalesInvoice>,
+    data: Partial<SalesInvoice>
   ): Promise<ApiResponse<SalesInvoice>> => {
     return createApiClient().put(`/api/erp/receivables/${id}`, data);
   },
@@ -399,7 +377,7 @@ export const receivablePayableApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<PurchaseInvoice>>> => {
-    return createApiClient().get("/api/erp/payables", { params });
+    return createApiClient().get('/api/erp/payables', { params });
   },
 
   getPurchaseInvoice: (id: string): Promise<ApiResponse<PurchaseInvoice>> => {
@@ -407,14 +385,14 @@ export const receivablePayableApi = {
   },
 
   createPurchaseInvoice: (
-    data: Partial<PurchaseInvoice>,
+    data: Partial<PurchaseInvoice>
   ): Promise<ApiResponse<PurchaseInvoice>> => {
-    return createApiClient().post("/api/erp/payables", data);
+    return createApiClient().post('/api/erp/payables', data);
   },
 
   updatePurchaseInvoice: (
     id: string,
-    data: Partial<PurchaseInvoice>,
+    data: Partial<PurchaseInvoice>
   ): Promise<ApiResponse<PurchaseInvoice>> => {
     return createApiClient().put(`/api/erp/payables/${id}`, data);
   },
@@ -431,13 +409,11 @@ export const receivablePayableApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<CollectionRecord>>> => {
-    return createApiClient().get("/api/finance/ar/collections", { params });
+    return createApiClient().get('/api/finance/ar/collections', { params });
   },
 
-  createCollection: (
-    data: Partial<CollectionRecord>,
-  ): Promise<ApiResponse<CollectionRecord>> => {
-    return createApiClient().post("/api/finance/ar/collections", data);
+  createCollection: (data: Partial<CollectionRecord>): Promise<ApiResponse<CollectionRecord>> => {
+    return createApiClient().post('/api/finance/ar/collections', data);
   },
 
   // -------- 付款记录 --------
@@ -448,30 +424,28 @@ export const receivablePayableApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<PaymentRecord>>> => {
-    return createApiClient().get("/api/finance/ap/payments", { params });
+    return createApiClient().get('/api/finance/ap/payments', { params });
   },
 
-  createPayment: (
-    data: Partial<PaymentRecord>,
-  ): Promise<ApiResponse<PaymentRecord>> => {
-    return createApiClient().post("/api/finance/ap/payments", data);
+  createPayment: (data: Partial<PaymentRecord>): Promise<ApiResponse<PaymentRecord>> => {
+    return createApiClient().post('/api/finance/ap/payments', data);
   },
 
   // -------- 核销 --------
   reconcile: (params: {
-    type: "ar" | "ap";
+    type: 'ar' | 'ap';
     invoice_id: string;
     record_ids: string[];
   }): Promise<ApiResponse<void>> => {
-    return createApiClient().post("/api/finance/reconcile", params);
+    return createApiClient().post('/api/finance/reconcile', params);
   },
 
   autoReconcile: (params: {
-    type: "ar" | "ap";
+    type: 'ar' | 'ap';
     entity_id: string; // customer_id or supplier_id
     period: string;
   }): Promise<ApiResponse<{ reconciled: number }>> => {
-    return createApiClient().post("/api/finance/reconcile/auto", params);
+    return createApiClient().post('/api/finance/reconcile/auto', params);
   },
 
   // -------- 账龄分析 --------
@@ -494,7 +468,7 @@ export const receivablePayableApi = {
       total: number;
     }>
   > => {
-    return createApiClient().get("/api/finance/ar/aging", { params });
+    return createApiClient().get('/api/finance/ar/aging', { params });
   },
 
   getPayableAging: (params: {
@@ -516,7 +490,7 @@ export const receivablePayableApi = {
       total: number;
     }>
   > => {
-    return createApiClient().get("/api/finance/ap/aging", { params });
+    return createApiClient().get('/api/finance/ap/aging', { params });
   },
 };
 
@@ -528,10 +502,8 @@ export const reportApi = {
   /**
    * 获取资产负债表
    */
-  getBalanceSheet: (
-    params: ReportQueryParams,
-  ): Promise<ApiResponse<BalanceSheet>> => {
-    return createApiClient().get("/api/finance/reports/balance-sheet", {
+  getBalanceSheet: (params: ReportQueryParams): Promise<ApiResponse<BalanceSheet>> => {
+    return createApiClient().get('/api/finance/reports/balance-sheet', {
       params,
     });
   },
@@ -539,10 +511,8 @@ export const reportApi = {
   /**
    * 获取利润表
    */
-  getIncomeStatement: (
-    params: ReportQueryParams,
-  ): Promise<ApiResponse<IncomeStatement>> => {
-    return createApiClient().get("/api/finance/reports/income-statement", {
+  getIncomeStatement: (params: ReportQueryParams): Promise<ApiResponse<IncomeStatement>> => {
+    return createApiClient().get('/api/finance/reports/income-statement', {
       params,
     });
   },
@@ -550,10 +520,8 @@ export const reportApi = {
   /**
    * 获取现金流量表
    */
-  getCashFlowStatement: (
-    params: ReportQueryParams,
-  ): Promise<ApiResponse<CashFlowStatement>> => {
-    return createApiClient().get("/api/finance/reports/cash-flow", {
+  getCashFlowStatement: (params: ReportQueryParams): Promise<ApiResponse<CashFlowStatement>> => {
+    return createApiClient().get('/api/finance/reports/cash-flow', {
       params,
     });
   },
@@ -573,7 +541,7 @@ export const reportApi = {
       total_records: number;
     }>
   > => {
-    return createApiClient().get("/api/finance/reports/account-balance", {
+    return createApiClient().get('/api/finance/reports/account-balance', {
       params,
     });
   },
@@ -603,7 +571,7 @@ export const reportApi = {
       }>
     >
   > => {
-    return createApiClient().get("/api/finance/reports/account-ledger", {
+    return createApiClient().get('/api/finance/reports/account-ledger', {
       params,
     });
   },
@@ -618,7 +586,7 @@ export const reportApi = {
     end_period: string;
     company_id?: string;
   }): Promise<ApiResponse<any>> => {
-    return createApiClient().get("/api/finance/reports/dimension-detail", {
+    return createApiClient().get('/api/finance/reports/dimension-detail', {
       params,
     });
   },
@@ -627,9 +595,8 @@ export const reportApi = {
    * 导出资产负债表
    */
   exportBalanceSheet: async (params: ReportQueryParams): Promise<Blob> => {
-    const baseURL =
-      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, "/api/finance/reports/balance-sheet/export", {
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, '/api/finance/reports/balance-sheet/export', {
       params,
     });
   },
@@ -638,22 +605,16 @@ export const reportApi = {
    * 导出利润表
    */
   exportIncomeStatement: async (params: ReportQueryParams): Promise<Blob> => {
-    const baseURL =
-      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(
-      baseURL,
-      "/api/finance/reports/income-statement/export",
-      { params },
-    );
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, '/api/finance/reports/income-statement/export', { params });
   },
 
   /**
    * 导出现金流量表
    */
   exportCashFlowStatement: async (params: ReportQueryParams): Promise<Blob> => {
-    const baseURL =
-      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, "/api/finance/reports/cash-flow/export", {
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, '/api/finance/reports/cash-flow/export', {
       params,
     });
   },
@@ -674,7 +635,7 @@ export const voucherTemplateApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<VoucherTemplate>>> => {
-    return createApiClient().get("/api/finance/voucher-templates", {
+    return createApiClient().get('/api/finance/voucher-templates', {
       params,
     });
   },
@@ -689,19 +650,14 @@ export const voucherTemplateApi = {
   /**
    * 创建模板
    */
-  create: (
-    data: Partial<VoucherTemplate>,
-  ): Promise<ApiResponse<VoucherTemplate>> => {
-    return createApiClient().post("/api/finance/voucher-templates", data);
+  create: (data: Partial<VoucherTemplate>): Promise<ApiResponse<VoucherTemplate>> => {
+    return createApiClient().post('/api/finance/voucher-templates', data);
   },
 
   /**
    * 更新模板
    */
-  update: (
-    id: string,
-    data: Partial<VoucherTemplate>,
-  ): Promise<ApiResponse<VoucherTemplate>> => {
+  update: (id: string, data: Partial<VoucherTemplate>): Promise<ApiResponse<VoucherTemplate>> => {
     return createApiClient().put(`/api/finance/voucher-templates/${id}`, data);
   },
 
@@ -715,10 +671,7 @@ export const voucherTemplateApi = {
   /**
    * 复制模板
    */
-  copy: (
-    id: string,
-    newName: string,
-  ): Promise<ApiResponse<VoucherTemplate>> => {
+  copy: (id: string, newName: string): Promise<ApiResponse<VoucherTemplate>> => {
     return createApiClient().post(`/api/finance/voucher-templates/${id}/copy`, {
       name: newName,
     });
@@ -727,26 +680,17 @@ export const voucherTemplateApi = {
   /**
    * 预览模板生成的凭证
    */
-  preview: (
-    id: string,
-    sourceData: Record<string, any>,
-  ): Promise<ApiResponse<Voucher>> => {
-    return createApiClient().post(
-      `/api/finance/voucher-templates/${id}/preview`,
-      {
-        source_data: sourceData,
-      },
-    );
+  preview: (id: string, sourceData: Record<string, any>): Promise<ApiResponse<Voucher>> => {
+    return createApiClient().post(`/api/finance/voucher-templates/${id}/preview`, {
+      source_data: sourceData,
+    });
   },
 
   /**
    * 设为默认模板
    */
   setDefault: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post(
-      `/api/finance/voucher-templates/${id}/set-default`,
-      {},
-    );
+    return createApiClient().post(`/api/finance/voucher-templates/${id}/set-default`, {});
   },
 };
 
@@ -758,10 +702,8 @@ export const periodApi = {
   /**
    * 获取当前期间
    */
-  getCurrent: (): Promise<
-    ApiResponse<{ period: string; year: number; month: number }>
-  > => {
-    return createApiClient().get("/api/finance/period/current");
+  getCurrent: (): Promise<ApiResponse<{ period: string; year: number; month: number }>> => {
+    return createApiClient().get('/api/finance/period/current');
   },
 
   /**
@@ -778,34 +720,32 @@ export const periodApi = {
         month: number;
         start_date: string;
         end_date: string;
-        status: "open" | "closed" | "locked";
+        status: 'open' | 'closed' | 'locked';
       }[];
     }>
   > => {
-    return createApiClient().get("/api/finance/periods", { params });
+    return createApiClient().get('/api/finance/periods', { params });
   },
 
   /**
    * 开启期间
    */
   open: (period: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post("/api/finance/periods/open", { period });
+    return createApiClient().post('/api/finance/periods/open', { period });
   },
 
   /**
    * 关闭期间
    */
   close: (period: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post("/api/finance/periods/close", { period });
+    return createApiClient().post('/api/finance/periods/close', { period });
   },
 
   /**
    * 结转本期损益
    */
-  closePeriodIncome: (
-    period: string,
-  ): Promise<ApiResponse<{ voucher_id: string }>> => {
-    return createApiClient().post("/api/finance/periods/close-income", {
+  closePeriodIncome: (period: string): Promise<ApiResponse<{ voucher_id: string }>> => {
+    return createApiClient().post('/api/finance/periods/close-income', {
       period,
     });
   },
@@ -814,13 +754,13 @@ export const periodApi = {
    * 年末结账
    */
   yearEndClose: (
-    year: number,
+    year: number
   ): Promise<
     ApiResponse<{
       vouchers: { voucher_id: string; description: string }[];
     }>
   > => {
-    return createApiClient().post("/api/finance/periods/year-end-close", {
+    return createApiClient().post('/api/finance/periods/year-end-close', {
       year,
     });
   },
@@ -834,12 +774,8 @@ export const counterpartyFinanceApi = {
   /**
    * 获取客户财务信息
    */
-  getCustomerFinance: (
-    customerId: string,
-  ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().get(
-      `/api/finance/counterparty/customers/${customerId}`,
-    );
+  getCustomerFinance: (customerId: string): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
+    return createApiClient().get(`/api/finance/counterparty/customers/${customerId}`);
   },
 
   /**
@@ -847,23 +783,16 @@ export const counterpartyFinanceApi = {
    */
   updateCustomerFinance: (
     customerId: string,
-    data: Partial<CounterpartyFinanceInfo>,
+    data: Partial<CounterpartyFinanceInfo>
   ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().put(
-      `/api/finance/counterparty/customers/${customerId}`,
-      data,
-    );
+    return createApiClient().put(`/api/finance/counterparty/customers/${customerId}`, data);
   },
 
   /**
    * 获取供应商财务信息
    */
-  getSupplierFinance: (
-    supplierId: string,
-  ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().get(
-      `/api/finance/counterparty/suppliers/${supplierId}`,
-    );
+  getSupplierFinance: (supplierId: string): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
+    return createApiClient().get(`/api/finance/counterparty/suppliers/${supplierId}`);
   },
 
   /**
@@ -871,12 +800,9 @@ export const counterpartyFinanceApi = {
    */
   updateSupplierFinance: (
     supplierId: string,
-    data: Partial<CounterpartyFinanceInfo>,
+    data: Partial<CounterpartyFinanceInfo>
   ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().put(
-      `/api/finance/counterparty/suppliers/${supplierId}`,
-      data,
-    );
+    return createApiClient().put(`/api/finance/counterparty/suppliers/${supplierId}`, data);
   },
 
   /**
@@ -887,11 +813,9 @@ export const counterpartyFinanceApi = {
     page?: number;
     page_size?: number;
   }): Promise<
-    ApiResponse<
-      PaginatedResult<Customer & { finance_info?: CounterpartyFinanceInfo }>
-    >
+    ApiResponse<PaginatedResult<Customer & { finance_info?: CounterpartyFinanceInfo }>>
   > => {
-    return createApiClient().get("/api/finance/counterparty/customers", {
+    return createApiClient().get('/api/finance/counterparty/customers', {
       params,
     });
   },
@@ -904,11 +828,9 @@ export const counterpartyFinanceApi = {
     page?: number;
     page_size?: number;
   }): Promise<
-    ApiResponse<
-      PaginatedResult<Supplier & { finance_info?: CounterpartyFinanceInfo }>
-    >
+    ApiResponse<PaginatedResult<Supplier & { finance_info?: CounterpartyFinanceInfo }>>
   > => {
-    return createApiClient().get("/api/finance/counterparty/suppliers", {
+    return createApiClient().get('/api/finance/counterparty/suppliers', {
       params,
     });
   },

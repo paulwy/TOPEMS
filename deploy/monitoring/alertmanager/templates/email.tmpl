@@ -1,0 +1,62 @@
+{{ define "email.default.subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }} - {{ .CommonLabels.severity | toUpper }}{{ end }}] {{ .GroupLabels.alertname }} - TOPEMS监控系统
+{{ end }}
+
+{{ define "email.default.body" }}
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+    .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header { padding: 20px; border-bottom: 2px solid #e0e0e0; }
+    .header.critical { background-color: #ffebee; border-bottom-color: #f44336; }
+    .header.warning { background-color: #fff3e0; border-bottom-color: #ff9800; }
+    .header.info { background-color: #e3f2fd; border-bottom-color: #2196f3; }
+    .header h2 { margin: 0; color: #333; }
+    .content { padding: 20px; }
+    .alert-item { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 4px; border-left: 4px solid #2196f3; }
+    .alert-item.critical { border-left-color: #f44336; }
+    .alert-item.warning { border-left-color: #ff9800; }
+    .label { font-weight: bold; color: #555; display: inline-block; width: 100px; }
+    .value { color: #333; }
+    .summary { font-size: 16px; font-weight: bold; color: #1976d2; margin-bottom: 10px; }
+    .description { color: #666; margin-top: 10px; }
+    .footer { padding: 15px; background: #f5f5f5; border-top: 1px solid #e0e0e0; font-size: 12px; color: #999; text-align: center; }
+    .severity-critical { color: #f44336; }
+    .severity-warning { color: #ff9800; }
+    .severity-info { color: #2196f3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header {{ .CommonLabels.severity }}">
+      <h2>🔔 TOPEMS 告警通知</h2>
+      <p><strong>告警名称:</strong> {{ .GroupLabels.alertname }} | <strong>状态:</strong> {{ .Status | toUpper }}</p>
+    </div>
+    <div class="content">
+      {{ range .Alerts }}
+      <div class="alert-item {{ .Labels.severity }}">
+        <div class="summary">📌 {{ .Annotations.summary }}</div>
+        <div><span class="label">实例:</span><span class="value">{{ .Labels.instance }}</span></div>
+        <div><span class="label">任务:</span><span class="value">{{ .Labels.job }}</span></div>
+        <div><span class="label">严重级别:</span><span class="severity-{{ .Labels.severity }}">{{ .Labels.severity | toUpper }}</span></div>
+        <div><span class="label">开始时间:</span><span class="value">{{ .StartsAt.Local.Format "2006-01-02 15:04:05" }}</span></div>
+        {{ if ne .Status "resolved" }}
+        <div><span class="label">持续时间:</span><span class="value">{{ .Labels.duration }}</span></div>
+        {{ else }}
+        <div><span class="label">结束时间:</span><span class="value">{{ .EndsAt.Local.Format "2006-01-02 15:04:05" }}</span></div>
+        {{ end }}
+        {{ if .Annotations.description }}
+        <div class="description">{{ .Annotations.description }}</div>
+        {{ end }}
+      </div>
+      {{ end }}
+    </div>
+    <div class="footer">
+      <p>此邮件由 TOPEMS 监控系统自动发送 | 监控环境: {{ .CommonLabels.monitor }}</p>
+    </div>
+  </div>
+</body>
+</html>
+{{ end }}

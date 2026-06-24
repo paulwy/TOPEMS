@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from "react";
-import { aiApi } from "../api/ai";
+import { useState, useCallback, useRef } from 'react';
+import { aiApi } from '../api/ai';
 import type {
   AIFeatureType,
   ValidateRequest,
@@ -8,7 +8,7 @@ import type {
   CompleteResponse,
   SummarizeRequest,
   SummarizeResponse,
-} from "@/types/ai";
+} from '@/types/ai';
 
 interface UseAIHelperOptions {
   featureType: AIFeatureType;
@@ -33,9 +33,7 @@ interface UseAIHelperReturn<T = any> {
   retry: () => Promise<void>;
 }
 
-export function useAIHelper<T = any>(
-  options: UseAIHelperOptions,
-): UseAIHelperReturn<T> {
+export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperReturn<T> {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [result, setResult] = useState<T | null>(null);
@@ -51,7 +49,7 @@ export function useAIHelper<T = any>(
       setError(error);
       options.onError?.(error);
     },
-    [options],
+    [options]
   );
 
   const clearError = useCallback(() => {
@@ -75,7 +73,7 @@ export function useAIHelper<T = any>(
         data: R;
         message: string;
       }>,
-      successHandler: (data: R) => void,
+      successHandler: (data: R) => void
     ): Promise<R | null> => {
       lastOperationRef.current = operation as any;
       setIsLoading(true);
@@ -96,7 +94,7 @@ export function useAIHelper<T = any>(
             return data;
           }
 
-          throw new Error(response.message || "请求失败");
+          throw new Error(response.message || '请求失败');
         } catch (err) {
           lastError = err instanceof Error ? err : new Error(String(err));
           setRetryCount(attempt + 1);
@@ -111,7 +109,7 @@ export function useAIHelper<T = any>(
       setIsLoading(false);
       return null;
     },
-    [maxRetries, retryDelay, handleError],
+    [maxRetries, retryDelay, handleError]
   );
 
   const retry = useCallback(async () => {
@@ -125,7 +123,7 @@ export function useAIHelper<T = any>(
       const operation = () =>
         aiApi.generate({
           variables: { prompt },
-          output_format: "text",
+          output_format: 'text',
           ...generateOptions,
         });
 
@@ -135,7 +133,7 @@ export function useAIHelper<T = any>(
 
       return result?.content ?? null;
     },
-    [executeWithRetry, options],
+    [executeWithRetry, options]
   );
 
   const validate = useCallback(
@@ -148,7 +146,7 @@ export function useAIHelper<T = any>(
 
       return result as ValidateResponse | null;
     },
-    [executeWithRetry, options],
+    [executeWithRetry, options]
   );
 
   const complete = useCallback(
@@ -161,7 +159,7 @@ export function useAIHelper<T = any>(
 
       return result as CompleteResponse | null;
     },
-    [executeWithRetry, options],
+    [executeWithRetry, options]
   );
 
   const summarize = useCallback(
@@ -174,7 +172,7 @@ export function useAIHelper<T = any>(
 
       return result as SummarizeResponse | null;
     },
-    [executeWithRetry, options],
+    [executeWithRetry, options]
   );
 
   const chat = useCallback(
@@ -191,7 +189,7 @@ export function useAIHelper<T = any>(
 
       return result?.answer ?? null;
     },
-    [executeWithRetry, options],
+    [executeWithRetry, options]
   );
 
   return {

@@ -10,7 +10,7 @@ pub mod audit;
 pub mod data_sync;
 pub mod inbound_order;
 pub mod inventory;
-// pub mod inventory_alert;
+pub mod inventory_alert;
 pub mod openapi;
 pub mod outbound_order;
 pub mod plugin;
@@ -45,7 +45,7 @@ where
     Router::new()
         .merge(warehouse::create_routes())
         .merge(inventory::create_routes())
-        // .merge(inventory_alert::create_routes())
+        .merge(inventory_alert::create_routes())
         .merge(inbound_order::create_routes())
         .merge(outbound_order::create_routes())
         .merge(stock_take::create_routes())

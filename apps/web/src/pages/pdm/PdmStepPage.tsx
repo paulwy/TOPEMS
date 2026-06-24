@@ -1,28 +1,41 @@
-import React, { useState, useEffect } from "react";
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, CardHeader, Typography, Stack,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { apiLogger } from "@/utils/logger";
-import { Plus, Eye, ClipboardList, Clock, ListOrdered } from "lucide-react";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
-import { pdmApi } from "@/api/pdm";
-import type { ProductionStep } from "@/api/pdm";
-import { toast } from "react-toastify";
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Stack,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { apiLogger } from '@/utils/logger';
+import { Plus, Eye, ClipboardList, Clock, ListOrdered } from 'lucide-react';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { pdmApi } from '@/api/pdm';
+import type { ProductionStep } from '@/api/pdm';
+import { toast } from 'react-toastify';
 
 const PdmStepPage: React.FC = () => {
   const [steps, setSteps] = useState<ProductionStep[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedStep, setSelectedStep] = useState<ProductionStep | null>(null);
   const [formData, setFormData] = useState({
-    step_no: "",
-    name: "",
-    description: "",
-    process_id: "",
+    step_no: '',
+    name: '',
+    description: '',
+    process_id: '',
     sort_order: 1,
-    duration_hours: "",
-    equipment_required: "",
+    duration_hours: '',
+    equipment_required: '',
   });
 
   // 分页状态
@@ -43,18 +56,18 @@ const PdmStepPage: React.FC = () => {
           sort_order: item.sort_order || item.order || 0,
           duration: item.duration_hours || item.duration || 0,
           status:
-            item.status === "active"
-              ? "启用"
-              : item.status === "inactive"
-                ? "禁用"
-                : item.status || "正常",
+            item.status === 'active'
+              ? '启用'
+              : item.status === 'inactive'
+                ? '禁用'
+                : item.status || '正常',
         }));
         setSteps(adapted);
       } else {
         setSteps([]);
       }
     } catch (err) {
-      apiLogger.error("加载工序步骤数据失败:", err);
+      apiLogger.error('加载工序步骤数据失败:', err);
       setSteps([]);
     } finally {
       setLoading(false);
@@ -63,15 +76,15 @@ const PdmStepPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: "#dcfce7", color: "#16a34a" },
-      禁用: { bg: "#fee2e2", color: "#dc2626" },
-      正常: { bg: "#dbeafe", color: "#3b82f6" },
+      启用: { bg: '#dcfce7', color: '#16a34a' },
+      禁用: { bg: '#fee2e2', color: '#dc2626' },
+      正常: { bg: '#dbeafe', color: '#3b82f6' },
     };
-    const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
+    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
     return (
       <Chip
         label={status}
-        size="small"
+        size='small'
         sx={{
           backgroundColor: colors.bg,
           color: colors.color,
@@ -83,46 +96,46 @@ const PdmStepPage: React.FC = () => {
 
   const columns: ColumnDef<ProductionStep>[] = [
     {
-      id: "sort_order",
-      label: "序号",
+      id: 'sort_order',
+      label: '序号',
       width: 80,
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <ListOrdered sx={{ width: 14, height: 14 }} />
           {row.sort_order}
         </Box>
       ),
     },
     {
-      id: "step_no",
-      label: "步骤编号",
+      id: 'step_no',
+      label: '步骤编号',
     },
     {
-      id: "name",
-      label: "步骤名称",
+      id: 'name',
+      label: '步骤名称',
     },
     {
-      id: "duration",
-      label: "耗时(小时)",
+      id: 'duration',
+      label: '耗时(小时)',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Clock sx={{ width: 14, height: 14 }} />
-          {row.duration || "-"}
+          {row.duration || '-'}
         </Box>
       ),
     },
     {
-      id: "status",
-      label: "状态",
-      render: (row) => getStatusBadge(row.status || ""),
+      id: 'status',
+      label: '状态',
+      render: (row) => getStatusBadge(row.status || ''),
     },
     {
-      id: "actions",
-      label: "操作",
-      align: "right",
+      id: 'actions',
+      label: '操作',
+      align: 'right',
       render: (row) => (
         <Button
-          size="small"
+          size='small'
           onClick={() => handleView(row)}
           startIcon={<Eye style={{ width: 16, height: 16 }} />}
         >
@@ -141,10 +154,7 @@ const PdmStepPage: React.FC = () => {
   });
 
   // 分页数据
-  const paginatedSteps = filteredSteps.slice(
-    page * pageSize,
-    page * pageSize + pageSize,
-  );
+  const paginatedSteps = filteredSteps.slice(page * pageSize, page * pageSize + pageSize);
 
   const handleView = (step: ProductionStep) => {
     setSelectedStep(step);
@@ -153,13 +163,13 @@ const PdmStepPage: React.FC = () => {
 
   const handleCreate = () => {
     setFormData({
-      step_no: "",
-      name: "",
-      description: "",
-      process_id: "",
+      step_no: '',
+      name: '',
+      description: '',
+      process_id: '',
       sort_order: 1,
-      duration_hours: "",
-      equipment_required: "",
+      duration_hours: '',
+      equipment_required: '',
     });
     setShowCreateModal(true);
   };
@@ -170,96 +180,92 @@ const PdmStepPage: React.FC = () => {
         step_no: formData.step_no,
         name: formData.name,
         description: formData.description || undefined,
-        process_id: formData.process_id || "",
+        process_id: formData.process_id || '',
         sort_order: formData.sort_order,
-        duration_hours: formData.duration_hours
-          ? parseFloat(formData.duration_hours)
-          : undefined,
+        duration_hours: formData.duration_hours ? parseFloat(formData.duration_hours) : undefined,
         equipment_required: formData.equipment_required || undefined,
       });
-      toast.success("工序步骤创建成功");
+      toast.success('工序步骤创建成功');
       setShowCreateModal(false);
       loadSteps();
     } catch (err) {
-      toast.error("创建失败");
-      apiLogger.error("创建工序步骤失败:", err);
+      toast.error('创建失败');
+      apiLogger.error('创建工序步骤失败:', err);
     }
   };
 
   const stats = {
     total: steps.length,
-    active: steps.filter((s) => s.status === "启用" || s.status === "正常")
-      .length,
-    inactive: steps.filter((s) => s.status === "禁用").length,
+    active: steps.filter((s) => s.status === '启用' || s.status === '正常').length,
+    inactive: steps.filter((s) => s.status === '禁用').length,
   };
 
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)',
       }}
     >
       <Box
-        component="header"
+        component='header'
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           boxShadow: 1,
           borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
+          borderColor: 'divider',
+          position: 'sticky',
           top: 0,
           zIndex: 10,
         }}
       >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               height: 64,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  background:
-                    "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
                   borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <ClipboardList sx={{ width: 24, height: 24, color: "white" }} />
+                <ClipboardList sx={{ width: 24, height: 24, color: 'white' }} />
               </Box>
               <Box>
                 <Typography
-                  variant="h6"
+                  variant='h6'
                   sx={{
                     fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
+                    color: 'slate.900',
+                    fontSize: '1.25rem',
                   }}
                 >
                   工序步骤
                 </Typography>
                 <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
+                  variant='caption'
+                  sx={{ color: 'slate.500', fontSize: '0.75rem' }}
                 >
                   Production Steps
                 </Typography>
               </Box>
             </Box>
             <Button
-              variant="contained"
+              variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: "#22c55e", "&:hover": { bgcolor: "#16a34a" } }}
+              sx={{ bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
             >
               新增步骤
             </Button>
@@ -268,45 +274,43 @@ const PdmStepPage: React.FC = () => {
       </Box>
 
       <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
+        component='main'
+        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
       >
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
             gap: 2,
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: "#f0fdf4" }}>
+          <Card sx={{ bgcolor: '#f0fdf4' }}>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#dcfce7",
+                    bgcolor: '#dcfce7',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <ClipboardList
-                    sx={{ width: 20, height: 20, color: "#22c55e" }}
-                  />
+                  <ClipboardList sx={{ width: 20, height: 20, color: '#22c55e' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     步骤总数
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.total}
                   </Typography>
@@ -316,32 +320,30 @@ const PdmStepPage: React.FC = () => {
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#dcfce7",
+                    bgcolor: '#dcfce7',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <ClipboardList
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
+                  <ClipboardList sx={{ width: 20, height: 20, color: '#16a34a' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     正常使用
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.active}
                   </Typography>
@@ -351,32 +353,30 @@ const PdmStepPage: React.FC = () => {
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#fee2e2",
+                    bgcolor: '#fee2e2',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <ClipboardList
-                    sx={{ width: 20, height: 20, color: "#dc2626" }}
-                  />
+                  <ClipboardList sx={{ width: 20, height: 20, color: '#dc2626' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     已禁用
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.inactive}
                   </Typography>
@@ -389,20 +389,18 @@ const PdmStepPage: React.FC = () => {
         <Card>
           <CardHeader
             sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               pb: 0,
             }}
           >
             <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              variant='h6'
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
-              <ClipboardList
-                style={{ width: 20, height: 20, color: "#22c55e" }}
-              />
+              <ClipboardList style={{ width: 20, height: 20, color: '#22c55e' }} />
               工序步骤列表
             </Typography>
           </CardHeader>
@@ -412,7 +410,7 @@ const PdmStepPage: React.FC = () => {
               data={paginatedSteps}
               loading={loading}
               searchable
-              searchPlaceholder="搜索步骤名称或编号..."
+              searchPlaceholder='搜索步骤名称或编号...'
               searchValue={searchTerm}
               onSearch={setSearchTerm}
               pagination={{
@@ -432,43 +430,37 @@ const PdmStepPage: React.FC = () => {
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>新增工序步骤</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label="步骤编号 *"
+              label='步骤编号 *'
               value={formData.step_no}
-              onChange={(e) =>
-                setFormData({ ...formData, step_no: e.target.value })
-              }
-              placeholder="请输入步骤编号"
+              onChange={(e) => setFormData({ ...formData, step_no: e.target.value })}
+              placeholder='请输入步骤编号'
             />
             <TextField
               fullWidth
-              label="步骤名称 *"
+              label='步骤名称 *'
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="请输入步骤名称"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder='请输入步骤名称'
             />
             <TextField
               fullWidth
-              label="所属工艺"
+              label='所属工艺'
               value={formData.process_id}
-              onChange={(e) =>
-                setFormData({ ...formData, process_id: e.target.value })
-              }
-              placeholder="请输入工艺ID"
+              onChange={(e) => setFormData({ ...formData, process_id: e.target.value })}
+              placeholder='请输入工艺ID'
             />
             <TextField
               fullWidth
-              label="排序序号"
-              type="number"
+              label='排序序号'
+              type='number'
               value={formData.sort_order}
               onChange={(e) =>
                 setFormData({
@@ -479,44 +471,41 @@ const PdmStepPage: React.FC = () => {
             />
             <TextField
               fullWidth
-              label="耗时(小时)"
-              type="number"
+              label='耗时(小时)'
+              type='number'
               value={formData.duration_hours}
-              onChange={(e) =>
-                setFormData({ ...formData, duration_hours: e.target.value })
-              }
-              placeholder="请输入耗时"
+              onChange={(e) => setFormData({ ...formData, duration_hours: e.target.value })}
+              placeholder='请输入耗时'
             />
             <TextField
               fullWidth
-              label="所需设备"
+              label='所需设备'
               value={formData.equipment_required}
-              onChange={(e) =>
-                setFormData({ ...formData, equipment_required: e.target.value })
-              }
-              placeholder="请输入所需设备"
+              onChange={(e) => setFormData({ ...formData, equipment_required: e.target.value })}
+              placeholder='请输入所需设备'
             />
             <TextField
               fullWidth
-              label="描述"
+              label='描述'
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="请输入步骤描述"
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder='请输入步骤描述'
               multiline
               rows={2}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateModal(false)}
+          >
             取消
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: "#22c55e" }}
+            sx={{ bgcolor: '#22c55e' }}
           >
             保存
           </Button>
@@ -526,7 +515,7 @@ const PdmStepPage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>工序步骤详情</DialogTitle>
@@ -535,15 +524,15 @@ const PdmStepPage: React.FC = () => {
             <Box
               sx={{
                 pt: 2,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
                 gap: 2,
               }}
             >
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   步骤编号
                 </Box>
@@ -551,8 +540,8 @@ const PdmStepPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   步骤名称
                 </Box>
@@ -560,56 +549,54 @@ const PdmStepPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   排序序号
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <ListOrdered style={{ width: 16, height: 16 }} />
                   {selectedStep.sort_order}
                 </Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   耗时(小时)
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Clock style={{ width: 16, height: 16 }} />
-                  {selectedStep.duration_hours || selectedStep.duration || "-"}
+                  {selectedStep.duration_hours || selectedStep.duration || '-'}
                 </Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   所需设备
                 </Box>
-                <Box>{selectedStep.equipment_required || "-"}</Box>
+                <Box>{selectedStep.equipment_required || '-'}</Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(selectedStep.status || "正常")}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedStep.status || '正常')}</Box>
               </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   描述
                 </Box>
-                <Box>{selectedStep.description || "-"}</Box>
+                <Box>{selectedStep.description || '-'}</Box>
               </Box>
             </Box>
           )}

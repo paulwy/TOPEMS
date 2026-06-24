@@ -1,5 +1,5 @@
 /**
- * ERP财务核心类型定义
+ * 财务核心类型定义
  * 包含科目、凭证、财务报表、往来单位等核心实体类型
  */
 
@@ -11,30 +11,30 @@
  * 科目类别
  */
 export type AccountCategory =
-  | "asset" // 资产类
-  | "liability" // 负债类
-  | "equity" // 权益类
-  | "cost" // 成本类
-  | "expense" // 费用类
-  | "income"; // 收入类
+  | 'asset' // 资产类
+  | 'liability' // 负债类
+  | 'equity' // 权益类
+  | 'cost' // 成本类
+  | 'expense' // 费用类
+  | 'income'; // 收入类
 
 /**
  * 余额方向
  */
-export type BalanceDirection = "debit" | "credit";
+export type BalanceDirection = 'debit' | 'credit';
 
 /**
  * 辅助核算维度
  */
 export type AccountingDimension =
-  | "company" // 公司
-  | "department" // 部门
-  | "project" // 项目
-  | "customer" // 客户
-  | "supplier" // 供应商
-  | "employee" // 员工
-  | "product" // 产品
-  | "bank"; // 银行账户
+  | 'company' // 公司
+  | 'department' // 部门
+  | 'project' // 项目
+  | 'customer' // 客户
+  | 'supplier' // 供应商
+  | 'employee' // 员工
+  | 'product' // 产品
+  | 'bank'; // 银行账户
 
 /**
  * 会计科目
@@ -71,7 +71,7 @@ export interface Account {
   default_currency?: string; // 默认币种
 
   // 状态
-  status: "active" | "disabled";
+  status: 'active' | 'disabled';
   is_active?: boolean; // 是否启用（表单字段）
   is_detail?: boolean; // 是否明细科目
 
@@ -157,20 +157,20 @@ export interface AccountBalance {
  * 凭证状态
  */
 export type VoucherStatus =
-  | "draft" // 草稿
-  | "submitted" // 已提交
-  | "approved" // 已审核
-  | "posted" // 已过账
-  | "reversed"; // 已冲销
+  | 'draft' // 草稿
+  | 'submitted' // 已提交
+  | 'approved' // 已审核
+  | 'posted' // 已过账
+  | 'reversed'; // 已冲销
 
 /**
  * 凭证类型
  */
 export type VoucherType =
-  | "general" // 记账凭证
-  | "payment" // 付款凭证
-  | "receipt" // 收款凭证
-  | "transfer"; // 转账凭证
+  | 'general' // 记账凭证
+  | 'payment' // 付款凭证
+  | 'receipt' // 收款凭证
+  | 'transfer'; // 转账凭证
 
 /**
  * 凭证分录
@@ -336,7 +336,7 @@ export interface CreateVoucherEntryRequest {
 /**
  * 往来单位类型
  */
-export type CounterpartyType = "customer" | "supplier" | "both";
+export type CounterpartyType = 'customer' | 'supplier' | 'both';
 
 /**
  * 银行账户信息
@@ -362,7 +362,7 @@ export interface CounterpartyFinanceInfo {
   // 税务信息
   tax_number?: string; // 纳税识别号
   invoice_title?: string; // 发票抬头
-  invoice_type: "normal" | "special"; // 发票类型
+  invoice_type: 'normal' | 'special'; // 发票类型
 
   // 信用管理
   credit_limit: number; // 信用额度
@@ -382,7 +382,7 @@ export interface CounterpartyFinanceInfo {
   total_paid?: number; // 累计付款（供应商）
 
   // 状态
-  status: "normal" | "blocked" | "inactive";
+  status: 'normal' | 'blocked' | 'inactive';
   block_reason?: string;
 
   // 审计
@@ -418,7 +418,7 @@ export interface Customer {
   finance_info?: CounterpartyFinanceInfo;
 
   // 状态
-  status: "active" | "inactive" | "blocked";
+  status: 'active' | 'inactive' | 'blocked';
 
   created_at: string;
   updated_at: string;
@@ -450,7 +450,7 @@ export interface Supplier {
   finance_info?: CounterpartyFinanceInfo;
 
   // 状态
-  status: "active" | "inactive" | "blocked";
+  status: 'active' | 'inactive' | 'blocked';
 
   created_at: string;
   updated_at: string;
@@ -464,12 +464,12 @@ export interface Supplier {
  * 发票状态
  */
 export type InvoiceStatus =
-  | "draft" // 草稿
-  | "approved" // 已审核
-  | "invoiced" // 已开票
-  | "partial_received" // 部分收款
-  | "received" // 已收款
-  | "overdue"; // 已逾期
+  | 'draft' // 草稿
+  | 'approved' // 已审核
+  | 'invoiced' // 已开票
+  | 'partial_received' // 部分收款
+  | 'received' // 已收款
+  | 'overdue'; // 已逾期
 
 /**
  * 销售发票（应收）
@@ -497,7 +497,7 @@ export interface SalesInvoice {
   // 发票信息
   invoice_date: string; // 开票日期
   due_date: string; // 到期日期
-  invoice_type: "normal" | "special";
+  invoice_type: 'normal' | 'special';
 
   // 状态
   status: InvoiceStatus;
@@ -534,7 +534,7 @@ export interface PurchaseInvoice {
   // 发票信息
   invoice_date: string; // 收票日期
   due_date: string; // 到期日期
-  invoice_type: "normal" | "special";
+  invoice_type: 'normal' | 'special';
 
   // 状态
   status: InvoiceStatus;
@@ -576,7 +576,7 @@ export interface CollectionRecord {
   voucher_no?: string;
 
   // 状态
-  status: "recorded" | "matched" | "cancelled";
+  status: 'recorded' | 'matched' | 'cancelled';
 
   created_at: string;
   created_by?: string;
@@ -613,7 +613,7 @@ export interface PaymentRecord {
   voucher_no?: string;
 
   // 状态
-  status: "recorded" | "matched" | "cancelled";
+  status: 'recorded' | 'matched' | 'cancelled';
 
   created_at: string;
   created_by?: string;
@@ -871,14 +871,14 @@ export interface CashFlowStatement {
  * 凭证模板类型
  */
 export type VoucherTemplateType =
-  | "payroll" // 工资凭证
-  | "sales_invoice" // 销售发票
-  | "purchase_invoice" // 采购发票
-  | "collection" // 收款凭证
-  | "payment" // 付款凭证
-  | "depreciation" // 折旧凭证
-  | "expense" // 费用报销
-  | "cost_allocation"; // 成本归集
+  | 'payroll' // 工资凭证
+  | 'sales_invoice' // 销售发票
+  | 'purchase_invoice' // 采购发票
+  | 'collection' // 收款凭证
+  | 'payment' // 付款凭证
+  | 'depreciation' // 折旧凭证
+  | 'expense' // 费用报销
+  | 'cost_allocation'; // 成本归集
 
 /**
  * 凭证模板分录规则
@@ -888,7 +888,7 @@ export interface VoucherTemplateEntry {
   line_no: number;
 
   // 科目规则
-  account_rule_type: "fixed" | "dynamic"; // 固定科目还是动态规则
+  account_rule_type: 'fixed' | 'dynamic'; // 固定科目还是动态规则
   account_id?: string; // 固定科目ID
   account_code?: string;
   account_name?: string;
@@ -897,27 +897,27 @@ export interface VoucherTemplateEntry {
   account_expression?: string; // 表达式，如: ${source === 'HRM' ? '6602.01' : '6602.99'}
 
   // 金额规则
-  amount_rule_type: "fixed" | "field" | "expression";
+  amount_rule_type: 'fixed' | 'field' | 'expression';
   fixed_amount?: number;
   amount_field?: string; // 字段路径，如: payload.net_salary
   amount_expression?: string; // 表达式
 
   // 方向规则
-  direction_rule_type: "fixed" | "expression";
-  fixed_direction?: "debit" | "credit";
+  direction_rule_type: 'fixed' | 'expression';
+  fixed_direction?: 'debit' | 'credit';
   direction_expression?: string;
 
   // 辅助核算规则
   dimension_rules?: {
     dimension: AccountingDimension;
-    source_type: "fixed" | "field" | "expression";
+    source_type: 'fixed' | 'field' | 'expression';
     fixed_value?: string;
     field?: string;
     expression?: string;
   }[];
 
   // 摘要规则
-  summary_rule_type: "fixed" | "field" | "expression";
+  summary_rule_type: 'fixed' | 'field' | 'expression';
   fixed_summary?: string;
   summary_field?: string;
   summary_expression?: string;
@@ -945,7 +945,7 @@ export interface VoucherTemplate {
   entries: VoucherTemplateEntry[];
 
   // 状态
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
   is_default: boolean; // 是否默认模板
 
   // 审计

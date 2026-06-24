@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   TextField,
   Dialog,
@@ -14,115 +14,105 @@ import {
   Select,
   MenuItem,
   OutlinedInput,
-} from "@mui/material";
-import { Button } from "@/components/ui/Button";
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import type {
   Customer,
   CreateCustomerRequest,
   UpdateCustomerRequest,
   Tag,
-} from "@/api/modules/crm/crm";
-import { crmApi } from "@/api/modules/crm/crm";
-import { useAppStore } from "@/store";
-import { logger } from "@/utils/logger";
-import { DataExport } from "@/components/common";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Download,
-  Upload,
-  Tag as TagIcon,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
-import type { RowAction, FilterConfig } from "@/components/templates";
+} from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/modules/crm/crm';
+import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
+import { DataExport } from '@/components/common';
+import { Plus, Edit, Trash2, Eye, Download, Upload, Tag as TagIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import type { RowAction, FilterConfig } from '@/components/templates';
 
 const customerColumns = [
-  { key: "name", title: "客户名称" },
-  { key: "code", title: "客户代码" },
-  { key: "industry", title: "行业" },
-  { key: "company_size", title: "公司规模" },
-  { key: "customer_type", title: "客户类型" },
-  { key: "rating", title: "评级" },
-  { key: "phone", title: "电话" },
-  { key: "email", title: "邮箱" },
-  { key: "status", title: "状态" },
-  { key: "created_at", title: "创建时间" },
+  { key: 'name', title: '客户名称' },
+  { key: 'code', title: '客户代码' },
+  { key: 'industry', title: '行业' },
+  { key: 'company_size', title: '公司规模' },
+  { key: 'customer_type', title: '客户类型' },
+  { key: 'rating', title: '评级' },
+  { key: 'phone', title: '电话' },
+  { key: 'email', title: '邮箱' },
+  { key: 'status', title: '状态' },
+  { key: 'created_at', title: '创建时间' },
 ];
 
 const companySizes = [
-  { value: "", label: "请选择" },
-  { value: "micro", label: "微型 (<10人)" },
-  { value: "small", label: "小型 (10-50人)" },
-  { value: "medium", label: "中型 (50-200人)" },
-  { value: "large", label: "大型 (200-1000人)" },
-  { value: "enterprise", label: "集团 (>1000人)" },
+  { value: '', label: '请选择' },
+  { value: 'micro', label: '微型 (<10人)' },
+  { value: 'small', label: '小型 (10-50人)' },
+  { value: 'medium', label: '中型 (50-200人)' },
+  { value: 'large', label: '大型 (200-1000人)' },
+  { value: 'enterprise', label: '集团 (>1000人)' },
 ];
 
 const customerTypes = [
-  { value: "", label: "请选择" },
-  { value: "potential", label: "潜在客户" },
-  { value: "active", label: "活跃客户" },
-  { value: "inactive", label: "非活跃客户" },
-  { value: "churned", label: "流失客户" },
+  { value: '', label: '请选择' },
+  { value: 'potential', label: '潜在客户' },
+  { value: 'active', label: '活跃客户' },
+  { value: 'inactive', label: '非活跃客户' },
+  { value: 'churned', label: '流失客户' },
 ];
 
 const customerSources = [
-  { value: "", label: "请选择" },
-  { value: "website", label: "官网" },
-  { value: "referral", label: "转介绍" },
-  { value: "campaign", label: "营销活动" },
-  { value: "trade_show", label: "展会" },
-  { value: "direct_sales", label: "直销" },
-  { value: "other", label: "其他" },
+  { value: '', label: '请选择' },
+  { value: 'website', label: '官网' },
+  { value: 'referral', label: '转介绍' },
+  { value: 'campaign', label: '营销活动' },
+  { value: 'trade_show', label: '展会' },
+  { value: 'direct_sales', label: '直销' },
+  { value: 'other', label: '其他' },
 ];
 
 const ratingOptions = [
-  { value: "", label: "请选择" },
-  { value: "A", label: "A - 优秀" },
-  { value: "B", label: "B - 良好" },
-  { value: "C", label: "C - 一般" },
-  { value: "D", label: "D - 较差" },
+  { value: '', label: '请选择' },
+  { value: 'A', label: 'A - 优秀' },
+  { value: 'B', label: 'B - 良好' },
+  { value: 'C', label: 'C - 一般' },
+  { value: 'D', label: 'D - 较差' },
 ];
 
 const CustomerManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>("");
-  const [ratingFilter, setRatingFilter] = useState<string>("");
-  const [industryFilter, setIndustryFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>('');
+  const [ratingFilter, setRatingFilter] = useState<string>('');
+  const [industryFilter, setIndustryFilter] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null,
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showTagDialog, setShowTagDialog] = useState(false);
   const [customerTags, setCustomerTags] = useState<Tag[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [formData, setFormData] = useState<CreateCustomerRequest>({
-    name: "",
-    code: "",
-    industry: "",
-    company_size: "",
-    website: "",
-    email: "",
-    phone: "",
-    fax: "",
-    address: "",
-    city: "",
-    province: "",
-    country: "",
-    postal_code: "",
-    customer_type: "",
-    source: "",
-    rating: "",
+    name: '',
+    code: '',
+    industry: '',
+    company_size: '',
+    website: '',
+    email: '',
+    phone: '',
+    fax: '',
+    address: '',
+    city: '',
+    province: '',
+    country: '',
+    postal_code: '',
+    customer_type: '',
+    source: '',
+    rating: '',
     revenue: undefined,
     employee_count: undefined,
-    notes: "",
+    notes: '',
   });
   const [pagination, setPagination] = useState({
     page: 0,
@@ -171,11 +161,11 @@ const CustomerManagementPage: React.FC = () => {
         }));
       }
     } catch (error) {
-      logger.error("加载客户列表失败:", error);
+      logger.error('加载客户列表失败:', error);
       addNotification({
-        type: "error",
-        title: "加载失败",
-        message: "无法加载客户列表",
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载客户列表',
       });
     } finally {
       setLoading(false);
@@ -189,7 +179,7 @@ const CustomerManagementPage: React.FC = () => {
         setAllTags(response.data.items || []);
       }
     } catch (error) {
-      logger.error("加载标签列表失败:", error);
+      logger.error('加载标签列表失败:', error);
     }
   };
 
@@ -200,7 +190,7 @@ const CustomerManagementPage: React.FC = () => {
         setCustomerTags(response.data || []);
       }
     } catch (error) {
-      logger.error("加载客户标签失败:", error);
+      logger.error('加载客户标签失败:', error);
     }
   };
 
@@ -208,52 +198,49 @@ const CustomerManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedCustomer) {
-        await crmApi.customers.update(
-          selectedCustomer.id,
-          formData as UpdateCustomerRequest,
-        );
+        await crmApi.customers.update(selectedCustomer.id, formData as UpdateCustomerRequest);
         addNotification({
-          type: "success",
-          title: "更新成功",
-          message: "客户信息已更新",
+          type: 'success',
+          title: '更新成功',
+          message: '客户信息已更新',
         });
       } else {
         await crmApi.customers.create(formData);
         addNotification({
-          type: "success",
-          title: "创建成功",
-          message: "新客户已创建",
+          type: 'success',
+          title: '创建成功',
+          message: '新客户已创建',
         });
       }
       setShowDialog(false);
       resetForm();
       loadCustomers();
     } catch (error) {
-      logger.error("操作失败:", error);
+      logger.error('操作失败:', error);
       addNotification({
-        type: "error",
-        title: "操作失败",
-        message: selectedCustomer ? "更新客户失败" : "创建客户失败",
+        type: 'error',
+        title: '操作失败',
+        message: selectedCustomer ? '更新客户失败' : '创建客户失败',
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("确定要删除这个客户吗?")) return;
+    if (!window.confirm('确定要删除这个客户吗?')) return;
     try {
       await crmApi.customers.delete(id);
       addNotification({
-        type: "success",
-        title: "删除成功",
-        message: "客户已删除",
+        type: 'success',
+        title: '删除成功',
+        message: '客户已删除',
       });
       loadCustomers();
     } catch (error) {
-      logger.error("删除失败:", error);
+      logger.error('删除失败:', error);
       addNotification({
-        type: "error",
-        title: "删除失败",
-        message: "无法删除客户",
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除客户',
       });
     }
   };
@@ -262,24 +249,24 @@ const CustomerManagementPage: React.FC = () => {
     setSelectedCustomer(customer);
     setFormData({
       name: customer.name,
-      code: customer.code || "",
-      industry: customer.industry || "",
-      company_size: customer.company_size || "",
-      website: customer.website || "",
-      email: customer.email || "",
-      phone: customer.phone || "",
-      fax: customer.fax || "",
-      address: customer.address || "",
-      city: customer.city || "",
-      province: customer.province || "",
-      country: customer.country || "",
-      postal_code: customer.postal_code || "",
-      customer_type: customer.customer_type || "",
-      source: customer.source || "",
-      rating: customer.rating || "",
+      code: customer.code || '',
+      industry: customer.industry || '',
+      company_size: customer.company_size || '',
+      website: customer.website || '',
+      email: customer.email || '',
+      phone: customer.phone || '',
+      fax: customer.fax || '',
+      address: customer.address || '',
+      city: customer.city || '',
+      province: customer.province || '',
+      country: customer.country || '',
+      postal_code: customer.postal_code || '',
+      customer_type: customer.customer_type || '',
+      source: customer.source || '',
+      rating: customer.rating || '',
       revenue: customer.revenue,
       employee_count: customer.employee_count,
-      notes: customer.notes || "",
+      notes: customer.notes || '',
     });
     setShowDialog(true);
   };
@@ -300,16 +287,16 @@ const CustomerManagementPage: React.FC = () => {
       await crmApi.customers.addTag(selectedCustomer.id, tagId);
       await loadCustomerTags(selectedCustomer.id);
       addNotification({
-        type: "success",
-        title: "添加成功",
-        message: "标签已添加",
+        type: 'success',
+        title: '添加成功',
+        message: '标签已添加',
       });
     } catch (error) {
-      logger.error("添加标签失败:", error);
+      logger.error('添加标签失败:', error);
       addNotification({
-        type: "error",
-        title: "操作失败",
-        message: "添加标签失败",
+        type: 'error',
+        title: '操作失败',
+        message: '添加标签失败',
       });
     }
   };
@@ -320,16 +307,16 @@ const CustomerManagementPage: React.FC = () => {
       await crmApi.customers.removeTag(selectedCustomer.id, tagId);
       await loadCustomerTags(selectedCustomer.id);
       addNotification({
-        type: "success",
-        title: "移除成功",
-        message: "标签已移除",
+        type: 'success',
+        title: '移除成功',
+        message: '标签已移除',
       });
     } catch (error) {
-      logger.error("移除标签失败:", error);
+      logger.error('移除标签失败:', error);
       addNotification({
-        type: "error",
-        title: "操作失败",
-        message: "移除标签失败",
+        type: 'error',
+        title: '操作失败',
+        message: '移除标签失败',
       });
     }
   };
@@ -337,25 +324,25 @@ const CustomerManagementPage: React.FC = () => {
   const resetForm = () => {
     setSelectedCustomer(null);
     setFormData({
-      name: "",
-      code: "",
-      industry: "",
-      company_size: "",
-      website: "",
-      email: "",
-      phone: "",
-      fax: "",
-      address: "",
-      city: "",
-      province: "",
-      country: "",
-      postal_code: "",
-      customer_type: "",
-      source: "",
-      rating: "",
+      name: '',
+      code: '',
+      industry: '',
+      company_size: '',
+      website: '',
+      email: '',
+      phone: '',
+      fax: '',
+      address: '',
+      city: '',
+      province: '',
+      country: '',
+      postal_code: '',
+      customer_type: '',
+      source: '',
+      rating: '',
       revenue: undefined,
       employee_count: undefined,
-      notes: "",
+      notes: '',
     });
   };
 
@@ -364,22 +351,21 @@ const CustomerManagementPage: React.FC = () => {
       string,
       {
         label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      active: { label: "活跃", color: "success" },
-      inactive: { label: "非活跃", color: "default" },
-      prospect: { label: "潜在", color: "info" },
+      active: { label: '活跃', color: 'success' },
+      inactive: { label: '非活跃', color: 'default' },
+      prospect: { label: '潜在', color: 'info' },
     };
-    const s = statusMap[status] || { label: status, color: "default" };
-    return <Chip label={s.label} color={s.color} size="small" />;
+    const s = statusMap[status] || { label: status, color: 'default' };
+    return (
+      <Chip
+        label={s.label}
+        color={s.color}
+        size='small'
+      />
+    );
   };
 
   const getCustomerTypeChip = (customerType: string | undefined) => {
@@ -387,27 +373,26 @@ const CustomerManagementPage: React.FC = () => {
       string,
       {
         label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      potential: { label: "潜在", color: "info" },
-      active: { label: "活跃", color: "success" },
-      inactive: { label: "非活跃", color: "default" },
-      churned: { label: "流失", color: "error" },
+      potential: { label: '潜在', color: 'info' },
+      active: { label: '活跃', color: 'success' },
+      inactive: { label: '非活跃', color: 'default' },
+      churned: { label: '流失', color: 'error' },
     };
-    if (!customerType) return "-";
+    if (!customerType) return '-';
     const t = typeMap[customerType] || {
       label: customerType,
-      color: "default",
+      color: 'default',
     };
-    return <Chip label={t.label} color={t.color} size="small" />;
+    return (
+      <Chip
+        label={t.label}
+        color={t.color}
+        size='small'
+      />
+    );
   };
 
   const getRatingChip = (rating: string | undefined) => {
@@ -415,128 +400,130 @@ const CustomerManagementPage: React.FC = () => {
       string,
       {
         label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      A: { label: "A", color: "success" },
-      B: { label: "B", color: "primary" },
-      C: { label: "C", color: "warning" },
-      D: { label: "D", color: "error" },
+      A: { label: 'A', color: 'success' },
+      B: { label: 'B', color: 'primary' },
+      C: { label: 'C', color: 'warning' },
+      D: { label: 'D', color: 'error' },
     };
-    if (!rating) return "-";
-    const r = ratingMap[rating] || { label: rating, color: "default" };
-    return <Chip label={r.label} color={r.color} size="small" />;
+    if (!rating) return '-';
+    const r = ratingMap[rating] || { label: rating, color: 'default' };
+    return (
+      <Chip
+        label={r.label}
+        color={r.color}
+        size='small'
+      />
+    );
   };
 
   const getCompanySizeLabel = (size: string | undefined) => {
     const sizeMap: Record<string, string> = {
-      micro: "微型",
-      small: "小型",
-      medium: "中型",
-      large: "大型",
-      enterprise: "集团",
+      micro: '微型',
+      small: '小型',
+      medium: '中型',
+      large: '大型',
+      enterprise: '集团',
     };
-    return sizeMap[size || ""] || size || "-";
+    return sizeMap[size || ''] || size || '-';
   };
 
   const columns = useMemo<ColumnDef<Customer>[]>(
     () => [
       {
-        id: "name",
-        label: "客户名称",
+        id: 'name',
+        label: '客户名称',
         render: (row) => (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {row.name}
           </Typography>
         ),
       },
       {
-        id: "code",
-        label: "客户代码",
-        render: (row) => row.code || "-",
+        id: 'code',
+        label: '客户代码',
+        render: (row) => row.code || '-',
       },
       {
-        id: "industry",
-        label: "行业",
-        render: (row) => row.industry || "-",
+        id: 'industry',
+        label: '行业',
+        render: (row) => row.industry || '-',
       },
       {
-        id: "customer_type",
-        label: "客户类型",
+        id: 'customer_type',
+        label: '客户类型',
         render: (row) => getCustomerTypeChip(row.customer_type),
       },
       {
-        id: "rating",
-        label: "评级",
+        id: 'rating',
+        label: '评级',
         render: (row) => getRatingChip(row.rating),
       },
       {
-        id: "phone",
-        label: "电话",
-        render: (row) => row.phone || "-",
+        id: 'phone',
+        label: '电话',
+        render: (row) => row.phone || '-',
       },
       {
-        id: "email",
-        label: "邮箱",
-        render: (row) => row.email || "-",
+        id: 'email',
+        label: '邮箱',
+        render: (row) => row.email || '-',
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusChip(row.status),
       },
     ],
-    [],
+    []
   );
 
   const rowActions = useMemo<RowAction<Customer>[]>(
     () => [
       {
-        label: "查看",
+        label: '查看',
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: (row) => handleEdit(row),
       },
       {
-        label: "标签",
+        label: '标签',
         icon: <TagIcon size={16} />,
         onClick: (row) => handleManageTags(row),
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error",
+        color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这个客户吗?",
+        confirmMessage: '确定要删除这个客户吗?',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
-        id: "status",
-        label: "状态",
-        type: "select",
+        id: 'status',
+        label: '状态',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "active", label: "活跃" },
-          { value: "inactive", label: "非活跃" },
-          { value: "prospect", label: "潜在" },
+          { value: '', label: '全部' },
+          { value: 'active', label: '活跃' },
+          { value: 'inactive', label: '非活跃' },
+          { value: 'prospect', label: '潜在' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -544,15 +531,15 @@ const CustomerManagementPage: React.FC = () => {
         },
       },
       {
-        id: "customer_type",
-        label: "客户类型",
-        type: "select",
+        id: 'customer_type',
+        label: '客户类型',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "potential", label: "潜在客户" },
-          { value: "active", label: "活跃客户" },
-          { value: "inactive", label: "非活跃客户" },
-          { value: "churned", label: "流失客户" },
+          { value: '', label: '全部' },
+          { value: 'potential', label: '潜在客户' },
+          { value: 'active', label: '活跃客户' },
+          { value: 'inactive', label: '非活跃客户' },
+          { value: 'churned', label: '流失客户' },
         ],
         value: customerTypeFilter,
         onChange: (value) => {
@@ -560,15 +547,15 @@ const CustomerManagementPage: React.FC = () => {
         },
       },
       {
-        id: "rating",
-        label: "评级",
-        type: "select",
+        id: 'rating',
+        label: '评级',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "A", label: "A - 优秀" },
-          { value: "B", label: "B - 良好" },
-          { value: "C", label: "C - 一般" },
-          { value: "D", label: "D - 较差" },
+          { value: '', label: '全部' },
+          { value: 'A', label: 'A - 优秀' },
+          { value: 'B', label: 'B - 良好' },
+          { value: 'C', label: 'C - 一般' },
+          { value: 'D', label: 'D - 较差' },
         ],
         value: ratingFilter,
         onChange: (value) => {
@@ -576,26 +563,24 @@ const CustomerManagementPage: React.FC = () => {
         },
       },
     ],
-    [statusFilter, customerTypeFilter, ratingFilter],
+    [statusFilter, customerTypeFilter, ratingFilter]
   );
 
-  const availableTags = allTags.filter(
-    (tag) => !customerTags.some((ct) => ct.id === tag.id),
-  );
+  const availableTags = allTags.filter((tag) => !customerTags.some((ct) => ct.id === tag.id));
 
   return (
     <>
       <ListPageTemplate<Customer>
-        title="客户管理"
-        subtitle="管理客户信息，包括客户基本信息、联系方式、分类和标签等"
+        title='客户管理'
+        subtitle='管理客户信息，包括客户基本信息、联系方式、分类和标签等'
         backButton={{
-          href: "/dashboard",
+          href: '/dashboard',
         }}
         columns={columns}
         data={customers}
         loading={loading}
         searchable
-        searchPlaceholder="搜索客户名称或代码..."
+        searchPlaceholder='搜索客户名称或代码...'
         searchValue={searchTerm}
         onSearch={(value) => {
           setSearchTerm(value);
@@ -615,33 +600,33 @@ const CustomerManagementPage: React.FC = () => {
         }}
         actions={[
           {
-            label: "导入",
+            label: '导入',
             icon: <Upload size={18} />,
             onClick: () => {},
-            variant: "outlined",
+            variant: 'outlined',
           },
           {
-            label: "导出",
+            label: '导出',
             icon: <Download size={18} />,
             onClick: () => {},
-            variant: "outlined",
+            variant: 'outlined',
           },
           {
-            label: "新建客户",
+            label: '新建客户',
             icon: <Plus size={18} />,
             onClick: () => {
               resetForm();
               setShowDialog(true);
             },
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
         headerContent={
           <DataExport
             data={customers as unknown as Record<string, unknown>[]}
             fields={customerColumns}
-            defaultFileName="客户数据"
-            buttonText=""
+            defaultFileName='客户数据'
+            buttonText=''
           />
         }
       />
@@ -649,38 +634,56 @@ const CustomerManagementPage: React.FC = () => {
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        maxWidth="lg"
+        maxWidth='lg'
       >
-        <DialogTitle>{selectedCustomer ? "编辑客户" : "新建客户"}</DialogTitle>
+        <DialogTitle>{selectedCustomer ? '编辑客户' : '新建客户'}</DialogTitle>
         <DialogContent>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+          <Box
+            component='form'
+            onSubmit={handleSubmit}
+            sx={{ mt: 2 }}
+          >
+            <Grid
+              container
+              spacing={3}
+            >
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="客户名称"
+                  label='客户名称'
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                   required
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="客户代码"
+                  label='客户代码'
                   value={formData.code}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, code: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth margin="normal">
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
+                <FormControl
+                  fullWidth
+                  margin='normal'
+                >
                   <InputLabel>客户类型</InputLabel>
                   <Select
                     value={formData.customer_type}
@@ -690,18 +693,28 @@ const CustomerManagementPage: React.FC = () => {
                         customer_type: e.target.value as string,
                       }))
                     }
-                    label="客户类型"
+                    label='客户类型'
                   >
                     {customerTypes.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
+                      <MenuItem
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth margin="normal">
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
+                <FormControl
+                  fullWidth
+                  margin='normal'
+                >
                   <InputLabel>评级</InputLabel>
                   <Select
                     value={formData.rating}
@@ -711,10 +724,13 @@ const CustomerManagementPage: React.FC = () => {
                         rating: e.target.value as string,
                       }))
                     }
-                    label="评级"
+                    label='评级'
                   >
                     {ratingOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
+                      <MenuItem
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </MenuItem>
                     ))}
@@ -722,9 +738,13 @@ const CustomerManagementPage: React.FC = () => {
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="行业"
+                  label='行业'
                   value={formData.industry}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -733,11 +753,18 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth margin="normal">
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
+                <FormControl
+                  fullWidth
+                  margin='normal'
+                >
                   <InputLabel>公司规模</InputLabel>
                   <Select
                     value={formData.company_size}
@@ -747,10 +774,13 @@ const CustomerManagementPage: React.FC = () => {
                         company_size: e.target.value as string,
                       }))
                     }
-                    label="公司规模"
+                    label='公司规模'
                   >
                     {companySizes.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
+                      <MenuItem
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </MenuItem>
                     ))}
@@ -758,55 +788,65 @@ const CustomerManagementPage: React.FC = () => {
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="客户来源"
+                  label='客户来源'
                   value={formData.source}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, source: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, source: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="员工数量"
-                  type="number"
-                  value={formData.employee_count || ""}
+                  label='员工数量'
+                  type='number'
+                  value={formData.employee_count || ''}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      employee_count: e.target.value
-                        ? parseInt(e.target.value, 10)
-                        : undefined,
+                      employee_count: e.target.value ? parseInt(e.target.value, 10) : undefined,
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="年营收(元)"
-                  type="number"
-                  value={formData.revenue || ""}
+                  label='年营收(元)'
+                  type='number'
+                  value={formData.revenue || ''}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      revenue: e.target.value
-                        ? parseFloat(e.target.value)
-                        : undefined,
+                      revenue: e.target.value ? parseFloat(e.target.value) : undefined,
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="网站"
+                  label='网站'
                   value={formData.website}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -815,48 +855,58 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="邮箱"
-                  type="email"
+                  label='邮箱'
+                  type='email'
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, email: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="电话"
+                  label='电话'
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="传真"
+                  label='传真'
                   value={formData.fax}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, fax: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, fax: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <TextField
-                  label="邮编"
+                  label='邮编'
                   value={formData.postal_code}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -865,13 +915,17 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid
+                item
+                xs={12}
+                md={4}
+              >
                 <TextField
-                  label="国家"
+                  label='国家'
                   value={formData.country}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -880,12 +934,16 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid
+                item
+                xs={12}
+                md={4}
+              >
                 <TextField
-                  label="省份"
+                  label='省份'
                   value={formData.province}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -894,24 +952,29 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid
+                item
+                xs={12}
+                md={4}
+              >
                 <TextField
-                  label="城市"
+                  label='城市'
                   value={formData.city}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, city: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid
+                item
+                xs={12}
+              >
                 <TextField
-                  label="详细地址"
+                  label='详细地址'
                   value={formData.address}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -920,28 +983,32 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid
+                item
+                xs={12}
+              >
                 <TextField
-                  label="备注"
+                  label='备注'
                   multiline
                   rows={3}
                   value={formData.notes}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, notes: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                   fullWidth
-                  margin="normal"
+                  margin='normal'
                 />
               </Grid>
             </Grid>
             <DialogActions>
               <Button onClick={() => setShowDialog(false)}>取消</Button>
-              <Button type="submit" variant="contained">
-                {selectedCustomer ? "保存修改" : "创建客户"}
+              <Button
+                type='submit'
+                variant='contained'
+              >
+                {selectedCustomer ? '保存修改' : '创建客户'}
               </Button>
             </DialogActions>
           </Box>
@@ -951,55 +1018,68 @@ const CustomerManagementPage: React.FC = () => {
       <Dialog
         open={showTagDialog}
         onClose={() => setShowTagDialog(false)}
-        maxWidth="md"
+        maxWidth='md'
       >
         <DialogTitle>管理客户标签 - {selectedCustomer?.name}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 2 }}
+            >
               已添加的标签
             </Typography>
             {customerTags.length > 0 ? (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 4 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 4 }}>
                 {customerTags.map((tag) => (
                   <Chip
                     key={tag.id}
                     label={tag.name}
                     style={{
-                      backgroundColor: tag.color + "20",
+                      backgroundColor: tag.color + '20',
                       color: tag.color,
                     }}
                     onDelete={() => handleRemoveTag(tag.id)}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: 'pointer' }}
                   />
                 ))}
               </Box>
             ) : (
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 4 }}>
+              <Typography
+                variant='body2'
+                color='textSecondary'
+                sx={{ mb: 4 }}
+              >
                 暂无标签，点击下方标签添加
               </Typography>
             )}
 
-            <Typography variant="subtitle2" sx={{ mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 2 }}
+            >
               可用标签
             </Typography>
             {availableTags.length > 0 ? (
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {availableTags.map((tag) => (
                   <Chip
                     key={tag.id}
                     label={tag.name}
                     style={{
-                      backgroundColor: tag.color + "20",
+                      backgroundColor: tag.color + '20',
                       color: tag.color,
                     }}
                     onClick={() => handleAddTag(tag.id)}
-                    sx={{ cursor: "pointer" }}
+                    sx={{ cursor: 'pointer' }}
                   />
                 ))}
               </Box>
             ) : (
-              <Typography variant="body2" color="textSecondary">
+              <Typography
+                variant='body2'
+                color='textSecondary'
+              >
                 暂无可用标签
               </Typography>
             )}

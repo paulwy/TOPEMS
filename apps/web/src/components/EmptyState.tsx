@@ -1,10 +1,14 @@
-import React from "react";
-import { FileText, Inbox, Search, Folder, AlertTriangle } from "lucide-react";
-import { Box, Typography } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+/**
+ * @deprecated 此组件已弃用，请使用 @/components/mui/EmptyState 中的 EmptyState 组件
+ * 该组件将保留作为向后兼容，预计在未来的版本中移除
+ */
+import React from 'react';
+import { FileText, Inbox, Search, Folder, AlertTriangle } from 'lucide-react';
+import { Box, Typography } from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
 interface EmptyStateProps {
-  icon?: "file" | "folder" | "search" | "inbox";
+  icon?: 'file' | 'folder' | 'search' | 'inbox';
   title: string;
   description?: string;
   action?: {
@@ -15,7 +19,7 @@ interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
-  icon = "inbox",
+  icon = 'inbox',
   title,
   description,
   action,
@@ -32,39 +36,39 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         py: 6,
         px: 2,
-        textAlign: "center",
+        textAlign: 'center',
       }}
     >
       <Box
         sx={{
           width: 64,
           height: 64,
-          backgroundColor: "grey.100",
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          backgroundColor: 'grey.100',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           mb: 2,
         }}
       >
-        <Icon style={{ width: 32, height: 32, color: "#9ca3af" }} />
+        <Icon style={{ width: 32, height: 32, color: '#9ca3af' }} />
       </Box>
       <Typography
-        variant="h6"
-        sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}
+        variant='h6'
+        sx={{ fontWeight: 500, color: 'text.primary', mb: 1 }}
       >
         {title}
       </Typography>
       {description && (
         <Typography
-          variant="body2"
-          sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}
+          variant='body2'
+          sx={{ color: 'text.secondary', mb: 3, maxWidth: 280 }}
         >
           {description}
         </Typography>
@@ -82,50 +86,53 @@ interface ErrorStateProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  title = "出错了",
-  message = "加载数据时出现错误，请稍后重试",
+  title = '出错了',
+  message = '加载数据时出现错误，请稍后重试',
   onRetry,
 }) => {
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         py: 6,
         px: 2,
-        textAlign: "center",
+        textAlign: 'center',
       }}
     >
       <Box
         sx={{
           width: 64,
           height: 64,
-          backgroundColor: "error.light",
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          backgroundColor: 'error.light',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           mb: 2,
         }}
       >
-        <AlertTriangle style={{ width: 32, height: 32, color: "#dc2626" }} />
+        <AlertTriangle style={{ width: 32, height: 32, color: '#dc2626' }} />
       </Box>
       <Typography
-        variant="h6"
-        sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}
+        variant='h6'
+        sx={{ fontWeight: 500, color: 'text.primary', mb: 1 }}
       >
         {title}
       </Typography>
       <Typography
-        variant="body2"
-        sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}
+        variant='body2'
+        sx={{ color: 'text.secondary', mb: 3, maxWidth: 280 }}
       >
         {message}
       </Typography>
       {onRetry && (
-        <Button variant="outlined" onClick={onRetry}>
+        <Button
+          variant='outlined'
+          onClick={onRetry}
+        >
           重新加载
         </Button>
       )}

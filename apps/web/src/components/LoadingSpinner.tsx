@@ -1,28 +1,28 @@
-import React from "react";
-import { Loader2 } from "lucide-react";
+import React from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface LoadingSpinnerProps {
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
-  size = "md",
-  className = "",
-}) => {
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', className = '' }) => {
   const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-6 h-6",
-    lg: "w-8 h-8",
+    sm: 'w-4 h-4',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
   };
 
   return (
-    <div role="status" aria-label="Loading">
+    <div
+      role='status'
+      aria-label='Loading'
+    >
       <Loader2
         sx={{
-          width: size === "sm" ? 16 : size === "md" ? 24 : 32,
-          height: size === "sm" ? 16 : size === "md" ? 24 : 32,
-          animation: "spin 1s linear infinite",
+          width: size === 'sm' ? 16 : size === 'md' ? 24 : 32,
+          height: size === 'sm' ? 16 : size === 'md' ? 24 : 32,
+          animation: 'spin 1s linear infinite',
         }}
       />
     </div>
@@ -35,47 +35,39 @@ interface LoadingOverlayProps {
   message?: string;
 }
 
-export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
-  isLoading,
-  children,
-  message,
-}) => {
+export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, children, message }) => {
   if (!isLoading) return <>{children}</>;
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: 'relative' }}>
       {children}
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          backgroundColor: "rgba(255, 255, 255, 0.8)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           zIndex: 50,
         }}
       >
-        <div style={{ textAlign: "center" }}>
-          <LoadingSpinner size="lg" />
-          {message && (
-            <p style={{ marginTop: "16px", color: "#6b7280" }}>{message}</p>
-          )}
+        <div style={{ textAlign: 'center' }}>
+          <LoadingSpinner size='lg' />
+          {message && <p style={{ marginTop: '16px', color: '#6b7280' }}>{message}</p>}
         </div>
       </div>
     </div>
   );
 };
 
-export const SkeletonLoader: React.FC<{ className?: string }> = ({
-  className = "",
-}) => {
+export const SkeletonLoader: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
     <div
       style={{
-        animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        backgroundColor: "#e5e7eb",
-        borderRadius: "8px",
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        backgroundColor: '#e5e7eb',
+        borderRadius: '8px',
         ...(className ? {} : {}),
       }}
     />

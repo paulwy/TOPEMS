@@ -77,6 +77,7 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route(
             "/metrics",
             get(move || async move {

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -10,13 +10,14 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::api::audit::{log_audit_event, AuditEventParams};
-#[allow(unused_imports)]
 use crate::models::finance::{
     AccountingSubject, CreateAccountingSubjectRequest, CreateFinancialVoucherRequest,
     FinancialVoucher, U8VoucherData, U8VoucherImportRequest, U8VoucherItem,
     UpdateAccountingSubjectRequest, UpdateFinancialVoucherRequest, VoucherImportResult,
     VoucherItem, VoucherItemRequest,
 };
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
@@ -26,6 +27,19 @@ pub struct PaginationParams {
     pub search: Option<String>,
     pub status: Option<String>,
     pub period: Option<String>,
+}
+
+#[derive(Debug, Deserialize, serde::Serialize)]
+pub struct ApproveVoucherRequest {
+    pub checker_id: Option<Uuid>,
+    pub checker_name: Option<String>,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug, Deserialize, serde::Serialize)]
+pub struct PostVoucherRequest {
+    pub bookkeeper_id: Option<Uuid>,
+    pub bookkeeper_name: Option<String>,
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -44,13 +58,21 @@ pub fn create_routes() -> Router<ApiState> {
             get(get_voucher).put(update_voucher).delete(delete_voucher),
         )
         .route("/api/erp/vouchers/{id}/items", get(get_voucher_items))
+        .route("/api/erp/vouchers/{id}/approve", post(approve_voucher))
+        .route("/api/erp/vouchers/{id}/post", post(post_voucher))
+        .route("/api/erp/vouchers/{id}/unpost", post(unpost_voucher))
         .route("/api/erp/vouchers/import/u8", post(import_u8_vouchers))
 }
 
 async fn list_subjects(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AccountingSubject>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -104,9 +126,22 @@ async fn list_subjects(
 
 async fn create_subject(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+        return e;
+    }
+
+    if req.code.is_empty() {
+        return Json(api_error(400, "科目编码不能为空"));
+    }
+
+    if req.name.is_empty() {
+        return Json(api_error(400, "科目名称不能为空"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let is_cash_flow = req.is_cash_flow.unwrap_or(false);
@@ -163,8 +198,8 @@ async fn create_subject(
             entity_type: "accounting_subject".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -179,8 +214,13 @@ async fn create_subject(
 
 async fn get_subject(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AccountingSubject>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+        return e;
+    }
+
     let result = sqlx::query_as::<_, AccountingSubject>(
         r#"
         SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
@@ -203,10 +243,15 @@ async fn get_subject(
 
 async fn update_subject(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, AccountingSubject>(
         "SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at FROM accounting_subjects WHERE id = $1",
     )
@@ -278,8 +323,8 @@ async fn update_subject(
             entity_type: "accounting_subject".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -294,9 +339,14 @@ async fn update_subject(
 
 async fn delete_subject(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+        return e;
+    }
+
     let result = sqlx::query("DELETE FROM accounting_subjects WHERE id = $1")
         .bind(id)
         .execute(&state.db)
@@ -336,8 +386,8 @@ async fn delete_subject(
             entity_type: "accounting_subject".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -352,8 +402,13 @@ async fn delete_subject(
 
 async fn list_vouchers(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<FinancialVoucher>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -411,18 +466,31 @@ async fn list_vouchers(
 
 async fn create_voucher(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateFinancialVoucherRequest>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
-    let id = Uuid::new_v4();
-    let now = Utc::now();
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+        return e;
+    }
+
+    if req.voucher_number.is_empty() {
+        return Json(api_error(400, "凭证编号不能为空"));
+    }
+
+    if req.items.is_empty() {
+        return Json(api_error(400, "凭证明细不能为空"));
+    }
 
     let total_debit: f64 = req.items.iter().map(|item| item.debit_amount).sum();
     let total_credit: f64 = req.items.iter().map(|item| item.credit_amount).sum();
 
-    if total_debit != total_credit {
+    if (total_debit - total_credit).abs() > 0.01 {
         return Json(api_error(400, "借贷不平，无法创建凭证"));
     }
+
+    let id = Uuid::new_v4();
+    let now = Utc::now();
 
     let result = sqlx::query_as::<_, FinancialVoucher>(
         r#"
@@ -506,8 +574,8 @@ async fn create_voucher(
             entity_type: "financial_voucher".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: "success".to_string(),
@@ -522,8 +590,13 @@ async fn create_voucher(
 
 async fn get_voucher(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+        return e;
+    }
+
     let result = sqlx::query_as::<_, FinancialVoucher>(
         r#"
         SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
@@ -546,8 +619,13 @@ async fn get_voucher(
 
 async fn get_voucher_items(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<VoucherItem>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherRead).await {
+        return e;
+    }
+
     let result = sqlx::query_as::<_, VoucherItem>(
         r#"
         SELECT id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, quantity, unit, price, department_id, project_id, contract_id, created_at, updated_at
@@ -569,10 +647,15 @@ async fn get_voucher_items(
 
 async fn update_voucher(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateFinancialVoucherRequest>,
 ) -> Json<ApiResponse<FinancialVoucher>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, FinancialVoucher>(
         "SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at FROM financial_vouchers WHERE id = $1",
     )
@@ -585,6 +668,10 @@ async fn update_voucher(
         Ok(None) => return Json(api_error(404, "财务凭证不存在")),
         Err(e) => return Json(api_error(500, &format!("查询财务凭证失败: {}", e))),
     };
+
+    if existing.status == "posted" {
+        return Json(api_error(400, "已记账的凭证不能修改"));
+    }
 
     let request_data = serde_json::to_value(&req).ok();
 
@@ -650,8 +737,8 @@ async fn update_voucher(
             entity_type: "financial_voucher".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -666,9 +753,30 @@ async fn update_voucher(
 
 async fn delete_voucher(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+        return e;
+    }
+
+    let existing = sqlx::query_as::<_, FinancialVoucher>(
+        "SELECT status FROM financial_vouchers WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match existing {
+        Ok(Some(v)) if v.status == "posted" => {
+            return Json(api_error(400, "已记账的凭证不能删除"));
+        }
+        Ok(None) => return Json(api_error(404, "财务凭证不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询财务凭证失败: {}", e))),
+        _ => {}
+    }
+
     let _ = sqlx::query("DELETE FROM voucher_items WHERE voucher_id = $1")
         .bind(id)
         .execute(&state.db)
@@ -713,8 +821,273 @@ async fn delete_voucher(
             entity_type: "financial_voucher".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
+            request_details: None,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn approve_voucher(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApproveVoucherRequest>,
+) -> Json<ApiResponse<FinancialVoucher>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherAudit).await {
+        return e;
+    }
+
+    let existing = sqlx::query_as::<_, FinancialVoucher>(
+        "SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at FROM financial_vouchers WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(v)) => v,
+        Ok(None) => return Json(api_error(404, "财务凭证不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询财务凭证失败: {}", e))),
+    };
+
+    if existing.status != "draft" && existing.status != "rejected" {
+        return Json(api_error(400, &format!("当前状态({})不允许审核", existing.status)));
+    }
+
+    let request_data = serde_json::to_value(&req).ok();
+    let checker_id = req.checker_id.or(Some(Uuid::parse_str(&claims.sub).ok()).flatten());
+    let checker_name = req.checker_name.or(Some(claims.username.clone()));
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, FinancialVoucher>(
+        r#"
+        UPDATE financial_vouchers SET
+            checker_id = $2, checker_name = $3, status = 'approved', updated_at = $4
+        WHERE id = $1
+        RETURNING id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(checker_id)
+    .bind(&checker_name)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(voucher) => (
+            Json(ApiResponse::success(voucher.clone(), "财务凭证审核通过")),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("审核财务凭证失败: {}", e);
+            (
+                Json(api_error(500, "财务凭证审核失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+    let response_data = if let Ok(voucher) = &result {
+        serde_json::to_value(voucher).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        AuditEventParams {
+            action: "approve".to_string(),
+            entity_type: "financial_voucher".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn post_voucher(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<PostVoucherRequest>,
+) -> Json<ApiResponse<FinancialVoucher>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherPost).await {
+        return e;
+    }
+
+    let existing = sqlx::query_as::<_, FinancialVoucher>(
+        "SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at FROM financial_vouchers WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(v)) => v,
+        Ok(None) => return Json(api_error(404, "财务凭证不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询财务凭证失败: {}", e))),
+    };
+
+    if existing.status != "approved" {
+        return Json(api_error(400, "只有已审核的凭证才能记账"));
+    }
+
+    let request_data = serde_json::to_value(&req).ok();
+    let bookkeeper_id = req.bookkeeper_id.or(Some(Uuid::parse_str(&claims.sub).ok()).flatten());
+    let bookkeeper_name = req.bookkeeper_name.or(Some(claims.username.clone()));
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, FinancialVoucher>(
+        r#"
+        UPDATE financial_vouchers SET
+            bookkeeper_id = $2, bookkeeper_name = $3, status = 'posted', updated_at = $4
+        WHERE id = $1
+        RETURNING id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(bookkeeper_id)
+    .bind(&bookkeeper_name)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(voucher) => (
+            Json(ApiResponse::success(voucher.clone(), "财务凭证记账成功")),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("记账财务凭证失败: {}", e);
+            (
+                Json(api_error(500, "财务凭证记账失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+    let response_data = if let Ok(voucher) = &result {
+        serde_json::to_value(voucher).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        AuditEventParams {
+            action: "post".to_string(),
+            entity_type: "financial_voucher".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
+            request_details: request_data,
+            response_details: response_data,
+            status: status_str,
+            error_message: error_msg,
+        },
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn unpost_voucher(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<FinancialVoucher>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherPost).await {
+        return e;
+    }
+
+    let existing = sqlx::query_as::<_, FinancialVoucher>(
+        "SELECT id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at FROM financial_vouchers WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(v)) => v,
+        Ok(None) => return Json(api_error(404, "财务凭证不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询财务凭证失败: {}", e))),
+    };
+
+    if existing.status != "posted" {
+        return Json(api_error(400, "只有已记账的凭证才能反记账"));
+    }
+
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, FinancialVoucher>(
+        r#"
+        UPDATE financial_vouchers SET
+            bookkeeper_id = NULL, bookkeeper_name = NULL, status = 'approved', updated_at = $2
+        WHERE id = $1
+        RETURNING id, voucher_number, voucher_date, period, attachment_count, summary, maker_id, maker_name, checker_id, checker_name, bookkeeper_id, bookkeeper_name, status, total_debit, total_credit, source_system, source_id, project_id, contract_id, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(voucher) => (
+            Json(ApiResponse::success(voucher.clone(), "财务凭证反记账成功")),
+            "success".to_string(),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("反记账财务凭证失败: {}", e);
+            (
+                Json(api_error(500, "财务凭证反记账失败")),
+                "error".to_string(),
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(voucher) = &result {
+        serde_json::to_value(voucher).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        AuditEventParams {
+            action: "unpost".to_string(),
+            entity_type: "financial_voucher".to_string(),
+            entity_id: Some(id),
+            entity_ids: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -729,9 +1102,14 @@ async fn delete_voucher(
 
 async fn import_u8_vouchers(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<U8VoucherImportRequest>,
 ) -> Json<ApiResponse<VoucherImportResult>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::VoucherWrite).await {
+        return e;
+    }
+
     let mut success_count = 0;
     let mut failed_count = 0;
     let mut errors = Vec::new();
@@ -763,7 +1141,7 @@ async fn import_u8_vouchers(
         let total_debit: f64 = u8_voucher.items.iter().map(|item| item.debit_amount).sum();
         let total_credit: f64 = u8_voucher.items.iter().map(|item| item.credit_amount).sum();
 
-        if total_debit != total_credit {
+        if (total_debit - total_credit).abs() > 0.01 {
             errors.push(format!(
                 "凭证{}借贷不平: 借方{} 贷方{}",
                 u8_voucher.voucher_number, total_debit, total_credit
@@ -847,8 +1225,8 @@ async fn import_u8_vouchers(
             entity_type: "financial_voucher".to_string(),
             entity_id: None,
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: if failed_count == 0 {

@@ -13,6 +13,8 @@ pub enum ModulePermission {
     PurchaseItemWrite,
     SupplierEvaluationRead,
     SupplierEvaluationWrite,
+    PriceComparisonRead,
+    PriceComparisonWrite,
     All,
 }
 
@@ -27,6 +29,8 @@ impl std::fmt::Display for ModulePermission {
             ModulePermission::PurchaseItemWrite => write!(f, "scm:write"),
             ModulePermission::SupplierEvaluationRead => write!(f, "scm:read"),
             ModulePermission::SupplierEvaluationWrite => write!(f, "scm:write"),
+            ModulePermission::PriceComparisonRead => write!(f, "scm:read"),
+            ModulePermission::PriceComparisonWrite => write!(f, "scm:write"),
             ModulePermission::All => write!(f, "scm:admin"),
         }
     }

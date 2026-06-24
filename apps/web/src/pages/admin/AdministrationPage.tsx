@@ -1,9 +1,50 @@
-import { Grid } from "@/components/Grid";
-import { apiLogger } from "@/utils/logger";
-import { QuickSearch } from "@/components/common";
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Card, CardContent, Chip, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Stack, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Tooltip, Divider, InputAdornment, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Skeleton, Tabs, Tab, FormControl, InputLabel, Select, MenuItem, useTheme, useMediaQuery, LinearProgress, Checkbox,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import { Grid } from '@/components/Grid';
+import { apiLogger } from '@/utils/logger';
+import { QuickSearch } from '@/components/common';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
+  Stack,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Tooltip,
+  Divider,
+  InputAdornment,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Skeleton,
+  Tabs,
+  Tab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  useTheme,
+  useMediaQuery,
+  LinearProgress,
+  Checkbox,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   Package2 as Package,
   Calendar,
@@ -30,9 +71,9 @@ import {
   X,
   ChevronRight,
   MoreHorizontal as MoreVert,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAppStore } from '../../store';
 import {
   officeSupplyApi,
   meetingRoomApi,
@@ -44,7 +85,7 @@ import {
   type MeetingBooking,
   type Vehicle,
   type Announcement,
-} from "@/api/erp";
+} from '@/api/erp';
 import {
   leaveApi,
   attendanceApi,
@@ -52,7 +93,7 @@ import {
   type AttendanceRecord,
   employeeApi,
   type Employee,
-} from "@/api/hrm";
+} from '@/api/hrm';
 
 interface ExpenseClaim {
   id: string;
@@ -60,66 +101,61 @@ interface ExpenseClaim {
   amount: number;
   category: string;
   employee: string;
-  status: "pending" | "approved" | "rejected";
+  status: 'pending' | 'approved' | 'rejected';
   created_at: string;
 }
 
 type TabType =
-  | "overview"
-  | "supplies"
-  | "meetings"
-  | "vehicles"
-  | "attendance"
-  | "leave"
-  | "announcements"
-  | "expenses";
+  | 'overview'
+  | 'supplies'
+  | 'meetings'
+  | 'vehicles'
+  | 'attendance'
+  | 'leave'
+  | 'announcements'
+  | 'expenses';
 
-type ModalType = "create" | "edit" | "view";
+type ModalType = 'create' | 'edit' | 'view';
 
-const STATUS_STYLES: Record<
-  string,
-  { bg: string; color: string; label: string }
-> = {
-  in_stock: { bg: "success.light", color: "success.dark", label: "库存充足" },
-  low_stock: { bg: "warning.light", color: "warning.dark", label: "库存不足" },
-  out_of_stock: { bg: "error.light", color: "error.dark", label: "已售罄" },
-  available: { bg: "success.light", color: "success.dark", label: "可用" },
-  occupied: { bg: "error.light", color: "error.dark", label: "使用中" },
-  confirmed: { bg: "success.light", color: "success.dark", label: "已确认" },
-  cancelled: { bg: "grey.200", color: "grey.700", label: "已取消" },
-  in_use: { bg: "info.light", color: "info.dark", label: "使用中" },
-  maintenance: { bg: "warning.light", color: "warning.dark", label: "维护中" },
-  active: { bg: "success.light", color: "success.dark", label: "活跃" },
-  inactive: { bg: "grey.200", color: "grey.700", label: "停用" },
-  pending: { bg: "warning.light", color: "warning.dark", label: "待审批" },
-  approved: { bg: "success.light", color: "success.dark", label: "已批准" },
-  rejected: { bg: "error.light", color: "error.dark", label: "已拒绝" },
-  published: { bg: "info.light", color: "info.dark", label: "已发布" },
-  draft: { bg: "grey.200", color: "grey.700", label: "草稿" },
-  checked_in: { bg: "success.light", color: "success.dark", label: "已签到" },
-  checked_out: { bg: "info.light", color: "info.dark", label: "已签退" },
-  absent: { bg: "error.light", color: "error.dark", label: "缺勤" },
-  late: { bg: "warning.light", color: "warning.dark", label: "迟到" },
-  normal: { bg: "info.light", color: "info.dark", label: "普通" },
-  high: { bg: "error.light", color: "error.dark", label: "高" },
-  urgent: { bg: "error.light", color: "error.dark", label: "紧急" },
+const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+  in_stock: { bg: 'success.light', color: 'success.dark', label: '库存充足' },
+  low_stock: { bg: 'warning.light', color: 'warning.dark', label: '库存不足' },
+  out_of_stock: { bg: 'error.light', color: 'error.dark', label: '已售罄' },
+  available: { bg: 'success.light', color: 'success.dark', label: '可用' },
+  occupied: { bg: 'error.light', color: 'error.dark', label: '使用中' },
+  confirmed: { bg: 'success.light', color: 'success.dark', label: '已确认' },
+  cancelled: { bg: 'grey.200', color: 'grey.700', label: '已取消' },
+  in_use: { bg: 'info.light', color: 'info.dark', label: '使用中' },
+  maintenance: { bg: 'warning.light', color: 'warning.dark', label: '维护中' },
+  active: { bg: 'success.light', color: 'success.dark', label: '活跃' },
+  inactive: { bg: 'grey.200', color: 'grey.700', label: '停用' },
+  pending: { bg: 'warning.light', color: 'warning.dark', label: '待审批' },
+  approved: { bg: 'success.light', color: 'success.dark', label: '已批准' },
+  rejected: { bg: 'error.light', color: 'error.dark', label: '已拒绝' },
+  published: { bg: 'info.light', color: 'info.dark', label: '已发布' },
+  draft: { bg: 'grey.200', color: 'grey.700', label: '草稿' },
+  checked_in: { bg: 'success.light', color: 'success.dark', label: '已签到' },
+  checked_out: { bg: 'info.light', color: 'info.dark', label: '已签退' },
+  absent: { bg: 'error.light', color: 'error.dark', label: '缺勤' },
+  late: { bg: 'warning.light', color: 'warning.dark', label: '迟到' },
+  normal: { bg: 'info.light', color: 'info.dark', label: '普通' },
+  high: { bg: 'error.light', color: 'error.dark', label: '高' },
+  urgent: { bg: 'error.light', color: 'error.dark', label: '紧急' },
 };
 
 const AdministrationPage: React.FC = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<
-    AttendanceRecord[]
-  >([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
 
   const [officeSupplies, setOfficeSupplies] = useState<OfficeSupply[]>([]);
   const [meetingRooms, setMeetingRooms] = useState<MeetingRoom[]>([]);
@@ -128,10 +164,10 @@ const AdministrationPage: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   const [showModal, setShowModal] = useState(false);
-  const [currentModalType, setCurrentModalType] = useState<ModalType>("create");
+  const [currentModalType, setCurrentModalType] = useState<ModalType>('create');
   const [formData, setFormData] = useState<any>({});
 
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -139,43 +175,43 @@ const AdministrationPage: React.FC = () => {
   const expenseClaims: ExpenseClaim[] = useMemo(
     () => [
       {
-        id: "1",
-        title: "差旅费报销",
+        id: '1',
+        title: '差旅费报销',
         amount: 2580,
-        category: "差旅费",
-        employee: "张三",
-        status: "approved",
-        created_at: "2026-05-20",
+        category: '差旅费',
+        employee: '张三',
+        status: 'approved',
+        created_at: '2026-05-20',
       },
       {
-        id: "2",
-        title: "办公用品采购",
+        id: '2',
+        title: '办公用品采购',
         amount: 850,
-        category: "办公费",
-        employee: "李四",
-        status: "pending",
-        created_at: "2026-05-25",
+        category: '办公费',
+        employee: '李四',
+        status: 'pending',
+        created_at: '2026-05-25',
       },
       {
-        id: "3",
-        title: "业务招待费",
+        id: '3',
+        title: '业务招待费',
         amount: 1200,
-        category: "招待费",
-        employee: "王五",
-        status: "rejected",
-        created_at: "2026-05-24",
+        category: '招待费',
+        employee: '王五',
+        status: 'rejected',
+        created_at: '2026-05-24',
       },
       {
-        id: "4",
-        title: "培训费用",
+        id: '4',
+        title: '培训费用',
         amount: 3500,
-        category: "培训费",
-        employee: "赵六",
-        status: "pending",
-        created_at: "2026-05-26",
+        category: '培训费',
+        employee: '赵六',
+        status: 'pending',
+        created_at: '2026-05-26',
       },
     ],
-    [],
+    []
   );
 
   useEffect(() => {
@@ -201,7 +237,7 @@ const AdministrationPage: React.FC = () => {
 
       const setIfFulfilled = (idx: number, setter: (data: any[]) => void) => {
         if (
-          results[idx].status === "fulfilled" &&
+          results[idx].status === 'fulfilled' &&
           (results[idx] as any).value.code === 200 &&
           (results[idx] as any).value.data
         ) {
@@ -219,14 +255,14 @@ const AdministrationPage: React.FC = () => {
       setIfFulfilled(6, setVehicles);
       setIfFulfilled(7, setAnnouncements);
     } catch (err: any) {
-      apiLogger.error("加载数据失败:", err);
+      apiLogger.error('加载数据失败:', err);
       if (err.response?.status === 401) {
         addNotification({
-          title: "认证失败",
-          message: "请先登录后再访问行政管理系统",
-          type: "error",
+          title: '认证失败',
+          message: '请先登录后再访问行政管理系统',
+          type: 'error',
         });
-        navigate("/login");
+        navigate('/login');
       }
     } finally {
       setLoading(false);
@@ -235,36 +271,36 @@ const AdministrationPage: React.FC = () => {
 
   const handleSelectItem = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
   const handleBatchDelete = () => {
     addNotification({
-      title: "删除成功",
+      title: '删除成功',
       message: `已删除 ${selectedIds.length} 条记录`,
-      type: "success",
+      type: 'success',
     });
     setSelectedIds([]);
   };
 
   const handleExport = (data: any[], type: string) => {
     addNotification({
-      title: "导出成功",
+      title: '导出成功',
       message: `已导出 ${data.length} 条${type}数据`,
-      type: "success",
+      type: 'success',
     });
   };
 
   const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     const config = STATUS_STYLES[status] || {
-      bg: "grey.200",
-      color: "grey.700",
+      bg: 'grey.200',
+      color: 'grey.700',
       label: status,
     };
     return (
       <Chip
-        size="small"
+        size='small'
         label={config.label}
         sx={{ bgcolor: config.bg, color: config.color, fontWeight: 500 }}
       />
@@ -284,24 +320,20 @@ const AdministrationPage: React.FC = () => {
 
   const handleSave = () => {
     addNotification({
-      title: "操作成功",
-      message: `${currentModalType === "create" ? "创建" : "更新"}成功`,
-      type: "success",
+      title: '操作成功',
+      message: `${currentModalType === 'create' ? '创建' : '更新'}成功`,
+      type: 'success',
     });
     handleCloseModal();
   };
 
   const stats = useMemo(() => {
-    const pendingLeaves = leaveRequests.filter(
-      (l) => l.status === "pending",
-    ).length;
-    const today = new Date().toISOString().split("T")[0];
+    const pendingLeaves = leaveRequests.filter((l) => l.status === 'pending').length;
+    const today = new Date().toISOString().split('T')[0];
     const todayAttendance = attendanceRecords.filter((a) =>
-      a.check_in_time?.includes(today),
+      a.check_in_time?.includes(today)
     ).length;
-    const pendingExpenses = expenseClaims.filter(
-      (e) => e.status === "pending",
-    ).length;
+    const pendingExpenses = expenseClaims.filter((e) => e.status === 'pending').length;
 
     return {
       employees: employees.length,
@@ -317,80 +349,86 @@ const AdministrationPage: React.FC = () => {
 
   const renderOverview = () => (
     <Stack spacing={3}>
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         {[
           {
-            label: "员工数量",
+            label: '员工数量',
             value: stats.employees,
-            color: "purple",
+            color: 'purple',
             icon: <Users />,
-            bg: "#f3e8ff",
+            bg: '#f3e8ff',
           },
           {
-            label: "待审批请假",
+            label: '待审批请假',
             value: stats.pendingLeaves,
-            color: "orange",
+            color: 'orange',
             icon: <EventNote />,
-            bg: "#ffedd5",
+            bg: '#ffedd5',
           },
           {
-            label: "今日考勤",
+            label: '今日考勤',
             value: stats.todayAttendance,
-            color: "teal",
+            color: 'teal',
             icon: <UserCheck />,
-            bg: "#ccfbf1",
+            bg: '#ccfbf1',
           },
           {
-            label: "待审批报销",
+            label: '待审批报销',
             value: stats.pendingExpenses,
-            color: "indigo",
+            color: 'indigo',
             icon: <AttachMoney />,
-            bg: "#e0e7ff",
+            bg: '#e0e7ff',
           },
           {
-            label: "会议室",
+            label: '会议室',
             value: stats.meetingRooms,
-            color: "blue",
+            color: 'blue',
             icon: <Calendar />,
-            bg: "#dbeafe",
+            bg: '#dbeafe',
           },
           {
-            label: "车辆",
+            label: '车辆',
             value: stats.vehicles,
-            color: "red",
+            color: 'red',
             icon: <Car />,
-            bg: "#fee2e2",
+            bg: '#fee2e2',
           },
         ].map((stat) => (
-          <Grid key={stat.label} size={{ xs: 6, sm: 4, md: 2 }}>
+          <Grid
+            key={stat.label}
+            size={{ xs: 6, sm: 4, md: 2 }}
+          >
             <Card
               sx={{
                 boxShadow: 1,
                 p: 2.5,
                 borderRadius: 2,
-                transition: "box-shadow 0.2s",
-                "&:hover": { boxShadow: 3 },
+                transition: 'box-shadow 0.2s',
+                '&:hover': { boxShadow: 3 },
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
                 <Box>
                   <Typography
-                    variant="body2"
-                    color="text.secondary"
+                    variant='body2'
+                    color='text.secondary'
                     sx={{ mb: 0.5 }}
                   >
                     {stat.label}
                   </Typography>
                   <Typography
-                    variant="h5"
-                    component="div"
-                    sx={{ fontWeight: "bold" }}
+                    variant='h5'
+                    component='div'
+                    sx={{ fontWeight: 'bold' }}
                   >
                     {stat.value}
                   </Typography>
@@ -411,29 +449,32 @@ const AdministrationPage: React.FC = () => {
         ))}
       </Grid>
 
-      <Grid container spacing={3}>
+      <Grid
+        container
+        spacing={3}
+      >
         <Grid size={{ xs: 12, lg: 6 }}>
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
             <CardContent>
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   mb: 2,
                 }}
               >
                 <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{ fontWeight: "bold" }}
+                  variant='h6'
+                  component='div'
+                  sx={{ fontWeight: 'bold' }}
                 >
                   近期公告
                 </Typography>
                 <Button
-                  size="small"
-                  endIcon={<ChevronRight fontSize="small" />}
-                  sx={{ color: "primary.main" }}
+                  size='small'
+                  endIcon={<ChevronRight fontSize='small' />}
+                  sx={{ color: 'primary.main' }}
                 >
                   查看全部
                 </Button>
@@ -444,57 +485,64 @@ const AdministrationPage: React.FC = () => {
                     key={announcement.id}
                     sx={{
                       p: 2,
-                      bgcolor: "grey.50",
+                      bgcolor: 'grey.50',
                       borderRadius: 2,
-                      cursor: "pointer",
-                      transition: "background-color 0.2s",
-                      "&:hover": { bgcolor: "grey.100" },
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      '&:hover': { bgcolor: 'grey.100' },
                     }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
                       }}
                     >
                       <Box sx={{ flex: 1 }}>
                         <Typography
-                          variant="subtitle2"
-                          component="div"
-                          sx={{ mb: 0.5, fontWeight: "medium" }}
+                          variant='subtitle2'
+                          component='div'
+                          sx={{ mb: 0.5, fontWeight: 'medium' }}
                         >
                           {announcement.title}
                         </Typography>
                         <Typography
-                          variant="body2"
-                          color="text.secondary"
+                          variant='body2'
+                          color='text.secondary'
                           sx={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            display: "-webkit-box",
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
                             WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
+                            WebkitBoxOrient: 'vertical',
                           }}
                         >
                           {announcement.content}
                         </Typography>
                         <Stack
-                          component="div"
-                          direction="row"
+                          component='div'
+                          direction='row'
                           spacing={1}
-                          sx={{ alignItems: "center", mt: 1 }}
+                          sx={{ alignItems: 'center', mt: 1 }}
                         >
-                          <UserCheck
-                            sx={{ fontSize: 12, color: "text.secondary" }}
-                          />
-                          <Typography variant="caption" color="text.secondary">
+                          <UserCheck sx={{ fontSize: 12, color: 'text.secondary' }} />
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             {announcement.author}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             ·
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             {announcement.created_at}
                           </Typography>
                         </Stack>
@@ -513,75 +561,77 @@ const AdministrationPage: React.FC = () => {
             <CardContent>
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   mb: 2,
                 }}
               >
                 <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{ fontWeight: "bold" }}
+                  variant='h6'
+                  component='div'
+                  sx={{ fontWeight: 'bold' }}
                 >
                   今日会议
                 </Typography>
                 <Button
-                  size="small"
-                  endIcon={<ChevronRight fontSize="small" />}
-                  sx={{ color: "primary.main" }}
+                  size='small'
+                  endIcon={<ChevronRight fontSize='small' />}
+                  sx={{ color: 'primary.main' }}
                 >
                   查看全部
                 </Button>
               </Box>
               <Stack spacing={1.5}>
                 {meetingBookings
-                  .filter((b) =>
-                    b.start_time.includes(
-                      new Date().toISOString().split("T")[0],
-                    ),
-                  )
+                  .filter((b) => b.start_time.includes(new Date().toISOString().split('T')[0]))
                   .map((booking) => (
                     <Box
                       key={booking.id}
                       sx={{
                         p: 2,
-                        bgcolor: "grey.50",
+                        bgcolor: 'grey.50',
                         borderRadius: 2,
-                        cursor: "pointer",
-                        transition: "background-color 0.2s",
-                        "&:hover": { bgcolor: "grey.100" },
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                        '&:hover': { bgcolor: 'grey.100' },
                       }}
                     >
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                         }}
                       >
                         <Box sx={{ flex: 1 }}>
                           <Typography
-                            variant="subtitle2"
-                            component="div"
-                            sx={{ mb: 0.5, fontWeight: "medium" }}
+                            variant='subtitle2'
+                            component='div'
+                            sx={{ mb: 0.5, fontWeight: 'medium' }}
                           >
                             {booking.title}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             {booking.room_name} · {booking.organizer}
                           </Typography>
                         </Box>
-                        <Box sx={{ textAlign: "right" }}>
+                        <Box sx={{ textAlign: 'right' }}>
                           <Typography
-                            variant="body2"
-                            component="div"
-                            sx={{ fontWeight: "medium" }}
+                            variant='body2'
+                            component='div'
+                            sx={{ fontWeight: 'medium' }}
                           >
-                            {booking.start_time.split(" ")[1]}
+                            {booking.start_time.split(' ')[1]}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            至 {booking.end_time.split(" ")[1]}
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            至 {booking.end_time.split(' ')[1]}
                           </Typography>
                         </Box>
                       </Box>
@@ -597,40 +647,40 @@ const AdministrationPage: React.FC = () => {
 
   const renderSupplies = () => {
     const filteredData = officeSupplies.filter((s) => {
-      if (filterStatus !== "all" && s.status !== filterStatus) return false;
+      if (filterStatus !== 'all' && s.status !== filterStatus) return false;
       return true;
     });
     const totalPages = Math.ceil(filteredData.length / pageSize);
-    const paginatedData = filteredData.slice(
-      (currentPage - 1) * pageSize,
-      currentPage * pageSize,
-    );
+    const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     return (
       <Stack spacing={2}>
         <Box
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            justifyContent: "space-between",
-            alignItems: { xs: "flex-start", sm: "center" },
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
             gap: 2,
           }}
         >
           <Stack
-            direction="row"
+            direction='row'
             spacing={2}
-            component="div"
-            sx={{ alignItems: "center" }}
+            component='div'
+            sx={{ alignItems: 'center' }}
           >
             <Typography
-              variant="h5"
-              component="div"
-              sx={{ fontWeight: "bold" }}
+              variant='h5'
+              component='div'
+              sx={{ fontWeight: 'bold' }}
             >
               办公用品管理
             </Typography>
-            <FormControl size="small" sx={{ minWidth: 140 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 140 }}
+            >
               <Select
                 value={filterStatus}
                 onChange={(e) => {
@@ -638,25 +688,28 @@ const AdministrationPage: React.FC = () => {
                   setCurrentPage(1);
                 }}
               >
-                <MenuItem value="all">全部状态</MenuItem>
-                <MenuItem value="in_stock">库存充足</MenuItem>
-                <MenuItem value="low_stock">库存不足</MenuItem>
-                <MenuItem value="out_of_stock">已售罄</MenuItem>
+                <MenuItem value='all'>全部状态</MenuItem>
+                <MenuItem value='in_stock'>库存充足</MenuItem>
+                <MenuItem value='low_stock'>库存不足</MenuItem>
+                <MenuItem value='out_of_stock'>已售罄</MenuItem>
               </Select>
             </FormControl>
           </Stack>
-          <Stack direction="row" spacing={1.5}>
+          <Stack
+            direction='row'
+            spacing={1.5}
+          >
             <Button
-              variant="outlined"
+              variant='outlined'
               startIcon={<Download />}
-              onClick={() => handleExport(filteredData, "supplies")}
+              onClick={() => handleExport(filteredData, 'supplies')}
             >
               导出
             </Button>
             <Button
-              variant="contained"
+              variant='contained'
               startIcon={<Plus />}
-              onClick={() => handleOpenModal("create")}
+              onClick={() => handleOpenModal('create')}
             >
               新增用品
             </Button>
@@ -666,22 +719,20 @@ const AdministrationPage: React.FC = () => {
         {selectedIds.length > 0 && (
           <Box
             sx={{
-              bgcolor: "primary.50",
+              bgcolor: 'primary.50',
               border: 1,
-              borderColor: "primary.200",
+              borderColor: 'primary.200',
               borderRadius: 1,
               p: 1.5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Typography color="primary.dark">
-              已选择 {selectedIds.length} 条记录
-            </Typography>
+            <Typography color='primary.dark'>已选择 {selectedIds.length} 条记录</Typography>
             <Button
-              color="error"
-              size="small"
+              color='error'
+              size='small'
               startIcon={<Trash2 />}
               onClick={handleBatchDelete}
             >
@@ -690,46 +741,52 @@ const AdministrationPage: React.FC = () => {
           </Box>
         )}
 
-        <Grid container spacing={2}>
+        <Grid
+          container
+          spacing={2}
+        >
           {paginatedData.length > 0 ? (
             paginatedData.map((supply) => (
-              <Grid key={supply.id} size={{ xs: 12, md: 6, lg: 4 }}>
+              <Grid
+                key={supply.id}
+                size={{ xs: 12, md: 6, lg: 4 }}
+              >
                 <Card
                   sx={{
                     p: 2.5,
                     boxShadow: 1,
                     borderRadius: 2,
-                    transition: "all 0.2s",
-                    "&:hover": { boxShadow: 3 },
+                    transition: 'all 0.2s',
+                    '&:hover': { boxShadow: 3 },
                     ...(selectedIds.includes(supply.id) && {
-                      boxShadow: "0 0 0 2px",
-                      boxShadowColor: "primary.main",
+                      boxShadow: '0 0 0 2px',
+                      boxShadowColor: 'primary.main',
                     }),
                   }}
                 >
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
                       mb: 2,
                     }}
                   >
                     <Stack
-                      direction="row"
+                      direction='row'
                       spacing={1}
-                      component="div"
-                      sx={{ alignItems: "center" }}
+                      component='div'
+                      sx={{ alignItems: 'center' }}
                     >
                       <Checkbox
                         checked={selectedIds.includes(supply.id)}
                         onChange={() => handleSelectItem(supply.id)}
-                        size="small"
+                        size='small'
                       />
                       <Typography
-                        variant="h6"
-                        component="div"
-                        sx={{ fontWeight: "bold" }}
+                        variant='h6'
+                        component='div'
+                        sx={{ fontWeight: 'bold' }}
                       >
                         {supply.name}
                       </Typography>
@@ -737,75 +794,80 @@ const AdministrationPage: React.FC = () => {
                     <StatusBadge status={supply.status} />
                   </Box>
                   <Stack spacing={1}>
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         分类:
                       </Typography>
                       <Typography
-                        variant="body2"
-                        component="div"
-                        sx={{ fontWeight: "medium" }}
+                        variant='body2'
+                        component='div'
+                        sx={{ fontWeight: 'medium' }}
                       >
                         {supply.category}
                       </Typography>
                     </Box>
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         库存:
                       </Typography>
                       <Typography
-                        variant="body2"
-                        component="div"
+                        variant='body2'
+                        component='div'
                         sx={{
-                          fontWeight: "bold",
+                          fontWeight: 'bold',
                           color:
-                            supply.status === "low_stock"
-                              ? "warning.main"
-                              : supply.status === "out_of_stock"
-                                ? "error.main"
-                                : "primary.main",
+                            supply.status === 'low_stock'
+                              ? 'warning.main'
+                              : supply.status === 'out_of_stock'
+                                ? 'error.main'
+                                : 'primary.main',
                         }}
                       >
                         {supply.quantity} {supply.unit}
                       </Typography>
                     </Box>
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         单价:
                       </Typography>
-                      <Typography variant="body2">¥{supply.price}</Typography>
+                      <Typography variant='body2'>¥{supply.price}</Typography>
                     </Box>
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         位置:
                       </Typography>
-                      <Typography variant="body2">{supply.location}</Typography>
+                      <Typography variant='body2'>{supply.location}</Typography>
                     </Box>
                   </Stack>
                   <Divider sx={{ my: 2 }} />
-                  <Box
-                    sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}
-                  >
-                    <Tooltip title="编辑">
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <Tooltip title='编辑'>
                       <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleOpenModal("edit", supply)}
+                        size='small'
+                        color='primary'
+                        onClick={() => handleOpenModal('edit', supply)}
                       >
-                        <Edit fontSize="small" />
+                        <Edit fontSize='small' />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="删除">
-                      <IconButton size="small" color="error">
-                        <Trash2 fontSize="small" />
+                    <Tooltip title='删除'>
+                      <IconButton
+                        size='small'
+                        color='error'
+                      >
+                        <Trash2 fontSize='small' />
                       </IconButton>
                     </Tooltip>
                   </Box>
@@ -814,20 +876,20 @@ const AdministrationPage: React.FC = () => {
             ))
           ) : (
             <Grid size={12}>
-              <Box sx={{ textAlign: "center", py: 8 }}>
+              <Box sx={{ textAlign: 'center', py: 8 }}>
                 <Avatar
                   sx={{
                     width: 80,
                     height: 80,
-                    bgcolor: "grey.100",
-                    color: "grey.400",
-                    mx: "auto",
+                    bgcolor: 'grey.100',
+                    color: 'grey.400',
+                    mx: 'auto',
                     mb: 2,
                   }}
                 >
                   <ShoppingCart sx={{ fontSize: 40 }} />
                 </Avatar>
-                <Typography color="text.secondary">暂无办公用品数据</Typography>
+                <Typography color='text.secondary'>暂无办公用品数据</Typography>
               </Box>
             </Grid>
           )}
@@ -837,44 +899,46 @@ const AdministrationPage: React.FC = () => {
           <Card sx={{ p: 1.5, boxShadow: 1, borderRadius: 2 }}>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              <Typography variant="body2" color="text.secondary">
-                显示 {(currentPage - 1) * pageSize + 1} -{" "}
-                {Math.min(currentPage * pageSize, filteredData.length)} 条，共{" "}
-                {filteredData.length} 条
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                显示 {(currentPage - 1) * pageSize + 1} -{' '}
+                {Math.min(currentPage * pageSize, filteredData.length)} 条，共 {filteredData.length}{' '}
+                条
               </Typography>
-              <Stack direction="row" spacing={1}>
+              <Stack
+                direction='row'
+                spacing={1}
+              >
                 <Button
-                  size="small"
-                  variant="outlined"
+                  size='small'
+                  variant='outlined'
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 >
                   上一页
                 </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <Button
-                      key={page}
-                      size="small"
-                      variant={currentPage === page ? "contained" : "outlined"}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  ),
-                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    size='small'
+                    variant={currentPage === page ? 'contained' : 'outlined'}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
                 <Button
-                  size="small"
-                  variant="outlined"
+                  size='small'
+                  variant='outlined'
                   disabled={currentPage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 >
                   下一页
                 </Button>
@@ -890,102 +954,123 @@ const AdministrationPage: React.FC = () => {
     <Stack spacing={3}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 2,
         }}
       >
         <Stack
-          direction="row"
+          direction='row'
           spacing={1.5}
-          component="div"
-          sx={{ alignItems: "center" }}
+          component='div'
+          sx={{ alignItems: 'center' }}
         >
-          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
+          <Typography
+            variant='h5'
+            component='div'
+            sx={{ fontWeight: 'bold' }}
+          >
             会议室管理
           </Typography>
-          <IconButton size="small" sx={{ color: "text.secondary" }}>
+          <IconButton
+            size='small'
+            sx={{ color: 'text.secondary' }}
+          >
             <Filter />
           </IconButton>
         </Stack>
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus />}
-          onClick={() => handleOpenModal("create")}
+          onClick={() => handleOpenModal('create')}
         >
           预约会议室
         </Button>
       </Box>
 
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         {meetingRooms.map((room) => (
-          <Grid key={room.id} size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid
+            key={room.id}
+            size={{ xs: 12, sm: 6, md: 3 }}
+          >
             <Card
               sx={{
                 p: 2.5,
                 boxShadow: 1,
                 borderRadius: 2,
-                transition: "all 0.2s",
-                "&:hover": { boxShadow: 3 },
+                transition: 'all 0.2s',
+                '&:hover': { boxShadow: 3 },
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
                   mb: 2,
                 }}
               >
                 <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{ fontWeight: "bold" }}
+                  variant='h6'
+                  component='div'
+                  sx={{ fontWeight: 'bold' }}
                 >
                   {room.name}
                 </Typography>
                 <StatusBadge status={room.status} />
               </Box>
               <Stack spacing={1}>
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     容量:
                   </Typography>
                   <Typography
-                    variant="body2"
-                    component="div"
-                    sx={{ fontWeight: "medium" }}
+                    variant='body2'
+                    component='div'
+                    sx={{ fontWeight: 'medium' }}
                   >
                     {room.capacity}人
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     位置:
                   </Typography>
-                  <Typography variant="body2">{room.location}</Typography>
+                  <Typography variant='body2'>{room.location}</Typography>
                 </Box>
-                <Box
-                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}
-                >
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1 }}>
                   {room.facilities?.map((facility, idx) => (
                     <Chip
                       key={idx}
                       label={facility}
-                      size="small"
+                      size='small'
                       sx={{
-                        bgcolor: "grey.100",
-                        color: "text.primary",
+                        bgcolor: 'grey.100',
+                        color: 'text.primary',
                         fontWeight: 500,
                       }}
                     />
                   ))}
                 </Box>
               </Stack>
-              {room.status === "available" && (
-                <Button variant="contained" fullWidth sx={{ mt: 2 }}>
+              {room.status === 'available' && (
+                <Button
+                  variant='contained'
+                  fullWidth
+                  sx={{ mt: 2 }}
+                >
                   立即预约
                 </Button>
               )}
@@ -998,73 +1083,77 @@ const AdministrationPage: React.FC = () => {
         <CardContent>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               mb: 2,
             }}
           >
             <Typography
-              variant="h6"
-              component="div"
-              sx={{ fontWeight: "bold" }}
+              variant='h6'
+              component='div'
+              sx={{ fontWeight: 'bold' }}
             >
               今日会议预约
             </Typography>
             <Button
-              size="small"
-              endIcon={<ChevronRight fontSize="small" />}
-              sx={{ color: "primary.main" }}
+              size='small'
+              endIcon={<ChevronRight fontSize='small' />}
+              sx={{ color: 'primary.main' }}
             >
               查看全部
             </Button>
           </Box>
           <Stack spacing={1.5}>
             {meetingBookings
-              .filter((b) =>
-                b.start_time.includes(new Date().toISOString().split("T")[0]),
-              )
+              .filter((b) => b.start_time.includes(new Date().toISOString().split('T')[0]))
               .map((booking) => (
                 <Box
                   key={booking.id}
                   sx={{
                     p: 2,
-                    bgcolor: "grey.50",
+                    bgcolor: 'grey.50',
                     borderRadius: 2,
-                    cursor: "pointer",
-                    transition: "background-color 0.2s",
-                    "&:hover": { bgcolor: "grey.100" },
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s',
+                    '&:hover': { bgcolor: 'grey.100' },
                   }}
                 >
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                     }}
                   >
                     <Box sx={{ flex: 1 }}>
                       <Typography
-                        variant="subtitle2"
-                        component="div"
-                        sx={{ fontWeight: "medium" }}
+                        variant='subtitle2'
+                        component='div'
+                        sx={{ fontWeight: 'medium' }}
                       >
                         {booking.title}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         {booking.room_name} · {booking.organizer}
                       </Typography>
                     </Box>
-                    <Box sx={{ textAlign: "right", mr: 2 }}>
+                    <Box sx={{ textAlign: 'right', mr: 2 }}>
                       <Typography
-                        variant="body2"
-                        component="div"
-                        sx={{ fontWeight: "medium" }}
+                        variant='body2'
+                        component='div'
+                        sx={{ fontWeight: 'medium' }}
                       >
-                        {booking.start_time.split(" ")[1]}
+                        {booking.start_time.split(' ')[1]}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        至 {booking.end_time.split(" ")[1]}
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        至 {booking.end_time.split(' ')[1]}
                       </Typography>
                     </Box>
                     <StatusBadge status={booking.status} />
@@ -1081,122 +1170,149 @@ const AdministrationPage: React.FC = () => {
     <Stack spacing={2}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 2,
         }}
       >
         <Stack
-          direction="row"
+          direction='row'
           spacing={1.5}
-          component="div"
-          sx={{ alignItems: "center" }}
+          component='div'
+          sx={{ alignItems: 'center' }}
         >
-          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
+          <Typography
+            variant='h5'
+            component='div'
+            sx={{ fontWeight: 'bold' }}
+          >
             车辆管理
           </Typography>
-          <IconButton size="small" sx={{ color: "text.secondary" }}>
+          <IconButton
+            size='small'
+            sx={{ color: 'text.secondary' }}
+          >
             <Filter />
           </IconButton>
         </Stack>
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus />}
-          onClick={() => handleOpenModal("create")}
+          onClick={() => handleOpenModal('create')}
         >
           新增车辆
         </Button>
       </Box>
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         {vehicles.map((vehicle) => (
-          <Grid key={vehicle.id} size={{ xs: 12, md: 6, lg: 4 }}>
+          <Grid
+            key={vehicle.id}
+            size={{ xs: 12, md: 6, lg: 4 }}
+          >
             <Card
               sx={{
                 p: 2.5,
                 boxShadow: 1,
                 borderRadius: 2,
-                transition: "all 0.2s",
-                "&:hover": { boxShadow: 3 },
+                transition: 'all 0.2s',
+                '&:hover': { boxShadow: 3 },
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
                   mb: 2,
                 }}
               >
                 <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{ fontWeight: "bold" }}
+                  variant='h6'
+                  component='div'
+                  sx={{ fontWeight: 'bold' }}
                 >
                   {vehicle.plate_number}
                 </Typography>
                 <StatusBadge status={vehicle.status} />
               </Box>
               <Stack spacing={1}>
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     品牌型号:
                   </Typography>
                   <Typography
-                    variant="body2"
-                    component="div"
-                    sx={{ fontWeight: "medium" }}
+                    variant='body2'
+                    component='div'
+                    sx={{ fontWeight: 'medium' }}
                   >
                     {vehicle.brand} {vehicle.model}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     类型:
                   </Typography>
                   <Typography
-                    variant="body2"
-                    component="div"
-                    sx={{ fontWeight: "medium" }}
+                    variant='body2'
+                    component='div'
+                    sx={{ fontWeight: 'medium' }}
                   >
                     {vehicle.vehicle_type}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     驾驶员:
                   </Typography>
                   <Typography
-                    variant="body2"
-                    component="div"
-                    sx={{ fontWeight: "medium" }}
+                    variant='body2'
+                    component='div'
+                    sx={{ fontWeight: 'medium' }}
                   >
                     {vehicle.driver}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     上次保养:
                   </Typography>
-                  <Typography variant="body2">
-                    {vehicle.last_service}
-                  </Typography>
+                  <Typography variant='body2'>{vehicle.last_service}</Typography>
                 </Box>
               </Stack>
               <Divider sx={{ my: 2 }} />
-              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                <Tooltip title="编辑">
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                <Tooltip title='编辑'>
                   <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => handleOpenModal("edit", vehicle)}
+                    size='small'
+                    color='primary'
+                    onClick={() => handleOpenModal('edit', vehicle)}
                   >
-                    <Edit fontSize="small" />
+                    <Edit fontSize='small' />
                   </IconButton>
                 </Tooltip>
-                {vehicle.status === "available" && (
-                  <Button variant="contained" color="success" size="small">
+                {vehicle.status === 'available' && (
+                  <Button
+                    variant='contained'
+                    color='success'
+                    size='small'
+                  >
                     申请用车
                   </Button>
                 )}
@@ -1212,77 +1328,79 @@ const AdministrationPage: React.FC = () => {
     <Stack spacing={2}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 2,
         }}
       >
         <Stack
-          component="div"
-          direction="row"
+          component='div'
+          direction='row'
           spacing={1.5}
-          sx={{ alignItems: "center" }}
+          sx={{ alignItems: 'center' }}
         >
-          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
+          <Typography
+            variant='h5'
+            component='div'
+            sx={{ fontWeight: 'bold' }}
+          >
             考勤管理
           </Typography>
-          <IconButton size="small" sx={{ color: "text.secondary" }}>
+          <IconButton
+            size='small'
+            sx={{ color: 'text.secondary' }}
+          >
             <Filter />
           </IconButton>
         </Stack>
-        <Button variant="contained" color="success" startIcon={<AccessTime />}>
+        <Button
+          variant='contained'
+          color='success'
+          startIcon={<AccessTime />}
+        >
           打卡
         </Button>
       </Box>
 
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: "hidden" }}>
-            <TableContainer component={Box} sx={{ overflowX: "auto" }}>
+          <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: 'hidden' }}>
+            <TableContainer
+              component={Box}
+              sx={{ overflowX: 'auto' }}
+            >
               <Table>
-                <TableHead sx={{ bgcolor: "grey.50" }}>
+                <TableHead sx={{ bgcolor: 'grey.50' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      员工
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      日期
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      签到时间
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      签退时间
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      状态
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>员工</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>日期</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>签到时间</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>签退时间</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>状态</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {attendanceRecords.length > 0 ? (
                     attendanceRecords.slice(0, 10).map((record) => (
-                      <TableRow key={record.id} hover>
+                      <TableRow
+                        key={record.id}
+                        hover
+                      >
+                        <TableCell>{record.employee_name || '未知员工'}</TableCell>
+                        <TableCell>{record.check_in_time?.split('T')[0] || '-'}</TableCell>
                         <TableCell>
-                          {record.employee_name || "未知员工"}
+                          {record.check_in_time?.split('T')[1]?.slice(0, 8) || '-'}
                         </TableCell>
                         <TableCell>
-                          {record.check_in_time?.split("T")[0] || "-"}
+                          {record.check_out_time?.split('T')[1]?.slice(0, 8) || '-'}
                         </TableCell>
                         <TableCell>
-                          {record.check_in_time?.split("T")[1]?.slice(0, 8) ||
-                            "-"}
-                        </TableCell>
-                        <TableCell>
-                          {record.check_out_time?.split("T")[1]?.slice(0, 8) ||
-                            "-"}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge
-                            status={record.attendance_status || "checked_in"}
-                          />
+                          <StatusBadge status={record.attendance_status || 'checked_in'} />
                         </TableCell>
                       </TableRow>
                     ))
@@ -1290,23 +1408,21 @@ const AdministrationPage: React.FC = () => {
                     <TableRow>
                       <TableCell
                         colSpan={5}
-                        sx={{ textAlign: "center", py: 8 }}
+                        sx={{ textAlign: 'center', py: 8 }}
                       >
                         <Avatar
                           sx={{
                             width: 64,
                             height: 64,
-                            bgcolor: "grey.100",
-                            color: "grey.400",
-                            mx: "auto",
+                            bgcolor: 'grey.100',
+                            color: 'grey.400',
+                            mx: 'auto',
                             mb: 2,
                           }}
                         >
                           <Clock sx={{ fontSize: 32 }} />
                         </Avatar>
-                        <Typography color="text.secondary">
-                          暂无考勤记录
-                        </Typography>
+                        <Typography color='text.secondary'>暂无考勤记录</Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -1320,64 +1436,62 @@ const AdministrationPage: React.FC = () => {
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
-                variant="h6"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 2 }}
+                variant='h6'
+                component='div'
+                sx={{ fontWeight: 'bold', mb: 2 }}
               >
                 今日统计
               </Typography>
               <Stack spacing={2}>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography color="text.secondary">应到人数</Typography>
+                  <Typography color='text.secondary'>应到人数</Typography>
                   <Typography
-                    variant="h5"
-                    component="div"
-                    sx={{ fontWeight: "bold" }}
+                    variant='h5'
+                    component='div'
+                    sx={{ fontWeight: 'bold' }}
                   >
                     {employees.length}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography color="text.secondary">已签到</Typography>
+                  <Typography color='text.secondary'>已签到</Typography>
                   <Typography
-                    variant="h5"
-                    component="div"
-                    sx={{ fontWeight: "bold" }}
-                    color="success.main"
+                    variant='h5'
+                    component='div'
+                    sx={{ fontWeight: 'bold' }}
+                    color='success.main'
                   >
                     {stats.todayAttendance}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography color="text.secondary">出勤率</Typography>
+                  <Typography color='text.secondary'>出勤率</Typography>
                   <Typography
-                    variant="h5"
-                    component="div"
-                    sx={{ fontWeight: "bold" }}
-                    color="primary.main"
+                    variant='h5'
+                    component='div'
+                    sx={{ fontWeight: 'bold' }}
+                    color='primary.main'
                   >
                     {employees.length > 0
-                      ? Math.round(
-                          (stats.todayAttendance / employees.length) * 100,
-                        )
+                      ? Math.round((stats.todayAttendance / employees.length) * 100)
                       : 0}
                     %
                   </Typography>
@@ -1386,17 +1500,17 @@ const AdministrationPage: React.FC = () => {
             </Card>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
-                variant="h6"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 2 }}
+                variant='h6'
+                component='div'
+                sx={{ fontWeight: 'bold', mb: 2 }}
               >
                 本月考勤趋势
               </Typography>
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
                   height: 128,
                   gap: 0.5,
                 }}
@@ -1407,20 +1521,20 @@ const AdministrationPage: React.FC = () => {
                     sx={{
                       flex: 1,
                       height: `${Math.random() * 80 + 20}%`,
-                      background: "linear-gradient(to top, #3b82f6, #93c5fd)",
-                      borderRadius: "4px 4px 0 0",
-                      transition: "background 0.2s",
-                      "&:hover": {
-                        background: "linear-gradient(to top, #2563eb, #60a5fa)",
+                      background: 'linear-gradient(to top, #3b82f6, #93c5fd)',
+                      borderRadius: '4px 4px 0 0',
+                      transition: 'background 0.2s',
+                      '&:hover': {
+                        background: 'linear-gradient(to top, #2563eb, #60a5fa)',
                       },
                     }}
                   />
                 ))}
               </Box>
               <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mt: 1, textAlign: "center" }}
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block', mt: 1, textAlign: 'center' }}
               >
                 近7天出勤情况
               </Typography>
@@ -1435,103 +1549,109 @@ const AdministrationPage: React.FC = () => {
     <Stack spacing={2}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 2,
         }}
       >
         <Stack
-          direction="row"
+          direction='row'
           spacing={1.5}
-          component="div"
-          sx={{ alignItems: "center" }}
+          component='div'
+          sx={{ alignItems: 'center' }}
         >
-          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
+          <Typography
+            variant='h5'
+            component='div'
+            sx={{ fontWeight: 'bold' }}
+          >
             请假管理
           </Typography>
-          <IconButton size="small" sx={{ color: "text.secondary" }}>
+          <IconButton
+            size='small'
+            sx={{ color: 'text.secondary' }}
+          >
             <Filter />
           </IconButton>
         </Stack>
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus />}
-          onClick={() => handleOpenModal("create")}
+          onClick={() => handleOpenModal('create')}
         >
           申请请假
         </Button>
       </Box>
 
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: "hidden" }}>
-            <TableContainer sx={{ overflowX: "auto" }}>
+          <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: 'hidden' }}>
+            <TableContainer sx={{ overflowX: 'auto' }}>
               <Table>
-                <TableHead sx={{ bgcolor: "grey.50" }}>
+                <TableHead sx={{ bgcolor: 'grey.50' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      申请人
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      类型
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      开始日期
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      结束日期
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      天数
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      状态
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      操作
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>申请人</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>类型</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>开始日期</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>结束日期</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>天数</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>状态</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>操作</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {leaveRequests.length > 0 ? (
                     leaveRequests.map((leave) => (
-                      <TableRow key={leave.id} hover>
+                      <TableRow
+                        key={leave.id}
+                        hover
+                      >
+                        <TableCell>{leave.employee_name || '未知员工'}</TableCell>
+                        <TableCell>{leave.leave_type || '-'}</TableCell>
+                        <TableCell>{leave.start_date || '-'}</TableCell>
+                        <TableCell>{leave.end_date || '-'}</TableCell>
+                        <TableCell>{leave.days || '-'}</TableCell>
                         <TableCell>
-                          {leave.employee_name || "未知员工"}
+                          <StatusBadge status={leave.status || 'pending'} />
                         </TableCell>
-                        <TableCell>{leave.leave_type || "-"}</TableCell>
-                        <TableCell>{leave.start_date || "-"}</TableCell>
-                        <TableCell>{leave.end_date || "-"}</TableCell>
-                        <TableCell>{leave.days || "-"}</TableCell>
                         <TableCell>
-                          <StatusBadge status={leave.status || "pending"} />
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={0.5}>
-                            {leave.status === "pending" && (
+                          <Stack
+                            direction='row'
+                            spacing={0.5}
+                          >
+                            {leave.status === 'pending' && (
                               <>
-                                <Tooltip title="批准">
-                                  <IconButton size="small" color="success">
-                                    <CheckSquare fontSize="small" />
+                                <Tooltip title='批准'>
+                                  <IconButton
+                                    size='small'
+                                    color='success'
+                                  >
+                                    <CheckSquare fontSize='small' />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title="拒绝">
-                                  <IconButton size="small" color="error">
-                                    <XCircle fontSize="small" />
+                                <Tooltip title='拒绝'>
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                  >
+                                    <XCircle fontSize='small' />
                                   </IconButton>
                                 </Tooltip>
                               </>
                             )}
-                            {leave.status !== "pending" && (
-                              <Tooltip title="查看">
+                            {leave.status !== 'pending' && (
+                              <Tooltip title='查看'>
                                 <IconButton
-                                  size="small"
-                                  sx={{ color: "text.secondary" }}
-                                  onClick={() => handleOpenModal("view", leave)}
+                                  size='small'
+                                  sx={{ color: 'text.secondary' }}
+                                  onClick={() => handleOpenModal('view', leave)}
                                 >
-                                  <Eye fontSize="small" />
+                                  <Eye fontSize='small' />
                                 </IconButton>
                               </Tooltip>
                             )}
@@ -1543,23 +1663,21 @@ const AdministrationPage: React.FC = () => {
                     <TableRow>
                       <TableCell
                         colSpan={7}
-                        sx={{ textAlign: "center", py: 8 }}
+                        sx={{ textAlign: 'center', py: 8 }}
                       >
                         <Avatar
                           sx={{
                             width: 64,
                             height: 64,
-                            bgcolor: "grey.100",
-                            color: "grey.400",
-                            mx: "auto",
+                            bgcolor: 'grey.100',
+                            color: 'grey.400',
+                            mx: 'auto',
                             mb: 2,
                           }}
                         >
                           <Calendar sx={{ fontSize: 32 }} />
                         </Avatar>
-                        <Typography color="text.secondary">
-                          暂无请假申请
-                        </Typography>
+                        <Typography color='text.secondary'>暂无请假申请</Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -1573,125 +1691,122 @@ const AdministrationPage: React.FC = () => {
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
-                variant="h6"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 2 }}
+                variant='h6'
+                component='div'
+                sx={{ fontWeight: 'bold', mb: 2 }}
               >
                 统计概览
               </Typography>
               <Stack spacing={1.5}>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography color="text.secondary">待审批</Typography>
+                  <Typography color='text.secondary'>待审批</Typography>
                   <Typography
-                    variant="h5"
-                    component="div"
-                    sx={{ fontWeight: "bold" }}
-                    color="warning.main"
+                    variant='h5'
+                    component='div'
+                    sx={{ fontWeight: 'bold' }}
+                    color='warning.main'
                   >
-                    {leaveRequests.filter((l) => l.status === "pending").length}
+                    {leaveRequests.filter((l) => l.status === 'pending').length}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography color="text.secondary">已批准</Typography>
+                  <Typography color='text.secondary'>已批准</Typography>
                   <Typography
-                    variant="h5"
-                    component="div"
-                    sx={{ fontWeight: "bold" }}
-                    color="success.main"
+                    variant='h5'
+                    component='div'
+                    sx={{ fontWeight: 'bold' }}
+                    color='success.main'
                   >
-                    {
-                      leaveRequests.filter((l) => l.status === "approved")
-                        .length
-                    }
+                    {leaveRequests.filter((l) => l.status === 'approved').length}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography color="text.secondary">已拒绝</Typography>
+                  <Typography color='text.secondary'>已拒绝</Typography>
                   <Typography
-                    variant="h5"
-                    component="div"
-                    sx={{ fontWeight: "bold" }}
-                    color="error.main"
+                    variant='h5'
+                    component='div'
+                    sx={{ fontWeight: 'bold' }}
+                    color='error.main'
                   >
-                    {
-                      leaveRequests.filter((l) => l.status === "rejected")
-                        .length
-                    }
+                    {leaveRequests.filter((l) => l.status === 'rejected').length}
                   </Typography>
                 </Box>
               </Stack>
             </Card>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
-                variant="h6"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 2 }}
+                variant='h6'
+                component='div'
+                sx={{ fontWeight: 'bold', mb: 2 }}
               >
                 请假类型分布
               </Typography>
               <Stack spacing={1.5}>
-                {["事假", "病假", "年假", "调休"].map((type, idx) => (
+                {['事假', '病假', '年假', '调休'].map((type, idx) => (
                   <Box
                     key={type}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                     }}
                   >
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       {type}
                     </Typography>
                     <Stack
-                      direction="row"
+                      direction='row'
                       spacing={1}
-                      component="div"
-                      sx={{ alignItems: "center" }}
+                      component='div'
+                      sx={{ alignItems: 'center' }}
                     >
                       <Box
                         sx={{
                           width: 96,
-                          bgcolor: "grey.200",
+                          bgcolor: 'grey.200',
                           borderRadius: 5,
                           height: 10,
                         }}
                       >
                         <Box
                           sx={{
-                            height: "100%",
+                            height: '100%',
                             borderRadius: 5,
                             width: `${Math.random() * 60 + 20}%`,
                             bgcolor: [
-                              "primary.main",
-                              "success.main",
-                              "warning.main",
-                              "secondary.main",
+                              'primary.main',
+                              'success.main',
+                              'warning.main',
+                              'secondary.main',
                             ][idx],
                           }}
                         />
                       </Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ width: 32, textAlign: "right" }}
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ width: 32, textAlign: 'right' }}
                       >
                         {Math.floor(Math.random() * 10 + 1)}
                       </Typography>
@@ -1710,61 +1825,74 @@ const AdministrationPage: React.FC = () => {
     <Stack spacing={2}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 2,
         }}
       >
         <Stack
-          component="div"
-          direction="row"
+          component='div'
+          direction='row'
           spacing={1.5}
-          sx={{ alignItems: "center" }}
+          sx={{ alignItems: 'center' }}
         >
-          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
+          <Typography
+            variant='h5'
+            component='div'
+            sx={{ fontWeight: 'bold' }}
+          >
             公告管理
           </Typography>
-          <IconButton size="small" sx={{ color: "text.secondary" }}>
+          <IconButton
+            size='small'
+            sx={{ color: 'text.secondary' }}
+          >
             <Filter />
           </IconButton>
         </Stack>
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus />}
-          onClick={() => handleOpenModal("create")}
+          onClick={() => handleOpenModal('create')}
         >
           发布公告
         </Button>
       </Box>
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         {announcements.map((announcement) => (
-          <Grid key={announcement.id} size={{ xs: 12, md: 6, lg: 4 }}>
+          <Grid
+            key={announcement.id}
+            size={{ xs: 12, md: 6, lg: 4 }}
+          >
             <Card
               sx={{
                 p: 2.5,
                 boxShadow: 1,
                 borderRadius: 2,
-                transition: "all 0.2s",
-                "&:hover": { boxShadow: 3 },
+                transition: 'all 0.2s',
+                '&:hover': { boxShadow: 3 },
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
                   mb: 1.5,
                 }}
               >
                 <Typography
-                  variant="h6"
-                  component="div"
+                  variant='h6'
+                  component='div'
                   sx={{
-                    fontWeight: "bold",
-                    transition: "color 0.2s",
-                    "&:hover": { color: "primary.main" },
+                    fontWeight: 'bold',
+                    transition: 'color 0.2s',
+                    '&:hover': { color: 'primary.main' },
                   }}
                 >
                   {announcement.title}
@@ -1772,15 +1900,15 @@ const AdministrationPage: React.FC = () => {
                 <StatusBadge status={announcement.status} />
               </Box>
               <Typography
-                variant="body2"
-                color="text.secondary"
+                variant='body2'
+                color='text.secondary'
                 sx={{
                   mb: 2,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  display: "-webkit-box",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
                   WebkitLineClamp: 3,
-                  WebkitBoxOrient: "vertical",
+                  WebkitBoxOrient: 'vertical',
                 }}
               >
                 {announcement.content}
@@ -1788,48 +1916,66 @@ const AdministrationPage: React.FC = () => {
               <Divider sx={{ my: 1.5 }} />
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
                 <Stack
-                  component="div"
-                  direction="row"
+                  component='div'
+                  direction='row'
                   spacing={1}
-                  sx={{ alignItems: "center" }}
+                  sx={{ alignItems: 'center' }}
                 >
-                  <UserCheck sx={{ fontSize: 16, color: "text.secondary" }} />
-                  <Typography variant="body2" color="text.secondary">
+                  <UserCheck sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {announcement.author}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     ·
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {announcement.created_at}
                   </Typography>
                 </Stack>
-                <Stack direction="row" spacing={0.5}>
-                  {announcement.status === "draft" && (
-                    <Tooltip title="发布">
-                      <IconButton size="small" color="primary">
-                        <Send fontSize="small" />
+                <Stack
+                  direction='row'
+                  spacing={0.5}
+                >
+                  {announcement.status === 'draft' && (
+                    <Tooltip title='发布'>
+                      <IconButton
+                        size='small'
+                        color='primary'
+                      >
+                        <Send fontSize='small' />
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title="编辑">
+                  <Tooltip title='编辑'>
                     <IconButton
-                      size="small"
-                      sx={{ color: "text.secondary" }}
-                      onClick={() => handleOpenModal("edit", announcement)}
+                      size='small'
+                      sx={{ color: 'text.secondary' }}
+                      onClick={() => handleOpenModal('edit', announcement)}
                     >
-                      <Edit fontSize="small" />
+                      <Edit fontSize='small' />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="删除">
-                    <IconButton size="small" color="error">
-                      <Trash2 fontSize="small" />
+                  <Tooltip title='删除'>
+                    <IconButton
+                      size='small'
+                      color='error'
+                    >
+                      <Trash2 fontSize='small' />
                     </IconButton>
                   </Tooltip>
                 </Stack>
@@ -1845,69 +1991,70 @@ const AdministrationPage: React.FC = () => {
     <Stack spacing={2}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "flex-start", sm: "center" },
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
           gap: 2,
         }}
       >
         <Stack
-          component="div"
-          direction="row"
+          component='div'
+          direction='row'
           spacing={1.5}
-          sx={{ alignItems: "center" }}
+          sx={{ alignItems: 'center' }}
         >
-          <Typography component="div" variant="h5" sx={{ fontWeight: "bold" }}>
+          <Typography
+            component='div'
+            variant='h5'
+            sx={{ fontWeight: 'bold' }}
+          >
             费用报销
           </Typography>
-          <IconButton size="small" sx={{ color: "text.secondary" }}>
+          <IconButton
+            size='small'
+            sx={{ color: 'text.secondary' }}
+          >
             <Filter />
           </IconButton>
         </Stack>
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus />}
-          onClick={() => handleOpenModal("create")}
+          onClick={() => handleOpenModal('create')}
         >
           提交报销
         </Button>
       </Box>
 
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: "hidden" }}>
-            <TableContainer sx={{ overflowX: "auto" }}>
+          <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: 'hidden' }}>
+            <TableContainer sx={{ overflowX: 'auto' }}>
               <Table>
-                <TableHead sx={{ bgcolor: "grey.50" }}>
+                <TableHead sx={{ bgcolor: 'grey.50' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      报销标题
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      申请人
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      类别
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      金额
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      状态
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
-                      操作
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>报销标题</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>申请人</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>类别</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>金额</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>状态</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>操作</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {expenseClaims.map((claim) => (
-                    <TableRow key={claim.id} hover>
+                    <TableRow
+                      key={claim.id}
+                      hover
+                    >
                       <TableCell>
                         <Typography
-                          component="div"
-                          sx={{ fontWeight: "medium" }}
+                          component='div'
+                          sx={{ fontWeight: 'medium' }}
                         >
                           {claim.title}
                         </Typography>
@@ -1915,37 +2062,44 @@ const AdministrationPage: React.FC = () => {
                       <TableCell>{claim.employee}</TableCell>
                       <TableCell>{claim.category}</TableCell>
                       <TableCell>
-                        <Typography>
-                          ¥{claim.amount.toLocaleString()}
-                        </Typography>
+                        <Typography>¥{claim.amount.toLocaleString()}</Typography>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={claim.status} />
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          {claim.status === "pending" && (
+                        <Stack
+                          direction='row'
+                          spacing={0.5}
+                        >
+                          {claim.status === 'pending' && (
                             <>
-                              <Tooltip title="批准">
-                                <IconButton size="small" color="success">
-                                  <CheckSquare fontSize="small" />
+                              <Tooltip title='批准'>
+                                <IconButton
+                                  size='small'
+                                  color='success'
+                                >
+                                  <CheckSquare fontSize='small' />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="拒绝">
-                                <IconButton size="small" color="error">
-                                  <XCircle fontSize="small" />
+                              <Tooltip title='拒绝'>
+                                <IconButton
+                                  size='small'
+                                  color='error'
+                                >
+                                  <XCircle fontSize='small' />
                                 </IconButton>
                               </Tooltip>
                             </>
                           )}
-                          {claim.status !== "pending" && (
-                            <Tooltip title="查看">
+                          {claim.status !== 'pending' && (
+                            <Tooltip title='查看'>
                               <IconButton
-                                size="small"
-                                sx={{ color: "text.secondary" }}
-                                onClick={() => handleOpenModal("view", claim)}
+                                size='small'
+                                sx={{ color: 'text.secondary' }}
+                                onClick={() => handleOpenModal('view', claim)}
                               >
-                                <Eye fontSize="small" />
+                                <Eye fontSize='small' />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -1963,35 +2117,35 @@ const AdministrationPage: React.FC = () => {
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
-                variant="h6"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 2 }}
+                variant='h6'
+                component='div'
+                sx={{ fontWeight: 'bold', mb: 2 }}
               >
                 报销统计
               </Typography>
               <Stack spacing={1.5}>
                 {[
-                  { label: "待审批", status: "pending", color: "warning.main" },
+                  { label: '待审批', status: 'pending', color: 'warning.main' },
                   {
-                    label: "已批准",
-                    status: "approved",
-                    color: "success.main",
+                    label: '已批准',
+                    status: 'approved',
+                    color: 'success.main',
                   },
-                  { label: "已拒绝", status: "rejected", color: "error.main" },
+                  { label: '已拒绝', status: 'rejected', color: 'error.main' },
                 ].map((item) => (
                   <Box
                     key={item.status}
                     sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
                   >
-                    <Typography color="text.secondary">{item.label}</Typography>
+                    <Typography color='text.secondary'>{item.label}</Typography>
                     <Typography
-                      variant="h5"
-                      component="div"
-                      sx={{ fontWeight: "bold" }}
+                      variant='h5'
+                      component='div'
+                      sx={{ fontWeight: 'bold' }}
                       color={item.color}
                     >
                       ¥
@@ -2006,62 +2160,62 @@ const AdministrationPage: React.FC = () => {
             </Card>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
-                variant="h6"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 2 }}
+                variant='h6'
+                component='div'
+                sx={{ fontWeight: 'bold', mb: 2 }}
               >
                 类别分布
               </Typography>
               <Stack spacing={1.5}>
-                {["差旅费", "办公费", "招待费", "培训费"].map((cat, idx) => (
+                {['差旅费', '办公费', '招待费', '培训费'].map((cat, idx) => (
                   <Box
                     key={cat}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                     }}
                   >
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       {cat}
                     </Typography>
                     <Stack
-                      direction="row"
+                      direction='row'
                       spacing={1}
-                      component="div"
-                      sx={{ alignItems: "center" }}
+                      component='div'
+                      sx={{ alignItems: 'center' }}
                     >
                       <Box
                         sx={{
                           width: 96,
-                          bgcolor: "grey.200",
+                          bgcolor: 'grey.200',
                           borderRadius: 5,
                           height: 10,
                         }}
                       >
                         <Box
                           sx={{
-                            height: "100%",
+                            height: '100%',
                             borderRadius: 5,
                             width: `${Math.random() * 60 + 20}%`,
                             bgcolor: [
-                              "primary.main",
-                              "success.main",
-                              "warning.main",
-                              "secondary.main",
+                              'primary.main',
+                              'success.main',
+                              'warning.main',
+                              'secondary.main',
                             ][idx],
                           }}
                         />
                       </Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ width: 64, textAlign: "right" }}
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ width: 64, textAlign: 'right' }}
                       >
-                        ¥
-                        {Math.floor(
-                          Math.random() * 5000 + 500,
-                        ).toLocaleString()}
+                        ¥{Math.floor(Math.random() * 5000 + 500).toLocaleString()}
                       </Typography>
                     </Stack>
                   </Box>
@@ -2075,57 +2229,60 @@ const AdministrationPage: React.FC = () => {
   );
 
   const tabs = [
-    { key: "overview", label: "概览", icon: <Briefcase /> },
-    { key: "supplies", label: "办公用品", icon: <Package /> },
-    { key: "meetings", label: "会议室", icon: <Calendar /> },
-    { key: "vehicles", label: "车辆", icon: <Car /> },
-    { key: "attendance", label: "考勤", icon: <UserCheck /> },
-    { key: "leave", label: "请假", icon: <EventNote /> },
-    { key: "announcements", label: "公告", icon: <Bell /> },
-    { key: "expenses", label: "报销", icon: <AttachMoney /> },
+    { key: 'overview', label: '概览', icon: <Briefcase /> },
+    { key: 'supplies', label: '办公用品', icon: <Package /> },
+    { key: 'meetings', label: '会议室', icon: <Calendar /> },
+    { key: 'vehicles', label: '车辆', icon: <Car /> },
+    { key: 'attendance', label: '考勤', icon: <UserCheck /> },
+    { key: 'leave', label: '请假', icon: <EventNote /> },
+    { key: 'announcements', label: '公告', icon: <Bell /> },
+    { key: 'expenses', label: '报销', icon: <AttachMoney /> },
   ] as const;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <Box
         sx={{
-          display: { xs: "flex", md: "none" },
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: { xs: 'flex', md: 'none' },
+          alignItems: 'center',
+          justifyContent: 'space-between',
           p: 2,
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Typography variant="h6">行政管理</Typography>
+        <Typography variant='h6'>行政管理</Typography>
         <IconButton onClick={() => setMobileMenuOpen(true)}>
           <MoreVert />
         </IconButton>
       </Box>
 
       <Drawer
-        anchor="left"
+        anchor='left'
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       >
         <Box sx={{ width: 280, p: 2 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               mb: 3,
             }}
           >
-            <Typography variant="h6">菜单</Typography>
+            <Typography variant='h6'>菜单</Typography>
             <IconButton onClick={() => setMobileMenuOpen(false)}>
               <X />
             </IconButton>
           </Box>
           <List>
             {tabs.map((item) => (
-              <ListItem key={item.key} disablePadding>
+              <ListItem
+                key={item.key}
+                disablePadding
+              >
                 <ListItemButton
                   selected={activeTab === item.key}
                   onClick={() => {
@@ -2142,38 +2299,38 @@ const AdministrationPage: React.FC = () => {
         </Box>
       </Drawer>
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 3 }, py: 3 }}>
+      <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, md: 3 }, py: 3 }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             mb: 3,
-            flexWrap: "wrap",
+            flexWrap: 'wrap',
             gap: 2,
           }}
         >
           <Stack
-            component="div"
-            direction="row"
+            component='div'
+            direction='row'
             spacing={1.5}
-            sx={{ alignItems: "center" }}
+            sx={{ alignItems: 'center' }}
           >
             <IconButton onClick={() => navigate(-1)}>
               <ChevronLeft />
             </IconButton>
             <Typography
-              variant="h4"
-              component="div"
-              sx={{ fontWeight: "bold" }}
+              variant='h4'
+              component='div'
+              sx={{ fontWeight: 'bold' }}
             >
               行政管理
             </Typography>
           </Stack>
-          <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
             <QuickSearch
-              placeholder="搜索行政内容..."
+              placeholder='搜索行政内容...'
               onSearch={(query) => {
-                apiLogger.info("搜索:", query);
+                apiLogger.info('搜索:', query);
               }}
               width={320}
             />
@@ -2183,9 +2340,9 @@ const AdministrationPage: React.FC = () => {
         <Tabs
           value={activeTab}
           onChange={(_, v) => setActiveTab(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+          variant='scrollable'
+          scrollButtons='auto'
+          sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
         >
           {tabs.map((item) => (
             <Tab
@@ -2193,7 +2350,7 @@ const AdministrationPage: React.FC = () => {
               value={item.key}
               label={item.label}
               icon={item.icon}
-              iconPosition="start"
+              iconPosition='start'
               sx={{ minHeight: 48, fontWeight: 500 }}
             />
           ))}
@@ -2201,19 +2358,25 @@ const AdministrationPage: React.FC = () => {
 
         {loading ? (
           <Stack spacing={2}>
-            <Skeleton variant="rounded" height={120} />
-            <Skeleton variant="rounded" height={400} />
+            <Skeleton
+              variant='rounded'
+              height={120}
+            />
+            <Skeleton
+              variant='rounded'
+              height={400}
+            />
           </Stack>
         ) : (
           <>
-            {activeTab === "overview" && renderOverview()}
-            {activeTab === "supplies" && renderSupplies()}
-            {activeTab === "meetings" && renderMeetings()}
-            {activeTab === "vehicles" && renderVehicles()}
-            {activeTab === "attendance" && renderAttendance()}
-            {activeTab === "leave" && renderLeave()}
-            {activeTab === "announcements" && renderAnnouncements()}
-            {activeTab === "expenses" && renderExpenses()}
+            {activeTab === 'overview' && renderOverview()}
+            {activeTab === 'supplies' && renderSupplies()}
+            {activeTab === 'meetings' && renderMeetings()}
+            {activeTab === 'vehicles' && renderVehicles()}
+            {activeTab === 'attendance' && renderAttendance()}
+            {activeTab === 'leave' && renderLeave()}
+            {activeTab === 'announcements' && renderAnnouncements()}
+            {activeTab === 'expenses' && renderExpenses()}
           </>
         )}
       </Box>
@@ -2221,23 +2384,23 @@ const AdministrationPage: React.FC = () => {
       <Dialog
         open={showModal}
         onClose={handleCloseModal}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Typography variant="h6">
-              {currentModalType === "create"
-                ? "创建"
-                : currentModalType === "edit"
-                  ? "编辑"
-                  : "查看"}
+            <Typography variant='h6'>
+              {currentModalType === 'create'
+                ? '创建'
+                : currentModalType === 'edit'
+                  ? '编辑'
+                  : '查看'}
             </Typography>
             <IconButton onClick={handleCloseModal}>
               <X />
@@ -2245,42 +2408,47 @@ const AdministrationPage: React.FC = () => {
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
             <TextField
               fullWidth
-              label="名称"
-              value={formData.name || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              disabled={currentModalType === "view"}
-              placeholder="请输入名称"
+              label='名称'
+              value={formData.name || ''}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              disabled={currentModalType === 'view'}
+              placeholder='请输入名称'
             />
             <TextField
               fullWidth
-              label="描述"
-              value={formData.description || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              disabled={currentModalType === "view"}
+              label='描述'
+              value={formData.description || ''}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              disabled={currentModalType === 'view'}
               multiline
               rows={3}
-              placeholder="请输入描述"
+              placeholder='请输入描述'
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          {currentModalType !== "view" && (
+          {currentModalType !== 'view' && (
             <>
               <Button onClick={handleCloseModal}>取消</Button>
-              <Button variant="contained" onClick={handleSave}>
+              <Button
+                variant='contained'
+                onClick={handleSave}
+              >
                 保存
               </Button>
             </>
           )}
-          {currentModalType === "view" && (
-            <Button variant="contained" onClick={handleCloseModal}>
+          {currentModalType === 'view' && (
+            <Button
+              variant='contained'
+              onClick={handleCloseModal}
+            >
               关闭
             </Button>
           )}

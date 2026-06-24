@@ -1,23 +1,23 @@
-import { Button } from "@/components/ui/Button";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Button } from '@/components/ui/Button';
+import { Sparkles, Loader2 } from 'lucide-react';
 
-import type { ButtonProps } from "@mui/material/Button";
+import type { ButtonProps } from '@mui/material/Button';
 
 export interface AIHelperButtonProps {
-  type: "generate" | "optimize" | "validate" | "complete";
+  type: 'generate' | 'optimize' | 'validate' | 'complete';
   onClick: () => void;
   disabled?: boolean;
   loading?: boolean;
   label?: string;
-  size?: ButtonProps["size"];
-  variant?: ButtonProps["variant"];
+  size?: ButtonProps['size'];
+  variant?: ButtonProps['variant'];
 }
 
 const typeLabels = {
-  generate: "AI 生成",
-  optimize: "AI 优化",
-  validate: "AI 校验",
-  complete: "AI 补全",
+  generate: 'AI 生成',
+  optimize: 'AI 优化',
+  validate: 'AI 校验',
+  complete: 'AI 补全',
 };
 
 export function AIHelperButton({
@@ -26,8 +26,8 @@ export function AIHelperButton({
   disabled = false,
   loading = false,
   label,
-  size = "medium",
-  variant = "contained",
+  size = 'medium',
+  variant = 'contained',
 }: AIHelperButtonProps) {
   const buttonLabel = label || typeLabels[type];
 
@@ -42,7 +42,7 @@ export function AIHelperButton({
         <>
           <Loader2
             style={{ width: 16, height: 16, marginRight: 8 }}
-            className="animate-spin"
+            className='animate-spin'
           />
           处理中...
         </>

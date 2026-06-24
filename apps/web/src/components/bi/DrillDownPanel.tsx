@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { X, ChevronRight, Search, Filter, RefreshCw } from "lucide-react";
-import { Card, CardHeader, CardContent, TextField, Typography, Chip, Paper,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import { useState } from 'react';
+import { X, ChevronRight, Search, Filter, RefreshCw } from 'lucide-react';
+import { Card, CardHeader, CardContent, TextField, Typography, Chip, Paper } from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
 interface DrillDownData extends Record<string, any> {
   id: string;
@@ -30,9 +30,9 @@ export function DrillDownPanel({
   columns,
   onRowClick,
 }: DrillDownPanelProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const filteredData = data.filter((row) => {
     return Object.values(row).some((value) => {
@@ -44,23 +44,21 @@ export function DrillDownPanel({
     ? [...filteredData].sort((a, b) => {
         const aVal = a[sortKey];
         const bVal = b[sortKey];
-        if (typeof aVal === "number" && typeof bVal === "number") {
-          return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
         }
         const aStr = String(aVal);
         const bStr = String(bVal);
-        return sortOrder === "asc"
-          ? aStr.localeCompare(bStr)
-          : bStr.localeCompare(aStr);
+        return sortOrder === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
       })
     : filteredData;
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortKey(key);
-      setSortOrder("asc");
+      setSortOrder('asc');
     }
   };
 
@@ -69,50 +67,57 @@ export function DrillDownPanel({
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
         zIndex: 50,
-        display: "flex",
-        justifyContent: "flex-end",
+        display: 'flex',
+        justifyContent: 'flex-end',
       }}
     >
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           inset: 0,
-          backgroundColor: "rgba(0,0,0,0.3)",
-          backdropFilter: "blur(4px)",
+          backgroundColor: 'rgba(0,0,0,0.3)',
+          backdropFilter: 'blur(4px)',
         }}
         onClick={onClose}
       />
       <Paper
         style={{
-          position: "relative",
-          width: "100%",
+          position: 'relative',
+          width: '100%',
           maxWidth: 800,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
         elevation={3}
       >
         <CardHeader
-          sx={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}
+          sx={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}
           action={
-            <Button variant="text" size="small" onClick={onClose}>
+            <Button
+              variant='text'
+              size='small'
+              onClick={onClose}
+            >
               <X style={{ width: 20, height: 20 }} />
             </Button>
           }
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <ChevronRight style={{ width: 20, height: 20, color: "#3B82F6" }} />
-            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ChevronRight style={{ width: 20, height: 20, color: '#3B82F6' }} />
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 'semibold' }}
+            >
               {title}
             </Typography>
             <Chip
-              variant="outlined"
-              size="small"
+              variant='outlined'
+              size='small'
               label={`${data.length} 条记录`}
             />
           </div>
@@ -121,58 +126,58 @@ export function DrillDownPanel({
         <div
           style={{
             padding: 16,
-            borderBottom: "1px solid rgba(0,0,0,0.1)",
-            display: "flex",
-            alignItems: "center",
+            borderBottom: '1px solid rgba(0,0,0,0.1)',
+            display: 'flex',
+            alignItems: 'center',
             gap: 12,
           }}
         >
-          <div style={{ position: "relative", flex: 1 }}>
+          <div style={{ position: 'relative', flex: 1 }}>
             <Search
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
+                top: '50%',
+                transform: 'translateY(-50%)',
                 width: 16,
                 height: 16,
-                color: "text.secondary",
+                color: 'text.secondary',
               }}
             />
             <TextField
-              placeholder="搜索..."
+              placeholder='搜索...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              size="small"
-              sx={{ width: "100%", input: { paddingLeft: 40 } }}
+              size='small'
+              sx={{ width: '100%', input: { paddingLeft: 40 } }}
             />
           </div>
           <Button
-            variant="outlined"
-            size="small"
-            sx={{ textTransform: "none" }}
+            variant='outlined'
+            size='small'
+            sx={{ textTransform: 'none' }}
           >
             <Filter style={{ width: 16, height: 16, marginRight: 4 }} />
             筛选
           </Button>
           <Button
-            variant="outlined"
-            size="small"
-            sx={{ textTransform: "none" }}
+            variant='outlined'
+            size='small'
+            sx={{ textTransform: 'none' }}
           >
             <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
             刷新
           </Button>
         </div>
 
-        <CardContent sx={{ flex: 1, overflow: "auto" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%" }}>
+        <CardContent sx={{ flex: 1, overflow: 'auto' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%' }}>
               <thead>
                 <tr
                   style={{
-                    backgroundColor: "#F8FAFC",
-                    position: "sticky",
+                    backgroundColor: '#F8FAFC',
+                    position: 'sticky',
                     top: 0,
                   }}
                 >
@@ -181,24 +186,22 @@ export function DrillDownPanel({
                       key={column.key}
                       onClick={() => handleSort(column.key)}
                       style={{
-                        padding: "12px 16px",
-                        textAlign: "left",
+                        padding: '12px 16px',
+                        textAlign: 'left',
                         fontWeight: 600,
-                        cursor: "pointer",
-                        color: "#64748B",
+                        cursor: 'pointer',
+                        color: '#64748B',
                       }}
                     >
                       <div
                         style={{
-                          display: "flex",
-                          alignItems: "center",
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 4,
                         }}
                       >
                         {column.label}
-                        {sortKey === column.key && (
-                          <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                        )}
+                        {sortKey === column.key && <span>{sortOrder === 'asc' ? '↑' : '↓'}</span>}
                       </div>
                     </th>
                   ))}
@@ -210,26 +213,24 @@ export function DrillDownPanel({
                     key={row.id}
                     onClick={() => onRowClick?.(row)}
                     style={{
-                      borderBottom: "1px solid rgba(0,0,0,0.05)",
-                      cursor: onRowClick ? "pointer" : "default",
+                      borderBottom: '1px solid rgba(0,0,0,0.05)',
+                      cursor: onRowClick ? 'pointer' : 'default',
                     }}
                     onMouseEnter={(e) => {
                       if (onRowClick) {
-                        e.currentTarget.style.backgroundColor = "#F8FAFC";
+                        e.currentTarget.style.backgroundColor = '#F8FAFC';
                       }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        style={{ padding: "12px 16px", color: "#334155" }}
+                        style={{ padding: '12px 16px', color: '#334155' }}
                       >
-                        {column.format
-                          ? column.format(row[column.key])
-                          : row[column.key]}
+                        {column.format ? column.format(row[column.key]) : row[column.key]}
                       </td>
                     ))}
                   </tr>

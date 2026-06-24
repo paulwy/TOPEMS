@@ -1,20 +1,12 @@
-import React, { useState, useEffect } from "react";
-import {
-  Bell,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Check,
-  Play,
-  CheckCircle2,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import type { Notification } from "@/api/flow";
-import { flowApi } from "@/api/flow";
-import { useAppStore } from "../../store";
-import { apiLogger } from "@/utils/logger";
-import { Box, Typography, Tabs, Tab, CircularProgress,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useEffect } from 'react';
+import { Bell, CheckCircle, XCircle, Clock, Check, Play, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import type { Notification } from '@/api/flow';
+import { flowApi } from '@/api/flow';
+import { useAppStore } from '../../store';
+import { apiLogger } from '@/utils/logger';
+import { Box, Typography, Tabs, Tab, CircularProgress } from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +14,7 @@ const FlowNotificationCenter: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
   useEffect(() => {
     loadNotifications();
@@ -34,10 +26,10 @@ const FlowNotificationCenter: React.FC = () => {
       setLoading(true);
 
       // TODO: Get actual user ID from auth context
-      const userId = "current-user-id";
+      const userId = 'current-user-id';
 
       const params: any = {};
-      if (filter === "unread") {
+      if (filter === 'unread') {
         // This would need backend support to filter by is_read
       }
 
@@ -54,11 +46,11 @@ const FlowNotificationCenter: React.FC = () => {
         setNotifications([]);
       }
     } catch (err) {
-      apiLogger.error("加载通知失败:", err);
+      apiLogger.error('加载通知失败:', err);
       addNotification({
-        title: "错误",
-        message: "加载通知失败",
-        type: "error",
+        title: '错误',
+        message: '加载通知失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -67,19 +59,19 @@ const FlowNotificationCenter: React.FC = () => {
 
   const handleMarkAsRead = async () => {
     try {
-      const userId = "current-user-id"; // TODO: Get from auth context
+      const userId = 'current-user-id'; // TODO: Get from auth context
       const response = await flowApi.markNotificationsAsRead(userId);
       if (response.success) {
         addNotification({
-          title: "成功",
-          message: "所有通知已标记为已读",
-          type: "success",
+          title: '成功',
+          message: '所有通知已标记为已读',
+          type: 'success',
         });
         loadNotifications();
       }
     } catch (err) {
-      addNotification({ title: "错误", message: "标记失败", type: "error" });
-      apiLogger.error("标记失败:", err);
+      addNotification({ title: '错误', message: '标记失败', type: 'error' });
+      apiLogger.error('标记失败:', err);
     }
   };
 
@@ -101,92 +93,90 @@ const FlowNotificationCenter: React.FC = () => {
   const getNotificationIcon = (type: string) => {
     const iconProps = { sx: { width: 20, height: 20 } };
     switch (type) {
-      case "approval_created":
-        return (
-          <CheckCircle sx={{ width: 20, height: 20, color: "blue.600" }} />
-        );
-      case "approval_completed":
-        return (
-          <CheckCircle2 sx={{ width: 20, height: 20, color: "green.600" }} />
-        );
-      case "workflow_started":
-        return <Play sx={{ width: 20, height: 20, color: "indigo.600" }} />;
-      case "workflow_completed":
-        return (
-          <CheckCircle sx={{ width: 20, height: 20, color: "green.600" }} />
-        );
-      case "workflow_rejected":
-        return <XCircle sx={{ width: 20, height: 20, color: "red.600" }} />;
+      case 'approval_created':
+        return <CheckCircle sx={{ width: 20, height: 20, color: 'blue.600' }} />;
+      case 'approval_completed':
+        return <CheckCircle2 sx={{ width: 20, height: 20, color: 'green.600' }} />;
+      case 'workflow_started':
+        return <Play sx={{ width: 20, height: 20, color: 'indigo.600' }} />;
+      case 'workflow_completed':
+        return <CheckCircle sx={{ width: 20, height: 20, color: 'green.600' }} />;
+      case 'workflow_rejected':
+        return <XCircle sx={{ width: 20, height: 20, color: 'red.600' }} />;
       default:
-        return <Bell sx={{ width: 20, height: 20, color: "grey.600" }} />;
+        return <Bell sx={{ width: 20, height: 20, color: 'grey.600' }} />;
     }
   };
 
   const getNotificationText = (type: string) => {
     const typeMap: Record<string, string> = {
-      approval_created: "新审批任务",
-      approval_completed: "审批已完成",
-      workflow_started: "工作流已启动",
-      workflow_completed: "工作流已完成",
-      workflow_rejected: "工作流被拒绝",
+      approval_created: '新审批任务',
+      approval_completed: '审批已完成',
+      workflow_started: '工作流已启动',
+      workflow_completed: '工作流已完成',
+      workflow_rejected: '工作流被拒绝',
     };
     return typeMap[type] || type;
   };
 
   const filteredNotifications =
-    filter === "unread"
-      ? notifications.filter((n) => !n.is_read)
-      : notifications;
+    filter === 'unread' ? notifications.filter((n) => !n.is_read) : notifications;
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
       {/* Header */}
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 1, p: 3, mb: 3 }}>
+      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, p: 3, mb: 3 }}>
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 48,
                 height: 48,
-                bgcolor: "warning.100",
+                bgcolor: 'warning.100',
                 borderRadius: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Bell sx={{ width: 24, height: 24, color: "warning.main" }} />
+              <Bell sx={{ width: 24, height: 24, color: 'warning.main' }} />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 'bold' }}
+              >
                 通知中心
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {unreadCount > 0 ? (
                   <Typography
-                    component="span"
-                    sx={{ color: "warning.main", fontWeight: 500 }}
+                    component='span'
+                    sx={{ color: 'warning.main', fontWeight: 500 }}
                   >
                     {unreadCount} 条未读通知
                   </Typography>
                 ) : (
-                  "暂无未读通知"
+                  '暂无未读通知'
                 )}
               </Typography>
             </Box>
           </Box>
           {unreadCount > 0 && (
             <Button
-              variant="contained"
+              variant='contained'
               onClick={handleMarkAsRead}
               startIcon={<Check sx={{ width: 20, height: 20 }} />}
-              sx={{ textTransform: "none" }}
+              sx={{ textTransform: 'none' }}
             >
               全部标记为已读
             </Button>
@@ -195,91 +185,87 @@ const FlowNotificationCenter: React.FC = () => {
       </Box>
 
       {/* Tabs */}
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 1, mb: 3 }}>
+      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, mb: 3 }}>
         <Tabs
           value={filter}
           onChange={(_, newValue) => setFilter(newValue)}
-          sx={{ borderBottom: 1, borderColor: "divider" }}
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
           <Tab
             label={`全部通知 (${notifications.length})`}
-            value="all"
+            value='all'
             sx={{
-              textTransform: "none",
-              fontWeight: filter === "all" ? 600 : 400,
-              color: filter === "all" ? "primary.main" : "text.secondary",
-              borderBottom: filter === "all" ? 2 : 0,
-              borderColor: "primary.main",
+              textTransform: 'none',
+              fontWeight: filter === 'all' ? 600 : 400,
+              color: filter === 'all' ? 'primary.main' : 'text.secondary',
+              borderBottom: filter === 'all' ? 2 : 0,
+              borderColor: 'primary.main',
             }}
           />
           <Tab
             label={`未读 (${unreadCount})`}
-            value="unread"
+            value='unread'
             sx={{
-              textTransform: "none",
-              fontWeight: filter === "unread" ? 600 : 400,
-              color: filter === "unread" ? "primary.main" : "text.secondary",
-              borderBottom: filter === "unread" ? 2 : 0,
-              borderColor: "primary.main",
+              textTransform: 'none',
+              fontWeight: filter === 'unread' ? 600 : 400,
+              color: filter === 'unread' ? 'primary.main' : 'text.secondary',
+              borderBottom: filter === 'unread' ? 2 : 0,
+              borderColor: 'primary.main',
             }}
           />
         </Tabs>
       </Box>
 
       {/* Notification List */}
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 1, p: 3 }}>
+      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, p: 3 }}>
         {loading ? (
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               py: 6,
             }}
           >
-            <CircularProgress sx={{ color: "primary.main" }} />
+            <CircularProgress sx={{ color: 'primary.main' }} />
           </Box>
         ) : filteredNotifications.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <Bell sx={{ width: 64, height: 64, color: "grey.300", mb: 2 }} />
-            <Typography color="text.secondary">
-              {filter === "unread" ? "暂无未读通知" : "暂无通知"}
+          <Box sx={{ textAlign: 'center', py: 6 }}>
+            <Bell sx={{ width: 64, height: 64, color: 'grey.300', mb: 2 }} />
+            <Typography color='text.secondary'>
+              {filter === 'unread' ? '暂无未读通知' : '暂无通知'}
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {filteredNotifications.map((notification) => (
               <Box
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
                 sx={{
                   border: 1,
-                  borderColor: notification.is_read
-                    ? "grey.200"
-                    : "primary.200",
-                  bgcolor: notification.is_read
-                    ? "background.paper"
-                    : "primary.50",
+                  borderColor: notification.is_read ? 'grey.200' : 'primary.200',
+                  bgcolor: notification.is_read ? 'background.paper' : 'primary.50',
                   borderRadius: 1,
                   p: 2,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  "&:hover": {
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  '&:hover': {
                     boxShadow: 2,
                   },
                 }}
               >
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                   }}
                 >
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "flex-start",
+                      display: 'flex',
+                      alignItems: 'flex-start',
                       gap: 1.5,
                       flex: 1,
                     }}
@@ -288,13 +274,11 @@ const FlowNotificationCenter: React.FC = () => {
                       sx={{
                         width: 40,
                         height: 40,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: notification.is_read
-                          ? "grey.100"
-                          : "primary.100",
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: notification.is_read ? 'grey.100' : 'primary.100',
                       }}
                     >
                       {getNotificationIcon(notification.notification_type)}
@@ -302,8 +286,8 @@ const FlowNotificationCenter: React.FC = () => {
                     <Box sx={{ flex: 1 }}>
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 0.5,
                           mb: 0.5,
                         }}
@@ -311,9 +295,7 @@ const FlowNotificationCenter: React.FC = () => {
                         <Typography
                           sx={{
                             fontWeight: notification.is_read ? 400 : 500,
-                            color: notification.is_read
-                              ? "grey.700"
-                              : "grey.900",
+                            color: notification.is_read ? 'grey.700' : 'grey.900',
                           }}
                         >
                           {notification.title}
@@ -323,68 +305,75 @@ const FlowNotificationCenter: React.FC = () => {
                             sx={{
                               width: 8,
                               height: 8,
-                              bgcolor: "primary.600",
-                              borderRadius: "50%",
+                              bgcolor: 'primary.600',
+                              borderRadius: '50%',
                             }}
                           />
                         )}
                       </Box>
                       <Typography
-                        variant="body2"
-                        color="text.secondary"
+                        variant='body2'
+                        color='text.secondary'
                         sx={{ mb: 1 }}
                       >
                         {notification.content}
                       </Typography>
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 2,
-                          color: "text.disabled",
-                          fontSize: "0.75rem",
+                          color: 'text.disabled',
+                          fontSize: '0.75rem',
                         }}
                       >
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 0.25,
                           }}
                         >
                           {getNotificationIcon(notification.notification_type)}
-                          <Typography variant="caption" color="text.secondary">
-                            {getNotificationText(
-                              notification.notification_type,
-                            )}
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {getNotificationText(notification.notification_type)}
                           </Typography>
                         </Box>
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 0.25,
                           }}
                         >
                           <Clock sx={{ width: 12, height: 12 }} />
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             {new Date(notification.created_at).toLocaleString()}
                           </Typography>
                         </Box>
                       </Box>
                     </Box>
                   </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {notification.workflow_instance_id && (
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          fontSize: "0.75rem",
-                          color: "grey.400",
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '0.75rem',
+                          color: 'grey.400',
                         }}
                       >
-                        <Typography variant="caption" color="text.disabled">
+                        <Typography
+                          variant='caption'
+                          color='text.disabled'
+                        >
                           实例
                         </Typography>
                       </Box>
@@ -392,13 +381,16 @@ const FlowNotificationCenter: React.FC = () => {
                     {notification.approval_id && (
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          fontSize: "0.75rem",
-                          color: "grey.400",
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '0.75rem',
+                          color: 'grey.400',
                         }}
                       >
-                        <Typography variant="caption" color="text.disabled">
+                        <Typography
+                          variant='caption'
+                          color='text.disabled'
+                        >
                           审批
                         </Typography>
                       </Box>
@@ -408,15 +400,15 @@ const FlowNotificationCenter: React.FC = () => {
                         sx={{
                           px: 1,
                           py: 0.5,
-                          bgcolor: "primary.100",
-                          color: "primary.700",
+                          bgcolor: 'primary.100',
+                          color: 'primary.700',
                           borderRadius: 1,
-                          fontSize: "0.75rem",
+                          fontSize: '0.75rem',
                         }}
                       >
                         <Typography
-                          variant="caption"
-                          sx={{ color: "primary.700" }}
+                          variant='caption'
+                          sx={{ color: 'primary.700' }}
                         >
                           未读
                         </Typography>

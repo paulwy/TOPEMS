@@ -1,5 +1,5 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 import type {
   ValidateRequest,
   ValidateResponse,
@@ -8,7 +8,7 @@ import type {
   SummarizeRequest,
   SummarizeResponse,
   AITemplate,
-} from "@/types/ai";
+} from '@/types/ai';
 
 export interface Document {
   id: string;
@@ -86,7 +86,7 @@ export interface Conversation {
 
 export interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp: string;
 }
@@ -128,7 +128,7 @@ export interface SentimentAnalysisRequest {
 }
 
 export interface SentimentAnalysisResponse {
-  sentiment: "positive" | "negative" | "neutral";
+  sentiment: 'positive' | 'negative' | 'neutral';
   confidence: number;
   details?: {
     positive_words?: string[];
@@ -199,7 +199,7 @@ export interface QAHistoryItem {
 export interface AIGenerateRequest {
   template_id?: string;
   variables: Record<string, any>;
-  output_format?: "text" | "json" | "markdown";
+  output_format?: 'text' | 'json' | 'markdown';
 }
 
 export interface AIGenerateResponse {
@@ -223,35 +223,27 @@ export interface PaginatedResult<T> {
 
 export const aiApi = {
   listDocuments: async (
-    params?: PaginationParams,
+    params?: PaginationParams
   ): Promise<ApiResponse<PaginatedResult<Document>>> => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.category) searchParams.set("category", params.category);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(
-      `/api/ai/documents${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.ai.get(`/api/ai/documents${queryString ? '?' + queryString : ''}`);
   },
 
   getDocument: async (id: string): Promise<ApiResponse<Document>> => {
     return apiClient.ai.get(`/api/ai/documents/${id}`);
   },
 
-  createDocument: async (
-    data: Partial<Document>,
-  ): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.post("/api/ai/documents", data);
+  createDocument: async (data: Partial<Document>): Promise<ApiResponse<Document>> => {
+    return apiClient.ai.post('/api/ai/documents', data);
   },
 
-  updateDocument: async (
-    id: string,
-    data: Partial<Document>,
-  ): Promise<ApiResponse<Document>> => {
+  updateDocument: async (id: string, data: Partial<Document>): Promise<ApiResponse<Document>> => {
     return apiClient.ai.put(`/api/ai/documents/${id}`, data);
   },
 
@@ -260,31 +252,27 @@ export const aiApi = {
   },
 
   chat: async (data: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
-    return apiClient.ai.post<ChatResponse>("/api/ai/ai/chat", data);
+    return apiClient.ai.post<ChatResponse>('/api/ai/ai/chat', data);
   },
 
   search: async (data: SearchRequest): Promise<ApiResponse<SearchResult>> => {
-    return apiClient.ai.post<SearchResult>("/api/ai/ai/search", data);
+    return apiClient.ai.post<SearchResult>('/api/ai/ai/search', data);
   },
 
-  generate: async (
-    data: AIGenerateRequest,
-  ): Promise<ApiResponse<AIGenerateResponse>> => {
-    return apiClient.ai.post<AIGenerateResponse>("/api/ai/ai/generate", data);
+  generate: async (data: AIGenerateRequest): Promise<ApiResponse<AIGenerateResponse>> => {
+    return apiClient.ai.post<AIGenerateResponse>('/api/ai/ai/generate', data);
   },
 
   listConversations: async (): Promise<ApiResponse<Conversation[]>> => {
-    return apiClient.ai.get<Conversation[]>("/api/ai/conversations");
+    return apiClient.ai.get<Conversation[]>('/api/ai/conversations');
   },
 
   getConversation: async (id: string): Promise<ApiResponse<Conversation>> => {
     return apiClient.ai.get(`/api/ai/conversations/${id}`);
   },
 
-  createConversation: async (
-    title?: string,
-  ): Promise<ApiResponse<Conversation>> => {
-    return apiClient.ai.post("/api/ai/conversations", { title });
+  createConversation: async (title?: string): Promise<ApiResponse<Conversation>> => {
+    return apiClient.ai.post('/api/ai/conversations', { title });
   },
 
   deleteConversation: async (id: string): Promise<ApiResponse<string>> => {
@@ -292,73 +280,51 @@ export const aiApi = {
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.ai.get<string>("/health");
+    return apiClient.ai.get<string>('/health');
   },
 
-  validate: async (
-    data: ValidateRequest,
-  ): Promise<ApiResponse<ValidateResponse>> => {
-    return apiClient.ai.post<ValidateResponse>("/api/ai/ai/validate", data);
+  validate: async (data: ValidateRequest): Promise<ApiResponse<ValidateResponse>> => {
+    return apiClient.ai.post<ValidateResponse>('/api/ai/ai/validate', data);
   },
 
-  complete: async (
-    data: CompleteRequest,
-  ): Promise<ApiResponse<CompleteResponse>> => {
-    return apiClient.ai.post<CompleteResponse>("/api/ai/ai/complete", data);
+  complete: async (data: CompleteRequest): Promise<ApiResponse<CompleteResponse>> => {
+    return apiClient.ai.post<CompleteResponse>('/api/ai/ai/complete', data);
   },
 
-  summarize: async (
-    data: SummarizeRequest,
-  ): Promise<ApiResponse<SummarizeResponse>> => {
-    return apiClient.ai.post<SummarizeResponse>("/api/ai/ai/summarize", data);
+  summarize: async (data: SummarizeRequest): Promise<ApiResponse<SummarizeResponse>> => {
+    return apiClient.ai.post<SummarizeResponse>('/api/ai/ai/summarize', data);
   },
 
   listTemplates: async (): Promise<ApiResponse<AITemplate[]>> => {
-    return apiClient.ai.get<AITemplate[]>("/api/ai/ai/templates");
+    return apiClient.ai.get<AITemplate[]>('/api/ai/ai/templates');
   },
 
   // 分析相关接口
   analyzeSentiment: async (
-    data: SentimentAnalysisRequest,
+    data: SentimentAnalysisRequest
   ): Promise<ApiResponse<SentimentAnalysisResponse>> => {
-    return apiClient.ai.post<SentimentAnalysisResponse>(
-      "/api/ai/analysis/sentiment",
-      data,
-    );
+    return apiClient.ai.post<SentimentAnalysisResponse>('/api/ai/analysis/sentiment', data);
   },
 
-  classifyText: async (
-    data: ClassifyTextRequest,
-  ): Promise<ApiResponse<ClassifyTextResponse>> => {
-    return apiClient.ai.post<ClassifyTextResponse>(
-      "/api/ai/analysis/classify",
-      data,
-    );
+  classifyText: async (data: ClassifyTextRequest): Promise<ApiResponse<ClassifyTextResponse>> => {
+    return apiClient.ai.post<ClassifyTextResponse>('/api/ai/analysis/classify', data);
   },
 
   extractEntities: async (
-    data: ExtractEntitiesRequest,
+    data: ExtractEntitiesRequest
   ): Promise<ApiResponse<ExtractEntitiesResponse>> => {
-    return apiClient.ai.post<ExtractEntitiesResponse>(
-      "/api/ai/analysis/entities",
-      data,
-    );
+    return apiClient.ai.post<ExtractEntitiesResponse>('/api/ai/analysis/entities', data);
   },
 
   extractKeywords: async (
-    data: ExtractKeywordsRequest,
+    data: ExtractKeywordsRequest
   ): Promise<ApiResponse<ExtractKeywordsResponse>> => {
-    return apiClient.ai.post<ExtractKeywordsResponse>(
-      "/api/ai/analysis/keywords",
-      data,
-    );
+    return apiClient.ai.post<ExtractKeywordsResponse>('/api/ai/analysis/keywords', data);
   },
 
   // 文档问答接口
-  documentQA: async (
-    data: DocumentQAQuestionRequest,
-  ): Promise<ApiResponse<DocumentQAAnswer>> => {
-    return apiClient.ai.post<DocumentQAAnswer>("/api/v1/documents/qa", data);
+  documentQA: async (data: DocumentQAQuestionRequest): Promise<ApiResponse<DocumentQAAnswer>> => {
+    return apiClient.ai.post<DocumentQAAnswer>('/api/v1/documents/qa', data);
   },
 
   // 智能问答接口
@@ -373,7 +339,7 @@ export const aiApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post("/api/ai/qa/ask", data);
+    return apiClient.ai.post('/api/ai/qa/ask', data);
   },
 
   askWithContext: async (data: {
@@ -388,7 +354,7 @@ export const aiApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post("/api/ai/qa/ask-with-context", data);
+    return apiClient.ai.post('/api/ai/qa/ask-with-context', data);
   },
 
   askStructured: async (data: {
@@ -404,7 +370,7 @@ export const aiApi = {
       follow_up_questions: string[];
     }>
   > => {
-    return apiClient.ai.post("/api/ai/qa/ask-structured", data);
+    return apiClient.ai.post('/api/ai/qa/ask-structured', data);
   },
 
   askConversation: async (data: {
@@ -420,13 +386,13 @@ export const aiApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post("/api/ai/qa/ask-conversation", data);
+    return apiClient.ai.post('/api/ai/qa/ask-conversation', data);
   },
 
   classifyQuestion: async (data: {
     question: string;
   }): Promise<ApiResponse<{ question_type: string }>> => {
-    return apiClient.ai.post("/api/ai/qa/classify", data);
+    return apiClient.ai.post('/api/ai/qa/classify', data);
   },
 
   getQAHistory: async (params?: {
@@ -435,15 +401,12 @@ export const aiApi = {
     query?: string;
   }): Promise<ApiResponse<{ history: QAHistoryItem[]; total: number }>> => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.query) searchParams.set("query", params.query);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.query) searchParams.set('query', params.query);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(
-      `/api/ai/qa/history${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.ai.get(`/api/ai/qa/history${queryString ? '?' + queryString : ''}`);
   },
 
   deleteQAHistory: async (id: string): Promise<ApiResponse<string>> => {
@@ -451,9 +414,9 @@ export const aiApi = {
   },
 
   batchDeleteQAHistory: async (
-    ids: string[],
+    ids: string[]
   ): Promise<ApiResponse<{ deleted_count: number; message: string }>> => {
-    return apiClient.ai.post("/api/ai/qa/history/batch-delete", { ids });
+    return apiClient.ai.post('/api/ai/qa/history/batch-delete', { ids });
   },
 
   submitFeedback: async (data: {
@@ -461,39 +424,36 @@ export const aiApi = {
     feedback: string;
     rating?: number;
   }): Promise<ApiResponse<{ qa_id: string; message: string }>> => {
-    return apiClient.ai.post("/api/ai/qa/feedback", data);
+    return apiClient.ai.post('/api/ai/qa/feedback', data);
   },
 
   // 文档摘要接口
   summarizeDocument: async (
     id: string,
-    data?: SummarizeDocumentRequest,
+    data?: SummarizeDocumentRequest
   ): Promise<ApiResponse<SummarizeDocumentResponse>> => {
     return apiClient.ai.post<SummarizeDocumentResponse>(
       `/api/v1/documents/${id}/summarize`,
-      data || {},
+      data || {}
     );
   },
 
   // 提取文档关键点接口
   extractKeyPoints: async (
     id: string,
-    data?: ExtractKeyPointsRequest,
+    data?: ExtractKeyPointsRequest
   ): Promise<ApiResponse<ExtractKeyPointsResponse>> => {
     return apiClient.ai.post<ExtractKeyPointsResponse>(
       `/api/v1/documents/${id}/key-points`,
-      data || {},
+      data || {}
     );
   },
 
   // 文档提取接口
   extractDocument: async (
     id: string,
-    data: ExtractDocumentRequest,
+    data: ExtractDocumentRequest
   ): Promise<ApiResponse<ExtractDocumentResponse>> => {
-    return apiClient.ai.post<ExtractDocumentResponse>(
-      `/api/v1/documents/${id}/extract`,
-      data,
-    );
+    return apiClient.ai.post<ExtractDocumentResponse>(`/api/v1/documents/${id}/extract`, data);
   },
 };

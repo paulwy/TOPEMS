@@ -3,11 +3,11 @@
  * 支持3D地图视图、高度可视化、3D建筑和设施模型
  */
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { MapContainer, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet.heat";
-import "leaflet-3d-tiles";
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { MapContainer, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet.heat';
+import 'leaflet-3d-tiles';
 
 // 3D地图类型定义
 export interface ViewState3D {
@@ -78,7 +78,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
   enableTerrain = true,
   enableBuildings = true,
   children,
-  className = "",
+  className = '',
   style = {},
 }) => {
   const mapRef = useRef<L.Map | null>(null);
@@ -126,18 +126,12 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
         const currentView: ViewState3D = {
           center: [
             animation.from.center[0] +
-              (animation.to.center[0] - animation.from.center[0]) *
-                easedProgress,
+              (animation.to.center[0] - animation.from.center[0]) * easedProgress,
             animation.from.center[1] +
-              (animation.to.center[1] - animation.from.center[1]) *
-                easedProgress,
+              (animation.to.center[1] - animation.from.center[1]) * easedProgress,
           ],
-          zoom:
-            animation.from.zoom +
-            (animation.to.zoom - animation.from.zoom) * easedProgress,
-          pitch:
-            animation.from.pitch +
-            (animation.to.pitch - animation.from.pitch) * easedProgress,
+          zoom: animation.from.zoom + (animation.to.zoom - animation.from.zoom) * easedProgress,
+          pitch: animation.from.pitch + (animation.to.pitch - animation.from.pitch) * easedProgress,
           bearing:
             animation.from.bearing +
             (animation.to.bearing - animation.from.bearing) * easedProgress,
@@ -157,7 +151,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
 
       animate();
     },
-    [onViewStateChange],
+    [onViewStateChange]
   );
 
   // 渲染3D建筑
@@ -175,16 +169,22 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
   }, [buildings, enableBuildings, enable3D]);
 
   return (
-    <div className={`map-3d-view ${className}`} style={style}>
+    <div
+      className={`map-3d-view ${className}`}
+      style={style}
+    >
       <MapContainer
         center={viewState.center}
         zoom={viewState.zoom}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: '100%', width: '100%' }}
         ref={mapRef}
-        className="map-3d-container"
+        className='map-3d-container'
       >
         {/* 地图层级 */}
-        <TileLayer3D viewState={viewState} enable3D={enable3D} />
+        <TileLayer3D
+          viewState={viewState}
+          enable3D={enable3D}
+        />
 
         {/* 3D建筑标记 */}
         {enableBuildings &&
@@ -201,7 +201,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
       </MapContainer>
 
       {/* 3D控制面板 */}
-      <div className="map-3d-controls">
+      <div className='map-3d-controls'>
         <button
           onClick={() =>
             animateTo({
@@ -210,7 +210,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
               duration: 500,
             })
           }
-          title="2D视图"
+          title='2D视图'
         >
           2D
         </button>
@@ -222,7 +222,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
               duration: 500,
             })
           }
-          title="3D视图"
+          title='3D视图'
         >
           3D
         </button>
@@ -234,7 +234,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
               duration: 500,
             })
           }
-          title="旋转"
+          title='旋转'
         >
           ↻
         </button>
@@ -242,9 +242,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
 
       {/* 高度指示器 */}
       {enable3D && (
-        <div className="altitude-indicator">
-          高度: {Math.round(viewState.altitude)}m
-        </div>
+        <div className='altitude-indicator'>高度: {Math.round(viewState.altitude)}m</div>
       )}
     </div>
   );
@@ -279,11 +277,7 @@ interface BuildingMarkerProps {
   map?: L.Map;
 }
 
-const BuildingMarker: React.FC<BuildingMarkerProps> = ({
-  building,
-  enable3D,
-  map,
-}) => {
+const BuildingMarker: React.FC<BuildingMarkerProps> = ({ building, enable3D, map }) => {
   const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
@@ -292,22 +286,21 @@ const BuildingMarker: React.FC<BuildingMarkerProps> = ({
     // 创建3D建筑标记
     const icon = L.divIcon({
       html: `
-        <div class="building-marker ${enable3D ? "building-marker-3d" : ""}"
-             style="height: ${building.height}px; background: ${building.color || "#666"};">
+        <div class="building-marker ${enable3D ? 'building-marker-3d' : ''}"
+             style="height: ${building.height}px; background: ${building.color || '#666'};">
           <span>${building.name}</span>
         </div>
       `,
-      className: "building-marker-container",
+      className: 'building-marker-container',
       iconSize: [50, building.height],
       iconAnchor: [25, building.height],
     });
 
-    markerRef.current = L.marker(building.position, { icon }).addTo(map)
-      .bindPopup(`
+    markerRef.current = L.marker(building.position, { icon }).addTo(map).bindPopup(`
         <div class="building-popup">
           <h4>${building.name}</h4>
           <p>高度: ${building.height}m</p>
-          ${building.properties ? `<pre>${JSON.stringify(building.properties, null, 2)}</pre>` : ""}
+          ${building.properties ? `<pre>${JSON.stringify(building.properties, null, 2)}</pre>` : ''}
         </div>
       `);
 
@@ -333,24 +326,21 @@ interface HeightVisualizationProps {
 
 export const HeightVisualization: React.FC<HeightVisualizationProps> = ({
   data,
-  colorScale = ["#00f", "#0ff", "#0f0", "#ff0", "#f00"],
+  colorScale = ['#00f', '#0ff', '#0f0', '#ff0', '#f00'],
   maxHeight = 100,
 }) => {
   // 渲染高度热力图
   return (
-    <div className="height-visualization">
+    <div className='height-visualization'>
       {data.map((point, index) => (
         <div
           key={index}
-          className="height-point"
+          className='height-point'
           style={{
             left: `${point.position[1]}%`,
             top: `${point.position[0]}%`,
             height: `${(point.value / maxHeight) * 100}%`,
-            background:
-              colorScale[
-                Math.floor((point.value / maxHeight) * (colorScale.length - 1))
-              ],
+            background: colorScale[Math.floor((point.value / maxHeight) * (colorScale.length - 1))],
           }}
         />
       ))}
@@ -360,23 +350,18 @@ export const HeightVisualization: React.FC<HeightVisualizationProps> = ({
 
 // 3D视角控制器hook
 export function use3DViewController(initialView?: ViewState3D) {
-  const [viewState, setViewState] = useState<ViewState3D>(
-    initialView || DEFAULT_3D_VIEW,
-  );
+  const [viewState, setViewState] = useState<ViewState3D>(initialView || DEFAULT_3D_VIEW);
   const [isAnimating, setIsAnimating] = useState(false);
 
   // 飞向指定位置
-  const flyTo = useCallback(
-    (position: [number, number], zoom?: number, pitch?: number) => {
-      setViewState((prev) => ({
-        ...prev,
-        center: position,
-        zoom: zoom ?? prev.zoom,
-        pitch: pitch ?? prev.pitch,
-      }));
-    },
-    [],
-  );
+  const flyTo = useCallback((position: [number, number], zoom?: number, pitch?: number) => {
+    setViewState((prev) => ({
+      ...prev,
+      center: position,
+      zoom: zoom ?? prev.zoom,
+      pitch: pitch ?? prev.pitch,
+    }));
+  }, []);
 
   // 改变视角
   const rotateTo = useCallback((bearing: number) => {

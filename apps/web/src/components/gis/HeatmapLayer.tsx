@@ -1,16 +1,16 @@
-import React, { useEffect, useRef, useMemo } from "react";
-import L from "leaflet";
-import { useMap } from "react-leaflet";
-import { Box, Typography, Paper } from "@mui/material";
-import "leaflet/dist/leaflet.css";
-import type { DevicePoint, StorageLocation } from "../../api/gis";
+import React, { useEffect, useRef, useMemo } from 'react';
+import L from 'leaflet';
+import { useMap } from 'react-leaflet';
+import { Box, Typography, Paper } from '@mui/material';
+import 'leaflet/dist/leaflet.css';
+import type { DevicePoint, StorageLocation } from '../../api/gis';
 
 interface HeatmapLayerProps {
   devicePoints: DevicePoint[];
   storageLocations: StorageLocation[];
   mapRef?: React.RefObject<L.Map | null>;
   visible: boolean;
-  intensityMode: "density" | "status";
+  intensityMode: 'density' | 'status';
 }
 
 const colorCache = new Map<number, string>();
@@ -21,18 +21,18 @@ const getCachedColor = (intensity: number): string => {
     return colorCache.get(key)!;
   }
 
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement('canvas');
   canvas.width = 256;
   canvas.height = 1;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return "rgba(255, 0, 0, 0.5)";
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return 'rgba(255, 0, 0, 0.5)';
 
   const gradient = ctx.createLinearGradient(0, 0, 256, 0);
-  gradient.addColorStop(0, "rgba(0, 255, 0, 0)");
-  gradient.addColorStop(0.3, "rgba(0, 255, 0, 0.5)");
-  gradient.addColorStop(0.5, "rgba(255, 255, 0, 0.7)");
-  gradient.addColorStop(0.7, "rgba(255, 128, 0, 0.8)");
-  gradient.addColorStop(1, "rgba(255, 0, 0, 1)");
+  gradient.addColorStop(0, 'rgba(0, 255, 0, 0)');
+  gradient.addColorStop(0.3, 'rgba(0, 255, 0, 0.5)');
+  gradient.addColorStop(0.5, 'rgba(255, 255, 0, 0.7)');
+  gradient.addColorStop(0.7, 'rgba(255, 128, 0, 0.8)');
+  gradient.addColorStop(1, 'rgba(255, 0, 0, 1)');
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 256, 1);
@@ -64,17 +64,15 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     const result: { x: number; y: number; value: number }[] = [];
 
     devicePoints.forEach((p) => {
-      const pixel = effectiveMap.latLngToContainerPoint(
-        L.latLng(p.latitude, p.longitude),
-      );
+      const pixel = effectiveMap.latLngToContainerPoint(L.latLng(p.latitude, p.longitude));
       let value = 1;
-      if (intensityMode === "status") {
+      if (intensityMode === 'status') {
         const status = p.status.toLowerCase();
-        if (status.includes("active") || status.includes("启用")) {
+        if (status.includes('active') || status.includes('启用')) {
           value = 0.3;
-        } else if (status.includes("pending") || status.includes("待处理")) {
+        } else if (status.includes('pending') || status.includes('待处理')) {
           value = 0.7;
-        } else if (status.includes("inactive") || status.includes("禁用")) {
+        } else if (status.includes('inactive') || status.includes('禁用')) {
           value = 1;
         }
       }
@@ -82,9 +80,7 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     });
 
     storageLocations.forEach((s) => {
-      const pixel = effectiveMap.latLngToContainerPoint(
-        L.latLng(s.latitude, s.longitude),
-      );
+      const pixel = effectiveMap.latLngToContainerPoint(L.latLng(s.latitude, s.longitude));
       result.push({ x: pixel.x, y: pixel.y, value: 1 });
     });
 
@@ -104,17 +100,17 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
 
     let canvas = canvasRef.current;
     if (!canvas) {
-      canvas = document.createElement("canvas");
+      canvas = document.createElement('canvas');
       canvasRef.current = canvas;
     }
     canvas.width = size.x;
     canvas.height = size.y;
-    canvas.style.position = "absolute";
-    canvas.style.top = "0";
-    canvas.style.left = "0";
-    canvas.style.pointerEvents = "none";
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.pointerEvents = 'none';
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     ctx.clearRect(0, 0, size.x, size.y);
@@ -137,8 +133,7 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
           const ny = gridY + dy;
           if (nx >= 0 && nx < gridCols && ny >= 0 && ny < gridRows) {
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const weight =
-              distance <= radius ? (1 - distance / radius) * point.value : 0;
+            const weight = distance <= radius ? (1 - distance / radius) * point.value : 0;
             grid[ny * gridCols + nx] += weight;
           }
         }
@@ -166,14 +161,14 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     ctx.globalAlpha = 1;
 
     if (!heatmapRef.current) {
-      const overlay = L.DomUtil.create("div", "leaflet-heatmap-overlay");
-      overlay.style.position = "absolute";
-      overlay.style.top = "0";
-      overlay.style.left = "0";
-      overlay.style.width = "100%";
-      overlay.style.height = "100%";
+      const overlay = L.DomUtil.create('div', 'leaflet-heatmap-overlay');
+      overlay.style.position = 'absolute';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
 
-      const pane = effectiveMap.getPane("overlayPane");
+      const pane = effectiveMap.getPane('overlayPane');
       if (pane) {
         pane.appendChild(overlay);
         heatmapRef.current = overlay;
@@ -181,7 +176,7 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     }
 
     if (heatmapRef.current && canvas.parentNode !== heatmapRef.current) {
-      heatmapRef.current.innerHTML = "";
+      heatmapRef.current.innerHTML = '';
       heatmapRef.current.appendChild(canvas);
     }
 
@@ -192,12 +187,12 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
       }
     };
 
-    effectiveMap.on("move", handleMove);
-    effectiveMap.on("zoom", handleMove);
+    effectiveMap.on('move', handleMove);
+    effectiveMap.on('zoom', handleMove);
 
     return () => {
-      effectiveMap.off("move", handleMove);
-      effectiveMap.off("zoom", handleMove);
+      effectiveMap.off('move', handleMove);
+      effectiveMap.off('zoom', handleMove);
       if (heatmapRef.current) {
         heatmapRef.current.remove();
         heatmapRef.current = null;
@@ -208,74 +203,87 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
   return null;
 };
 
-export const HeatmapLegend: React.FC<{ mode: "density" | "status" }> = ({
-  mode,
-}) => {
+export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
   return (
     <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
       <Typography
-        variant="caption"
-        sx={{ fontWeight: 500, color: "text.secondary", mb: 2 }}
+        variant='caption'
+        sx={{ fontWeight: 500, color: 'text.secondary', mb: 2 }}
       >
-        {mode === "density" ? "密度图例" : "状态图例"}
+        {mode === 'density' ? '密度图例' : '状态图例'}
       </Typography>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           sx={{
             width: 128,
             height: 12,
             borderRadius: 1,
             background:
-              "linear-gradient(to right, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.5), rgba(255, 255, 0, 0.7), rgba(255, 128, 0, 0.8), rgba(255, 0, 0, 1))",
+              'linear-gradient(to right, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.5), rgba(255, 255, 0, 0.7), rgba(255, 128, 0, 0.8), rgba(255, 0, 0, 1))',
           }}
         />
       </Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+        <Typography
+          variant='caption'
+          sx={{ color: 'text.secondary' }}
+        >
           低
         </Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+        <Typography
+          variant='caption'
+          sx={{ color: 'text.secondary' }}
+        >
           高
         </Typography>
       </Box>
-      {mode === "status" && (
-        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+      {mode === 'status' && (
+        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
             <Box
               sx={{
                 width: 12,
                 height: 12,
                 borderRadius: 1,
-                bgcolor: "rgba(0, 255, 0, 0.5)",
+                bgcolor: 'rgba(0, 255, 0, 0.5)',
               }}
             />
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary' }}
+            >
               正常运行
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
             <Box
               sx={{
                 width: 12,
                 height: 12,
                 borderRadius: 1,
-                bgcolor: "rgba(255, 255, 0, 0.7)",
+                bgcolor: 'rgba(255, 255, 0, 0.7)',
               }}
             />
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary' }}
+            >
               待处理
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
               sx={{
                 width: 12,
                 height: 12,
                 borderRadius: 1,
-                bgcolor: "rgba(255, 0, 0, 1)",
+                bgcolor: 'rgba(255, 0, 0, 1)',
               }}
             />
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary' }}
+            >
               异常/禁用
             </Typography>
           </Box>

@@ -3,20 +3,29 @@
  * 适用于任务卡片、设备卡片、订单卡片等场景
  */
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Box, Paper, Typography, TextField, InputAdornment, IconButton, Select, MenuItem, FormControl, InputLabel, Chip, Skeleton, Tooltip, Pagination, Collapse, useTheme, useMediaQuery,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useCallback, useMemo } from 'react';
 import {
-  Search,
-  RefreshCw,
-  Filter,
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  Grid,
-  List,
-} from "lucide-react";
-import { EmptyState } from "@/components/mui";
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Chip,
+  Skeleton,
+  Tooltip,
+  Pagination,
+  Collapse,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Search, RefreshCw, Filter, Plus, ChevronDown, ChevronUp, Grid, List } from 'lucide-react';
+import { EmptyState } from '@/components/mui';
 
 /**
  * 统计卡片类型
@@ -30,9 +39,9 @@ export interface MetricStatCard {
   subtitle?: string;
   trend?: {
     value: number;
-    direction: "up" | "down" | "neutral";
+    direction: 'up' | 'down' | 'neutral';
   };
-  color?: "primary" | "success" | "warning" | "error" | "info";
+  color?: 'primary' | 'success' | 'warning' | 'error' | 'info';
 }
 
 /**
@@ -41,7 +50,7 @@ export interface MetricStatCard {
 export interface FilterConfig {
   id: string;
   label: string;
-  type: "text" | "select" | "date" | "daterange";
+  type: 'text' | 'select' | 'date' | 'daterange';
   placeholder?: string;
   options?: { label: string; value: string }[];
   width?: number | string;
@@ -54,9 +63,9 @@ export interface CardAction {
   label: string;
   icon?: React.ReactNode;
   onClick: (item: any) => void;
-  color?: "primary" | "secondary" | "success" | "error" | "warning" | "info";
+  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
   disabled?: (item: any) => boolean;
-  variant?: "contained" | "outlined" | "text";
+  variant?: 'contained' | 'outlined' | 'text';
   divider?: boolean;
 }
 
@@ -169,9 +178,9 @@ export interface CardListTemplateProps {
   /** 是否显示视图切换 */
   showViewToggle?: boolean;
   /** 当前视图模式 */
-  viewMode?: "grid" | "list";
+  viewMode?: 'grid' | 'list';
   /** 视图模式变更回调 */
-  onViewModeChange?: (mode: "grid" | "list") => void;
+  onViewModeChange?: (mode: 'grid' | 'list') => void;
   /** 自定义工具栏 */
   customToolbar?: React.ReactNode;
   /** 是否显示筛选折叠面板 */
@@ -218,17 +227,14 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   fixedCardHeight,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // 内部状态
-  const [internalViewMode, setInternalViewMode] = useState<"grid" | "list">(
-    "grid",
-  );
+  const [internalViewMode, setInternalViewMode] = useState<'grid' | 'list'>('grid');
   const [filterExpanded, setFilterExpanded] = useState(defaultFilterExpanded);
 
   // 使用受控或内部状态
-  const viewMode =
-    controlledViewMode !== undefined ? controlledViewMode : internalViewMode;
+  const viewMode = controlledViewMode !== undefined ? controlledViewMode : internalViewMode;
   const setViewMode = onViewModeChange || setInternalViewMode;
 
   // 筛选变更处理
@@ -237,7 +243,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       const newFilters = { ...filterValues, [filterId]: value };
       onFilterChange?.(newFilters);
     },
-    [filterValues, onFilterChange],
+    [filterValues, onFilterChange]
   );
 
   // 重置筛选
@@ -252,10 +258,10 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
     return (
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "repeat(2, 1fr)",
-            sm: "repeat(3, 1fr)",
+            xs: 'repeat(2, 1fr)',
+            sm: 'repeat(3, 1fr)',
             md: `repeat(${Math.min(metricColumns, metricStats.length)}, 1fr)`,
           },
           gap: 2,
@@ -270,28 +276,26 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               background: stat.gradient
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
-              bgcolor: stat.gradient ? undefined : "grey.50",
-              color: stat.gradient ? "white" : "inherit",
-              position: "relative",
-              overflow: "hidden",
+              bgcolor: stat.gradient ? undefined : 'grey.50',
+              color: stat.gradient ? 'white' : 'inherit',
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
               {stat.icon && (
                 <Box
                   sx={{
                     width: 48,
                     height: 48,
                     borderRadius: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     bgcolor: stat.gradient
-                      ? "rgba(255,255,255,0.2)"
-                      : `${stat.color || "primary"}.light`,
-                    color: stat.gradient
-                      ? "white"
-                      : `${stat.color || "primary"}.main`,
+                      ? 'rgba(255,255,255,0.2)'
+                      : `${stat.color || 'primary'}.light`,
+                    color: stat.gradient ? 'white' : `${stat.color || 'primary'}.main`,
                   }}
                 >
                   {stat.icon}
@@ -299,26 +303,25 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               )}
               <Box sx={{ flex: 1 }}>
                 <Typography
-                  variant="caption"
+                  variant='caption'
                   sx={{
                     opacity: stat.gradient ? 0.8 : 1,
-                    color: stat.gradient
-                      ? "rgba(255,255,255,0.8)"
-                      : "text.secondary",
+                    color: stat.gradient ? 'rgba(255,255,255,0.8)' : 'text.secondary',
                   }}
                 >
                   {stat.title}
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 700 }}
+                >
                   {stat.value}
                 </Typography>
                 {stat.subtitle && (
                   <Typography
-                    variant="caption"
+                    variant='caption'
                     sx={{
-                      color: stat.gradient
-                        ? "rgba(255,255,255,0.7)"
-                        : "text.secondary",
+                      color: stat.gradient ? 'rgba(255,255,255,0.7)' : 'text.secondary',
                     }}
                   >
                     {stat.subtitle}
@@ -330,29 +333,29 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             {/* 趋势指示器 */}
             {stat.trend && (
               <Chip
-                size="small"
-                label={`${stat.trend.value > 0 ? "+" : ""}${stat.trend.value}%`}
+                size='small'
+                label={`${stat.trend.value > 0 ? '+' : ''}${stat.trend.value}%`}
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 12,
                   right: 12,
                   bgcolor:
-                    stat.trend.direction === "up"
+                    stat.trend.direction === 'up'
                       ? stat.gradient
-                        ? "rgba(255,255,255,0.2)"
-                        : "success.light"
-                      : stat.trend.direction === "down"
+                        ? 'rgba(255,255,255,0.2)'
+                        : 'success.light'
+                      : stat.trend.direction === 'down'
                         ? stat.gradient
-                          ? "rgba(255,255,255,0.2)"
-                          : "error.light"
-                        : "grey.200",
+                          ? 'rgba(255,255,255,0.2)'
+                          : 'error.light'
+                        : 'grey.200',
                   color: stat.gradient
-                    ? "white"
-                    : stat.trend.direction === "up"
-                      ? "success.main"
-                      : stat.trend.direction === "down"
-                        ? "error.main"
-                        : "text.secondary",
+                    ? 'white'
+                    : stat.trend.direction === 'up'
+                      ? 'success.main'
+                      : stat.trend.direction === 'down'
+                        ? 'error.main'
+                        : 'text.secondary',
                   fontWeight: 500,
                 }}
               />
@@ -368,31 +371,29 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
     if (filters.length === 0) return null;
 
     const filterContent = (
-      <Box
-        sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}
-      >
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         {filters.map((filter) => {
           const value = filterValues?.[filter.id];
 
-          if (filter.type === "text") {
+          if (filter.type === 'text') {
             return (
               <TextField
                 key={filter.id}
-                size="small"
+                size='small'
                 placeholder={filter.placeholder || filter.label}
-                value={value || ""}
+                value={value || ''}
                 onChange={(e) => handleFilterChange(filter.id, e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && onSearch?.()}
+                onKeyDown={(e) => e.key === 'Enter' && onSearch?.()}
                 sx={{ minWidth: filter.width || 200 }}
                 slotProps={{
                   input: {
                     startAdornment: (
-                      <InputAdornment position="start">
+                      <InputAdornment position='start'>
                         <Search
                           sx={{
                             width: 16,
                             height: 16,
-                            color: "text.secondary",
+                            color: 'text.secondary',
                           }}
                         />
                       </InputAdornment>
@@ -403,23 +404,24 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             );
           }
 
-          if (filter.type === "select" && filter.options) {
+          if (filter.type === 'select' && filter.options) {
             return (
               <FormControl
                 key={filter.id}
-                size="small"
+                size='small'
                 sx={{ minWidth: filter.width || 150 }}
               >
                 <InputLabel>{filter.label}</InputLabel>
                 <Select
-                  value={value || ""}
+                  value={value || ''}
                   label={filter.label}
-                  onChange={(e) =>
-                    handleFilterChange(filter.id, e.target.value)
-                  }
+                  onChange={(e) => handleFilterChange(filter.id, e.target.value)}
                 >
                   {filter.options.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
+                    <MenuItem
+                      key={option.value}
+                      value={option.value}
+                    >
                       {option.label}
                     </MenuItem>
                   ))}
@@ -431,11 +433,19 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           return null;
         })}
 
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="contained" size="small" onClick={onSearch}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant='contained'
+            size='small'
+            onClick={onSearch}
+          >
             搜索
           </Button>
-          <Button variant="outlined" size="small" onClick={handleReset}>
+          <Button
+            variant='outlined'
+            size='small'
+            onClick={handleReset}
+          >
             重置
           </Button>
         </Box>
@@ -447,21 +457,24 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
         <Paper sx={{ mb: 2, p: 2, borderRadius: 2 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              cursor: "pointer",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
               mb: filterExpanded ? 2 : 0,
             }}
             onClick={() => setFilterExpanded(!filterExpanded)}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Filter sx={{ width: 18, height: 18, color: "text.secondary" }} />
-              <Typography variant="subtitle2" color="text.secondary">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Filter sx={{ width: 18, height: 18, color: 'text.secondary' }} />
+              <Typography
+                variant='subtitle2'
+                color='text.secondary'
+              >
                 筛选条件
               </Typography>
             </Box>
-            <IconButton size="small">
+            <IconButton size='small'>
               {filterExpanded ? (
                 <ChevronUp sx={{ width: 18, height: 18 }} />
               ) : (
@@ -480,56 +493,54 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   // 渲染单个卡片
   const renderCard = (item: any, index: number) => {
     const title =
-      typeof cardConfig.title === "function"
-        ? cardConfig.title(item)
-        : item[cardConfig.title];
+      typeof cardConfig.title === 'function' ? cardConfig.title(item) : item[cardConfig.title];
 
     const description = cardConfig.description
-      ? typeof cardConfig.description === "function"
+      ? typeof cardConfig.description === 'function'
         ? cardConfig.description(item)
         : item[cardConfig.description]
       : null;
 
     const icon = cardConfig.icon
-      ? typeof cardConfig.icon === "function"
+      ? typeof cardConfig.icon === 'function'
         ? cardConfig.icon(item)
         : cardConfig.icon
       : null;
 
     const iconBgColor = cardConfig.iconBgColor
-      ? typeof cardConfig.iconBgColor === "function"
+      ? typeof cardConfig.iconBgColor === 'function'
         ? cardConfig.iconBgColor(item)
         : cardConfig.iconBgColor
-      : "primary.light";
+      : 'primary.light';
 
-    const statusConfig =
-      cardConfig.status?.field ? cardConfig.status?.options?.[item[cardConfig.status.field]] : undefined;
-    const statusColor = statusConfig?.color || "default";
-    const statusLabel = statusConfig?.label || (cardConfig.status?.field ? item[cardConfig.status.field] : "");
+    const statusConfig = cardConfig.status?.field
+      ? cardConfig.status?.options?.[item[cardConfig.status.field]]
+      : undefined;
+    const statusColor = statusConfig?.color || 'default';
+    const statusLabel =
+      statusConfig?.label || (cardConfig.status?.field ? item[cardConfig.status.field] : '');
 
     return (
       <Paper
         key={item.id || index}
         sx={{
           borderRadius: 2,
-          overflow: "hidden",
-          cursor: onCardClick ? "pointer" : "default",
-          transition: "all 0.2s ease",
-          "&:hover": {
+          overflow: 'hidden',
+          cursor: onCardClick ? 'pointer' : 'default',
+          transition: 'all 0.2s ease',
+          '&:hover': {
             boxShadow: onCardClick ? 4 : 1,
-            transform: onCardClick ? "translateY(-2px)" : "none",
+            transform: onCardClick ? 'translateY(-2px)' : 'none',
           },
           height: fixedCardHeight,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         }}
         onClick={() => onCardClick?.(item)}
       >
-        <Box sx={{ p: 2, flex: 1, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* 卡片头部 */}
-          <Box
-            sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 2 }}
-          >
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
             {/* 图标 */}
             {icon && (
               <Box
@@ -537,9 +548,9 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                   width: 48,
                   height: 48,
                   borderRadius: 1.5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   bgcolor: iconBgColor,
                   flexShrink: 0,
                 }}
@@ -550,23 +561,21 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
 
             {/* 标题和描述 */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
-              >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                 <Typography
-                  variant="subtitle1"
+                  variant='subtitle1'
                   sx={{
                     fontWeight: 600,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {title}
                 </Typography>
                 {statusConfig && (
                   <Chip
-                    size="small"
+                    size='small'
                     label={statusLabel}
                     sx={{
                       bgcolor: `${statusColor}.light`,
@@ -579,14 +588,14 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               </Box>
               {description && (
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
+                  variant='body2'
+                  color='text.secondary'
                   sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    display: "-webkit-box",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
                     WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
+                    WebkitBoxOrient: 'vertical',
                   }}
                 >
                   {description}
@@ -600,39 +609,43 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             <Box sx={{ flex: 1 }}>
               {cardConfig.meta.map((meta, idx) => {
                 const value = item[meta.field];
-                const formattedValue = meta.format
-                  ? meta.format(value, item)
-                  : value;
+                const formattedValue = meta.format ? meta.format(value, item) : value;
 
                 return (
                   <Box
                     key={idx}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1,
                       mb: 1,
-                      color: "text.secondary",
+                      color: 'text.secondary',
                     }}
                   >
                     {meta.icon && (
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          color: "text.disabled",
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: 'text.disabled',
                         }}
                       >
                         {meta.icon}
                       </Box>
                     )}
                     {meta.label && (
-                      <Typography variant="caption" sx={{ minWidth: 60 }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ minWidth: 60 }}
+                      >
                         {meta.label}:
                       </Typography>
                     )}
-                    <Typography variant="body2" sx={{ flex: 1 }}>
-                      {formattedValue || "-"}
+                    <Typography
+                      variant='body2'
+                      sx={{ flex: 1 }}
+                    >
+                      {formattedValue || '-'}
                     </Typography>
                   </Box>
                 );
@@ -644,10 +657,10 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           {cardConfig.tags && cardConfig.tags.length > 0 && (
             <Box
               sx={{
-                display: "flex",
+                display: 'flex',
                 gap: 0.5,
-                flexWrap: "wrap",
-                mt: "auto",
+                flexWrap: 'wrap',
+                mt: 'auto',
                 pt: 1,
               }}
             >
@@ -658,13 +671,13 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                 return (
                   <Chip
                     key={idx}
-                    size="small"
+                    size='small'
                     label={tagConfig?.label || tagValue}
                     sx={{
-                      bgcolor: tagConfig?.color || "grey.100",
+                      bgcolor: tagConfig?.color || 'grey.100',
                       color: tagConfig?.color
                         ? `${tagConfig.color}.contrastText`
-                        : "text.secondary",
+                        : 'text.secondary',
                       height: 22,
                     }}
                   />
@@ -681,23 +694,23 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               px: 2,
               py: 1.5,
               borderTop: 1,
-              borderColor: "divider",
-              display: "flex",
+              borderColor: 'divider',
+              display: 'flex',
               gap: 1,
-              bgcolor: "grey.50",
+              bgcolor: 'grey.50',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {cardActions.map((action, idx) => (
               <Button
                 key={idx}
-                size="small"
-                variant={action.variant || "text"}
-                color={action.color || "primary"}
+                size='small'
+                variant={action.variant || 'text'}
+                color={action.color || 'primary'}
                 onClick={() => action.onClick(item)}
                 disabled={action.disabled?.(item)}
                 startIcon={action.icon}
-                sx={{ textTransform: "none" }}
+                sx={{ textTransform: 'none' }}
               >
                 {action.label}
               </Button>
@@ -715,12 +728,12 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
     const totalPages = Math.ceil(pagination.total / pagination.pageSize);
 
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
         <Pagination
           count={totalPages}
           page={pagination.page}
           onChange={(_, p) => pagination.onPageChange(p)}
-          color="primary"
+          color='primary'
           showFirstButton
           showLastButton
         />
@@ -734,53 +747,57 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       <Box
         sx={{
           mb: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
           gap: 2,
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600, mb: 0.5 }}
+          >
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {subtitle}
             </Typography>
           )}
         </Box>
 
         {/* 操作按钮 */}
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           {showViewToggle && (
             <Box
               sx={{
-                display: "flex",
-                bgcolor: "grey.100",
+                display: 'flex',
+                bgcolor: 'grey.100',
                 borderRadius: 1,
                 p: 0.5,
               }}
             >
               <IconButton
-                size="small"
-                onClick={() => setViewMode("grid")}
+                size='small'
+                onClick={() => setViewMode('grid')}
                 sx={{
-                  bgcolor:
-                    viewMode === "grid" ? "background.paper" : "transparent",
-                  boxShadow: viewMode === "grid" ? 1 : 0,
+                  bgcolor: viewMode === 'grid' ? 'background.paper' : 'transparent',
+                  boxShadow: viewMode === 'grid' ? 1 : 0,
                 }}
               >
                 <Grid sx={{ width: 16, height: 16 }} />
               </IconButton>
               <IconButton
-                size="small"
-                onClick={() => setViewMode("list")}
+                size='small'
+                onClick={() => setViewMode('list')}
                 sx={{
-                  bgcolor:
-                    viewMode === "list" ? "background.paper" : "transparent",
-                  boxShadow: viewMode === "list" ? 1 : 0,
+                  bgcolor: viewMode === 'list' ? 'background.paper' : 'transparent',
+                  boxShadow: viewMode === 'list' ? 1 : 0,
                 }}
               >
                 <List sx={{ width: 16, height: 16 }} />
@@ -789,16 +806,19 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           )}
 
           {onRefresh && (
-            <Tooltip title="刷新">
-              <IconButton onClick={onRefresh} disabled={loading}>
+            <Tooltip title='刷新'>
+              <IconButton
+                onClick={onRefresh}
+                disabled={loading}
+              >
                 <RefreshCw
                   sx={{
                     width: 18,
                     height: 18,
-                    animation: loading ? "spin 1s linear infinite" : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
+                    animation: loading ? 'spin 1s linear infinite' : 'none',
+                    '@keyframes spin': {
+                      '0%': { transform: 'rotate(0deg)' },
+                      '100%': { transform: 'rotate(360deg)' },
                     },
                   }}
                 />
@@ -808,13 +828,11 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
 
           {addButton && (
             <Button
-              variant="contained"
-              startIcon={
-                addButton.icon || <Plus style={{ width: 18, height: 18 }} />
-              }
+              variant='contained'
+              startIcon={addButton.icon || <Plus style={{ width: 18, height: 18 }} />}
               onClick={addButton.onClick}
             >
-              {addButton.text || "新增"}
+              {addButton.text || '新增'}
             </Button>
           )}
         </Box>
@@ -828,18 +846,21 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
         <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              cursor: "pointer",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
               mb: statsOverviewExpanded ? 2 : 0,
             }}
             onClick={() => onStatsOverviewToggle?.(!statsOverviewExpanded)}
           >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
               数据概览
             </Typography>
-            <IconButton size="small">
+            <IconButton size='small'>
               {statsOverviewExpanded ? (
                 <ChevronUp sx={{ width: 18, height: 18 }} />
               ) : (
@@ -859,9 +880,9 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
         {loading ? (
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "1fr",
+                xs: '1fr',
                 sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
                 md: `repeat(${gridColumns.md || 3}, 1fr)`,
                 lg: `repeat(${gridColumns.lg || 4}, 1fr)`,
@@ -871,14 +892,18 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             }}
           >
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} height={200} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                key={i}
+                height={200}
+                sx={{ borderRadius: 2 }}
+              />
             ))}
           </Box>
         ) : data.length === 0 ? (
-          <Box sx={{ p: 6, textAlign: "center" }}>
+          <Box sx={{ p: 6, textAlign: 'center' }}>
             <EmptyState
-              emoji={emptyState?.emoji || "📋"}
-              title={emptyState?.title || "暂无数据"}
+              emoji={emptyState?.emoji || '📋'}
+              title={emptyState?.title || '暂无数据'}
               description={emptyState?.description}
               actionLabel={emptyState?.actionLabel}
               onAction={emptyState?.onAction}
@@ -888,9 +913,9 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           <>
             <Box
               sx={{
-                display: "grid",
+                display: 'grid',
                 gridTemplateColumns: {
-                  xs: "1fr",
+                  xs: '1fr',
                   sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
                   md: `repeat(${gridColumns.md || 3}, 1fr)`,
                   lg: `repeat(${gridColumns.lg || 4}, 1fr)`,

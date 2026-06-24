@@ -2,8 +2,8 @@
  * ModuleLoader - Lazy loading component for modules
  */
 
-import React, { Suspense, lazy } from "react";
-import { CircularProgress, Box, Typography } from "@mui/material";
+import React, { Suspense, lazy } from 'react';
+import { CircularProgress, Box, Typography } from '@mui/material';
 
 interface ModuleLoaderProps {
   /** Component to load */
@@ -20,17 +20,20 @@ interface ModuleLoaderProps {
 export const ModuleLoadingFallback: React.FC = () => (
   <Box
     sx={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100%",
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
       minHeight: 200,
       gap: 2,
     }}
   >
     <CircularProgress size={40} />
-    <Typography variant="body2" color="text.secondary">
+    <Typography
+      variant='body2'
+      color='text.secondary'
+    >
       加载模块中...
     </Typography>
   </Box>
@@ -42,21 +45,27 @@ export const ModuleLoadingFallback: React.FC = () => (
 export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
   <Box
     sx={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100%",
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
       minHeight: 200,
       gap: 2,
       p: 3,
     }}
   >
-    <Typography variant="h6" color="error">
+    <Typography
+      variant='h6'
+      color='error'
+    >
       模块加载失败
     </Typography>
     {error && (
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {error.message}
       </Typography>
     )}
@@ -88,10 +97,7 @@ export class DynamicModuleLoader {
   private retryCount: Map<string, number> = new Map();
   private maxRetries = 3;
 
-  async loadModule(
-    component: () => Promise<any>,
-    moduleId?: string,
-  ): Promise<any> {
+  async loadModule(component: () => Promise<any>, moduleId?: string): Promise<any> {
     const cacheKey = moduleId || component.toString();
 
     // Return from cache if available
@@ -111,9 +117,7 @@ export class DynamicModuleLoader {
       if (retries < this.maxRetries) {
         this.retryCount.set(retryKey, retries + 1);
         // Exponential backoff
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.pow(2, retries) * 1000),
-        );
+        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
         return this.loadModule(component, moduleId);
       }
       throw error;

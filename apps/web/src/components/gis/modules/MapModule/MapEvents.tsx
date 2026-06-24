@@ -1,16 +1,16 @@
 // modules/MapModule/MapEvents.tsx
-import type React from "react";
-import { useEffect } from "react";
-import { useMap, useMapEvents } from "react-leaflet";
-import type { DrawFeature } from "../shared/types";
+import type React from 'react';
+import { useEffect } from 'react';
+import { useMap, useMapEvents } from 'react-leaflet';
+import type { DrawFeature } from '../shared/types';
 
 type ToolMode =
-  | "select"
-  | "measure-distance"
-  | "measure-area"
-  | "draw-point"
-  | "draw-line"
-  | "draw-polygon";
+  | 'select'
+  | 'measure-distance'
+  | 'measure-area'
+  | 'draw-point'
+  | 'draw-line'
+  | 'draw-polygon';
 
 interface MapEventsProps {
   toolMode: ToolMode;
@@ -61,61 +61,55 @@ const MapEvents: React.FC<MapEventsProps> = ({
       const latlng = e.latlng;
       const point: [number, number] = [latlng.lat, latlng.lng];
 
-      if (toolMode === "measure-distance") {
+      if (toolMode === 'measure-distance') {
         const newPoints = [...measurePoints, point];
         setMeasurePoints(newPoints);
         if (newPoints.length >= 2) {
           const totalDistance = calculateTotalDistance(newPoints);
           setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
         }
-      } else if (toolMode === "measure-area") {
+      } else if (toolMode === 'measure-area') {
         const newPoints = [...measurePoints, point];
         setMeasurePoints(newPoints);
         if (newPoints.length >= 3) {
           const area = calculateArea(newPoints);
           setMeasureResult(`面积: ${formatArea(area)}`);
         }
-      } else if (toolMode === "draw-point") {
+      } else if (toolMode === 'draw-point') {
         const newFeature: DrawFeature = {
           id: `point-${Date.now()}`,
-          type: "point",
+          type: 'point',
           points: [{ lat: point[0], lng: point[1], timestamp: Date.now() }],
-          color: "#EF4444",
+          color: '#EF4444',
         };
         setDrawFeatures([...drawFeatures, newFeature]);
-      } else if (toolMode === "draw-line") {
+      } else if (toolMode === 'draw-line') {
         if (!currentDrawing) {
           setCurrentDrawing({
             id: `line-${Date.now()}`,
-            type: "line",
+            type: 'line',
             points: [{ lat: point[0], lng: point[1] }],
-            color: "#3B82F6",
+            color: '#3B82F6',
           });
         } else {
           const updatedDrawing = {
             ...currentDrawing,
-            points: [
-              ...currentDrawing.points,
-              { lat: point[0], lng: point[1] },
-            ],
+            points: [...currentDrawing.points, { lat: point[0], lng: point[1] }],
           };
           setCurrentDrawing(updatedDrawing);
         }
-      } else if (toolMode === "draw-polygon") {
+      } else if (toolMode === 'draw-polygon') {
         if (!currentDrawing) {
           setCurrentDrawing({
             id: `polygon-${Date.now()}`,
-            type: "polygon",
+            type: 'polygon',
             points: [{ lat: point[0], lng: point[1] }],
-            color: "#10B981",
+            color: '#10B981',
           });
         } else {
           const updatedDrawing = {
             ...currentDrawing,
-            points: [
-              ...currentDrawing.points,
-              { lat: point[0], lng: point[1] },
-            ],
+            points: [...currentDrawing.points, { lat: point[0], lng: point[1] }],
           };
           setCurrentDrawing(updatedDrawing);
         }
@@ -123,21 +117,18 @@ const MapEvents: React.FC<MapEventsProps> = ({
     },
     mousemove: (e) => {
       if (
-        (toolMode === "measure-distance" || toolMode === "measure-area") &&
+        (toolMode === 'measure-distance' || toolMode === 'measure-area') &&
         measurePoints.length > 0
       ) {
         const latlng = e.latlng;
         setTooltipPosition([latlng.lat, latlng.lng]);
         setShowMeasureTooltip(true);
 
-        const tempPoints: [number, number][] = [
-          ...measurePoints,
-          [latlng.lat, latlng.lng],
-        ];
-        if (toolMode === "measure-distance") {
+        const tempPoints: [number, number][] = [...measurePoints, [latlng.lat, latlng.lng]];
+        if (toolMode === 'measure-distance') {
           const totalDistance = calculateTotalDistance(tempPoints);
           setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
-        } else if (toolMode === "measure-area" && tempPoints.length >= 3) {
+        } else if (toolMode === 'measure-area' && tempPoints.length >= 3) {
           const area = calculateArea(tempPoints);
           setMeasureResult(`面积: ${formatArea(area)}`);
         }

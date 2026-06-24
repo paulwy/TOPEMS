@@ -1,0 +1,69 @@
+# Integration Service - Kubernetes Deployment and Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration
+  namespace: topems
+  labels:
+    app: integration
+    suite: infrastructure
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: integration
+  template:
+    metadata:
+      labels:
+        app: integration
+        suite: infrastructure
+    spec:
+      containers:
+      - name: integration
+        image: topems/integration:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8072
+          name: http
+        envFrom:
+        - configMapRef:
+            name: topems-config
+        - secretRef:
+            name: topems-secrets
+        env:
+        - name: INTEGRATION_PORT
+          value: "8072"
+        - name: CONSUL_URL
+          value: "http://consul-service:8500"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8072
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8072
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integration-service
+  namespace: topems
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8072
+    targetPort: 8072
+  selector:
+    app: integration

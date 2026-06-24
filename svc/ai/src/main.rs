@@ -34,6 +34,7 @@ use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
     ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
+use topems_shared::ai_client::{AIModelConfig, AIProviderType};
 
 // AI 生成请求
 #[derive(Debug, Serialize, Deserialize)]
@@ -1779,14 +1780,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    // 创建 QA 和 Analysis 服务
-    let qa_config = QAConfig {
+    // 创建 QA 和 Analysis 服务（使用统一 AI 客户端）
+    let chat_model_config = AIModelConfig {
+        provider: if use_ollama { AIProviderType::Ollama } else { AIProviderType::OpenAI },
+        model_name: model.clone(),
         base_url: base_url.clone(),
         api_key: api_key.clone(),
-        model: model.clone(),
-        embedding_model: embedding_model.clone(),
+        ..Default::default()
     };
-    let qa_service = QAService::new(vector_service.db().clone(), http_client.clone(), qa_config);
+    
+    let embedding_model_config = AIModelConfig {
+        provider: if use_ollama { AIProviderType::Ollama } else { AIProviderType::OpenAI },
+        model_name: embedding_model.clone(),
+        base_url: if use_ollama { 
+            base_url.clone().replace("/v1", "/api") 
+        } else { 
+            base_url.clone() 
+        },
+        api_key: api_key.clone(),
+        ..Default::default()
+    };
+    
+    let qa_config = QAConfig {
+        chat_model: chat_model_config,
+        embedding_model: embedding_model_config,
+    };
+    let qa_service = QAService::new(vector_service.db().clone(), qa_config);
 
     let analysis_config = AnalysisConfig {
         base_url: base_url.clone(),
@@ -1898,7 +1917,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/ai/qa/ask-conversation", post(QaApi::ask_conversation))
         .route("/api/ai/qa/classify", post(QaApi::classify))
         .route("/api/ai/qa/history", get(QaApi::history))
-        .route("/api/ai/qa/history/:id", delete(QaApi::delete_history))
+        .route("/api/ai/qa/history/{id}", delete(QaApi::delete_history))
         .route("/api/ai/qa/history/batch-delete", post(QaApi::batch_delete_history))
         .route("/api/ai/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API

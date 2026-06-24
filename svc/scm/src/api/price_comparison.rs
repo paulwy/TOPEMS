@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::{delete, get, post},
     Json, Router,
 };
@@ -14,7 +14,8 @@ use crate::models::price_comparison::{
     CreatePriceComparisonRequest, CreatePurchaseInquiryRequest, CreateSupplierQuoteRequest,
     PurchaseInquiry,
 };
-use topems_shared::{api_error, ApiResponse};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::{api_error, auth::Claims, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct InquiryPaginationParams {
@@ -118,8 +119,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_inquiries(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -178,8 +184,13 @@ async fn list_inquiries(
 
 async fn create_inquiry(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePurchaseInquiryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let inquiry_no = format!("INQ-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
@@ -231,8 +242,13 @@ async fn create_inquiry(
 
 async fn get_inquiry(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, PurchaseInquiry>(
         r#"
         SELECT id, inquiry_no, title, description, inquiry_date, deadline, status, created_by, created_at, updated_at
@@ -282,8 +298,13 @@ async fn get_inquiry(
 
 async fn delete_inquiry(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         UPDATE scm.purchase_inquiries
@@ -305,8 +326,13 @@ async fn delete_inquiry(
 
 async fn publish_inquiry(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         UPDATE scm.purchase_inquiries
@@ -328,8 +354,13 @@ async fn publish_inquiry(
 
 async fn list_quotes(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -393,8 +424,13 @@ async fn list_quotes(
 
 async fn create_quote(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let quote_no = format!("QT-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
@@ -427,8 +463,13 @@ async fn create_quote(
 
 async fn get_quote(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, QuoteListRecord>(
         r#"
         SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount,
@@ -475,9 +516,14 @@ async fn get_quote(
 
 async fn update_quote(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateSupplierQuoteRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         UPDATE scm.supplier_quotes
@@ -503,8 +549,13 @@ async fn update_quote(
 
 async fn submit_quote(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         UPDATE scm.supplier_quotes
@@ -526,8 +577,13 @@ async fn submit_quote(
 
 async fn list_comparisons(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -586,8 +642,13 @@ async fn list_comparisons(
 
 async fn create_comparison(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePriceComparisonRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let comparison_no = format!("PC-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
@@ -663,8 +724,13 @@ async fn create_comparison(
 
 async fn get_comparison(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, ComparisonListRecord>(
         r#"
         SELECT c.id, c.inquiry_id, c.comparison_no, c.compared_at, c.recommended_supplier_id,
@@ -715,8 +781,13 @@ async fn get_comparison(
 
 async fn approve_comparison(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let now_str = Utc::now().to_rfc3339();
     let now = Utc::now();
 

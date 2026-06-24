@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -11,6 +11,8 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::api::audit::{log_audit_event, AuditEventParams};
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
@@ -32,8 +34,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_assets(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Asset>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::AssetRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -89,9 +96,14 @@ async fn list_assets(
 
 async fn create_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::AssetWrite).await {
+        return e;
+    }
+
     if req.name.is_empty() {
         return Json(api_error(400, "资产名称不能为空"));
     }
@@ -165,8 +177,8 @@ async fn create_asset(
             entity_type: "asset".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status,
@@ -181,8 +193,13 @@ async fn create_asset(
 
 async fn get_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Asset>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::AssetRead).await {
+        return e;
+    }
+
     let result = sqlx::query_as::<_, Asset>(
         "
         SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
@@ -206,10 +223,15 @@ async fn get_asset(
 
 async fn update_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::AssetWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, Asset>(
         "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
@@ -307,8 +329,8 @@ async fn update_asset(
             entity_type: "asset".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -323,9 +345,14 @@ async fn update_asset(
 
 async fn delete_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::AssetWrite).await {
+        return e;
+    }
+
     let result = sqlx::query("DELETE FROM assets WHERE id = $1")
         .bind(id)
         .execute(&state.db)
@@ -365,8 +392,8 @@ async fn delete_asset(
             entity_type: "asset".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,

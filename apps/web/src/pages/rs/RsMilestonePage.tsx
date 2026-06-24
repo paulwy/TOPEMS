@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Chip, LinearProgress, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Stack,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Plus, Flag, Calendar, Link2, Eye, Edit } from "lucide-react";
+import React, { useState, useEffect } from 'react';
 import {
-  ListPageTemplate,
-  type ColumnDef,
-  type FilterConfig,
-} from "@/components/templates";
+  Box,
+  Typography,
+  Chip,
+  LinearProgress,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Plus, Flag, Calendar, Link2, Eye, Edit } from 'lucide-react';
+import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 
 interface Milestone {
   id: string;
@@ -23,99 +30,95 @@ const RsMilestonePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: "",
-    end: "",
+    start: '',
+    end: '',
   });
   const [newMilestoneDialogOpen, setNewMilestoneDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(
-    null,
-  );
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [newMilestoneForm, setNewMilestoneForm] = useState({
-    name: "",
-    start_date: "",
-    end_date: "",
-    related_project: "",
+    name: '',
+    start_date: '',
+    end_date: '',
+    related_project: '',
   });
 
   useEffect(() => {
     const mockMilestones: Milestone[] = [
       {
-        id: "1",
-        name: "v1.0.0 发布",
-        start_date: "2024-06-01",
-        end_date: "2024-06-30",
+        id: '1',
+        name: 'v1.0.0 发布',
+        start_date: '2024-06-01',
+        end_date: '2024-06-30',
         progress: 75,
-        related_project: "用户中心重构",
-        status: "active",
+        related_project: '用户中心重构',
+        status: 'active',
       },
       {
-        id: "2",
-        name: "性能优化",
-        start_date: "2024-05-01",
-        end_date: "2024-05-31",
+        id: '2',
+        name: '性能优化',
+        start_date: '2024-05-01',
+        end_date: '2024-05-31',
         progress: 100,
-        related_project: "系统优化项目",
-        status: "completed",
+        related_project: '系统优化项目',
+        status: 'completed',
       },
       {
-        id: "3",
-        name: "移动端适配",
-        start_date: "2024-06-15",
-        end_date: "2024-07-15",
+        id: '3',
+        name: '移动端适配',
+        start_date: '2024-06-15',
+        end_date: '2024-07-15',
         progress: 30,
-        related_project: "移动端开发",
-        status: "active",
+        related_project: '移动端开发',
+        status: 'active',
       },
       {
-        id: "4",
-        name: "数据库迁移",
-        start_date: "2024-04-01",
-        end_date: "2024-04-30",
+        id: '4',
+        name: '数据库迁移',
+        start_date: '2024-04-01',
+        end_date: '2024-04-30',
         progress: 100,
-        related_project: "数据库升级",
-        status: "completed",
+        related_project: '数据库升级',
+        status: 'completed',
       },
       {
-        id: "5",
-        name: "API v2开发",
-        start_date: "2024-07-01",
-        end_date: "2024-08-31",
+        id: '5',
+        name: 'API v2开发',
+        start_date: '2024-07-01',
+        end_date: '2024-08-31',
         progress: 0,
-        related_project: "API重构",
-        status: "planning",
+        related_project: 'API重构',
+        status: 'planning',
       },
     ];
     setMilestones(mockMilestones);
     setLoading(false);
   }, []);
 
-  const getStatusColor = (
-    status: string,
-  ): "success" | "primary" | "warning" | "default" => {
+  const getStatusColor = (status: string): 'success' | 'primary' | 'warning' | 'default' => {
     switch (status) {
-      case "completed":
-        return "success";
-      case "active":
-        return "primary";
-      case "planning":
-        return "warning";
+      case 'completed':
+        return 'success';
+      case 'active':
+        return 'primary';
+      case 'planning':
+        return 'warning';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
-      case "completed":
-        return "已完成";
-      case "active":
-        return "进行中";
-      case "planning":
-        return "规划中";
+      case 'completed':
+        return '已完成';
+      case 'active':
+        return '进行中';
+      case 'planning':
+        return '规划中';
       default:
         return status;
     }
@@ -134,7 +137,7 @@ const RsMilestonePage: React.FC = () => {
 
   const paginatedMilestones = filteredMilestones.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   const handleCreateMilestone = () => {
@@ -145,15 +148,15 @@ const RsMilestonePage: React.FC = () => {
       end_date: newMilestoneForm.end_date,
       progress: 0,
       related_project: newMilestoneForm.related_project,
-      status: "planning",
+      status: 'planning',
     };
     setMilestones([newMs, ...milestones]);
     setNewMilestoneDialogOpen(false);
     setNewMilestoneForm({
-      name: "",
-      start_date: "",
-      end_date: "",
-      related_project: "",
+      name: '',
+      start_date: '',
+      end_date: '',
+      related_project: '',
     });
   };
 
@@ -164,68 +167,69 @@ const RsMilestonePage: React.FC = () => {
 
   const columns: ColumnDef<Milestone>[] = [
     {
-      id: "name",
-      label: "里程碑名称",
+      id: 'name',
+      label: '里程碑名称',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Flag size={16} color="#3b82f6" />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Flag
+            size={16}
+            color='#3b82f6'
+          />
           {row.name}
         </Box>
       ),
     },
     {
-      id: "start_date",
-      label: "开始日期",
+      id: 'start_date',
+      label: '开始日期',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Calendar size={14} />
           {row.start_date}
         </Box>
       ),
     },
     {
-      id: "end_date",
-      label: "结束日期",
+      id: 'end_date',
+      label: '结束日期',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Calendar size={14} />
           {row.end_date}
         </Box>
       ),
     },
     {
-      id: "progress",
-      label: "进度",
+      id: 'progress',
+      label: '进度',
       render: (row) => (
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 150 }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 150 }}>
           <LinearProgress
-            variant="determinate"
+            variant='determinate'
             value={row.progress}
             sx={{ flex: 1, height: 8, borderRadius: 4 }}
           />
-          <Typography variant="caption">{row.progress}%</Typography>
+          <Typography variant='caption'>{row.progress}%</Typography>
         </Box>
       ),
     },
     {
-      id: "related_project",
-      label: "关联项目",
+      id: 'related_project',
+      label: '关联项目',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Link2 size={14} />
           {row.related_project}
         </Box>
       ),
     },
     {
-      id: "status",
-      label: "状态",
+      id: 'status',
+      label: '状态',
       render: (row) => (
         <Chip
           label={getStatusLabel(row.status)}
-          size="small"
+          size='small'
           color={getStatusColor(row.status)}
         />
       ),
@@ -234,29 +238,29 @@ const RsMilestonePage: React.FC = () => {
 
   const filters: FilterConfig[] = [
     {
-      id: "status",
-      label: "状态",
-      type: "select",
+      id: 'status',
+      label: '状态',
+      type: 'select',
       options: [
-        { label: "全部", value: "" },
-        { label: "进行中", value: "active" },
-        { label: "已完成", value: "completed" },
-        { label: "规划中", value: "planning" },
+        { label: '全部', value: '' },
+        { label: '进行中', value: 'active' },
+        { label: '已完成', value: 'completed' },
+        { label: '规划中', value: 'planning' },
       ],
-      value: statusFilter || "",
+      value: statusFilter || '',
       onChange: (value) => setStatusFilter(value || null),
     },
     {
-      id: "start_date",
-      label: "开始日期",
-      type: "date",
+      id: 'start_date',
+      label: '开始日期',
+      type: 'date',
       value: dateRange.start,
       onChange: (value) => setDateRange((prev) => ({ ...prev, start: value })),
     },
     {
-      id: "end_date",
-      label: "结束日期",
-      type: "date",
+      id: 'end_date',
+      label: '结束日期',
+      type: 'date',
       value: dateRange.end,
       onChange: (value) => setDateRange((prev) => ({ ...prev, end: value })),
     },
@@ -264,36 +268,36 @@ const RsMilestonePage: React.FC = () => {
 
   const rowActions = [
     {
-      label: "查看进度",
+      label: '查看进度',
       icon: <Eye size={16} />,
       onClick: handleViewDetail,
     },
     {
-      label: "编辑",
+      label: '编辑',
       icon: <Edit size={16} />,
       onClick: () => {},
     },
     {
-      label: "关联项目",
+      label: '关联项目',
       icon: <Link2 size={16} />,
       onClick: () => {},
     },
   ];
 
   return (
-    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
+    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
-        title="里程碑"
+        title='里程碑'
         columns={columns}
         data={paginatedMilestones}
         loading={loading}
         searchable
-        searchPlaceholder="搜索里程碑名称、项目..."
+        searchPlaceholder='搜索里程碑名称、项目...'
         searchValue={searchTerm}
         onSearch={setSearchTerm}
         filters={filters}
         filtersValue={{
-          status: statusFilter || "",
+          status: statusFilter || '',
           start_date: dateRange.start,
           end_date: dateRange.end,
         }}
@@ -323,28 +327,31 @@ const RsMilestonePage: React.FC = () => {
         }}
         actions={[
           {
-            label: "新建里程碑",
-            variant: "contained",
+            label: '新建里程碑',
+            variant: 'contained',
             icon: <Plus size={18} />,
             onClick: () => setNewMilestoneDialogOpen(true),
           },
         ]}
         rowActions={rowActions}
         showRowNumber
-        emptyMessage="暂无里程碑数据"
+        emptyMessage='暂无里程碑数据'
       />
 
       <Dialog
         open={newMilestoneDialogOpen}
         onClose={() => setNewMilestoneDialogOpen(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>新建里程碑</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 2 }}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 2 }}
+          >
             <TextField
-              label="里程碑名称"
+              label='里程碑名称'
               fullWidth
               value={newMilestoneForm.name}
               onChange={(e) =>
@@ -355,8 +362,8 @@ const RsMilestonePage: React.FC = () => {
               }
             />
             <TextField
-              label="开始日期"
-              type="date"
+              label='开始日期'
+              type='date'
               fullWidth
               value={newMilestoneForm.start_date}
               onChange={(e) =>
@@ -368,8 +375,8 @@ const RsMilestonePage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
-              label="结束日期"
-              type="date"
+              label='结束日期'
+              type='date'
               fullWidth
               value={newMilestoneForm.end_date}
               onChange={(e) =>
@@ -381,7 +388,7 @@ const RsMilestonePage: React.FC = () => {
               slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
-              label="关联项目"
+              label='关联项目'
               fullWidth
               value={newMilestoneForm.related_project}
               onChange={(e) =>
@@ -396,8 +403,8 @@ const RsMilestonePage: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setNewMilestoneDialogOpen(false)}>取消</Button>
           <Button
-            variant="contained"
-            sx={{ bgcolor: "#3b82f6" }}
+            variant='contained'
+            sx={{ bgcolor: '#3b82f6' }}
             onClick={handleCreateMilestone}
           >
             创建
@@ -408,62 +415,95 @@ const RsMilestonePage: React.FC = () => {
       <Dialog
         open={detailDialogOpen}
         onClose={() => setDetailDialogOpen(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>里程碑详情</DialogTitle>
         <DialogContent>
           {selectedMilestone && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 'bold' }}
+              >
                 {selectedMilestone.name}
               </Typography>
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Stack
+                direction='row'
+                spacing={2}
+                sx={{ mt: 2 }}
+              >
                 <Chip
                   label={getStatusLabel(selectedMilestone.status)}
-                  size="small"
+                  size='small'
                   color={getStatusColor(selectedMilestone.status)}
                 />
               </Stack>
               <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary">
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                >
                   进度
                 </Typography>
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}
-                >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
                   <LinearProgress
-                    variant="determinate"
+                    variant='determinate'
                     value={selectedMilestone.progress}
                     sx={{ flex: 1, height: 10, borderRadius: 4 }}
                   />
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 'bold' }}
+                  >
                     {selectedMilestone.progress}%
                   </Typography>
                 </Box>
               </Box>
-              <Stack direction="row" spacing={4} sx={{ mt: 3 }}>
+              <Stack
+                direction='row'
+                spacing={4}
+                sx={{ mt: 3 }}
+              >
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     开始日期
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 'bold' }}
+                  >
                     {selectedMilestone.start_date}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     结束日期
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 'bold' }}
+                  >
                     {selectedMilestone.end_date}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     关联项目
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 'bold' }}
+                  >
                     {selectedMilestone.related_project}
                   </Typography>
                 </Box>

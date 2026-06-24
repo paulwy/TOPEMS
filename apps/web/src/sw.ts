@@ -1,13 +1,13 @@
 /// <reference lib="webworker" />
 
-import type { PrecacheEntry } from "workbox-precaching";
-import { precacheAndRoute } from "workbox-precaching";
-import { registerRoute } from "workbox-routing";
-import { StaleWhileRevalidate } from "workbox-strategies";
-import { CacheFirst } from "workbox-strategies";
-import { CacheableResponsePlugin } from "workbox-cacheable-response";
-import { ExpirationPlugin } from "workbox-expiration";
-import { logger } from "@/utils/logger";
+import type { PrecacheEntry } from 'workbox-precaching';
+import { precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { StaleWhileRevalidate } from 'workbox-strategies';
+import { CacheFirst } from 'workbox-strategies';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { ExpirationPlugin } from 'workbox-expiration';
+import { logger } from '@/utils/logger';
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: PrecacheEntry[];
@@ -17,9 +17,9 @@ precacheAndRoute(self.__WB_MANIFEST);
 
 // Cache API requests with stale-while-revalidate
 registerRoute(
-  ({ url }: { url: URL }) => url.pathname.startsWith("/api/"),
+  ({ url }: { url: URL }) => url.pathname.startsWith('/api/'),
   new StaleWhileRevalidate({
-    cacheName: "api-cache",
+    cacheName: 'api-cache',
     plugins: [
       new CacheableResponsePlugin({
         statuses: [200],
@@ -29,17 +29,17 @@ registerRoute(
         maxEntries: 100,
       }),
     ],
-  }),
+  })
 );
 
 // Cache static assets with cache-first
 registerRoute(
   ({ request }: { request: Request }) =>
-    request.destination === "style" ||
-    request.destination === "script" ||
-    request.destination === "image",
+    request.destination === 'style' ||
+    request.destination === 'script' ||
+    request.destination === 'image',
   new CacheFirst({
-    cacheName: "static-assets",
+    cacheName: 'static-assets',
     plugins: [
       new CacheableResponsePlugin({
         statuses: [200],
@@ -49,33 +49,33 @@ registerRoute(
         maxEntries: 50,
       }),
     ],
-  }),
+  })
 );
 
 // Handle offline page
-self.addEventListener("fetch", (event) => {
-  if (event.request.mode === "navigate") {
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
-        return caches.match("/offline.html") as Promise<Response>;
-      }),
+        return caches.match('/offline.html') as Promise<Response>;
+      })
     );
   }
 });
 
 // Background sync for failed requests
-self.addEventListener("sync", (event) => {
+self.addEventListener('sync', (event) => {
   const syncEvent = event as unknown as {
     tag: string;
     waitUntil: (promise: Promise<unknown>) => void;
   };
-  if (syncEvent.tag === "sync-data") {
+  if (syncEvent.tag === 'sync-data') {
     syncEvent.waitUntil(syncData());
   }
 });
 
 async function syncData() {
-  const queue = await caches.open("sync-queue");
+  const queue = await caches.open('sync-queue');
   const requests = await queue.keys();
 
   for (const request of requests) {
@@ -85,7 +85,7 @@ async function syncData() {
         await queue.delete(request);
       }
     } catch (error) {
-      logger.error("Sync failed:", error);
+      logger.error('Sync failed:', error);
     }
   }
 }

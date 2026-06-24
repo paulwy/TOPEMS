@@ -1,22 +1,31 @@
-import React, { useState, useCallback } from "react";
-import { Box, Typography, Menu, MenuItem, Checkbox, FormControlLabel, TextField, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemIcon, ListItemText, Divider,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { styled } from "@mui/material/styles";
+import React, { useState, useCallback } from 'react';
 import {
-  Download,
-  FileSpreadsheet,
-  FileText,
-  File,
-  ChevronDown,
-  Settings,
-  X,
-} from "lucide-react";
-import * as XLSX from "xlsx";
+  Box,
+  Typography,
+  Menu,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { styled } from '@mui/material/styles';
+import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 /**
  * 导出格式类型
  */
-export type ExportFormat = "xlsx" | "csv" | "pdf";
+export type ExportFormat = 'xlsx' | 'csv' | 'pdf';
 
 /**
  * 导出字段配置
@@ -65,8 +74,8 @@ export interface DataExportProps {
 const DataExport: React.FC<DataExportProps> = ({
   data,
   fields,
-  defaultFileName = "export",
-  buttonText = "导出",
+  defaultFileName = 'export',
+  buttonText = '导出',
   showFieldSelection = true,
   showFormatSelection = true,
   showSettingsDialog = true,
@@ -77,10 +86,10 @@ const DataExport: React.FC<DataExportProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedFields, setSelectedFields] = useState<ExportField[]>(
-    fields.map((f) => ({ ...f, selected: f.selected ?? true })),
+    fields.map((f) => ({ ...f, selected: f.selected ?? true }))
   );
   const [fileName, setFileName] = useState(defaultFileName);
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("xlsx");
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('xlsx');
 
   const open = Boolean(anchorEl);
 
@@ -120,7 +129,7 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const handleFieldToggle = (key: string) => {
     setSelectedFields((prev) =>
-      prev.map((f) => (f.key === key ? { ...f, selected: !f.selected } : f)),
+      prev.map((f) => (f.key === key ? { ...f, selected: !f.selected } : f))
     );
   };
 
@@ -136,9 +145,7 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const exportToExcel = useCallback(
     (exportData: Record<string, unknown>[], name: string) => {
-      const selectedKeys = selectedFields
-        .filter((f) => f.selected)
-        .map((f) => f.key);
+      const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
         selectedKeys.forEach((key) => {
@@ -149,17 +156,17 @@ const DataExport: React.FC<DataExportProps> = ({
 
       const worksheet = XLSX.utils.json_to_sheet(filteredData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
       // 设置列宽
       const colWidths = selectedFields
         .filter((f) => f.selected)
         .map((f) => ({ wch: f.width || 20 }));
-      worksheet["!cols"] = colWidths;
+      worksheet['!cols'] = colWidths;
 
       XLSX.writeFile(workbook, `${name}.xlsx`);
     },
-    [selectedFields],
+    [selectedFields]
   );
 
   /**
@@ -167,9 +174,7 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const exportToCsv = useCallback(
     (exportData: Record<string, unknown>[], name: string) => {
-      const selectedKeys = selectedFields
-        .filter((f) => f.selected)
-        .map((f) => f.key);
+      const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
         selectedKeys.forEach((key) => {
@@ -181,16 +186,16 @@ const DataExport: React.FC<DataExportProps> = ({
       const worksheet = XLSX.utils.json_to_sheet(filteredData);
       const csv = XLSX.utils.sheet_to_csv(worksheet);
 
-      const blob = new Blob(["\ufeff" + csv], {
-        type: "text/csv;charset=utf-8;",
+      const blob = new Blob(['\ufeff' + csv], {
+        type: 'text/csv;charset=utf-8;',
       });
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `${name}.csv`;
       link.click();
       URL.revokeObjectURL(link.href);
     },
-    [selectedFields],
+    [selectedFields]
   );
 
   /**
@@ -201,7 +206,7 @@ const DataExport: React.FC<DataExportProps> = ({
       const selectedFieldsFiltered = selectedFields.filter((f) => f.selected);
 
       // 创建临时表格用于打印
-      const printWindow = window.open("", "_blank");
+      const printWindow = window.open('', '_blank');
       if (!printWindow) return;
 
       const tableHtml = `
@@ -224,7 +229,7 @@ const DataExport: React.FC<DataExportProps> = ({
             <table>
               <thead>
                 <tr>
-                  ${selectedFieldsFiltered.map((f) => `<th>${f.title}</th>`).join("")}
+                  ${selectedFieldsFiltered.map((f) => `<th>${f.title}</th>`).join('')}
                 </tr>
               </thead>
               <tbody>
@@ -232,10 +237,10 @@ const DataExport: React.FC<DataExportProps> = ({
                   .map(
                     (row) =>
                       `<tr>${selectedFieldsFiltered
-                        .map((f) => `<td>${row[f.key] ?? ""}</td>`)
-                        .join("")}</tr>`,
+                        .map((f) => `<td>${row[f.key] ?? ''}</td>`)
+                        .join('')}</tr>`
                   )
-                  .join("")}
+                  .join('')}
               </tbody>
             </table>
             <script>
@@ -248,7 +253,7 @@ const DataExport: React.FC<DataExportProps> = ({
       printWindow.document.write(tableHtml);
       printWindow.document.close();
     },
-    [selectedFields],
+    [selectedFields]
   );
 
   /**
@@ -258,13 +263,13 @@ const DataExport: React.FC<DataExportProps> = ({
     let exportData = beforeExport ? beforeExport(data) : data;
 
     switch (format) {
-      case "xlsx":
+      case 'xlsx':
         exportToExcel(exportData, fileName);
         break;
-      case "csv":
+      case 'csv':
         exportToCsv(exportData, fileName);
         break;
-      case "pdf":
+      case 'pdf':
         exportToPdf(exportData, fileName);
         break;
     }
@@ -285,11 +290,11 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const getFormatIcon = (format: ExportFormat) => {
     switch (format) {
-      case "xlsx":
+      case 'xlsx':
         return <FileSpreadsheet size={18} />;
-      case "csv":
+      case 'csv':
         return <File size={18} />;
-      case "pdf":
+      case 'pdf':
         return <FileText size={18} />;
     }
   };
@@ -299,22 +304,22 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const getFormatName = (format: ExportFormat) => {
     switch (format) {
-      case "xlsx":
-        return "Excel (.xlsx)";
-      case "csv":
-        return "CSV (.csv)";
-      case "pdf":
-        return "PDF (.pdf)";
+      case 'xlsx':
+        return 'Excel (.xlsx)';
+      case 'csv':
+        return 'CSV (.csv)';
+      case 'pdf':
+        return 'PDF (.pdf)';
     }
   };
 
   return (
     <Box className={className}>
       <Button
-        variant="contained"
+        variant='contained'
         startIcon={<Download size={18} />}
         endIcon={showFormatSelection ? <ChevronDown size={16} /> : null}
-        onClick={showFormatSelection ? handleClick : () => handleExport("xlsx")}
+        onClick={showFormatSelection ? handleClick : () => handleExport('xlsx')}
         disabled={disabled || data.length === 0}
       >
         {buttonText}
@@ -325,24 +330,24 @@ const DataExport: React.FC<DataExportProps> = ({
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         {showFormatSelection && (
           <>
-            <MenuItem onClick={() => handleExport("xlsx")}>
+            <MenuItem onClick={() => handleExport('xlsx')}>
               <ListItemIcon>
                 <FileSpreadsheet size={18} />
               </ListItemIcon>
               <ListItemText>导出 Excel</ListItemText>
             </MenuItem>
-            <MenuItem onClick={() => handleExport("csv")}>
+            <MenuItem onClick={() => handleExport('csv')}>
               <ListItemIcon>
                 <File size={18} />
               </ListItemIcon>
               <ListItemText>导出 CSV</ListItemText>
             </MenuItem>
-            <MenuItem onClick={() => handleExport("pdf")}>
+            <MenuItem onClick={() => handleExport('pdf')}>
               <ListItemIcon>
                 <FileText size={18} />
               </ListItemIcon>
@@ -365,16 +370,16 @@ const DataExport: React.FC<DataExportProps> = ({
       <Dialog
         open={settingsOpen}
         onClose={handleCloseSettings}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             导出设置
             <Box sx={{ flex: 1 }} />
             <Button
               onClick={handleCloseSettings}
-              sx={{ minWidth: "auto", p: 0.5 }}
+              sx={{ minWidth: 'auto', p: 0.5 }}
             >
               <X size={20} />
             </Button>
@@ -383,31 +388,37 @@ const DataExport: React.FC<DataExportProps> = ({
         <DialogContent>
           {/* 文件名设置 */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1 }}
+            >
               文件名
             </Typography>
             <TextField
               fullWidth
-              size="small"
+              size='small'
               value={fileName}
               onChange={(e) => setFileName(e.target.value)}
-              placeholder="请输入文件名"
+              placeholder='请输入文件名'
             />
           </Box>
 
           {/* 格式选择 */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1 }}
+            >
               导出格式
             </Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              {(["xlsx", "csv", "pdf"] as ExportFormat[]).map((format) => (
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {(['xlsx', 'csv', 'pdf'] as ExportFormat[]).map((format) => (
                 <Button
                   key={format}
-                  variant={selectedFormat === format ? "contained" : "outlined"}
+                  variant={selectedFormat === format ? 'contained' : 'outlined'}
                   onClick={() => setSelectedFormat(format)}
                   startIcon={getFormatIcon(format)}
-                  size="small"
+                  size='small'
                 >
                   {getFormatName(format)}
                 </Button>
@@ -419,31 +430,40 @@ const DataExport: React.FC<DataExportProps> = ({
           <Box>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 mb: 1,
               }}
             >
-              <Typography variant="subtitle2">选择导出字段</Typography>
+              <Typography variant='subtitle2'>选择导出字段</Typography>
               <Box>
-                <Button size="small" onClick={() => handleSelectAll(true)}>
+                <Button
+                  size='small'
+                  onClick={() => handleSelectAll(true)}
+                >
                   全选
                 </Button>
-                <Button size="small" onClick={() => handleSelectAll(false)}>
+                <Button
+                  size='small'
+                  onClick={() => handleSelectAll(false)}
+                >
                   取消全选
                 </Button>
               </Box>
             </Box>
             <FieldList>
               {selectedFields.map((field) => (
-                <ListItem key={field.key} dense>
+                <ListItem
+                  key={field.key}
+                  dense
+                >
                   <ListItemIcon sx={{ minWidth: 36 }}>
                     <Checkbox
-                      edge="start"
+                      edge='start'
                       checked={field.selected}
                       onChange={() => handleFieldToggle(field.key)}
-                      size="small"
+                      size='small'
                     />
                   </ListItemIcon>
                   <ListItemText primary={field.title} />
@@ -454,9 +474,12 @@ const DataExport: React.FC<DataExportProps> = ({
 
           {/* 数据预览 */}
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              共 {data.length} 条数据，已选择{" "}
-              {selectedFields.filter((f) => f.selected).length} 个字段
+            <Typography
+              variant='subtitle2'
+              color='text.secondary'
+            >
+              共 {data.length} 条数据，已选择 {selectedFields.filter((f) => f.selected).length}{' '}
+              个字段
             </Typography>
           </Box>
         </DialogContent>
@@ -464,7 +487,7 @@ const DataExport: React.FC<DataExportProps> = ({
           <Button onClick={handleCloseSettings}>取消</Button>
           <Button
             onClick={handleConfirmExport}
-            variant="contained"
+            variant='contained'
             startIcon={<Download size={16} />}
           >
             确认导出
@@ -478,15 +501,15 @@ const DataExport: React.FC<DataExportProps> = ({
 // 样式化组件
 const FieldList = styled(List)({
   maxHeight: 250,
-  overflow: "auto",
-  border: "1px solid",
-  borderColor: "divider",
+  overflow: 'auto',
+  border: '1px solid',
+  borderColor: 'divider',
   borderRadius: 8,
-  "& .MuiListItem-root": {
-    borderBottom: "1px solid",
-    borderColor: "divider",
-    "&:last-child": {
-      borderBottom: "none",
+  '& .MuiListItem-root': {
+    borderBottom: '1px solid',
+    borderColor: 'divider',
+    '&:last-child': {
+      borderBottom: 'none',
     },
   },
 });

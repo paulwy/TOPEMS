@@ -1,10 +1,18 @@
-import { Box, Card, CardContent, CardHeader, Chip, Typography, LinearProgress,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect } from "react";
-import { monitorApi } from "@/api/shared/monitor";
-import { apiLogger } from "@/utils/logger";
-import { useAppStore } from "@/store";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  LinearProgress,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { monitorApi } from '@/api/shared/monitor';
+import { apiLogger } from '@/utils/logger';
+import { useAppStore } from '@/store';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
   Cpu,
   HardDrive,
@@ -15,7 +23,7 @@ import {
   RefreshCw,
   Activity,
   Server,
-} from "lucide-react";
+} from 'lucide-react';
 
 const MonitorPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -31,7 +39,7 @@ const MonitorPage: React.FC = () => {
   const [serviceHealth, setServiceHealth] = useState<
     {
       service_name: string;
-      status: "healthy" | "degraded" | "unhealthy";
+      status: 'healthy' | 'degraded' | 'unhealthy';
       latency: number;
       error_rate: number;
       last_checked: string;
@@ -42,11 +50,11 @@ const MonitorPage: React.FC = () => {
     {
       id: string;
       alert_type: string;
-      severity: "critical" | "warning" | "info";
+      severity: 'critical' | 'warning' | 'info';
       title: string;
       message: string;
       service_name: string;
-      status: "active" | "resolved" | "acknowledged";
+      status: 'active' | 'resolved' | 'acknowledged';
       created_at: string;
     }[]
   >([]);
@@ -72,11 +80,11 @@ const MonitorPage: React.FC = () => {
       setServiceHealth(healthRes.data || []);
       setAlerts(alertsRes.data?.items || []);
     } catch (error) {
-      apiLogger.error("加载监控数据失败:", error);
+      apiLogger.error('加载监控数据失败:', error);
       addNotification({
-        type: "error",
-        title: "加载失败",
-        message: "无法加载监控数据",
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载监控数据',
       });
     } finally {
       setLoading(false);
@@ -85,27 +93,27 @@ const MonitorPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "healthy":
-        return "success.main";
-      case "degraded":
-        return "warning.main";
-      case "unhealthy":
-        return "error.main";
+      case 'healthy':
+        return 'success.main';
+      case 'degraded':
+        return 'warning.main';
+      case 'unhealthy':
+        return 'error.main';
       default:
-        return "grey.500";
+        return 'grey.500';
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case "critical":
-        return "error.main";
-      case "warning":
-        return "warning.main";
-      case "info":
-        return "info.main";
+      case 'critical':
+        return 'error.main';
+      case 'warning':
+        return 'warning.main';
+      case 'info':
+        return 'info.main';
       default:
-        return "grey.500";
+        return 'grey.500';
     }
   };
 
@@ -125,58 +133,68 @@ const MonitorPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+        <Typography
+          variant='h4'
+          sx={{ fontWeight: 'bold' }}
+        >
           系统监控
         </Typography>
-        <Button variant="outlined" startIcon={<RefreshCw />} onClick={loadData}>
+        <Button
+          variant='outlined'
+          startIcon={<RefreshCw />}
+          onClick={loadData}
+        >
           刷新数据
         </Button>
       </Box>
 
       <Box
         sx={{
-          display: "grid",
+          display: 'grid',
           gridTemplateColumns: {
-            xs: "repeat(2, 1fr)",
-            md: "repeat(4, 1fr)",
+            xs: 'repeat(2, 1fr)',
+            md: 'repeat(4, 1fr)',
           },
           gap: 2,
         }}
       >
         <Card>
           <CardHeader>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Cpu sx={{ width: 16, height: 16, color: "primary.main" }} />
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Cpu sx={{ width: 16, height: 16, color: 'primary.main' }} />
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
                 CPU 使用率
               </Typography>
             </Box>
           </CardHeader>
           <CardContent>
             <Typography
-              variant="h4"
+              variant='h4'
               sx={{
-                fontWeight: "bold",
+                fontWeight: 'bold',
                 color:
                   (systemMetrics?.cpu_usage || 0) >= 80
-                    ? "error.main"
+                    ? 'error.main'
                     : (systemMetrics?.cpu_usage || 0) >= 60
-                      ? "warning.main"
-                      : "success.main",
+                      ? 'warning.main'
+                      : 'success.main',
               }}
             >
               {(systemMetrics?.cpu_usage || 0).toFixed(1)}%
             </Typography>
             <LinearProgress
-              variant="determinate"
+              variant='determinate'
               value={systemMetrics?.cpu_usage || 0}
               sx={{ mt: 2, height: 8 }}
             />
@@ -185,32 +203,33 @@ const MonitorPage: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <HardDrive
-                sx={{ width: 16, height: 16, color: "primary.main" }}
-              />
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <HardDrive sx={{ width: 16, height: 16, color: 'primary.main' }} />
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
                 内存使用率
               </Typography>
             </Box>
           </CardHeader>
           <CardContent>
             <Typography
-              variant="h4"
+              variant='h4'
               sx={{
-                fontWeight: "bold",
+                fontWeight: 'bold',
                 color:
                   (systemMetrics?.memory_usage || 0) >= 80
-                    ? "error.main"
+                    ? 'error.main'
                     : (systemMetrics?.memory_usage || 0) >= 60
-                      ? "warning.main"
-                      : "success.main",
+                      ? 'warning.main'
+                      : 'success.main',
               }}
             >
               {(systemMetrics?.memory_usage || 0).toFixed(1)}%
             </Typography>
             <LinearProgress
-              variant="determinate"
+              variant='determinate'
               value={systemMetrics?.memory_usage || 0}
               sx={{ mt: 2, height: 8 }}
             />
@@ -219,30 +238,33 @@ const MonitorPage: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Database sx={{ width: 16, height: 16, color: "primary.main" }} />
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Database sx={{ width: 16, height: 16, color: 'primary.main' }} />
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
                 磁盘使用率
               </Typography>
             </Box>
           </CardHeader>
           <CardContent>
             <Typography
-              variant="h4"
+              variant='h4'
               sx={{
-                fontWeight: "bold",
+                fontWeight: 'bold',
                 color:
                   (systemMetrics?.disk_usage || 0) >= 80
-                    ? "error.main"
+                    ? 'error.main'
                     : (systemMetrics?.disk_usage || 0) >= 60
-                      ? "warning.main"
-                      : "success.main",
+                      ? 'warning.main'
+                      : 'success.main',
               }}
             >
               {(systemMetrics?.disk_usage || 0).toFixed(1)}%
             </Typography>
             <LinearProgress
-              variant="determinate"
+              variant='determinate'
               value={systemMetrics?.disk_usage || 0}
               sx={{ mt: 2, height: 8 }}
             />
@@ -251,17 +273,20 @@ const MonitorPage: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Activity sx={{ width: 16, height: 16, color: "primary.main" }} />
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Activity sx={{ width: 16, height: 16, color: 'primary.main' }} />
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
                 系统运行时间
               </Typography>
             </Box>
           </CardHeader>
           <CardContent>
             <Typography
-              variant="h4"
-              sx={{ fontWeight: "bold", color: "success.main" }}
+              variant='h4'
+              sx={{ fontWeight: 'bold', color: 'success.main' }}
             >
               {formatUptime(systemMetrics?.uptime || 0)}
             </Typography>
@@ -272,11 +297,11 @@ const MonitorPage: React.FC = () => {
       <Card>
         <CardHeader>
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{
               fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
             }}
           >
@@ -285,14 +310,14 @@ const MonitorPage: React.FC = () => {
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", fontSize: "0.875rem" }}>
-              <thead style={{ backgroundColor: "#f5f5f5" }}>
+          <Box sx={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: '0.875rem' }}>
+              <thead style={{ backgroundColor: '#f5f5f5' }}>
                 <tr>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "left",
+                      padding: '12px 16px',
+                      textAlign: 'left',
                       fontWeight: 500,
                     }}
                   >
@@ -300,8 +325,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "center",
+                      padding: '12px 16px',
+                      textAlign: 'center',
                       fontWeight: 500,
                     }}
                   >
@@ -309,8 +334,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "right",
+                      padding: '12px 16px',
+                      textAlign: 'right',
                       fontWeight: 500,
                     }}
                   >
@@ -318,8 +343,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "right",
+                      padding: '12px 16px',
+                      textAlign: 'right',
                       fontWeight: 500,
                     }}
                   >
@@ -327,8 +352,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "right",
+                      padding: '12px 16px',
+                      textAlign: 'right',
                       fontWeight: 500,
                     }}
                   >
@@ -336,8 +361,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "left",
+                      padding: '12px 16px',
+                      textAlign: 'left',
                       fontWeight: 500,
                     }}
                   >
@@ -350,23 +375,21 @@ const MonitorPage: React.FC = () => {
                   serviceHealth.map((service) => (
                     <tr
                       key={service.service_name}
-                      style={{ borderBottom: "1px solid" }}
+                      style={{ borderBottom: '1px solid' }}
                     >
-                      <td style={{ padding: "12px 16px" }}>
-                        {service.service_name}
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                      <td style={{ padding: '12px 16px' }}>{service.service_name}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         <Chip
-                          size="small"
+                          size='small'
                           label={
-                            service.status === "healthy"
-                              ? "健康"
-                              : service.status === "degraded"
-                                ? "降级"
-                                : "异常"
+                            service.status === 'healthy'
+                              ? '健康'
+                              : service.status === 'degraded'
+                                ? '降级'
+                                : '异常'
                           }
                           icon={
-                            service.status === "healthy" ? (
+                            service.status === 'healthy' ? (
                               <CheckCircle sx={{ width: 14, height: 14 }} />
                             ) : (
                               <AlertTriangle sx={{ width: 14, height: 14 }} />
@@ -377,16 +400,16 @@ const MonitorPage: React.FC = () => {
                           }}
                         />
                       </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         {service.latency}
                       </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         {service.error_rate.toFixed(2)}%
                       </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                         {service.uptime_percentage.toFixed(1)}%
                       </td>
-                      <td style={{ padding: "12px 16px" }}>
+                      <td style={{ padding: '12px 16px' }}>
                         {new Date(service.last_checked).toLocaleString()}
                       </td>
                     </tr>
@@ -396,9 +419,9 @@ const MonitorPage: React.FC = () => {
                     <td
                       colSpan={6}
                       style={{
-                        padding: "32px 16px",
-                        textAlign: "center",
-                        color: "text.disabled",
+                        padding: '32px 16px',
+                        textAlign: 'center',
+                        color: 'text.disabled',
                       }}
                     >
                       暂无服务健康数据
@@ -414,30 +437,33 @@ const MonitorPage: React.FC = () => {
       <Card>
         <CardHeader>
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{
               fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
             }}
           >
             <AlertTriangle sx={{ width: 20, height: 20 }} />
             告警列表
           </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'grey.500' }}
+          >
             最近20条告警记录
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", fontSize: "0.875rem" }}>
-              <thead style={{ backgroundColor: "#f5f5f5" }}>
+          <Box sx={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', fontSize: '0.875rem' }}>
+              <thead style={{ backgroundColor: '#f5f5f5' }}>
                 <tr>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "left",
+                      padding: '12px 16px',
+                      textAlign: 'left',
                       fontWeight: 500,
                     }}
                   >
@@ -445,8 +471,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "center",
+                      padding: '12px 16px',
+                      textAlign: 'center',
                       fontWeight: 500,
                     }}
                   >
@@ -454,8 +480,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "left",
+                      padding: '12px 16px',
+                      textAlign: 'left',
                       fontWeight: 500,
                     }}
                   >
@@ -463,8 +489,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "left",
+                      padding: '12px 16px',
+                      textAlign: 'left',
                       fontWeight: 500,
                     }}
                   >
@@ -472,8 +498,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "center",
+                      padding: '12px 16px',
+                      textAlign: 'center',
                       fontWeight: 500,
                     }}
                   >
@@ -481,8 +507,8 @@ const MonitorPage: React.FC = () => {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
-                      textAlign: "left",
+                      padding: '12px 16px',
+                      textAlign: 'left',
                       fontWeight: 500,
                     }}
                   >
@@ -493,17 +519,20 @@ const MonitorPage: React.FC = () => {
               <tbody>
                 {alerts.length > 0 ? (
                   alerts.map((alert) => (
-                    <tr key={alert.id} style={{ borderBottom: "1px solid" }}>
-                      <td style={{ padding: "12px 16px" }}>{alert.title}</td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                    <tr
+                      key={alert.id}
+                      style={{ borderBottom: '1px solid' }}
+                    >
+                      <td style={{ padding: '12px 16px' }}>{alert.title}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         <Chip
-                          size="small"
+                          size='small'
                           label={
-                            alert.severity === "critical"
-                              ? "严重"
-                              : alert.severity === "warning"
-                                ? "警告"
-                                : "信息"
+                            alert.severity === 'critical'
+                              ? '严重'
+                              : alert.severity === 'warning'
+                                ? '警告'
+                                : '信息'
                           }
                           sx={{
                             bgcolor: `${getSeverityColor(alert.severity)}20`,
@@ -511,39 +540,34 @@ const MonitorPage: React.FC = () => {
                           }}
                         />
                       </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        {alert.service_name}
-                      </td>
+                      <td style={{ padding: '12px 16px' }}>{alert.service_name}</td>
                       <td
                         style={{
-                          padding: "12px 16px",
+                          padding: '12px 16px',
                           maxWidth: 300,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {alert.message}
                       </td>
-                      <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         <Chip
-                          size="small"
+                          size='small'
                           label={
-                            alert.status === "active"
-                              ? "活跃"
-                              : alert.status === "resolved"
-                                ? "已解决"
-                                : "已确认"
+                            alert.status === 'active'
+                              ? '活跃'
+                              : alert.status === 'resolved'
+                                ? '已解决'
+                                : '已确认'
                           }
                           sx={{
-                            bgcolor:
-                              alert.status === "active"
-                                ? "error.light"
-                                : "success.light",
+                            bgcolor: alert.status === 'active' ? 'error.light' : 'success.light',
                           }}
                         />
                       </td>
-                      <td style={{ padding: "12px 16px" }}>
+                      <td style={{ padding: '12px 16px' }}>
                         {new Date(alert.created_at).toLocaleString()}
                       </td>
                     </tr>
@@ -553,9 +577,9 @@ const MonitorPage: React.FC = () => {
                     <td
                       colSpan={6}
                       style={{
-                        padding: "32px 16px",
-                        textAlign: "center",
-                        color: "text.disabled",
+                        padding: '32px 16px',
+                        textAlign: 'center',
+                        color: 'text.disabled',
                       }}
                     >
                       暂无告警记录

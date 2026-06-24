@@ -10,7 +10,7 @@ import {
   truncateText as sharedTruncateText,
   capitalizeFirstLetter as sharedCapitalizeFirstLetter,
   clearCloneCache,
-} from "@topems/shared-utils";
+} from '@topems/shared-utils';
 
 // 重新导出共享工具
 export {
@@ -64,10 +64,7 @@ const addToCache = (key: string, value: string): void => {
 };
 
 // 保留缓存优化的 formatDate
-export const formatDate = (
-  dateString: string,
-  format: string = "YYYY-MM-DD HH:mm:ss",
-): string => {
+export const formatDate = (dateString: string, format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
   const cacheKey = getCacheKey(dateString, format);
   const cachedValue = getFromCache(cacheKey);
   if (cachedValue) {
@@ -81,50 +78,44 @@ export const formatDate = (
   }
 
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
 
   const result = format
-    .replace("YYYY", String(year))
-    .replace("MM", month)
-    .replace("DD", day)
-    .replace("HH", hours)
-    .replace("mm", minutes)
-    .replace("ss", seconds);
+    .replace('YYYY', String(year))
+    .replace('MM', month)
+    .replace('DD', day)
+    .replace('HH', hours)
+    .replace('mm', minutes)
+    .replace('ss', seconds);
 
   addToCache(cacheKey, result);
   return result;
 };
 
 // 基于 shared-utils 的 formatNumber
-export const formatNumber = (
-  num: number | string,
-  decimals: number = 2,
-): string => {
-  const number = typeof num === "string" ? parseFloat(num) : num;
-  if (isNaN(number)) return "0";
+export const formatNumber = (num: number | string, decimals: number = 2): string => {
+  const number = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(number)) return '0';
   return sharedFormatNumber(number, decimals);
 };
 
 // 扩展货币符号支持
-export const formatCurrency = (
-  amount: number | string,
-  currency: string = "CNY",
-): string => {
-  const number = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(number)) return "¥0.00";
+export const formatCurrency = (amount: number | string, currency: string = 'CNY'): string => {
+  const number = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(number)) return '¥0.00';
 
   const symbols: Record<string, string> = {
-    CNY: "¥",
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
+    CNY: '¥',
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
   };
 
-  const symbol = symbols[currency] || "¥";
+  const symbol = symbols[currency] || '¥';
   return `${symbol}${sharedFormatNumber(number, 2)}`;
 };
 

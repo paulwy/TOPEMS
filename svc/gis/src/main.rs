@@ -26,6 +26,7 @@ use sqlx::{PgPool, Row};
 use std::env;
 use std::io::BufReader;
 use uuid::Uuid;
+use utoipa::OpenApi;
 
 use topems_shared::auth::Claims;
 use topems_shared::{
@@ -2042,6 +2043,7 @@ async fn main() -> Result<()> {
         .route("/api/plugins/info", get(plugin::get_info))
         .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/api/gis/health/detailed", get(health_check_detailed))
+        .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
@@ -2374,4 +2376,8 @@ async fn main() -> Result<()> {
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(api::openapi::GisApiDoc::openapi())
 }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
   Tabs,
@@ -11,16 +11,9 @@ import {
   Tooltip,
   useTheme,
   useMediaQuery,
-} from "@mui/material";
-import {
-  Pin,
-  PinOff,
-  X,
-  GripVertical,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+} from '@mui/material';
+import { Pin, PinOff, X, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export interface TabItem {
   label: string;
@@ -34,14 +27,11 @@ interface ModuleTabsProps {
   onTabsChange?: (tabs: TabItem[]) => void;
 }
 
-export const ModuleTabs: React.FC<ModuleTabsProps> = ({
-  tabs,
-  onTabsChange,
-}) => {
+export const ModuleTabs: React.FC<ModuleTabsProps> = ({ tabs, onTabsChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [localTabs, setLocalTabs] = useState<TabItem[]>(tabs);
   const [contextMenu, setContextMenu] = useState<{
@@ -59,17 +49,14 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
   }, [tabs]);
 
   // 右键菜单
-  const handleContextMenu = useCallback(
-    (event: React.MouseEvent, tab: TabItem) => {
-      event.preventDefault();
-      setContextMenu({
-        mouseX: event.clientX,
-        mouseY: event.clientY,
-        tab,
-      });
-    },
-    [],
-  );
+  const handleContextMenu = useCallback((event: React.MouseEvent, tab: TabItem) => {
+    event.preventDefault();
+    setContextMenu({
+      mouseX: event.clientX,
+      mouseY: event.clientY,
+      tab,
+    });
+  }, []);
 
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null);
@@ -78,14 +65,12 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
   // 固定/取消固定
   const handleTogglePin = useCallback(
     (tab: TabItem) => {
-      const newTabs = localTabs.map((t) =>
-        t.path === tab.path ? { ...t, pinned: !t.pinned } : t,
-      );
+      const newTabs = localTabs.map((t) => (t.path === tab.path ? { ...t, pinned: !t.pinned } : t));
       setLocalTabs(newTabs);
       onTabsChange?.(newTabs);
       handleCloseContextMenu();
     },
-    [localTabs, onTabsChange, handleCloseContextMenu],
+    [localTabs, onTabsChange, handleCloseContextMenu]
   );
 
   // 关闭标签
@@ -101,13 +86,7 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       }
       handleCloseContextMenu();
     },
-    [
-      localTabs,
-      location.pathname,
-      navigate,
-      onTabsChange,
-      handleCloseContextMenu,
-    ],
+    [localTabs, location.pathname, navigate, onTabsChange, handleCloseContextMenu]
   );
 
   // 关闭其他标签
@@ -126,13 +105,7 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       }
       handleCloseContextMenu();
     },
-    [
-      localTabs,
-      location.pathname,
-      navigate,
-      onTabsChange,
-      handleCloseContextMenu,
-    ],
+    [localTabs, location.pathname, navigate, onTabsChange, handleCloseContextMenu]
   );
 
   // 关闭所有标签（只保留固定的）
@@ -146,13 +119,7 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       navigate(firstPinned.path);
     }
     handleCloseContextMenu();
-  }, [
-    localTabs,
-    location.pathname,
-    navigate,
-    onTabsChange,
-    handleCloseContextMenu,
-  ]);
+  }, [localTabs, location.pathname, navigate, onTabsChange, handleCloseContextMenu]);
 
   // 拖拽开始
   const handleDragStart = useCallback((index: number) => {
@@ -173,7 +140,7 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       setLocalTabs(newTabs);
       setDraggedIndex(index);
     },
-    [draggedIndex, localTabs],
+    [draggedIndex, localTabs]
   );
 
   // 拖拽结束
@@ -183,12 +150,12 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
   }, [localTabs, onTabsChange]);
 
   // 滚动
-  const handleScroll = useCallback((direction: "left" | "right") => {
+  const handleScroll = useCallback((direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const scrollAmount = 200;
       scrollRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
       });
     }
   }, []);
@@ -207,52 +174,48 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
         onDragEnd={handleDragEnd}
         onContextMenu={(e) => handleContextMenu(e, tab)}
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 0.5,
           px: 1.5,
           py: 1,
           minWidth: 120,
           maxWidth: 200,
           borderRadius: 1,
-          cursor: isMobile ? "pointer" : "grab",
+          cursor: isMobile ? 'pointer' : 'grab',
           opacity: isDragging ? 0.5 : 1,
-          backgroundColor: isActive ? "primary.light" : "transparent",
-          color: isActive ? "primary.main" : "text.secondary",
-          borderBottom: isActive ? "2px solid" : "2px solid transparent",
-          borderColor: isActive ? "primary.main" : "transparent",
-          transition: "all 0.2s ease",
-          "&:hover": {
-            backgroundColor: isActive ? "primary.light" : "action.hover",
+          backgroundColor: isActive ? 'primary.light' : 'transparent',
+          color: isActive ? 'primary.main' : 'text.secondary',
+          borderBottom: isActive ? '2px solid' : '2px solid transparent',
+          borderColor: isActive ? 'primary.main' : 'transparent',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: isActive ? 'primary.light' : 'action.hover',
           },
-          "&:active": {
-            cursor: isMobile ? "pointer" : "grabbing",
+          '&:active': {
+            cursor: isMobile ? 'pointer' : 'grabbing',
           },
         }}
         onClick={() => navigate(tab.path)}
       >
         {!isMobile && (
-          <GripVertical
-            style={{ width: 14, height: 14, opacity: 0.5, flexShrink: 0 }}
-          />
+          <GripVertical style={{ width: 14, height: 14, opacity: 0.5, flexShrink: 0 }} />
         )}
         <Box
-          component="span"
+          component='span'
           sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
             flex: 1,
           }}
         >
           {tab.label}
         </Box>
-        {tab.pinned && (
-          <Pin style={{ width: 12, height: 12, flexShrink: 0, opacity: 0.7 }} />
-        )}
+        {tab.pinned && <Pin style={{ width: 12, height: 12, flexShrink: 0, opacity: 0.7 }} />}
         {tab.closable !== false && !tab.pinned && (
           <IconButton
-            size="small"
+            size='small'
             onClick={(e) => {
               e.stopPropagation();
               handleCloseTab(tab);
@@ -261,9 +224,9 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
               p: 0.25,
               ml: 0.5,
               opacity: 0.7,
-              "&:hover": {
+              '&:hover': {
                 opacity: 1,
-                backgroundColor: "action.hover",
+                backgroundColor: 'action.hover',
               },
             }}
           >
@@ -284,40 +247,40 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
   return (
     <Box
       sx={{
-        backgroundColor: "background.paper",
+        backgroundColor: 'background.paper',
         borderBottom: 1,
-        borderColor: "divider",
-        position: "relative",
+        borderColor: 'divider',
+        position: 'relative',
       }}
     >
       {/* 滚动按钮 - 移动端 */}
       {isMobile && (
         <>
           <IconButton
-            size="small"
-            onClick={() => handleScroll("left")}
+            size='small'
+            onClick={() => handleScroll('left')}
             sx={{
-              position: "absolute",
+              position: 'absolute',
               left: 0,
-              top: "50%",
-              transform: "translateY(-50%)",
+              top: '50%',
+              transform: 'translateY(-50%)',
               zIndex: 2,
-              backgroundColor: "background.paper",
+              backgroundColor: 'background.paper',
               boxShadow: 1,
             }}
           >
             <ChevronLeft style={{ width: 16, height: 16 }} />
           </IconButton>
           <IconButton
-            size="small"
-            onClick={() => handleScroll("right")}
+            size='small'
+            onClick={() => handleScroll('right')}
             sx={{
-              position: "absolute",
+              position: 'absolute',
               right: 0,
-              top: "50%",
-              transform: "translateY(-50%)",
+              top: '50%',
+              transform: 'translateY(-50%)',
               zIndex: 2,
-              backgroundColor: "background.paper",
+              backgroundColor: 'background.paper',
               boxShadow: 1,
             }}
           >
@@ -330,13 +293,13 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       <Box
         ref={scrollRef}
         sx={{
-          display: "flex",
-          alignItems: "center",
-          overflowX: "auto",
-          overflowY: "hidden",
-          scrollbarWidth: "none",
-          "&::-webkit-scrollbar": {
-            display: "none",
+          display: 'flex',
+          alignItems: 'center',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
           },
           px: isMobile ? 4 : 2,
         }}
@@ -348,16 +311,12 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       <Menu
         open={contextMenu !== null}
         onClose={handleCloseContextMenu}
-        anchorReference="anchorPosition"
+        anchorReference='anchorPosition'
         anchorPosition={
-          contextMenu !== null
-            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-            : undefined
+          contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined
         }
       >
-        <MenuItem
-          onClick={() => contextMenu && handleTogglePin(contextMenu.tab)}
-        >
+        <MenuItem onClick={() => contextMenu && handleTogglePin(contextMenu.tab)}>
           <ListItemIcon>
             {contextMenu?.tab.pinned ? (
               <PinOff style={{ width: 18, height: 18 }} />
@@ -365,23 +324,17 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
               <Pin style={{ width: 18, height: 18 }} />
             )}
           </ListItemIcon>
-          <ListItemText>
-            {contextMenu?.tab.pinned ? "取消固定" : "固定标签"}
-          </ListItemText>
+          <ListItemText>{contextMenu?.tab.pinned ? '取消固定' : '固定标签'}</ListItemText>
         </MenuItem>
         {contextMenu?.tab.closable !== false && (
-          <MenuItem
-            onClick={() => contextMenu && handleCloseTab(contextMenu.tab)}
-          >
+          <MenuItem onClick={() => contextMenu && handleCloseTab(contextMenu.tab)}>
             <ListItemIcon>
               <X style={{ width: 18, height: 18 }} />
             </ListItemIcon>
             <ListItemText>关闭标签</ListItemText>
           </MenuItem>
         )}
-        <MenuItem
-          onClick={() => contextMenu && handleCloseOthers(contextMenu.tab)}
-        >
+        <MenuItem onClick={() => contextMenu && handleCloseOthers(contextMenu.tab)}>
           关闭其他标签
         </MenuItem>
         <MenuItem onClick={handleCloseAll}>关闭所有标签</MenuItem>

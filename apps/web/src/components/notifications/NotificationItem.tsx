@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { Check, Trash2, ExternalLink } from "lucide-react";
-import type { Notification } from "@/api/notification";
-import { markAsRead, deleteNotification } from "@/api/notification";
-import { logger } from "@/utils/logger";
+import React, { useState } from 'react';
+import { Check, Trash2, ExternalLink } from 'lucide-react';
+import type { Notification } from '@/api/notification';
+import { markAsRead, deleteNotification } from '@/api/notification';
+import { logger } from '@/utils/logger';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -12,148 +12,148 @@ interface NotificationItemProps {
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
-    case "system":
+    case 'system':
       return (
         <div
           style={{
             width: 40,
             height: 40,
-            borderRadius: "9999px",
-            backgroundColor: "#dbeafe",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: '9999px',
+            backgroundColor: '#dbeafe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: "#2563eb" }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            style={{ width: 20, height: 20, color: '#2563eb' }}
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.572c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              d='M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.572c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z'
             />
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M15 12a3 3 0 11-6 0a3 3 0 016 0z"
-            />
-          </svg>
-        </div>
-      );
-    case "workflow":
-      return (
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: "9999px",
-            backgroundColor: "#f3e8ff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg
-            style={{ width: 20, height: 20, color: "#9333ea" }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+              d='M15 12a3 3 0 11-6 0a3 3 0 016 0z'
             />
           </svg>
         </div>
       );
-    case "alert":
+    case 'workflow':
       return (
         <div
           style={{
             width: 40,
             height: 40,
-            borderRadius: "9999px",
-            backgroundColor: "#fee2e2",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: '9999px',
+            backgroundColor: '#f3e8ff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: "#dc2626" }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            style={{ width: 20, height: 20, color: '#9333ea' }}
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'
             />
           </svg>
         </div>
       );
-    case "reminder":
+    case 'alert':
       return (
         <div
           style={{
             width: 40,
             height: 40,
-            borderRadius: "9999px",
-            backgroundColor: "#fef9c3",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: '9999px',
+            backgroundColor: '#fee2e2',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: "#ca8a04" }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            style={{ width: 20, height: 20, color: '#dc2626' }}
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
             />
           </svg>
         </div>
       );
-    case "message":
+    case 'reminder':
       return (
         <div
           style={{
             width: 40,
             height: 40,
-            borderRadius: "9999px",
-            backgroundColor: "#dcfce7",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: '9999px',
+            backgroundColor: '#fef9c3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: "#16a34a" }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            style={{ width: 20, height: 20, color: '#ca8a04' }}
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+            />
+          </svg>
+        </div>
+      );
+    case 'message':
+      return (
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '9999px',
+            backgroundColor: '#dcfce7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <svg
+            style={{ width: 20, height: 20, color: '#16a34a' }}
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
             />
           </svg>
         </div>
@@ -164,24 +164,24 @@ const getNotificationIcon = (type: string) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: "9999px",
-            backgroundColor: "#f3f4f6",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: '9999px',
+            backgroundColor: '#f3f4f6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: "#4b5563" }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            style={{ width: 20, height: 20, color: '#4b5563' }}
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0a9 9 0 0118 0z"
+              d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0a9 9 0 0118 0z'
             />
           </svg>
         </div>
@@ -190,17 +190,17 @@ const getNotificationIcon = (type: string) => {
 };
 
 const getPriorityColor = (priority: number) => {
-  if (priority >= 4) return { color: "#dc2626" };
-  if (priority >= 3) return { color: "#ea580c" };
-  if (priority >= 2) return { color: "#ca8a04" };
-  return { color: "#4b5563" };
+  if (priority >= 4) return { color: '#dc2626' };
+  if (priority >= 3) return { color: '#ea580c' };
+  if (priority >= 2) return { color: '#ca8a04' };
+  return { color: '#4b5563' };
 };
 
 const getPriorityLabel = (priority: number) => {
-  if (priority >= 4) return "紧急";
-  if (priority >= 3) return "高";
-  if (priority >= 2) return "中";
-  return "低";
+  if (priority >= 4) return '紧急';
+  if (priority >= 3) return '高';
+  if (priority >= 2) return '中';
+  return '低';
 };
 
 const getLink = (notification: Notification) => notification.data?.link;
@@ -221,7 +221,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onUpdate(response.data);
       }
     } catch (error) {
-      logger.error("Failed to mark as read:", error);
+      logger.error('Failed to mark as read:', error);
     }
   };
 
@@ -234,7 +234,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onDelete(notification.id);
       }
     } catch (error) {
-      logger.error("Failed to delete notification:", error);
+      logger.error('Failed to delete notification:', error);
       setIsDeleting(false);
     }
   };
@@ -258,38 +258,36 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return "刚刚";
+    if (minutes < 1) return '刚刚';
     if (minutes < 60) return `${minutes}分钟前`;
     if (hours < 24) return `${hours}小时前`;
     if (days < 7) return `${days}天前`;
-    return date.toLocaleDateString("zh-CN");
+    return date.toLocaleDateString('zh-CN');
   };
 
   return (
     <div
       style={{
-        position: "relative",
+        position: 'relative',
         padding: 16,
-        backgroundColor: !notification.is_read
-          ? "rgba(59, 130, 246, 0.05)"
-          : undefined,
+        backgroundColor: !notification.is_read ? 'rgba(59, 130, 246, 0.05)' : undefined,
         opacity: isDeleting ? 0.5 : 1,
-        cursor: "pointer",
-        transition: "background-color 0.15s",
+        cursor: 'pointer',
+        transition: 'background-color 0.15s',
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
-      <div style={{ display: "flex", gap: 12 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         {getNotificationIcon(notification.notification_type)}
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
               gap: 8,
               marginBottom: 4,
             }}
@@ -298,10 +296,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               style={{
                 fontSize: 14,
                 fontWeight: 500,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                color: !notification.is_read ? "#111827" : "#374151",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                color: !notification.is_read ? '#111827' : '#374151',
               }}
             >
               {notification.title}
@@ -311,8 +309,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 style={{
                   width: 8,
                   height: 8,
-                  backgroundColor: "#3b82f6",
-                  borderRadius: "9999px",
+                  backgroundColor: '#3b82f6',
+                  borderRadius: '9999px',
                   flexShrink: 0,
                   marginTop: 6,
                 }}
@@ -323,12 +321,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           <p
             style={{
               fontSize: 14,
-              color: "#4b5563",
+              color: '#4b5563',
               marginBottom: 8,
-              overflow: "hidden",
-              display: "-webkit-box",
+              overflow: 'hidden',
+              display: '-webkit-box',
               WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
+              WebkitBoxOrient: 'vertical',
             }}
           >
             {notification.content}
@@ -336,11 +334,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 12,
               fontSize: 12,
-              color: "#6b7280",
+              color: '#6b7280',
             }}
           >
             <span>{formatTime(notification.created_at)}</span>
@@ -359,10 +357,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       {isHovered && (
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             top: 8,
             right: 8,
-            display: "flex",
+            display: 'flex',
             gap: 4,
           }}
         >
@@ -371,14 +369,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               onClick={handleMarkAsRead}
               style={{
                 padding: 6,
-                color: "#6b7280",
-                backgroundColor: "transparent",
-                border: "none",
+                color: '#6b7280',
+                backgroundColor: 'transparent',
+                border: 'none',
                 borderRadius: 8,
-                cursor: "pointer",
-                transition: "all 0.15s",
+                cursor: 'pointer',
+                transition: 'all 0.15s',
               }}
-              title="标记已读"
+              title='标记已读'
             >
               <Check style={{ width: 16, height: 16 }} />
             </button>
@@ -387,14 +385,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             onClick={handleDelete}
             style={{
               padding: 6,
-              color: "#6b7280",
-              backgroundColor: "transparent",
-              border: "none",
+              color: '#6b7280',
+              backgroundColor: 'transparent',
+              border: 'none',
               borderRadius: 8,
-              cursor: "pointer",
-              transition: "all 0.15s",
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
-            title="删除"
+            title='删除'
           >
             <Trash2 style={{ width: 16, height: 16 }} />
           </button>
@@ -406,14 +404,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               }}
               style={{
                 padding: 6,
-                color: "#6b7280",
-                backgroundColor: "transparent",
-                border: "none",
+                color: '#6b7280',
+                backgroundColor: 'transparent',
+                border: 'none',
                 borderRadius: 8,
-                cursor: "pointer",
-                transition: "all 0.15s",
+                cursor: 'pointer',
+                transition: 'all 0.15s',
               }}
-              title="查看详情"
+              title='查看详情'
             >
               <ExternalLink style={{ width: 16, height: 16 }} />
             </button>

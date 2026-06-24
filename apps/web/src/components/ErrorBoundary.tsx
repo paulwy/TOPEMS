@@ -1,9 +1,9 @@
-import type { ErrorInfo, ReactNode } from "react";
-import { Component } from "react";
-import { AlertTriangle, RefreshCw, Code2 } from "lucide-react";
-import createLogger from "../utils/logger";
+import type { ErrorInfo, ReactNode } from 'react';
+import { Component } from 'react';
+import { AlertTriangle, RefreshCw, Code2 } from 'lucide-react';
+import createLogger from '../utils/logger';
 
-const logger = createLogger("ErrorBoundary");
+const logger = createLogger('ErrorBoundary');
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -18,10 +18,7 @@ interface ErrorBoundaryState {
   errorInfo?: ErrorInfo;
 }
 
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -32,13 +29,13 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logger.error("ErrorBoundary caught error:", error.message, errorInfo);
+    logger.error('ErrorBoundary caught error:', error.message, errorInfo);
 
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
 
-    if (process.env.NODE_ENV === "production" && (window as any).Sentry) {
+    if (process.env.NODE_ENV === 'production' && (window as any).Sentry) {
       (window as any).Sentry.captureException(error, { extra: errorInfo });
     }
 
@@ -56,114 +53,111 @@ export class ErrorBoundary extends Component<
         return this.props.fallback;
       }
 
-      const showDetails =
-        this.props.showDetails ?? process.env.NODE_ENV !== "production";
+      const showDetails = this.props.showDetails ?? process.env.NODE_ENV !== 'production';
 
       return (
         <div
           style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "#f3f4f6",
-            padding: "16px",
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f3f4f6',
+            padding: '16px',
           }}
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "12px",
-              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-              padding: "32px",
-              maxWidth: "600px",
-              width: "100%",
-              textAlign: "center",
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+              padding: '32px',
+              maxWidth: '600px',
+              width: '100%',
+              textAlign: 'center',
             }}
           >
             <div
               style={{
-                width: "64px",
-                height: "64px",
-                backgroundColor: "#fef2f2",
-                borderRadius: "9999px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 16px",
+                width: '64px',
+                height: '64px',
+                backgroundColor: '#fef2f2',
+                borderRadius: '9999px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
               }}
             >
-              <AlertTriangle sx={{ width: 32, height: 32, color: "#ef4444" }} />
+              <AlertTriangle sx={{ width: 32, height: 32, color: '#ef4444' }} />
             </div>
             <h2
               style={{
-                fontSize: "20px",
+                fontSize: '20px',
                 fontWeight: 700,
-                color: "#111827",
-                marginBottom: "8px",
+                color: '#111827',
+                marginBottom: '8px',
               }}
             >
               页面出现错误
             </h2>
-            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
-              {this.state.error?.message || "发生了未知错误，请重试"}
+            <p style={{ color: '#6b7280', marginBottom: '16px' }}>
+              {this.state.error?.message || '发生了未知错误，请重试'}
             </p>
 
             {showDetails && this.state.error && this.state.errorInfo && (
               <div
                 style={{
-                  backgroundColor: "#1f2937",
-                  color: "#f9fafb",
-                  borderRadius: "8px",
-                  padding: "16px",
-                  marginBottom: "24px",
-                  textAlign: "left",
-                  maxHeight: "200px",
-                  overflowY: "auto",
+                  backgroundColor: '#1f2937',
+                  color: '#f9fafb',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginBottom: '24px',
+                  textAlign: 'left',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
                 }}
               >
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "12px",
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '12px',
                   }}
                 >
                   <Code2 style={{ width: 16, height: 16 }} />
-                  <span style={{ fontWeight: 600, fontSize: "14px" }}>
-                    错误详情
-                  </span>
+                  <span style={{ fontWeight: 600, fontSize: '14px' }}>错误详情</span>
                 </div>
-                <div style={{ marginBottom: "12px" }}>
+                <div style={{ marginBottom: '12px' }}>
                   <div
                     style={{
-                      fontSize: "12px",
-                      color: "#9ca3af",
-                      marginBottom: "4px",
+                      fontSize: '12px',
+                      color: '#9ca3af',
+                      marginBottom: '4px',
                     }}
                   >
                     错误信息
                   </div>
-                  <div style={{ fontSize: "13px", fontFamily: "monospace" }}>
+                  <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
                     {this.state.error.message}
                   </div>
                 </div>
                 <div>
                   <div
                     style={{
-                      fontSize: "12px",
-                      color: "#9ca3af",
-                      marginBottom: "4px",
+                      fontSize: '12px',
+                      color: '#9ca3af',
+                      marginBottom: '4px',
                     }}
                   >
                     组件栈
                   </div>
                   <div
                     style={{
-                      fontSize: "12px",
-                      fontFamily: "monospace",
-                      whiteSpace: "pre-wrap",
+                      fontSize: '12px',
+                      fontFamily: 'monospace',
+                      whiteSpace: 'pre-wrap',
                     }}
                   >
                     {this.state.errorInfo.componentStack}
@@ -175,15 +169,15 @@ export class ErrorBoundary extends Component<
             <button
               onClick={this.handleRetry}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "12px 24px",
-                backgroundColor: "#2563eb",
-                color: "#ffffff",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                transition: "background-color 0.2s",
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '12px 24px',
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
                 fontWeight: 500,
               }}
             >
@@ -206,10 +200,13 @@ export const withErrorBoundary = <P extends object>(
   options?: {
     fallback?: ReactNode;
     onError?: (error: Error, errorInfo: ErrorInfo) => void;
-  },
+  }
 ): React.ComponentType<P> => {
   return (props: P) => (
-    <ErrorBoundary fallback={options?.fallback} onError={options?.onError}>
+    <ErrorBoundary
+      fallback={options?.fallback}
+      onError={options?.onError}
+    >
       <Component {...props} />
     </ErrorBoundary>
   );

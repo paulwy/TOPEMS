@@ -4,7 +4,7 @@ interface EventListeners {
   [eventName: string]: Set<EventHandler>;
 }
 
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 export class EventBus {
   private listeners: EventListeners = {};
@@ -54,12 +54,12 @@ export class EventBus {
 export const eventBus = new EventBus();
 
 export const ModuleEvents = {
-  MODULE_LOADED: "module-loaded",
-  MODULE_UNLOADED: "module-unloaded",
-  MODULE_ERROR: "module-error",
-  USER_LOGIN: "user-login",
-  USER_LOGOUT: "user-logout",
-  THEME_CHANGE: "theme-change",
-  LANGUAGE_CHANGE: "language-change",
-  NOTIFICATION: "notification",
+  MODULE_LOADED: 'module-loaded',
+  MODULE_UNLOADED: 'module-unloaded',
+  MODULE_ERROR: 'module-error',
+  USER_LOGIN: 'user-login',
+  USER_LOGOUT: 'user-logout',
+  THEME_CHANGE: 'theme-change',
+  LANGUAGE_CHANGE: 'language-change',
+  NOTIFICATION: 'notification',
 };

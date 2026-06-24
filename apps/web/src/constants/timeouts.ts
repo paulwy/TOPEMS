@@ -66,11 +66,8 @@ export const TOAST = {
 /**
  * 获取环境变量的超时配置
  */
-export function getTimeoutFromEnv(
-  envKey: string,
-  defaultValue: number,
-): number {
-  if (typeof import.meta !== "undefined" && import.meta.env) {
+export function getTimeoutFromEnv(envKey: string, defaultValue: number): number {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
     const envValue = import.meta.env[envKey];
     if (envValue) {
       const parsed = parseInt(envValue, 10);
@@ -88,7 +85,7 @@ export function getTimeoutFromEnv(
 export async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
-  errorMessage?: string,
+  errorMessage?: string
 ): Promise<T> {
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {

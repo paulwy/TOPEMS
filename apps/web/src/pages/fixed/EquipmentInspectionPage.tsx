@@ -1,14 +1,30 @@
-import { Box, Card, CardContent, Chip, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Tooltip,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
-import { Plus, ChevronLeft, AlertCircle, ClipboardCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { assetApi, type Asset } from "@/api/erp";
-import { employeeApi, type Employee } from "@/api/hrm";
-import { mesEquipmentApi, type InspectionRecord } from "@/api/mesEquipment";
-import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/DataTable";
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Typography,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, ChevronLeft, AlertCircle, ClipboardCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { assetApi, type Asset } from '@/api/erp';
+import { employeeApi, type Employee } from '@/api/hrm';
+import { mesEquipmentApi, type InspectionRecord } from '@/api/mesEquipment';
+import { useAppStore } from '../../store';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DataTable } from '@/components/DataTable';
 
 const EquipmentInspectionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,16 +36,13 @@ const EquipmentInspectionPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInspectionModal, setShowInspectionModal] = useState(false);
-  const [selectedForInspection, setSelectedForInspection] =
-    useState<Asset | null>(null);
+  const [selectedForInspection, setSelectedForInspection] = useState<Asset | null>(null);
 
-  const [newInspection, setNewInspection] = useState<Partial<InspectionRecord>>(
-    {
-      inspector: "",
-      inspection_date: new Date().toISOString().split("T")[0],
-      status: "normal",
-    },
-  );
+  const [newInspection, setNewInspection] = useState<Partial<InspectionRecord>>({
+    inspector: '',
+    inspection_date: new Date().toISOString().split('T')[0],
+    status: 'normal',
+  });
 
   useEffect(() => {
     loadData();
@@ -58,11 +71,11 @@ const EquipmentInspectionPage: React.FC = () => {
         setInspections(inspectionRes.data.items || []);
       }
     } catch (err: any) {
-      setError(err.message || "加载数据失败");
+      setError(err.message || '加载数据失败');
       addNotification({
-        title: "加载失败",
-        message: "加载数据失败",
-        type: "error",
+        title: '加载失败',
+        message: '加载数据失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -88,25 +101,25 @@ const EquipmentInspectionPage: React.FC = () => {
       const res = await mesEquipmentApi.createInspection(data);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "点检记录创建成功",
-          type: "success",
+          title: '成功',
+          message: '点检记录创建成功',
+          type: 'success',
         });
         setShowInspectionModal(false);
         setSelectedForInspection(null);
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "创建点检记录失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '创建点检记录失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "创建点检记录失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '创建点检记录失败',
+        type: 'error',
       });
     }
   };
@@ -114,76 +127,77 @@ const EquipmentInspectionPage: React.FC = () => {
   const inspectionColumns = useMemo<ColumnDef<InspectionRecord>[]>(
     () => [
       {
-        accessorKey: "equipment_code",
-        header: "设备编号",
+        accessorKey: 'equipment_code',
+        header: '设备编号',
         cell: ({ row }) => row.original.equipment_code,
       },
       {
-        accessorKey: "equipment_name",
-        header: "设备名称",
+        accessorKey: 'equipment_name',
+        header: '设备名称',
         cell: ({ row }) => row.original.equipment_name,
       },
       {
-        accessorKey: "inspector",
-        header: "点检人",
+        accessorKey: 'inspector',
+        header: '点检人',
         cell: ({ row }) => row.original.inspector,
       },
       {
-        accessorKey: "inspection_date",
-        header: "点检日期",
+        accessorKey: 'inspection_date',
+        header: '点检日期',
         cell: ({ row }) => row.original.inspection_date,
       },
       {
-        accessorKey: "temperature",
-        header: "温度(°C)",
-        cell: ({ row }) => row.original.temperature || "-",
+        accessorKey: 'temperature',
+        header: '温度(°C)',
+        cell: ({ row }) => row.original.temperature || '-',
       },
       {
-        accessorKey: "status",
-        header: "状态",
+        accessorKey: 'status',
+        header: '状态',
         cell: ({ row }) => (
           <Chip
-            size="small"
-            color={row.original.status === "normal" ? "success" : "error"}
-            label={row.original.status === "normal" ? "正常" : "异常"}
+            size='small'
+            color={row.original.status === 'normal' ? 'success' : 'error'}
+            label={row.original.status === 'normal' ? '正常' : '异常'}
           />
         ),
       },
       {
-        accessorKey: "abnormalities",
-        header: "异常情况",
-        cell: ({ row }) => row.original.abnormalities || "-",
+        accessorKey: 'abnormalities',
+        header: '异常情况',
+        cell: ({ row }) => row.original.abnormalities || '-',
       },
     ],
-    [],
+    []
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f1f5f9" }}>
-      <Box
-        sx={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e2e8f0" }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
+      <Box sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Button variant="text" onClick={() => navigate("/equipment")}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Button
+                variant='text'
+                onClick={() => navigate('/equipment')}
+              >
                 <ChevronLeft sx={{ width: 20, height: 20, marginRight: 1 }} />
                 返回设备台账
               </Button>
               <Box sx={{ ml: 2 }}>
                 <Typography
                   sx={{
-                    fontSize: "1.5rem",
+                    fontSize: '1.5rem',
                     fontWeight: 700,
-                    color: "#0f172a",
-                    display: "flex",
-                    alignItems: "center",
+                    color: '#0f172a',
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
                   <ClipboardCheck
@@ -191,20 +205,18 @@ const EquipmentInspectionPage: React.FC = () => {
                       width: 28,
                       height: 28,
                       marginRight: 3,
-                      color: "#2563eb",
+                      color: '#2563eb',
                     }}
                   />
                   设备点检记录
                 </Typography>
-                <Typography
-                  sx={{ mt: 0.5, fontSize: "0.875rem", color: "#64748b" }}
-                >
+                <Typography sx={{ mt: 0.5, fontSize: '0.875rem', color: '#64748b' }}>
                   设备点检记录管理
                 </Typography>
               </Box>
             </Box>
             <Button
-              variant="contained"
+              variant='contained'
               onClick={() => {
                 setSelectedForInspection(assets[0] || null);
                 setShowInspectionModal(true);
@@ -217,39 +229,40 @@ const EquipmentInspectionPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 4 }}>
+      <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 4 }}>
         <Card>
           <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
+              <Box sx={{ p: 4, textAlign: 'center' }}>
                 <Box
                   sx={{
-                    display: "inline-block",
+                    display: 'inline-block',
                     width: 32,
                     height: 32,
-                    border: "4px solid #2563eb",
-                    borderTopColor: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
+                    border: '4px solid #2563eb',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
                   }}
                 />
-                <Typography sx={{ mt: 2, color: "#64748b" }}>
-                  加载中...
-                </Typography>
+                <Typography sx={{ mt: 2, color: '#64748b' }}>加载中...</Typography>
               </Box>
             ) : error ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
+              <Box sx={{ p: 4, textAlign: 'center' }}>
                 <AlertCircle
                   sx={{
                     width: 48,
                     height: 48,
-                    color: "#ef4444",
-                    mx: "auto",
+                    color: '#ef4444',
+                    mx: 'auto',
                     mb: 2,
                   }}
                 />
-                <Typography sx={{ color: "#dc2626" }}>{error}</Typography>
-                <Button sx={{ mt: 2 }} onClick={loadData}>
+                <Typography sx={{ color: '#dc2626' }}>{error}</Typography>
+                <Button
+                  sx={{ mt: 2 }}
+                  onClick={loadData}
+                >
                   重试
                 </Button>
               </Box>
@@ -257,8 +270,8 @@ const EquipmentInspectionPage: React.FC = () => {
               <DataTable
                 columns={inspectionColumns}
                 data={inspections}
-                searchPlaceholder="搜索点检记录..."
-                searchKey="equipment_name"
+                searchPlaceholder='搜索点检记录...'
+                searchKey='equipment_name'
               />
             )}
           </CardContent>
@@ -268,36 +281,35 @@ const EquipmentInspectionPage: React.FC = () => {
       <Dialog
         open={showInspectionModal}
         onClose={() => setShowInspectionModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>设备点检记录</DialogTitle>
         <DialogContent>
           <form onSubmit={handleCreateInspection}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box sx={{ backgroundColor: "#f8fafc", p: 2, borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ backgroundColor: '#f8fafc', p: 2, borderRadius: 2 }}>
                 <Typography
                   sx={{
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: "#475569",
+                    color: '#475569',
                   }}
                 >
-                  设备: {selectedForInspection?.name} (
-                  {selectedForInspection?.asset_number})
+                  设备: {selectedForInspection?.name} ({selectedForInspection?.asset_number})
                 </Typography>
               </Box>
 
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
                 <TextField
-                  label="点检人 *"
-                  value={newInspection.inspector || ""}
+                  label='点检人 *'
+                  value={newInspection.inspector || ''}
                   onChange={(e) =>
                     setNewInspection({
                       ...newInspection,
@@ -308,9 +320,9 @@ const EquipmentInspectionPage: React.FC = () => {
                   required
                 />
                 <TextField
-                  label="点检日期 *"
-                  type="date"
-                  value={newInspection.inspection_date || ""}
+                  label='点检日期 *'
+                  type='date'
+                  value={newInspection.inspection_date || ''}
                   onChange={(e) =>
                     setNewInspection({
                       ...newInspection,
@@ -325,16 +337,16 @@ const EquipmentInspectionPage: React.FC = () => {
 
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
                   gap: 2,
                 }}
               >
                 <TextField
-                  label="温度 (°C)"
-                  type="number"
-                  slotProps={{ htmlInput: { step: "0.1" } }}
-                  value={newInspection.temperature || ""}
+                  label='温度 (°C)'
+                  type='number'
+                  slotProps={{ htmlInput: { step: '0.1' } }}
+                  value={newInspection.temperature || ''}
                   onChange={(e) =>
                     setNewInspection({
                       ...newInspection,
@@ -344,10 +356,10 @@ const EquipmentInspectionPage: React.FC = () => {
                   fullWidth
                 />
                 <TextField
-                  label="振动"
-                  type="number"
-                  slotProps={{ htmlInput: { step: "0.01" } }}
-                  value={newInspection.vibration || ""}
+                  label='振动'
+                  type='number'
+                  slotProps={{ htmlInput: { step: '0.01' } }}
+                  value={newInspection.vibration || ''}
                   onChange={(e) =>
                     setNewInspection({
                       ...newInspection,
@@ -357,10 +369,10 @@ const EquipmentInspectionPage: React.FC = () => {
                   fullWidth
                 />
                 <TextField
-                  label="噪音 (dB)"
-                  type="number"
-                  slotProps={{ htmlInput: { step: "0.1" } }}
-                  value={newInspection.noise_level || ""}
+                  label='噪音 (dB)'
+                  type='number'
+                  slotProps={{ htmlInput: { step: '0.1' } }}
+                  value={newInspection.noise_level || ''}
                   onChange={(e) =>
                     setNewInspection({
                       ...newInspection,
@@ -374,8 +386,8 @@ const EquipmentInspectionPage: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>点检状态</InputLabel>
                 <Select
-                  value={newInspection.status || "normal"}
-                  label="点检状态"
+                  value={newInspection.status || 'normal'}
+                  label='点检状态'
                   onChange={(e) =>
                     setNewInspection({
                       ...newInspection,
@@ -383,16 +395,16 @@ const EquipmentInspectionPage: React.FC = () => {
                     })
                   }
                 >
-                  <MenuItem value="normal">正常</MenuItem>
-                  <MenuItem value="abnormal">异常</MenuItem>
+                  <MenuItem value='normal'>正常</MenuItem>
+                  <MenuItem value='abnormal'>异常</MenuItem>
                 </Select>
               </FormControl>
 
               <TextField
-                label="异常情况"
+                label='异常情况'
                 multiline
                 rows={3}
-                value={newInspection.abnormalities || ""}
+                value={newInspection.abnormalities || ''}
                 onChange={(e) =>
                   setNewInspection({
                     ...newInspection,
@@ -403,10 +415,10 @@ const EquipmentInspectionPage: React.FC = () => {
               />
 
               <TextField
-                label="备注"
+                label='备注'
                 multiline
                 rows={2}
-                value={newInspection.remarks || ""}
+                value={newInspection.remarks || ''}
                 onChange={(e) =>
                   setNewInspection({
                     ...newInspection,
@@ -420,18 +432,21 @@ const EquipmentInspectionPage: React.FC = () => {
             <Box
               sx={{
                 mt: 3,
-                display: "flex",
-                justifyContent: "flex-end",
+                display: 'flex',
+                justifyContent: 'flex-end',
                 gap: 1,
               }}
             >
               <Button
-                variant="outlined"
+                variant='outlined'
                 onClick={() => setShowInspectionModal(false)}
               >
                 取消
               </Button>
-              <Button variant="contained" type="submit">
+              <Button
+                variant='contained'
+                type='submit'
+              >
                 提交
               </Button>
             </Box>

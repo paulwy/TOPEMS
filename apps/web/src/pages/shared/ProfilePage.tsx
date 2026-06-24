@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { apiLogger } from "@/utils/logger";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { apiLogger } from '@/utils/logger';
 import {
   User,
   Mail,
@@ -17,15 +17,35 @@ import {
   Activity,
   MessageSquare,
   FileText,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { authApi, type User as UserType, type AccessLog } from "@/api/iam";
-import { useAppStore } from "../../store";
-import { useAuth } from "../../hooks/useAuth";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { authApi, type User as UserType, type AccessLog } from '@/api/iam';
+import { useAppStore } from '../../store';
+import { useAuth } from '../../hooks/useAuth';
 
-import { Box, TextField, Typography, Card, CardContent, CardHeader, Dialog, DialogTitle, DialogContent, DialogActions, Avatar, Switch, FormControlLabel, Chip, Tabs, Tab, IconButton, CircularProgress, Divider,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import {
+  Box,
+  TextField,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Avatar,
+  Switch,
+  FormControlLabel,
+  Chip,
+  Tabs,
+  Tab,
+  IconButton,
+  CircularProgress,
+  Divider,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
 interface ActivityItem {
   id: string;
@@ -63,12 +83,8 @@ const ProfilePage: React.FC = () => {
   const setUser = useAppStore((state) => state.setUser);
   const shortcuts = useAppStore((state) => state.shortcuts);
   const setShortcuts = useAppStore((state) => state.setShortcuts);
-  const notificationSettings = useAppStore(
-    (state) => state.notificationSettings,
-  );
-  const setNotificationSettings = useAppStore(
-    (state) => state.setNotificationSettings,
-  );
+  const notificationSettings = useAppStore((state) => state.notificationSettings);
+  const setNotificationSettings = useAppStore((state) => state.setNotificationSettings);
   const { logout } = useAuth();
 
   const [user, setUserState] = useState<UserType | null>(null);
@@ -84,16 +100,16 @@ const ProfilePage: React.FC = () => {
 
   const profileForm = useForm<ProfileFormData>({
     defaultValues: {
-      full_name: "",
-      email: "",
+      full_name: '',
+      email: '',
     },
   });
 
   const passwordForm = useForm<PasswordFormData>({
     defaultValues: {
-      current_password: "",
-      new_password: "",
-      confirm_password: "",
+      current_password: '',
+      new_password: '',
+      confirm_password: '',
     },
   });
 
@@ -105,7 +121,7 @@ const ProfilePage: React.FC = () => {
       if (res.success && res.data) {
         setUserState(res.data);
         profileForm.reset({
-          full_name: res.data.full_name || "",
+          full_name: res.data.full_name || '',
           email: res.data.email,
         });
         if (setUser) {
@@ -122,13 +138,12 @@ const ProfilePage: React.FC = () => {
           });
         }
       } else {
-        setError(res.message || "获取用户信息失败");
+        setError(res.message || '获取用户信息失败');
       }
     } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.message || err.message || "获取用户信息失败";
+      const errorMsg = err.response?.data?.message || err.message || '获取用户信息失败';
       setError(errorMsg);
-      addNotification({ title: "加载失败", message: errorMsg, type: "error" });
+      addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -145,7 +160,7 @@ const ProfilePage: React.FC = () => {
         setActivities(res.data);
       }
     } catch (err) {
-      apiLogger.error("加载活动记录失败", err);
+      apiLogger.error('加载活动记录失败', err);
     } finally {
       setLoadingActivities(false);
     }
@@ -165,20 +180,20 @@ const ProfilePage: React.FC = () => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      if (!file.type.startsWith("image/")) {
+      if (!file.type.startsWith('image/')) {
         addNotification({
-          title: "错误",
-          message: "请选择图片文件",
-          type: "error",
+          title: '错误',
+          message: '请选择图片文件',
+          type: 'error',
         });
         return;
       }
 
       if (file.size > 2 * 1024 * 1024) {
         addNotification({
-          title: "错误",
-          message: "图片大小不能超过2MB",
-          type: "error",
+          title: '错误',
+          message: '图片大小不能超过2MB',
+          type: 'error',
         });
         return;
       }
@@ -193,23 +208,23 @@ const ProfilePage: React.FC = () => {
             if (res.success && res.data) {
               setUserState(res.data);
               addNotification({
-                title: "成功",
-                message: "头像已更新",
-                type: "success",
+                title: '成功',
+                message: '头像已更新',
+                type: 'success',
               });
             }
           })
           .catch(() => {
             addNotification({
-              title: "错误",
-              message: "头像更新失败",
-              type: "error",
+              title: '错误',
+              message: '头像更新失败',
+              type: 'error',
             });
           });
       };
       reader.readAsDataURL(file);
     },
-    [addNotification],
+    [addNotification]
   );
 
   const handleProfileUpdate = useCallback(
@@ -238,47 +253,46 @@ const ProfilePage: React.FC = () => {
             });
           }
           addNotification({
-            title: "成功",
-            message: "个人信息更新成功",
-            type: "success",
+            title: '成功',
+            message: '个人信息更新成功',
+            type: 'success',
           });
         } else {
           addNotification({
-            title: "失败",
-            message: res.message || "更新失败",
-            type: "error",
+            title: '失败',
+            message: res.message || '更新失败',
+            type: 'error',
           });
         }
       } catch (err: any) {
-        const errorMsg =
-          err.response?.data?.message || err.message || "更新失败";
-        addNotification({ title: "失败", message: errorMsg, type: "error" });
+        const errorMsg = err.response?.data?.message || err.message || '更新失败';
+        addNotification({ title: '失败', message: errorMsg, type: 'error' });
       }
     },
-    [user, setUser, addNotification],
+    [user, setUser, addNotification]
   );
 
   const handlePasswordChange = useCallback(
     async (data: PasswordFormData) => {
       if (data.new_password !== data.confirm_password) {
         addNotification({
-          title: "错误",
-          message: "两次输入的密码不一致",
-          type: "error",
+          title: '错误',
+          message: '两次输入的密码不一致',
+          type: 'error',
         });
-        passwordForm.setError("confirm_password", {
-          message: "两次输入的密码不一致",
+        passwordForm.setError('confirm_password', {
+          message: '两次输入的密码不一致',
         });
         return;
       }
 
       if (data.new_password.length < 6) {
         addNotification({
-          title: "错误",
-          message: "密码长度至少为6位",
-          type: "error",
+          title: '错误',
+          message: '密码长度至少为6位',
+          type: 'error',
         });
-        passwordForm.setError("new_password", { message: "密码长度至少为6位" });
+        passwordForm.setError('new_password', { message: '密码长度至少为6位' });
         return;
       }
 
@@ -290,30 +304,29 @@ const ProfilePage: React.FC = () => {
 
         if (res.success) {
           addNotification({
-            title: "成功",
-            message: "密码修改成功，请重新登录",
-            type: "success",
+            title: '成功',
+            message: '密码修改成功，请重新登录',
+            type: 'success',
           });
           setShowPasswordDialog(false);
           passwordForm.reset();
           setTimeout(() => {
             logout();
-            navigate("/login");
+            navigate('/login');
           }, 2000);
         } else {
           addNotification({
-            title: "失败",
-            message: res.message || "修改密码失败",
-            type: "error",
+            title: '失败',
+            message: res.message || '修改密码失败',
+            type: 'error',
           });
         }
       } catch (err: any) {
-        const errorMsg =
-          err.response?.data?.message || err.message || "修改密码失败";
-        addNotification({ title: "失败", message: errorMsg, type: "error" });
+        const errorMsg = err.response?.data?.message || err.message || '修改密码失败';
+        addNotification({ title: '失败', message: errorMsg, type: 'error' });
       }
     },
-    [addNotification, navigate, passwordForm, logout],
+    [addNotification, navigate, passwordForm, logout]
   );
 
   const handleNotificationSettingChange = useCallback(
@@ -326,21 +339,21 @@ const ProfilePage: React.FC = () => {
       try {
         await authApi.updatePreferences({ notification_settings: newSettings });
         addNotification({
-          title: "成功",
+          title: '成功',
           message: `${key}通知设置已更新`,
-          type: "success",
+          type: 'success',
         });
       } catch (err) {
-        apiLogger.error("保存通知设置失败", err);
+        apiLogger.error('保存通知设置失败', err);
         addNotification({
-          title: "错误",
-          message: "保存通知设置失败",
-          type: "error",
+          title: '错误',
+          message: '保存通知设置失败',
+          type: 'error',
         });
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [notificationSettings, addNotification],
+    [notificationSettings, addNotification]
   );
 
   const handleShortcutToggle = useCallback(
@@ -354,36 +367,36 @@ const ProfilePage: React.FC = () => {
       if (shortcuts.find((s) => s.id === shortcut.id)) {
         newShortcuts = shortcuts.filter((s) => s.id !== shortcut.id);
         addNotification({
-          title: "提示",
+          title: '提示',
           message: `${shortcut.title}已从快捷方式移除`,
-          type: "info",
+          type: 'info',
         });
       } else {
         newShortcuts = [...shortcuts, shortcut];
         addNotification({
-          title: "提示",
+          title: '提示',
           message: `${shortcut.title}已添加到快捷方式`,
-          type: "success",
+          type: 'success',
         });
       }
       setShortcuts(newShortcuts);
 
       authApi.updatePreferences({ shortcuts: newShortcuts }).catch((err) => {
-        apiLogger.error("保存快捷方式失败", err);
+        apiLogger.error('保存快捷方式失败', err);
       });
     },
-    [shortcuts, setShortcuts, addNotification],
+    [shortcuts, setShortcuts, addNotification]
   );
 
   if (loading) {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          bgcolor: "grey.50",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100vh',
+          bgcolor: 'grey.50',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <CircularProgress />
@@ -395,20 +408,24 @@ const ProfilePage: React.FC = () => {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          bgcolor: "grey.50",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100vh',
+          bgcolor: 'grey.50',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
+        <Box sx={{ textAlign: 'center' }}>
           <AlertCircle
             size={48}
-            style={{ color: "#ef4444", marginBottom: 12 }}
+            style={{ color: '#ef4444', marginBottom: 12 }}
           />
-          <Typography color="error">{error || "无法获取用户信息"}</Typography>
-          <Button sx={{ mt: 2 }} variant="contained" onClick={loadUserProfile}>
+          <Typography color='error'>{error || '无法获取用户信息'}</Typography>
+          <Button
+            sx={{ mt: 2 }}
+            variant='contained'
+            onClick={loadUserProfile}
+          >
             重试
           </Button>
         </Box>
@@ -417,44 +434,44 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <Box
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ maxWidth: 1152, mx: "auto", px: 3, py: 3 }}>
+        <Box sx={{ maxWidth: 1152, mx: 'auto', px: 3, py: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <IconButton onClick={() => navigate("/dashboard")}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <IconButton onClick={() => navigate('/dashboard')}>
                 <ChevronLeft size={20} />
               </IconButton>
               <Box>
                 <Typography
-                  variant="h5"
+                  variant='h5'
                   sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
                   <User
                     size={28}
-                    style={{ marginRight: 12, color: "#2563eb" }}
+                    style={{ marginRight: 12, color: '#2563eb' }}
                   />
                   个人中心
                 </Typography>
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
+                  variant='body2'
+                  color='text.secondary'
                   sx={{ mt: 0.5 }}
                 >
                   管理您的个人信息和账户安全
@@ -465,33 +482,33 @@ const ProfilePage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1152, mx: "auto", px: 3, py: 3 }}>
+      <Box sx={{ maxWidth: 1152, mx: 'auto', px: 3, py: 3 }}>
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "1fr 2fr" },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' },
             gap: 3,
           }}
         >
           <Box>
-            <Card sx={{ position: "sticky", top: 64 }}>
+            <Card sx={{ position: 'sticky', top: 64 }}>
               <CardContent sx={{ p: 3 }}>
                 <Box
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
                   }}
                 >
-                  <Box sx={{ position: "relative" }}>
+                  <Box sx={{ position: 'relative' }}>
                     <Avatar
                       src={avatarUrl || undefined}
                       sx={{
                         width: 96,
                         height: 96,
                         mb: 2,
-                        bgcolor: "primary.main",
+                        bgcolor: 'primary.main',
                         fontSize: 36,
                       }}
                     >
@@ -501,78 +518,89 @@ const ProfilePage: React.FC = () => {
                     <IconButton
                       onClick={() => fileInputRef.current?.click()}
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         bottom: 8,
                         right: 0,
-                        bgcolor: "primary.main",
-                        color: "white",
-                        "&:hover": { bgcolor: "primary.dark" },
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' },
                         width: 32,
                         height: 32,
                       }}
-                      size="small"
+                      size='small'
                     >
                       <Camera size={16} />
                     </IconButton>
                     <input
                       ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
+                      type='file'
+                      accept='image/*'
                       onChange={handleAvatarUpload}
-                      style={{ display: "none" }}
+                      style={{ display: 'none' }}
                     />
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600 }}
+                  >
                     {user.full_name || user.username}
                   </Typography>
                   <Typography
-                    variant="body2"
-                    color="text.secondary"
+                    variant='body2'
+                    color='text.secondary'
                     sx={{ mt: 0.5 }}
                   >
                     {user.email}
                   </Typography>
-                  <Box sx={{ mt: 2, width: "100%" }}>
+                  <Box sx={{ mt: 2, width: '100%' }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 1,
                         mb: 1,
                       }}
                     >
                       <User size={16} />
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         用户名: {user.username}
                       </Typography>
                     </Box>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 1,
                         mb: 1,
                       }}
                     >
                       <Shield size={16} />
-                      <Typography variant="body2" color="text.secondary">
-                        角色: {user.role || "普通用户"}
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        角色: {user.role || '普通用户'}
                       </Typography>
                     </Box>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 1,
                       }}
                     >
                       <RefreshCw size={16} />
-                      <Typography variant="body2" color="text.secondary">
-                        创建于:{" "}
-                        {new Date(user.created_at).toLocaleDateString("zh-CN")}
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        创建于: {new Date(user.created_at).toLocaleDateString('zh-CN')}
                       </Typography>
                     </Box>
                   </Box>
@@ -586,31 +614,34 @@ const ProfilePage: React.FC = () => {
               <CardHeader
                 sx={{ pb: 0 }}
                 title={
-                  <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+                  <Tabs
+                    value={activeTab}
+                    onChange={(_, v) => setActiveTab(v)}
+                  >
                     <Tab
                       icon={<User size={16} />}
-                      iconPosition="start"
-                      label="个人信息"
+                      iconPosition='start'
+                      label='个人信息'
                     />
                     <Tab
                       icon={<Shield size={16} />}
-                      iconPosition="start"
-                      label="账户安全"
+                      iconPosition='start'
+                      label='账户安全'
                     />
                     <Tab
                       icon={<Activity size={16} />}
-                      iconPosition="start"
-                      label="最近活动"
+                      iconPosition='start'
+                      label='最近活动'
                     />
                     <Tab
                       icon={<Bell size={16} />}
-                      iconPosition="start"
-                      label="通知设置"
+                      iconPosition='start'
+                      label='通知设置'
                     />
                     <Tab
                       icon={<Star size={16} />}
-                      iconPosition="start"
-                      label="快捷方式"
+                      iconPosition='start'
+                      label='快捷方式'
                     />
                   </Tabs>
                 }
@@ -618,53 +649,53 @@ const ProfilePage: React.FC = () => {
               <CardContent>
                 {activeTab === 0 && (
                   <Box
-                    component="form"
+                    component='form'
                     onSubmit={profileForm.handleSubmit(handleProfileUpdate)}
-                    sx={{ "& > :not(style)": { mb: 3 } }}
+                    sx={{ '& > :not(style)': { mb: 3 } }}
                   >
                     <TextField
                       fullWidth
-                      label="姓名"
-                      {...profileForm.register("full_name")}
-                      placeholder="请输入姓名"
-                      size="small"
+                      label='姓名'
+                      {...profileForm.register('full_name')}
+                      placeholder='请输入姓名'
+                      size='small'
                     />
                     <Box>
                       <TextField
                         fullWidth
-                        label="邮箱 *"
-                        type="email"
-                        {...profileForm.register("email", {
-                          required: "邮箱是必填项",
+                        label='邮箱 *'
+                        type='email'
+                        {...profileForm.register('email', {
+                          required: '邮箱是必填项',
                           pattern: {
                             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: "请输入有效的邮箱地址",
+                            message: '请输入有效的邮箱地址',
                           },
                         })}
-                        placeholder="请输入邮箱"
+                        placeholder='请输入邮箱'
                         error={!!profileForm.formState.errors.email}
                         helperText={profileForm.formState.errors.email?.message}
-                        size="small"
+                        size='small'
                       />
                     </Box>
                     <TextField
                       fullWidth
-                      label="用户名"
+                      label='用户名'
                       value={user.username}
                       disabled
-                      size="small"
+                      size='small'
                     />
-                    <Box sx={{ display: "flex", gap: 1.5, pt: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 1.5, pt: 2 }}>
                       <Button
-                        type="submit"
-                        variant="contained"
+                        type='submit'
+                        variant='contained'
                         startIcon={<Save size={16} />}
                       >
                         保存更改
                       </Button>
                       <Button
-                        type="button"
-                        variant="outlined"
+                        type='button'
+                        variant='outlined'
                         onClick={() => profileForm.reset()}
                       >
                         重置
@@ -674,37 +705,39 @@ const ProfilePage: React.FC = () => {
                 )}
 
                 {activeTab === 1 && (
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-                  >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         p: 2,
-                        bgcolor: "grey.100",
+                        bgcolor: 'grey.100',
                         borderRadius: 1,
                       }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                      >
-                        <Shield size={20} style={{ color: "#2563eb" }} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Shield
+                          size={20}
+                          style={{ color: '#2563eb' }}
+                        />
                         <Box>
                           <Typography
-                            variant="subtitle1"
+                            variant='subtitle1'
                             sx={{ fontWeight: 500 }}
                           >
                             修改密码
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             定期更新密码以保护账户安全
                           </Typography>
                         </Box>
                       </Box>
                       <Button
-                        variant="contained"
+                        variant='contained'
                         onClick={() => setShowPasswordDialog(true)}
                       >
                         修改密码
@@ -713,64 +746,75 @@ const ProfilePage: React.FC = () => {
 
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         p: 2,
-                        bgcolor: "grey.100",
+                        bgcolor: 'grey.100',
                         borderRadius: 1,
                       }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                      >
-                        <Mail size={20} style={{ color: "#16a34a" }} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Mail
+                          size={20}
+                          style={{ color: '#16a34a' }}
+                        />
                         <Box>
                           <Typography
-                            variant="subtitle1"
+                            variant='subtitle1'
                             sx={{ fontWeight: 500 }}
                           >
                             邮箱验证
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             {user.email} 已验证
                           </Typography>
                         </Box>
                       </Box>
-                      <CheckCircle2 size={20} style={{ color: "#22c55e" }} />
+                      <CheckCircle2
+                        size={20}
+                        style={{ color: '#22c55e' }}
+                      />
                     </Box>
 
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         p: 2,
-                        bgcolor: "grey.100",
+                        bgcolor: 'grey.100',
                         borderRadius: 1,
                       }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                      >
-                        <Settings size={20} style={{ color: "#9333ea" }} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Settings
+                          size={20}
+                          style={{ color: '#9333ea' }}
+                        />
                         <Box>
                           <Typography
-                            variant="subtitle1"
+                            variant='subtitle1'
                             sx={{ fontWeight: 500 }}
                           >
                             登录状态
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             当前会话活跃中
                           </Typography>
                         </Box>
                       </Box>
                       <Button
-                        variant="outlined"
+                        variant='outlined'
                         onClick={() => {
                           logout();
-                          navigate("/login");
+                          navigate('/login');
                         }}
                       >
                         退出登录
@@ -783,18 +827,21 @@ const ProfilePage: React.FC = () => {
                   <Box>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         mb: 2,
                       }}
                     >
-                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ fontWeight: 500 }}
+                      >
                         最近活动记录
                       </Typography>
                       <Button
-                        variant="text"
-                        size="small"
+                        variant='text'
+                        size='small'
                         startIcon={<RefreshCw size={16} />}
                         onClick={loadActivities}
                       >
@@ -802,31 +849,29 @@ const ProfilePage: React.FC = () => {
                       </Button>
                     </Box>
                     {loadingActivities ? (
-                      <Box sx={{ textAlign: "center", py: 4 }}>
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
                         <CircularProgress size={32} />
                         <Typography
-                          variant="body2"
-                          color="text.secondary"
+                          variant='body2'
+                          color='text.secondary'
                           sx={{ mt: 1 }}
                         >
                           加载中...
                         </Typography>
                       </Box>
                     ) : activities.length === 0 ? (
-                      <Box sx={{ textAlign: "center", py: 4 }}>
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
                         <Clock
                           size={48}
-                          style={{ color: "#9ca3af", marginBottom: 12 }}
+                          style={{ color: '#9ca3af', marginBottom: 12 }}
                         />
-                        <Typography color="text.secondary">
-                          暂无活动记录
-                        </Typography>
+                        <Typography color='text.secondary'>暂无活动记录</Typography>
                       </Box>
                     ) : (
                       <Box
                         sx={{
-                          display: "flex",
-                          flexDirection: "column",
+                          display: 'flex',
+                          flexDirection: 'column',
                           gap: 1.5,
                         }}
                       >
@@ -834,11 +879,11 @@ const ProfilePage: React.FC = () => {
                           <Box
                             key={activity.id}
                             sx={{
-                              display: "flex",
-                              alignItems: "flex-start",
+                              display: 'flex',
+                              alignItems: 'flex-start',
                               gap: 1.5,
                               p: 1.5,
-                              bgcolor: "grey.100",
+                              bgcolor: 'grey.100',
                               borderRadius: 1,
                             }}
                           >
@@ -846,46 +891,44 @@ const ProfilePage: React.FC = () => {
                               sx={{
                                 width: 8,
                                 height: 8,
-                                borderRadius: "50%",
-                                bgcolor: activity.success
-                                  ? "success.main"
-                                  : "error.main",
+                                borderRadius: '50%',
+                                bgcolor: activity.success ? 'success.main' : 'error.main',
                                 mt: 1,
                               }}
                             />
                             <Box sx={{ flex: 1 }}>
                               <Box
                                 sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
                                 }}
                               >
                                 <Typography
-                                  variant="body2"
+                                  variant='body2'
                                   sx={{ fontWeight: 500 }}
                                 >
                                   {activity.action}
                                 </Typography>
                                 <Typography
-                                  variant="caption"
-                                  color="text.secondary"
+                                  variant='caption'
+                                  color='text.secondary'
                                 >
-                                  {new Date(activity.created_at).toLocaleString(
-                                    "zh-CN",
-                                  )}
+                                  {new Date(activity.created_at).toLocaleString('zh-CN')}
                                 </Typography>
                               </Box>
                               <Typography
-                                variant="body2"
-                                color="text.secondary"
+                                variant='body2'
+                                color='text.secondary'
                               >
                                 {activity.resource}
-                                {activity.ip_address &&
-                                  ` · ${activity.ip_address}`}
+                                {activity.ip_address && ` · ${activity.ip_address}`}
                               </Typography>
                               {activity.error_message && (
-                                <Typography variant="caption" color="error">
+                                <Typography
+                                  variant='caption'
+                                  color='error'
+                                >
                                   {activity.error_message}
                                 </Typography>
                               )}
@@ -900,80 +943,81 @@ const ProfilePage: React.FC = () => {
                 {activeTab === 3 && (
                   <Box>
                     <Typography
-                      variant="subtitle1"
+                      variant='subtitle1'
                       sx={{ fontWeight: 500, mb: 2 }}
                     >
                       通知偏好设置
                     </Typography>
-                    <Box
-                      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-                    >
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {[
                         {
-                          key: "email_enabled" as const,
+                          key: 'email_enabled' as const,
                           icon: Mail,
-                          label: "邮件通知",
-                          desc: "接收重要信息的邮件通知",
-                          color: "#2563eb",
+                          label: '邮件通知',
+                          desc: '接收重要信息的邮件通知',
+                          color: '#2563eb',
                         },
                         {
-                          key: "system_enabled" as const,
+                          key: 'system_enabled' as const,
                           icon: Bell,
-                          label: "系统通知",
-                          desc: "接收系统消息和公告",
-                          color: "#ca8a04",
+                          label: '系统通知',
+                          desc: '接收系统消息和公告',
+                          color: '#ca8a04',
                         },
                         {
-                          key: "workflow_enabled" as const,
+                          key: 'workflow_enabled' as const,
                           icon: Activity,
-                          label: "工作流通知",
-                          desc: "接收工作流审批和任务提醒",
-                          color: "#16a34a",
+                          label: '工作流通知',
+                          desc: '接收工作流审批和任务提醒',
+                          color: '#16a34a',
                         },
                         {
-                          key: "document_enabled" as const,
+                          key: 'document_enabled' as const,
                           icon: FileText,
-                          label: "文档通知",
-                          desc: "接收文档更新和评论提醒",
-                          color: "#9333ea",
+                          label: '文档通知',
+                          desc: '接收文档更新和评论提醒',
+                          color: '#9333ea',
                         },
                         {
-                          key: "security_enabled" as const,
+                          key: 'security_enabled' as const,
                           icon: Shield,
-                          label: "安全通知",
-                          desc: "接收登录和账户安全提醒",
-                          color: "#dc2626",
+                          label: '安全通知',
+                          desc: '接收登录和账户安全提醒',
+                          color: '#dc2626',
                         },
                       ].map(({ key, icon: Icon, label, desc, color }) => (
                         <Box
                           key={key}
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
                             p: 2,
-                            bgcolor: "grey.100",
+                            bgcolor: 'grey.100',
                             borderRadius: 1,
                           }}
                         >
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: 1.5,
                             }}
                           >
-                            <Icon size={20} style={{ color }} />
+                            <Icon
+                              size={20}
+                              style={{ color }}
+                            />
                             <Box>
                               <Typography
-                                variant="subtitle1"
+                                variant='subtitle1'
                                 sx={{ fontWeight: 500 }}
                               >
                                 {label}
                               </Typography>
                               <Typography
-                                variant="body2"
-                                color="text.secondary"
+                                variant='body2'
+                                color='text.secondary'
                               >
                                 {desc}
                               </Typography>
@@ -981,9 +1025,7 @@ const ProfilePage: React.FC = () => {
                           </Box>
                           <Switch
                             checked={notificationSettings[key]}
-                            onChange={() =>
-                              handleNotificationSettingChange(key)
-                            }
+                            onChange={() => handleNotificationSettingChange(key)}
                           />
                         </Box>
                       ))}
@@ -994,75 +1036,73 @@ const ProfilePage: React.FC = () => {
                 {activeTab === 4 && (
                   <Box>
                     <Typography
-                      variant="subtitle1"
+                      variant='subtitle1'
                       sx={{ fontWeight: 500, mb: 2 }}
                     >
                       我的快捷方式
                     </Typography>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 2 }}
                     >
                       选择您常用的功能添加到快捷方式
                     </Typography>
                     <Box
                       sx={{
-                        display: "grid",
+                        display: 'grid',
                         gridTemplateColumns: {
-                          xs: "repeat(2, 1fr)",
-                          md: "repeat(3, 1fr)",
+                          xs: 'repeat(2, 1fr)',
+                          md: 'repeat(3, 1fr)',
                         },
                         gap: 2,
                       }}
                     >
                       {[
                         {
-                          id: "1",
-                          title: "仪表盘",
+                          id: '1',
+                          title: '仪表盘',
                           icon: Activity,
-                          path: "/dashboard",
-                          color: "#3b82f6",
+                          path: '/dashboard',
+                          color: '#3b82f6',
                         },
                         {
-                          id: "2",
-                          title: "文档中心",
+                          id: '2',
+                          title: '文档中心',
                           icon: FileText,
-                          path: "/documents",
-                          color: "#22c55e",
+                          path: '/documents',
+                          color: '#22c55e',
                         },
                         {
-                          id: "3",
-                          title: "工作流",
+                          id: '3',
+                          title: '工作流',
                           icon: Activity,
-                          path: "/flow/definitions",
-                          color: "#a855f7",
+                          path: '/flow/definitions',
+                          color: '#a855f7',
                         },
                         {
-                          id: "4",
-                          title: "通知中心",
+                          id: '4',
+                          title: '通知中心',
                           icon: Bell,
-                          path: "/notifications",
-                          color: "#eab308",
+                          path: '/notifications',
+                          color: '#eab308',
                         },
                         {
-                          id: "5",
-                          title: "AI助手",
+                          id: '5',
+                          title: 'AI助手',
                           icon: Activity,
-                          path: "/ai",
-                          color: "#ec4899",
+                          path: '/ai',
+                          color: '#ec4899',
                         },
                         {
-                          id: "6",
-                          title: "消息中心",
+                          id: '6',
+                          title: '消息中心',
                           icon: MessageSquare,
-                          path: "/im",
-                          color: "#6366f1",
+                          path: '/im',
+                          color: '#6366f1',
                         },
                       ].map((item) => {
-                        const isSelected = shortcuts.some(
-                          (s) => s.id === item.id,
-                        );
+                        const isSelected = shortcuts.some((s) => s.id === item.id);
                         const Icon = item.icon;
                         return (
                           <Box
@@ -1078,26 +1118,22 @@ const ProfilePage: React.FC = () => {
                             sx={{
                               p: 2,
                               borderRadius: 1,
-                              cursor: "pointer",
-                              transition: "all 0.2s",
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
                               border: 2,
-                              borderColor: isSelected
-                                ? "primary.main"
-                                : "transparent",
-                              bgcolor: isSelected ? "primary.50" : "grey.100",
-                              "&:hover": {
-                                borderColor: isSelected
-                                  ? "primary.main"
-                                  : "primary.light",
+                              borderColor: isSelected ? 'primary.main' : 'transparent',
+                              bgcolor: isSelected ? 'primary.50' : 'grey.100',
+                              '&:hover': {
+                                borderColor: isSelected ? 'primary.main' : 'primary.light',
                               },
                             }}
                           >
                             <Box
                               sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                textAlign: "center",
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                textAlign: 'center',
                               }}
                             >
                               <Box
@@ -1105,25 +1141,28 @@ const ProfilePage: React.FC = () => {
                                   width: 48,
                                   height: 48,
                                   borderRadius: 1,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
                                   mb: 1.5,
                                   bgcolor: item.color,
                                 }}
                               >
-                                <Icon size={24} style={{ color: "white" }} />
+                                <Icon
+                                  size={24}
+                                  style={{ color: 'white' }}
+                                />
                               </Box>
                               <Typography
-                                variant="body2"
+                                variant='body2'
                                 sx={{ fontWeight: 500 }}
                               >
                                 {item.title}
                               </Typography>
                               {isSelected && (
                                 <Chip
-                                  label="已添加"
-                                  size="small"
+                                  label='已添加'
+                                  size='small'
                                   sx={{ mt: 1 }}
                                 />
                               )}
@@ -1136,19 +1175,19 @@ const ProfilePage: React.FC = () => {
                     {shortcuts.length > 0 && (
                       <Box sx={{ mt: 3 }}>
                         <Typography
-                          variant="subtitle1"
+                          variant='subtitle1'
                           sx={{ fontWeight: 500, mb: 2 }}
                         >
                           当前快捷方式
                         </Typography>
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                           {shortcuts.map((shortcut) => (
                             <Chip
                               key={shortcut.id}
                               label={`${shortcut.title} ×`}
-                              variant="outlined"
+                              variant='outlined'
                               onClick={() => handleShortcutToggle(shortcut)}
-                              sx={{ cursor: "pointer" }}
+                              sx={{ cursor: 'pointer' }}
                             />
                           ))}
                         </Box>
@@ -1165,65 +1204,62 @@ const ProfilePage: React.FC = () => {
       <Dialog
         open={showPasswordDialog}
         onClose={() => setShowPasswordDialog(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>修改密码</DialogTitle>
         <Box
-          component="form"
+          component='form'
           onSubmit={passwordForm.handleSubmit(handlePasswordChange)}
         >
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-          >
-            <Typography variant="body2" color="text.secondary">
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               请输入当前密码和新密码来完成密码修改
             </Typography>
             <TextField
               fullWidth
-              label="当前密码 *"
-              type="password"
-              {...passwordForm.register("current_password", {
-                required: "当前密码是必填项",
+              label='当前密码 *'
+              type='password'
+              {...passwordForm.register('current_password', {
+                required: '当前密码是必填项',
               })}
-              placeholder="请输入当前密码"
+              placeholder='请输入当前密码'
               error={!!passwordForm.formState.errors.current_password}
-              helperText={
-                passwordForm.formState.errors.current_password?.message
-              }
-              size="small"
+              helperText={passwordForm.formState.errors.current_password?.message}
+              size='small'
             />
             <TextField
               fullWidth
-              label="新密码 *"
-              type="password"
-              {...passwordForm.register("new_password", {
-                required: "新密码是必填项",
-                minLength: { value: 6, message: "密码长度至少为6位" },
+              label='新密码 *'
+              type='password'
+              {...passwordForm.register('new_password', {
+                required: '新密码是必填项',
+                minLength: { value: 6, message: '密码长度至少为6位' },
               })}
-              placeholder="请输入新密码（至少6位）"
+              placeholder='请输入新密码（至少6位）'
               error={!!passwordForm.formState.errors.new_password}
               helperText={passwordForm.formState.errors.new_password?.message}
-              size="small"
+              size='small'
             />
             <TextField
               fullWidth
-              label="确认新密码 *"
-              type="password"
-              {...passwordForm.register("confirm_password", {
-                required: "请再次输入新密码",
+              label='确认新密码 *'
+              type='password'
+              {...passwordForm.register('confirm_password', {
+                required: '请再次输入新密码',
               })}
-              placeholder="请再次输入新密码"
+              placeholder='请再次输入新密码'
               error={!!passwordForm.formState.errors.confirm_password}
-              helperText={
-                passwordForm.formState.errors.confirm_password?.message
-              }
-              size="small"
+              helperText={passwordForm.formState.errors.confirm_password?.message}
+              size='small'
             />
           </DialogContent>
           <DialogActions>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={() => {
                 setShowPasswordDialog(false);
                 passwordForm.reset();
@@ -1232,8 +1268,8 @@ const ProfilePage: React.FC = () => {
               取消
             </Button>
             <Button
-              type="submit"
-              variant="contained"
+              type='submit'
+              variant='contained'
               startIcon={<Save size={16} />}
             >
               确认修改

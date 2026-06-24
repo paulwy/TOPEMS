@@ -1,26 +1,26 @@
-import React, { lazy } from "react";
-import type { RouteConfig } from "./utils";
+import React, { lazy } from 'react';
+import type { RouteConfig } from './utils';
 
-const DashboardPage = lazy(() => import("../pages/shared/DashboardPage"));
-const HybridHomePage = lazy(() => import("../pages/shared/HybridHomePage"));
-const ProfilePage = lazy(() => import("../pages/shared/ProfilePage"));
-const AddressbookPage = lazy(() => import("../pages/common/AddressbookPage"));
+const DashboardPage = lazy(() => import('../pages/shared/DashboardPage'));
+const HybridHomePage = lazy(() => import('../pages/shared/HybridHomePage'));
+const ProfilePage = lazy(() => import('../pages/shared/ProfilePage'));
+const AddressbookPage = lazy(() => import('../pages/common/AddressbookPage'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
-    path: "/",
+    path: '/',
     element: HybridHomePage,
   },
   {
-    path: "/dashboard",
+    path: '/dashboard',
     element: DashboardPage,
   },
   {
-    path: "/profile",
+    path: '/profile',
     element: ProfilePage,
   },
   {
-    path: "/addressbook",
+    path: '/addressbook',
     element: AddressbookPage,
   },
 ];

@@ -1,6 +1,6 @@
-import React from "react";
-import { Button } from "@/components/ui/Button";
-import { Upload } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/Button';
+import { Upload } from 'lucide-react';
 
 export interface ImportButtonProps {
   onImport: () => void;
@@ -11,9 +11,9 @@ export interface ImportButtonProps {
 
 export const ImportButton: React.FC<ImportButtonProps> = ({
   onImport,
-  label = "导入",
+  label = '导入',
   disabled = false,
-  className = "",
+  className = '',
 }) => {
   return (
     <Button
@@ -21,20 +21,20 @@ export const ImportButton: React.FC<ImportButtonProps> = ({
       disabled={disabled}
       className={className}
       sx={{
-        display: "inline-flex",
-        alignItems: "center",
+        display: 'inline-flex',
+        alignItems: 'center',
         px: 4,
         py: 2,
-        backgroundColor: "#22c55e",
-        color: "white",
+        backgroundColor: '#22c55e',
+        color: 'white',
         borderRadius: 2,
-        transition: "all",
-        "&:hover": {
-          backgroundColor: "#16a34a",
+        transition: 'all',
+        '&:hover': {
+          backgroundColor: '#16a34a',
         },
-        "&:disabled": {
+        '&:disabled': {
           opacity: 0.5,
-          cursor: "not-allowed",
+          cursor: 'not-allowed',
         },
       }}
     >

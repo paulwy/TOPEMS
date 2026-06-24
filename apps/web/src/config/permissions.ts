@@ -20,10 +20,10 @@ export const MODULES = {
   CRM: 'crm',
   AI: 'ai',
   GIS: 'gis',
-  QMS: 'qms',      // 质量管理
-  EHS: 'ehs',      // 环境健康安全
-  MES: 'mes',      // 制造执行
-  WMS: 'wms',      // 仓储管理
+  QMS: 'qms', // 质量管理
+  EHS: 'ehs', // 环境健康安全
+  MES: 'mes', // 制造执行
+  WMS: 'wms', // 仓储管理
   // 特殊模块
   WORKFLOW: 'workflow',
   // 基础设施模块
@@ -36,7 +36,7 @@ export const MODULES = {
   SYSTEM: 'system',
 } as const;
 
-export type ModuleCode = typeof MODULES[keyof typeof MODULES];
+export type ModuleCode = (typeof MODULES)[keyof typeof MODULES];
 
 export const ACTIONS: { action: PermissionAction; name: string; level: number }[] = [
   { action: 'read', name: '只读', level: 1 },
@@ -249,7 +249,9 @@ export const getModulePermissions = (module: ModuleCode): string[] => {
   return Object.values(PERMISSIONS[module] || {});
 };
 
-export const getModuleActions = (module: ModuleCode): { action: PermissionAction; name: string; level: number; code: string }[] => {
+export const getModuleActions = (
+  module: ModuleCode
+): { action: PermissionAction; name: string; level: number; code: string }[] => {
   const modulePerms = PERMISSIONS[module];
   return ACTIONS.map((a) => ({
     ...a,
@@ -257,10 +259,7 @@ export const getModuleActions = (module: ModuleCode): { action: PermissionAction
   }));
 };
 
-export const hasPermission = (
-  userPermissions: string[],
-  requiredPermission: string
-): boolean => {
+export const hasPermission = (userPermissions: string[], requiredPermission: string): boolean => {
   if (userPermissions.includes('all')) {
     return true;
   }
@@ -311,7 +310,7 @@ export const getModuleActionsFromPermissions = (
   userPermissions: string[]
 ): PermissionAction[] => {
   const actions: PermissionAction[] = [];
-  
+
   if (hasPermission(userPermissions, `${module}:admin`)) {
     return ['read', 'write', 'delete', 'approve', 'admin'];
   }
@@ -334,7 +333,7 @@ export const getModuleActionsFromPermissions = (
 
 export const getAllPermissions = (): ModulePermission[] => {
   const perms: ModulePermission[] = [];
-  
+
   Object.entries(MODULE_INFO).forEach(([module, info]) => {
     ACTIONS.forEach((action) => {
       const code = `${module}:${action.action}`;

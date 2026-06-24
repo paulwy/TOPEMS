@@ -1,26 +1,26 @@
-import type { AITemplate } from "@/types/ai";
+import type { AITemplate } from '@/types/ai';
 
 export const AI_TEMPLATES: Record<string, AITemplate> = {
-  "meeting-minutes": {
-    id: "meeting-minutes",
-    name: "会议纪要",
-    description: "自动生成专业的会议纪要",
-    category: "文档",
+  'meeting-minutes': {
+    id: 'meeting-minutes',
+    name: '会议纪要',
+    description: '自动生成专业的会议纪要',
+    category: '文档',
     fields: [
-      { name: "title", type: "text", label: "会议标题", required: true },
-      { name: "time", type: "text", label: "会议时间", required: true },
-      { name: "location", type: "text", label: "会议地点", required: false },
+      { name: 'title', type: 'text', label: '会议标题', required: true },
+      { name: 'time', type: 'text', label: '会议时间', required: true },
+      { name: 'location', type: 'text', label: '会议地点', required: false },
       {
-        name: "attendees",
-        type: "textarea",
-        label: "参会人员",
+        name: 'attendees',
+        type: 'textarea',
+        label: '参会人员',
         required: true,
       },
-      { name: "agenda", type: "textarea", label: "会议议程", required: true },
+      { name: 'agenda', type: 'textarea', label: '会议议程', required: true },
       {
-        name: "resolutions",
-        type: "textarea",
-        label: "会议决议",
+        name: 'resolutions',
+        type: 'textarea',
+        label: '会议决议',
         required: true,
       },
     ],
@@ -43,24 +43,24 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 4. 下一步行动与时间节点
 `,
   },
-  "job-description": {
-    id: "job-description",
-    name: "岗位描述",
-    description: "生成标准化的岗位描述",
-    category: "HR",
+  'job-description': {
+    id: 'job-description',
+    name: '岗位描述',
+    description: '生成标准化的岗位描述',
+    category: 'HR',
     fields: [
-      { name: "position", type: "text", label: "岗位名称", required: true },
-      { name: "department", type: "text", label: "所属部门", required: true },
+      { name: 'position', type: 'text', label: '岗位名称', required: true },
+      { name: 'department', type: 'text', label: '所属部门', required: true },
       {
-        name: "responsibilities",
-        type: "textarea",
-        label: "主要职责",
+        name: 'responsibilities',
+        type: 'textarea',
+        label: '主要职责',
         required: true,
       },
       {
-        name: "requirements",
-        type: "textarea",
-        label: "任职要求",
+        name: 'requirements',
+        type: 'textarea',
+        label: '任职要求',
         required: true,
       },
     ],
@@ -78,21 +78,21 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 4. 发展方向
 `,
   },
-  "project-charter": {
-    id: "project-charter",
-    name: "项目立项书",
-    description: "生成完整的项目立项文档",
-    category: "项目管理",
+  'project-charter': {
+    id: 'project-charter',
+    name: '项目立项书',
+    description: '生成完整的项目立项文档',
+    category: '项目管理',
     fields: [
-      { name: "projectName", type: "text", label: "项目名称", required: true },
+      { name: 'projectName', type: 'text', label: '项目名称', required: true },
       {
-        name: "objective",
-        type: "textarea",
-        label: "项目目标",
+        name: 'objective',
+        type: 'textarea',
+        label: '项目目标',
         required: true,
       },
-      { name: "scope", type: "textarea", label: "项目范围", required: true },
-      { name: "timeline", type: "textarea", label: "时间计划", required: true },
+      { name: 'scope', type: 'textarea', label: '项目范围', required: true },
+      { name: 'timeline', type: 'textarea', label: '时间计划', required: true },
     ],
     promptTemplate: `你是一位资深的项目经理，请根据以下信息生成一份完整的项目立项书：
 
@@ -109,25 +109,25 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 5. 项目风险评估
 `,
   },
-  "contract-template": {
-    id: "contract-template",
-    name: "合同模板",
-    description: "生成规范的合同文本",
-    category: "法务",
+  'contract-template': {
+    id: 'contract-template',
+    name: '合同模板',
+    description: '生成规范的合同文本',
+    category: '法务',
     fields: [
-      { name: "partyA", type: "text", label: "甲方名称", required: true },
-      { name: "partyB", type: "text", label: "乙方名称", required: true },
-      { name: "contractType", type: "text", label: "合同类型", required: true },
+      { name: 'partyA', type: 'text', label: '甲方名称', required: true },
+      { name: 'partyB', type: 'text', label: '乙方名称', required: true },
+      { name: 'contractType', type: 'text', label: '合同类型', required: true },
       {
-        name: "effectiveDate",
-        type: "text",
-        label: "生效日期",
+        name: 'effectiveDate',
+        type: 'text',
+        label: '生效日期',
         required: true,
       },
       {
-        name: "contractContent",
-        type: "textarea",
-        label: "合同主要内容",
+        name: 'contractContent',
+        type: 'textarea',
+        label: '合同主要内容',
         required: true,
       },
     ],
@@ -149,23 +149,23 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 7. 其他约定事项
 `,
   },
-  "recruitment-post": {
-    id: "recruitment-post",
-    name: "招聘启事",
-    description: "生成专业的招聘公告",
-    category: "HR",
+  'recruitment-post': {
+    id: 'recruitment-post',
+    name: '招聘启事',
+    description: '生成专业的招聘公告',
+    category: 'HR',
     fields: [
-      { name: "companyName", type: "text", label: "公司名称", required: true },
-      { name: "position", type: "text", label: "招聘职位", required: true },
-      { name: "department", type: "text", label: "所属部门", required: true },
+      { name: 'companyName', type: 'text', label: '公司名称', required: true },
+      { name: 'position', type: 'text', label: '招聘职位', required: true },
+      { name: 'department', type: 'text', label: '所属部门', required: true },
       {
-        name: "jobRequirements",
-        type: "textarea",
-        label: "职位要求",
+        name: 'jobRequirements',
+        type: 'textarea',
+        label: '职位要求',
         required: true,
       },
-      { name: "benefits", type: "textarea", label: "福利待遇", required: true },
-      { name: "contactInfo", type: "text", label: "联系方式", required: true },
+      { name: 'benefits', type: 'textarea', label: '福利待遇', required: true },
+      { name: 'contactInfo', type: 'text', label: '联系方式', required: true },
     ],
     promptTemplate: `你是一位专业的招聘专家，请根据以下信息生成一份吸引人的招聘启事：
 
@@ -184,22 +184,22 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 5. 应聘方式与联系信息
 `,
   },
-  "project-report": {
-    id: "project-report",
-    name: "项目周报",
-    description: "生成项目进度周报",
-    category: "项目管理",
+  'project-report': {
+    id: 'project-report',
+    name: '项目周报',
+    description: '生成项目进度周报',
+    category: '项目管理',
     fields: [
-      { name: "projectName", type: "text", label: "项目名称", required: true },
-      { name: "reportPeriod", type: "text", label: "报告周期", required: true },
+      { name: 'projectName', type: 'text', label: '项目名称', required: true },
+      { name: 'reportPeriod', type: 'text', label: '报告周期', required: true },
       {
-        name: "progressSummary",
-        type: "textarea",
-        label: "本周工作总结",
+        name: 'progressSummary',
+        type: 'textarea',
+        label: '本周工作总结',
         required: true,
       },
-      { name: "problems", type: "textarea", label: "存在问题", required: true },
-      { name: "nextPlan", type: "textarea", label: "下周计划", required: true },
+      { name: 'problems', type: 'textarea', label: '存在问题', required: true },
+      { name: 'nextPlan', type: 'textarea', label: '下周计划', required: true },
     ],
     promptTemplate: `你是一位专业的项目经理，请根据以下信息生成一份清晰完整的项目周报：
 
@@ -217,25 +217,25 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 5. 需要协调的事项
 `,
   },
-  "employee-evaluation": {
-    id: "employee-evaluation",
-    name: "员工评价",
-    description: "生成员工绩效评价建议",
-    category: "HR",
+  'employee-evaluation': {
+    id: 'employee-evaluation',
+    name: '员工评价',
+    description: '生成员工绩效评价建议',
+    category: 'HR',
     fields: [
-      { name: "employeeName", type: "text", label: "员工姓名", required: true },
-      { name: "position", type: "text", label: "岗位", required: true },
-      { name: "period", type: "text", label: "评价周期", required: true },
+      { name: 'employeeName', type: 'text', label: '员工姓名', required: true },
+      { name: 'position', type: 'text', label: '岗位', required: true },
+      { name: 'period', type: 'text', label: '评价周期', required: true },
       {
-        name: "strengths",
-        type: "textarea",
-        label: "主要优点",
+        name: 'strengths',
+        type: 'textarea',
+        label: '主要优点',
         required: true,
       },
       {
-        name: "improvements",
-        type: "textarea",
-        label: "改进建议",
+        name: 'improvements',
+        type: 'textarea',
+        label: '改进建议',
         required: true,
       },
     ],
@@ -255,29 +255,29 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 5. 下一步行动计划
 `,
   },
-  "business-plan": {
-    id: "business-plan",
-    name: "商业计划",
-    description: "生成商业计划书",
-    category: "业务",
+  'business-plan': {
+    id: 'business-plan',
+    name: '商业计划',
+    description: '生成商业计划书',
+    category: '业务',
     fields: [
-      { name: "companyName", type: "text", label: "公司名称", required: true },
+      { name: 'companyName', type: 'text', label: '公司名称', required: true },
       {
-        name: "businessModel",
-        type: "textarea",
-        label: "商业模式",
+        name: 'businessModel',
+        type: 'textarea',
+        label: '商业模式',
         required: true,
       },
       {
-        name: "marketAnalysis",
-        type: "textarea",
-        label: "市场分析",
+        name: 'marketAnalysis',
+        type: 'textarea',
+        label: '市场分析',
         required: true,
       },
       {
-        name: "financialPlan",
-        type: "textarea",
-        label: "财务计划",
+        name: 'financialPlan',
+        type: 'textarea',
+        label: '财务计划',
         required: true,
       },
     ],
@@ -298,32 +298,32 @@ export const AI_TEMPLATES: Record<string, AITemplate> = {
 7. 财务规划
 `,
   },
-  "training-plan": {
-    id: "training-plan",
-    name: "培训计划",
-    description: "生成培训计划文档",
-    category: "HR",
+  'training-plan': {
+    id: 'training-plan',
+    name: '培训计划',
+    description: '生成培训计划文档',
+    category: 'HR',
     fields: [
-      { name: "trainingName", type: "text", label: "培训名称", required: true },
+      { name: 'trainingName', type: 'text', label: '培训名称', required: true },
       {
-        name: "targetAudience",
-        type: "text",
-        label: "培训对象",
+        name: 'targetAudience',
+        type: 'text',
+        label: '培训对象',
         required: true,
       },
       {
-        name: "trainingObjectives",
-        type: "textarea",
-        label: "培训目标",
+        name: 'trainingObjectives',
+        type: 'textarea',
+        label: '培训目标',
         required: true,
       },
       {
-        name: "trainingContent",
-        type: "textarea",
-        label: "培训内容",
+        name: 'trainingContent',
+        type: 'textarea',
+        label: '培训内容',
         required: true,
       },
-      { name: "duration", type: "text", label: "培训时长", required: true },
+      { name: 'duration', type: 'text', label: '培训时长', required: true },
     ],
     promptTemplate: `你是一位专业的培训师，请根据以下信息生成一份完整的培训计划：
 

@@ -1,27 +1,38 @@
 //! Production Order handlers
 
-use axum::{extract::Path, extract::State, Json};
-use chrono::Utc;
+use axum::{extract::Path, extract::State, extract::Extension, Json};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sqlx::{types::{BigDecimal, Uuid}, PgPool};
+use std::str::FromStr;
+use topems_shared::auth::Claims;
 
 use crate::AppState;
-use topems_shared::ApiResponse;
+use super::permission::{check_permission, ModulePermission};
+use topems_shared::response::ApiResponse;
 
 // ==================== Data Types ====================
 
-/// 生产工单来源
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProductionOrderSource {
-    /// 手动创建
+    #[serde(rename = "manual")]
     Manual,
-    /// 从 ERP 销售订单创建
+    #[serde(rename = "erp_sales_order")]
     ErpSalesOrder,
-    /// 从 MRP 计划创建
+    #[serde(rename = "mrp")]
     Mrp,
 }
 
-/// ERP 销售订单信息
+impl std::fmt::Display for ProductionOrderSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProductionOrderSource::Manual => write!(f, "manual"),
+            ProductionOrderSource::ErpSalesOrder => write!(f, "erp_sales_order"),
+            ProductionOrderSource::Mrp => write!(f, "mrp"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErpSalesOrderInfo {
     pub order_id: Uuid,
@@ -31,186 +42,795 @@ pub struct ErpSalesOrderInfo {
     pub product_code: String,
     pub quantity: f64,
     pub unit: String,
-    pub delivery_date: Option<chrono::DateTime<Utc>>,
+    pub delivery_date: Option<DateTime<Utc>>,
     pub priority: Option<i32>,
 }
 
-/// 从 ERP 创建生产工单的请求
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateFromErpRequest {
     pub erp_order: ErpSalesOrderInfo,
-    pub planned_start_date: Option<chrono::DateTime<Utc>>,
-    pub planned_completion_date: Option<chrono::DateTime<Utc>>,
+    pub planned_start_date: Option<DateTime<Utc>>,
+    pub planned_completion_date: Option<DateTime<Utc>>,
     pub workshop_id: Option<Uuid>,
     pub notes: Option<String>,
 }
 
-/// 生产工单响应
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateProductionOrderRequest {
+    pub product_id: Option<Uuid>,
+    pub product_name: String,
+    pub product_code: String,
+    pub quantity: f64,
+    pub planned_start_date: Option<DateTime<Utc>>,
+    pub planned_end_date: Option<DateTime<Utc>>,
+    pub workshop_id: Option<Uuid>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateProductionOrderRequest {
+    pub product_name: Option<String>,
+    pub product_code: Option<String>,
+    pub quantity: Option<f64>,
+    pub planned_start_date: Option<DateTime<Utc>>,
+    pub planned_end_date: Option<DateTime<Utc>>,
+    pub workshop_id: Option<Uuid>,
+    pub notes: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct ProductionOrderResponse {
     pub id: Uuid,
-    pub order_number: String,
-    pub source: ProductionOrderSource,
-    pub source_order_id: Option<Uuid>,
-    pub source_order_number: Option<String>,
-    pub status: String,
+    pub order_no: String,
+    pub product_id: Option<Uuid>,
     pub product_name: String,
     pub product_code: String,
     pub quantity: f64,
     pub completed_quantity: f64,
-    pub planned_start_date: Option<chrono::DateTime<Utc>>,
-    pub planned_completion_date: Option<chrono::DateTime<Utc>>,
-    pub actual_start_date: Option<chrono::DateTime<Utc>>,
-    pub actual_completion_date: Option<chrono::DateTime<Utc>>,
-    pub created_at: chrono::DateTime<Utc>,
+    pub status: String,
+    pub source: String,
+    pub source_order_id: Option<Uuid>,
+    pub source_order_number: Option<String>,
+    pub planned_start_date: Option<DateTime<Utc>>,
+    pub planned_end_date: Option<DateTime<Utc>>,
+    pub actual_start_date: Option<DateTime<Utc>>,
+    pub actual_end_date: Option<DateTime<Utc>>,
+    pub workshop_id: Option<Uuid>,
+    pub notes: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ListProductionOrdersResponse {
+    pub orders: Vec<ProductionOrderResponse>,
+    pub total: i64,
+}
+
+fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
+    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+}
+
+fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
+    dt.map(|d| Utc.from_utc_datetime(&d))
+}
+
+fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {
+    dt.map(|d| Utc.from_utc_datetime(&d.and_hms_opt(0, 0, 0).unwrap()))
+}
+
+fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
+    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+}
+
+// ==================== State Transition ====================
+
+pub fn validate_state_transition(current_status: &str, target_status: &str) -> Result<(), String> {
+    let valid_transitions = [
+        ("pending", "released"),
+        ("pending", "cancelled"),
+        ("released", "in_progress"),
+        ("released", "cancelled"),
+        ("in_progress", "completed"),
+        ("in_progress", "paused"),
+        ("paused", "in_progress"),
+        ("paused", "cancelled"),
+        ("completed", "closed"),
+    ];
+
+    if current_status == target_status {
+        return Ok(());
+    }
+
+    for &(from, to) in &valid_transitions {
+        if current_status == from && target_status == to {
+            return Ok(());
+        }
+    }
+
+    Err(format!(
+        "Invalid state transition: {} -> {}",
+        current_status, target_status
+    ))
 }
 
 // ==================== Production Order Handlers ====================
 
-/// List production orders
 pub async fn list_production_orders(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("list_production_orders called");
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<ListProductionOrdersResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await {
+        return e;
+    }
+
+    let result = sqlx::query!(
+        r#"
+        SELECT 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        FROM production_orders
+        ORDER BY created_at DESC
+        "#
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    let orders = match result {
+        Ok(o) => o,
+        Err(e) => {
+            tracing::error!("Failed to fetch production orders: {}", e);
+            return Json(ApiResponse::error(500, "获取生产工单列表失败"));
+        }
+    };
+
+    let orders_list: Vec<ProductionOrderResponse> = orders.into_iter().map(|r| ProductionOrderResponse {
+        id: r.id,
+        order_no: r.order_no,
+        product_id: r.product_id,
+        product_name: r.product_name.unwrap_or_default(),
+        product_code: r.product_code.unwrap_or_default(),
+        quantity: big_decimal_to_f64(Some(r.quantity)),
+        completed_quantity: big_decimal_to_f64(r.completed_quantity),
+        status: r.status.unwrap_or_else(|| "pending".to_string()),
+        source: r.source.unwrap_or_else(|| "manual".to_string()),
+        source_order_id: r.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+        source_order_number: r.source_order_number,
+        planned_start_date: opt_naive_date_to_utc(r.planned_start_date),
+        planned_end_date: opt_naive_date_to_utc(r.planned_end_date),
+        actual_start_date: opt_naive_to_utc(r.actual_start_date),
+        actual_end_date: opt_naive_to_utc(r.actual_end_date),
+        workshop_id: r.workshop_id,
+        notes: r.notes,
+        created_at: naive_to_utc(r.created_at),
+        updated_at: naive_to_utc(r.updated_at),
+    }).collect();
+
+    let total = orders_list.len() as i64;
+
     Json(ApiResponse::success(
-        serde_json::json!({
-            "orders": [],
-            "total": 0
-        }),
+        ListProductionOrdersResponse {
+            orders: orders_list,
+            total,
+        },
         "获取生产工单列表成功",
     ))
 }
 
-/// Create a new production order
 pub async fn create_production_order(
-    State(_state): State<AppState>,
-    Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("create_production_order called with: {:?}", req);
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "id": Uuid::new_v4()
-        }),
-        "生产工单创建成功",
-    ))
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateProductionOrderRequest>,
+) -> Json<ApiResponse<ProductionOrderResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+        return e;
+    }
+
+    let now = Utc::now();
+    let order_no = format!("MO{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO production_orders (
+            order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            planned_start_date, planned_end_date, workshop_id, notes,
+            created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, 0, 'pending', 'manual', $6, $7, $8, $9, $10, $10)
+        RETURNING 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        "#,
+        order_no,
+        req.product_id,
+        req.product_name,
+        req.product_code,
+        BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
+        req.planned_start_date.map(|d| d.date_naive()),
+        req.planned_end_date.map(|d| d.date_naive()),
+        req.workshop_id,
+        req.notes,
+        now.naive_utc(),
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create production order: {}", e);
+            return Json(ApiResponse::error(500, "创建生产工单失败"));
+        }
+    };
+
+    let order = ProductionOrderResponse {
+        id: result.id,
+        order_no: result.order_no,
+        product_id: result.product_id,
+        product_name: result.product_name.unwrap_or_default(),
+        product_code: result.product_code.unwrap_or_default(),
+        quantity: big_decimal_to_f64(Some(result.quantity)),
+        completed_quantity: big_decimal_to_f64(result.completed_quantity),
+        status: result.status.unwrap_or_else(|| "pending".to_string()),
+        source: result.source.unwrap_or_else(|| "manual".to_string()),
+        source_order_id: result.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+        source_order_number: result.source_order_number,
+        planned_start_date: opt_naive_date_to_utc(result.planned_start_date),
+        planned_end_date: opt_naive_date_to_utc(result.planned_end_date),
+        actual_start_date: opt_naive_to_utc(result.actual_start_date),
+        actual_end_date: opt_naive_to_utc(result.actual_end_date),
+        workshop_id: result.workshop_id,
+        notes: result.notes,
+        created_at: naive_to_utc(result.created_at),
+        updated_at: naive_to_utc(result.updated_at),
+    };
+
+    Json(ApiResponse::success(order, "生产工单创建成功"))
 }
 
-/// Create production order from ERP sales order
-/// 这是 ERP → MES 数据转换的核心接口
 pub async fn create_from_erp(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFromErpRequest>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    tracing::info!(
-        "create_from_erp called for ERP order: {}",
-        req.erp_order.order_number
-    );
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+        return e;
+    }
 
-    let order_id = Uuid::new_v4();
     let now = Utc::now();
+    let order_no = format!("MO{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
 
-    // 生成生产工单号: MO + 年月日 + 4位序号
-    let order_number = format!("MO{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
-
-    // 计算计划开始和完成日期
     let planned_start = req.planned_start_date.unwrap_or(now);
-    let planned_completion = req.planned_completion_date
+    let planned_end = req.planned_completion_date
         .or_else(|| req.erp_order.delivery_date)
         .unwrap_or_else(|| now + chrono::Duration::days(7));
 
-    let response = ProductionOrderResponse {
-        id: order_id,
-        order_number: order_number.clone(),
-        source: ProductionOrderSource::ErpSalesOrder,
-        source_order_id: Some(req.erp_order.order_id),
-        source_order_number: Some(req.erp_order.order_number.clone()),
-        status: "created".to_string(),
-        product_name: req.erp_order.product_name.clone(),
-        product_code: req.erp_order.product_code.clone(),
-        quantity: req.erp_order.quantity,
-        completed_quantity: 0.0,
-        planned_start_date: Some(planned_start),
-        planned_completion_date: Some(planned_completion),
-        actual_start_date: None,
-        actual_completion_date: None,
-        created_at: now,
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO production_orders (
+            order_no, product_name, product_code, quantity,
+            status, source, source_order_id, source_order_number,
+            planned_start_date, planned_end_date, workshop_id, notes,
+            created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, 'pending', 'erp_sales_order', $5, $6, $7, $8, $9, $10, $11, $11)
+        RETURNING 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        "#,
+        order_no,
+        req.erp_order.product_name,
+        req.erp_order.product_code,
+        BigDecimal::from_str(&req.erp_order.quantity.to_string()).unwrap_or_default(),
+        req.erp_order.order_id.to_string(),
+        req.erp_order.order_number,
+        planned_start.date_naive(),
+        planned_end.date_naive(),
+        req.workshop_id,
+        req.notes,
+        now.naive_utc(),
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create production order from ERP: {}", e);
+            return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+        }
+    };
+
+    let order = ProductionOrderResponse {
+        id: result.id,
+        order_no: result.order_no,
+        product_id: result.product_id,
+        product_name: result.product_name.unwrap_or_default(),
+        product_code: result.product_code.unwrap_or_default(),
+        quantity: big_decimal_to_f64(Some(result.quantity)),
+        completed_quantity: big_decimal_to_f64(result.completed_quantity),
+        status: result.status.unwrap_or_else(|| "pending".to_string()),
+        source: result.source.unwrap_or_else(|| "erp_sales_order".to_string()),
+        source_order_id: result.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+        source_order_number: result.source_order_number,
+        planned_start_date: opt_naive_date_to_utc(result.planned_start_date),
+        planned_end_date: opt_naive_date_to_utc(result.planned_end_date),
+        actual_start_date: opt_naive_to_utc(result.actual_start_date),
+        actual_end_date: opt_naive_to_utc(result.actual_end_date),
+        workshop_id: result.workshop_id,
+        notes: result.notes,
+        created_at: naive_to_utc(result.created_at),
+        updated_at: naive_to_utc(result.updated_at),
     };
 
     tracing::info!(
         "[MES] Created production order {} from ERP order {}",
-        order_number,
+        order_no,
         req.erp_order.order_number
     );
 
-    Json(ApiResponse::success(response, "从ERP订单创建生产工单成功"))
+    Json(ApiResponse::success(order, "从ERP订单创建生产工单成功"))
 }
 
-/// Get production order by ID
 pub async fn get_production_order(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("get_production_order called: {}", id);
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "获取生产工单成功",
-    ))
+) -> Json<ApiResponse<ProductionOrderResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await {
+        return e;
+    }
+
+    let result = sqlx::query!(
+        r#"
+        SELECT 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        FROM production_orders
+        WHERE id = $1
+        "#,
+        id,
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to fetch production order: {}", e);
+            return Json(ApiResponse::error(500, "获取生产工单失败"));
+        }
+    };
+
+    match result {
+        Some(r) => {
+            let order = ProductionOrderResponse {
+                id: r.id,
+                order_no: r.order_no,
+                product_id: r.product_id,
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                completed_quantity: big_decimal_to_f64(r.completed_quantity),
+                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                source: r.source.unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+                source_order_number: r.source_order_number,
+                planned_start_date: opt_naive_date_to_utc(r.planned_start_date),
+                planned_end_date: opt_naive_date_to_utc(r.planned_end_date),
+                actual_start_date: opt_naive_to_utc(r.actual_start_date),
+                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                workshop_id: r.workshop_id,
+                notes: r.notes,
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
+            };
+            Json(ApiResponse::success(order, "获取生产工单成功"))
+        }
+        None => Json(ApiResponse::error(404, "生产工单不存在")),
+    }
 }
 
-/// Update production order
 pub async fn update_production_order(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("update_production_order called: {}, req: {:?}", id, req);
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "生产工单更新成功",
-    ))
+    Json(req): Json<UpdateProductionOrderRequest>,
+) -> Json<ApiResponse<ProductionOrderResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE production_orders SET
+            product_name = COALESCE($2, product_name),
+            product_code = COALESCE($3, product_code),
+            quantity = COALESCE($4, quantity),
+            planned_start_date = COALESCE($5, planned_start_date),
+            planned_end_date = COALESCE($6, planned_end_date),
+            workshop_id = COALESCE($7, workshop_id),
+            notes = COALESCE($8, notes),
+            updated_at = $9
+        WHERE id = $1 AND status = 'pending'
+        RETURNING 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        "#,
+        id,
+        req.product_name,
+        req.product_code,
+        req.quantity.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.planned_start_date.map(|d| d.date_naive()),
+        req.planned_end_date.map(|d| d.date_naive()),
+        req.workshop_id,
+        req.notes,
+        Utc::now().naive_utc(),
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to update production order: {}", e);
+            return Json(ApiResponse::error(500, "更新生产工单失败"));
+        }
+    };
+
+    match result {
+        Some(r) => {
+            let order = ProductionOrderResponse {
+                id: r.id,
+                order_no: r.order_no,
+                product_id: r.product_id,
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                completed_quantity: big_decimal_to_f64(r.completed_quantity),
+                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                source: r.source.unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+                source_order_number: r.source_order_number,
+                planned_start_date: opt_naive_date_to_utc(r.planned_start_date),
+                planned_end_date: opt_naive_date_to_utc(r.planned_end_date),
+                actual_start_date: opt_naive_to_utc(r.actual_start_date),
+                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                workshop_id: r.workshop_id,
+                notes: r.notes,
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
+            };
+            Json(ApiResponse::success(order, "生产工单更新成功"))
+        }
+        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许修改")),
+    }
 }
 
-/// Delete production order
 pub async fn delete_production_order(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    tracing::info!("delete_production_order called: {}", id);
-    Json(ApiResponse::success("".to_string(), "生产工单删除成功"))
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM production_orders
+        WHERE id = $1 AND status IN ('pending', 'cancelled')
+        "#,
+        id,
+    )
+    .execute(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete production order: {}", e);
+            return Json(ApiResponse::error(500, "删除生产工单失败"));
+        }
+    };
+
+    if result.rows_affected() > 0 {
+        Json(ApiResponse::success("".to_string(), "生产工单删除成功"))
+    } else {
+        Json(ApiResponse::error(404, "生产工单不存在或状态不允许删除"))
+    }
 }
 
-/// Start production order
 pub async fn start_production_order(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("start_production_order called: {}", id);
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "生产工单启动成功",
-    ))
+) -> Json<ApiResponse<ProductionOrderResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderStart).await {
+        return e;
+    }
+
+    let now = Utc::now();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE production_orders SET
+            status = 'in_progress',
+            actual_start_date = $2,
+            updated_at = $2
+        WHERE id = $1 AND status = 'released'
+        RETURNING 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        "#,
+        id,
+        now.naive_utc(),
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to start production order: {}", e);
+            return Json(ApiResponse::error(500, "启动生产工单失败"));
+        }
+    };
+
+    match result {
+        Some(r) => {
+            let order = ProductionOrderResponse {
+                id: r.id,
+                order_no: r.order_no,
+                product_id: r.product_id,
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                completed_quantity: big_decimal_to_f64(r.completed_quantity),
+                status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+                source: r.source.unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+                source_order_number: r.source_order_number,
+                planned_start_date: opt_naive_date_to_utc(r.planned_start_date),
+                planned_end_date: opt_naive_date_to_utc(r.planned_end_date),
+                actual_start_date: opt_naive_to_utc(r.actual_start_date),
+                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                workshop_id: r.workshop_id,
+                notes: r.notes,
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
+            };
+            Json(ApiResponse::success(order, "生产工单启动成功"))
+        }
+        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许启动")),
+    }
 }
 
-/// Complete production order
 pub async fn complete_production_order(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("complete_production_order called: {}", id);
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "生产工单完成成功",
-    ))
+) -> Json<ApiResponse<ProductionOrderResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderComplete).await {
+        return e;
+    }
+
+    let now = Utc::now();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE production_orders SET
+            status = 'completed',
+            completed_quantity = quantity,
+            actual_end_date = $2,
+            updated_at = $2
+        WHERE id = $1 AND status = 'in_progress'
+        RETURNING 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        "#,
+        id,
+        now.naive_utc(),
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to complete production order: {}", e);
+            return Json(ApiResponse::error(500, "完成生产工单失败"));
+        }
+    };
+
+    match result {
+        Some(r) => {
+            let order = ProductionOrderResponse {
+                id: r.id,
+                order_no: r.order_no,
+                product_id: r.product_id,
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                completed_quantity: big_decimal_to_f64(r.completed_quantity),
+                status: r.status.unwrap_or_else(|| "completed".to_string()),
+                source: r.source.unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+                source_order_number: r.source_order_number,
+                planned_start_date: opt_naive_date_to_utc(r.planned_start_date),
+                planned_end_date: opt_naive_date_to_utc(r.planned_end_date),
+                actual_start_date: opt_naive_to_utc(r.actual_start_date),
+                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                workshop_id: r.workshop_id,
+                notes: r.notes,
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
+            };
+            Json(ApiResponse::success(order, "生产工单完成成功"))
+        }
+        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许完成")),
+    }
 }
 
-/// Cancel production order
 pub async fn cancel_production_order(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("cancel_production_order called: {}", id);
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "生产工单取消成功",
-    ))
+) -> Json<ApiResponse<ProductionOrderResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderCancel).await {
+        return e;
+    }
+
+    let now = Utc::now();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE production_orders SET
+            status = 'cancelled',
+            updated_at = $2
+        WHERE id = $1 AND status IN ('pending', 'released', 'paused')
+        RETURNING 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        "#,
+        id,
+        now.naive_utc(),
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to cancel production order: {}", e);
+            return Json(ApiResponse::error(500, "取消生产工单失败"));
+        }
+    };
+
+    match result {
+        Some(r) => {
+            let order = ProductionOrderResponse {
+                id: r.id,
+                order_no: r.order_no,
+                product_id: r.product_id,
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                completed_quantity: big_decimal_to_f64(r.completed_quantity),
+                status: r.status.unwrap_or_else(|| "cancelled".to_string()),
+                source: r.source.unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+                source_order_number: r.source_order_number,
+                planned_start_date: opt_naive_date_to_utc(r.planned_start_date),
+                planned_end_date: opt_naive_date_to_utc(r.planned_end_date),
+                actual_start_date: opt_naive_to_utc(r.actual_start_date),
+                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                workshop_id: r.workshop_id,
+                notes: r.notes,
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
+            };
+            Json(ApiResponse::success(order, "生产工单取消成功"))
+        }
+        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许取消")),
+    }
+}
+
+pub async fn release_production_order(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ProductionOrderResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+        return e;
+    }
+
+    let now = Utc::now();
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE production_orders SET
+            status = 'released',
+            updated_at = $2
+        WHERE id = $1 AND status = 'pending'
+        RETURNING 
+            id, order_no, product_id, product_name, product_code,
+            quantity, completed_quantity, status, source,
+            source_order_id, source_order_number,
+            planned_start_date, planned_end_date,
+            actual_start_date, actual_end_date,
+            workshop_id, notes, created_at, updated_at
+        "#,
+        id,
+        now.naive_utc(),
+    )
+    .fetch_optional(&state.pool)
+    .await;
+
+    let result = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to release production order: {}", e);
+            return Json(ApiResponse::error(500, "发布生产工单失败"));
+        }
+    };
+
+    match result {
+        Some(r) => {
+            let order = ProductionOrderResponse {
+                id: r.id,
+                order_no: r.order_no,
+                product_id: r.product_id,
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                completed_quantity: big_decimal_to_f64(r.completed_quantity),
+                status: r.status.unwrap_or_else(|| "released".to_string()),
+                source: r.source.unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r.source_order_id.and_then(|s| Uuid::from_str(&s).ok()),
+                source_order_number: r.source_order_number,
+                planned_start_date: opt_naive_date_to_utc(r.planned_start_date),
+                planned_end_date: opt_naive_date_to_utc(r.planned_end_date),
+                actual_start_date: opt_naive_to_utc(r.actual_start_date),
+                actual_end_date: opt_naive_to_utc(r.actual_end_date),
+                workshop_id: r.workshop_id,
+                notes: r.notes,
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
+            };
+            Json(ApiResponse::success(order, "生产工单发布成功"))
+        }
+        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许发布")),
+    }
 }

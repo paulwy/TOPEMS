@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Stepper as MuiStepper,
   Step,
@@ -7,9 +7,9 @@ import {
   Typography,
   styled,
   keyframes,
-} from "@mui/material";
-import type { StepIconProps } from "@mui/material";
-import { Check, AlertCircle } from "lucide-react";
+} from '@mui/material';
+import type { StepIconProps } from '@mui/material';
+import { Check, AlertCircle } from 'lucide-react';
 
 // 脉冲动画
 const pulse = keyframes`
@@ -25,51 +25,48 @@ const pulse = keyframes`
 `;
 
 // 自定义步骤图标容器
-const StepIconContainer = styled("div")<{
-  status: StepItem["status"];
-  variant: StepperProps["variant"];
+const StepIconContainer = styled('div')<{
+  status: StepItem['status'];
+  variant: StepperProps['variant'];
   active: boolean;
 }>(({ theme, status, variant, active }) => {
   const getBackgroundColor = () => {
-    if (status === "completed") {
-      return variant === "gradient"
-        ? "linear-gradient(135deg, #3b82f6, #2563eb)"
+    if (status === 'completed') {
+      return variant === 'gradient'
+        ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
         : theme.palette.success.main;
     }
-    if (status === "error") {
+    if (status === 'error') {
       return theme.palette.error.main;
     }
-    if (status === "active") {
-      return variant === "gradient"
-        ? "linear-gradient(135deg, #3b82f6, #2563eb)"
+    if (status === 'active') {
+      return variant === 'gradient'
+        ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
         : theme.palette.primary.main;
     }
-    return variant === "outlined" ? "transparent" : theme.palette.grey[300];
+    return variant === 'outlined' ? 'transparent' : theme.palette.grey[300];
   };
 
   const getBorderColor = () => {
-    if (status === "completed") return theme.palette.success.main;
-    if (status === "error") return theme.palette.error.main;
-    if (status === "active") return theme.palette.primary.main;
+    if (status === 'completed') return theme.palette.success.main;
+    if (status === 'error') return theme.palette.error.main;
+    if (status === 'active') return theme.palette.primary.main;
     return theme.palette.grey[400];
   };
 
   return {
     width: 40,
     height: 40,
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: getBackgroundColor(),
-    border: variant === "outlined" ? `2px solid ${getBorderColor()}` : "none",
-    color:
-      status === "pending"
-        ? theme.palette.text.disabled
-        : theme.palette.common.white,
-    transition: "all 0.3s ease",
-    animation: status === "active" ? `${pulse} 2s infinite` : "none",
-    "& svg": {
+    border: variant === 'outlined' ? `2px solid ${getBorderColor()}` : 'none',
+    color: status === 'pending' ? theme.palette.text.disabled : theme.palette.common.white,
+    transition: 'all 0.3s ease',
+    animation: status === 'active' ? `${pulse} 2s infinite` : 'none',
+    '& svg': {
       width: 20,
       height: 20,
     },
@@ -81,15 +78,15 @@ export interface StepItem {
   label: string;
   description?: string;
   icon?: React.ReactNode;
-  status?: "pending" | "active" | "completed" | "error";
+  status?: 'pending' | 'active' | 'completed' | 'error';
 }
 
 // Stepper 组件属性接口
 export interface StepperProps {
   steps: StepItem[];
   activeStep: number;
-  orientation?: "horizontal" | "vertical";
-  variant?: "default" | "outlined" | "gradient";
+  orientation?: 'horizontal' | 'vertical';
+  variant?: 'default' | 'outlined' | 'gradient';
   showLabels?: boolean;
   showDescriptions?: boolean;
   onStepClick?: (step: number) => void;
@@ -98,19 +95,19 @@ export interface StepperProps {
 // 自定义步骤图标组件
 const CustomStepIcon: React.FC<
   StepIconProps & {
-    status: StepItem["status"];
-    variant: StepperProps["variant"];
+    status: StepItem['status'];
+    variant: StepperProps['variant'];
     customIcon?: React.ReactNode;
   }
 > = ({ status, variant, customIcon, active }) => {
   const renderIcon = () => {
-    if (customIcon && status !== "completed" && status !== "error") {
+    if (customIcon && status !== 'completed' && status !== 'error') {
       return customIcon;
     }
-    if (status === "completed") {
+    if (status === 'completed') {
       return <Check />;
     }
-    if (status === "error") {
+    if (status === 'error') {
       return <AlertCircle />;
     }
     return null;
@@ -131,8 +128,8 @@ const CustomStepIcon: React.FC<
 const Stepper: React.FC<StepperProps> = ({
   steps,
   activeStep,
-  orientation = "horizontal",
-  variant = "default",
+  orientation = 'horizontal',
+  variant = 'default',
   showLabels = true,
   showDescriptions = true,
   onStepClick,
@@ -141,19 +138,18 @@ const Stepper: React.FC<StepperProps> = ({
     <MuiStepper
       activeStep={activeStep}
       orientation={orientation}
-      alternativeLabel={orientation === "horizontal"}
+      alternativeLabel={orientation === 'horizontal'}
     >
       {steps.map((step, index) => {
         const status =
           step.status ||
-          (index < activeStep
-            ? "completed"
-            : index === activeStep
-              ? "active"
-              : "pending");
+          (index < activeStep ? 'completed' : index === activeStep ? 'active' : 'pending');
 
         return (
-          <Step key={index} completed={status === "completed"}>
+          <Step
+            key={index}
+            completed={status === 'completed'}
+          >
             <StepLabel
               slots={{
                 stepIcon: (props: StepIconProps) => (
@@ -162,40 +158,40 @@ const Stepper: React.FC<StepperProps> = ({
                     status={status}
                     variant={variant}
                     customIcon={step.icon}
-                    active={status === "active"}
+                    active={status === 'active'}
                   />
                 ),
               }}
               onClick={() => onStepClick?.(index)}
               sx={{
-                cursor: onStepClick ? "pointer" : "default",
-                "& .MuiStepLabel-label": {
-                  mt: orientation === "horizontal" ? 1 : 0,
+                cursor: onStepClick ? 'pointer' : 'default',
+                '& .MuiStepLabel-label': {
+                  mt: orientation === 'horizontal' ? 1 : 0,
                 },
               }}
             >
               {showLabels && (
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ fontWeight: status === "active" ? 600 : 400 }}
+                    variant='body2'
+                    sx={{ fontWeight: status === 'active' ? 600 : 400 }}
                     color={
-                      status === "active"
-                        ? "primary"
-                        : status === "completed"
-                          ? "success.main"
-                          : status === "error"
-                            ? "error.main"
-                            : "text.disabled"
+                      status === 'active'
+                        ? 'primary'
+                        : status === 'completed'
+                          ? 'success.main'
+                          : status === 'error'
+                            ? 'error.main'
+                            : 'text.disabled'
                     }
                   >
                     {step.label}
                   </Typography>
                   {showDescriptions && step.description && (
                     <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mt: 0.5, display: "block" }}
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{ mt: 0.5, display: 'block' }}
                     >
                       {step.description}
                     </Typography>

@@ -1,56 +1,52 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
-import type { RouteConfig } from "./utils";
-import { lazyWithRetry } from "./utils";
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import type { RouteConfig } from './utils';
+import { lazyWithRetry } from './utils';
 
 const lazy = lazyWithRetry;
 
 const ProductionOrderManagementPage = lazy(
-  () => import("../pages/mes/ProductionOrderManagementPage"),
+  () => import('../pages/mes/ProductionOrderManagementPage')
 );
-const ProductionProcessPage = lazy(
-  () => import("../pages/mes/ProductionProcessPage"),
-);
-const WorkStationPage = lazy(() => import("../pages/mes/WorkStationPage"));
-const ProductionRecordPage = lazy(
-  () => import("../pages/mes/ProductionRecordPage"),
-);
-const MesDashboardPage = lazy(() => import("../pages/mes/DashboardPage"));
+const ProductionProcessPage = lazy(() => import('../pages/mes/ProductionProcessPage'));
+const WorkStationPage = lazy(() => import('../pages/mes/WorkStationPage'));
+const ProductionRecordPage = lazy(() => import('../pages/mes/ProductionRecordPage'));
+const MesDashboardPage = lazy(() => import('../pages/mes/DashboardPage'));
 
 export const mesRoutes: RouteConfig[] = [
   {
-    path: "/mes",
+    path: '/mes',
     element: MesDashboardPage,
-    requiredPermissions: ["mes:read"],
-    module: "mes",
-    action: "read",
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
-    path: "/mes/orders",
+    path: '/mes/orders',
     element: ProductionOrderManagementPage,
-    requiredPermissions: ["mes:read"],
-    module: "mes",
-    action: "read",
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
-    path: "/mes/processes",
+    path: '/mes/processes',
     element: ProductionProcessPage,
-    requiredPermissions: ["mes:read"],
-    module: "mes",
-    action: "read",
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
-    path: "/mes/workstations",
+    path: '/mes/workstations',
     element: WorkStationPage,
-    requiredPermissions: ["mes:read"],
-    module: "mes",
-    action: "read",
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
-    path: "/mes/records",
+    path: '/mes/records',
     element: ProductionRecordPage,
-    requiredPermissions: ["mes:read"],
-    module: "mes",
-    action: "read",
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
 ];

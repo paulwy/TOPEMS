@@ -1,8 +1,8 @@
-import * as React from "react";
-import type { LucideIcon, LucideProps } from "lucide-react";
-import { styled } from "@mui/material/styles";
+import * as React from 'react';
+import type { LucideIcon, LucideProps } from 'lucide-react';
+import { styled } from '@mui/material/styles';
 
-export interface IconWrapperProps extends Omit<LucideProps, "size"> {
+export interface IconWrapperProps extends Omit<LucideProps, 'size'> {
   icon: LucideIcon;
   size?: number;
   sx?: React.CSSProperties;
@@ -24,6 +24,6 @@ export const IconWrapper = styled(
           {...props}
         />
       );
-    },
-  ),
+    }
+  )
 )<IconWrapperProps>``;

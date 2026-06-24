@@ -29,7 +29,7 @@ pub struct ReportSubscription {
     pub id: Uuid,
     pub template_id: Uuid,
     pub template_name: String,
-    pub user_id: String,
+    pub user_id: Uuid,
     pub email: Option<String>,
     pub frequency: SubscriptionFrequency,
     pub enabled: bool,
@@ -39,7 +39,7 @@ pub struct ReportSubscription {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateSubscriptionRequest {
     pub template_id: Uuid,
-    pub user_id: String,
+    pub user_id: Uuid,
     pub email: Option<String>,
     pub frequency: SubscriptionFrequency,
 }
@@ -55,7 +55,7 @@ pub struct UpdateSubscriptionRequest {
 pub struct SubscriptionRow {
     pub id: Uuid,
     pub template_id: Uuid,
-    pub user_id: String,
+    pub user_id: Uuid,
     pub email: Option<String>,
     pub frequency: String,
     pub enabled: bool,

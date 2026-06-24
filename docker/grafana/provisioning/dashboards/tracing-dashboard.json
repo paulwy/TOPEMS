@@ -1,0 +1,255 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "链路追踪概览",
+      "type": "row"
+    },
+    {
+      "datasource": "Jaeger",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Jaeger",
+          "queries": {
+            "limit": 100,
+            "lookback": "1h",
+            "service": "topems-*"
+          },
+          "refId": "A",
+          "type": "jaeger_search"
+        }
+      ],
+      "title": "服务延迟分布",
+      "type": "stat"
+    },
+    {
+      "datasource": "Jaeger",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Jaeger",
+          "queries": {
+            "limit": 100,
+            "lookback": "1h",
+            "service": "topems-*"
+          },
+          "refId": "A",
+          "type": "jaeger_search"
+        }
+      ],
+      "title": "请求成功率",
+      "type": "stat"
+    },
+    {
+      "datasource": "Jaeger",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Jaeger",
+          "queries": {
+            "limit": 100,
+            "lookback": "1h",
+            "service": "topems-*"
+          },
+          "refId": "A",
+          "type": "jaeger_search"
+        }
+      ],
+      "title": "服务调用次数",
+      "type": "stat"
+    },
+    {
+      "datasource": "Jaeger",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Jaeger",
+          "queries": {
+            "limit": 100,
+            "lookback": "1h",
+            "service": "topems-*"
+          },
+          "refId": "A",
+          "type": "jaeger_search"
+        }
+      ],
+      "title": "慢请求数量",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 6,
+      "panels": [],
+      "title": "追踪列表",
+      "type": "row"
+    },
+    {
+      "datasource": "Jaeger",
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 7,
+      "options": {
+        "showTraceId": true,
+        "showDuration": true,
+        "showService": true,
+        "showOperation": true,
+        "showStartTime": true
+      },
+      "targets": [
+        {
+          "datasource": "Jaeger",
+          "queries": {
+            "limit": 50,
+            "lookback": "1h",
+            "service": "topems-*"
+          },
+          "refId": "A",
+          "type": "jaeger_search"
+        }
+      ],
+      "title": "最近追踪记录",
+      "type": "jaeger_trace_list"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["tracing", "jaeger", "topems"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "All"
+        },
+        "hide": 0,
+        "label": "服务",
+        "name": "service",
+        "options": [],
+        "query": "Jaeger",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "TOPEMS 链路追踪仪表板",
+  "uid": "topems-tracing",
+  "version": 1
+}

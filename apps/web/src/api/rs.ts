@@ -1,6 +1,6 @@
-import apiClient, { downloadBlob } from "./client";
-import type { ApiResponse } from "./client";
-import config from "../config/runtime";
+import apiClient, { downloadBlob } from './client';
+import type { ApiResponse } from './client';
+import config from '../config/runtime';
 
 // 项目相关类型
 export interface Project {
@@ -304,12 +304,10 @@ export const rsApi = {
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)]),
+            .map(([k, v]) => [k, String(v)])
         )
-      : "";
-    const url = queryParams
-      ? `/api/rs/projects?${queryParams}`
-      : "/api/rs/projects";
+      : '';
+    const url = queryParams ? `/api/rs/projects?${queryParams}` : '/api/rs/projects';
     return apiClient.rs.get(url);
   },
 
@@ -317,16 +315,11 @@ export const rsApi = {
     return apiClient.rs.get(`/api/rs/projects/${id}`);
   },
 
-  createProject: async (
-    data: CreateProjectRequest,
-  ): Promise<ApiResponse<Project>> => {
-    return apiClient.rs.post("/api/rs/projects", data);
+  createProject: async (data: CreateProjectRequest): Promise<ApiResponse<Project>> => {
+    return apiClient.rs.post('/api/rs/projects', data);
   },
 
-  updateProject: async (
-    id: string,
-    data: UpdateProjectRequest,
-  ): Promise<ApiResponse<Project>> => {
+  updateProject: async (id: string, data: UpdateProjectRequest): Promise<ApiResponse<Project>> => {
     return apiClient.rs.put(`/api/rs/projects/${id}`, data);
   },
 
@@ -335,43 +328,36 @@ export const rsApi = {
   },
 
   batchCreateProjects: async (
-    data: BatchCreateProjectsRequest,
+    data: BatchCreateProjectsRequest
   ): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.rs.post("/api/rs/projects/batch", data);
+    return apiClient.rs.post('/api/rs/projects/batch', data);
   },
 
   batchDeleteProjects: async (
-    data: BatchDeleteProjectsRequest,
+    data: BatchDeleteProjectsRequest
   ): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.rs.delete("/api/rs/projects/batch", { data });
+    return apiClient.rs.delete('/api/rs/projects/batch', { data });
   },
 
   exportProjects: async (): Promise<Blob> => {
-    const baseURL =
-      (apiClient.rs as any).defaults?.baseURL || config.services.rs;
-    return downloadBlob(baseURL, "/api/rs/projects/export");
+    const baseURL = (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    return downloadBlob(baseURL, '/api/rs/projects/export');
   },
 
-  importProjects: async (
-    file: File,
-  ): Promise<ApiResponse<BatchOperationResult>> => {
+  importProjects: async (file: File): Promise<ApiResponse<BatchOperationResult>> => {
     const content = await file.text();
-    return apiClient.rs.post("/api/rs/projects/import", content, {
+    return apiClient.rs.post('/api/rs/projects/import', content, {
       headers: {
-        "Content-Type": "text/csv",
+        'Content-Type': 'text/csv',
       },
     });
   },
 
-  getProjectDashboard: async (
-    id: string,
-  ): Promise<ApiResponse<ProjectDashboardResponse>> => {
+  getProjectDashboard: async (id: string): Promise<ApiResponse<ProjectDashboardResponse>> => {
     return apiClient.rs.get(`/api/rs/projects/${id}/dashboard`);
   },
 
-  getProjectGantt: async (
-    id: string,
-  ): Promise<ApiResponse<ProjectGanttResponse>> => {
+  getProjectGantt: async (id: string): Promise<ApiResponse<ProjectGanttResponse>> => {
     return apiClient.rs.get(`/api/rs/projects/${id}/gantt`);
   },
 
@@ -395,12 +381,10 @@ export const rsApi = {
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)]),
+            .map(([k, v]) => [k, String(v)])
         )
-      : "";
-    const url = queryParams
-      ? `/api/rs/experiments?${queryParams}`
-      : "/api/rs/experiments";
+      : '';
+    const url = queryParams ? `/api/rs/experiments?${queryParams}` : '/api/rs/experiments';
     return apiClient.rs.get(url);
   },
 
@@ -408,15 +392,13 @@ export const rsApi = {
     return apiClient.rs.get(`/api/rs/experiments/${id}`);
   },
 
-  createExperiment: async (
-    data: CreateExperimentRequest,
-  ): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.post("/api/rs/experiments", data);
+  createExperiment: async (data: CreateExperimentRequest): Promise<ApiResponse<Experiment>> => {
+    return apiClient.rs.post('/api/rs/experiments', data);
   },
 
   updateExperiment: async (
     id: string,
-    data: UpdateExperimentRequest,
+    data: UpdateExperimentRequest
   ): Promise<ApiResponse<Experiment>> => {
     return apiClient.rs.put(`/api/rs/experiments/${id}`, data);
   },
@@ -425,9 +407,7 @@ export const rsApi = {
     return apiClient.rs.delete(`/api/rs/experiments/${id}`);
   },
 
-  listExperimentsByProject: async (
-    projectId: string,
-  ): Promise<ApiResponse<Experiment[]>> => {
+  listExperimentsByProject: async (projectId: string): Promise<ApiResponse<Experiment[]>> => {
     return apiClient.rs.get(`/api/rs/experiments/project/${projectId}`);
   },
 
@@ -448,12 +428,12 @@ export const rsApi = {
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)]),
+            .map(([k, v]) => [k, String(v)])
         )
-      : "";
+      : '';
     const url = queryParams
       ? `/api/rs/experiments/phase/lab?${queryParams}`
-      : "/api/rs/experiments/phase/lab";
+      : '/api/rs/experiments/phase/lab';
     return apiClient.rs.get(url);
   },
 
@@ -474,12 +454,12 @@ export const rsApi = {
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)]),
+            .map(([k, v]) => [k, String(v)])
         )
-      : "";
+      : '';
     const url = queryParams
       ? `/api/rs/experiments/phase/pilot?${queryParams}`
-      : "/api/rs/experiments/phase/pilot";
+      : '/api/rs/experiments/phase/pilot';
     return apiClient.rs.get(url);
   },
 
@@ -500,55 +480,45 @@ export const rsApi = {
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)]),
+            .map(([k, v]) => [k, String(v)])
         )
-      : "";
+      : '';
     const url = queryParams
       ? `/api/rs/experiments/phase/scaleup?${queryParams}`
-      : "/api/rs/experiments/phase/scaleup";
+      : '/api/rs/experiments/phase/scaleup';
     return apiClient.rs.get(url);
   },
 
   advancePhase: async (
     id: string,
-    data?: { new_status?: string },
+    data?: { new_status?: string }
   ): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.post(
-      `/api/rs/experiments/${id}/advance-phase`,
-      data || {},
-    );
+    return apiClient.rs.post(`/api/rs/experiments/${id}/advance-phase`, data || {});
   },
 
-  traceBatch: async (
-    batchNumber: string,
-  ): Promise<ApiResponse<BatchTraceItem[]>> => {
+  traceBatch: async (batchNumber: string): Promise<ApiResponse<BatchTraceItem[]>> => {
     return apiClient.rs.get(`/api/rs/batch-trace/${batchNumber}`);
   },
 
   // 试验记录相关
-  getExperimentRecords: async (
-    experimentId: string,
-  ): Promise<ApiResponse<ExperimentRecord[]>> => {
+  getExperimentRecords: async (experimentId: string): Promise<ApiResponse<ExperimentRecord[]>> => {
     return apiClient.rs.get(`/api/rs/experiments/${experimentId}/records`);
   },
 
   createExperimentRecord: async (
     experimentId: string,
-    data: CreateExperimentRecordRequest,
+    data: CreateExperimentRecordRequest
   ): Promise<ApiResponse<{ id: string; recorded_at: string }>> => {
-    return apiClient.rs.post(
-      `/api/rs/experiments/${experimentId}/records`,
-      data,
-    );
+    return apiClient.rs.post(`/api/rs/experiments/${experimentId}/records`, data);
   },
 
   // 统计相关
   getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
-    return apiClient.rs.get("/api/rs/statistics");
+    return apiClient.rs.get('/api/rs/statistics');
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.rs.get("/health");
+    return apiClient.rs.get('/health');
   },
 };
 
@@ -558,7 +528,7 @@ export const formulaApi = {
     project_id?: string;
     status?: string;
   }): Promise<ApiResponse<Formula[]>> => {
-    let url = "/api/rs/formulas";
+    let url = '/api/rs/formulas';
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -578,16 +548,11 @@ export const formulaApi = {
     return apiClient.rs.get(`/api/rs/formulas/${id}`);
   },
 
-  createFormula: async (
-    data: CreateFormulaRequest,
-  ): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.post("/api/rs/formulas", data);
+  createFormula: async (data: CreateFormulaRequest): Promise<ApiResponse<Formula>> => {
+    return apiClient.rs.post('/api/rs/formulas', data);
   },
 
-  updateFormula: async (
-    id: string,
-    data: UpdateFormulaRequest,
-  ): Promise<ApiResponse<Formula>> => {
+  updateFormula: async (id: string, data: UpdateFormulaRequest): Promise<ApiResponse<Formula>> => {
     return apiClient.rs.put(`/api/rs/formulas/${id}`, data);
   },
 
@@ -595,28 +560,24 @@ export const formulaApi = {
     return apiClient.rs.delete(`/api/rs/formulas/${id}`);
   },
 
-  listVersions: async (
-    formulaId: string,
-  ): Promise<ApiResponse<FormulaVersion[]>> => {
+  listVersions: async (formulaId: string): Promise<ApiResponse<FormulaVersion[]>> => {
     return apiClient.rs.get(`/api/rs/formulas/${formulaId}/versions`);
   },
 
-  listFormulaVersions: async (
-    formulaId: string,
-  ): Promise<ApiResponse<FormulaVersion[]>> => {
+  listFormulaVersions: async (formulaId: string): Promise<ApiResponse<FormulaVersion[]>> => {
     return apiClient.rs.get(`/api/rs/formulas/${formulaId}/versions`);
   },
 
   createVersion: async (
     formulaId: string,
-    data: CreateFormulaVersionRequest,
+    data: CreateFormulaVersionRequest
   ): Promise<ApiResponse<FormulaVersion>> => {
     return apiClient.rs.post(`/api/rs/formulas/${formulaId}/versions`, data);
   },
 
   createFormulaVersion: async (
     formulaId: string,
-    data: CreateFormulaVersionRequest,
+    data: CreateFormulaVersionRequest
   ): Promise<ApiResponse<FormulaVersion>> => {
     return apiClient.rs.post(`/api/rs/formulas/${formulaId}/versions`, data);
   },
@@ -637,7 +598,7 @@ export interface AuditLog {
   user_name?: string;
   request_details?: any;
   response_details?: any;
-  status: "success" | "partial" | "error";
+  status: 'success' | 'partial' | 'error';
   error_message?: string;
   ip_address?: string;
   user_agent?: string;
@@ -649,6 +610,8 @@ export interface AuditLogQueryParams {
   entity_type?: string;
   user_id?: string;
   status?: string;
+  start_date?: string;
+  end_date?: string;
   page?: number;
   page_size?: number;
 }
@@ -674,9 +637,9 @@ export interface RsStatistics {
 
 export const auditRsApi = {
   listAuditLogs: async (
-    params?: AuditLogQueryParams,
+    params?: AuditLogQueryParams
   ): Promise<ApiResponse<{ audit_logs: AuditLog[]; total: number }>> => {
-    let url = "/api/rs/audit-logs";
+    let url = '/api/rs/audit-logs';
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -695,11 +658,31 @@ export const auditRsApi = {
   getAuditLog: async (id: string): Promise<ApiResponse<AuditLog>> => {
     return apiClient.rs.get(`/api/rs/audit-logs/${id}`);
   },
+
+  exportAuditLogs: async (
+    params?: Omit<AuditLogQueryParams, 'page' | 'page_size'>
+  ): Promise<Blob> => {
+    let url = '/api/rs/audit-logs/export';
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+      const queryString = searchParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    const baseURL = (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    return downloadBlob(baseURL, url);
+  },
 };
 
 export const rsStatisticsApi = {
   getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
-    return apiClient.rs.get("/api/rs/statistics");
+    return apiClient.rs.get('/api/rs/statistics');
   },
 };
 
@@ -757,7 +740,7 @@ export interface MaterialQueryParams {
 
 export const materialApi = {
   listMaterials: async (
-    params?: MaterialQueryParams,
+    params?: MaterialQueryParams
   ): Promise<
     ApiResponse<{
       materials: Material[];
@@ -770,12 +753,10 @@ export const materialApi = {
       ? new URLSearchParams(
           Object.entries(params)
             .filter(([, v]) => v !== undefined && v !== null)
-            .map(([k, v]) => [k, String(v)]),
+            .map(([k, v]) => [k, String(v)])
         )
-      : "";
-    const url = queryParams
-      ? `/api/rs/materials?${queryParams}`
-      : "/api/rs/materials";
+      : '';
+    const url = queryParams ? `/api/rs/materials?${queryParams}` : '/api/rs/materials';
     return apiClient.rs.get(url);
   },
 
@@ -783,15 +764,13 @@ export const materialApi = {
     return apiClient.rs.get(`/api/rs/materials/${id}`);
   },
 
-  createMaterial: async (
-    data: CreateMaterialRequest,
-  ): Promise<ApiResponse<Material>> => {
-    return apiClient.rs.post("/api/rs/materials", data);
+  createMaterial: async (data: CreateMaterialRequest): Promise<ApiResponse<Material>> => {
+    return apiClient.rs.post('/api/rs/materials', data);
   },
 
   updateMaterial: async (
     id: string,
-    data: UpdateMaterialRequest,
+    data: UpdateMaterialRequest
   ): Promise<ApiResponse<Material>> => {
     return apiClient.rs.put(`/api/rs/materials/${id}`, data);
   },
@@ -800,27 +779,22 @@ export const materialApi = {
     return apiClient.rs.delete(`/api/rs/materials/${id}`);
   },
 
-  batchDeleteMaterials: async (
-    ids: string[],
-  ): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.rs.delete("/api/rs/materials/batch", { data: { ids } });
+  batchDeleteMaterials: async (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.rs.delete('/api/rs/materials/batch', { data: { ids } });
   },
 
-  importMaterials: async (
-    file: File,
-  ): Promise<ApiResponse<BatchOperationResult>> => {
+  importMaterials: async (file: File): Promise<ApiResponse<BatchOperationResult>> => {
     const content = await file.text();
-    return apiClient.rs.post("/api/rs/materials/import", content, {
+    return apiClient.rs.post('/api/rs/materials/import', content, {
       headers: {
-        "Content-Type": "text/csv",
+        'Content-Type': 'text/csv',
       },
     });
   },
 
   exportMaterials: async (): Promise<Blob> => {
-    const baseURL =
-      (apiClient.rs as any).defaults?.baseURL || config.services.rs;
-    return downloadBlob(baseURL, "/api/rs/materials/export");
+    const baseURL = (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    return downloadBlob(baseURL, '/api/rs/materials/export');
   },
 };
 

@@ -1,14 +1,6 @@
-import React, { useState } from "react";
-import {
-  User,
-  FileText,
-  Check,
-  CheckCheck,
-  MoreVertical,
-  Trash2,
-  Edit3,
-} from "lucide-react";
-import type { ChatMessage } from "../../api/im";
+import React, { useState } from 'react';
+import { User, FileText, Check, CheckCheck, MoreVertical, Trash2, Edit3 } from 'lucide-react';
+import type { ChatMessage } from '../../api/im';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -29,14 +21,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
 
-  const isImage = message.message_type === "image";
-  const isFile = message.message_type === "file";
+  const isImage = message.message_type === 'image';
+  const isFile = message.message_type === 'file';
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString("zh-CN", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -68,28 +60,28 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <div
       style={{
-        display: "flex",
-        justifyContent: isSent ? "flex-end" : "flex-start",
+        display: 'flex',
+        justifyContent: isSent ? 'flex-end' : 'flex-start',
         marginBottom: 16,
       }}
     >
       <div
         style={{
-          display: "flex",
-          alignItems: "flex-end",
-          maxWidth: "70%",
-          flexDirection: isSent ? "row-reverse" : "row",
+          display: 'flex',
+          alignItems: 'flex-end',
+          maxWidth: '70%',
+          flexDirection: isSent ? 'row-reverse' : 'row',
         }}
       >
         <div
           style={{
             width: 32,
             height: 32,
-            borderRadius: "9999px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: isSent ? "#4f46e5" : "#d1d5db",
+            borderRadius: '9999px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isSent ? '#4f46e5' : '#d1d5db',
             marginLeft: isSent ? 8 : 0,
             marginRight: isSent ? 0 : 8,
           }}
@@ -98,28 +90,28 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             style={{
               width: 16,
               height: 16,
-              color: isSent ? "#ffffff" : "#4b5563",
+              color: isSent ? '#ffffff' : '#4b5563',
             }}
           />
         </div>
         <div
           style={{
-            position: "relative",
+            position: 'relative',
             borderRadius: 8,
             padding: 12,
-            backgroundColor: isSent ? "#4f46e5" : "#f3f4f6",
-            color: isSent ? "#ffffff" : "#111827",
+            backgroundColor: isSent ? '#4f46e5' : '#f3f4f6',
+            color: isSent ? '#ffffff' : '#111827',
           }}
         >
           {isSent && (
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 top: -4,
                 right: -4,
                 opacity: 0,
-                transition: "opacity 0.15s",
-                cursor: "pointer",
+                transition: 'opacity 0.15s',
+                cursor: 'pointer',
               }}
               onClick={() => setShowMenu(!showMenu)}
             >
@@ -127,9 +119,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 style={{
                   width: 16,
                   height: 16,
-                  color: "#9ca3af",
-                  backgroundColor: "#ffffff",
-                  borderRadius: "9999px",
+                  color: '#9ca3af',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '9999px',
                   padding: 2,
                 }}
               />
@@ -139,13 +131,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {showMenu && isSent && (
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 top: -64,
                 right: -4,
-                backgroundColor: "#ffffff",
+                backgroundColor: '#ffffff',
                 borderRadius: 8,
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                border: "1px solid #e5e7eb",
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                border: '1px solid #e5e7eb',
                 padding: 4,
                 zIndex: 10,
               }}
@@ -153,16 +145,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               <button
                 onClick={handleEdit}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 8,
-                  padding: "8px 16px",
+                  padding: '8px 16px',
                   fontSize: 14,
-                  color: "#374151",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "100%",
+                  color: '#374151',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  width: '100%',
                 }}
               >
                 <Edit3 style={{ width: 16, height: 16 }} />
@@ -171,16 +163,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               <button
                 onClick={handleDelete}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 8,
-                  padding: "8px 16px",
+                  padding: '8px 16px',
                   fontSize: 14,
-                  color: "#dc2626",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "100%",
+                  color: '#dc2626',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  width: '100%',
                 }}
               >
                 <Trash2 style={{ width: 16, height: 16 }} />
@@ -203,7 +195,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           )}
 
           {isEditing ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
@@ -211,27 +203,25 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   padding: 8,
                   borderRadius: 4,
                   fontSize: 14,
-                  resize: "none",
-                  backgroundColor: isSent ? "#4338ca" : "#ffffff",
-                  color: isSent ? "#ffffff" : "#111827",
-                  border: `1px solid ${isSent ? "#6366f1" : "#d1d5db"}`,
+                  resize: 'none',
+                  backgroundColor: isSent ? '#4338ca' : '#ffffff',
+                  color: isSent ? '#ffffff' : '#111827',
+                  border: `1px solid ${isSent ? '#6366f1' : '#d1d5db'}`,
                 }}
                 rows={3}
                 autoFocus
               />
-              <div
-                style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
-              >
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button
                   onClick={handleCancelEdit}
                   style={{
                     fontSize: 12,
-                    padding: "4px 12px",
+                    padding: '4px 12px',
                     borderRadius: 4,
-                    backgroundColor: isSent ? "#6366f1" : "#e5e7eb",
-                    color: isSent ? "#ffffff" : "#374151",
-                    border: "none",
-                    cursor: "pointer",
+                    backgroundColor: isSent ? '#6366f1' : '#e5e7eb',
+                    color: isSent ? '#ffffff' : '#374151',
+                    border: 'none',
+                    cursor: 'pointer',
                   }}
                 >
                   取消
@@ -240,12 +230,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   onClick={handleSaveEdit}
                   style={{
                     fontSize: 12,
-                    padding: "4px 12px",
+                    padding: '4px 12px',
                     borderRadius: 4,
-                    backgroundColor: isSent ? "#ffffff" : "#4f46e5",
-                    color: isSent ? "#4f46e5" : "#ffffff",
-                    border: "none",
-                    cursor: "pointer",
+                    backgroundColor: isSent ? '#ffffff' : '#4f46e5',
+                    color: isSent ? '#4f46e5' : '#ffffff',
+                    border: 'none',
+                    cursor: 'pointer',
                   }}
                 >
                   保存
@@ -255,46 +245,44 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           ) : isImage && message.content ? (
             <img
               src={message.content}
-              alt="Shared image"
+              alt='Shared image'
               style={{
                 borderRadius: 8,
-                maxWidth: "100%",
-                cursor: "pointer",
+                maxWidth: '100%',
+                cursor: 'pointer',
                 maxHeight: 300,
               }}
-              onClick={() => window.open(message.content, "_blank")}
+              onClick={() => window.open(message.content, '_blank')}
             />
           ) : isFile ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <FileText style={{ width: 20, height: 20 }} />
               <a
                 href={message.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
+                target='_blank'
+                rel='noopener noreferrer'
                 style={{
-                  textDecoration: "underline",
-                  color: isSent ? "#ffffff" : "#4f46e5",
+                  textDecoration: 'underline',
+                  color: isSent ? '#ffffff' : '#4f46e5',
                 }}
               >
                 {message.file_name || message.content}
               </a>
             </div>
           ) : (
-            <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-              {message.content}
-            </div>
+            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.content}</div>
           )}
 
           {!isEditing && (
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
                 gap: 4,
                 marginTop: 4,
                 fontSize: 12,
-                color: isSent ? "#c7d2fe" : "#6b7280",
+                color: isSent ? '#c7d2fe' : '#6b7280',
               }}
             >
               <span>{formatTime(message.created_at)}</span>

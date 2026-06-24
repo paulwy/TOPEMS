@@ -3,28 +3,31 @@
  * 管理金蝶、用友、SAP等外部ERP系统的连接配置
  */
 
-import React, { useState, useMemo, useCallback } from "react";
-import { apiLogger } from "@/utils/logger";
-import { useNavigate } from "react-router-dom";
-import {
-  Plus,
-  Settings,
-  RefreshCw,
-  Trash2,
-  Edit,
-  Power,
-  TestTube,
-  Eye,
-} from "lucide-react";
+import React, { useState, useMemo, useCallback } from 'react';
+import { apiLogger } from '@/utils/logger';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Settings, RefreshCw, Trash2, Edit, Power, TestTube, Eye } from 'lucide-react';
 
-import { Box, Typography, TextField, Chip, Card, CardContent, CardHeader, Dialog, DialogTitle, DialogContent, DialogActions,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import {
+  Box,
+  Typography,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  Switch,
+  FormControlLabel,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
 import {
   ListPageTemplate,
+  FormPageTemplate,
   type ColumnDef,
   type RowAction,
-} from "@/components/templates";
+} from '@/components/templates';
 
 import {
   useErpConnections,
@@ -33,50 +36,47 @@ import {
   useDeleteErpConnection,
   useToggleErpConnection,
   useTestErpConnection,
-} from "@/hooks/useExternalErp";
+} from '@/hooks/useExternalErp';
 
 // ERP系统类型配置
-const ERP_TYPE_CONFIG: Record<
-  string,
-  { name: string; logo: string; color: string }
-> = {
+const ERP_TYPE_CONFIG: Record<string, { name: string; logo: string; color: string }> = {
   kingdee: {
-    name: "金蝶K/3",
-    logo: "K",
-    color: "#3b82f6",
+    name: '金蝶K/3',
+    logo: 'K',
+    color: '#3b82f6',
   },
   yonyou: {
-    name: "用友U8",
-    logo: "Y",
-    color: "#f59e0b",
+    name: '用友U8',
+    logo: 'Y',
+    color: '#f59e0b',
   },
   sap: {
-    name: "SAP S/4",
-    logo: "S",
-    color: "#22c55e",
+    name: 'SAP S/4',
+    logo: 'S',
+    color: '#22c55e',
   },
 };
 
 // 状态配置
 const STATUS_CONFIG: Record<
   string,
-  { label: string; color: "success" | "default" | "error" | "warning" }
+  { label: string; color: 'success' | 'default' | 'error' | 'warning' }
 > = {
   connected: {
-    label: "已连接",
-    color: "success",
+    label: '已连接',
+    color: 'success',
   },
   disconnected: {
-    label: "未连接",
-    color: "default",
+    label: '未连接',
+    color: 'default',
   },
   error: {
-    label: "连接错误",
-    color: "error",
+    label: '连接错误',
+    color: 'error',
   },
   syncing: {
-    label: "同步中",
-    color: "warning",
+    label: '同步中',
+    color: 'warning',
   },
 };
 
@@ -95,6 +95,93 @@ interface ErpConnection {
   last_sync_at?: string;
 }
 
+// 创建/编辑表单配置
+const CONNECTION_FORM_SECTIONS = [
+  {
+    id: 'basic',
+    title: '基本信息',
+    fields: [
+      {
+        name: 'type',
+        label: 'ERP类型',
+        type: 'select',
+        required: true,
+        options: [
+          { label: '金蝶K/3', value: 'kingdee' },
+          { label: '用友U8', value: 'yonyou' },
+          { label: 'SAP S/4', value: 'sap' },
+        ],
+      },
+      {
+        name: 'name',
+        label: '连接名称',
+        type: 'text',
+        required: true,
+        placeholder: '输入连接名称',
+      },
+    ],
+  },
+  {
+    id: 'api',
+    title: 'API配置',
+    fields: [
+      {
+        name: 'api_url',
+        label: 'API地址',
+        type: 'text',
+        required: true,
+        placeholder: '输入API地址，如 https://api.example.com',
+      },
+      {
+        name: 'app_key',
+        label: 'App Key',
+        type: 'text',
+        placeholder: '输入App Key（可选）',
+      },
+      {
+        name: 'app_secret',
+        label: 'App Secret',
+        type: 'text',
+        placeholder: '输入App Secret（可选）',
+      },
+      {
+        name: 'timeout',
+        label: '超时时间（毫秒）',
+        type: 'number',
+        placeholder: '默认30000',
+      },
+    ],
+  },
+  {
+    id: 'sync',
+    title: '同步配置',
+    fields: [
+      {
+        name: 'sync_direction',
+        label: '同步方向',
+        type: 'select',
+        required: true,
+        options: [
+          { label: '双向同步', value: 'bidirectional' },
+          { label: '仅导入', value: 'import' },
+          { label: '仅导出', value: 'export' },
+        ],
+      },
+      {
+        name: 'sync_mode',
+        label: '同步模式',
+        type: 'select',
+        required: true,
+        options: [
+          { label: '实时同步', value: 'realtime' },
+          { label: '定时同步', value: 'scheduled' },
+          { label: '手动同步', value: 'manual' },
+        ],
+      },
+    ],
+  },
+];
+
 export default function ExternalErpConnectionsPage() {
   const navigate = useNavigate();
 
@@ -110,53 +197,57 @@ export default function ExternalErpConnectionsPage() {
 
   // 状态
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingConnection, setEditingConnection] =
-    useState<ErpConnection | null>(null);
-  const [searchValue, setSearchValue] = useState("");
+  const [editingConnection, setEditingConnection] = useState<ErpConnection | null>(null);
+  const [searchValue, setSearchValue] = useState('');
   const [pagination, setPagination] = useState({ page: 0, pageSize: 10 });
-
-  // 连接列表数据
-  const connections: ErpConnection[] = connectionsData?.data?.items || [];
+  const [submitting, setSubmitting] = useState(false);
 
   // 筛选后的数据
   const filteredData = useMemo(() => {
-    if (!searchValue) return connections;
+    const list = connectionsData?.data?.items ?? [];
+    if (!searchValue) return list;
     const keyword = searchValue.toLowerCase();
-    return connections.filter(
+    return list.filter(
       (conn) =>
         conn.name.toLowerCase().includes(keyword) ||
-        ERP_TYPE_CONFIG[conn.type]?.name.toLowerCase().includes(keyword),
+        ERP_TYPE_CONFIG[conn.type]?.name.toLowerCase().includes(keyword)
     );
-  }, [connections, searchValue]);
+  }, [connectionsData, searchValue]);
 
   // 表格列定义
   const columns: ColumnDef<ErpConnection>[] = [
     {
-      id: "name",
-      label: "连接名称",
+      id: 'name',
+      label: '连接名称',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
               width: 32,
               height: 32,
               borderRadius: 1,
-              bgcolor: ERP_TYPE_CONFIG[row.type]?.color || "#9ca3af",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
+              bgcolor: ERP_TYPE_CONFIG[row.type]?.color || '#9ca3af',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
               fontWeight: 700,
-              fontSize: "0.875rem",
+              fontSize: '0.875rem',
             }}
           >
-            {ERP_TYPE_CONFIG[row.type]?.logo || "?"}
+            {ERP_TYPE_CONFIG[row.type]?.logo || '?'}
           </Box>
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {row.name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {ERP_TYPE_CONFIG[row.type]?.name || row.type}
             </Typography>
           </Box>
@@ -164,18 +255,18 @@ export default function ExternalErpConnectionsPage() {
       ),
     },
     {
-      id: "api_url",
-      label: "API地址",
+      id: 'api_url',
+      label: 'API地址',
       render: (row) => (
         <Typography
-          variant="body2"
+          variant='body2'
           sx={{
-            fontFamily: "monospace",
-            fontSize: "0.75rem",
+            fontFamily: 'monospace',
+            fontSize: '0.75rem',
             maxWidth: 200,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
           title={row.api_url}
         >
@@ -184,58 +275,58 @@ export default function ExternalErpConnectionsPage() {
       ),
     },
     {
-      id: "sync_direction",
-      label: "同步方向",
+      id: 'sync_direction',
+      label: '同步方向',
       render: (row) => {
         const directionMap: Record<string, string> = {
-          bidirectional: "双向同步",
-          import: "导入",
-          export: "导出",
+          bidirectional: '双向同步',
+          import: '导入',
+          export: '导出',
         };
         return (
-          <Typography variant="body2">
+          <Typography variant='body2'>
             {directionMap[row.sync_direction] || row.sync_direction}
           </Typography>
         );
       },
     },
     {
-      id: "sync_mode",
-      label: "同步模式",
+      id: 'sync_mode',
+      label: '同步模式',
       render: (row) => {
         const modeMap: Record<string, string> = {
-          realtime: "实时",
-          scheduled: "定时",
-          manual: "手动",
+          realtime: '实时',
+          scheduled: '定时',
+          manual: '手动',
         };
-        return (
-          <Typography variant="body2">
-            {modeMap[row.sync_mode] || row.sync_mode}
-          </Typography>
-        );
+        return <Typography variant='body2'>{modeMap[row.sync_mode] || row.sync_mode}</Typography>;
       },
     },
     {
-      id: "last_sync_at",
-      label: "最后同步",
+      id: 'last_sync_at',
+      label: '最后同步',
       render: (row) => (
         <Typography
-          variant="body2"
-          sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+          variant='body2'
+          sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
         >
-          {row.last_sync_at
-            ? new Date(row.last_sync_at).toLocaleString("zh-CN")
-            : "从未同步"}
+          {row.last_sync_at ? new Date(row.last_sync_at).toLocaleString('zh-CN') : '从未同步'}
         </Typography>
       ),
     },
     {
-      id: "status",
-      label: "状态",
+      id: 'status',
+      label: '状态',
       render: (row) => {
-        const status = row.status || "disconnected";
+        const status = row.status || 'disconnected';
         const config = STATUS_CONFIG[status] || STATUS_CONFIG.disconnected;
-        return <Chip label={config.label} color={config.color} size="small" />;
+        return (
+          <Chip
+            label={config.label}
+            color={config.color}
+            size='small'
+          />
+        );
       },
     },
   ];
@@ -243,35 +334,30 @@ export default function ExternalErpConnectionsPage() {
   // 行操作
   const rowActions: RowAction<ErpConnection>[] = [
     {
-      label: "查看",
+      label: '查看',
       icon: <Eye size={14} />,
       onClick: (row) => setEditingConnection(row),
     },
     {
-      label: "编辑",
+      label: '编辑',
       icon: <Edit size={14} />,
       onClick: (row) => setEditingConnection(row),
     },
     {
-      label: "测试",
+      label: '测试',
       icon: <TestTube size={14} />,
       onClick: (row) => handleTestConnection(row),
-      confirm: true,
-      confirmMessage: "确定要测试此连接吗？",
     },
     {
-      label: "映射管理",
+      label: '映射管理',
       icon: <Settings size={14} />,
-      onClick: (row) =>
-        navigate(`/integration/external-erp/${row.id}/mappings`),
+      onClick: (row) => navigate(`/integration/external-erp/${row.id}/mappings`),
     },
     {
-      label: "删除",
+      label: '删除',
       icon: <Trash2 size={14} />,
-      color: "error",
+      color: 'error',
       onClick: (row) => handleDelete(row.id),
-      confirm: true,
-      confirmMessage: "确定要删除此连接吗？此操作不可恢复。",
     },
   ];
 
@@ -281,15 +367,15 @@ export default function ExternalErpConnectionsPage() {
       try {
         await testConnection.mutateAsync({
           api_url: connection.api_url,
-          app_key: connection.app_key || "",
-          app_secret: connection.app_secret || "",
+          app_key: connection.app_key || '',
+          app_secret: connection.app_secret || '',
           timeout: connection.timeout || 30000,
         });
       } catch (error) {
-        apiLogger.error("Test connection failed:", error);
+        apiLogger.error('Test connection failed:', error);
       }
     },
-    [testConnection],
+    [testConnection]
   );
 
   // 处理删除
@@ -298,71 +384,132 @@ export default function ExternalErpConnectionsPage() {
       try {
         await deleteConnection.mutateAsync(connectionId);
       } catch (error) {
-        apiLogger.error("Delete connection failed:", error);
+        apiLogger.error('Delete connection failed:', error);
       }
     },
-    [deleteConnection],
+    [deleteConnection]
   );
 
-  // 处理创建
-  const handleCreate = useCallback(
-    async (data: Partial<ErpConnection>) => {
-      try {
-        await createConnection.mutateAsync(data as any);
-        setShowCreateModal(false);
-      } catch (error) {
-        apiLogger.error("Create connection failed:", error);
-      }
-    },
-    [createConnection],
-  );
-
-  // 处理更新
-  const handleUpdate = useCallback(
-    async (data: Partial<ErpConnection>) => {
-      if (!editingConnection) return;
-      try {
+  // 处理创建/更新提交
+  const handleSubmit = async (data: any) => {
+    try {
+      setSubmitting(true);
+      if (editingConnection) {
         await updateConnection.mutateAsync({
           connectionId: editingConnection.id,
-          data: data as any,
+          data: {
+            name: data.name,
+            api_url: data.api_url,
+            app_key: data.app_key,
+            app_secret: data.app_secret,
+            timeout: data.timeout,
+            sync_direction: data.sync_direction,
+            sync_mode: data.sync_mode,
+          },
         });
         setEditingConnection(null);
-      } catch (error) {
-        apiLogger.error("Update connection failed:", error);
+      } else {
+        await createConnection.mutateAsync({
+          type: data.type,
+          name: data.name,
+          api_url: data.api_url,
+          app_key: data.app_key,
+          app_secret: data.app_secret,
+          sync_direction: data.sync_direction,
+          sync_mode: data.sync_mode,
+        });
+        setShowCreateModal(false);
       }
-    },
-    [updateConnection, editingConnection],
-  );
+    } catch (error) {
+      apiLogger.error('Save connection failed:', error);
+      throw error;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 关闭弹窗
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setEditingConnection(null);
+  };
 
   return (
-    <ListPageTemplate
-      title="外部ERP连接管理"
-      subtitle="管理金蝶、用友、SAP等外部ERP系统的连接配置"
-      columns={columns}
-      data={filteredData}
-      loading={isLoading}
-      pagination={{
-        page: pagination.page,
-        pageSize: pagination.pageSize,
-        total: filteredData.length,
-        onPageChange: (page) => setPagination((p) => ({ ...p, page })),
-        onPageSizeChange: (pageSize) => setPagination({ page: 0, pageSize }),
-      }}
-      searchValue={searchValue}
-      onSearch={setSearchValue}
-      searchable
-      searchPlaceholder="搜索连接名称..."
-      actions={[
-        {
-          label: "新建连接",
-          icon: <Plus size={16} />,
-          onClick: () => setShowCreateModal(true),
-          variant: "contained",
-        },
-      ]}
-      rowActions={rowActions}
-      onRefresh={refetch}
-      emptyMessage="暂无外部ERP连接"
-    />
+    <>
+      <ListPageTemplate
+        title='外部ERP连接管理'
+        subtitle='管理金蝶、用友、SAP等外部ERP系统的连接配置'
+        columns={columns}
+        data={filteredData}
+        loading={isLoading}
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: filteredData.length,
+          onPageChange: (page) => setPagination((p) => ({ ...p, page })),
+          onPageSizeChange: (pageSize) => setPagination({ page: 0, pageSize }),
+        }}
+        searchValue={searchValue}
+        onSearch={setSearchValue}
+        searchable
+        searchPlaceholder='搜索连接名称...'
+        actions={[
+          {
+            label: '新建连接',
+            icon: <Plus size={16} />,
+            onClick: () => setShowCreateModal(true),
+            variant: 'contained',
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={refetch}
+        emptyMessage='暂无外部ERP连接'
+      />
+
+      {/* 创建弹窗 */}
+      <Dialog
+        open={showCreateModal}
+        onClose={handleCloseModal}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>新建ERP连接</DialogTitle>
+        <DialogContent>
+          <FormPageTemplate
+            sections={CONNECTION_FORM_SECTIONS}
+            defaultValues={{
+              type: 'kingdee',
+              sync_direction: 'bidirectional',
+              sync_mode: 'realtime',
+              timeout: 30000,
+            }}
+            onSubmit={handleSubmit}
+            onCancel={handleCloseModal}
+            submitting={submitting}
+            columns={2}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* 编辑/查看弹窗 */}
+      <Dialog
+        open={!!editingConnection}
+        onClose={handleCloseModal}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>编辑ERP连接</DialogTitle>
+        <DialogContent>
+          <FormPageTemplate
+            sections={CONNECTION_FORM_SECTIONS}
+            defaultValues={editingConnection || {}}
+            onSubmit={handleSubmit}
+            onCancel={handleCloseModal}
+            submitting={submitting}
+            columns={2}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

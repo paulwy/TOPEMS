@@ -3,46 +3,43 @@
  * 管理系统基础配置、邮件设置、短信设置、日志设置
  */
 
-import React, { useState, useMemo, useCallback } from "react";
-import { apiLogger } from "@/utils/logger";
-import { Box, Typography, Tabs, Tab, Paper } from "@mui/material";
-import { Settings, Mail, MessageSquare, FileText } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import FormPageTemplate from "@/components/templates/FormPageTemplate";
-import type {
-  FormSection,
-  FormField,
-} from "@/components/templates/FormPageTemplate";
+import React, { useState, useMemo, useCallback } from 'react';
+import { apiLogger } from '@/utils/logger';
+import { Box, Typography, Tabs, Tab, Paper } from '@mui/material';
+import { Settings, Mail, MessageSquare, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import FormPageTemplate from '@/components/templates/FormPageTemplate';
+import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 
 // ============ Mock 数据 ============
 const mockSettings = {
   basic: {
-    systemName: "TOPEMS 企业管理系统",
-    systemLogo: "",
-    companyName: "示例公司",
-    contactEmail: "admin@example.com",
-    contactPhone: "400-123-4567",
-    address: "北京市朝阳区某某路123号",
+    systemName: 'TOPEMS 企业管理系统',
+    systemLogo: '',
+    companyName: '示例公司',
+    contactEmail: 'admin@example.com',
+    contactPhone: '400-123-4567',
+    address: '北京市朝阳区某某路123号',
   },
   mail: {
     enabled: true,
-    smtpHost: "smtp.example.com",
+    smtpHost: 'smtp.example.com',
     smtpPort: 465,
-    smtpUsername: "noreply@example.com",
-    smtpPassword: "",
+    smtpUsername: 'noreply@example.com',
+    smtpPassword: '',
     useTLS: true,
-    fromEmail: "noreply@example.com",
-    fromName: "TOPEMS 系统",
+    fromEmail: 'noreply@example.com',
+    fromName: 'TOPEMS 系统',
   },
   sms: {
     enabled: false,
-    provider: "aliyun",
-    accessKeyId: "",
-    accessKeySecret: "",
-    signName: "TOPEMS",
+    provider: 'aliyun',
+    accessKeyId: '',
+    accessKeySecret: '',
+    signName: 'TOPEMS',
   },
   log: {
-    level: "info",
+    level: 'info',
     retentionDays: 30,
     enableAccessLog: true,
     enableOperationLog: true,
@@ -57,43 +54,43 @@ interface TabConfig {
 }
 
 const tabsConfig: TabConfig[] = [
-  { id: "basic", label: "基础配置", icon: Settings },
-  { id: "mail", label: "邮件设置", icon: Mail },
-  { id: "sms", label: "短信设置", icon: MessageSquare },
-  { id: "log", label: "日志设置", icon: FileText },
+  { id: 'basic', label: '基础配置', icon: Settings },
+  { id: 'mail', label: '邮件设置', icon: Mail },
+  { id: 'sms', label: '短信设置', icon: MessageSquare },
+  { id: 'log', label: '日志设置', icon: FileText },
 ];
 
 // ============ 表单字段定义 ============
 
 const getBasicFields = (): FormField[] => [
   {
-    name: "systemName",
-    label: "系统名称",
-    type: "text",
+    name: 'systemName',
+    label: '系统名称',
+    type: 'text',
     defaultValue: mockSettings.basic.systemName,
   },
   {
-    name: "companyName",
-    label: "公司名称",
-    type: "text",
+    name: 'companyName',
+    label: '公司名称',
+    type: 'text',
     defaultValue: mockSettings.basic.companyName,
   },
   {
-    name: "contactEmail",
-    label: "联系邮箱",
-    type: "email",
+    name: 'contactEmail',
+    label: '联系邮箱',
+    type: 'email',
     defaultValue: mockSettings.basic.contactEmail,
   },
   {
-    name: "contactPhone",
-    label: "联系电话",
-    type: "text",
+    name: 'contactPhone',
+    label: '联系电话',
+    type: 'text',
     defaultValue: mockSettings.basic.contactPhone,
   },
   {
-    name: "address",
-    label: "公司地址",
-    type: "textarea",
+    name: 'address',
+    label: '公司地址',
+    type: 'textarea',
     rows: 2,
     defaultValue: mockSettings.basic.address,
   },
@@ -101,153 +98,153 @@ const getBasicFields = (): FormField[] => [
 
 const getMailFields = (): FormField[] => [
   {
-    name: "enabled",
-    label: "启用邮件服务",
-    type: "switch",
+    name: 'enabled',
+    label: '启用邮件服务',
+    type: 'switch',
     defaultValue: mockSettings.mail.enabled,
   },
   {
-    name: "smtpHost",
-    label: "SMTP 服务器",
-    type: "text",
+    name: 'smtpHost',
+    label: 'SMTP 服务器',
+    type: 'text',
     defaultValue: mockSettings.mail.smtpHost,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "smtpPort",
-    label: "SMTP 端口",
-    type: "number",
+    name: 'smtpPort',
+    label: 'SMTP 端口',
+    type: 'number',
     defaultValue: mockSettings.mail.smtpPort,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "smtpUsername",
-    label: "用户名",
-    type: "text",
+    name: 'smtpUsername',
+    label: '用户名',
+    type: 'text',
     defaultValue: mockSettings.mail.smtpUsername,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "smtpPassword",
-    label: "密码",
-    type: "password",
+    name: 'smtpPassword',
+    label: '密码',
+    type: 'password',
     defaultValue: mockSettings.mail.smtpPassword,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "useTLS",
-    label: "使用 TLS",
-    type: "switch",
+    name: 'useTLS',
+    label: '使用 TLS',
+    type: 'switch',
     defaultValue: mockSettings.mail.useTLS,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "fromEmail",
-    label: "发件人邮箱",
-    type: "email",
+    name: 'fromEmail',
+    label: '发件人邮箱',
+    type: 'email',
     defaultValue: mockSettings.mail.fromEmail,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "fromName",
-    label: "发件人名称",
-    type: "text",
+    name: 'fromName',
+    label: '发件人名称',
+    type: 'text',
     defaultValue: mockSettings.mail.fromName,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
 ];
 
 const getSmsFields = (): FormField[] => [
   {
-    name: "enabled",
-    label: "启用短信服务",
-    type: "switch",
+    name: 'enabled',
+    label: '启用短信服务',
+    type: 'switch',
     defaultValue: mockSettings.sms.enabled,
   },
   {
-    name: "provider",
-    label: "短信服务商",
-    type: "select",
+    name: 'provider',
+    label: '短信服务商',
+    type: 'select',
     options: [
-      { label: "阿里云", value: "aliyun" },
-      { label: "腾讯云", value: "tencent" },
-      { label: "华为云", value: "huawei" },
+      { label: '阿里云', value: 'aliyun' },
+      { label: '腾讯云', value: 'tencent' },
+      { label: '华为云', value: 'huawei' },
     ],
     defaultValue: mockSettings.sms.provider,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "accessKeyId",
-    label: "AccessKey ID",
-    type: "text",
+    name: 'accessKeyId',
+    label: 'AccessKey ID',
+    type: 'text',
     defaultValue: mockSettings.sms.accessKeyId,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "accessKeySecret",
-    label: "AccessKey Secret",
-    type: "password",
+    name: 'accessKeySecret',
+    label: 'AccessKey Secret',
+    type: 'password',
     defaultValue: mockSettings.sms.accessKeySecret,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
   {
-    name: "signName",
-    label: "签名名称",
-    type: "text",
+    name: 'signName',
+    label: '签名名称',
+    type: 'text',
     defaultValue: mockSettings.sms.signName,
-    dependsOn: ["enabled"],
+    dependsOn: ['enabled'],
   },
 ];
 
 const getLogFields = (): FormField[] => [
   {
-    name: "level",
-    label: "日志级别",
-    type: "select",
+    name: 'level',
+    label: '日志级别',
+    type: 'select',
     options: [
-      { label: "Debug", value: "debug" },
-      { label: "Info", value: "info" },
-      { label: "Warning", value: "warn" },
-      { label: "Error", value: "error" },
+      { label: 'Debug', value: 'debug' },
+      { label: 'Info', value: 'info' },
+      { label: 'Warning', value: 'warn' },
+      { label: 'Error', value: 'error' },
     ],
     defaultValue: mockSettings.log.level,
   },
   {
-    name: "retentionDays",
-    label: "日志保留天数",
-    type: "number",
+    name: 'retentionDays',
+    label: '日志保留天数',
+    type: 'number',
     defaultValue: mockSettings.log.retentionDays,
   },
   {
-    name: "enableAccessLog",
-    label: "启用访问日志",
-    type: "switch",
+    name: 'enableAccessLog',
+    label: '启用访问日志',
+    type: 'switch',
     defaultValue: mockSettings.log.enableAccessLog,
   },
   {
-    name: "enableOperationLog",
-    label: "启用操作日志",
-    type: "switch",
+    name: 'enableOperationLog',
+    label: '启用操作日志',
+    type: 'switch',
     defaultValue: mockSettings.log.enableOperationLog,
   },
   {
-    name: "enableSecurityLog",
-    label: "启用安全日志",
-    type: "switch",
+    name: 'enableSecurityLog',
+    label: '启用安全日志',
+    type: 'switch',
     defaultValue: mockSettings.log.enableSecurityLog,
   },
 ];
 
 const getSections = (tabId: string): FormSection[] => {
   switch (tabId) {
-    case "basic":
-      return [{ id: "basic", title: "基础配置", fields: getBasicFields() }];
-    case "mail":
-      return [{ id: "mail", title: "邮件设置", fields: getMailFields() }];
-    case "sms":
-      return [{ id: "sms", title: "短信设置", fields: getSmsFields() }];
-    case "log":
-      return [{ id: "log", title: "日志设置", fields: getLogFields() }];
+    case 'basic':
+      return [{ id: 'basic', title: '基础配置', fields: getBasicFields() }];
+    case 'mail':
+      return [{ id: 'mail', title: '邮件设置', fields: getMailFields() }];
+    case 'sms':
+      return [{ id: 'sms', title: '短信设置', fields: getSmsFields() }];
+    case 'log':
+      return [{ id: 'log', title: '日志设置', fields: getLogFields() }];
     default:
       return [];
   }
@@ -256,7 +253,7 @@ const getSections = (tabId: string): FormSection[] => {
 export default function SystemSettingsPage() {
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState("basic");
+  const [activeTab, setActiveTab] = useState('basic');
   const [settings, setSettings] = useState(mockSettings);
 
   // 计算字段依赖：enabled 字段控制其他字段的禁用状态
@@ -264,39 +261,37 @@ export default function SystemSettingsPage() {
     const deps: any[] = [];
 
     // 邮件设置依赖
-    if (activeTab === "mail") {
+    if (activeTab === 'mail') {
       [
-        "smtpHost",
-        "smtpPort",
-        "smtpUsername",
-        "smtpPassword",
-        "useTLS",
-        "fromEmail",
-        "fromName",
+        'smtpHost',
+        'smtpPort',
+        'smtpUsername',
+        'smtpPassword',
+        'useTLS',
+        'fromEmail',
+        'fromName',
       ].forEach((field) => {
         deps.push({
-          sourceField: "enabled",
+          sourceField: 'enabled',
           targetField: field,
-          type: "disabled" as const,
-          condition: { type: "equals" as const, value: false },
+          type: 'disabled' as const,
+          condition: { type: 'equals' as const, value: false },
           effect: { disabled: true },
         });
       });
     }
 
     // 短信设置依赖
-    if (activeTab === "sms") {
-      ["provider", "accessKeyId", "accessKeySecret", "signName"].forEach(
-        (field) => {
-          deps.push({
-            sourceField: "enabled",
-            targetField: field,
-            type: "disabled" as const,
-            condition: { type: "equals" as const, value: false },
-            effect: { disabled: true },
-          });
-        },
-      );
+    if (activeTab === 'sms') {
+      ['provider', 'accessKeyId', 'accessKeySecret', 'signName'].forEach((field) => {
+        deps.push({
+          sourceField: 'enabled',
+          targetField: field,
+          type: 'disabled' as const,
+          condition: { type: 'equals' as const, value: false },
+          effect: { disabled: true },
+        });
+      });
     }
 
     return deps;
@@ -319,9 +314,9 @@ export default function SystemSettingsPage() {
           ...data,
         },
       }));
-      apiLogger.info("保存设置:", { tab: activeTab, data });
+      apiLogger.info('保存设置:', { tab: activeTab, data });
     },
-    [activeTab],
+    [activeTab]
   );
 
   const handleReset = useCallback(() => {
@@ -336,27 +331,34 @@ export default function SystemSettingsPage() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      <Box sx={{ maxWidth: 1280, mx: "auto", p: 3 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      <Box sx={{ maxWidth: 1280, mx: 'auto', p: 3 }}>
         {/* 页面头部 */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
             mb: 3,
           }}
         >
           <Box
-            onClick={() => navigate("/dashboard")}
-            sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+            onClick={() => navigate('/dashboard')}
+            sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
-            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold' }}
+            >
               系统设置
             </Typography>
           </Box>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           管理系统基础配置、邮件设置、短信设置、日志设置
         </Typography>
 
@@ -367,8 +369,8 @@ export default function SystemSettingsPage() {
             onChange={handleTabChange}
             sx={{
               borderBottom: 1,
-              borderColor: "divider",
-              "& .MuiTab-root": {
+              borderColor: 'divider',
+              '& .MuiTab-root': {
                 minHeight: 56,
               },
             }}
@@ -382,7 +384,7 @@ export default function SystemSettingsPage() {
                   key={tab.id}
                   value={tab.id}
                   label={
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Icon style={{ width: 18, height: 18 }} />
                       <span>{tab.label}</span>
                     </Box>
@@ -395,15 +397,15 @@ export default function SystemSettingsPage() {
           {/* 表单内容 */}
           <Box sx={{ p: 3 }}>
             <FormPageTemplate
-              title=""
-              subtitle=""
+              title=''
+              subtitle=''
               sections={sections}
               defaultValues={defaultValues}
               dependencies={dependencies}
               onSubmit={handleSubmit}
               onReset={handleReset}
-              submitText="保存"
-              resetText="重置"
+              submitText='保存'
+              resetText='重置'
               columns={2}
               stickyFooter={true}
               showGroupTabs={false}

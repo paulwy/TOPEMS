@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   AppBar,
   Box,
@@ -18,7 +18,7 @@ import {
   ListItemText,
   Collapse,
   useTheme,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Menu as MenuIcon,
   Bell,
@@ -38,11 +38,11 @@ import {
   Workflow,
   MessageSquare,
   FolderOpen,
-} from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useResponsive } from "../../hooks/useResponsive";
-import { ModeToggle } from "../ModeToggle";
-import type { NavItem } from "../../config/navigation";
+} from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useResponsive } from '../../hooks/useResponsive';
+import { ModeToggle } from '../ModeToggle';
+import type { NavItem } from '../../config/navigation';
 
 // 模块图标映射
 const moduleIconMap: Record<string, React.ReactNode> = {
@@ -69,19 +69,14 @@ interface ResponsiveHeaderProps {
  * - 平板端：折叠部分导航到"更多"菜单
  * - 移动端：汉堡菜单 + Drawer
  */
-export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
-  navItems,
-  onNavClick,
-}) => {
+export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, onNavClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const { isMobile, isTablet, isDesktop } = useResponsive();
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(
-    null,
-  );
+  const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // 切换展开状态
@@ -111,42 +106,41 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
         toggleExpand(item.label);
       }
     },
-    [navigate, onNavClick, toggleExpand],
+    [navigate, onNavClick, toggleExpand]
   );
 
   // 渲染导航项
   const renderNavItem = (item: NavItem, index: number) => {
     const isActive =
-      item.path === location.pathname ||
-      location.pathname.startsWith(item.path + "/");
+      item.path === location.pathname || location.pathname.startsWith(item.path + '/');
 
     return (
       <Box
         key={item.label + index}
         sx={{
-          position: "relative",
+          position: 'relative',
         }}
       >
         <Box
           onClick={() => handleItemClick(item)}
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 0.5,
             px: 1.5,
             py: 1,
-            cursor: "pointer",
-            color: isActive ? "primary.main" : "text.primary",
+            cursor: 'pointer',
+            color: isActive ? 'primary.main' : 'text.primary',
             fontWeight: isActive ? 600 : 400,
             borderRadius: 1,
-            backgroundColor: isActive ? "primary.light" : "transparent",
-            "&:hover": {
-              backgroundColor: isActive ? "primary.light" : "action.hover",
+            backgroundColor: isActive ? 'primary.light' : 'transparent',
+            '&:hover': {
+              backgroundColor: isActive ? 'primary.light' : 'action.hover',
             },
-            transition: "all 0.2s",
+            transition: 'all 0.2s',
           }}
         >
-          <Typography sx={{ fontSize: "0.9rem" }}>{item.label}</Typography>
+          <Typography sx={{ fontSize: '0.9rem' }}>{item.label}</Typography>
           {item.children && <ChevronDown style={{ width: 14, height: 14 }} />}
         </Box>
       </Box>
@@ -158,9 +152,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.label);
     const isActive = item.path === location.pathname;
-    const icon = moduleIconMap[item.label] || (
-      <FolderOpen style={{ width: 20, height: 20 }} />
-    );
+    const icon = moduleIconMap[item.label] || <FolderOpen style={{ width: 20, height: 20 }} />;
 
     return (
       <React.Fragment key={item.label + depth}>
@@ -169,11 +161,11 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
           sx={{
             pl: 2 + depth * 2,
             py: 1.5,
-            backgroundColor: isActive ? "primary.light" : "transparent",
-            borderLeft: isActive ? "3px solid" : "3px solid transparent",
-            borderColor: isActive ? "primary.main" : "transparent",
-            "&:hover": {
-              backgroundColor: isActive ? "primary.light" : "action.hover",
+            backgroundColor: isActive ? 'primary.light' : 'transparent',
+            borderLeft: isActive ? '3px solid' : '3px solid transparent',
+            borderColor: isActive ? 'primary.main' : 'transparent',
+            '&:hover': {
+              backgroundColor: isActive ? 'primary.light' : 'action.hover',
             },
           }}
         >
@@ -183,7 +175,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
               <Typography
                 sx={{
                   fontWeight: isActive ? 600 : 400,
-                  color: isActive ? "primary.main" : "text.primary",
+                  color: isActive ? 'primary.main' : 'text.primary',
                 }}
               >
                 {item.label}
@@ -193,10 +185,10 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
           {hasChildren && (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                transition: "transform 0.2s",
+                display: 'flex',
+                alignItems: 'center',
+                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s',
               }}
             >
               <ChevronRight style={{ width: 18, height: 18 }} />
@@ -206,11 +198,16 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
 
         {/* 子菜单 */}
         {hasChildren && (
-          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {(item.children as NavItem[]).map((child) =>
-                renderMobileMenuItem(child, depth + 1),
-              )}
+          <Collapse
+            in={isExpanded}
+            timeout='auto'
+            unmountOnExit
+          >
+            <List
+              component='div'
+              disablePadding
+            >
+              {(item.children as NavItem[]).map((child) => renderMobileMenuItem(child, depth + 1))}
             </List>
           </Collapse>
         )}
@@ -222,11 +219,11 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
   const renderDesktopNav = () => (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         gap: 0.5,
         flex: 1,
-        overflow: "auto",
+        overflow: 'auto',
       }}
     >
       {navItems.map((item, index) => renderNavItem(item, index))}
@@ -241,11 +238,11 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
     return (
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 0.5,
           flex: 1,
-          overflow: "auto",
+          overflow: 'auto',
         }}
       >
         {visibleItems.map((item, index) => renderNavItem(item, index))}
@@ -263,12 +260,12 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
               open={Boolean(moreMenuAnchor)}
               onClose={() => setMoreMenuAnchor(null)}
               anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
+                vertical: 'bottom',
+                horizontal: 'right',
               }}
               transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
+                vertical: 'top',
+                horizontal: 'right',
               }}
             >
               {moreItems.map((item, index) => (
@@ -279,7 +276,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
                     minWidth: 150,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {moduleIconMap[item.label]}
                     <Typography>{item.label}</Typography>
                   </Box>
@@ -295,13 +292,13 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
   // 移动端抽屉
   const renderMobileDrawer = () => (
     <Drawer
-      anchor="left"
+      anchor='left'
       open={mobileDrawerOpen}
       onClose={() => setMobileDrawerOpen(false)}
       sx={{
-        "& .MuiDrawer-paper": {
+        '& .MuiDrawer-paper': {
           width: 300,
-          maxWidth: "85vw",
+          maxWidth: '85vw',
         },
       }}
     >
@@ -309,36 +306,39 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
       <Box
         sx={{
           p: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           borderBottom: 1,
-          borderColor: "divider",
-          background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-          color: "white",
+          borderColor: 'divider',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+          color: 'white',
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
               width: 32,
               height: 32,
               borderRadius: 1,
-              backgroundColor: "rgba(255,255,255,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <Typography sx={{ fontWeight: 700, fontSize: 14 }}>T</Typography>
           </Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
             TOPEMS
           </Typography>
         </Box>
         <IconButton
           onClick={() => setMobileDrawerOpen(false)}
-          sx={{ color: "white" }}
+          sx={{ color: 'white' }}
         >
           <X style={{ width: 20, height: 20 }} />
         </IconButton>
@@ -348,40 +348,41 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
       <Box
         sx={{
           flex: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
+          overflowY: 'auto',
+          overflowX: 'hidden',
         }}
       >
-        <List component="nav">
-          {navItems.map((item) => renderMobileMenuItem(item))}
-        </List>
+        <List component='nav'>{navItems.map((item) => renderMobileMenuItem(item))}</List>
       </Box>
 
       {/* 底部 */}
       <Divider />
       <Box sx={{ p: 2 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-around", gap: 1 }}>
-          <Tooltip title="通知">
+        <Box sx={{ display: 'flex', justifyContent: 'space-around', gap: 1 }}>
+          <Tooltip title='通知'>
             <IconButton
               onClick={() => {
-                navigate("/notifications");
+                navigate('/notifications');
                 setMobileDrawerOpen(false);
               }}
             >
-              <Badge badgeContent={3} color="error">
+              <Badge
+                badgeContent={3}
+                color='error'
+              >
                 <Bell style={{ width: 20, height: 20 }} />
               </Badge>
             </IconButton>
           </Tooltip>
           <ModeToggle />
-          <Tooltip title="用户">
+          <Tooltip title='用户'>
             <IconButton>
               <Avatar
                 sx={{
                   width: 28,
                   height: 28,
                   fontSize: 12,
-                  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
                 }}
               >
                 陈
@@ -396,12 +397,12 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
   return (
     <>
       <AppBar
-        position="sticky"
+        position='sticky'
         elevation={0}
         sx={{
-          backgroundColor: "background.paper",
+          backgroundColor: 'background.paper',
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
         <Toolbar
@@ -409,47 +410,43 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
             minHeight: 56,
             px: { xs: 1, sm: 2 },
             maxWidth: 1600,
-            mx: "auto",
-            width: "100%",
+            mx: 'auto',
+            width: '100%',
           }}
         >
           {/* Logo */}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1.5,
               marginRight: { xs: 1, sm: 3 },
-              cursor: "pointer",
+              cursor: 'pointer',
             }}
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate('/dashboard')}
           >
             <Box
               sx={{
                 width: 36,
                 height: 36,
                 borderRadius: 1.5,
-                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Typography
-                sx={{ color: "white", fontWeight: 700, fontSize: 16 }}
-              >
-                T
-              </Typography>
+              <Typography sx={{ color: 'white', fontWeight: 700, fontSize: 16 }}>T</Typography>
             </Box>
             <Typography
-              variant="h6"
+              variant='h6'
               sx={{
                 fontWeight: 700,
-                background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                display: { xs: "none", sm: "block" },
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                display: { xs: 'none', sm: 'block' },
               }}
             >
               TOPEMS
@@ -463,8 +460,8 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
           {/* 右侧工具 */}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: { xs: 0.5, sm: 1 },
             }}
           >
@@ -481,22 +478,25 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
             {/* 桌面端/平板端工具 */}
             {!isMobile && (
               <>
-                <Tooltip title="通知">
+                <Tooltip title='通知'>
                   <IconButton sx={{ width: 32, height: 32 }}>
-                    <Badge badgeContent={3} color="error">
+                    <Badge
+                      badgeContent={3}
+                      color='error'
+                    >
                       <Bell style={{ width: 20, height: 20 }} />
                     </Badge>
                   </IconButton>
                 </Tooltip>
                 <ModeToggle />
-                <Tooltip title="用户">
+                <Tooltip title='用户'>
                   <IconButton sx={{ width: 32, height: 32 }}>
                     <Avatar
                       sx={{
                         width: 32,
                         height: 32,
                         fontSize: 14,
-                        background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
                       }}
                     >
                       陈

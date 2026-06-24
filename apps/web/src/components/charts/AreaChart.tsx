@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Typography } from "@mui/material";
+import React from 'react';
+import { Box, Typography } from '@mui/material';
 import {
   AreaChart as RechartsAreaChart,
   Area,
@@ -9,9 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from "recharts";
-import { getChartColor } from "./chartTheme";
-import { CustomTooltip } from "./CustomTooltip";
+} from 'recharts';
+import { getChartColor } from './chartTheme';
+import { CustomTooltip } from './CustomTooltip';
 
 interface AreaChartProps {
   data: any[];
@@ -22,7 +22,7 @@ interface AreaChartProps {
   yDomain?: [number, number];
   animate?: boolean;
   showGrid?: boolean;
-  strokeType?: "solid" | "dashed";
+  strokeType?: 'solid' | 'dashed';
   fillOpacity?: number;
   onAreaClick?: (data: any) => void;
 }
@@ -36,7 +36,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   yDomain,
   animate = true,
   showGrid = true,
-  strokeType = "solid",
+  strokeType = 'solid',
   fillOpacity = 0.3,
   onAreaClick,
 }) => {
@@ -47,8 +47,8 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   return (
     <Box sx={{ height }}>
       <ResponsiveContainer
-        width="100%"
-        height="100%"
+        width='100%'
+        height='100%'
         minWidth={0}
         minHeight={0}
       >
@@ -58,18 +58,18 @@ export const AreaChart: React.FC<AreaChartProps> = ({
               <linearGradient
                 key={`gradient-${index}`}
                 id={`area-gradient-${index}`}
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
+                x1='0'
+                y1='0'
+                x2='0'
+                y2='1'
               >
                 <stop
-                  offset="0%"
+                  offset='0%'
                   stopColor={yKey.color || getChartColor(index)}
                   stopOpacity={fillOpacity}
                 />
                 <stop
-                  offset="95%"
+                  offset='95%'
                   stopColor={yKey.color || getChartColor(index)}
                   stopOpacity={0.05}
                 />
@@ -78,58 +78,56 @@ export const AreaChart: React.FC<AreaChartProps> = ({
           </defs>
           {showGrid && (
             <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#E2E8F0"
+              strokeDasharray='3 3'
+              stroke='#E2E8F0'
               vertical={false}
             />
           )}
           <XAxis
             dataKey={xKey}
-            tick={{ fill: "#64748B", fontSize: 12 }}
-            axisLine={{ stroke: "#E2E8F0" }}
-            tickLine={{ stroke: "#E2E8F0" }}
+            tick={{ fill: '#64748B', fontSize: 12 }}
+            axisLine={{ stroke: '#E2E8F0' }}
+            tickLine={{ stroke: '#E2E8F0' }}
           />
           <YAxis
             domain={yDomain}
-            tick={{ fill: "#64748B", fontSize: 12 }}
-            axisLine={{ stroke: "#E2E8F0" }}
-            tickLine={{ stroke: "#E2E8F0" }}
+            tick={{ fill: '#64748B', fontSize: 12 }}
+            axisLine={{ stroke: '#E2E8F0' }}
+            tickLine={{ stroke: '#E2E8F0' }}
             width={50}
           />
           <Tooltip
             content={<CustomTooltip />}
             cursor={{
-              stroke: "#94A3B8",
+              stroke: '#94A3B8',
               strokeWidth: 1,
-              strokeDasharray: "4 4",
+              strokeDasharray: '4 4',
             }}
           />
           {showLegend && (
             <Legend
-              wrapperStyle={{ paddingTop: "20px" }}
-              iconType="circle"
+              wrapperStyle={{ paddingTop: '20px' }}
+              iconType='circle'
               iconSize={8}
               formatter={(value) => (
-                <Typography sx={{ fontSize: "0.875rem", color: "#475569" }}>
-                  {value}
-                </Typography>
+                <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>{value}</Typography>
               )}
             />
           )}
           {yKeys.map((yKey, index) => (
             <Area
               key={yKey.key}
-              type="monotone"
+              type='monotone'
               dataKey={yKey.key}
               name={yKey.name}
               stroke={yKey.color || getChartColor(index)}
               strokeWidth={2}
-              strokeDasharray={strokeType === "dashed" ? "5 5" : undefined}
+              strokeDasharray={strokeType === 'dashed' ? '5 5' : undefined}
               fill={`url(#area-gradient-${index})`}
               onClick={handleClick}
-              cursor={onAreaClick ? "pointer" : "default"}
+              cursor={onAreaClick ? 'pointer' : 'default'}
               animationDuration={animate ? 1000 + index * 150 : 0}
-              animationEasing="ease-out"
+              animationEasing='ease-out'
             />
           ))}
         </RechartsAreaChart>

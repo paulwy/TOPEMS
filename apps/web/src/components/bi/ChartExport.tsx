@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Image, Download, FileImage, Copy, Check } from "lucide-react";
-import { Menu, MenuItem } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { logger } from "@/utils/logger";
+import { useState } from 'react';
+import { Image, Download, FileImage, Copy, Check } from 'lucide-react';
+import { Menu, MenuItem } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { logger } from '@/utils/logger';
 
 interface ChartExportProps {
   chartRef: React.RefObject<HTMLDivElement | null>;
@@ -10,15 +10,12 @@ interface ChartExportProps {
 }
 
 const exportFormats = [
-  { id: "png", label: "PNG", mimeType: "image/png" },
-  { id: "jpeg", label: "JPEG", mimeType: "image/jpeg" },
-  { id: "svg", label: "SVG", mimeType: "image/svg+xml" },
+  { id: 'png', label: 'PNG', mimeType: 'image/png' },
+  { id: 'jpeg', label: 'JPEG', mimeType: 'image/jpeg' },
+  { id: 'svg', label: 'SVG', mimeType: 'image/svg+xml' },
 ];
 
-export const ChartExport = ({
-  chartRef,
-  filename = "chart",
-}: ChartExportProps) => {
+export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [copied, setCopied] = useState(false);
 
@@ -26,20 +23,20 @@ export const ChartExport = ({
     try {
       if (!chartRef.current) return;
 
-      const canvas = chartRef.current.querySelector("canvas");
+      const canvas = chartRef.current.querySelector('canvas');
 
       if (canvas) {
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.download = `${filename}.${format}`;
         link.href = canvas.toDataURL(mimeType);
         link.click();
       } else {
-        const svgElement = chartRef.current.querySelector("svg");
+        const svgElement = chartRef.current.querySelector('svg');
         if (svgElement) {
           const svgData = new XMLSerializer().serializeToString(svgElement);
           const blob = new Blob([svgData], { type: mimeType });
           const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
+          const link = document.createElement('a');
           link.download = `${filename}.${format}`;
           link.href = url;
           link.click();
@@ -47,8 +44,8 @@ export const ChartExport = ({
         }
       }
     } catch (error) {
-      logger.error("Failed to export chart:", error);
-      alert("导出失败，请重试");
+      logger.error('Failed to export chart:', error);
+      alert('导出失败，请重试');
     }
     setAnchorEl(null);
   };
@@ -57,23 +54,21 @@ export const ChartExport = ({
     try {
       if (!chartRef.current) return;
 
-      const canvas = chartRef.current.querySelector("canvas");
+      const canvas = chartRef.current.querySelector('canvas');
 
       if (canvas) {
         const blob = await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob(resolve, "image/png"),
+          canvas.toBlob(resolve, 'image/png')
         );
         if (blob) {
-          await navigator.clipboard.write([
-            new ClipboardItem({ "image/png": blob }),
-          ]);
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         }
       }
     } catch (error) {
-      logger.error("Failed to copy chart:", error);
-      alert("复制失败，请重试");
+      logger.error('Failed to copy chart:', error);
+      alert('复制失败，请重试');
     }
     setAnchorEl(null);
   };
@@ -81,10 +76,10 @@ export const ChartExport = ({
   return (
     <>
       <Button
-        variant="text"
-        size="small"
+        variant='text'
+        size='small'
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        title="导出图表"
+        title='导出图表'
       >
         <Image sx={{ width: 16, height: 16, marginRight: 4 }} />
         <Download sx={{ width: 16, height: 16 }} />
@@ -95,11 +90,7 @@ export const ChartExport = ({
         onClose={() => setAnchorEl(null)}
       >
         <MenuItem disabled>
-          <span
-            style={{ fontSize: 12, fontWeight: 500, color: "text.secondary" }}
-          >
-            导出格式
-          </span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: 'text.secondary' }}>导出格式</span>
         </MenuItem>
         {exportFormats.map((format) => (
           <MenuItem
@@ -113,9 +104,7 @@ export const ChartExport = ({
         <MenuItem onClick={handleCopy}>
           {copied ? (
             <>
-              <Check
-                sx={{ width: 16, height: 16, marginRight: 8, color: "#10B981" }}
-              />
+              <Check sx={{ width: 16, height: 16, marginRight: 8, color: '#10B981' }} />
               已复制
             </>
           ) : (

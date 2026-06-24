@@ -1,110 +1,94 @@
-import React, { lazy } from "react";
-import type { RouteConfig } from "./utils";
+import React, { lazy } from 'react';
+import type { RouteConfig } from './utils';
 
-const UserManagementPage = lazy(
-  () => import("../pages/admin/UserManagementPage"),
-);
-const IamDashboardPage = lazy(() => import("../pages/iam/DashboardPage"));
-const RoleManagementPage = lazy(
-  () => import("../pages/admin/RoleManagementPage"),
-);
-const PermissionManagementPage = lazy(
-  () => import("../pages/admin/PermissionManagementPage"),
-);
-const AuditLogPage = lazy(() => import("../pages/admin/AuditLogPage"));
-const SystemManagementPage = lazy(
-  () => import("../pages/admin/SystemManagementPage"),
-);
-const DictionaryManagementPage = lazy(
-  () => import("../pages/admin/DictionaryManagementPage"),
-);
-const DatabaseStructurePage = lazy(
-  () => import("../pages/admin/DatabaseStructurePage"),
-);
-const MigrationAdminPage = lazy(
-  () => import("../pages/system/MigrationAdminPage"),
-);
-const ConfigDebugPage = lazy(() => import("../pages/admin/ConfigDebugPage"));
-const PluginMarketplacePage = lazy(
-  () => import("../pages/plugin/PluginMarketplacePage"),
-);
+const UserManagementPage = lazy(() => import('../pages/admin/UserManagementPage'));
+const IamDashboardPage = lazy(() => import('../pages/iam/DashboardPage'));
+const RoleManagementPage = lazy(() => import('../pages/admin/RoleManagementPage'));
+const PermissionManagementPage = lazy(() => import('../pages/admin/PermissionManagementPage'));
+const AuditLogPage = lazy(() => import('../pages/admin/AuditLogPage'));
+const SystemManagementPage = lazy(() => import('../pages/admin/SystemManagementPage'));
+const DictionaryManagementPage = lazy(() => import('../pages/admin/DictionaryManagementPage'));
+const DatabaseStructurePage = lazy(() => import('../pages/admin/DatabaseStructurePage'));
+const MigrationAdminPage = lazy(() => import('../pages/system/MigrationAdminPage'));
+const ConfigDebugPage = lazy(() => import('../pages/admin/ConfigDebugPage'));
+const PluginMarketplacePage = lazy(() => import('../pages/plugin/PluginMarketplacePage'));
 
 export const iamRoutes: RouteConfig[] = [
   {
-    path: "/iam",
+    path: '/iam',
     element: IamDashboardPage,
-    requiredPermissions: ["iam:users_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:users_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/users",
+    path: '/iam/users',
     element: UserManagementPage,
-    requiredPermissions: ["iam:users_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:users_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/roles",
+    path: '/iam/roles',
     element: RoleManagementPage,
-    requiredPermissions: ["iam:roles_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:roles_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/permissions",
+    path: '/iam/permissions',
     element: PermissionManagementPage,
-    requiredPermissions: ["iam:permissions_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:permissions_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/audit",
+    path: '/iam/audit',
     element: AuditLogPage,
-    requiredPermissions: ["iam:audit_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:audit_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/system",
+    path: '/iam/system',
     element: SystemManagementPage,
-    requiredPermissions: ["iam:system_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:system_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/dictionaries",
+    path: '/iam/dictionaries',
     element: DictionaryManagementPage,
-    requiredPermissions: ["iam:dictionaries_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:dictionaries_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/database",
+    path: '/iam/database',
     element: DatabaseStructurePage,
-    requiredPermissions: ["iam:system_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:system_read'],
+    module: 'iam',
+    action: 'read',
   },
   {
-    path: "/iam/migration",
+    path: '/iam/migration',
     element: MigrationAdminPage,
-    requiredPermissions: ["iam:system_update"],
-    module: "iam",
-    action: "update",
+    requiredPermissions: ['iam:system_update'],
+    module: 'iam',
+    action: 'update',
   },
   {
-    path: "/iam/debug",
+    path: '/iam/debug',
     element: ConfigDebugPage,
-    requiredPermissions: ["iam:system_update"],
-    module: "iam",
-    action: "update",
+    requiredPermissions: ['iam:system_update'],
+    module: 'iam',
+    action: 'update',
   },
   {
-    path: "/iam/plugins",
+    path: '/iam/plugins',
     element: PluginMarketplacePage,
-    requiredPermissions: ["iam:plugins_read"],
-    module: "iam",
-    action: "read",
+    requiredPermissions: ['iam:plugins_read'],
+    module: 'iam',
+    action: 'read',
   },
 ];

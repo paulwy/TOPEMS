@@ -1,47 +1,41 @@
-import React from "react";
-import {
-  Box,
-  Typography,
-  LinearProgress,
-  CircularProgress,
-  keyframes,
-} from "@mui/material";
-import { styled } from "@mui/material/styles";
+import React from 'react';
+import { Box, Typography, LinearProgress, CircularProgress, keyframes } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
 // 渐变颜色配置
 const GRADIENT_COLORS = {
-  primary: "linear-gradient(90deg, #3b82f6, #2563eb)",
-  success: "linear-gradient(90deg, #22c55e, #16a34a)",
-  warning: "linear-gradient(90deg, #f59e0b, #d97706)",
-  error: "linear-gradient(90deg, #ef4444, #dc2626)",
-  gradient: "linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)",
+  primary: 'linear-gradient(90deg, #3b82f6, #2563eb)',
+  success: 'linear-gradient(90deg, #22c55e, #16a34a)',
+  warning: 'linear-gradient(90deg, #f59e0b, #d97706)',
+  error: 'linear-gradient(90deg, #ef4444, #dc2626)',
+  gradient: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)',
 };
 
 // 实色配置（用于 MUI 组件的 color 属性）
 const SOLID_COLORS = {
-  primary: "primary",
-  success: "success",
-  warning: "warning",
-  error: "error",
-  gradient: "primary", // gradient 使用 primary 作为基础色
+  primary: 'primary',
+  success: 'success',
+  warning: 'warning',
+  error: 'error',
+  gradient: 'primary', // gradient 使用 primary 作为基础色
 } as const;
 
 // 尺寸配置
 const SIZE_CONFIG = {
   small: {
-    linear: { height: 6, fontSize: "0.75rem" },
-    circular: { size: 40, fontSize: "0.75rem" },
-    segmented: { height: 8, fontSize: "0.75rem" },
+    linear: { height: 6, fontSize: '0.75rem' },
+    circular: { size: 40, fontSize: '0.75rem' },
+    segmented: { height: 8, fontSize: '0.75rem' },
   },
   medium: {
-    linear: { height: 10, fontSize: "0.875rem" },
-    circular: { size: 60, fontSize: "0.875rem" },
-    segmented: { height: 12, fontSize: "0.875rem" },
+    linear: { height: 10, fontSize: '0.875rem' },
+    circular: { size: 60, fontSize: '0.875rem' },
+    segmented: { height: 12, fontSize: '0.875rem' },
   },
   large: {
-    linear: { height: 14, fontSize: "1rem" },
-    circular: { size: 80, fontSize: "1rem" },
-    segmented: { height: 16, fontSize: "1rem" },
+    linear: { height: 14, fontSize: '1rem' },
+    circular: { size: 80, fontSize: '1rem' },
+    segmented: { height: 16, fontSize: '1rem' },
   },
 };
 
@@ -68,20 +62,20 @@ const stripeAnimation = keyframes`
 // 样式化组件
 const GradientLinearProgress = styled(LinearProgress, {
   shouldForwardProp: (prop) =>
-    prop !== "gradientColor" && prop !== "animated" && prop !== "striped",
+    prop !== 'gradientColor' && prop !== 'animated' && prop !== 'striped',
 })<{
   gradientColor?: string;
   animated?: boolean;
   striped?: boolean;
 }>(({ gradientColor, animated, striped, theme }) => ({
-  height: "100%",
+  height: '100%',
   borderRadius: 4,
   backgroundColor: theme.palette.grey[200],
-  "& .MuiLinearProgress-bar": {
+  '& .MuiLinearProgress-bar': {
     borderRadius: 4,
     background: gradientColor || theme.palette.primary.main,
-    backgroundSize: animated ? "200% 200%" : "100% 100%",
-    animation: animated ? `${flowAnimation} 3s linear infinite` : "none",
+    backgroundSize: animated ? '200% 200%' : '100% 100%',
+    animation: animated ? `${flowAnimation} 3s linear infinite` : 'none',
     ...(striped && {
       backgroundImage: `linear-gradient(
         45deg,
@@ -93,62 +87,61 @@ const GradientLinearProgress = styled(LinearProgress, {
         transparent 75%,
         transparent
       )`,
-      backgroundSize: "1rem 1rem",
+      backgroundSize: '1rem 1rem',
       animation: `${stripeAnimation} 1s linear infinite`,
     }),
   },
 }));
 
 const GradientCircularProgress = styled(CircularProgress, {
-  shouldForwardProp: (prop) => prop !== "gradientColor",
+  shouldForwardProp: (prop) => prop !== 'gradientColor',
 })<{ gradientColor?: string }>(({ gradientColor, theme }) => ({
   color: theme.palette.primary.main,
   ...(gradientColor && {
-    "& .MuiCircularProgress-svg": {
+    '& .MuiCircularProgress-svg': {
       background: gradientColor,
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
     },
   }),
 }));
 
 const CircularContainer = styled(Box)({
-  position: "relative",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
+  position: 'relative',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 });
 
 const CircularValue = styled(Box)({
-  position: "absolute",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
+  position: 'absolute',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 });
 
 const SegmentedContainer = styled(Box)({
-  display: "flex",
+  display: 'flex',
   gap: 4,
-  alignItems: "center",
+  alignItems: 'center',
 });
 
 const Segment = styled(Box, {
-  shouldForwardProp: (prop) =>
-    prop !== "filled" && prop !== "gradientColor" && prop !== "animated",
+  shouldForwardProp: (prop) => prop !== 'filled' && prop !== 'gradientColor' && prop !== 'animated',
 })<{
   filled?: boolean;
   gradientColor?: string;
   animated?: boolean;
 }>(({ filled, gradientColor, animated, theme }) => ({
   flex: 1,
-  height: "100%",
+  height: '100%',
   borderRadius: 4,
-  backgroundColor: filled ? "transparent" : theme.palette.grey[200],
-  transition: "all 0.3s ease",
+  backgroundColor: filled ? 'transparent' : theme.palette.grey[200],
+  transition: 'all 0.3s ease',
   ...(filled && {
     background: gradientColor || theme.palette.primary.main,
-    backgroundSize: animated ? "200% 200%" : "100% 100%",
-    animation: animated ? `${flowAnimation} 3s linear infinite` : "none",
+    backgroundSize: animated ? '200% 200%' : '100% 100%',
+    animation: animated ? `${flowAnimation} 3s linear infinite` : 'none',
   }),
 }));
 
@@ -157,9 +150,9 @@ export interface ProgressBarProps {
   max?: number;
   label?: string;
   showValue?: boolean;
-  variant?: "linear" | "circular" | "segmented";
-  color?: "primary" | "success" | "warning" | "error" | "gradient";
-  size?: "small" | "medium" | "large";
+  variant?: 'linear' | 'circular' | 'segmented';
+  color?: 'primary' | 'success' | 'warning' | 'error' | 'gradient';
+  size?: 'small' | 'medium' | 'large';
   animated?: boolean;
   striped?: boolean;
   segments?: number; // 仅用于 segmented 变体
@@ -170,9 +163,9 @@ export default function ProgressBar({
   max = 100,
   label,
   showValue = false,
-  variant = "linear",
-  color = "primary",
-  size = "medium",
+  variant = 'linear',
+  color = 'primary',
+  size = 'medium',
   animated = false,
   striped = false,
   segments = 10,
@@ -187,19 +180,19 @@ export default function ProgressBar({
 
   // 渲染线性进度条
   const renderLinear = () => (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: '100%' }}>
       {(label || showValue) && (
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             mb: 0.5,
           }}
         >
           {label && (
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{ fontSize: sizeConfig.linear.fontSize }}
             >
               {label}
@@ -207,7 +200,7 @@ export default function ProgressBar({
           )}
           {showValue && (
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{ fontSize: sizeConfig.linear.fontSize }}
             >
               {displayValue}%
@@ -217,7 +210,7 @@ export default function ProgressBar({
       )}
       <Box sx={{ height: sizeConfig.linear.height, borderRadius: 1 }}>
         <GradientLinearProgress
-          variant="determinate"
+          variant='determinate'
           value={percentage}
           gradientColor={gradientColor}
           animated={animated}
@@ -229,13 +222,11 @@ export default function ProgressBar({
 
   // 渲染圆形进度条
   const renderCircular = () => (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-    >
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <CircularContainer>
         <Box
           sx={{
-            position: "relative",
+            position: 'relative',
             width: sizeConfig.circular.size,
             height: sizeConfig.circular.size,
           }}
@@ -243,15 +234,15 @@ export default function ProgressBar({
           <svg
             width={sizeConfig.circular.size}
             height={sizeConfig.circular.size}
-            style={{ transform: "rotate(-90deg)" }}
+            style={{ transform: 'rotate(-90deg)' }}
           >
             {/* 背景圆 */}
             <circle
               cx={sizeConfig.circular.size / 2}
               cy={sizeConfig.circular.size / 2}
               r={(sizeConfig.circular.size - 8) / 2}
-              fill="none"
-              stroke="currentColor"
+              fill='none'
+              stroke='currentColor'
               strokeWidth={8}
               style={{ opacity: 0.2 }}
             />
@@ -260,44 +251,50 @@ export default function ProgressBar({
               cx={sizeConfig.circular.size / 2}
               cy={sizeConfig.circular.size / 2}
               r={(sizeConfig.circular.size - 8) / 2}
-              fill="none"
-              stroke="url(#gradient)"
+              fill='none'
+              stroke='url(#gradient)'
               strokeWidth={8}
-              strokeLinecap="round"
+              strokeLinecap='round'
               strokeDasharray={`${2 * Math.PI * ((sizeConfig.circular.size - 8) / 2)}`}
               strokeDashoffset={
-                2 *
-                Math.PI *
-                ((sizeConfig.circular.size - 8) / 2) *
-                (1 - percentage / 100)
+                2 * Math.PI * ((sizeConfig.circular.size - 8) / 2) * (1 - percentage / 100)
               }
               style={{
-                transition: "stroke-dashoffset 0.3s ease",
+                transition: 'stroke-dashoffset 0.3s ease',
               }}
             />
             <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                {color === "gradient" ? (
+              <linearGradient
+                id='gradient'
+                x1='0%'
+                y1='0%'
+                x2='100%'
+                y2='0%'
+              >
+                {color === 'gradient' ? (
                   <>
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="50%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#ec4899" />
+                    <stop
+                      offset='0%'
+                      stopColor='#3b82f6'
+                    />
+                    <stop
+                      offset='50%'
+                      stopColor='#8b5cf6'
+                    />
+                    <stop
+                      offset='100%'
+                      stopColor='#ec4899'
+                    />
                   </>
                 ) : (
                   <>
                     <stop
-                      offset="0%"
-                      stopColor={
-                        GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[0] ||
-                        "#3b82f6"
-                      }
+                      offset='0%'
+                      stopColor={GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[0] || '#3b82f6'}
                     />
                     <stop
-                      offset="100%"
-                      stopColor={
-                        GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[1] ||
-                        "#2563eb"
-                      }
+                      offset='100%'
+                      stopColor={GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[1] || '#2563eb'}
                     />
                   </>
                 )}
@@ -307,20 +304,20 @@ export default function ProgressBar({
           {showValue && (
             <Box
               sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <Typography
-                variant="caption"
+                variant='caption'
                 sx={{
                   fontSize: sizeConfig.circular.fontSize,
-                  fontWeight: "medium",
+                  fontWeight: 'medium',
                 }}
               >
                 {displayValue}%
@@ -331,7 +328,7 @@ export default function ProgressBar({
       </CircularContainer>
       {label && (
         <Typography
-          variant="body2"
+          variant='body2'
           sx={{ mt: 1, fontSize: sizeConfig.circular.fontSize }}
         >
           {label}
@@ -346,19 +343,19 @@ export default function ProgressBar({
     const segmentArray = Array.from({ length: segments }, (_, i) => i);
 
     return (
-      <Box sx={{ width: "100%" }}>
+      <Box sx={{ width: '100%' }}>
         {(label || showValue) && (
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               mb: 0.5,
             }}
           >
             {label && (
               <Typography
-                variant="body2"
+                variant='body2'
                 sx={{ fontSize: sizeConfig.segmented.fontSize }}
               >
                 {label}
@@ -366,7 +363,7 @@ export default function ProgressBar({
             )}
             {showValue && (
               <Typography
-                variant="body2"
+                variant='body2'
                 sx={{ fontSize: sizeConfig.segmented.fontSize }}
               >
                 {displayValue}%
@@ -390,11 +387,11 @@ export default function ProgressBar({
 
   // 根据变体渲染不同的进度条
   switch (variant) {
-    case "circular":
+    case 'circular':
       return renderCircular();
-    case "segmented":
+    case 'segmented':
       return renderSegmented();
-    case "linear":
+    case 'linear':
     default:
       return renderLinear();
   }

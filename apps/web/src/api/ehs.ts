@@ -1,5 +1,5 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
 // ============ Safety Hazard Types ============
 export interface SafetyHazard {
@@ -13,9 +13,9 @@ export interface SafetyHazard {
   risk_assessment: string | null;
   control_measures: any;
   status: string;
-  severity?: "high" | "medium" | "low";
-  exposure?: "high" | "medium" | "low";
-  likelihood?: "high" | "medium" | "low";
+  severity?: 'high' | 'medium' | 'low';
+  exposure?: 'high' | 'medium' | 'low';
+  likelihood?: 'high' | 'medium' | 'low';
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -39,10 +39,10 @@ export interface Hazard {
   description: string | null;
   category: string | null;
   location: string | null;
-  severity: "high" | "medium" | "low";
-  exposure: "high" | "medium" | "low";
-  likelihood: "high" | "medium" | "low";
-  status: "active" | "controlled" | "eliminated" | "archived";
+  severity: 'high' | 'medium' | 'low';
+  exposure: 'high' | 'medium' | 'low';
+  likelihood: 'high' | 'medium' | 'low';
+  status: 'active' | 'controlled' | 'eliminated' | 'archived';
   created_at: string;
   updated_at: string;
 }
@@ -52,8 +52,8 @@ export interface RiskAssessment {
   hazard_id: string;
   assessment_date: string | null;
   assessor: string | null;
-  severity: "high" | "medium" | "low";
-  likelihood: "high" | "medium" | "low";
+  severity: 'high' | 'medium' | 'low';
+  likelihood: 'high' | 'medium' | 'low';
   risk_level: string | null;
   recommendations: string | null;
   created_at: string;
@@ -62,11 +62,11 @@ export interface RiskAssessment {
 export interface ControlMeasure {
   id: string;
   hazard_id: string;
-  measure_type: "engineering" | "administrative" | "ppe";
+  measure_type: 'engineering' | 'administrative' | 'ppe';
   description: string | null;
   responsible: string | null;
   deadline: string | null;
-  status: "pending" | "in_progress" | "completed" | "verified";
+  status: 'pending' | 'in_progress' | 'completed' | 'verified';
   effectiveness: string | null;
   created_at: string;
 }
@@ -75,17 +75,17 @@ export interface CreateRiskAssessmentRequest {
   hazard_id: string;
   assessment_date?: string | null;
   assessor?: string | null;
-  severity?: "high" | "medium" | "low";
-  likelihood?: "high" | "medium" | "low";
+  severity?: 'high' | 'medium' | 'low';
+  likelihood?: 'high' | 'medium' | 'low';
   recommendations?: string | null;
 }
 
 export interface CreateControlMeasureRequest {
-  measure_type: "engineering" | "administrative" | "ppe";
+  measure_type: 'engineering' | 'administrative' | 'ppe';
   description?: string | null;
   responsible?: string | null;
   deadline?: string | null;
-  status?: "pending" | "in_progress" | "completed" | "verified";
+  status?: 'pending' | 'in_progress' | 'completed' | 'verified';
 }
 
 // ============ Inspection Plan Types ============
@@ -297,17 +297,12 @@ export interface Incident {
   id: string;
   title: string;
   description: string | null;
-  incident_type:
-    | "near_miss"
-    | "accident"
-    | "injury"
-    | "environmental"
-    | "equipment";
-  severity: "near_miss" | "minor" | "serious" | "fatal";
+  incident_type: 'near_miss' | 'accident' | 'injury' | 'environmental' | 'equipment';
+  severity: 'near_miss' | 'minor' | 'serious' | 'fatal';
   location: string | null;
   reported_by: string | null;
   reported_at: string | null;
-  status: "pending" | "investigating" | "resolved" | "closed";
+  status: 'pending' | 'investigating' | 'resolved' | 'closed';
   root_cause: string | null;
   corrective_actions: string | null;
   created_at: string;
@@ -317,11 +312,11 @@ export interface Incident {
 export interface IncidentAction {
   id: string;
   incident_id: string;
-  action_type: "investigation" | "correction" | "prevention";
+  action_type: 'investigation' | 'correction' | 'prevention';
   description: string | null;
   responsible: string | null;
   due_date: string | null;
-  status: "pending" | "in_progress" | "completed" | "verified";
+  status: 'pending' | 'in_progress' | 'completed' | 'verified';
   completion_date: string | null;
   created_at: string;
 }
@@ -329,26 +324,21 @@ export interface IncidentAction {
 export interface CreateIncidentRequest {
   title: string;
   description?: string | null;
-  incident_type:
-    | "near_miss"
-    | "accident"
-    | "injury"
-    | "environmental"
-    | "equipment";
-  severity: "near_miss" | "minor" | "serious" | "fatal";
+  incident_type: 'near_miss' | 'accident' | 'injury' | 'environmental' | 'equipment';
+  severity: 'near_miss' | 'minor' | 'serious' | 'fatal';
   location?: string | null;
   reported_by?: string | null;
   reported_at?: string | null;
-  status?: "pending" | "investigating" | "resolved" | "closed";
+  status?: 'pending' | 'investigating' | 'resolved' | 'closed';
 }
 
 export interface CreateIncidentActionRequest {
   incident_id: string;
-  action_type: "investigation" | "correction" | "prevention";
+  action_type: 'investigation' | 'correction' | 'prevention';
   description: string | null;
   responsible?: string | null;
   due_date?: string | null;
-  status?: "pending" | "in_progress" | "completed" | "verified";
+  status?: 'pending' | 'in_progress' | 'completed' | 'verified';
 }
 
 // ============ Accident Types ============
@@ -543,30 +533,27 @@ export interface PaginatedResponse<T> {
 export const ehsApi = {
   // Safety Hazards
   listHazards: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<SafetyHazard>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<SafetyHazard>>(
-      `/api/ehs/hazards?${queryParams.toString()}`,
+      `/api/ehs/hazards?${queryParams.toString()}`
     );
   },
   getHazard: async (id: string): Promise<ApiResponse<SafetyHazard>> => {
     return apiClient.ehs.get<SafetyHazard>(`/api/ehs/hazards/${id}`);
   },
-  createHazard: async (
-    data: CreateSafetyHazardRequest,
-  ): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.post<SafetyHazard>("/api/ehs/hazards", data);
+  createHazard: async (data: CreateSafetyHazardRequest): Promise<ApiResponse<SafetyHazard>> => {
+    return apiClient.ehs.post<SafetyHazard>('/api/ehs/hazards', data);
   },
   updateHazard: async (
     id: string,
-    data: Partial<CreateSafetyHazardRequest>,
+    data: Partial<CreateSafetyHazardRequest>
   ): Promise<ApiResponse<SafetyHazard>> => {
     return apiClient.ehs.put<SafetyHazard>(`/api/ehs/hazards/${id}`, data);
   },
@@ -576,94 +563,82 @@ export const ehsApi = {
 
   // Risk Assessments
   listRiskAssessments: async (
-    hazardId: string,
+    hazardId: string
   ): Promise<ApiResponse<PaginatedResponse<RiskAssessment>>> => {
     return apiClient.ehs.get<PaginatedResponse<RiskAssessment>>(
-      `/api/ehs/hazards/${hazardId}/assessments`,
+      `/api/ehs/hazards/${hazardId}/assessments`
     );
   },
   createRiskAssessment: async (
     hazardId: string,
-    data: CreateRiskAssessmentRequest,
+    data: CreateRiskAssessmentRequest
   ): Promise<ApiResponse<RiskAssessment>> => {
-    return apiClient.ehs.post<RiskAssessment>(
-      `/api/ehs/hazards/${hazardId}/assessments`,
-      data,
-    );
+    return apiClient.ehs.post<RiskAssessment>(`/api/ehs/hazards/${hazardId}/assessments`, data);
   },
   updateRiskAssessment: async (
     hazardId: string,
     assessmentId: string,
-    data: Partial<CreateRiskAssessmentRequest>,
+    data: Partial<CreateRiskAssessmentRequest>
   ): Promise<ApiResponse<RiskAssessment>> => {
     return apiClient.ehs.put<RiskAssessment>(
       `/api/ehs/hazards/${hazardId}/assessments/${assessmentId}`,
-      data,
+      data
     );
   },
 
   // Control Measures
   listControlMeasures: async (
-    hazardId: string,
+    hazardId: string
   ): Promise<ApiResponse<PaginatedResponse<ControlMeasure>>> => {
     return apiClient.ehs.get<PaginatedResponse<ControlMeasure>>(
-      `/api/ehs/hazards/${hazardId}/controls`,
+      `/api/ehs/hazards/${hazardId}/controls`
     );
   },
   createControlMeasure: async (
     hazardId: string,
-    data: CreateControlMeasureRequest,
+    data: CreateControlMeasureRequest
   ): Promise<ApiResponse<ControlMeasure>> => {
-    return apiClient.ehs.post<ControlMeasure>(
-      `/api/ehs/hazards/${hazardId}/controls`,
-      data,
-    );
+    return apiClient.ehs.post<ControlMeasure>(`/api/ehs/hazards/${hazardId}/controls`, data);
   },
   updateControlMeasure: async (
     hazardId: string,
     measureId: string,
-    data: Partial<CreateControlMeasureRequest>,
+    data: Partial<CreateControlMeasureRequest>
   ): Promise<ApiResponse<ControlMeasure>> => {
     return apiClient.ehs.put<ControlMeasure>(
       `/api/ehs/hazards/${hazardId}/controls/${measureId}`,
-      data,
+      data
     );
   },
-  deleteControlMeasure: async (
-    hazardId: string,
-    measureId: string,
-  ): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(
-      `/api/ehs/hazards/${hazardId}/controls/${measureId}`,
-    );
+  deleteControlMeasure: async (hazardId: string, measureId: string): Promise<ApiResponse<void>> => {
+    return apiClient.ehs.delete<void>(`/api/ehs/hazards/${hazardId}/controls/${measureId}`);
   },
 
   // Inspection Plans
   listInspectionPlans: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<InspectionPlan>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<InspectionPlan>>(
-      `/api/ehs/checks/plans?${queryParams.toString()}`,
+      `/api/ehs/checks/plans?${queryParams.toString()}`
     );
   },
   getInspectionPlan: async (id: string): Promise<ApiResponse<InspectionPlan>> => {
     return apiClient.ehs.get<InspectionPlan>(`/api/ehs/checks/plans/${id}`);
   },
   createInspectionPlan: async (
-    data: CreateInspectionPlanRequest,
+    data: CreateInspectionPlanRequest
   ): Promise<ApiResponse<InspectionPlan>> => {
-    return apiClient.ehs.post<InspectionPlan>("/api/ehs/checks/plans", data);
+    return apiClient.ehs.post<InspectionPlan>('/api/ehs/checks/plans', data);
   },
   updateInspectionPlan: async (
     id: string,
-    data: Partial<CreateInspectionPlanRequest>,
+    data: Partial<CreateInspectionPlanRequest>
   ): Promise<ApiResponse<InspectionPlan>> => {
     return apiClient.ehs.put<InspectionPlan>(`/api/ehs/checks/plans/${id}`, data);
   },
@@ -673,58 +648,47 @@ export const ehsApi = {
 
   // Inspection Items
   listInspectionItems: async (
-    planId: string,
+    planId: string
   ): Promise<ApiResponse<PaginatedResponse<InspectionItem>>> => {
     return apiClient.ehs.get<PaginatedResponse<InspectionItem>>(
-      `/api/ehs/checks/plans/${planId}/items`,
+      `/api/ehs/checks/plans/${planId}/items`
     );
   },
   createInspectionItem: async (
     planId: string,
-    data: CreateInspectionItemRequest,
+    data: CreateInspectionItemRequest
   ): Promise<ApiResponse<InspectionItem>> => {
-    return apiClient.ehs.post<InspectionItem>(
-      `/api/ehs/checks/plans/${planId}/items`,
-      data,
-    );
+    return apiClient.ehs.post<InspectionItem>(`/api/ehs/checks/plans/${planId}/items`, data);
   },
-  deleteInspectionItem: async (
-    planId: string,
-    itemId: string,
-  ): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(
-      `/api/ehs/checks/plans/${planId}/items/${itemId}`,
-    );
+  deleteInspectionItem: async (planId: string, itemId: string): Promise<ApiResponse<void>> => {
+    return apiClient.ehs.delete<void>(`/api/ehs/checks/plans/${planId}/items/${itemId}`);
   },
 
   // Inspection Records
   listInspectionRecords: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<InspectionRecord>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<InspectionRecord>>(
-      `/api/ehs/checks/records?${queryParams.toString()}`,
+      `/api/ehs/checks/records?${queryParams.toString()}`
     );
   },
-  getInspectionRecord: async (
-    id: string,
-  ): Promise<ApiResponse<InspectionRecordDetail>> => {
+  getInspectionRecord: async (id: string): Promise<ApiResponse<InspectionRecordDetail>> => {
     return apiClient.ehs.get<InspectionRecordDetail>(`/api/ehs/checks/records/${id}`);
   },
   createInspectionRecord: async (
-    data: CreateInspectionRecordRequest,
+    data: CreateInspectionRecordRequest
   ): Promise<ApiResponse<InspectionRecord>> => {
-    return apiClient.ehs.post<InspectionRecord>("/api/ehs/checks/records", data);
+    return apiClient.ehs.post<InspectionRecord>('/api/ehs/checks/records', data);
   },
   updateInspectionRecord: async (
     id: string,
-    data: Partial<CreateInspectionRecordRequest>,
+    data: Partial<CreateInspectionRecordRequest>
   ): Promise<ApiResponse<InspectionRecord>> => {
     return apiClient.ehs.put<InspectionRecord>(`/api/ehs/checks/records/${id}`, data);
   },
@@ -734,30 +698,27 @@ export const ehsApi = {
 
   // Safety Issues (Hazard Management)
   listSafetyIssues: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<SafetyIssue>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<SafetyIssue>>(
-      `/api/ehs/issues?${queryParams.toString()}`,
+      `/api/ehs/issues?${queryParams.toString()}`
     );
   },
   getSafetyIssue: async (id: string): Promise<ApiResponse<SafetyIssueDetail>> => {
     return apiClient.ehs.get<SafetyIssueDetail>(`/api/ehs/issues/${id}`);
   },
-  createSafetyIssue: async (
-    data: CreateSafetyIssueRequest,
-  ): Promise<ApiResponse<SafetyIssue>> => {
-    return apiClient.ehs.post<SafetyIssue>("/api/ehs/issues", data);
+  createSafetyIssue: async (data: CreateSafetyIssueRequest): Promise<ApiResponse<SafetyIssue>> => {
+    return apiClient.ehs.post<SafetyIssue>('/api/ehs/issues', data);
   },
   updateSafetyIssue: async (
     id: string,
-    data: Partial<CreateSafetyIssueRequest>,
+    data: Partial<CreateSafetyIssueRequest>
   ): Promise<ApiResponse<SafetyIssue>> => {
     return apiClient.ehs.put<SafetyIssue>(`/api/ehs/issues/${id}`, data);
   },
@@ -768,40 +729,26 @@ export const ehsApi = {
   // Rectification
   startRectification: async (
     issueId: string,
-    data: CreateRectificationRequest,
+    data: CreateRectificationRequest
   ): Promise<ApiResponse<Rectification>> => {
-    return apiClient.ehs.post<Rectification>(
-      `/api/ehs/issues/${issueId}/rectification`,
-      data,
-    );
+    return apiClient.ehs.post<Rectification>(`/api/ehs/issues/${issueId}/rectification`, data);
   },
   updateRectification: async (
     issueId: string,
-    data: UpdateRectificationRequest,
+    data: UpdateRectificationRequest
   ): Promise<ApiResponse<Rectification>> => {
-    return apiClient.ehs.put<Rectification>(
-      `/api/ehs/issues/${issueId}/rectification`,
-      data,
-    );
+    return apiClient.ehs.put<Rectification>(`/api/ehs/issues/${issueId}/rectification`, data);
   },
-  submitRectification: async (
-    issueId: string,
-  ): Promise<ApiResponse<Rectification>> => {
-    return apiClient.ehs.post<Rectification>(
-      `/api/ehs/issues/${issueId}/rectification/submit`,
-      {},
-    );
+  submitRectification: async (issueId: string): Promise<ApiResponse<Rectification>> => {
+    return apiClient.ehs.post<Rectification>(`/api/ehs/issues/${issueId}/rectification/submit`, {});
   },
 
   // Verification
   verifySafetyIssue: async (
     issueId: string,
-    data: CreateVerificationRequest,
+    data: CreateVerificationRequest
   ): Promise<ApiResponse<Verification>> => {
-    return apiClient.ehs.post<Verification>(
-      `/api/ehs/issues/${issueId}/verification`,
-      data,
-    );
+    return apiClient.ehs.post<Verification>(`/api/ehs/issues/${issueId}/verification`, data);
   },
 
   // Close Issue
@@ -811,30 +758,27 @@ export const ehsApi = {
 
   // Safety Checks
   listChecks: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<SafetyCheck>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<SafetyCheck>>(
-      `/api/ehs/checks?${queryParams.toString()}`,
+      `/api/ehs/checks?${queryParams.toString()}`
     );
   },
   getCheck: async (id: string): Promise<ApiResponse<SafetyCheck>> => {
     return apiClient.ehs.get<SafetyCheck>(`/api/ehs/checks/${id}`);
   },
-  createCheck: async (
-    data: CreateSafetyCheckRequest,
-  ): Promise<ApiResponse<SafetyCheck>> => {
-    return apiClient.ehs.post<SafetyCheck>("/api/ehs/checks", data);
+  createCheck: async (data: CreateSafetyCheckRequest): Promise<ApiResponse<SafetyCheck>> => {
+    return apiClient.ehs.post<SafetyCheck>('/api/ehs/checks', data);
   },
   updateCheck: async (
     id: string,
-    data: Partial<CreateSafetyCheckRequest>,
+    data: Partial<CreateSafetyCheckRequest>
   ): Promise<ApiResponse<SafetyCheck>> => {
     return apiClient.ehs.put<SafetyCheck>(`/api/ehs/checks/${id}`, data);
   },
@@ -844,30 +788,27 @@ export const ehsApi = {
 
   // Emergency Plans
   listPlans: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<EmergencyPlan>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<EmergencyPlan>>(
-      `/api/ehs/plans?${queryParams.toString()}`,
+      `/api/ehs/plans?${queryParams.toString()}`
     );
   },
   getPlan: async (id: string): Promise<ApiResponse<EmergencyPlan>> => {
     return apiClient.ehs.get<EmergencyPlan>(`/api/ehs/plans/${id}`);
   },
-  createPlan: async (
-    data: CreateEmergencyPlanRequest,
-  ): Promise<ApiResponse<EmergencyPlan>> => {
-    return apiClient.ehs.post<EmergencyPlan>("/api/ehs/plans", data);
+  createPlan: async (data: CreateEmergencyPlanRequest): Promise<ApiResponse<EmergencyPlan>> => {
+    return apiClient.ehs.post<EmergencyPlan>('/api/ehs/plans', data);
   },
   updatePlan: async (
     id: string,
-    data: Partial<CreateEmergencyPlanRequest>,
+    data: Partial<CreateEmergencyPlanRequest>
   ): Promise<ApiResponse<EmergencyPlan>> => {
     return apiClient.ehs.put<EmergencyPlan>(`/api/ehs/plans/${id}`, data);
   },
@@ -877,29 +818,26 @@ export const ehsApi = {
 
   // Drill Records
   listDrills: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<DrillRecord>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
 
     return apiClient.ehs.get<PaginatedResponse<DrillRecord>>(
-      `/api/ehs/drills?${queryParams.toString()}`,
+      `/api/ehs/drills?${queryParams.toString()}`
     );
   },
   getDrill: async (id: string): Promise<ApiResponse<DrillRecord>> => {
     return apiClient.ehs.get<DrillRecord>(`/api/ehs/drills/${id}`);
   },
-  createDrill: async (
-    data: CreateDrillRecordRequest,
-  ): Promise<ApiResponse<DrillRecord>> => {
-    return apiClient.ehs.post<DrillRecord>("/api/ehs/drills", data);
+  createDrill: async (data: CreateDrillRecordRequest): Promise<ApiResponse<DrillRecord>> => {
+    return apiClient.ehs.post<DrillRecord>('/api/ehs/drills', data);
   },
   updateDrill: async (
     id: string,
-    data: Partial<CreateDrillRecordRequest>,
+    data: Partial<CreateDrillRecordRequest>
   ): Promise<ApiResponse<DrillRecord>> => {
     return apiClient.ehs.put<DrillRecord>(`/api/ehs/drills/${id}`, data);
   },
@@ -909,30 +847,27 @@ export const ehsApi = {
 
   // Incidents
   listIncidents: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<Incident>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<Incident>>(
-      `/api/ehs/incidents?${queryParams.toString()}`,
+      `/api/ehs/incidents?${queryParams.toString()}`
     );
   },
   getIncident: async (id: string): Promise<ApiResponse<Incident>> => {
     return apiClient.ehs.get<Incident>(`/api/ehs/incidents/${id}`);
   },
-  createIncident: async (
-    data: CreateIncidentRequest,
-  ): Promise<ApiResponse<Incident>> => {
-    return apiClient.ehs.post<Incident>("/api/ehs/incidents", data);
+  createIncident: async (data: CreateIncidentRequest): Promise<ApiResponse<Incident>> => {
+    return apiClient.ehs.post<Incident>('/api/ehs/incidents', data);
   },
   updateIncident: async (
     id: string,
-    data: Partial<CreateIncidentRequest>,
+    data: Partial<CreateIncidentRequest>
   ): Promise<ApiResponse<Incident>> => {
     return apiClient.ehs.put<Incident>(`/api/ehs/incidents/${id}`, data);
   },
@@ -942,58 +877,52 @@ export const ehsApi = {
 
   // Incident Actions
   listIncidentActions: async (
-    incidentId: string,
+    incidentId: string
   ): Promise<ApiResponse<PaginatedResponse<IncidentAction>>> => {
     return apiClient.ehs.get<PaginatedResponse<IncidentAction>>(
-      `/api/ehs/incidents/${incidentId}/actions`,
+      `/api/ehs/incidents/${incidentId}/actions`
     );
   },
   createIncidentAction: async (
     incidentId: string,
-    data: CreateIncidentActionRequest,
+    data: CreateIncidentActionRequest
   ): Promise<ApiResponse<IncidentAction>> => {
-    return apiClient.ehs.post<IncidentAction>(
-      `/api/ehs/incidents/${incidentId}/actions`,
-      data,
-    );
+    return apiClient.ehs.post<IncidentAction>(`/api/ehs/incidents/${incidentId}/actions`, data);
   },
   updateIncidentAction: async (
     incidentId: string,
     actionId: string,
-    data: Partial<CreateIncidentActionRequest>,
+    data: Partial<CreateIncidentActionRequest>
   ): Promise<ApiResponse<IncidentAction>> => {
     return apiClient.ehs.put<IncidentAction>(
       `/api/ehs/incidents/${incidentId}/actions/${actionId}`,
-      data,
+      data
     );
   },
 
   // Accidents
   listAccidents: async (
-    params?: ListQueryParams,
+    params?: ListQueryParams
   ): Promise<ApiResponse<PaginatedResponse<Accident>>> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.page_size)
-      queryParams.append("page_size", params.page_size.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<Accident>>(
-      `/api/ehs/incidents?${queryParams.toString()}`,
+      `/api/ehs/incidents?${queryParams.toString()}`
     );
   },
   getAccident: async (id: string): Promise<ApiResponse<AccidentDetail>> => {
     return apiClient.ehs.get<AccidentDetail>(`/api/ehs/incidents/${id}`);
   },
-  createAccident: async (
-    data: CreateAccidentRequest,
-  ): Promise<ApiResponse<Accident>> => {
-    return apiClient.ehs.post<Accident>("/api/ehs/incidents", data);
+  createAccident: async (data: CreateAccidentRequest): Promise<ApiResponse<Accident>> => {
+    return apiClient.ehs.post<Accident>('/api/ehs/incidents', data);
   },
   updateAccident: async (
     id: string,
-    data: Partial<CreateAccidentRequest>,
+    data: Partial<CreateAccidentRequest>
   ): Promise<ApiResponse<Accident>> => {
     return apiClient.ehs.put<Accident>(`/api/ehs/incidents/${id}`, data);
   },
@@ -1004,69 +933,53 @@ export const ehsApi = {
   // Accident Investigation
   startInvestigation: async (
     accidentId: string,
-    data: CreateInvestigationRequest,
+    data: CreateInvestigationRequest
   ): Promise<ApiResponse<Investigation>> => {
     return apiClient.ehs.post<Investigation>(
       `/api/ehs/incidents/${accidentId}/investigation`,
-      data,
+      data
     );
   },
   updateInvestigation: async (
     accidentId: string,
-    data: Partial<CreateInvestigationRequest>,
+    data: Partial<CreateInvestigationRequest>
   ): Promise<ApiResponse<Investigation>> => {
-    return apiClient.ehs.put<Investigation>(
-      `/api/ehs/incidents/${accidentId}/investigation`,
-      data,
-    );
+    return apiClient.ehs.put<Investigation>(`/api/ehs/incidents/${accidentId}/investigation`, data);
   },
-  completeInvestigation: async (
-    accidentId: string,
-  ): Promise<ApiResponse<Investigation>> => {
+  completeInvestigation: async (accidentId: string): Promise<ApiResponse<Investigation>> => {
     return apiClient.ehs.post<Investigation>(
       `/api/ehs/incidents/${accidentId}/investigation/complete`,
-      {},
+      {}
     );
   },
 
   // Accident Treatment
   createTreatment: async (
     accidentId: string,
-    data: CreateTreatmentRequest,
+    data: CreateTreatmentRequest
   ): Promise<ApiResponse<Treatment>> => {
-    return apiClient.ehs.post<Treatment>(
-      `/api/ehs/incidents/${accidentId}/treatment`,
-      data,
-    );
+    return apiClient.ehs.post<Treatment>(`/api/ehs/incidents/${accidentId}/treatment`, data);
   },
   updateTreatmentAction: async (
     accidentId: string,
     actionId: string,
-    data: { status?: string; completed_at?: string },
+    data: { status?: string; completed_at?: string }
   ): Promise<ApiResponse<TreatmentAction>> => {
     return apiClient.ehs.put<TreatmentAction>(
       `/api/ehs/incidents/${accidentId}/treatment/actions/${actionId}`,
-      data,
+      data
     );
   },
-  completeTreatment: async (
-    accidentId: string,
-  ): Promise<ApiResponse<Treatment>> => {
-    return apiClient.ehs.post<Treatment>(
-      `/api/ehs/incidents/${accidentId}/treatment/complete`,
-      {},
-    );
+  completeTreatment: async (accidentId: string): Promise<ApiResponse<Treatment>> => {
+    return apiClient.ehs.post<Treatment>(`/api/ehs/incidents/${accidentId}/treatment/complete`, {});
   },
 
   // Accident Review
   createReview: async (
     accidentId: string,
-    data: CreateReviewRequest,
+    data: CreateReviewRequest
   ): Promise<ApiResponse<Review>> => {
-    return apiClient.ehs.post<Review>(
-      `/api/ehs/incidents/${accidentId}/review`,
-      data,
-    );
+    return apiClient.ehs.post<Review>(`/api/ehs/incidents/${accidentId}/review`, data);
   },
 
   // Close Accident
@@ -1075,6 +988,6 @@ export const ehsApi = {
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.ehs.get<string>("/health");
+    return apiClient.ehs.get<string>('/health');
   },
 };

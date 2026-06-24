@@ -1,0 +1,25 @@
+{
+  "datacenter": "dc1",
+  "data_dir": "/consul/data",
+  "ui_config": {
+    "enabled": true
+  },
+  "server": true,
+  "bootstrap_expect": 1,
+  "bind_addr": "0.0.0.0",
+  "client_addr": "0.0.0.0",
+  "advertise_addr": "localhost",
+  "ports": {
+    "http": 8500,
+    "dns": 8600
+  },
+  "enable_script_checks": false,
+  "disable_update_check": true,
+  "log_level": "INFO",
+  "retry_join": ["consul"],
+  "service_mesh": {
+    "gateway_rate_limiter": {
+      "requests_per_second": 100
+    }
+  }
+}

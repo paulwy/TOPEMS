@@ -13,7 +13,7 @@ export interface ModuleConfig {
   /** Module description */
   description?: string;
   /** Module category */
-  category: "core" | "business" | "plugin";
+  category: 'core' | 'business' | 'plugin';
   /** Version */
   version: string;
   /** Entry point for the module */
@@ -56,7 +56,7 @@ export interface ModuleRoute {
 // ============================================================================
 
 // In static mode, CORE_MODULES is empty to avoid Module Federation imports
-const isStaticMode = import.meta.env.VITE_DEPLOYMENT_MODE === "static";
+const isStaticMode = import.meta.env.VITE_DEPLOYMENT_MODE === 'static';
 
 // CORE_MODULES is set dynamically after module initialization
 // In static mode, it's an empty array
@@ -205,9 +205,7 @@ export class ModuleRegistry {
     return Array.from(this.modules.values());
   }
 
-  getModulesByCategory(
-    category: "core" | "business" | "plugin",
-  ): ModuleConfig[] {
+  getModulesByCategory(category: 'core' | 'business' | 'plugin'): ModuleConfig[] {
     return this.getAllModules().filter((m) => m.category === category);
   }
 
@@ -267,7 +265,7 @@ export class ModuleRegistry {
       throw new Error(`Module ${moduleId} not found`);
     }
 
-    if (module.category === "core" || module.category === "business") {
+    if (module.category === 'core' || module.category === 'business') {
       // Static module - use lazy import
       return import(/* @vite-ignore */ module.entry);
     }
@@ -275,7 +273,7 @@ export class ModuleRegistry {
     if (module.remoteEntry && module.entry) {
       // Dynamic remote module
       // @ts-ignore
-      await __webpack_init_sharing__("default");
+      await __webpack_init_sharing__('default');
       // @ts-ignore
       const container = await window[module.id];
       // @ts-ignore
@@ -300,9 +298,9 @@ export function useModules() {
     registry: moduleRegistry,
     allModules: moduleRegistry.getAllModules(),
     enabledModules: moduleRegistry.getEnabledModules(),
-    coreModules: moduleRegistry.getModulesByCategory("core"),
-    businessModules: moduleRegistry.getModulesByCategory("business"),
-    pluginModules: moduleRegistry.getModulesByCategory("plugin"),
+    coreModules: moduleRegistry.getModulesByCategory('core'),
+    businessModules: moduleRegistry.getModulesByCategory('business'),
+    pluginModules: moduleRegistry.getModulesByCategory('plugin'),
   };
 }
 

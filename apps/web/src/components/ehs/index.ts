@@ -13,7 +13,7 @@ export {
   type RiskLevel,
   type MeasureType,
   type IncidentType,
-} from "./EHSBadges";
+} from './EHSBadges';
 
 export {
   calculateRiskLevel,
@@ -30,4 +30,4 @@ export {
   type ExposureValue,
   type EffectivenessLevel,
   type RiskCalculationResult,
-} from "./riskUtils";
+} from './riskUtils';

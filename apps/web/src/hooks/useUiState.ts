@@ -3,7 +3,7 @@
  * 提供常用的UI状态管理功能
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
 /**
  * 模态框状态管理
@@ -138,10 +138,7 @@ export function useSelection<T = string>() {
     setSelected([]);
   }, []);
 
-  const isSelected = useCallback(
-    (item: T) => selected.includes(item),
-    [selected],
-  );
+  const isSelected = useCallback((item: T) => selected.includes(item), [selected]);
 
   return {
     selected,
@@ -158,17 +155,14 @@ export function useSelection<T = string>() {
 /**
  * 排序状态管理
  */
-export type SortOrder = "asc" | "desc" | undefined;
+export type SortOrder = 'asc' | 'desc' | undefined;
 
 export interface SortState {
   field: string | undefined;
   order: SortOrder;
 }
 
-export function useSort(
-  initialField?: string,
-  initialOrder: SortOrder = "asc",
-) {
+export function useSort(initialField?: string, initialOrder: SortOrder = 'asc') {
   const [sort, setSort] = useState<SortState>({
     field: initialField,
     order: initialOrder,
@@ -177,14 +171,14 @@ export function useSort(
   const toggleSort = useCallback((field: string) => {
     setSort((prev) => {
       if (prev.field === field) {
-        if (prev.order === "asc") {
-          return { field, order: "desc" };
+        if (prev.order === 'asc') {
+          return { field, order: 'desc' };
         }
-        if (prev.order === "desc") {
+        if (prev.order === 'desc') {
           return { field: undefined, order: undefined };
         }
       }
-      return { field, order: "asc" };
+      return { field, order: 'asc' };
     });
   }, []);
 
@@ -258,18 +252,15 @@ export function useLoading(initialState: boolean = false) {
     setLoading(false);
   }, []);
 
-  const withLoading = useCallback(
-    async <T>(promise: Promise<T>): Promise<T> => {
-      setLoading(true);
-      try {
-        const result = await promise;
-        return result;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+  const withLoading = useCallback(async <T>(promise: Promise<T>): Promise<T> => {
+    setLoading(true);
+    try {
+      const result = await promise;
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return { loading, setLoading, startLoading, stopLoading, withLoading };
 }
@@ -279,7 +270,7 @@ export function useLoading(initialState: boolean = false) {
  */
 export interface ToastMessage {
   id: string;
-  type: "success" | "error" | "warning" | "info";
+  type: 'success' | 'error' | 'warning' | 'info';
   message: string;
   duration?: number;
 }
@@ -287,7 +278,7 @@ export interface ToastMessage {
 export function useToast() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const addToast = useCallback((toast: Omit<ToastMessage, "id">) => {
+  const addToast = useCallback((toast: Omit<ToastMessage, 'id'>) => {
     const id = `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newToast = { ...toast, id };
     setToasts((prev) => [...prev, newToast]);
@@ -308,30 +299,30 @@ export function useToast() {
 
   const success = useCallback(
     (message: string, duration?: number) => {
-      return addToast({ type: "success", message, duration });
+      return addToast({ type: 'success', message, duration });
     },
-    [addToast],
+    [addToast]
   );
 
   const error = useCallback(
     (message: string, duration?: number) => {
-      return addToast({ type: "error", message, duration });
+      return addToast({ type: 'error', message, duration });
     },
-    [addToast],
+    [addToast]
   );
 
   const warning = useCallback(
     (message: string, duration?: number) => {
-      return addToast({ type: "warning", message, duration });
+      return addToast({ type: 'warning', message, duration });
     },
-    [addToast],
+    [addToast]
   );
 
   const info = useCallback(
     (message: string, duration?: number) => {
-      return addToast({ type: "info", message, duration });
+      return addToast({ type: 'info', message, duration });
     },
-    [addToast],
+    [addToast]
   );
 
   return {

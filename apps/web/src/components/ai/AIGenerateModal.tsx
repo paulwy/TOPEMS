@@ -1,6 +1,6 @@
-import { Dialog, DialogContent, DialogTitle, DialogActions,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Sparkles } from 'lucide-react';
 
 export interface AIGenerateModalProps {
   isOpen: boolean;
@@ -23,8 +23,8 @@ export function AIGenerateModal({
   children,
   isLoading = false,
   onConfirm,
-  confirmText = "确认",
-  cancelText = "取消",
+  confirmText = '确认',
+  cancelText = '取消',
   extraActions,
 }: AIGenerateModalProps) {
   const handleClose = () => {
@@ -32,58 +32,57 @@ export function AIGenerateModal({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      maxWidth='sm'
+      fullWidth
+    >
       <DialogContent sx={{ padding: 3 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               width: 32,
               height: 32,
-              borderRadius: "50%",
-              backgroundColor: "#f3e8ff",
+              borderRadius: '50%',
+              backgroundColor: '#f3e8ff',
             }}
           >
-            <Sparkles style={{ width: 16, height: 16, color: "#9333ea" }} />
+            <Sparkles style={{ width: 16, height: 16, color: '#9333ea' }} />
           </div>
           <DialogTitle sx={{ padding: 0, margin: 0 }}>{title}</DialogTitle>
         </div>
-        {description && (
-          <p style={{ marginTop: 8, color: "rgba(0,0,0,0.6)" }}>
-            {description}
-          </p>
-        )}
+        {description && <p style={{ marginTop: 8, color: 'rgba(0,0,0,0.6)' }}>{description}</p>}
 
         <div style={{ paddingTop: 16, paddingBottom: 16 }}>{children}</div>
 
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {extraActions}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{extraActions}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Button
-              variant="contained"
+              variant='contained'
               onClick={handleClose}
               disabled={isLoading}
-              sx={{ textTransform: "none" }}
+              sx={{ textTransform: 'none' }}
             >
               {cancelText}
             </Button>
             {onConfirm && (
               <Button
-                variant="contained"
-                color="primary"
+                variant='contained'
+                color='primary'
                 onClick={(e) => onConfirm(e)}
                 disabled={isLoading}
-                sx={{ textTransform: "none" }}
+                sx={{ textTransform: 'none' }}
               >
                 {confirmText}
               </Button>

@@ -11,20 +11,20 @@ import {
   DialogContent,
   DialogActions,
   LinearProgress,
-} from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
 import type {
   Opportunity,
   CreateOpportunityRequest,
   UpdateOpportunityRequest,
   FunnelStage,
   OpportunityStats,
-} from "@/api/modules/crm/crm";
-import { crmApi } from "@/api/modules/crm/crm";
-import { useAppStore } from "@/store";
-import { logger } from "@/utils/logger";
-import { DataExport } from "@/components/common";
+} from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/modules/crm/crm';
+import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
+import { DataExport } from '@/components/common';
 import {
   Plus,
   Edit,
@@ -35,31 +35,24 @@ import {
   TrendingDown,
   CheckCircle,
   XCircle,
-} from "lucide-react";
-import { ListPageTemplate } from "@/components/templates";
-import type {
-  ColumnDef,
-  RowAction,
-  FilterConfig,
-} from "@/components/templates";
+} from 'lucide-react';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 
 const OpportunityManagementPage: React.FC = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [stageFilter, setStageFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [stageFilter, setStageFilter] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [selectedOpportunity, setSelectedOpportunity] =
-    useState<Opportunity | null>(null);
-  const [formData, setFormData] = useState<
-    CreateOpportunityRequest & { customer_id?: string }
-  >({
-    name: "",
+  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
+  const [formData, setFormData] = useState<CreateOpportunityRequest & { customer_id?: string }>({
+    name: '',
     value: undefined,
     probability: undefined,
-    close_date: "",
-    notes: "",
+    close_date: '',
+    notes: '',
   });
   const [pagination, setPagination] = useState({
     page: 0,
@@ -97,11 +90,11 @@ const OpportunityManagementPage: React.FC = () => {
         }));
       }
     } catch (error) {
-      logger.error("加载商机列表失败:", error);
+      logger.error('加载商机列表失败:', error);
       addNotification({
-        type: "error",
-        title: "加载失败",
-        message: "无法加载商机列表",
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载商机列表',
       });
     } finally {
       setLoading(false);
@@ -115,7 +108,7 @@ const OpportunityManagementPage: React.FC = () => {
         setFunnelData(response.data);
       }
     } catch (error) {
-      logger.error("加载销售漏斗数据失败:", error);
+      logger.error('加载销售漏斗数据失败:', error);
     }
   };
 
@@ -126,7 +119,7 @@ const OpportunityManagementPage: React.FC = () => {
         setStats(response.data);
       }
     } catch (error) {
-      logger.error("加载商机统计数据失败:", error);
+      logger.error('加载商机统计数据失败:', error);
     }
   };
 
@@ -136,50 +129,50 @@ const OpportunityManagementPage: React.FC = () => {
       if (selectedOpportunity) {
         await crmApi.opportunities.update(
           selectedOpportunity.id,
-          formData as UpdateOpportunityRequest,
+          formData as UpdateOpportunityRequest
         );
         addNotification({
-          type: "success",
-          title: "更新成功",
-          message: "商机信息已更新",
+          type: 'success',
+          title: '更新成功',
+          message: '商机信息已更新',
         });
       } else {
         await crmApi.opportunities.create(formData);
         addNotification({
-          type: "success",
-          title: "创建成功",
-          message: "新商机已创建",
+          type: 'success',
+          title: '创建成功',
+          message: '新商机已创建',
         });
       }
       setShowDialog(false);
       resetForm();
       loadOpportunities();
     } catch (error) {
-      logger.error("操作失败:", error);
+      logger.error('操作失败:', error);
       addNotification({
-        type: "error",
-        title: "操作失败",
-        message: selectedOpportunity ? "更新商机失败" : "创建商机失败",
+        type: 'error',
+        title: '操作失败',
+        message: selectedOpportunity ? '更新商机失败' : '创建商机失败',
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("确定要删除这个商机吗?")) return;
+    if (!window.confirm('确定要删除这个商机吗?')) return;
     try {
       await crmApi.opportunities.delete(id);
       addNotification({
-        type: "success",
-        title: "删除成功",
-        message: "商机已删除",
+        type: 'success',
+        title: '删除成功',
+        message: '商机已删除',
       });
       loadOpportunities();
     } catch (error) {
-      logger.error("删除失败:", error);
+      logger.error('删除失败:', error);
       addNotification({
-        type: "error",
-        title: "删除失败",
-        message: "无法删除商机",
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除商机',
       });
     }
   };
@@ -191,8 +184,8 @@ const OpportunityManagementPage: React.FC = () => {
       customer_id: opportunity.customer_id,
       value: opportunity.value,
       probability: opportunity.probability,
-      close_date: opportunity.close_date || "",
-      notes: opportunity.notes || "",
+      close_date: opportunity.close_date || '',
+      notes: opportunity.notes || '',
     });
     setShowDialog(true);
   };
@@ -205,11 +198,11 @@ const OpportunityManagementPage: React.FC = () => {
   const resetForm = () => {
     setSelectedOpportunity(null);
     setFormData({
-      name: "",
+      name: '',
       value: undefined,
       probability: undefined,
-      close_date: "",
-      notes: "",
+      close_date: '',
+      notes: '',
     });
   };
 
@@ -218,25 +211,24 @@ const OpportunityManagementPage: React.FC = () => {
       string,
       {
         label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      prospecting: { label: "线索", color: "default" },
-      qualified: { label: "合格", color: "info" },
-      proposal: { label: "提案", color: "primary" },
-      negotiation: { label: "谈判", color: "warning" },
-      closed_won: { label: "赢单", color: "success" },
-      closed_lost: { label: "输单", color: "error" },
+      prospecting: { label: '线索', color: 'default' },
+      qualified: { label: '合格', color: 'info' },
+      proposal: { label: '提案', color: 'primary' },
+      negotiation: { label: '谈判', color: 'warning' },
+      closed_won: { label: '赢单', color: 'success' },
+      closed_lost: { label: '输单', color: 'error' },
     };
-    const s = stageMap[stage] || { label: stage, color: "default" };
-    return <Chip size="small" color={s.color} label={s.label} />;
+    const s = stageMap[stage] || { label: stage, color: 'default' };
+    return (
+      <Chip
+        size='small'
+        color={s.color}
+        label={s.label}
+      />
+    );
   };
 
   const maxValue = Math.max(...funnelData.map((f) => f.total_value || 0), 1);
@@ -244,80 +236,81 @@ const OpportunityManagementPage: React.FC = () => {
   const columns = useMemo<ColumnDef<Opportunity>[]>(
     () => [
       {
-        id: "name",
-        label: "商机名称",
+        id: 'name',
+        label: '商机名称',
         render: (row) => (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {row.name}
           </Typography>
         ),
       },
       {
-        id: "value",
-        label: "金额",
+        id: 'value',
+        label: '金额',
         render: (row) => `¥${(row.value || 0).toLocaleString()}`,
       },
       {
-        id: "stage",
-        label: "阶段",
+        id: 'stage',
+        label: '阶段',
         render: (row) => getStageBadge(row.stage),
       },
       {
-        id: "probability",
-        label: "概率",
-        render: (row) => (row.probability ? `${row.probability}%` : "-"),
+        id: 'probability',
+        label: '概率',
+        render: (row) => (row.probability ? `${row.probability}%` : '-'),
       },
       {
-        id: "close_date",
-        label: "预计成交日期",
+        id: 'close_date',
+        label: '预计成交日期',
         render: (row) =>
-          row.close_date
-            ? new Date(row.close_date).toLocaleDateString("zh-CN")
-            : "-",
+          row.close_date ? new Date(row.close_date).toLocaleDateString('zh-CN') : '-',
       },
     ],
-    [],
+    []
   );
 
   const rowActions = useMemo<RowAction<Opportunity>[]>(
     () => [
       {
-        label: "查看",
+        label: '查看',
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: (row) => handleEdit(row),
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error",
+        color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这个商机吗?",
+        confirmMessage: '确定要删除这个商机吗?',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
-        id: "stage",
-        label: "阶段",
-        type: "select",
+        id: 'stage',
+        label: '阶段',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "lead", label: "线索" },
-          { value: "qualified", label: "合格" },
-          { value: "proposal", label: "提案" },
-          { value: "negotiation", label: "谈判" },
-          { value: "closed_won", label: "赢单" },
-          { value: "closed_lost", label: "输单" },
+          { value: '', label: '全部' },
+          { value: 'lead', label: '线索' },
+          { value: 'qualified', label: '合格' },
+          { value: 'proposal', label: '提案' },
+          { value: 'negotiation', label: '谈判' },
+          { value: 'closed_won', label: '赢单' },
+          { value: 'closed_lost', label: '输单' },
         ],
         value: stageFilter,
         onChange: (value) => {
@@ -325,79 +318,84 @@ const OpportunityManagementPage: React.FC = () => {
         },
       },
     ],
-    [stageFilter],
+    [stageFilter]
   );
 
   const exportFields = useMemo(
     () => [
-      { key: "name", title: "商机名称" },
-      { key: "customer_name", title: "客户名称" },
-      { key: "stage", title: "商机阶段" },
-      { key: "value", title: "商机金额" },
-      { key: "probability", title: "概率" },
-      { key: "expected_close_date", title: "预计关闭日期" },
-      { key: "status", title: "状态" },
+      { key: 'name', title: '商机名称' },
+      { key: 'customer_name', title: '客户名称' },
+      { key: 'stage', title: '商机阶段' },
+      { key: 'value', title: '商机金额' },
+      { key: 'probability', title: '概率' },
+      { key: 'expected_close_date', title: '预计关闭日期' },
+      { key: 'status', title: '状态' },
     ],
-    [],
+    []
   );
 
   return (
     <>
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
           gap: 2,
           mb: 3,
         }}
       >
         <Card>
           <CardContent sx={{ p: 2 }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
-            >
-              <Target sx={{ width: 18, height: 18, color: "primary.main" }} />
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <Target sx={{ width: 18, height: 18, color: 'primary.main' }} />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 商机总数
               </Typography>
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold' }}
+            >
               {stats?.total_count || 0}
             </Typography>
           </CardContent>
         </Card>
         <Card>
           <CardContent sx={{ p: 2 }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
-            >
-              <TrendingUp
-                sx={{ width: 18, height: 18, color: "warning.main" }}
-              />
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <TrendingUp sx={{ width: 18, height: 18, color: 'warning.main' }} />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 总金额
               </Typography>
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold' }}
+            >
               ¥{(stats?.total_value || 0).toLocaleString()}
             </Typography>
           </CardContent>
         </Card>
         <Card>
           <CardContent sx={{ p: 2 }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
-            >
-              <CheckCircle
-                sx={{ width: 18, height: 18, color: "success.main" }}
-              />
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <CheckCircle sx={{ width: 18, height: 18, color: 'success.main' }} />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 赢单数量
               </Typography>
             </Box>
             <Typography
-              variant="h4"
-              sx={{ fontWeight: "bold", color: "success.main" }}
+              variant='h4'
+              sx={{ fontWeight: 'bold', color: 'success.main' }}
             >
               {stats?.won_count || 0}
             </Typography>
@@ -405,17 +403,18 @@ const OpportunityManagementPage: React.FC = () => {
         </Card>
         <Card>
           <CardContent sx={{ p: 2 }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
-            >
-              <XCircle sx={{ width: 18, height: 18, color: "error.main" }} />
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <XCircle sx={{ width: 18, height: 18, color: 'error.main' }} />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 输单数量
               </Typography>
             </Box>
             <Typography
-              variant="h4"
-              sx={{ fontWeight: "bold", color: "error.main" }}
+              variant='h4'
+              sx={{ fontWeight: 'bold', color: 'error.main' }}
             >
               {stats?.lost_count || 0}
             </Typography>
@@ -426,72 +425,81 @@ const OpportunityManagementPage: React.FC = () => {
       <Card sx={{ mb: 3 }}>
         <CardHeader>
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{
               fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
             }}
           >
             <TrendingUp style={{ width: 20, height: 20 }} />
             销售漏斗
           </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'grey.500' }}
+          >
             各阶段商机数量与金额统计
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {funnelData.map((item, index) => {
               const widthPercent = 100 - index * 10;
               const stageColors: Record<string, string> = {
-                prospecting: "#9CA3AF",
-                qualified: "#3B82F6",
-                proposal: "#8B5CF6",
-                negotiation: "#F59E0B",
-                closed_won: "#10B981",
-                closed_lost: "#EF4444",
+                prospecting: '#9CA3AF',
+                qualified: '#3B82F6',
+                proposal: '#8B5CF6',
+                negotiation: '#F59E0B',
+                closed_won: '#10B981',
+                closed_lost: '#EF4444',
               };
               return (
                 <Box
                   key={item.stage}
-                  sx={{ display: "flex", alignItems: "center", gap: 3 }}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 3 }}
                 >
-                  <Box sx={{ width: 80, textAlign: "right" }}>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  <Box sx={{ width: 80, textAlign: 'right' }}>
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 500 }}
+                    >
                       {item.stage_label}
                     </Typography>
                   </Box>
-                  <Box sx={{ flex: 1, maxWidth: "400px" }}>
+                  <Box sx={{ flex: 1, maxWidth: '400px' }}>
                     <Box
                       sx={{
                         height: 40,
-                        bgcolor: "grey.100",
+                        bgcolor: 'grey.100',
                         borderRadius: 1,
-                        overflow: "hidden",
-                        position: "relative",
+                        overflow: 'hidden',
+                        position: 'relative',
                       }}
                     >
                       <Box
                         sx={{
-                          height: "100%",
-                          bgcolor: stageColors[item.stage] || "#6B7280",
+                          height: '100%',
+                          bgcolor: stageColors[item.stage] || '#6B7280',
                           width: `${widthPercent}%`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                           px: 2,
-                          transition: "width 0.3s",
+                          transition: 'width 0.3s',
                         }}
                       >
                         <Typography
-                          variant="body2"
-                          sx={{ color: "white", fontWeight: 500 }}
+                          variant='body2'
+                          sx={{ color: 'white', fontWeight: 500 }}
                         >
                           {item.count} 个商机
                         </Typography>
-                        <Typography variant="body2" sx={{ color: "white" }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'white' }}
+                        >
                           ¥{(item.total_value || 0).toLocaleString()}
                         </Typography>
                       </Box>
@@ -500,22 +508,22 @@ const OpportunityManagementPage: React.FC = () => {
                       <Box
                         sx={{
                           mt: 0.5,
-                          display: "flex",
-                          alignItems: "center",
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 1,
                         }}
                       >
                         <LinearProgress
-                          variant="determinate"
+                          variant='determinate'
                           value={item.avg_probability}
                           sx={{ flex: 1, height: 4, borderRadius: 2 }}
                         />
                         <Typography
-                          variant="caption"
+                          variant='caption'
                           sx={{
-                            color: "text.secondary",
+                            color: 'text.secondary',
                             width: 40,
-                            textAlign: "right",
+                            textAlign: 'right',
                           }}
                         >
                           {item.avg_probability.toFixed(0)}%
@@ -523,17 +531,18 @@ const OpportunityManagementPage: React.FC = () => {
                       </Box>
                     )}
                   </Box>
-                  <Box sx={{ width: 100, textAlign: "right" }}>
+                  <Box sx={{ width: 100, textAlign: 'right' }}>
                     <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
+                      variant='body2'
+                      sx={{ color: 'text.secondary' }}
                     >
                       平均概率
                     </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {item.avg_probability
-                        ? `${item.avg_probability.toFixed(0)}%`
-                        : "-"}
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {item.avg_probability ? `${item.avg_probability.toFixed(0)}%` : '-'}
                     </Typography>
                   </Box>
                 </Box>
@@ -544,16 +553,16 @@ const OpportunityManagementPage: React.FC = () => {
       </Card>
 
       <ListPageTemplate<Opportunity>
-        title="商机管理"
-        subtitle="管理商机信息，跟踪销售机会和成交进度"
+        title='商机管理'
+        subtitle='管理商机信息，跟踪销售机会和成交进度'
         backButton={{
-          href: "/dashboard",
+          href: '/dashboard',
         }}
         columns={columns}
         data={opportunities}
         loading={loading}
         searchable
-        searchPlaceholder="搜索商机名称..."
+        searchPlaceholder='搜索商机名称...'
         searchValue={searchTerm}
         onSearch={(value) => {
           setSearchTerm(value);
@@ -573,27 +582,27 @@ const OpportunityManagementPage: React.FC = () => {
         }}
         actions={[
           {
-            label: "导出",
+            label: '导出',
             icon: <Eye size={18} />,
             onClick: () => {},
-            variant: "outlined",
+            variant: 'outlined',
           },
           {
-            label: "新增商机",
+            label: '新增商机',
             icon: <Plus size={18} />,
             onClick: () => {
               resetForm();
               setShowDialog(true);
             },
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
         headerContent={
           <DataExport
             data={opportunities as unknown as Record<string, unknown>[]}
             fields={exportFields}
-            defaultFileName="商机数据"
-            buttonText=""
+            defaultFileName='商机数据'
+            buttonText=''
           />
         }
       />
@@ -601,36 +610,32 @@ const OpportunityManagementPage: React.FC = () => {
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
-        <DialogTitle>
-          {selectedOpportunity ? "编辑商机" : "新增商机"}
-        </DialogTitle>
+        <DialogTitle>{selectedOpportunity ? '编辑商机' : '新增商机'}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 2,
                 pt: 1,
               }}
             >
               <TextField
-                label="商机名称 *"
+                label='商机名称 *'
                 required
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 fullWidth
-                sx={{ gridColumn: "span 2" }}
+                sx={{ gridColumn: 'span 2' }}
               />
               <TextField
-                label="金额"
-                type="number"
-                value={formData.value || ""}
+                label='金额'
+                type='number'
+                value={formData.value || ''}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
@@ -640,45 +645,42 @@ const OpportunityManagementPage: React.FC = () => {
                 fullWidth
               />
               <TextField
-                label="成交概率 (%)"
-                type="number"
-                value={formData.probability || ""}
+                label='成交概率 (%)'
+                type='number'
+                value={formData.probability || ''}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    probability: e.target.value
-                      ? Number(e.target.value)
-                      : undefined,
+                    probability: e.target.value ? Number(e.target.value) : undefined,
                   })
                 }
                 fullWidth
               />
               <TextField
-                label="预计成交日期"
-                type="date"
+                label='预计成交日期'
+                type='date'
                 value={formData.close_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, close_date: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, close_date: e.target.value })}
                 fullWidth
-                sx={{ gridColumn: "span 2" }}
+                sx={{ gridColumn: 'span 2' }}
               />
               <TextField
-                label="备注"
+                label='备注'
                 multiline
                 rows={3}
                 value={formData.notes}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 fullWidth
-                sx={{ gridColumn: "span 2" }}
+                sx={{ gridColumn: 'span 2' }}
               />
             </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               保存
             </Button>
           </DialogActions>
@@ -688,7 +690,7 @@ const OpportunityManagementPage: React.FC = () => {
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>商机详情</DialogTitle>
@@ -696,72 +698,81 @@ const OpportunityManagementPage: React.FC = () => {
           <DialogContent>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 2,
               }}
             >
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   商机名称
                 </Typography>
-                <Typography sx={{ fontWeight: "medium" }}>
-                  {selectedOpportunity.name}
-                </Typography>
+                <Typography sx={{ fontWeight: 'medium' }}>{selectedOpportunity.name}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   金额
                 </Typography>
-                <Typography>
-                  ¥{(selectedOpportunity.value || 0).toLocaleString()}
-                </Typography>
+                <Typography>¥{(selectedOpportunity.value || 0).toLocaleString()}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   阶段
                 </Typography>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStageBadge(selectedOpportunity.stage)}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStageBadge(selectedOpportunity.stage)}</Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   成交概率
                 </Typography>
                 <Typography>
-                  {selectedOpportunity.probability
-                    ? `${selectedOpportunity.probability}%`
-                    : "-"}
+                  {selectedOpportunity.probability ? `${selectedOpportunity.probability}%` : '-'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   预计成交日期
                 </Typography>
                 <Typography>
                   {selectedOpportunity.close_date
-                    ? new Date(
-                        selectedOpportunity.close_date,
-                      ).toLocaleDateString("zh-CN")
-                    : "-"}
+                    ? new Date(selectedOpportunity.close_date).toLocaleDateString('zh-CN')
+                    : '-'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   创建时间
                 </Typography>
                 <Typography>
-                  {new Date(selectedOpportunity.created_at).toLocaleString(
-                    "zh-CN",
-                  )}
+                  {new Date(selectedOpportunity.created_at).toLocaleString('zh-CN')}
                 </Typography>
               </Box>
-              <Box sx={{ gridColumn: "span 2" }}>
-                <Typography variant="caption" color="text.secondary">
+              <Box sx={{ gridColumn: 'span 2' }}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   备注
                 </Typography>
-                <Typography>{selectedOpportunity.notes || "-"}</Typography>
+                <Typography>{selectedOpportunity.notes || '-'}</Typography>
               </Box>
             </Box>
           </DialogContent>

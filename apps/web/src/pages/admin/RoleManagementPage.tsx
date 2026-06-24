@@ -1,24 +1,32 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box, Typography, IconButton, Chip,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
-import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from "lucide-react";
-import { authApi, type Role, type Permission } from "@/api/iam";
-import { useAppStore } from "../../store";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Box,
+  Typography,
+  IconButton,
+  Chip,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from 'lucide-react';
+import { authApi, type Role, type Permission } from '@/api/iam';
+import { useAppStore } from '../../store';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
 interface RoleManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
-const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
-  onNavigate: _onNavigate,
-}) => {
+const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
@@ -27,8 +35,8 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
 
   const [newRole, setNewRole] = useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
   });
 
   useEffect(() => {
@@ -52,11 +60,11 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
         setAllPermissions(permsRes.data);
       }
     } catch (_err: any) {
-      setError(_err.message || "加载数据失败");
+      setError(_err.message || '加载数据失败');
       addNotification({
-        title: "加载失败",
-        message: "加载数据失败",
-        type: "error",
+        title: '加载失败',
+        message: '加载数据失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -71,9 +79,9 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       }
     } catch (_err: any) {
       addNotification({
-        title: "加载失败",
-        message: "加载角色权限失败",
-        type: "error",
+        title: '加载失败',
+        message: '加载角色权限失败',
+        type: 'error',
       });
     }
   };
@@ -84,25 +92,25 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       const res = await authApi.createRole(newRole);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "角色创建成功",
-          type: "success",
+          title: '成功',
+          message: '角色创建成功',
+          type: 'success',
         });
         setShowCreateModal(false);
-        setNewRole({ name: "", description: "" });
+        setNewRole({ name: '', description: '' });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "创建角色失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '创建角色失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "创建角色失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '创建角色失败',
+        type: 'error',
       });
     }
   };
@@ -117,53 +125,53 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       });
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "角色更新成功",
-          type: "success",
+          title: '成功',
+          message: '角色更新成功',
+          type: 'success',
         });
         setShowEditModal(false);
         setSelectedRole(null);
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "更新角色失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '更新角色失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "更新角色失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '更新角色失败',
+        type: 'error',
       });
     }
   };
 
   const handleDeleteRole = async (roleId: string) => {
-    if (!confirm("确定要删除这个角色吗？删除后无法恢复。")) return;
+    if (!confirm('确定要删除这个角色吗？删除后无法恢复。')) return;
 
     try {
       const res = await authApi.deleteRole(roleId);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "角色删除成功",
-          type: "success",
+          title: '成功',
+          message: '角色删除成功',
+          type: 'success',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "删除角色失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '删除角色失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "删除角色失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '删除角色失败',
+        type: 'error',
       });
     }
   };
@@ -173,52 +181,49 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       const res = await authApi.addRolePermission(roleId, permissionId);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "权限添加成功",
-          type: "success",
+          title: '成功',
+          message: '权限添加成功',
+          type: 'success',
         });
         loadRolePermissions(roleId);
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "添加权限失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '添加权限失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "添加权限失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '添加权限失败',
+        type: 'error',
       });
     }
   };
 
-  const handleRemovePermission = async (
-    roleId: string,
-    permissionId: string,
-  ) => {
+  const handleRemovePermission = async (roleId: string, permissionId: string) => {
     try {
       const res = await authApi.removeRolePermission(roleId, permissionId);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "权限移除成功",
-          type: "success",
+          title: '成功',
+          message: '权限移除成功',
+          type: 'success',
         });
         loadRolePermissions(roleId);
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "移除权限失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '移除权限失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "移除权限失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '移除权限失败',
+        type: 'error',
       });
     }
   };
@@ -232,29 +237,38 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
   const columns: ColumnDef<Role>[] = useMemo(
     () => [
       {
-        id: "name",
-        label: "角色名称",
+        id: 'name',
+        label: '角色名称',
         render: (row) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
                 borderRadius: 1,
-                bgcolor: "primary.light",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                bgcolor: 'primary.light',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Shield size={20} color="#6366f1" />
+              <Shield
+                size={20}
+                color='#6366f1'
+              />
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.name}
               </Typography>
               {row.description && (
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {row.description}
                 </Typography>
               )}
@@ -263,23 +277,26 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
         ),
       },
       {
-        id: "created_at",
-        label: "创建时间",
+        id: 'created_at',
+        label: '创建时间',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
-            {new Date(row.created_at).toLocaleString("zh-CN")}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {new Date(row.created_at).toLocaleString('zh-CN')}
           </Typography>
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+
+    []
   );
 
   const rowActions = useMemo(
     () => [
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: (row: Role) => {
           setSelectedRole(row);
@@ -287,21 +304,21 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
         },
       },
       {
-        label: "管理权限",
+        label: '管理权限',
         icon: <Key size={16} />,
         onClick: (row: Role) => openPermissionsModal(row),
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error" as const,
+        color: 'error' as const,
         onClick: (row: Role) => handleDeleteRole(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这个角色吗？删除后无法恢复。",
+        confirmMessage: '确定要删除这个角色吗？删除后无法恢复。',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   // Filter roles based on search
@@ -310,35 +327,34 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
     const query = searchQuery.toLowerCase();
     return roles.filter(
       (role) =>
-        role.name.toLowerCase().includes(query) ||
-        role.description?.toLowerCase().includes(query),
+        role.name.toLowerCase().includes(query) || role.description?.toLowerCase().includes(query)
     );
   }, [roles, searchQuery]);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <ListPageTemplate
-        title="角色管理"
-        subtitle="管理用户角色、权限配置"
+        title='角色管理'
+        subtitle='管理用户角色、权限配置'
         columns={columns}
         data={filteredRoles}
         loading={loading}
         error={error || undefined}
         rowActions={rowActions}
         searchable
-        searchPlaceholder="搜索角色名称或描述..."
+        searchPlaceholder='搜索角色名称或描述...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         actions={[
           {
-            label: "创建角色",
+            label: '创建角色',
             icon: <Plus size={20} />,
             onClick: () => setShowCreateModal(true),
           },
         ]}
         onRefresh={loadData}
         backButton={{
-          href: "/dashboard",
+          href: '/dashboard',
         }}
       />
 
@@ -346,34 +362,28 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>创建新角色</DialogTitle>
         <form onSubmit={handleCreateRole}>
           <DialogContent>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <TextField
-                label="角色名称 *"
+                label='角色名称 *'
                 required
                 value={newRole.name}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, name: e.target.value })
-                }
-                placeholder="例如：管理员、普通用户"
+                onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+                placeholder='例如：管理员、普通用户'
                 fullWidth
               />
               <TextField
-                label="描述"
+                label='描述'
                 multiline
                 rows={3}
                 value={newRole.description}
-                onChange={(e) =>
-                  setNewRole({ ...newRole, description: e.target.value })
-                }
-                placeholder="描述这个角色的用途"
+                onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
+                placeholder='描述这个角色的用途'
                 fullWidth
               />
             </Box>
@@ -382,12 +392,15 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
             <Button
               onClick={() => {
                 setShowCreateModal(false);
-                setNewRole({ name: "", description: "" });
+                setNewRole({ name: '', description: '' });
               }}
             >
               取消
             </Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               创建
             </Button>
           </DialogActions>
@@ -398,38 +411,34 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>编辑角色</DialogTitle>
         {selectedRole && (
           <form onSubmit={handleEditRole}>
             <DialogContent>
-              <Box
-                sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
-              >
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
                 <TextField
-                  label="角色名称 *"
+                  label='角色名称 *'
                   required
                   value={selectedRole.name}
-                  onChange={(e) =>
-                    setSelectedRole({ ...selectedRole, name: e.target.value })
-                  }
-                  placeholder="例如：管理员、普通用户"
+                  onChange={(e) => setSelectedRole({ ...selectedRole, name: e.target.value })}
+                  placeholder='例如：管理员、普通用户'
                   fullWidth
                 />
                 <TextField
-                  label="描述"
+                  label='描述'
                   multiline
                   rows={3}
-                  value={selectedRole.description || ""}
+                  value={selectedRole.description || ''}
                   onChange={(e) =>
                     setSelectedRole({
                       ...selectedRole,
                       description: e.target.value,
                     })
                   }
-                  placeholder="描述这个角色的用途"
+                  placeholder='描述这个角色的用途'
                   fullWidth
                 />
               </Box>
@@ -443,7 +452,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
               >
                 取消
               </Button>
-              <Button type="submit" variant="contained">
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -455,71 +467,72 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       <Dialog
         open={showPermissionsModal}
         onClose={() => setShowPermissionsModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>角色权限 - {selectedRole?.name}</DialogTitle>
-        <DialogContent sx={{ overflow: "auto", maxHeight: "60vh" }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+        <DialogContent sx={{ overflow: 'auto', maxHeight: '60vh' }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 2, fontWeight: 600 }}
+          >
             可选权限
           </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {allPermissions.map((perm) => {
-              const hasPermission = rolePermissions.some(
-                (p) => p.id === perm.id,
-              );
+              const hasPermission = rolePermissions.some((p) => p.id === perm.id);
               return (
                 <Box
                   key={perm.id}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     p: 2,
-                    bgcolor: "grey.100",
+                    bgcolor: 'grey.100',
                     borderRadius: 2,
                   }}
                 >
                   <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography sx={{ fontWeight: 500 }}>
-                        {perm.name}
-                      </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography sx={{ fontWeight: 500 }}>{perm.name}</Typography>
                       {hasPermission && (
-                        <CheckCircle size={16} color="#2e7d32" />
+                        <CheckCircle
+                          size={16}
+                          color='#2e7d32'
+                        />
                       )}
                     </Box>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mt: 0.5 }}
                     >
                       {perm.description}
                     </Typography>
-                    <Typography variant="caption" color="text.disabled">
+                    <Typography
+                      variant='caption'
+                      color='text.disabled'
+                    >
                       分类: {perm.category} | 权限码: {perm.code}
                     </Typography>
                   </Box>
                   {hasPermission ? (
                     <Button
-                      variant="outlined"
-                      size="small"
-                      color="error"
+                      variant='outlined'
+                      size='small'
+                      color='error'
                       onClick={() =>
-                        selectedRole &&
-                        handleRemovePermission(selectedRole.id, perm.id)
+                        selectedRole && handleRemovePermission(selectedRole.id, perm.id)
                       }
                     >
                       移除
                     </Button>
                   ) : (
                     <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() =>
-                        selectedRole &&
-                        handleAddPermission(selectedRole.id, perm.id)
-                      }
+                      variant='outlined'
+                      size='small'
+                      onClick={() => selectedRole && handleAddPermission(selectedRole.id, perm.id)}
                     >
                       添加
                     </Button>

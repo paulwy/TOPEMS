@@ -1,12 +1,12 @@
-import { useState, useCallback, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   topNavItems,
   moduleTabsConfig,
   getModuleFromPath,
   type NavItem,
   type TabItem,
-} from "../config/navigation";
+} from '../config/navigation';
 
 interface NavState {
   activeModule: string | null;
@@ -28,7 +28,7 @@ interface UseTopNavReturn {
   reorderTabs: (fromIndex: number, toIndex: number) => void;
 }
 
-const STORAGE_KEY = "topems_nav_tabs";
+const STORAGE_KEY = 'topems_nav_tabs';
 
 export function useTopNav(): UseTopNavReturn {
   const location = useLocation();
@@ -83,14 +83,13 @@ export function useTopNav(): UseTopNavReturn {
       navigate(path);
       setState((prev) => ({ ...prev, openMenu: null }));
     },
-    [navigate],
+    [navigate]
   );
 
   const currentModuleTabs = (): TabItem[] => {
     if (!state.activeModule) return [];
 
-    const configTabs =
-      moduleTabsConfig.find((c) => c.module === state.activeModule)?.tabs || [];
+    const configTabs = moduleTabsConfig.find((c) => c.module === state.activeModule)?.tabs || [];
 
     const customTabs = state.customTabs[state.activeModule] || [];
 
@@ -111,7 +110,7 @@ export function useTopNav(): UseTopNavReturn {
       setState((prev) => {
         const currentTabs = prev.customTabs[module] || [];
         const updatedTabs = currentTabs.map((t: TabItem) =>
-          t.path === tab.path ? { ...t, pinned: !t.pinned } : t,
+          t.path === tab.path ? { ...t, pinned: !t.pinned } : t
         );
         return {
           ...prev,
@@ -122,7 +121,7 @@ export function useTopNav(): UseTopNavReturn {
         };
       });
     },
-    [state.activeModule],
+    [state.activeModule]
   );
 
   const closeTab = useCallback(
@@ -132,9 +131,7 @@ export function useTopNav(): UseTopNavReturn {
       const module = state.activeModule;
       setState((prev) => {
         const currentTabs = prev.customTabs[module] || [];
-        const updatedTabs = currentTabs.filter(
-          (t: TabItem) => t.path !== tab.path,
-        );
+        const updatedTabs = currentTabs.filter((t: TabItem) => t.path !== tab.path);
         return {
           ...prev,
           customTabs: {
@@ -144,7 +141,7 @@ export function useTopNav(): UseTopNavReturn {
         };
       });
     },
-    [state.activeModule],
+    [state.activeModule]
   );
 
   const reorderTabs = useCallback(
@@ -165,7 +162,7 @@ export function useTopNav(): UseTopNavReturn {
         };
       });
     },
-    [state.activeModule],
+    [state.activeModule]
   );
 
   return {

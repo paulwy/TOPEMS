@@ -1,16 +1,8 @@
 // modules/MapModule/LayerManager.tsx
-import React from "react";
-import {
-  Layers,
-  ChevronDown,
-  ChevronUp,
-  MapPin,
-  Navigation,
-  Info,
-  Pencil,
-} from "lucide-react";
-import { Box, Typography, Paper, IconButton } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React from 'react';
+import { Layers, ChevronDown, ChevronUp, MapPin, Navigation, Info, Pencil } from 'lucide-react';
+import { Box, Typography, Paper, IconButton } from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
 interface LayerToggleProps {
   label: string;
@@ -20,20 +12,14 @@ interface LayerToggleProps {
   color: string;
 }
 
-const LayerToggle: React.FC<LayerToggleProps> = ({
-  label,
-  icon: _,
-  checked,
-  onChange,
-  color,
-}) => (
+const LayerToggle: React.FC<LayerToggleProps> = ({ label, icon: _, checked, onChange, color }) => (
   <Box
     sx={{
-      display: "flex",
-      alignItems: "center",
+      display: 'flex',
+      alignItems: 'center',
       gap: 2,
-      cursor: "pointer",
-      "&:hover": { bgcolor: "#f9fafb" },
+      cursor: 'pointer',
+      '&:hover': { bgcolor: '#f9fafb' },
       px: 2,
       py: 1,
       borderRadius: 1,
@@ -44,11 +30,14 @@ const LayerToggle: React.FC<LayerToggleProps> = ({
       sx={{
         width: 12,
         height: 12,
-        borderRadius: "50%",
-        bgcolor: checked ? color : "#d1d5db",
+        borderRadius: '50%',
+        bgcolor: checked ? color : '#d1d5db',
       }}
     />
-    <Typography variant="body2" sx={{ color: "#374151" }}>
+    <Typography
+      variant='body2'
+      sx={{ color: '#374151' }}
+    >
       {label}
     </Typography>
   </Box>
@@ -60,7 +49,7 @@ interface LayerManagerProps {
     pipelines: boolean;
     storage: boolean;
   };
-  onToggleLayer: (layer: "devices" | "pipelines" | "storage") => void;
+  onToggleLayer: (layer: 'devices' | 'pipelines' | 'storage') => void;
   showPanel: boolean;
   onTogglePanel: () => void;
   drawFeaturesLength?: number;
@@ -76,74 +65,83 @@ const LayerManager: React.FC<LayerManagerProps> = ({
   return (
     <Paper
       sx={{
-        position: "absolute",
+        position: 'absolute',
         top: 16,
         right: 16,
         borderRadius: 2,
         boxShadow: 2,
-        overflow: "hidden",
+        overflow: 'hidden',
       }}
     >
       <Button
         onClick={onTogglePanel}
         sx={{
-          width: "100%",
+          width: '100%',
           px: 4,
           py: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          "&:hover": { bgcolor: "#f9fafb" },
-          textTransform: "none",
-          bgcolor: "transparent",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          '&:hover': { bgcolor: '#f9fafb' },
+          textTransform: 'none',
+          bgcolor: 'transparent',
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Layers size={20} style={{ color: "#374151" }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Layers
+            size={20}
+            style={{ color: '#374151' }}
+          />
           <Typography
-            variant="body2"
-            sx={{ fontWeight: 500, color: "#374151" }}
+            variant='body2'
+            sx={{ fontWeight: 500, color: '#374151' }}
           >
             图层
           </Typography>
         </Box>
         {showPanel ? (
-          <ChevronUp size={16} style={{ color: "#6b7280" }} />
+          <ChevronUp
+            size={16}
+            style={{ color: '#6b7280' }}
+          />
         ) : (
-          <ChevronDown size={16} style={{ color: "#6b7280" }} />
+          <ChevronDown
+            size={16}
+            style={{ color: '#6b7280' }}
+          />
         )}
       </Button>
       {showPanel && (
-        <Box sx={{ px: 3, py: 3, borderTop: 1, borderColor: "#e5e7eb" }}>
+        <Box sx={{ px: 3, py: 3, borderTop: 1, borderColor: '#e5e7eb' }}>
           <LayerToggle
-            label="设备点位"
+            label='设备点位'
             icon={<MapPin size={16} />}
             checked={visibleLayers.devices}
-            onChange={() => onToggleLayer("devices")}
-            color="#00C897"
+            onChange={() => onToggleLayer('devices')}
+            color='#00C897'
           />
           <LayerToggle
-            label="管线"
+            label='管线'
             icon={<Navigation size={16} />}
             checked={visibleLayers.pipelines}
-            onChange={() => onToggleLayer("pipelines")}
-            color="#6366F1"
+            onChange={() => onToggleLayer('pipelines')}
+            color='#6366F1'
           />
           <LayerToggle
-            label="仓储位置"
+            label='仓储位置'
             icon={<Info size={16} />}
             checked={visibleLayers.storage}
-            onChange={() => onToggleLayer("storage")}
-            color="#F59E0B"
+            onChange={() => onToggleLayer('storage')}
+            color='#F59E0B'
           />
           {drawFeaturesLength > 0 && (
-            <Box sx={{ borderTop: 1, borderColor: "#e5e7eb", pt: 2, mt: 2 }}>
+            <Box sx={{ borderTop: 1, borderColor: '#e5e7eb', pt: 2, mt: 2 }}>
               <LayerToggle
-                label="绘制图形"
+                label='绘制图形'
                 icon={<Pencil size={16} />}
                 checked={true}
                 onChange={() => {}}
-                color="#EF4444"
+                color='#EF4444'
               />
             </Box>
           )}

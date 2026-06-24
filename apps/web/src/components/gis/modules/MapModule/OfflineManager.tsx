@@ -1,12 +1,12 @@
 // modules/MapModule/OfflineManager.tsx
-import { useState, useCallback, useEffect, useRef } from "react";
-import type { OfflineConfig, SyncStatus } from "../shared/types";
+import { useState, useCallback, useEffect, useRef } from 'react';
+import type { OfflineConfig, SyncStatus } from '../shared/types';
 
-const DB_NAME = "gis_offline_db";
+const DB_NAME = 'gis_offline_db';
 const DB_VERSION = 1;
-const TILE_STORE = "tiles";
-const DATA_STORE = "offline_data";
-const PENDING_STORE = "pending_sync";
+const TILE_STORE = 'tiles';
+const DATA_STORE = 'offline_data';
+const PENDING_STORE = 'pending_sync';
 
 interface TileKey {
   source: string;
@@ -21,7 +21,7 @@ function tileKeyToString(key: TileKey): string {
 }
 
 function parseTileKey(keyStr: string): TileKey {
-  const [source, z, x, y] = keyStr.split(":");
+  const [source, z, x, y] = keyStr.split(':');
   return {
     source,
     z: parseInt(z, 10),
@@ -32,7 +32,7 @@ function parseTileKey(keyStr: string): TileKey {
 
 interface PendingItem {
   id: string;
-  type: "evidence" | "track";
+  type: 'evidence' | 'track';
   data: unknown;
   timestamp: number;
   retryCount: number;
@@ -55,15 +55,10 @@ interface UseOfflineManagerReturn {
   // 瓦片操作
   downloadTiles: (
     bounds: [[number, number], [number, number]],
-    zoomLevels: number[],
+    zoomLevels: number[]
   ) => Promise<void>;
   clearTiles: () => Promise<void>;
-  getTile: (
-    source: string,
-    z: number,
-    x: number,
-    y: number,
-  ) => Promise<string | null>;
+  getTile: (source: string, z: number, x: number, y: number) => Promise<string | null>;
 
   // 数据操作
   saveOfflineData: (key: string, data: unknown) => Promise<void>;
@@ -71,7 +66,7 @@ interface UseOfflineManagerReturn {
   clearOfflineData: () => Promise<void>;
 
   // 同步操作
-  addPendingItem: (type: "evidence" | "track", data: unknown) => Promise<void>;
+  addPendingItem: (type: 'evidence' | 'track', data: unknown) => Promise<void>;
   syncPendingItems: () => Promise<void>;
 
   // 存储管理
@@ -79,15 +74,13 @@ interface UseOfflineManagerReturn {
   clearAllOfflineData: () => Promise<void>;
 }
 
-export function useOfflineManager(
-  options: UseOfflineManagerOptions,
-): UseOfflineManagerReturn {
+export function useOfflineManager(options: UseOfflineManagerOptions): UseOfflineManagerReturn {
   const { config, onSyncComplete, onSyncError } = options;
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    lastSyncTime: "",
+    lastSyncTime: '',
     pendingUploads: 0,
     pendingDownloads: 0,
   });
@@ -114,18 +107,18 @@ export function useOfflineManager(
 
         // 创建瓦片存储
         if (!db.objectStoreNames.contains(TILE_STORE)) {
-          db.createObjectStore(TILE_STORE, { keyPath: "key" });
+          db.createObjectStore(TILE_STORE, { keyPath: 'key' });
         }
 
         // 创建离线数据存储
         if (!db.objectStoreNames.contains(DATA_STORE)) {
-          db.createObjectStore(DATA_STORE, { keyPath: "key" });
+          db.createObjectStore(DATA_STORE, { keyPath: 'key' });
         }
 
         // 创建待同步项存储
         if (!db.objectStoreNames.contains(PENDING_STORE)) {
-          const store = db.createObjectStore(PENDING_STORE, { keyPath: "id" });
-          store.createIndex("timestamp", "timestamp", { unique: false });
+          const store = db.createObjectStore(PENDING_STORE, { keyPath: 'id' });
+          store.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
     });
@@ -141,22 +134,19 @@ export function useOfflineManager(
 
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 计算瓦片数量
   const getTileCount = useCallback(
-    (
-      bounds: [[number, number], [number, number]],
-      zoomLevels: number[],
-    ): number => {
+    (bounds: [[number, number], [number, number]], zoomLevels: number[]): number => {
       let count = 0;
       for (const z of zoomLevels) {
         const tilesAtZoom = Math.pow(4, z); // 每个缩放级别4倍
@@ -164,15 +154,12 @@ export function useOfflineManager(
       }
       return count;
     },
-    [],
+    []
   );
 
   // 下载瓦片
   const downloadTiles = useCallback(
-    async (
-      bounds: [[number, number], [number, number]],
-      zoomLevels: number[],
-    ) => {
+    async (bounds: [[number, number], [number, number]], zoomLevels: number[]) => {
       const db = await initDB();
       const totalTiles = getTileCount(bounds, zoomLevels);
       let downloaded = 0;
@@ -188,21 +175,21 @@ export function useOfflineManager(
           ((1 -
             Math.log(
               Math.tan((northEast[0] * Math.PI) / 180) +
-                1 / Math.cos((northEast[0] * Math.PI) / 180),
+                1 / Math.cos((northEast[0] * Math.PI) / 180)
             ) /
               Math.PI) /
             2) *
-            Math.pow(2, z),
+            Math.pow(2, z)
         );
         const maxY = Math.floor(
           ((1 -
             Math.log(
               Math.tan((southWest[0] * Math.PI) / 180) +
-                1 / Math.cos((southWest[0] * Math.PI) / 180),
+                1 / Math.cos((southWest[0] * Math.PI) / 180)
             ) /
               Math.PI) /
             2) *
-            Math.pow(2, z),
+            Math.pow(2, z)
         );
 
         for (let x = minX; x <= maxX; x++) {
@@ -217,7 +204,7 @@ export function useOfflineManager(
                   const tileKey: TileKey = { source, z, x, y };
                   const keyStr = tileKeyToString(tileKey);
 
-                  const tx = db.transaction(TILE_STORE, "readwrite");
+                  const tx = db.transaction(TILE_STORE, 'readwrite');
                   await tx.objectStore(TILE_STORE).put({ key: keyStr, blob });
                   downloaded++;
 
@@ -235,22 +222,17 @@ export function useOfflineManager(
         }
       }
     },
-    [config.tileSources, initDB, getTileCount],
+    [config.tileSources, initDB, getTileCount]
   );
 
   // 获取瓦片URL
-  const getTileUrl = (
-    source: string,
-    z: number,
-    x: number,
-    y: number,
-  ): string => {
-    if (source === "osm") {
+  const getTileUrl = (source: string, z: number, x: number, y: number): string => {
+    if (source === 'osm') {
       return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
-    } else if (source === "amap") {
+    } else if (source === 'amap') {
       return `https://webst0{s}.is.autonavi.com/appmaptile?style=6&x=${x}&y=${y}&z=${z}`.replace(
-        "{s}",
-        ["1", "2", "3", "4"][Math.floor(Math.random() * 4)],
+        '{s}',
+        ['1', '2', '3', '4'][Math.floor(Math.random() * 4)]
       );
     }
     throw new Error(`Unknown tile source: ${source}`);
@@ -258,18 +240,13 @@ export function useOfflineManager(
 
   // 获取离线瓦片
   const getTile = useCallback(
-    async (
-      source: string,
-      z: number,
-      x: number,
-      y: number,
-    ): Promise<string | null> => {
+    async (source: string, z: number, x: number, y: number): Promise<string | null> => {
       const db = await initDB();
       const tileKey: TileKey = { source, z, x, y };
       const keyStr = tileKeyToString(tileKey);
 
       return new Promise((resolve) => {
-        const tx = db.transaction(TILE_STORE, "readonly");
+        const tx = db.transaction(TILE_STORE, 'readonly');
         const request = tx.objectStore(TILE_STORE).get(keyStr);
 
         request.onsuccess = () => {
@@ -284,13 +261,13 @@ export function useOfflineManager(
         request.onerror = () => resolve(null);
       });
     },
-    [initDB],
+    [initDB]
   );
 
   // 清除瓦片缓存
   const clearTiles = useCallback(async (): Promise<void> => {
     const db = await initDB();
-    const tx = db.transaction(TILE_STORE, "readwrite");
+    const tx = db.transaction(TILE_STORE, 'readwrite');
     await tx.objectStore(TILE_STORE).clear();
     setDownloadedTiles(0);
   }, [initDB]);
@@ -299,12 +276,10 @@ export function useOfflineManager(
   const saveOfflineData = useCallback(
     async (key: string, data: unknown): Promise<void> => {
       const db = await initDB();
-      const tx = db.transaction(DATA_STORE, "readwrite");
-      await tx
-        .objectStore(DATA_STORE)
-        .put({ key, data, timestamp: Date.now() });
+      const tx = db.transaction(DATA_STORE, 'readwrite');
+      await tx.objectStore(DATA_STORE).put({ key, data, timestamp: Date.now() });
     },
-    [initDB],
+    [initDB]
   );
 
   // 获取离线数据
@@ -313,7 +288,7 @@ export function useOfflineManager(
       const db = await initDB();
 
       return new Promise((resolve) => {
-        const tx = db.transaction(DATA_STORE, "readonly");
+        const tx = db.transaction(DATA_STORE, 'readonly');
         const request = tx.objectStore(DATA_STORE).get(key);
 
         request.onsuccess = () => {
@@ -323,19 +298,19 @@ export function useOfflineManager(
         request.onerror = () => resolve(null);
       });
     },
-    [initDB],
+    [initDB]
   );
 
   // 清除离线数据
   const clearOfflineData = useCallback(async (): Promise<void> => {
     const db = await initDB();
-    const tx = db.transaction(DATA_STORE, "readwrite");
+    const tx = db.transaction(DATA_STORE, 'readwrite');
     await tx.objectStore(DATA_STORE).clear();
   }, [initDB]);
 
   // 添加待同步项
   const addPendingItem = useCallback(
-    async (type: "evidence" | "track", data: unknown): Promise<void> => {
+    async (type: 'evidence' | 'track', data: unknown): Promise<void> => {
       const db = await initDB();
       const item: PendingItem = {
         id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -345,7 +320,7 @@ export function useOfflineManager(
         retryCount: 0,
       };
 
-      const tx = db.transaction(PENDING_STORE, "readwrite");
+      const tx = db.transaction(PENDING_STORE, 'readwrite');
       await tx.objectStore(PENDING_STORE).put(item);
 
       setSyncStatus((prev) => ({
@@ -359,7 +334,7 @@ export function useOfflineManager(
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [initDB, isOnline],
+    [initDB, isOnline]
   );
 
   // 同步待处理项
@@ -371,7 +346,7 @@ export function useOfflineManager(
     try {
       const db = await initDB();
 
-      const tx = db.transaction(PENDING_STORE, "readonly");
+      const tx = db.transaction(PENDING_STORE, 'readonly');
       const request = tx.objectStore(PENDING_STORE).getAll();
 
       const items = await new Promise<PendingItem[]>((resolve, reject) => {
@@ -382,21 +357,19 @@ export function useOfflineManager(
       for (const item of items) {
         try {
           const endpoint =
-            item.type === "evidence"
-              ? "/gis/api/gis/evidence"
-              : "/gis/api/gis/tracks/positions";
+            item.type === 'evidence' ? '/gis/api/gis/evidence' : '/gis/api/gis/tracks/positions';
 
           const response = await fetch(endpoint, {
-            method: "POST",
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify(item.data),
           });
 
           if (response.ok) {
             // 删除已同步的项
-            const deleteTx = db.transaction(PENDING_STORE, "readwrite");
+            const deleteTx = db.transaction(PENDING_STORE, 'readwrite');
             await deleteTx.objectStore(PENDING_STORE).delete(item.id);
 
             setSyncStatus((prev) => ({
@@ -411,7 +384,7 @@ export function useOfflineManager(
         } catch {
           // 更新重试计数
           if (item.retryCount < 3) {
-            const updateTx = db.transaction(PENDING_STORE, "readwrite");
+            const updateTx = db.transaction(PENDING_STORE, 'readwrite');
             await updateTx.objectStore(PENDING_STORE).put({
               ...item,
               retryCount: item.retryCount + 1,
@@ -447,18 +420,18 @@ export function useOfflineManager(
   const clearAllOfflineData = useCallback(async (): Promise<void> => {
     const db = await initDB();
 
-    const tx1 = db.transaction(TILE_STORE, "readwrite");
+    const tx1 = db.transaction(TILE_STORE, 'readwrite');
     await tx1.objectStore(TILE_STORE).clear();
 
-    const tx2 = db.transaction(DATA_STORE, "readwrite");
+    const tx2 = db.transaction(DATA_STORE, 'readwrite');
     await tx2.objectStore(DATA_STORE).clear();
 
-    const tx3 = db.transaction(PENDING_STORE, "readwrite");
+    const tx3 = db.transaction(PENDING_STORE, 'readwrite');
     await tx3.objectStore(PENDING_STORE).clear();
 
     setDownloadedTiles(0);
     setSyncStatus({
-      lastSyncTime: "",
+      lastSyncTime: '',
       pendingUploads: 0,
       pendingDownloads: 0,
     });
@@ -489,31 +462,20 @@ export function useOfflineManager(
 }
 
 // 瓦片坐标工具函数
-export function tileToLatLng(
-  z: number,
-  x: number,
-  y: number,
-): [number, number] {
+export function tileToLatLng(z: number, x: number, y: number): [number, number] {
   const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, z);
   const lat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
   const lng = (x / Math.pow(2, z)) * 360 - 180;
   return [lat, lng];
 }
 
-export function latLngToTile(
-  lat: number,
-  lng: number,
-  z: number,
-): [number, number] {
+export function latLngToTile(lat: number, lng: number, z: number): [number, number] {
   const x = Math.floor(((lng + 180) / 360) * Math.pow(2, z));
   const y = Math.floor(
     ((1 -
-      Math.log(
-        Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180),
-      ) /
-        Math.PI) /
+      Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) /
       2) *
-      Math.pow(2, z),
+      Math.pow(2, z)
   );
   return [x, y];
 }
@@ -521,7 +483,7 @@ export function latLngToTile(
 export function getTileBounds(
   z: number,
   x: number,
-  y: number,
+  y: number
 ): [[number, number], [number, number]] {
   const [minLat, minLng] = tileToLatLng(z, x, y);
   const [maxLat, maxLng] = tileToLatLng(z, x + 1, y + 1);

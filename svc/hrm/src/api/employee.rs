@@ -433,10 +433,16 @@ async fn export_employees(
 
     let format = req.format.unwrap_or_else(|| "csv".to_string());
 
+    // 导出数量限制，防止大结果集导致的性能问题
+    const MAX_EXPORT_COUNT: i64 = 10000;
+
     let employees = match &req.ids {
         Some(ids) => {
             if ids.is_empty() {
                 return Json(api_error(400, "导出员工ID列表不能为空"));
+            }
+            if ids.len() as i64 > MAX_EXPORT_COUNT {
+                return Json(api_error(400, &format!("导出数量不能超过 {}", MAX_EXPORT_COUNT)));
             }
             sqlx::query_as::<_, Employee>(
                 r#"
@@ -446,9 +452,11 @@ async fn export_employees(
                        created_at, updated_at
                 FROM hrm.employees
                 WHERE id = ANY($1)
+                LIMIT $2
                 "#,
             )
             .bind(ids)
+            .bind(MAX_EXPORT_COUNT)
             .fetch_all(&state.db)
             .await
         }
@@ -460,8 +468,10 @@ async fn export_employees(
                        email, phone, status,
                        created_at, updated_at
                 FROM hrm.employees
+                LIMIT $1
                 "#,
             )
+            .bind(MAX_EXPORT_COUNT)
             .fetch_all(&state.db)
             .await
         }

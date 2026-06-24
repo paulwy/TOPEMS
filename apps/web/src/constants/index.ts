@@ -4,13 +4,13 @@
  */
 
 // 颜色常量
-export * from "./colors";
+export * from './colors';
 
 // 数字常量
-export * from "./numbers";
+export * from './numbers';
 
 // 超时常量
-export * from "./timeouts";
+export * from './timeouts';
 
 // 标签常量
-export * from "./labels";
+export * from './labels';

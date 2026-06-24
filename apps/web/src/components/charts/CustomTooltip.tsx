@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Typography } from "@mui/material";
+import React from 'react';
+import { Box, Typography } from '@mui/material';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -24,9 +24,9 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
   return (
     <Box
       sx={{
-        backgroundColor: "rgba(255, 255, 255, 0.95)",
-        backdropFilter: "blur(4px)",
-        border: "1px solid #e2e8f0",
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(4px)',
+        border: '1px solid #e2e8f0',
         borderRadius: 3,
         boxShadow: 10,
         px: 4,
@@ -37,25 +37,23 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
       {label && (
         <Typography
           sx={{
-            fontSize: "0.75rem",
+            fontSize: '0.75rem',
             fontWeight: 500,
-            color: "#64748b",
+            color: '#64748b',
             mb: 2,
             pb: 2,
-            borderBottom: "1px solid #f1f5f9",
+            borderBottom: '1px solid #f1f5f9',
           }}
         >
           {label}
         </Typography>
       )}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {payload.map((entry, index) => {
           const [displayValue, displayName] = formatter
             ? formatter(entry.value, entry.name)
             : [
-                typeof entry.value === "number"
-                  ? entry.value.toLocaleString()
-                  : entry.value,
+                typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value,
                 entry.name,
               ];
 
@@ -63,28 +61,26 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
             <Box
               key={index}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 gap: 4,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box
                   sx={{
                     width: 10,
                     height: 10,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     backgroundColor: entry.color,
                   }}
                 />
-                <Typography sx={{ fontSize: "0.875rem", color: "#475569" }}>
+                <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
                   {displayName}
                 </Typography>
               </Box>
-              <Typography
-                sx={{ fontSize: "0.875rem", fontWeight: 600, color: "#0f172a" }}
-              >
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>
                 {displayValue}
               </Typography>
             </Box>

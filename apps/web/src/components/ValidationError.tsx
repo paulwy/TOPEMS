@@ -1,26 +1,23 @@
-import React from "react";
-import { AlertCircle, X } from "lucide-react";
+import React from 'react';
+import { AlertCircle, X } from 'lucide-react';
 
 interface FieldErrorProps {
   error: string | undefined;
   showIcon?: boolean;
 }
 
-export const FieldError: React.FC<FieldErrorProps> = ({
-  error,
-  showIcon = true,
-}) => {
+export const FieldError: React.FC<FieldErrorProps> = ({ error, showIcon = true }) => {
   if (!error) return null;
 
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
-        color: "#dc2626",
-        fontSize: "14px",
-        marginTop: "4px",
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        color: '#dc2626',
+        fontSize: '14px',
+        marginTop: '4px',
       }}
     >
       {showIcon && <AlertCircle sx={{ width: 16, height: 16 }} />}
@@ -34,10 +31,7 @@ interface FormErrorProps {
   fields?: string[];
 }
 
-export const FormError: React.FC<FormErrorProps> = ({
-  errors,
-  fields = [],
-}) => {
+export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => {
   const errorList =
     fields.length > 0
       ? fields.map((field) => errors[field]).filter(Boolean)
@@ -48,53 +42,51 @@ export const FormError: React.FC<FormErrorProps> = ({
   return (
     <div
       style={{
-        backgroundColor: "#fef2f2",
-        border: "1px solid #fecaca",
-        borderRadius: "8px",
-        padding: "16px",
-        marginBottom: "16px",
+        backgroundColor: '#fef2f2',
+        border: '1px solid #fecaca',
+        borderRadius: '8px',
+        padding: '16px',
+        marginBottom: '16px',
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-        <AlertCircle
-          sx={{ width: 20, height: 20, color: "#dc2626", marginTop: "2px" }}
-        />
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+        <AlertCircle sx={{ width: 20, height: 20, color: '#dc2626', marginTop: '2px' }} />
         <div style={{ flex: 1 }}>
           <h4
             style={{
-              fontSize: "14px",
+              fontSize: '14px',
               fontWeight: 500,
-              color: "#991b1b",
-              marginBottom: "4px",
+              color: '#991b1b',
+              marginBottom: '4px',
             }}
           >
             请修正以下错误：
           </h4>
           <ul
             style={{
-              fontSize: "14px",
-              color: "#b91c1c",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
+              fontSize: '14px',
+              color: '#b91c1c',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
             }}
           >
             {errorList.map((error, index) => (
               <li
                 key={index}
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "8px",
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px',
                 }}
               >
                 <span
                   style={{
-                    width: "4px",
-                    height: "4px",
-                    backgroundColor: "#dc2626",
-                    borderRadius: "9999px",
-                    marginTop: "8px",
+                    width: '4px',
+                    height: '4px',
+                    backgroundColor: '#dc2626',
+                    borderRadius: '9999px',
+                    marginTop: '8px',
                     flexShrink: 0,
                   }}
                 ></span>
@@ -113,32 +105,29 @@ interface ValidationHintProps {
   rules: string[];
 }
 
-export const ValidationHint: React.FC<ValidationHintProps> = ({
-  field,
-  rules,
-}) => {
+export const ValidationHint: React.FC<ValidationHintProps> = ({ field, rules }) => {
   return (
-    <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
       <span style={{ fontWeight: 500 }}>{field}要求：</span>
       <ul
         style={{
-          marginTop: "4px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "2px",
+          marginTop: '4px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '2px',
         }}
       >
         {rules.map((rule, index) => (
           <li
             key={index}
-            style={{ display: "flex", alignItems: "center", gap: "4px" }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <span
               style={{
-                width: "4px",
-                height: "4px",
-                backgroundColor: "#94a3b8",
-                borderRadius: "9999px",
+                width: '4px',
+                height: '4px',
+                backgroundColor: '#94a3b8',
+                borderRadius: '9999px',
               }}
             ></span>
             <span>{rule}</span>
@@ -199,9 +188,7 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
       if (rules.custom) {
         const result = rules.custom(value);
         if (result !== true) {
-          setError(
-            typeof result === "string" ? result : `${fieldName}验证失败`,
-          );
+          setError(typeof result === 'string' ? result : `${fieldName}验证失败`);
           onValidChange?.(false);
           return;
         }
@@ -217,12 +204,12 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
-        color: "#dc2626",
-        fontSize: "14px",
-        marginTop: "4px",
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        color: '#dc2626',
+        fontSize: '14px',
+        marginTop: '4px',
       }}
     >
       <AlertCircle sx={{ width: 16, height: 16 }} />
@@ -236,59 +223,56 @@ interface SuccessMessageProps {
   onClose?: () => void;
 }
 
-export const SuccessMessage: React.FC<SuccessMessageProps> = ({
-  message,
-  onClose,
-}) => {
+export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose }) => {
   return (
     <div
       style={{
-        backgroundColor: "#f0fdf4",
-        border: "1px solid #bbf7d0",
-        borderRadius: "8px",
-        padding: "16px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
+        backgroundColor: '#f0fdf4',
+        border: '1px solid #bbf7d0',
+        borderRadius: '8px',
+        padding: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div
           style={{
-            width: "32px",
-            height: "32px",
-            backgroundColor: "#dcfce7",
-            borderRadius: "9999px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: '32px',
+            height: '32px',
+            backgroundColor: '#dcfce7',
+            borderRadius: '9999px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: "#22c55e" }}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            style={{ width: 20, height: 20, color: '#22c55e' }}
+            fill='none'
+            viewBox='0 0 24 24'
+            stroke='currentColor'
           >
             <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap='round'
+              strokeLinejoin='round'
               strokeWidth={2}
-              d="M5 13l4 4L19 7"
+              d='M5 13l4 4L19 7'
             />
           </svg>
         </div>
-        <span style={{ color: "#166534", fontWeight: 500 }}>{message}</span>
+        <span style={{ color: '#166534', fontWeight: 500 }}>{message}</span>
       </div>
       {onClose && (
         <button
           onClick={onClose}
           style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#22c55e",
-            padding: "4px",
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#22c55e',
+            padding: '4px',
           }}
         >
           <X sx={{ width: 20, height: 20 }} />

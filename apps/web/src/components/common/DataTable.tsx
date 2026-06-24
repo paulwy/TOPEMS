@@ -4,9 +4,24 @@
  * 使用TanStack React Table，支持搜索、排序、筛选、分页、选择、导出等功能
  * 增强特性：列配置持久化、行展开功能、虚拟滚动支持
  */
-import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { Box, Typography, IconButton, Menu, MenuItem, Divider, Table, TableBody, TableCell, TableHead, TableRow, Checkbox, Tooltip, Skeleton,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import {
+  Box,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Checkbox,
+  Tooltip,
+  Skeleton,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   Search,
   Filter,
@@ -21,7 +36,7 @@ import {
   MoreVertical,
   ChevronDown,
   ChevronUp,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   flexRender,
   getCoreRowModel,
@@ -33,8 +48,8 @@ import {
   type ColumnFiltersState,
   type PaginationState,
   type VisibilityState,
-} from "@tanstack/react-table";
-import { useAppStore } from "@/store";
+} from '@tanstack/react-table';
+import { useAppStore } from '@/store';
 
 // ============ 类型定义 ============
 
@@ -187,10 +202,7 @@ const loadColumnVisibility = (key: string): VisibilityState => {
 /**
  * 保存列配置到localStorage
  */
-const saveColumnVisibility = (
-  key: string,
-  visibility: VisibilityState,
-): void => {
+const saveColumnVisibility = (key: string, visibility: VisibilityState): void => {
   try {
     localStorage.setItem(`datatable:${key}`, JSON.stringify(visibility));
   } catch {
@@ -229,15 +241,15 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = "搜索...",
+  searchPlaceholder = '搜索...',
   showSearch = true,
   showFilters = true,
   showExport = true,
   showSelection = false,
   showCreate = false,
-  createLabel = "新建",
+  createLabel = '新建',
   onCreate,
-  exportFileName = "export",
+  exportFileName = 'export',
   enablePagination = true,
   totalPages,
   totalItems,
@@ -251,13 +263,13 @@ export function DataTable<TData, TValue>({
   onRefresh,
   loading = false,
   responsive = true,
-  emptyMessage = "暂无数据",
+  emptyMessage = '暂无数据',
   getRowKey = (row: TData) =>
     (row as any).id?.toString() || (row as any).key || Math.random().toString(),
   extraActions,
   sx,
   persistColumnConfig = false,
-  columnConfigKey = "default",
+  columnConfigKey = 'default',
   enableRowExpansion = false,
   expandedRowRender,
   enableVirtualization = false,
@@ -273,7 +285,7 @@ export function DataTable<TData, TValue>({
   });
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    persistColumnConfig ? loadColumnVisibility(columnConfigKey) : {},
+    persistColumnConfig ? loadColumnVisibility(columnConfigKey) : {}
   );
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -298,9 +310,7 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onPaginationChange: (newPagination) => {
       const paginationState =
-        typeof newPagination === "function"
-          ? newPagination(pagination)
-          : newPagination;
+        typeof newPagination === 'function' ? newPagination(pagination) : newPagination;
       setPagination(newPagination);
       if (onPageChange) {
         onPageChange(paginationState.pageIndex);
@@ -332,7 +342,7 @@ export function DataTable<TData, TValue>({
         table.getColumn(searchKey)?.setFilterValue(value);
       }
     },
-    [searchKey, table],
+    [searchKey, table]
   );
 
   const handleSelectionChange = useCallback(
@@ -340,7 +350,7 @@ export function DataTable<TData, TValue>({
       setSelectedKeys(keys);
       onSelectionChange?.(keys);
     },
-    [onSelectionChange],
+    [onSelectionChange]
   );
 
   const handleSelectAll = useCallback(() => {
@@ -348,9 +358,7 @@ export function DataTable<TData, TValue>({
     if (selectedKeys.size === filteredRows.length && filteredRows.length > 0) {
       handleSelectionChange(new Set());
     } else {
-      const allKeys = new Set(
-        filteredRows.map((row) => getRowKey(row.original)),
-      );
+      const allKeys = new Set(filteredRows.map((row) => getRowKey(row.original)));
       handleSelectionChange(allKeys);
     }
   }, [selectedKeys, table, getRowKey, handleSelectionChange]);
@@ -366,7 +374,7 @@ export function DataTable<TData, TValue>({
       }
       handleSelectionChange(newKeys);
     },
-    [selectedKeys, getRowKey, handleSelectionChange],
+    [selectedKeys, getRowKey, handleSelectionChange]
   );
 
   const handleRowExpand = useCallback(
@@ -380,123 +388,117 @@ export function DataTable<TData, TValue>({
       }
       setExpandedRows(newExpanded);
     },
-    [expandedRows, getRowKey],
+    [expandedRows, getRowKey]
   );
 
   const exportToCSV = useCallback(() => {
     try {
-      const visibleColumns = table
-        .getAllLeafColumns()
-        .filter((column) => column.getIsVisible());
-      const headerNames = visibleColumns.map(
-        (col) => (col.columnDef.header as string) || col.id,
-      );
+      const visibleColumns = table.getAllLeafColumns().filter((column) => column.getIsVisible());
+      const headerNames = visibleColumns.map((col) => (col.columnDef.header as string) || col.id);
 
       const csvData = [
-        headerNames.join(","),
+        headerNames.join(','),
         ...table.getFilteredRowModel().rows.map((row) => {
           return visibleColumns
             .map((col) => {
               const value = row.getValue(col.id);
-              if (typeof value === "string") {
+              if (typeof value === 'string') {
                 return `"${value.replace(/"/g, '""')}"`;
               }
               return value;
             })
-            .join(",");
+            .join(',');
         }),
-      ].join("\n");
+      ].join('\n');
 
-      const blob = new Blob(["\ufeff" + csvData], {
-        type: "text/csv;charset=utf-8;",
+      const blob = new Blob(['\ufeff' + csvData], {
+        type: 'text/csv;charset=utf-8;',
       });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.setAttribute(
-        "download",
-        `${exportFileName}-${new Date().toISOString().split("T")[0]}.csv`,
+        'download',
+        `${exportFileName}-${new Date().toISOString().split('T')[0]}.csv`
       );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       addNotification({
-        title: "导出成功",
-        message: "数据已成功导出为 CSV 文件",
-        type: "success",
+        title: '导出成功',
+        message: '数据已成功导出为 CSV 文件',
+        type: 'success',
       });
     } catch {
       addNotification({
-        title: "导出失败",
-        message: "导出过程中发生错误",
-        type: "error",
+        title: '导出失败',
+        message: '导出过程中发生错误',
+        type: 'error',
       });
     }
   }, [table, exportFileName, addNotification]);
 
   const currentPageIndex = currentPage;
   const totalRecords =
-    totalItems !== undefined
-      ? totalItems
-      : table.getFilteredRowModel().rows.length;
-  const totalPageCount =
-    totalPages !== undefined ? totalPages : table.getPageCount();
+    totalItems !== undefined ? totalItems : table.getFilteredRowModel().rows.length;
+  const totalPageCount = totalPages !== undefined ? totalPages : table.getPageCount();
 
-  const renderRowNumber = (index: number) => {
-    return currentPageIndex * pageSize + index + 1;
-  };
+  const renderRowNumber = useCallback(
+    (index: number) => {
+      return currentPageIndex * pageSize + index + 1;
+    },
+    [currentPageIndex, pageSize]
+  );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, ...sx }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, ...sx }}>
       {/* 顶部操作栏 */}
       <Box
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: "flex-start",
-          justifyContent: "space-between",
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
           gap: 2,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         {/* 左侧：搜索框 */}
         {showSearch && searchKey && (
           <Box
             sx={{
-              width: { xs: "100%", sm: "auto" },
+              width: { xs: '100%', sm: 'auto' },
               flex: { sm: 1 },
               maxWidth: { sm: 320 },
             }}
           >
-            <Box sx={{ position: "relative" }}>
+            <Box sx={{ position: 'relative' }}>
               <Search
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   width: 18,
                   height: 18,
-                  color: "text.disabled",
+                  color: 'text.disabled',
                 }}
               />
               <input
-                type="text"
+                type='text'
                 placeholder={searchPlaceholder}
-                value={
-                  (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
-                }
+                value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
                 onChange={(event) => handleSearch(event.target.value)}
                 style={{
-                  width: "100%",
-                  padding: "10px 12px 10px 40px",
-                  border: "1px solid",
-                  borderColor: "#e0e0e0",
+                  width: '100%',
+                  padding: '10px 12px 10px 40px',
+                  border: '1px solid',
+                  borderColor: '#e0e0e0',
                   borderRadius: 4,
                   fontSize: 14,
-                  backgroundColor: "#fff",
-                  outline: "none",
+                  backgroundColor: '#fff',
+                  outline: 'none',
                 }}
               />
             </Box>
@@ -506,19 +508,19 @@ export function DataTable<TData, TValue>({
         {/* 右侧：操作按钮 */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 1,
-            flexWrap: "wrap",
-            justifyContent: { xs: "flex-start", sm: "flex-end" },
+            flexWrap: 'wrap',
+            justifyContent: { xs: 'flex-start', sm: 'flex-end' },
           }}
         >
           {/* 筛选按钮 */}
           {showFilters && (
-            <Tooltip title="筛选">
+            <Tooltip title='筛选'>
               <IconButton
-                size="small"
-                sx={{ display: { xs: "flex", sm: "flex" } }}
+                size='small'
+                sx={{ display: { xs: 'flex', sm: 'flex' } }}
               >
                 <Filter sx={{ width: 18, height: 18 }} />
               </IconButton>
@@ -527,11 +529,11 @@ export function DataTable<TData, TValue>({
 
           {/* 刷新按钮 */}
           {showRefresh && onRefresh && (
-            <Tooltip title="刷新">
+            <Tooltip title='刷新'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={onRefresh}
-                sx={{ display: { xs: "flex", sm: "flex" } }}
+                sx={{ display: { xs: 'flex', sm: 'flex' } }}
               >
                 <RefreshCw sx={{ width: 18, height: 18 }} />
               </IconButton>
@@ -539,11 +541,11 @@ export function DataTable<TData, TValue>({
           )}
 
           {/* 列设置按钮 */}
-          <Tooltip title="列设置">
+          <Tooltip title='列设置'>
             <IconButton
-              size="small"
+              size='small'
               onClick={handleMenuOpen}
-              sx={{ display: { xs: "none", sm: "flex" } }}
+              sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
               <Settings2 sx={{ width: 18, height: 18 }} />
             </IconButton>
@@ -552,11 +554,11 @@ export function DataTable<TData, TValue>({
           {/* 导出按钮 */}
           {showExport && (
             <Button
-              variant="outlined"
-              size="small"
+              variant='outlined'
+              size='small'
               onClick={exportToCSV}
               startIcon={<Download sx={{ width: 16, height: 16 }} />}
-              sx={{ display: { xs: "none", sm: "flex" } }}
+              sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
               导出 CSV
             </Button>
@@ -564,11 +566,11 @@ export function DataTable<TData, TValue>({
 
           {/* 移动端导出按钮 */}
           {showExport && (
-            <Tooltip title="导出 CSV">
+            <Tooltip title='导出 CSV'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={exportToCSV}
-                sx={{ display: { xs: "flex", sm: "none" } }}
+                sx={{ display: { xs: 'flex', sm: 'none' } }}
               >
                 <Download sx={{ width: 20, height: 20 }} />
               </IconButton>
@@ -578,8 +580,8 @@ export function DataTable<TData, TValue>({
           {/* 新建按钮 */}
           {showCreate && onCreate && (
             <Button
-              variant="contained"
-              size="small"
+              variant='contained'
+              size='small'
               onClick={onCreate}
               startIcon={<Plus sx={{ width: 16, height: 16 }} />}
             >
@@ -605,16 +607,16 @@ export function DataTable<TData, TValue>({
             key={column.id}
             onClick={() => column.toggleVisibility()}
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
+              display: 'flex',
+              justifyContent: 'space-between',
               minWidth: 180,
             }}
           >
             <span>{(column.columnDef.header as string) || column.id}</span>
             {column.getIsVisible() ? (
-              <Eye sx={{ width: 16, height: 16, color: "success.main" }} />
+              <Eye sx={{ width: 16, height: 16, color: 'success.main' }} />
             ) : (
-              <EyeOff sx={{ width: 16, height: 16, color: "text.disabled" }} />
+              <EyeOff sx={{ width: 16, height: 16, color: 'text.disabled' }} />
             )}
           </MenuItem>
         ))}
@@ -637,51 +639,52 @@ export function DataTable<TData, TValue>({
       <Box
         sx={{
           borderRadius: 1,
-          overflow: "hidden",
-          border: "1px solid",
-          borderColor: "divider",
-          bgcolor: "background.paper",
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
         }}
       >
-        <Box sx={{ overflowX: responsive ? "auto" : "hidden" }}>
+        <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
           <Table
             sx={{
               minWidth: 640,
               ...(enableStickyHeader && {
                 thead: {
-                  position: "sticky",
+                  position: 'sticky',
                   top: 0,
                   zIndex: 1,
-                  bgcolor: "grey.50",
+                  bgcolor: 'grey.50',
                 },
               }),
             }}
           >
             <TableHead>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} sx={{ bgcolor: "grey.50" }}>
+                <TableRow
+                  key={headerGroup.id}
+                  sx={{ bgcolor: 'grey.50' }}
+                >
                   {/* 选择列 */}
                   {showSelection && (
                     <TableCell
-                      padding="checkbox"
+                      padding='checkbox'
                       sx={{
-                        position: "sticky",
+                        position: 'sticky',
                         left: 0,
                         zIndex: 2,
-                        bgcolor: "grey.50",
+                        bgcolor: 'grey.50',
                       }}
                     >
                       <Checkbox
                         checked={
-                          selectedKeys.size ===
-                            table.getFilteredRowModel().rows.length &&
+                          selectedKeys.size === table.getFilteredRowModel().rows.length &&
                           table.getFilteredRowModel().rows.length > 0
                         }
                         onChange={handleSelectAll}
                         indeterminate={
                           selectedKeys.size > 0 &&
-                          selectedKeys.size <
-                            table.getFilteredRowModel().rows.length
+                          selectedKeys.size < table.getFilteredRowModel().rows.length
                         }
                       />
                     </TableCell>
@@ -690,16 +693,16 @@ export function DataTable<TData, TValue>({
                   {showRowNumber && (
                     <TableCell
                       sx={{
-                        whiteSpace: "nowrap",
+                        whiteSpace: 'nowrap',
                         fontWeight: 600,
                         fontSize: 12,
-                        textTransform: "uppercase",
+                        textTransform: 'uppercase',
                         letterSpacing: 0.5,
-                        color: "text.secondary",
-                        position: showSelection ? "sticky" : "relative",
+                        color: 'text.secondary',
+                        position: showSelection ? 'sticky' : 'relative',
                         left: showSelection ? 56 : 0,
                         zIndex: 2,
-                        bgcolor: "grey.50",
+                        bgcolor: 'grey.50',
                       }}
                     >
                       #
@@ -709,20 +712,16 @@ export function DataTable<TData, TValue>({
                   {enableRowExpansion && (
                     <TableCell
                       sx={{
-                        whiteSpace: "nowrap",
+                        whiteSpace: 'nowrap',
                         fontWeight: 600,
                         fontSize: 12,
-                        textTransform: "uppercase",
+                        textTransform: 'uppercase',
                         letterSpacing: 0.5,
-                        color: "text.secondary",
-                        position:
-                          showSelection || showRowNumber
-                            ? "sticky"
-                            : "relative",
-                        left:
-                          (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                        color: 'text.secondary',
+                        position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                        left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
                         zIndex: 2,
-                        bgcolor: "grey.50",
+                        bgcolor: 'grey.50',
                       }}
                     >
                       展开
@@ -733,20 +732,17 @@ export function DataTable<TData, TValue>({
                     <TableCell
                       key={header.id}
                       sx={{
-                        whiteSpace: "nowrap",
+                        whiteSpace: 'nowrap',
                         fontWeight: 600,
                         fontSize: 12,
-                        textTransform: "uppercase",
+                        textTransform: 'uppercase',
                         letterSpacing: 0.5,
-                        color: "text.secondary",
+                        color: 'text.secondary',
                       }}
                     >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -762,23 +758,26 @@ export function DataTable<TData, TValue>({
                       (showRowNumber ? 1 : 0) +
                       (enableRowExpansion ? 1 : 0)
                     }
-                    sx={{ height: 120, textAlign: "center" }}
+                    sx={{ height: 120, textAlign: 'center' }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 2,
                       }}
                     >
                       <Skeleton
-                        variant="circular"
+                        variant='circular'
                         width={24}
                         height={24}
-                        animation="wave"
+                        animation='wave'
                       />
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         加载中...
                       </Typography>
                     </Box>
@@ -795,22 +794,22 @@ export function DataTable<TData, TValue>({
                         key={row.id}
                         onClick={() => onRowClick?.(row.original)}
                         sx={{
-                          cursor: onRowClick ? "pointer" : "default",
-                          "&:hover": {
-                            backgroundColor: onRowClick ? "grey.50" : "inherit",
+                          cursor: onRowClick ? 'pointer' : 'default',
+                          '&:hover': {
+                            backgroundColor: onRowClick ? 'grey.50' : 'inherit',
                           },
-                          "&:last-child td": { borderBottom: 0 },
+                          '&:last-child td': { borderBottom: 0 },
                         }}
                       >
                         {/* 选择列 */}
                         {showSelection && (
                           <TableCell
-                            padding="checkbox"
+                            padding='checkbox'
                             sx={{
-                              position: "sticky",
+                              position: 'sticky',
                               left: 0,
                               zIndex: 1,
-                              bgcolor: "inherit",
+                              bgcolor: 'inherit',
                             }}
                           >
                             <Checkbox
@@ -823,13 +822,13 @@ export function DataTable<TData, TValue>({
                         {showRowNumber && (
                           <TableCell
                             sx={{
-                              whiteSpace: "nowrap",
+                              whiteSpace: 'nowrap',
                               fontSize: 14,
                               fontWeight: 500,
-                              position: showSelection ? "sticky" : "relative",
+                              position: showSelection ? 'sticky' : 'relative',
                               left: showSelection ? 56 : 0,
                               zIndex: 1,
-                              bgcolor: "inherit",
+                              bgcolor: 'inherit',
                             }}
                           >
                             {renderRowNumber(rowIndex)}
@@ -839,21 +838,16 @@ export function DataTable<TData, TValue>({
                         {enableRowExpansion && (
                           <TableCell
                             sx={{
-                              whiteSpace: "nowrap",
+                              whiteSpace: 'nowrap',
                               fontSize: 14,
-                              position:
-                                showSelection || showRowNumber
-                                  ? "sticky"
-                                  : "relative",
-                              left:
-                                (showSelection ? 56 : 0) +
-                                (showRowNumber ? 64 : 0),
+                              position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                              left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
                               zIndex: 1,
-                              bgcolor: "inherit",
+                              bgcolor: 'inherit',
                             }}
                           >
                             <IconButton
-                              size="small"
+                              size='small'
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRowExpand(row.original);
@@ -872,40 +866,35 @@ export function DataTable<TData, TValue>({
                           <TableCell
                             key={cell.id}
                             sx={{
-                              whiteSpace: "nowrap",
+                              whiteSpace: 'nowrap',
                               fontSize: 14,
                             }}
                           >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         ))}
                       </TableRow>
                       {/* 展开行 */}
-                      {enableRowExpansion &&
-                        isExpanded &&
-                        expandedRowRender && (
-                          <TableRow key={`${row.id}-expanded`}>
-                            <TableCell
-                              colSpan={
-                                columns.length +
-                                (showSelection ? 1 : 0) +
-                                (showRowNumber ? 1 : 0) +
-                                (enableRowExpansion ? 1 : 0)
-                              }
-                              sx={{
-                                padding: 2,
-                                bgcolor: "grey.50",
-                                borderTop: "1px solid",
-                                borderTopColor: "divider",
-                              }}
-                            >
-                              {expandedRowRender(row.original)}
-                            </TableCell>
-                          </TableRow>
-                        )}
+                      {enableRowExpansion && isExpanded && expandedRowRender && (
+                        <TableRow key={`${row.id}-expanded`}>
+                          <TableCell
+                            colSpan={
+                              columns.length +
+                              (showSelection ? 1 : 0) +
+                              (showRowNumber ? 1 : 0) +
+                              (enableRowExpansion ? 1 : 0)
+                            }
+                            sx={{
+                              padding: 2,
+                              bgcolor: 'grey.50',
+                              borderTop: '1px solid',
+                              borderTopColor: 'divider',
+                            }}
+                          >
+                            {expandedRowRender(row.original)}
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </>
                   );
                 })
@@ -918,9 +907,12 @@ export function DataTable<TData, TValue>({
                       (showRowNumber ? 1 : 0) +
                       (enableRowExpansion ? 1 : 0)
                     }
-                    sx={{ height: 120, textAlign: "center" }}
+                    sx={{ height: 120, textAlign: 'center' }}
                   >
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       {emptyMessage}
                     </Typography>
                   </TableCell>
@@ -935,10 +927,10 @@ export function DataTable<TData, TValue>({
       {enablePagination && totalPageCount > 1 && (
         <Box
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: 'center',
+            justifyContent: 'space-between',
             gap: 2,
             py: 2,
           }}
@@ -946,38 +938,47 @@ export function DataTable<TData, TValue>({
           {/* 左侧：统计信息 */}
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: { xs: 1, sm: 2 },
-              flexWrap: "wrap",
+              flexWrap: 'wrap',
             }}
           >
             {/* 选择信息 */}
             {showSelection && selectedKeys.size > 0 && (
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 已选择 {selectedKeys.size} 条记录
               </Typography>
             )}
             {/* 总数信息 */}
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               共 {totalRecords} 条记录
             </Typography>
             {/* 每页条数选择 */}
             {onPageSizeChange && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Typography variant="body2" color="text.secondary">
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   每页
                 </Typography>
                 <select
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
                   style={{
-                    border: "1px solid",
-                    borderColor: "#e0e0e0",
+                    border: '1px solid',
+                    borderColor: '#e0e0e0',
                     borderRadius: 4,
-                    padding: "4px 8px",
+                    padding: '4px 8px',
                     fontSize: 14,
-                    backgroundColor: "#fff",
+                    backgroundColor: '#fff',
                   }}
                 >
                   <option value={10}>10</option>
@@ -990,47 +991,47 @@ export function DataTable<TData, TValue>({
           </Box>
 
           {/* 右侧：分页按钮 */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {/* 上一页 */}
             <Button
-              variant="outlined"
-              size="small"
+              variant='outlined'
+              size='small'
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              sx={{ display: { xs: "none", sm: "flex" } }}
+              sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
               上一页
             </Button>
             <IconButton
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              sx={{ display: { xs: "flex", sm: "none" } }}
+              sx={{ display: { xs: 'flex', sm: 'none' } }}
             >
               <ChevronLeft sx={{ width: 20, height: 20 }} />
             </IconButton>
 
             {/* 当前页码 */}
             <Typography
-              variant="body2"
-              sx={{ minWidth: 100, textAlign: "center" }}
+              variant='body2'
+              sx={{ minWidth: 100, textAlign: 'center' }}
             >
               第 {currentPageIndex + 1} / {totalPageCount} 页
             </Typography>
 
             {/* 下一页 */}
             <Button
-              variant="outlined"
-              size="small"
+              variant='outlined'
+              size='small'
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              sx={{ display: { xs: "none", sm: "flex" } }}
+              sx={{ display: { xs: 'none', sm: 'flex' } }}
             >
               下一页
             </Button>
             <IconButton
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              sx={{ display: { xs: "flex", sm: "none" } }}
+              sx={{ display: { xs: 'flex', sm: 'none' } }}
             >
               <ChevronRight sx={{ width: 20, height: 20 }} />
             </IconButton>
@@ -1043,4 +1044,5 @@ export function DataTable<TData, TValue>({
 
 // ============ 默认导出 ============
 
-export default DataTable;
+const MemoizedDataTable = React.memo(DataTable) as typeof DataTable;
+export default MemoizedDataTable;

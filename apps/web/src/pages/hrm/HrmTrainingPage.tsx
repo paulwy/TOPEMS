@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Edit2,
@@ -16,8 +16,8 @@ import {
   UserPlus,
   FileText,
   Search,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   trainingPlanApi,
   trainingCourseApi,
@@ -27,23 +27,42 @@ import {
   type TrainingCourse,
   type TrainingRecord,
   type Employee,
-} from "@/api/hrm";
-import { apiLogger } from "@/utils/logger";
-import { useNotification } from "@/hooks/useNotification";
-import { PageHeader } from "@/components/templates";
+} from '@/api/hrm';
+import { apiLogger } from '@/utils/logger';
+import { useNotification } from '@/hooks/useNotification';
+import { PageHeader } from '@/components/templates';
 
-import { TextField, Chip, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Tooltip, Avatar, Box, Tabs, Tab, IconButton, Typography, FormLabel,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { ImageUpload } from "@/components/common";
-import { StatCardGroup } from "@/components/mui";
+import {
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+  Avatar,
+  Box,
+  Tabs,
+  Tab,
+  IconButton,
+  Typography,
+  FormLabel,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { ImageUpload } from '@/components/common';
+import { StatCardGroup } from '@/components/mui';
 
 const HrmTrainingPage: React.FC = () => {
   const { success, error } = useNotification();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<"plans" | "courses" | "records">(
-    "plans",
-  );
+  const [activeTab, setActiveTab] = useState<'plans' | 'courses' | 'records'>('plans');
   const [plans, setPlans] = useState<TrainingPlan[]>([]);
   const [courses, setCourses] = useState<TrainingCourse[]>([]);
   const [records, setRecords] = useState<TrainingRecord[]>([]);
@@ -53,17 +72,11 @@ const HrmTrainingPage: React.FC = () => {
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
-  const [selectedRecord, setSelectedRecord] = useState<TrainingRecord | null>(
-    null,
-  );
-  const [selectedCourse, setSelectedCourse] = useState<TrainingCourse | null>(
-    null,
-  );
-  const [formData, setFormData] = useState<
-    Partial<TrainingPlan | TrainingCourse>
-  >({});
+  const [selectedRecord, setSelectedRecord] = useState<TrainingRecord | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<TrainingCourse | null>(null);
+  const [formData, setFormData] = useState<Partial<TrainingPlan | TrainingCourse>>({});
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -75,21 +88,21 @@ const HrmTrainingPage: React.FC = () => {
     setLoading(true);
     try {
       switch (activeTab) {
-        case "plans": {
+        case 'plans': {
           const planRes = await trainingPlanApi.list({ page_size: 100 });
           if (planRes.code === 200) {
             setPlans(planRes.data?.items || []);
           }
           break;
         }
-        case "courses": {
+        case 'courses': {
           const courseRes = await trainingCourseApi.list({ page_size: 100 });
           if (courseRes.code === 200) {
             setCourses(courseRes.data?.items || []);
           }
           break;
         }
-        case "records": {
+        case 'records': {
           const recordRes = await trainingRecordApi.list({ page_size: 100 });
           if (recordRes.code === 200) {
             setRecords(recordRes.data?.items || []);
@@ -98,8 +111,8 @@ const HrmTrainingPage: React.FC = () => {
         }
       }
     } catch (err) {
-      apiLogger.error("Failed to load data:", err);
-      error("加载数据失败");
+      apiLogger.error('Failed to load data:', err);
+      error('加载数据失败');
     } finally {
       setLoading(false);
     }
@@ -112,29 +125,27 @@ const HrmTrainingPage: React.FC = () => {
         setEmployees(res.data?.items || []);
       }
     } catch (err) {
-      apiLogger.error("Failed to load employees:", err);
+      apiLogger.error('Failed to load employees:', err);
     }
   };
 
   // 统计数据计算
   const trainingStats = {
     totalPlans: plans.length,
-    activeCourses: courses.filter((c) => c.status === "active").length,
-    completedRecords: records.filter((r) => r.completion_status === "completed")
-      .length,
+    activeCourses: courses.filter((c) => c.status === 'active').length,
+    completedRecords: records.filter((r) => r.completion_status === 'completed').length,
     avgCompletionRate:
       records.length > 0
         ? Math.round(
-            (records.filter((r) => r.completion_status === "completed").length /
-              records.length) *
-              100,
+            (records.filter((r) => r.completion_status === 'completed').length / records.length) *
+              100
           )
         : 0,
   };
 
   const getEmployeeName = (id?: string) => {
-    if (!id) return "-";
-    return employees.find((e) => e.id === id)?.name || "-";
+    if (!id) return '-';
+    return employees.find((e) => e.id === id)?.name || '-';
   };
 
   const handleOpenModal = (item?: any) => {
@@ -162,13 +173,13 @@ const HrmTrainingPage: React.FC = () => {
     try {
       let response;
       if (editItem) {
-        if (activeTab === "plans") {
+        if (activeTab === 'plans') {
           response = await trainingPlanApi.update(editItem.id, formData);
         } else {
           response = await trainingCourseApi.update(editItem.id, formData);
         }
       } else {
-        if (activeTab === "plans") {
+        if (activeTab === 'plans') {
           response = await trainingPlanApi.create(formData);
         } else {
           response = await trainingCourseApi.create(formData);
@@ -176,36 +187,36 @@ const HrmTrainingPage: React.FC = () => {
       }
 
       if (response.code === 200) {
-        success(editItem ? "更新成功" : "创建成功");
+        success(editItem ? '更新成功' : '创建成功');
         setShowModal(false);
         loadData();
       }
     } catch (err) {
-      apiLogger.error("Failed to save:", err);
-      error("保存失败");
+      apiLogger.error('Failed to save:', err);
+      error('保存失败');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("确定要删除吗？")) return;
+    if (!confirm('确定要删除吗？')) return;
 
     try {
       let response;
-      if (activeTab === "plans") {
+      if (activeTab === 'plans') {
         response = await trainingPlanApi.delete(id);
-      } else if (activeTab === "courses") {
+      } else if (activeTab === 'courses') {
         response = await trainingCourseApi.delete(id);
       } else {
         response = await trainingRecordApi.delete(id);
       }
 
       if (response.code === 200) {
-        success("删除成功");
+        success('删除成功');
         loadData();
       }
     } catch (err) {
-      apiLogger.error("Failed to delete:", err);
-      error("删除失败");
+      apiLogger.error('Failed to delete:', err);
+      error('删除失败');
     }
   };
 
@@ -215,12 +226,12 @@ const HrmTrainingPage: React.FC = () => {
         ? trainingPlanApi.activate(id)
         : trainingPlanApi.deactivate(id));
       if (response.code === 200) {
-        success(activate ? "已启用" : "已停用");
+        success(activate ? '已启用' : '已停用');
         loadData();
       }
     } catch (err) {
-      apiLogger.error("Failed to update status:", err);
-      error("操作失败");
+      apiLogger.error('Failed to update status:', err);
+      error('操作失败');
     }
   };
 
@@ -228,61 +239,56 @@ const HrmTrainingPage: React.FC = () => {
     if (!selectedCourse) return;
 
     try {
-      const response = await trainingRecordApi.enroll(
-        selectedCourse.id,
-        employeeId,
-      );
+      const response = await trainingRecordApi.enroll(selectedCourse.id, employeeId);
       if (response.code === 200) {
-        success("报名成功");
+        success('报名成功');
         setShowEnrollModal(false);
         setSelectedCourse(null);
         loadData();
       }
     } catch (err) {
-      apiLogger.error("Failed to enroll:", err);
-      error("报名失败");
+      apiLogger.error('Failed to enroll:', err);
+      error('报名失败');
     }
   };
 
   const filteredPlans = plans.filter(
     (plan) =>
       plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plan.code?.toLowerCase().includes(searchTerm.toLowerCase()),
+      plan.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredCourses = courses.filter(
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.instructor_name?.toLowerCase().includes(searchTerm.toLowerCase()),
+      course.instructor_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredRecords = records.filter((record) =>
-    getEmployeeName(record.employee_id)
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase()),
+    getEmployeeName(record.employee_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          bgcolor: "grey.100",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100vh',
+          bgcolor: 'grey.100',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <Box
           sx={{
-            animation: "spin 1s linear infinite",
+            animation: 'spin 1s linear infinite',
             width: 48,
             height: 48,
-            borderRadius: "50%",
+            borderRadius: '50%',
             border: 4,
-            borderColor: "primary.main",
-            borderTopColor: "transparent",
+            borderColor: 'primary.main',
+            borderTopColor: 'transparent',
           }}
         />
       </Box>
@@ -290,26 +296,21 @@ const HrmTrainingPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
-      <Box
-        sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: 3 }}
-      >
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+      <Box sx={{ maxWidth: 1536, mx: 'auto', px: { xs: 2, sm: 3, md: 4 }, py: 3 }}>
         <PageHeader
-          title="培训管理"
-          subtitle="管理培训计划、课程和培训记录"
-          breadcrumbs={[
-            { label: "人力资源", href: "/hrm" },
-            { label: "培训管理" },
-          ]}
+          title='培训管理'
+          subtitle='管理培训计划、课程和培训记录'
+          breadcrumbs={[{ label: '人力资源', href: '/hrm' }, { label: '培训管理' }]}
           backButton={{ onClick: () => navigate(-1) }}
           actions={
-            activeTab !== "records"
+            activeTab !== 'records'
               ? [
                   {
-                    label: "新增",
+                    label: '新增',
                     icon: <Plus sx={{ width: 16, height: 16, mr: 1 }} />,
                     onClick: () => handleOpenModal(),
-                    variant: "contained",
+                    variant: 'contained',
                   },
                 ]
               : []
@@ -319,28 +320,28 @@ const HrmTrainingPage: React.FC = () => {
           <StatCardGroup
             stats={[
               {
-                title: "培训计划数",
+                title: '培训计划数',
                 value: trainingStats.totalPlans,
-                color: "primary",
+                color: 'primary',
                 icon: <Calendar sx={{ width: 24, height: 24 }} />,
               },
               {
-                title: "进行中课程",
+                title: '进行中课程',
                 value: trainingStats.activeCourses,
-                color: "warning",
+                color: 'warning',
                 icon: <BookOpen sx={{ width: 24, height: 24 }} />,
               },
               {
-                title: "已完成培训",
+                title: '已完成培训',
                 value: trainingStats.completedRecords,
-                color: "success",
+                color: 'success',
                 icon: <CheckCircle sx={{ width: 24, height: 24 }} />,
               },
               {
-                title: "平均完成率",
+                title: '平均完成率',
                 value: trainingStats.avgCompletionRate,
-                unit: "%",
-                color: "info",
+                unit: '%',
+                color: 'info',
                 icon: <Award sx={{ width: 24, height: 24 }} />,
               },
             ]}
@@ -353,27 +354,27 @@ const HrmTrainingPage: React.FC = () => {
             onChange={(_, v) => setActiveTab(v as typeof activeTab)}
           >
             <Tab
-              value="plans"
+              value='plans'
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Calendar sx={{ width: 16, height: 16 }} />
                   培训计划
                 </Box>
               }
             />
             <Tab
-              value="courses"
+              value='courses'
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <BookOpen sx={{ width: 16, height: 16 }} />
                   培训课程
                 </Box>
               }
             />
             <Tab
-              value="records"
+              value='records'
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Users sx={{ width: 16, height: 16 }} />
                   培训记录
                 </Box>
@@ -382,114 +383,114 @@ const HrmTrainingPage: React.FC = () => {
           </Tabs>
         </Box>
 
-        {activeTab === "plans" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {activeTab === 'plans' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 mb: 2,
               }}
             >
-              <Box sx={{ position: "relative", width: 256 }}>
+              <Box sx={{ position: 'relative', width: 256 }}>
                 <Search
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "grey.400",
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'grey.400',
                     width: 16,
                     height: 16,
                   }}
                   size={16}
                 />
                 <TextField
-                  size="small"
-                  type="text"
-                  placeholder="搜索培训计划..."
+                  size='small'
+                  type='text'
+                  placeholder='搜索培训计划...'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
+                  sx={{ width: '100%', '& .MuiOutlinedInput-root': { pl: 4 } }}
                 />
               </Box>
             </Box>
 
             <Card>
               <CardContent sx={{ p: 0 }}>
-                <Box sx={{ maxHeight: 600, overflow: "auto" }}>
-                  <table style={{ width: "100%" }}>
+                <Box sx={{ maxHeight: 600, overflow: 'auto' }}>
+                  <table style={{ width: '100%' }}>
                     <thead
                       style={{
-                        backgroundColor: "rgb(249, 250, 251)",
-                        position: "sticky",
+                        backgroundColor: 'rgb(249, 250, 251)',
+                        position: 'sticky',
                         top: 0,
                       }}
                     >
                       <tr>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           计划名称
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           代码
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           时间安排
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           预算
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           状态
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           操作
@@ -498,8 +499,8 @@ const HrmTrainingPage: React.FC = () => {
                     </thead>
                     <tbody
                       style={{
-                        backgroundColor: "white",
-                        borderTop: "1px solid rgb(229, 231, 235)",
+                        backgroundColor: 'white',
+                        borderTop: '1px solid rgb(229, 231, 235)',
                       }}
                     >
                       {filteredPlans.length === 0 ? (
@@ -511,16 +512,16 @@ const HrmTrainingPage: React.FC = () => {
                               paddingRight: 24,
                               paddingTop: 32,
                               paddingBottom: 32,
-                              textAlign: "center",
-                              color: "#6b7280",
+                              textAlign: 'center',
+                              color: '#6b7280',
                             }}
                           >
                             <Typography
                               sx={{
                                 px: 6,
                                 py: 8,
-                                textAlign: "center",
-                                color: "grey.500",
+                                textAlign: 'center',
+                                color: 'grey.500',
                               }}
                             >
                               暂无培训计划
@@ -532,32 +533,26 @@ const HrmTrainingPage: React.FC = () => {
                           <React.Fragment key={plan.id}>
                             <tr
                               style={{
-                                borderBottom: "1px solid rgb(229, 231, 235)",
+                                borderBottom: '1px solid rgb(229, 231, 235)',
                               }}
                             >
                               <td
                                 style={{
-                                  padding: "16px 24px",
-                                  whiteSpace: "nowrap",
+                                  padding: '16px 24px',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
-                                <Box
-                                  sx={{ display: "flex", alignItems: "center" }}
-                                >
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                   <Box
-                                    component="button"
+                                    component='button'
                                     onClick={() =>
-                                      setExpandedPlan(
-                                        expandedPlan === plan.id
-                                          ? null
-                                          : plan.id,
-                                      )
+                                      setExpandedPlan(expandedPlan === plan.id ? null : plan.id)
                                     }
                                     sx={{
                                       mr: 1,
                                       p: 0.5,
                                       borderRadius: 1,
-                                      "&:hover": { bgcolor: "grey.100" },
+                                      '&:hover': { bgcolor: 'grey.100' },
                                     }}
                                   >
                                     {expandedPlan === plan.id ? (
@@ -565,7 +560,7 @@ const HrmTrainingPage: React.FC = () => {
                                         sx={{
                                           width: 16,
                                           height: 16,
-                                          color: "grey.400",
+                                          color: 'grey.400',
                                         }}
                                       />
                                     ) : (
@@ -573,115 +568,96 @@ const HrmTrainingPage: React.FC = () => {
                                         sx={{
                                           width: 16,
                                           height: 16,
-                                          color: "grey.400",
+                                          color: 'grey.400',
                                         }}
                                       />
                                     )}
                                   </Box>
-                                  <Typography
-                                    sx={{ fontWeight: 500, color: "grey.900" }}
-                                  >
+                                  <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                                     {plan.name}
                                   </Typography>
                                 </Box>
                               </td>
                               <td
                                 style={{
-                                  padding: "16px 24px",
-                                  whiteSpace: "nowrap",
-                                  fontSize: "0.875rem",
-                                  color: "grey.500",
+                                  padding: '16px 24px',
+                                  whiteSpace: 'nowrap',
+                                  fontSize: '0.875rem',
+                                  color: 'grey.500',
                                 }}
                               >
-                                {plan.code || "-"}
+                                {plan.code || '-'}
                               </td>
                               <td
                                 style={{
-                                  padding: "16px 24px",
-                                  whiteSpace: "nowrap",
-                                  fontSize: "0.875rem",
-                                  color: "grey.500",
+                                  padding: '16px 24px',
+                                  whiteSpace: 'nowrap',
+                                  fontSize: '0.875rem',
+                                  color: 'grey.500',
                                 }}
                               >
-                                {new Date(plan.start_date).toLocaleDateString()}{" "}
-                                ~ {new Date(plan.end_date).toLocaleDateString()}
+                                {new Date(plan.start_date).toLocaleDateString()} ~{' '}
+                                {new Date(plan.end_date).toLocaleDateString()}
                               </td>
                               <td
                                 style={{
-                                  padding: "16px 24px",
-                                  whiteSpace: "nowrap",
-                                  fontSize: "0.875rem",
-                                  color: "grey.500",
+                                  padding: '16px 24px',
+                                  whiteSpace: 'nowrap',
+                                  fontSize: '0.875rem',
+                                  color: 'grey.500',
                                 }}
                               >
-                                {plan.budget
-                                  ? `¥${plan.budget.toLocaleString()}`
-                                  : "-"}
+                                {plan.budget ? `¥${plan.budget.toLocaleString()}` : '-'}
                               </td>
                               <td
                                 style={{
-                                  padding: "16px 24px",
-                                  whiteSpace: "nowrap",
+                                  padding: '16px 24px',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
                                 <Chip
-                                  size="small"
-                                  label={
-                                    plan.status === "active"
-                                      ? "进行中"
-                                      : "已结束"
-                                  }
-                                  color={
-                                    plan.status === "active"
-                                      ? "primary"
-                                      : "default"
-                                  }
+                                  size='small'
+                                  label={plan.status === 'active' ? '进行中' : '已结束'}
+                                  color={plan.status === 'active' ? 'primary' : 'default'}
                                 />
                               </td>
                               <td
                                 style={{
-                                  padding: "16px 24px",
-                                  whiteSpace: "nowrap",
+                                  padding: '16px 24px',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
-                                <Box sx={{ display: "flex", gap: 0.5 }}>
-                                  <Tooltip title="编辑">
+                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                  <Tooltip title='编辑'>
                                     <IconButton
-                                      size="small"
+                                      size='small'
                                       onClick={() => handleOpenModal(plan)}
                                     >
                                       <Edit2 sx={{ width: 16, height: 16 }} />
                                     </IconButton>
                                   </Tooltip>
-                                  <Tooltip title="删除">
+                                  <Tooltip title='删除'>
                                     <IconButton
-                                      size="small"
+                                      size='small'
                                       onClick={() => handleDelete(plan.id)}
-                                      sx={{ color: "error.main" }}
+                                      sx={{ color: 'error.main' }}
                                     >
                                       <Trash2 sx={{ width: 16, height: 16 }} />
                                     </IconButton>
                                   </Tooltip>
-                                  <Tooltip
-                                    title={
-                                      plan.status === "active" ? "停用" : "启用"
-                                    }
-                                  >
+                                  <Tooltip title={plan.status === 'active' ? '停用' : '启用'}>
                                     <IconButton
-                                      size="small"
+                                      size='small'
                                       onClick={() =>
-                                        handleStatusChange(
-                                          plan.id,
-                                          plan.status !== "active",
-                                        )
+                                        handleStatusChange(plan.id, plan.status !== 'active')
                                       }
                                     >
-                                      {plan.status === "active" ? (
+                                      {plan.status === 'active' ? (
                                         <XCircle
                                           sx={{
                                             width: 16,
                                             height: 16,
-                                            color: "orange.500",
+                                            color: 'orange.500',
                                           }}
                                         />
                                       ) : (
@@ -689,7 +665,7 @@ const HrmTrainingPage: React.FC = () => {
                                           sx={{
                                             width: 16,
                                             height: 16,
-                                            color: "green.500",
+                                            color: 'green.500',
                                           }}
                                         />
                                       )}
@@ -703,22 +679,22 @@ const HrmTrainingPage: React.FC = () => {
                                 <td
                                   colSpan={6}
                                   style={{
-                                    padding: "16px 24px",
-                                    backgroundColor: "rgb(249, 250, 251)",
+                                    padding: '16px 24px',
+                                    backgroundColor: 'rgb(249, 250, 251)',
                                   }}
                                 >
                                   <Box
                                     sx={{
                                       ml: 4,
-                                      display: "flex",
-                                      flexDirection: "column",
+                                      display: 'flex',
+                                      flexDirection: 'column',
                                       gap: 1,
                                     }}
                                   >
                                     <Box
                                       sx={{
-                                        display: "flex",
-                                        alignItems: "center",
+                                        display: 'flex',
+                                        alignItems: 'center',
                                         gap: 1,
                                       }}
                                     >
@@ -726,21 +702,20 @@ const HrmTrainingPage: React.FC = () => {
                                         sx={{
                                           width: 16,
                                           height: 16,
-                                          color: "grey.400",
+                                          color: 'grey.400',
                                         }}
                                       />
                                       <Typography
-                                        variant="body2"
-                                        sx={{ color: "grey.600" }}
+                                        variant='body2'
+                                        sx={{ color: 'grey.600' }}
                                       >
-                                        <strong>描述:</strong>{" "}
-                                        {plan.description || "-"}
+                                        <strong>描述:</strong> {plan.description || '-'}
                                       </Typography>
                                     </Box>
                                     <Box
                                       sx={{
-                                        display: "flex",
-                                        alignItems: "center",
+                                        display: 'flex',
+                                        alignItems: 'center',
                                         gap: 1,
                                       }}
                                     >
@@ -748,17 +723,15 @@ const HrmTrainingPage: React.FC = () => {
                                         sx={{
                                           width: 16,
                                           height: 16,
-                                          color: "grey.400",
+                                          color: 'grey.400',
                                         }}
                                       />
                                       <Typography
-                                        variant="body2"
-                                        sx={{ color: "grey.500" }}
+                                        variant='body2'
+                                        sx={{ color: 'grey.500' }}
                                       >
-                                        <strong>创建时间:</strong>{" "}
-                                        {new Date(
-                                          plan.created_at,
-                                        ).toLocaleString()}
+                                        <strong>创建时间:</strong>{' '}
+                                        {new Date(plan.created_at).toLocaleString()}
                                       </Typography>
                                     </Box>
                                   </Box>
@@ -776,56 +749,54 @@ const HrmTrainingPage: React.FC = () => {
           </Box>
         )}
 
-        {activeTab === "courses" && (
+        {activeTab === 'courses' && (
           <Box>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 mb: 2,
               }}
             >
-              <Box sx={{ position: "relative", width: 256 }}>
+              <Box sx={{ position: 'relative', width: 256 }}>
                 <Search
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "grey.400",
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'grey.400',
                     width: 16,
                     height: 16,
                   }}
                   size={16}
                 />
                 <TextField
-                  size="small"
-                  type="text"
-                  placeholder="搜索课程..."
+                  size='small'
+                  type='text'
+                  placeholder='搜索课程...'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
+                  sx={{ width: '100%', '& .MuiOutlinedInput-root': { pl: 4 } }}
                 />
               </Box>
             </Box>
 
-            <Box sx={{ display: "grid", gap: 2 }}>
+            <Box sx={{ display: 'grid', gap: 2 }}>
               {filteredCourses.length === 0 ? (
                 <Card>
-                  <CardContent sx={{ p: 8, textAlign: "center" }}>
+                  <CardContent sx={{ p: 8, textAlign: 'center' }}>
                     <BookOpen
                       sx={{
                         width: 48,
                         height: 48,
-                        color: "grey.400",
-                        mx: "auto",
+                        color: 'grey.400',
+                        mx: 'auto',
                         mb: 2,
                       }}
                     />
-                    <Typography sx={{ color: "grey.500" }}>
-                      暂无培训课程
-                    </Typography>
+                    <Typography sx={{ color: 'grey.500' }}>暂无培训课程</Typography>
                   </CardContent>
                 </Card>
               ) : (
@@ -833,23 +804,23 @@ const HrmTrainingPage: React.FC = () => {
                   <Card
                     key={course.id}
                     sx={{
-                      "&:hover": { boxShadow: 3 },
-                      transition: "box-shadow",
+                      '&:hover': { boxShadow: 3 },
+                      transition: 'box-shadow',
                     }}
                   >
                     <CardContent sx={{ p: 2 }}>
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'space-between',
                         }}
                       >
                         <Box sx={{ flex: 1 }}>
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: 2,
                               mb: 1,
                             }}
@@ -858,112 +829,110 @@ const HrmTrainingPage: React.FC = () => {
                               sx={{
                                 width: 40,
                                 height: 40,
-                                bgcolor: "primary.light",
-                                color: "primary.dark",
+                                bgcolor: 'primary.light',
+                                color: 'primary.dark',
                               }}
                             >
                               {course.name.charAt(0).toUpperCase()}
                             </Avatar>
                             <Box>
                               <Typography
-                                variant="subtitle1"
+                                variant='subtitle1'
                                 sx={{ fontWeight: 600 }}
                               >
                                 {course.name}
                               </Typography>
                               <Typography
-                                variant="body2"
-                                color="text.secondary"
+                                variant='body2'
+                                color='text.secondary'
                               >
-                                {course.code || "未设置代码"}
+                                {course.code || '未设置代码'}
                               </Typography>
                             </Box>
                           </Box>
                           <Box
                             sx={{
-                              display: "grid",
-                              gridTemplateColumns: "repeat(4, 1fr)",
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(4, 1fr)',
                               gap: 2,
                             }}
                           >
                             <Box>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ color: "grey.500" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ color: 'grey.500' }}
                               >
                                 分类:
                               </Typography>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ ml: 1, color: "grey.700" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ ml: 1, color: 'grey.700' }}
                               >
                                 {course.category}
                               </Typography>
                             </Box>
                             <Box>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ color: "grey.500" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ color: 'grey.500' }}
                               >
                                 级别:
                               </Typography>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ ml: 1, color: "grey.700" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ ml: 1, color: 'grey.700' }}
                               >
                                 {course.level}
                               </Typography>
                             </Box>
                             <Box>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ color: "grey.500" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ color: 'grey.500' }}
                               >
                                 时长:
                               </Typography>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ ml: 1, color: "grey.700" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ ml: 1, color: 'grey.700' }}
                               >
-                                {course.duration_hours
-                                  ? `${course.duration_hours}小时`
-                                  : "-"}
+                                {course.duration_hours ? `${course.duration_hours}小时` : '-'}
                               </Typography>
                             </Box>
                             <Box>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ color: "grey.500" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ color: 'grey.500' }}
                               >
                                 讲师:
                               </Typography>
                               <Typography
-                                variant="body2"
-                                component="span"
-                                sx={{ ml: 1, color: "grey.700" }}
+                                variant='body2'
+                                component='span'
+                                sx={{ ml: 1, color: 'grey.700' }}
                               >
-                                {course.instructor_name || "-"}
+                                {course.instructor_name || '-'}
                               </Typography>
                             </Box>
                           </Box>
                           {course.description && (
                             <Typography
-                              variant="body2"
+                              variant='body2'
                               sx={{
                                 mt: 2,
-                                color: "grey.600",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                display: "-webkit-box",
+                                color: 'grey.600',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
                                 WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
+                                WebkitBoxOrient: 'vertical',
                               }}
                             >
                               {course.description}
@@ -972,45 +941,41 @@ const HrmTrainingPage: React.FC = () => {
                         </Box>
                         <Box
                           sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "flex-end",
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
                             gap: 1,
                           }}
                         >
                           <Chip
-                            size="small"
-                            label={
-                              course.status === "active" ? "开放报名" : "已关闭"
-                            }
-                            color={
-                              course.status === "active" ? "success" : "default"
-                            }
+                            size='small'
+                            label={course.status === 'active' ? '开放报名' : '已关闭'}
+                            color={course.status === 'active' ? 'success' : 'default'}
                           />
-                          <Box sx={{ display: "flex", gap: 0.5 }}>
-                            <Tooltip title="编辑">
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Tooltip title='编辑'>
                               <IconButton
-                                size="small"
+                                size='small'
                                 onClick={() => handleOpenModal(course)}
                               >
                                 <Edit2 sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="删除">
+                            <Tooltip title='删除'>
                               <IconButton
-                                size="small"
+                                size='small'
                                 onClick={() => handleDelete(course.id)}
-                                sx={{ color: "error.main" }}
+                                sx={{ color: 'error.main' }}
                               >
                                 <Trash2 sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
-                            {course.status === "active" && (
-                              <Tooltip title="报名">
+                            {course.status === 'active' && (
+                              <Tooltip title='报名'>
                                 <IconButton
-                                  size="small"
+                                  size='small'
                                   onClick={() => handleOpenEnrollModal(course)}
-                                  sx={{ color: "success.main" }}
+                                  sx={{ color: 'success.main' }}
                                 >
                                   <UserPlus sx={{ width: 16, height: 16 }} />
                                 </IconButton>
@@ -1027,125 +992,125 @@ const HrmTrainingPage: React.FC = () => {
           </Box>
         )}
 
-        {activeTab === "records" && (
+        {activeTab === 'records' && (
           <Box>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 mb: 2,
               }}
             >
-              <Box sx={{ position: "relative", width: 256 }}>
+              <Box sx={{ position: 'relative', width: 256 }}>
                 <Search
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "grey.400",
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'grey.400',
                     width: 16,
                     height: 16,
                   }}
                   size={16}
                 />
                 <TextField
-                  size="small"
-                  type="text"
-                  placeholder="搜索员工..."
+                  size='small'
+                  type='text'
+                  placeholder='搜索员工...'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
+                  sx={{ width: '100%', '& .MuiOutlinedInput-root': { pl: 4 } }}
                 />
               </Box>
             </Box>
 
             <Card>
               <CardContent sx={{ p: 0 }}>
-                <Box sx={{ maxHeight: 600, overflow: "auto" }}>
-                  <table style={{ width: "100%" }}>
+                <Box sx={{ maxHeight: 600, overflow: 'auto' }}>
+                  <table style={{ width: '100%' }}>
                     <thead
                       style={{
-                        backgroundColor: "rgb(249, 250, 251)",
-                        position: "sticky",
+                        backgroundColor: 'rgb(249, 250, 251)',
+                        position: 'sticky',
                         top: 0,
                       }}
                     >
                       <tr>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           员工
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           课程
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           报名日期
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           出勤状态
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           完成状态
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           成绩
                         </th>
                         <th
                           style={{
-                            padding: "12px 24px",
-                            textAlign: "left",
-                            fontSize: "0.75rem",
+                            padding: '12px 24px',
+                            textAlign: 'left',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
-                            color: "rgb(107, 114, 128)",
+                            color: 'rgb(107, 114, 128)',
                           }}
                         >
                           操作
@@ -1154,8 +1119,8 @@ const HrmTrainingPage: React.FC = () => {
                     </thead>
                     <tbody
                       style={{
-                        backgroundColor: "white",
-                        borderTop: "1px solid rgb(229, 231, 235)",
+                        backgroundColor: 'white',
+                        borderTop: '1px solid rgb(229, 231, 235)',
                       }}
                     >
                       {filteredRecords.length === 0 ? (
@@ -1163,14 +1128,12 @@ const HrmTrainingPage: React.FC = () => {
                           <td
                             colSpan={7}
                             style={{
-                              padding: "32px 24px",
-                              textAlign: "center",
-                              color: "rgb(107, 114, 128)",
+                              padding: '32px 24px',
+                              textAlign: 'center',
+                              color: 'rgb(107, 114, 128)',
                             }}
                           >
-                            <Typography
-                              sx={{ textAlign: "center", color: "grey.500" }}
-                            >
+                            <Typography sx={{ textAlign: 'center', color: 'grey.500' }}>
                               暂无培训记录
                             </Typography>
                           </td>
@@ -1180,19 +1143,19 @@ const HrmTrainingPage: React.FC = () => {
                           <tr
                             key={record.id}
                             style={{
-                              borderBottom: "1px solid rgb(229, 231, 235)",
+                              borderBottom: '1px solid rgb(229, 231, 235)',
                             }}
                           >
                             <td
                               style={{
-                                padding: "16px 24px",
-                                whiteSpace: "nowrap",
+                                padding: '16px 24px',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               <Box
                                 sx={{
-                                  display: "flex",
-                                  alignItems: "center",
+                                  display: 'flex',
+                                  alignItems: 'center',
                                   gap: 1,
                                 }}
                               >
@@ -1200,18 +1163,16 @@ const HrmTrainingPage: React.FC = () => {
                                   sx={{
                                     width: 32,
                                     height: 32,
-                                    bgcolor: "primary.light",
-                                    color: "primary.dark",
+                                    bgcolor: 'primary.light',
+                                    color: 'primary.dark',
                                     fontSize: 14,
                                   }}
                                 >
-                                  {getEmployeeName(record.employee_id)
-                                    .charAt(0)
-                                    .toUpperCase()}
+                                  {getEmployeeName(record.employee_id).charAt(0).toUpperCase()}
                                 </Avatar>
                                 <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 500, color: "grey.900" }}
+                                  variant='body2'
+                                  sx={{ fontWeight: 500, color: 'grey.900' }}
                                 >
                                   {getEmployeeName(record.employee_id)}
                                 </Typography>
@@ -1219,92 +1180,82 @@ const HrmTrainingPage: React.FC = () => {
                             </td>
                             <td
                               style={{
-                                padding: "16px 24px",
-                                whiteSpace: "nowrap",
-                                fontSize: "0.875rem",
-                                color: "grey.500",
+                                padding: '16px 24px',
+                                whiteSpace: 'nowrap',
+                                fontSize: '0.875rem',
+                                color: 'grey.500',
                               }}
                             >
                               {record.course_id.substring(0, 8)}...
                             </td>
                             <td
                               style={{
-                                padding: "16px 24px",
-                                whiteSpace: "nowrap",
-                                fontSize: "0.875rem",
-                                color: "grey.500",
+                                padding: '16px 24px',
+                                whiteSpace: 'nowrap',
+                                fontSize: '0.875rem',
+                                color: 'grey.500',
                               }}
                             >
-                              {new Date(
-                                record.enrollment_date,
-                              ).toLocaleDateString()}
+                              {new Date(record.enrollment_date).toLocaleDateString()}
                             </td>
                             <td
                               style={{
-                                padding: "16px 24px",
-                                whiteSpace: "nowrap",
+                                padding: '16px 24px',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               <Chip
-                                size="small"
+                                size='small'
                                 label={
-                                  record.attendance_status === "attended"
-                                    ? "已出勤"
-                                    : record.attendance_status === "absent"
-                                      ? "缺勤"
-                                      : "未考勤"
+                                  record.attendance_status === 'attended'
+                                    ? '已出勤'
+                                    : record.attendance_status === 'absent'
+                                      ? '缺勤'
+                                      : '未考勤'
                                 }
                                 color={
-                                  record.attendance_status === "attended"
-                                    ? "success"
-                                    : record.attendance_status === "absent"
-                                      ? "error"
-                                      : "default"
+                                  record.attendance_status === 'attended'
+                                    ? 'success'
+                                    : record.attendance_status === 'absent'
+                                      ? 'error'
+                                      : 'default'
                                 }
                                 variant={
-                                  record.attendance_status === "pending"
-                                    ? "outlined"
-                                    : "filled"
+                                  record.attendance_status === 'pending' ? 'outlined' : 'filled'
                                 }
                               />
                             </td>
                             <td
                               style={{
-                                padding: "16px 24px",
-                                whiteSpace: "nowrap",
+                                padding: '16px 24px',
+                                whiteSpace: 'nowrap',
                               }}
                             >
                               <Chip
-                                size="small"
+                                size='small'
                                 label={
-                                  record.completion_status === "completed"
-                                    ? "已完成"
-                                    : "未完成"
+                                  record.completion_status === 'completed' ? '已完成' : '未完成'
                                 }
                                 color={
-                                  record.completion_status === "completed"
-                                    ? "success"
-                                    : "default"
+                                  record.completion_status === 'completed' ? 'success' : 'default'
                                 }
                                 variant={
-                                  record.completion_status === "completed"
-                                    ? "filled"
-                                    : "outlined"
+                                  record.completion_status === 'completed' ? 'filled' : 'outlined'
                                 }
                               />
                             </td>
                             <td
                               style={{
-                                padding: "16px 24px",
-                                whiteSpace: "nowrap",
-                                fontSize: "0.875rem",
+                                padding: '16px 24px',
+                                whiteSpace: 'nowrap',
+                                fontSize: '0.875rem',
                               }}
                             >
                               {record.score ? (
                                 <Box
                                   sx={{
-                                    display: "flex",
-                                    alignItems: "center",
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     gap: 0.5,
                                   }}
                                 >
@@ -1312,40 +1263,40 @@ const HrmTrainingPage: React.FC = () => {
                                     sx={{
                                       width: 16,
                                       height: 16,
-                                      color: "yellow.500",
+                                      color: 'yellow.500',
                                     }}
                                   />
                                   <Typography
-                                    variant="body2"
+                                    variant='body2'
                                     sx={{ fontWeight: 500 }}
                                   >
                                     {record.score}分
                                   </Typography>
                                 </Box>
                               ) : (
-                                "-"
+                                '-'
                               )}
                             </td>
                             <td
                               style={{
-                                padding: "16px 24px",
-                                whiteSpace: "nowrap",
+                                padding: '16px 24px',
+                                whiteSpace: 'nowrap',
                               }}
                             >
-                              <Box sx={{ display: "flex", gap: 0.5 }}>
-                                <Tooltip title="查看详情">
+                              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                <Tooltip title='查看详情'>
                                   <IconButton
-                                    size="small"
+                                    size='small'
                                     onClick={() => handleViewRecord(record)}
                                   >
                                     <Eye sx={{ width: 16, height: 16 }} />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title="删除">
+                                <Tooltip title='删除'>
                                   <IconButton
-                                    size="small"
+                                    size='small'
                                     onClick={() => handleDelete(record.id)}
-                                    sx={{ color: "error.main" }}
+                                    sx={{ color: 'error.main' }}
                                   >
                                     <Trash2 sx={{ width: 16, height: 16 }} />
                                   </IconButton>
@@ -1368,90 +1319,82 @@ const HrmTrainingPage: React.FC = () => {
         <Dialog
           open={showModal}
           onClose={() => setShowModal(false)}
-          maxWidth="sm"
+          maxWidth='sm'
           fullWidth
         >
           <DialogTitle>
-            {editItem ? "编辑" : "新增"}
-            {activeTab === "plans" ? "培训计划" : "培训课程"}
+            {editItem ? '编辑' : '新增'}
+            {activeTab === 'plans' ? '培训计划' : '培训课程'}
           </DialogTitle>
           <DialogContent>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
-            >
-              {activeTab === "plans" ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              {activeTab === 'plans' ? (
                 <>
                   <Box>
-                    <FormLabel htmlFor="plan-name">计划名称 *</FormLabel>
+                    <FormLabel htmlFor='plan-name'>计划名称 *</FormLabel>
                     <TextField
-                      id="plan-name"
-                      size="small"
+                      id='plan-name'
+                      size='small'
                       fullWidth
-                      type="text"
-                      value={(formData as TrainingPlan).name || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="请输入计划名称"
+                      type='text'
+                      value={(formData as TrainingPlan).name || ''}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder='请输入计划名称'
                     />
                   </Box>
                   <Box
                     sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
                       gap: 2,
                     }}
                   >
                     <Box>
-                      <FormLabel htmlFor="plan-code">计划代码</FormLabel>
+                      <FormLabel htmlFor='plan-code'>计划代码</FormLabel>
                       <TextField
-                        id="plan-code"
-                        size="small"
+                        id='plan-code'
+                        size='small'
                         fullWidth
-                        type="text"
-                        value={(formData as TrainingPlan).code || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, code: e.target.value })
-                        }
-                        placeholder="自动生成"
+                        type='text'
+                        value={(formData as TrainingPlan).code || ''}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        placeholder='自动生成'
                         disabled={!editItem}
                       />
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="plan-budget">预算</FormLabel>
+                      <FormLabel htmlFor='plan-budget'>预算</FormLabel>
                       <TextField
-                        id="plan-budget"
-                        size="small"
+                        id='plan-budget'
+                        size='small'
                         fullWidth
-                        type="number"
-                        value={
-                          (formData as TrainingPlan).budget?.toString() || ""
-                        }
+                        type='number'
+                        value={(formData as TrainingPlan).budget?.toString() || ''}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
                             budget: parseFloat(e.target.value) || undefined,
                           })
                         }
-                        placeholder="请输入预算金额"
+                        placeholder='请输入预算金额'
                       />
                     </Box>
                   </Box>
                   <Box
                     sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
                       gap: 2,
                     }}
                   >
                     <Box>
-                      <FormLabel htmlFor="plan-start">开始日期 *</FormLabel>
+                      <FormLabel htmlFor='plan-start'>开始日期 *</FormLabel>
                       <TextField
-                        id="plan-start"
-                        size="small"
+                        id='plan-start'
+                        size='small'
                         fullWidth
-                        type="date"
-                        value={(formData as TrainingPlan).start_date || ""}
+                        type='date'
+                        value={(formData as TrainingPlan).start_date || ''}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
@@ -1461,25 +1404,23 @@ const HrmTrainingPage: React.FC = () => {
                       />
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="plan-end">结束日期 *</FormLabel>
+                      <FormLabel htmlFor='plan-end'>结束日期 *</FormLabel>
                       <TextField
-                        id="plan-end"
-                        size="small"
+                        id='plan-end'
+                        size='small'
                         fullWidth
-                        type="date"
-                        value={(formData as TrainingPlan).end_date || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, end_date: e.target.value })
-                        }
+                        type='date'
+                        value={(formData as TrainingPlan).end_date || ''}
+                        onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                       />
                     </Box>
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="plan-description">描述</FormLabel>
+                    <FormLabel htmlFor='plan-description'>描述</FormLabel>
                     <Box
-                      component="textarea"
-                      id="plan-description"
-                      value={(formData as TrainingPlan).description || ""}
+                      component='textarea'
+                      id='plan-description'
+                      value={(formData as TrainingPlan).description || ''}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         setFormData({
                           ...formData,
@@ -1487,48 +1428,49 @@ const HrmTrainingPage: React.FC = () => {
                         })
                       }
                       sx={{
-                        width: "100%",
-                        border: "1px solid rgb(209, 213, 219)",
+                        width: '100%',
+                        border: '1px solid rgb(209, 213, 219)',
                         borderRadius: 1,
                         px: 2,
                         py: 1.5,
-                        fontFamily: "inherit",
-                        fontSize: "0.875rem",
-                        resize: "vertical",
+                        fontFamily: 'inherit',
+                        fontSize: '0.875rem',
+                        resize: 'vertical',
                       }}
                       rows={3}
-                      placeholder="请输入计划描述"
+                      placeholder='请输入计划描述'
                     />
                   </Box>
                 </>
               ) : (
                 <>
                   <Box>
-                    <FormLabel htmlFor="course-name">课程名称 *</FormLabel>
+                    <FormLabel htmlFor='course-name'>课程名称 *</FormLabel>
                     <TextField
-                      id="course-name"
-                      size="small"
+                      id='course-name'
+                      size='small'
                       fullWidth
-                      type="text"
-                      value={(formData as TrainingCourse).name || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="请输入课程名称"
+                      type='text'
+                      value={(formData as TrainingCourse).name || ''}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder='请输入课程名称'
                     />
                   </Box>
                   <Box
                     sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
                       gap: 2,
                     }}
                   >
                     <Box>
-                      <FormLabel htmlFor="course-category">分类 *</FormLabel>
-                      <FormControl size="small" fullWidth>
+                      <FormLabel htmlFor='course-category'>分类 *</FormLabel>
+                      <FormControl
+                        size='small'
+                        fullWidth
+                      >
                         <Select
-                          value={(formData as TrainingCourse).category || ""}
+                          value={(formData as TrainingCourse).category || ''}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
@@ -1537,114 +1479,107 @@ const HrmTrainingPage: React.FC = () => {
                           }
                           displayEmpty
                         >
-                          <MenuItem value="" disabled>
+                          <MenuItem
+                            value=''
+                            disabled
+                          >
                             请选择分类
                           </MenuItem>
-                          <MenuItem value="technical">技术培训</MenuItem>
-                          <MenuItem value="management">管理培训</MenuItem>
-                          <MenuItem value="soft_skill">软技能</MenuItem>
-                          <MenuItem value="onboarding">入职培训</MenuItem>
+                          <MenuItem value='technical'>技术培训</MenuItem>
+                          <MenuItem value='management'>管理培训</MenuItem>
+                          <MenuItem value='soft_skill'>软技能</MenuItem>
+                          <MenuItem value='onboarding'>入职培训</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="course-level">级别 *</FormLabel>
-                      <FormControl size="small" fullWidth>
+                      <FormLabel htmlFor='course-level'>级别 *</FormLabel>
+                      <FormControl
+                        size='small'
+                        fullWidth
+                      >
                         <Select
-                          value={(formData as TrainingCourse).level || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, level: e.target.value })
-                          }
+                          value={(formData as TrainingCourse).level || ''}
+                          onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                           displayEmpty
                         >
-                          <MenuItem value="" disabled>
+                          <MenuItem
+                            value=''
+                            disabled
+                          >
                             请选择级别
                           </MenuItem>
-                          <MenuItem value="beginner">入门级</MenuItem>
-                          <MenuItem value="intermediate">中级</MenuItem>
-                          <MenuItem value="advanced">高级</MenuItem>
-                          <MenuItem value="expert">专家级</MenuItem>
+                          <MenuItem value='beginner'>入门级</MenuItem>
+                          <MenuItem value='intermediate'>中级</MenuItem>
+                          <MenuItem value='advanced'>高级</MenuItem>
+                          <MenuItem value='expert'>专家级</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
                   </Box>
                   <Box
                     sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
                       gap: 2,
                     }}
                   >
                     <Box>
-                      <FormLabel htmlFor="course-duration">
-                        时长(小时)
-                      </FormLabel>
+                      <FormLabel htmlFor='course-duration'>时长(小时)</FormLabel>
                       <TextField
-                        id="course-duration"
-                        size="small"
+                        id='course-duration'
+                        size='small'
                         fullWidth
-                        type="number"
-                        value={
-                          (
-                            formData as TrainingCourse
-                          ).duration_hours?.toString() || ""
-                        }
+                        type='number'
+                        value={(formData as TrainingCourse).duration_hours?.toString() || ''}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            duration_hours:
-                              parseFloat(e.target.value) || undefined,
+                            duration_hours: parseFloat(e.target.value) || undefined,
                           })
                         }
                       />
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="course-participants">
-                        最大人数
-                      </FormLabel>
+                      <FormLabel htmlFor='course-participants'>最大人数</FormLabel>
                       <TextField
-                        id="course-participants"
-                        size="small"
+                        id='course-participants'
+                        size='small'
                         fullWidth
-                        type="number"
-                        value={
-                          (
-                            formData as TrainingCourse
-                          ).max_participants?.toString() || ""
-                        }
+                        type='number'
+                        value={(formData as TrainingCourse).max_participants?.toString() || ''}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            max_participants:
-                              parseInt(e.target.value) || undefined,
+                            max_participants: parseInt(e.target.value) || undefined,
                           })
                         }
                       />
                     </Box>
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="course-instructor">讲师</FormLabel>
+                    <FormLabel htmlFor='course-instructor'>讲师</FormLabel>
                     <TextField
-                      id="course-instructor"
-                      size="small"
+                      id='course-instructor'
+                      size='small'
                       fullWidth
-                      type="text"
-                      value={(formData as TrainingCourse).instructor_name || ""}
+                      type='text'
+                      value={(formData as TrainingCourse).instructor_name || ''}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
                           instructor_name: e.target.value,
                         })
                       }
-                      placeholder="请输入讲师姓名"
+                      placeholder='请输入讲师姓名'
                     />
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="course-description">描述</FormLabel>
+                    <FormLabel htmlFor='course-description'>描述</FormLabel>
                     <Box
-                      component="textarea"
-                      id="course-description"
-                      value={(formData as TrainingCourse).description || ""}
+                      component='textarea'
+                      id='course-description'
+                      value={(formData as TrainingCourse).description || ''}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         setFormData({
                           ...formData,
@@ -1652,29 +1587,27 @@ const HrmTrainingPage: React.FC = () => {
                         })
                       }
                       sx={{
-                        width: "100%",
-                        border: "1px solid rgb(209, 213, 219)",
+                        width: '100%',
+                        border: '1px solid rgb(209, 213, 219)',
                         borderRadius: 1,
                         px: 2,
                         py: 1.5,
-                        fontFamily: "inherit",
-                        fontSize: "0.875rem",
-                        resize: "vertical",
+                        fontFamily: 'inherit',
+                        fontSize: '0.875rem',
+                        resize: 'vertical',
                       }}
                       rows={3}
-                      placeholder="请输入课程描述"
+                      placeholder='请输入课程描述'
                     />
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="course-images">课程图片</FormLabel>
+                    <FormLabel htmlFor='course-images'>课程图片</FormLabel>
                     <Box sx={{ mt: 1 }}>
                       <ImageUpload
                         value={(formData as any).images || []}
-                        onChange={(files) =>
-                          setFormData({ ...formData, images: files } as any)
-                        }
+                        onChange={(files) => setFormData({ ...formData, images: files } as any)}
                         maxCount={9}
-                        accept="image/*"
+                        accept='image/*'
                         cropEnabled
                         height={150}
                       />
@@ -1685,11 +1618,17 @@ const HrmTrainingPage: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button variant="outlined" onClick={() => setShowModal(false)}>
+            <Button
+              variant='outlined'
+              onClick={() => setShowModal(false)}
+            >
               取消
             </Button>
-            <Button variant="contained" onClick={handleSave}>
-              {editItem ? "保存" : "创建"}
+            <Button
+              variant='contained'
+              onClick={handleSave}
+            >
+              {editItem ? '保存' : '创建'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1699,207 +1638,184 @@ const HrmTrainingPage: React.FC = () => {
         <Dialog
           open={showRecordModal}
           onClose={() => setShowRecordModal(false)}
-          maxWidth="sm"
+          maxWidth='sm'
           fullWidth
         >
           <DialogTitle>培训记录详情</DialogTitle>
           <DialogContent>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
-                >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Avatar
                     sx={{
                       width: 48,
                       height: 48,
-                      bgcolor: "primary.light",
-                      color: "primary.dark",
+                      bgcolor: 'primary.light',
+                      color: 'primary.dark',
                     }}
                   >
-                    {getEmployeeName(selectedRecord.employee_id)
-                      .charAt(0)
-                      .toUpperCase()}
+                    {getEmployeeName(selectedRecord.employee_id).charAt(0).toUpperCase()}
                   </Avatar>
                   <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600 }}
+                    >
                       {getEmployeeName(selectedRecord.employee_id)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       员工ID: {selectedRecord.employee_id.substring(0, 8)}...
                     </Typography>
                   </Box>
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
+                    display: 'flex',
+                    flexDirection: 'column',
                     gap: 1,
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                   }}
                 >
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography
-                      variant="body2"
-                      component="span"
-                      sx={{ color: "grey.500" }}
+                      variant='body2'
+                      component='span'
+                      sx={{ color: 'grey.500' }}
                     >
                       课程ID:
                     </Typography>
                     <Typography
-                      variant="body2"
-                      component="span"
-                      sx={{ color: "grey.700" }}
+                      variant='body2'
+                      component='span'
+                      sx={{ color: 'grey.700' }}
                     >
                       {selectedRecord.course_id.substring(0, 8)}...
                     </Typography>
                   </Box>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography
-                      variant="body2"
-                      component="span"
-                      sx={{ color: "grey.500" }}
+                      variant='body2'
+                      component='span'
+                      sx={{ color: 'grey.500' }}
                     >
                       报名日期:
                     </Typography>
                     <Typography
-                      variant="body2"
-                      component="span"
-                      sx={{ color: "grey.700" }}
+                      variant='body2'
+                      component='span'
+                      sx={{ color: 'grey.700' }}
                     >
-                      {new Date(
-                        selectedRecord.enrollment_date,
-                      ).toLocaleDateString()}
+                      {new Date(selectedRecord.enrollment_date).toLocaleDateString()}
                     </Typography>
                   </Box>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography
-                      variant="body2"
-                      component="span"
-                      sx={{ color: "grey.500" }}
+                      variant='body2'
+                      component='span'
+                      sx={{ color: 'grey.500' }}
                     >
                       出勤状态:
                     </Typography>
                     <Chip
-                      size="small"
+                      size='small'
                       label={
-                        selectedRecord.attendance_status === "attended"
-                          ? "已出勤"
-                          : selectedRecord.attendance_status === "absent"
-                            ? "缺勤"
-                            : "未考勤"
+                        selectedRecord.attendance_status === 'attended'
+                          ? '已出勤'
+                          : selectedRecord.attendance_status === 'absent'
+                            ? '缺勤'
+                            : '未考勤'
                       }
                       color={
-                        selectedRecord.attendance_status === "attended"
-                          ? "success"
-                          : selectedRecord.attendance_status === "absent"
-                            ? "error"
-                            : "default"
+                        selectedRecord.attendance_status === 'attended'
+                          ? 'success'
+                          : selectedRecord.attendance_status === 'absent'
+                            ? 'error'
+                            : 'default'
                       }
                       variant={
-                        selectedRecord.attendance_status === "pending"
-                          ? "outlined"
-                          : "filled"
+                        selectedRecord.attendance_status === 'pending' ? 'outlined' : 'filled'
                       }
                     />
                   </Box>
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography
-                      variant="body2"
-                      component="span"
-                      sx={{ color: "grey.500" }}
+                      variant='body2'
+                      component='span'
+                      sx={{ color: 'grey.500' }}
                     >
                       完成状态:
                     </Typography>
                     <Chip
-                      size="small"
-                      label={
-                        selectedRecord.completion_status === "completed"
-                          ? "已完成"
-                          : "未完成"
-                      }
+                      size='small'
+                      label={selectedRecord.completion_status === 'completed' ? '已完成' : '未完成'}
                       color={
-                        selectedRecord.completion_status === "completed"
-                          ? "success"
-                          : "default"
+                        selectedRecord.completion_status === 'completed' ? 'success' : 'default'
                       }
                       variant={
-                        selectedRecord.completion_status === "completed"
-                          ? "filled"
-                          : "outlined"
+                        selectedRecord.completion_status === 'completed' ? 'filled' : 'outlined'
                       }
                     />
                   </Box>
                   {selectedRecord.score && (
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
                       <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{ color: "grey.500" }}
+                        variant='body2'
+                        component='span'
+                        sx={{ color: 'grey.500' }}
                       >
                         成绩:
                       </Typography>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <Award
-                          sx={{ width: 16, height: 16, color: "yellow.500" }}
-                        />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Award sx={{ width: 16, height: 16, color: 'yellow.500' }} />
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
                           {selectedRecord.score}分
                         </Typography>
                       </Box>
                     </Box>
                   )}
                   {selectedRecord.certificate_no && (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{ color: "grey.500" }}
+                        variant='body2'
+                        component='span'
+                        sx={{ color: 'grey.500' }}
                       >
                         证书编号:
                       </Typography>
                       <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{ color: "grey.700", fontFamily: "monospace" }}
+                        variant='body2'
+                        component='span'
+                        sx={{ color: 'grey.700', fontFamily: 'monospace' }}
                       >
                         {selectedRecord.certificate_no}
                       </Typography>
                     </Box>
                   )}
                   {selectedRecord.completed_at && (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
-                    >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{ color: "grey.500" }}
+                        variant='body2'
+                        component='span'
+                        sx={{ color: 'grey.500' }}
                       >
                         完成时间:
                       </Typography>
                       <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{ color: "grey.700" }}
+                        variant='body2'
+                        component='span'
+                        sx={{ color: 'grey.700' }}
                       >
                         {new Date(selectedRecord.completed_at).toLocaleString()}
                       </Typography>
@@ -1908,16 +1824,16 @@ const HrmTrainingPage: React.FC = () => {
                   {selectedRecord.feedback && (
                     <Box sx={{ mt: 1 }}>
                       <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{ color: "grey.500", display: "block", mb: 0.5 }}
+                        variant='body2'
+                        component='span'
+                        sx={{ color: 'grey.500', display: 'block', mb: 0.5 }}
                       >
                         反馈:
                       </Typography>
                       <Box
                         sx={{
-                          color: "grey.700",
-                          bgcolor: "background.paper",
+                          color: 'grey.700',
+                          bgcolor: 'background.paper',
                           borderRadius: 1,
                           p: 1,
                         }}
@@ -1932,7 +1848,7 @@ const HrmTrainingPage: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button
-              variant="contained"
+              variant='contained'
               onClick={() => setShowRecordModal(false)}
             >
               关闭
@@ -1945,26 +1861,38 @@ const HrmTrainingPage: React.FC = () => {
         <Dialog
           open={showEnrollModal}
           onClose={() => setShowEnrollModal(false)}
-          maxWidth="sm"
+          maxWidth='sm'
           fullWidth
         >
           <DialogTitle>报名课程: {selectedCourse.name}</DialogTitle>
           <DialogContent>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-                <Typography variant="body2" sx={{ color: "grey.600" }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.600' }}
+                >
                   请选择要报名的员工:
                 </Typography>
               </Box>
               <Box>
-                <FormLabel htmlFor="enroll-employee">员工 *</FormLabel>
-                <FormControl size="small" fullWidth>
+                <FormLabel htmlFor='enroll-employee'>员工 *</FormLabel>
+                <FormControl
+                  size='small'
+                  fullWidth
+                >
                   <Select displayEmpty>
-                    <MenuItem value="" disabled>
+                    <MenuItem
+                      value=''
+                      disabled
+                    >
                       请选择员工
                     </MenuItem>
                     {employees.map((employee) => (
-                      <MenuItem key={employee.id} value={employee.id}>
+                      <MenuItem
+                        key={employee.id}
+                        value={employee.id}
+                      >
                         {employee.name} ({employee.employee_no})
                       </MenuItem>
                     ))}
@@ -1975,12 +1903,15 @@ const HrmTrainingPage: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={() => setShowEnrollModal(false)}
             >
               取消
             </Button>
-            <Button variant="contained" onClick={() => handleEnroll("")}>
+            <Button
+              variant='contained'
+              onClick={() => handleEnroll('')}
+            >
               确认报名
             </Button>
           </DialogActions>

@@ -3,8 +3,8 @@
  * 实现消息总线、事件发布订阅、数据同步等功能
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNotification } from "../hooks/useNotification";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotification } from '../hooks/useNotification';
 
 // ============================================
 // 一、类型定义
@@ -14,15 +14,15 @@ import { useNotification } from "../hooks/useNotification";
  * 消息类型
  */
 export type MessageType =
-  | "command" // 命令
-  | "event" // 事件
-  | "query" // 查询
-  | "response"; // 响应
+  | 'command' // 命令
+  | 'event' // 事件
+  | 'query' // 查询
+  | 'response'; // 响应
 
 /**
  * 消息优先级
  */
-export type MessagePriority = "high" | "normal" | "low";
+export type MessagePriority = 'high' | 'normal' | 'low';
 
 /**
  * 消息接口
@@ -72,8 +72,8 @@ export interface SyncTask {
     type: string;
     entity: string;
   };
-  sync_mode: "full" | "incremental" | "realtime";
-  status: "idle" | "running" | "completed" | "failed";
+  sync_mode: 'full' | 'incremental' | 'realtime';
+  status: 'idle' | 'running' | 'completed' | 'failed';
   last_run_at?: string;
   last_run_duration?: number;
   last_run_result?: {
@@ -92,8 +92,8 @@ export interface Subscription {
   name: string;
   event_types: string[];
   endpoint: string;
-  endpoint_type: "webhook" | "queue" | "service";
-  status: "active" | "paused" | "error";
+  endpoint_type: 'webhook' | 'queue' | 'service';
+  status: 'active' | 'paused' | 'error';
   retry_policy?: {
     max_retries: number;
     retry_delay: number;
@@ -108,64 +108,64 @@ export interface Subscription {
  * HRM模块事件
  */
 export const HRM_EVENTS = {
-  EMPLOYEE_CREATED: "hrm.employee.created",
-  EMPLOYEE_UPDATED: "hrm.employee.updated",
-  EMPLOYEE_RESIGNED: "hrm.employee.resigned",
-  ATTENDANCE_RECORDED: "hrm.attendance.recorded",
-  PAYROLL_CALCULATED: "hrm.payroll.calculated",
-  PAYROLL_APPROVED: "hrm.payroll.approved",
-  PAYROLL_PAID: "hrm.payroll.paid",
+  EMPLOYEE_CREATED: 'hrm.employee.created',
+  EMPLOYEE_UPDATED: 'hrm.employee.updated',
+  EMPLOYEE_RESIGNED: 'hrm.employee.resigned',
+  ATTENDANCE_RECORDED: 'hrm.attendance.recorded',
+  PAYROLL_CALCULATED: 'hrm.payroll.calculated',
+  PAYROLL_APPROVED: 'hrm.payroll.approved',
+  PAYROLL_PAID: 'hrm.payroll.paid',
 } as const;
 
 /**
  * CRM模块事件
  */
 export const CRM_EVENTS = {
-  CUSTOMER_CREATED: "crm.customer.created",
-  CUSTOMER_UPDATED: "crm.customer.updated",
-  OPPORTUNITY_CREATED: "crm.opportunity.created",
-  OPPORTUNITY_STAGE_CHANGED: "crm.opportunity.stage_changed",
-  INVOICE_ISSUED: "crm.invoice.issued",
-  INVOICE_RECEIVED: "crm.invoice.received",
-  COLLECTION_RECORDED: "crm.collection.recorded",
+  CUSTOMER_CREATED: 'crm.customer.created',
+  CUSTOMER_UPDATED: 'crm.customer.updated',
+  OPPORTUNITY_CREATED: 'crm.opportunity.created',
+  OPPORTUNITY_STAGE_CHANGED: 'crm.opportunity.stage_changed',
+  INVOICE_ISSUED: 'crm.invoice.issued',
+  INVOICE_RECEIVED: 'crm.invoice.received',
+  COLLECTION_RECORDED: 'crm.collection.recorded',
 } as const;
 
 /**
  * SRM模块事件
  */
 export const SRM_EVENTS = {
-  SUPPLIER_CREATED: "srm.supplier.created",
-  SUPPLIER_UPDATED: "srm.supplier.updated",
-  PURCHASE_ORDER_CREATED: "srm.purchase_order.created",
-  PURCHASE_ORDER_APPROVED: "srm.purchase_order.approved",
-  GOODS_RECEIVED: "srm.goods_received",
-  INVOICE_RECEIVED: "srm.invoice.received",
-  PAYMENT_MADE: "srm.payment.made",
+  SUPPLIER_CREATED: 'srm.supplier.created',
+  SUPPLIER_UPDATED: 'srm.supplier.updated',
+  PURCHASE_ORDER_CREATED: 'srm.purchase_order.created',
+  PURCHASE_ORDER_APPROVED: 'srm.purchase_order.approved',
+  GOODS_RECEIVED: 'srm.goods_received',
+  INVOICE_RECEIVED: 'srm.invoice.received',
+  PAYMENT_MADE: 'srm.payment.made',
 } as const;
 
 /**
  * PM模块事件
  */
 export const PM_EVENTS = {
-  PROJECT_CREATED: "pm.project.created",
-  PROJECT_STATUS_CHANGED: "pm.project.status_changed",
-  PROJECT_BUDGET_UPDATED: "pm.project.budget_updated",
-  COST_RECORDED: "pm.cost.recorded",
-  MILESTONE_COMPLETED: "pm.milestone.completed",
-  REVENUE_CONFIRMED: "pm.revenue.confirmed",
+  PROJECT_CREATED: 'pm.project.created',
+  PROJECT_STATUS_CHANGED: 'pm.project.status_changed',
+  PROJECT_BUDGET_UPDATED: 'pm.project.budget_updated',
+  COST_RECORDED: 'pm.cost.recorded',
+  MILESTONE_COMPLETED: 'pm.milestone.completed',
+  REVENUE_CONFIRMED: 'pm.revenue.confirmed',
 } as const;
 
 /**
  * ERP模块事件
  */
 export const ERP_EVENTS = {
-  VOUCHER_CREATED: "erp.voucher.created",
-  VOUCHER_APPROVED: "erp.voucher.approved",
-  VOUCHER_POSTED: "erp.voucher.posted",
-  VOUCHER_REVERSED: "erp.voucher.reversed",
-  PERIOD_OPENED: "erp.period.opened",
-  PERIOD_CLOSED: "erp.period.closed",
-  ASSET_DEPRECIATION: "erp.asset.depreciation",
+  VOUCHER_CREATED: 'erp.voucher.created',
+  VOUCHER_APPROVED: 'erp.voucher.approved',
+  VOUCHER_POSTED: 'erp.voucher.posted',
+  VOUCHER_REVERSED: 'erp.voucher.reversed',
+  PERIOD_OPENED: 'erp.period.opened',
+  PERIOD_CLOSED: 'erp.period.closed',
+  ASSET_DEPRECIATION: 'erp.asset.depreciation',
 } as const;
 
 /**
@@ -186,33 +186,25 @@ export const ALL_EVENTS = {
 const exchangeApi = {
   // 消息发送
   sendMessage: (topic: string, message: any) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.post(
-        `/api/integration/messages/${topic}`,
-        message,
-      ),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.post(`/api/integration/messages/${topic}`, message)
     ),
 
   publishEvent: (eventType: string, payload: any) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.post("/api/integration/events", {
+    import('../api/client').then((c) =>
+      c.apiClient.integration.post('/api/integration/events', {
         event_type: eventType,
         payload,
-      }),
+      })
     ),
 
   // 同步任务
   getSyncTasks: () =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/integration/sync/tasks"),
-    ),
+    import('../api/client').then((c) => c.apiClient.integration.get('/api/integration/sync/tasks')),
 
   triggerSync: (taskId: string, params?: { full_sync?: boolean }) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.post(
-        `/api/integration/sync/tasks/${taskId}/trigger`,
-        params,
-      ),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.post(`/api/integration/sync/tasks/${taskId}/trigger`, params)
     ),
 
   getSyncHistory: (params?: {
@@ -222,35 +214,35 @@ const exchangeApi = {
     page?: number;
     page_size?: number;
   }) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/integration/sync/history", { params }),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.get('/api/integration/sync/history', { params })
     ),
 
   // 订阅管理
   getSubscriptions: (params?: { event_type?: string; status?: string }) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/integration/subscriptions", { params }),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.get('/api/integration/subscriptions', { params })
     ),
 
   createSubscription: (data: Partial<Subscription>) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.post("/api/integration/subscriptions", data),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.post('/api/integration/subscriptions', data)
     ),
 
   updateSubscription: (id: string, data: Partial<Subscription>) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.put(`/api/integration/subscriptions/${id}`, data),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.put(`/api/integration/subscriptions/${id}`, data)
     ),
 
   deleteSubscription: (id: string) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.delete(`/api/integration/subscriptions/${id}`),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.delete(`/api/integration/subscriptions/${id}`)
     ),
 
   // 事件定义
   getEventDefinitions: () =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/integration/events/definitions"),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.get('/api/integration/events/definitions')
     ),
 
   // 消息监控
@@ -262,21 +254,18 @@ const exchangeApi = {
     page?: number;
     page_size?: number;
   }) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/integration/messages", { params }),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.get('/api/integration/messages', { params })
     ),
 
   getDeadLetterMessages: (params?: { page?: number; page_size?: number }) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/integration/dead-letter", { params }),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.get('/api/integration/dead-letter', { params })
     ),
 
   retryDeadLetter: (messageId: string) =>
-    import("../api/client").then((c) =>
-      c.apiClient.integration.post(
-        `/api/integration/dead-letter/${messageId}/retry`,
-        {},
-      ),
+    import('../api/client').then((c) =>
+      c.apiClient.integration.post(`/api/integration/dead-letter/${messageId}/retry`, {})
     ),
 };
 
@@ -295,7 +284,7 @@ export function usePublishEvent() {
     mutationFn: ({ eventType, payload }: { eventType: string; payload: any }) =>
       exchangeApi.publishEvent(eventType, payload),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["exchange", "events"] });
+      queryClient.invalidateQueries({ queryKey: ['exchange', 'events'] });
       success(variables.eventType);
     },
     onError: (error: any, variables) => {
@@ -309,7 +298,7 @@ export function usePublishEvent() {
  */
 export function useSyncTasks() {
   return useQuery({
-    queryKey: ["exchange", "sync-tasks"],
+    queryKey: ['exchange', 'sync-tasks'],
     queryFn: () => exchangeApi.getSyncTasks(),
     staleTime: 60 * 1000,
   });
@@ -323,20 +312,15 @@ export function useTriggerSync() {
   const { success, error: notifyError } = useNotification();
 
   return useMutation({
-    mutationFn: ({
-      taskId,
-      fullSync,
-    }: {
-      taskId: string;
-      fullSync?: boolean;
-    }) => exchangeApi.triggerSync(taskId, { full_sync: fullSync }),
+    mutationFn: ({ taskId, fullSync }: { taskId: string; fullSync?: boolean }) =>
+      exchangeApi.triggerSync(taskId, { full_sync: fullSync }),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["exchange", "sync-tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["exchange", "sync-history"] });
+      queryClient.invalidateQueries({ queryKey: ['exchange', 'sync-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['exchange', 'sync-history'] });
       success(`同步任务 ${variables.taskId} 已触发`);
     },
     onError: (error: any) => {
-      notifyError(error.message || "触发同步任务失败");
+      notifyError(error.message || '触发同步任务失败');
     },
   });
 }
@@ -352,7 +336,7 @@ export function useSyncHistory(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["exchange", "sync-history", params],
+    queryKey: ['exchange', 'sync-history', params],
     queryFn: () => exchangeApi.getSyncHistory(params),
     staleTime: 30 * 1000,
   });
@@ -361,12 +345,9 @@ export function useSyncHistory(params?: {
 /**
  * 获取订阅列表
  */
-export function useSubscriptions(params?: {
-  event_type?: string;
-  status?: string;
-}) {
+export function useSubscriptions(params?: { event_type?: string; status?: string }) {
   return useQuery({
-    queryKey: ["exchange", "subscriptions", params],
+    queryKey: ['exchange', 'subscriptions', params],
     queryFn: () => exchangeApi.getSubscriptions(params),
     staleTime: 60 * 1000,
   });
@@ -380,16 +361,15 @@ export function useCreateSubscription() {
   const { success, error: notifyError } = useNotification();
 
   return useMutation({
-    mutationFn: (data: Partial<Subscription>) =>
-      exchangeApi.createSubscription(data),
+    mutationFn: (data: Partial<Subscription>) => exchangeApi.createSubscription(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["exchange", "subscriptions"],
+        queryKey: ['exchange', 'subscriptions'],
       });
-      success("新的数据订阅已创建");
+      success('新的数据订阅已创建');
     },
     onError: (error: any) => {
-      notifyError(error.message || "创建数据订阅失败");
+      notifyError(error.message || '创建数据订阅失败');
     },
   });
 }
@@ -406,12 +386,12 @@ export function useUpdateSubscription() {
       exchangeApi.updateSubscription(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["exchange", "subscriptions"],
+        queryKey: ['exchange', 'subscriptions'],
       });
-      success("数据订阅已更新");
+      success('数据订阅已更新');
     },
     onError: (error: any) => {
-      notifyError(error.message || "更新数据订阅失败");
+      notifyError(error.message || '更新数据订阅失败');
     },
   });
 }
@@ -427,12 +407,12 @@ export function useDeleteSubscription() {
     mutationFn: (id: string) => exchangeApi.deleteSubscription(id),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["exchange", "subscriptions"],
+        queryKey: ['exchange', 'subscriptions'],
       });
-      success("数据订阅已删除");
+      success('数据订阅已删除');
     },
     onError: (error: any) => {
-      notifyError(error.message || "删除数据订阅失败");
+      notifyError(error.message || '删除数据订阅失败');
     },
   });
 }
@@ -442,7 +422,7 @@ export function useDeleteSubscription() {
  */
 export function useEventDefinitions() {
   return useQuery({
-    queryKey: ["exchange", "event-definitions"],
+    queryKey: ['exchange', 'event-definitions'],
     queryFn: () => exchangeApi.getEventDefinitions(),
     staleTime: 10 * 60 * 1000, // 10分钟
   });
@@ -460,7 +440,7 @@ export function useMessages(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["exchange", "messages", params],
+    queryKey: ['exchange', 'messages', params],
     queryFn: () => exchangeApi.getMessages(params),
     staleTime: 10 * 1000,
   });
@@ -469,12 +449,9 @@ export function useMessages(params?: {
 /**
  * 获取死信消息
  */
-export function useDeadLetterMessages(params?: {
-  page?: number;
-  page_size?: number;
-}) {
+export function useDeadLetterMessages(params?: { page?: number; page_size?: number }) {
   return useQuery({
-    queryKey: ["exchange", "dead-letter", params],
+    queryKey: ['exchange', 'dead-letter', params],
     queryFn: () => exchangeApi.getDeadLetterMessages(params),
     staleTime: 10 * 1000,
   });
@@ -490,11 +467,11 @@ export function useRetryDeadLetter() {
   return useMutation({
     mutationFn: (messageId: string) => exchangeApi.retryDeadLetter(messageId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["exchange", "dead-letter"] });
-      success("死信消息已重新投递");
+      queryClient.invalidateQueries({ queryKey: ['exchange', 'dead-letter'] });
+      success('死信消息已重新投递');
     },
     onError: (error: any) => {
-      notifyError(error.message || "消息重试失败");
+      notifyError(error.message || '消息重试失败');
     },
   });
 }
@@ -513,10 +490,7 @@ export function useEventBus() {
   /**
    * 发布HRM事件
    */
-  const publishHrmEvent = (
-    eventName: keyof typeof HRM_EVENTS,
-    payload: any,
-  ) => {
+  const publishHrmEvent = (eventName: keyof typeof HRM_EVENTS, payload: any) => {
     return publishEvent.mutateAsync({
       eventType: HRM_EVENTS[eventName],
       payload,
@@ -526,10 +500,7 @@ export function useEventBus() {
   /**
    * 发布CRM事件
    */
-  const publishCrmEvent = (
-    eventName: keyof typeof CRM_EVENTS,
-    payload: any,
-  ) => {
+  const publishCrmEvent = (eventName: keyof typeof CRM_EVENTS, payload: any) => {
     return publishEvent.mutateAsync({
       eventType: CRM_EVENTS[eventName],
       payload,
@@ -539,10 +510,7 @@ export function useEventBus() {
   /**
    * 发布SRM事件
    */
-  const publishSrmEvent = (
-    eventName: keyof typeof SRM_EVENTS,
-    payload: any,
-  ) => {
+  const publishSrmEvent = (eventName: keyof typeof SRM_EVENTS, payload: any) => {
     return publishEvent.mutateAsync({
       eventType: SRM_EVENTS[eventName],
       payload,
@@ -562,10 +530,7 @@ export function useEventBus() {
   /**
    * 发布ERP事件
    */
-  const publishErpEvent = (
-    eventName: keyof typeof ERP_EVENTS,
-    payload: any,
-  ) => {
+  const publishErpEvent = (eventName: keyof typeof ERP_EVENTS, payload: any) => {
     return publishEvent.mutateAsync({
       eventType: ERP_EVENTS[eventName],
       payload,
