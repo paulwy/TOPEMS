@@ -26,7 +26,9 @@
     "paths": {
       "@/*": ["./src/*"],
       "@topems/shared-types": ["../../packages/shared-types/src"],
-      "@topems/shared-utils": ["../../packages/shared-utils/src"]
+      "@topems/shared-utils": ["../../packages/shared-utils/src"],
+      "@topems/shared-hooks": ["../../packages/shared-hooks/src"],
+      "@topems/shared-constants": ["../../packages/shared-constants/src"]
     },
     "ignoreDeprecations": "6.0",
     "types": ["vitest/globals", "node", "react", "react-dom"]

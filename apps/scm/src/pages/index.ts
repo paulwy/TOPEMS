@@ -1,0 +1,9 @@
+export { DashboardPage } from './DashboardPage';
+export { SupplierManagementPage } from './SupplierManagementPage';
+export { PurchaseOrderPage } from './PurchaseOrderPage';
+export { PurchaseReceiptPage } from './PurchaseReceiptPage';
+export { InventoryPage } from './InventoryPage';
+export { WarehousePage } from './WarehousePage';
+export { InOutBoundPage } from './InOutBoundPage';
+export { InventoryCheckPage } from './InventoryCheckPage';
+export { InventoryAlertPage } from './InventoryAlertPage';

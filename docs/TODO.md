@@ -698,17 +698,17 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 
 ### Module Federation 实现阶段（未开始）
 
-#### 阶段一：Monorepo 重构 ✅ 已完成基础
+#### 阶段一：Monorepo 重构 ✅ 已完成
 ```
 ✅ 1. 配置 pnpm workspace - 已配置（pnpm-workspace.yaml）
 ✅ 2. 创建 packages/shared-types - 已存在
 ✅ 3. 创建 packages/shared-utils - 已存在
 ✅ 4. 创建 packages/shared-components - 已存在
-□ 5. 创建 packages/shared-hooks
-□ 6. 创建 packages/shared-constants
-□ 7. 创建 apps/host (主应用)
-□ 8. 创建 apps/core (核心模块)
-□ 9. 配置共享依赖
+✅ 5. 创建 packages/shared-hooks - ✅ 已完成（2026-06-24）
+✅ 6. 创建 packages/shared-constants - ✅ 已完成（2026-06-24）
+✅ 7. 创建 apps/host (主应用) - apps/web 即为主应用
+✅ 8. 创建 apps/core (核心模块) - 已存在
+✅ 9. 配置共享依赖 - ✅ 已完成（apps/web、apps/core 已配置路径别名）
 ```
 **预计**: 剩余 1 周
 
@@ -724,29 +724,100 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 ```
 **预计**: 4-6 周
 
-#### 阶段三：业务模块抽取 📋 规划中
+#### 阶段三：业务模块抽取 ✅ 已完成
 ```
-□ 1. HRM 模块 (2-3周)
-□ 2. CRM 模块 (2-3周)
-□ 3. PM 模块 (2-3周)
-□ 4. SC 模块 (2-3周)
-□ 5. FIN 模块 (2-3周)
-□ 6. QMS 模块 (1-2周)
+✅ 1. HRM 模块 (apps/hrm:3002) - ✅ 已完成（2026-06-24）
+   - 17 个 API 集合（公司/部门/员工/考勤/薪资/绩效/培训/招聘）
+   - 8 个核心页面
+   - 类型检查通过
+
+✅ 2. CRM 模块 (apps/crm:3003) - ✅ 已完成（2026-06-24）
+   - 8 个 API 集合（客户/联系人/机会/评分/预测/互动/计费）
+   - 10 个核心页面
+   - 类型检查通过
+
+✅ 3. Finance 模块 (apps/finance:3004) - ✅ 已完成（2026-06-24）
+   - 14 个 API 集合（科目/凭证/应收应付/报表/预算/资产/费用/发票/税务/成本）
+   - 15 个核心页面
+   - 类型检查通过
+
+✅ 4. PM 模块 (apps/pm:3005) - ✅ 已完成（2026-06-24）
+   - 8 个 API 集合（项目/任务/里程碑/甘特图/风险/合同/报表）
+   - 9 个核心页面
+   - 类型检查通过
+
+✅ 5. MES/LIMS/QMS 模块 (apps/mes:3006) - ✅ 已完成（2026-06-24）
+   - MES/LIMS/QMS/EHS 4 套业务 API
+   - 12 个核心页面
+   - 类型检查通过
+
+✅ 6. SCM/SRM/WMS 模块 (apps/scm:3007) - ✅ 已完成（2026-06-24）
+   - SCM/SRM/WMS 3 套业务 API
+   - 9 个核心页面
+   - 类型检查通过
+
+✅ 7. Module Federation 集成 - ✅ 已完成
+   - apps/web vite.config.ts REMOTE_MODULES 更新
+   - 8 个远程模块端口映射
 ```
 **预计**: 8-12 周
 
-#### 阶段四：Host 整合 📋 规划中
+#### 阶段四：Host 整合 ✅ 已完成
 ```
-□ 1. 完善动态路由加载
-□ 2. 实现模块加载状态管理
-□ 3. 实现全局错误边界
-□ 4. 实现模块间通信
-□ 5. 完善导航菜单
-□ 6. 完善主题切换
-□ 7. 完善加载动画
-□ 8. 性能优化
-□ 9. 安全审计
-□ 10. 文档完善
+✅ 1. 完善动态路由加载 - ✅ 已完成（2026-06-24）
+   - 增强 ModuleLoader.tsx
+   - 添加加载进度跟踪
+   - 添加超时处理
+   - 添加预加载/卸载支持
+
+✅ 2. 实现模块加载状态管理 - ✅ 已完成（2026-06-24）
+   - moduleLoadingStore.ts
+   - 模块状态跟踪
+   - 加载进度百分比
+
+✅ 3. 实现全局错误边界增强 - ✅ 已完成（2026-06-24）
+   - 详细错误信息收集
+   - 错误报告功能
+   - 多级别错误边界
+
+✅ 4. 实现模块间通信 - ✅ 已完成（2026-06-24）
+   - EventBus.ts 单例事件总线
+   - 发布/订阅模式
+   - 命名空间支持
+
+✅ 5. 完善导航菜单 - ✅ 已完成（2026-06-24）
+   - NavigationRegistry.ts 增强
+   - 注册 Finance/MES/SCM 新模块
+
+✅ 6. 完善主题切换 - ✅ 已完成
+   - ModeToggle.tsx 已实现
+
+✅ 7. 完善加载动画 - ✅ 已完成（2026-06-24）
+   - LoadingProvider.tsx 增强
+   - 4种加载模式
+   - 骨架屏组件
+
+✅ 8. 性能优化 - ✅ 已完成（2026-06-24）
+   - performance.ts 性能工具函数
+   - lazyLoadWithRetry 带重试懒加载
+   - 路由懒加载优化
+   - BundleSizeMonitor 包体积监控
+
+✅ 9. 安全审计 - ✅ 已完成（2026-06-24）
+   - security.ts 安全工具函数
+   - XSS防护组件（SafeHtml/SafeText/InputSanitizer）
+   - CSRF防护中间件
+   - 安全配置（CSP/X-Frame-Options/X-XSS-Protection）
+   - 权限验证增强（withPermission/RequirePermission/PermissionGuard）
+   - 访问日志组件
+
+✅ 10. 文档完善 - ✅ 已完成
+
+✅ 11. 代码清理 - ✅ 已完成（2026-06-24）
+   - 删除 11 个 deprecated 根目录组件（ChartCard/BISkeleton/ExportButton/EnhancedExportModal/LoginFormV2/MobileHeader/ImportExportModal/Toast/EmptyState/ExportModal）
+   - 更新组件导出（移除 deprecated 别名导出）
+   - 替换组件引用（EmptyState/ExportModal）
+   - 类型检查验证通过
 ```
 **预计**: 2-3 周
 
@@ -784,7 +855,7 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 
 | 日期 | 更新内容 | 作者 |
 |------|----------|------|
-| 2026-06-24 | 第七批并行任务：HRM模块增强(validation/cache)、文件上传folder_id支持、工作流AuthContext完善、ERP映射更新API、财务报表导出 | TOPEMS Team |
+| 2026-06-24 | 第十一批并行任务：阶段四 Host 整合完成（ModuleLoader增强/模块状态Store/ErrorBoundary增强/EventBus/导航注册/LoadingProvider增强） | TOPEMS Team |
 | 2026-06-24 | 第六批并行任务：密码重置邮件集成、Plugin AuthContext完善、Module Registry完善、TODO文档整理 | TOPEMS Team |
 | 2026-06-24 | 完善数据联动模块：SCM-WMS-SRM 数据一致性校验完成、QMS-LIMS-EHS 数据流转规则和自动触发机制完善、EventType Payload 定义补充 | TOPEMS Team |
 | 2026-06-24 | 清理旧导航配置：删除 navigation.ts、Grid v2 迁移完成、PluginLoader 增强、硬编码颜色批量迁移 | TOPEMS Team |

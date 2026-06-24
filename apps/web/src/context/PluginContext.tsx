@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Plugin, TenantInstalledPlugin } from '@/api/plugin';
 import { PLUGIN_REGISTRY, checkAllPluginsHealth, pluginApi } from '@/api/plugin';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface PluginContextType {
   installedPlugins: TenantInstalledPlugin[];
@@ -41,6 +42,7 @@ interface PluginProviderProps {
 }
 
 export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [installedPlugins, setInstalledPlugins] = useState<TenantInstalledPlugin[]>([]);
   const [pluginHealth, setPluginHealth] = useState<
     Record<string, { healthy: boolean; status?: string; latency?: number }>
@@ -51,22 +53,30 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const fetchPlugins = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [healthRes, installedRes] = await Promise.all([
-        checkAllPluginsHealth(),
-        pluginApi.listInstalled(),
-      ]);
+      const promises: Promise<any>[] = [checkAllPluginsHealth()];
+
+      if (isAuthenticated) {
+        promises.push(pluginApi.listInstalled());
+      }
+
+      const [healthRes, installedRes] = await Promise.all(promises);
 
       setPluginHealth(healthRes);
 
-      if (installedRes.success && installedRes.data) {
+      if (isAuthenticated && installedRes?.success && installedRes?.data) {
         setInstalledPlugins(installedRes.data);
       }
     } catch (error: unknown) {
-      console.error('Failed to fetch plugins:', error);
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        console.debug('Plugin fetch skipped: not authenticated');
+      } else {
+        console.error('Failed to fetch plugins:', error);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchPlugins();

@@ -6477,6 +6477,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@topems/shared-constants@npm:^1.0.0, @topems/shared-constants@workspace:*, @topems/shared-constants@workspace:packages/shared-constants":
+  version: 0.0.0-use.local
+  resolution: "@topems/shared-constants@workspace:packages/shared-constants"
+  dependencies:
+    typescript: "npm:^6.0.3"
+  languageName: unknown
+  linkType: soft
+
+"@topems/shared-hooks@npm:^1.0.0, @topems/shared-hooks@workspace:*, @topems/shared-hooks@workspace:packages/shared-hooks":
+  version: 0.0.0-use.local
+  resolution: "@topems/shared-hooks@workspace:packages/shared-hooks"
+  dependencies:
+    "@types/react": "npm:^19.2.3"
+    typescript: "npm:^6.0.3"
+  peerDependencies:
+    axios: ^1.6.0
+    react: ^18.0.0 || ^19.0.0
+  languageName: unknown
+  linkType: soft
+
 "@topems/shared-types@npm:^1.0.0, @topems/shared-types@workspace:*, @topems/shared-types@workspace:packages/shared-types":
   version: 0.0.0-use.local
   resolution: "@topems/shared-types@workspace:packages/shared-types"
@@ -6485,7 +6505,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@topems/shared-utils@npm:^1.0.0, @topems/shared-utils@workspace:packages/shared-utils":
+"@topems/shared-utils@npm:^1.0.0, @topems/shared-utils@workspace:*, @topems/shared-utils@workspace:packages/shared-utils":
   version: 0.0.0-use.local
   resolution: "@topems/shared-utils@workspace:packages/shared-utils"
   dependencies:
@@ -6734,6 +6754,15 @@ __metadata:
   version: 0.0.9
   resolution: "@types/doctrine@npm:0.0.9"
   checksum: 10/64ef06e6eea2f4f9684d259fedbcb8bf21c954630b96ea2e04875ca42763552b0ba3b01b3dd27ec0f9ea6f8b3b0dba4965d31d5a925cd4c6225fd13a93ae9354
+  languageName: node
+  linkType: hard
+
+"@types/dompurify@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "@types/dompurify@npm:3.2.0"
+  dependencies:
+    dompurify: "npm:*"
+  checksum: 10/0194dd9024e76e856f3373e8b080c7a5ac9910543ac1ee85db45277efbbea820b2f27fe22c8a6f02bb51833e0a8540d732be0d11d156efd16cb0b97f88e41ebf
   languageName: node
   linkType: hard
 
@@ -7074,7 +7103,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/trusted-types@npm:^2.0.2":
+"@types/trusted-types@npm:^2.0.2, @types/trusted-types@npm:^2.0.7":
   version: 2.0.7
   resolution: "@types/trusted-types@npm:2.0.7"
   checksum: 10/8e4202766a65877efcf5d5a41b7dd458480b36195e580a3b1085ad21e948bc417d55d6f8af1fd2a7ad008015d4117d5fdfe432731157da3c68678487174e4ba3
@@ -10267,6 +10296,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dompurify@npm:*, dompurify@npm:^3.4.11":
+  version: 3.4.11
+  resolution: "dompurify@npm:3.4.11"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.7"
+  dependenciesMeta:
+    "@types/trusted-types":
+      optional: true
+  checksum: 10/d0473e1a22ed9cc23d86ef426717bce866913d1a725512a9478985bd917b272e0faba5f1d6ad8b2e37f3f4219206c4385162d7c984cfedcd23396e1e6ae0bc5e
+  languageName: node
+  linkType: hard
+
 "dot-prop@npm:^5.2.0":
   version: 5.3.0
   resolution: "dot-prop@npm:5.3.0"
@@ -11166,7 +11207,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eventemitter3@npm:^5.0.1":
+"eventemitter3@npm:^5.0.1, eventemitter3@npm:^5.0.4":
   version: 5.0.4
   resolution: "eventemitter3@npm:5.0.4"
   checksum: 10/54f5c8c543650d65f92d03dbef1bb73a682a920490c44699ad8f863a6b19bbca42fb7409aa09ca09cb98a44149d9a7bc1dffd55ca88a740bd928c7be0ad666a0
@@ -20529,6 +20570,8 @@ __metadata:
     "@mui/icons-material": "npm:^6.5.0"
     "@mui/material": "npm:^6.5.0"
     "@mui/x-tree-view": "npm:^9.4.0"
+    "@topems/shared-constants": "npm:^1.0.0"
+    "@topems/shared-hooks": "npm:^1.0.0"
     "@topems/shared-types": "npm:^1.0.0"
     "@topems/shared-utils": "npm:^1.0.0"
     "@types/node": "npm:^20.0.0"
@@ -20648,7 +20691,11 @@ __metadata:
     "@testing-library/jest-dom": "npm:^6.9.1"
     "@testing-library/react": "npm:^16.3.2"
     "@testing-library/user-event": "npm:^14.5.0"
+    "@topems/shared-constants": "workspace:*"
+    "@topems/shared-hooks": "workspace:*"
     "@topems/shared-types": "workspace:*"
+    "@topems/shared-utils": "workspace:*"
+    "@types/dompurify": "npm:^3.2.0"
     "@types/jest": "npm:^29.5.14"
     "@types/leaflet": "npm:^1.9.21"
     "@types/node": "npm:^25.9.2"
@@ -20668,6 +20715,7 @@ __metadata:
     date-fns: "npm:^4.3.0"
     dayjs: "npm:^1.11.21"
     docx-preview: "npm:^0.3.7"
+    dompurify: "npm:^3.4.11"
     es-toolkit: "npm:^1.47.1"
     eslint: "npm:^10.5.0"
     eslint-config-prettier: "npm:^10.1.8"
@@ -20675,6 +20723,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.1"
     eslint-plugin-react-hooks: "npm:^5.2.0"
     eslint-plugin-storybook: "npm:^10.4.6"
+    eventemitter3: "npm:^5.0.4"
     faker: "npm:^5.5.3"
     framer-motion: "npm:^12.40.0"
     globals: "npm:^17.6.0"
@@ -20722,6 +20771,192 @@ __metadata:
   dependencies:
     "@react-leaflet/core": "npm:^3.0.0"
     react-leaflet: "npm:^5.0.0"
+  languageName: unknown
+  linkType: soft
+
+"topems_crm@workspace:apps/crm":
+  version: 0.0.0-use.local
+  resolution: "topems_crm@workspace:apps/crm"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@module-federation/vite": "npm:^1.16.8"
+    "@mui/icons-material": "npm:^6.5.0"
+    "@mui/material": "npm:^6.5.0"
+    "@topems/shared-constants": "npm:^1.0.0"
+    "@topems/shared-hooks": "npm:^1.0.0"
+    "@topems/shared-types": "npm:^1.0.0"
+    "@topems/shared-utils": "npm:^1.0.0"
+    "@types/node": "npm:^20.0.0"
+    "@types/react": "npm:^19.2.3"
+    "@types/react-dom": "npm:^19.2.3"
+    "@vitejs/plugin-react": "npm:^4.0.0"
+    axios: "npm:^1.6.8"
+    dayjs: "npm:^1.11.21"
+    i18next: "npm:^26.3.1"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    react-router-dom: "npm:^7.17.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.0.0"
+    vite: "npm:^5.4.0"
+    zod: "npm:^4.4.3"
+    zustand: "npm:^5.0.14"
+  languageName: unknown
+  linkType: soft
+
+"topems_finance@workspace:apps/finance":
+  version: 0.0.0-use.local
+  resolution: "topems_finance@workspace:apps/finance"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@module-federation/vite": "npm:^1.16.8"
+    "@mui/icons-material": "npm:^6.5.0"
+    "@mui/material": "npm:^6.5.0"
+    "@topems/shared-constants": "npm:^1.0.0"
+    "@topems/shared-hooks": "npm:^1.0.0"
+    "@topems/shared-types": "npm:^1.0.0"
+    "@topems/shared-utils": "npm:^1.0.0"
+    "@types/node": "npm:^20.0.0"
+    "@types/react": "npm:^19.2.3"
+    "@types/react-dom": "npm:^19.2.3"
+    "@vitejs/plugin-react": "npm:^4.0.0"
+    axios: "npm:^1.6.8"
+    dayjs: "npm:^1.11.21"
+    i18next: "npm:^26.3.1"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    react-router-dom: "npm:^7.17.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.0.0"
+    vite: "npm:^5.4.0"
+    zod: "npm:^4.4.3"
+    zustand: "npm:^5.0.14"
+  languageName: unknown
+  linkType: soft
+
+"topems_hrm@workspace:apps/hrm":
+  version: 0.0.0-use.local
+  resolution: "topems_hrm@workspace:apps/hrm"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@module-federation/vite": "npm:^1.16.8"
+    "@mui/icons-material": "npm:^6.5.0"
+    "@mui/material": "npm:^6.5.0"
+    "@topems/shared-constants": "npm:^1.0.0"
+    "@topems/shared-hooks": "npm:^1.0.0"
+    "@topems/shared-types": "npm:^1.0.0"
+    "@topems/shared-utils": "npm:^1.0.0"
+    "@types/node": "npm:^20.0.0"
+    "@types/react": "npm:^19.2.3"
+    "@types/react-dom": "npm:^19.2.3"
+    "@vitejs/plugin-react": "npm:^4.0.0"
+    axios: "npm:^1.6.8"
+    dayjs: "npm:^1.11.21"
+    i18next: "npm:^26.3.1"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    react-router-dom: "npm:^7.17.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.0.0"
+    vite: "npm:^5.4.0"
+    zod: "npm:^4.4.3"
+    zustand: "npm:^5.0.14"
+  languageName: unknown
+  linkType: soft
+
+"topems_mes@workspace:apps/mes":
+  version: 0.0.0-use.local
+  resolution: "topems_mes@workspace:apps/mes"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@module-federation/vite": "npm:^1.16.8"
+    "@mui/icons-material": "npm:^6.5.0"
+    "@mui/material": "npm:^6.5.0"
+    "@topems/shared-constants": "npm:^1.0.0"
+    "@topems/shared-hooks": "npm:^1.0.0"
+    "@topems/shared-types": "npm:^1.0.0"
+    "@topems/shared-utils": "npm:^1.0.0"
+    "@types/node": "npm:^20.0.0"
+    "@types/react": "npm:^19.2.3"
+    "@types/react-dom": "npm:^19.2.3"
+    "@vitejs/plugin-react": "npm:^4.0.0"
+    axios: "npm:^1.6.8"
+    dayjs: "npm:^1.11.21"
+    i18next: "npm:^26.3.1"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    react-router-dom: "npm:^7.17.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.0.0"
+    vite: "npm:^5.4.0"
+    zod: "npm:^4.4.3"
+    zustand: "npm:^5.0.14"
+  languageName: unknown
+  linkType: soft
+
+"topems_pm@workspace:apps/pm":
+  version: 0.0.0-use.local
+  resolution: "topems_pm@workspace:apps/pm"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@module-federation/vite": "npm:^1.16.8"
+    "@mui/icons-material": "npm:^6.5.0"
+    "@mui/material": "npm:^6.5.0"
+    "@topems/shared-constants": "npm:^1.0.0"
+    "@topems/shared-hooks": "npm:^1.0.0"
+    "@topems/shared-types": "npm:^1.0.0"
+    "@topems/shared-utils": "npm:^1.0.0"
+    "@types/node": "npm:^20.0.0"
+    "@types/react": "npm:^19.2.3"
+    "@types/react-dom": "npm:^19.2.3"
+    "@vitejs/plugin-react": "npm:^4.0.0"
+    axios: "npm:^1.6.8"
+    dayjs: "npm:^1.11.21"
+    i18next: "npm:^26.3.1"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    react-router-dom: "npm:^7.17.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.0.0"
+    vite: "npm:^5.4.0"
+    zod: "npm:^4.4.3"
+    zustand: "npm:^5.0.14"
+  languageName: unknown
+  linkType: soft
+
+"topems_scm@workspace:apps/scm":
+  version: 0.0.0-use.local
+  resolution: "topems_scm@workspace:apps/scm"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@module-federation/vite": "npm:^1.16.8"
+    "@mui/icons-material": "npm:^6.5.0"
+    "@mui/material": "npm:^6.5.0"
+    "@topems/shared-constants": "npm:^1.0.0"
+    "@topems/shared-hooks": "npm:^1.0.0"
+    "@topems/shared-types": "npm:^1.0.0"
+    "@topems/shared-utils": "npm:^1.0.0"
+    "@types/node": "npm:^20.0.0"
+    "@types/react": "npm:^19.2.3"
+    "@types/react-dom": "npm:^19.2.3"
+    "@vitejs/plugin-react": "npm:^4.0.0"
+    axios: "npm:^1.6.8"
+    dayjs: "npm:^1.11.21"
+    i18next: "npm:^26.3.1"
+    react: "npm:^19.0.0"
+    react-dom: "npm:^19.0.0"
+    react-router-dom: "npm:^7.17.0"
+    terser: "npm:^5.31.0"
+    typescript: "npm:^5.0.0"
+    vite: "npm:^5.4.0"
+    zod: "npm:^4.4.3"
+    zustand: "npm:^5.0.14"
   languageName: unknown
   linkType: soft
 

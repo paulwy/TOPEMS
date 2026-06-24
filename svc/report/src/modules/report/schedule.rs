@@ -331,7 +331,7 @@ pub async fn execute_schedule(
 ) -> Json<serde_json::Value> {
     info!("Executing schedule: {}", id);
     
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"

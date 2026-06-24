@@ -8,6 +8,21 @@ export * from '../utils/date';
 export * from '../utils/string';
 export * from '../utils/validator';
 
+// ============ EventBus 事件总线 ============
+export {
+  eventBus,
+  EventTypes,
+  createNamespaceEventBus,
+  default,
+} from '../lib/EventBus';
+export type {
+  PresetEventName,
+  WildcardEventName,
+  EventName,
+  Subscription,
+  ModuleEventData,
+} from '../lib/EventBus';
+
 export * from '../hooks/useCommonHooks';
 export * from '../hooks/useApiHooks';
 export * from '../hooks/useUiState';

@@ -47,6 +47,7 @@ import {
   useUpdateSupplierMapping,
 } from '@/hooks/useExternalErp';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
+import { AccountMappingDirection } from '@/types/external-erp';
 
 // 映射类型配置
 const MAPPING_TYPE_CONFIG = {
@@ -115,7 +116,14 @@ export default function ExternalErpMappingPage() {
   const [editingMapping, setEditingMapping] = useState<any>(null);
 
   // 编辑表单状态
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<{
+    local_code: string;
+    local_name: string;
+    external_code: string;
+    external_name: string;
+    direction: AccountMappingDirection;
+    is_active: boolean;
+  }>({
     local_code: '',
     local_name: '',
     external_code: '',

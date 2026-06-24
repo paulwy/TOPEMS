@@ -1,10 +1,11 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::ApiState;
@@ -349,7 +350,7 @@ async fn delete_order(
     response
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ApprovalRequest {
     pub approver_id: Option<Uuid>,
     pub approver_name: Option<String>,
@@ -385,7 +386,7 @@ async fn approve_order(
         return Json(api_error(400, &format!("采购订单当前状态为{}，无法审批", existing.status)));
     }
 
-    let approver_name = req.approver_name.or(Some(claims.username.clone()));
+    let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
     let new_remarks = match (existing.remarks.clone(), req.remarks.clone()) {
         (Some(old), Some(new)) => Some(format!("{} | 审批通过 ({}): {}", old, approver_name.clone().unwrap_or_default(), new)),
         (Some(old), None) => Some(format!("{} | 审批通过 ({})", old, approver_name.clone().unwrap_or_default())),
@@ -480,7 +481,7 @@ async fn reject_order(
         return Json(api_error(400, &format!("采购订单当前状态为{}，无法驳回", existing.status)));
     }
 
-    let approver_name = req.approver_name.or(Some(claims.username.clone()));
+    let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
     let reject_reason = req.remarks.clone().unwrap_or_default();
     let new_remarks = match existing.remarks.clone() {
         Some(old) => Some(format!("{} | 审批驳回 ({}): {}", old, approver_name.clone().unwrap_or_default(), reject_reason)),

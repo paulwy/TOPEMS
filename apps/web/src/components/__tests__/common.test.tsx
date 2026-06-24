@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { LoadingSpinner } from '../LoadingSpinner';
-import { EmptyState } from '../EmptyState';
+import { EmptyState } from '../mui/EmptyState';
 
 // 增加测试超时时间
 vi.setConfig({ testTimeout: 30000 });

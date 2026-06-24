@@ -1,14 +1,12 @@
 //! Permission checking middleware
 
 use axum::{
-    extract::State,
     middleware::Next,
     response::Response,
 };
 use topems_shared::ApiResponse;
 
 pub async fn check_permission(
-    State(state): State<crate::AppState>,
     req: axum::http::Request<axum::body::Body>,
     next: Next,
 ) -> Result<Response, axum::Json<ApiResponse<()>>> {

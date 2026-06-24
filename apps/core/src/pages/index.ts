@@ -1,3 +1,11 @@
 export { UserManagement } from './UserManagement';
 export { RoleManagement } from './RoleManagement';
+export { PermissionManagement } from './PermissionManagement';
 export { OrgChart } from './OrgChart';
+export { FlowDesignerPage } from './FlowDesignerPage';
+export { FlowMonitorPage } from './FlowMonitorPage';
+export { FlowTemplatePage } from './FlowTemplatePage';
+export { DocumentCenterPage } from './DocumentCenterPage';
+export { NotificationCenterPage } from './NotificationCenterPage';
+export { ReportListPage } from './ReportListPage';
+export { ReportViewerPage } from './ReportViewerPage';

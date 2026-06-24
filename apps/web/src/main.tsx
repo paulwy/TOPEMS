@@ -3,11 +3,13 @@ import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './index.css';
-import './i18n'; // 初始化 i18next
+import './i18n';
 import { createPermissionInterceptor } from './api/permissionInterceptor';
 import { queryClient } from './lib/react-query';
 import { logger } from '@/utils/logger';
+import { applySecurityHeaders } from '@/config/security';
 
+applySecurityHeaders();
 createPermissionInterceptor();
 
 window.addEventListener('permission-denied', (event: Event) => {

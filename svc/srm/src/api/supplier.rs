@@ -17,7 +17,6 @@ use crate::models::{
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
-use topems_shared::database::{analyze_query, QueryLogger};
 
 #[derive(Debug, Deserialize)]
 pub struct ListQueryParams {
@@ -118,20 +117,6 @@ async fn list_suppliers(
         sort_field, order_clause
     );
 
-    // 分析查询性能
-    let query_analysis = analyze_query(&query);
-    if query_analysis.needs_optimization() {
-        tracing::warn!(
-            query = %query,
-            score = query_analysis.score,
-            issues = ?query_analysis.issues,
-            "⚠️ 查询需要优化"
-        );
-    }
-
-    // 记录查询执行时间
-    let query_logger = QueryLogger::new(&query);
-
     let result = sqlx::query_as::<_, Supplier>(&query)
         .bind(&search_pattern)
         .bind(&status_filter)
@@ -143,8 +128,6 @@ async fn list_suppliers(
 
     match result {
         Ok(suppliers) => {
-            query_logger.finish(Some(suppliers.len() as u64));
-
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.suppliers
@@ -154,7 +137,6 @@ async fn list_suppliers(
                 "#,
             );
 
-            let count_logger = QueryLogger::new(&count_query);
             let count_result = sqlx::query_scalar::<_, i64>(&count_query)
                 .bind(&search_pattern)
                 .bind(&status_filter)
@@ -162,7 +144,6 @@ async fn list_suppliers(
                 .fetch_one(&state.db)
                 .await;
 
-            count_logger.finish(Some(1));
             let total = count_result.unwrap_or(0);
 
             Json(ApiResponse::success(

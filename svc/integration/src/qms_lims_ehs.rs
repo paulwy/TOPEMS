@@ -19,7 +19,7 @@ pub async fn handle_qms_inspection_completed(
     let _ = sqlx::query(
         "INSERT INTO qa_lab_samples (sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (sample_no) DO UPDATE SET updated_at = NOW()"
     )
-    .bind(sample_no)
+    .bind(&sample_no)
     .bind(payload.product_name.as_deref().unwrap_or("未知产品"))
     .bind("产品检验样品")
     .bind("QMS同步")
@@ -32,7 +32,7 @@ pub async fn handle_qms_inspection_completed(
         "INSERT INTO qa_lab_tasks (task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (task_no) DO UPDATE SET updated_at = NOW()"
     )
     .bind(task_no)
-    .bind(sample_no)
+    .bind(&sample_no)
     .bind(serde_json::json!(["外观检查", "尺寸测量", "性能测试"]))
     .bind("pending")
     .bind("normal")
@@ -197,7 +197,7 @@ pub async fn handle_lims_record_completed(
     )
     .bind(payload.conclusion.clone())
     .bind(payload.test_data.clone())
-    .bind(payload.conclusion)
+    .bind(&payload.conclusion)
     .bind(payload.related_inspection_no.as_deref().unwrap_or(""))
     .execute(pool)
     .await;

@@ -197,7 +197,7 @@ pub async fn create_subscription(
         "#,
         id,
         req.template_id,
-        req.user_id.to_string(),
+        req.user_id,
         req.email,
         req.frequency.to_string(),
         true,

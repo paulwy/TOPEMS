@@ -188,10 +188,12 @@ async fn main() {
         .route("/api/core/iam/users", get(modules::iam::user::list_users))
         .route("/api/core/iam/users/{id}", get(modules::iam::user::get_user))
         .route("/api/core/iam/users/me", get(modules::iam::user::get_current_user))
+        .route("/api/core/iam/users/me/preferences", get(modules::iam::user::get_preferences))
         // IAM API v1 compatibility
         .route("/api/iam/users", get(modules::iam::user::list_users))
         .route("/api/iam/users/{id}", get(modules::iam::user::get_user))
         .route("/api/iam/users/me", get(modules::iam::user::get_current_user))
+        .route("/api/iam/users/me/preferences", get(modules::iam::user::get_preferences))
         .route("/api/core/iam/roles", get(modules::iam::role::list_roles))
         .route("/api/core/iam/roles/{id}", get(modules::iam::role::get_role))
         // IAM API v1 compatibility
@@ -209,9 +211,11 @@ async fn main() {
         .route("/api/core/iam/users/{id}/disable", post(modules::iam::user::disable_user))
         .route("/api/core/iam/users/{id}/enable", post(modules::iam::user::enable_user))
         .route("/api/core/iam/users/{id}/password", put(modules::iam::user::change_password))
+        .route("/api/core/iam/users/me/preferences", put(modules::iam::user::update_preferences))
         // IAM API v1 compatibility
         .route("/api/iam/users", post(modules::iam::user::create_user))
         .route("/api/iam/users/{id}", put(modules::iam::user::update_user))
+        .route("/api/iam/users/me/preferences", put(modules::iam::user::update_preferences))
         .route("/api/core/iam/roles", post(modules::iam::role::create_role))
         .route("/api/core/iam/roles/{id}", put(modules::iam::role::update_role))
         .route("/api/core/iam/user-permissions/{user_id}", put(modules::iam::user_permission::update_user_permissions))

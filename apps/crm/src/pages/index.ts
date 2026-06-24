@@ -1,0 +1,10 @@
+export { DashboardPage } from './DashboardPage';
+export { CustomerManagementPage } from './CustomerManagementPage';
+export { CustomerDetailPage } from './CustomerDetailPage';
+export { ContactManagementPage } from './ContactManagementPage';
+export { OpportunityManagementPage } from './OpportunityManagementPage';
+export { OpportunityDetailPage } from './OpportunityDetailPage';
+export { CustomerScoringPage } from './CustomerScoringPage';
+export { SalesForecastPage } from './SalesForecastPage';
+export { InteractionManagementPage } from './InteractionManagementPage';
+export { BillingPage } from './BillingPage';

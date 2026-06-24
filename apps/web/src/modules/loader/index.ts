@@ -1,4 +1,5 @@
 export { ModuleLoader, ModuleLoadingFallback, ModuleErrorFallback } from './ModuleLoader';
+export { ModuleLoadingProgress, ModuleLoadingOverlay } from './ModuleLoadingProgress';
 export {
   PluginLoader,
   PluginRouteWrapper,
@@ -13,3 +14,5 @@ export {
   loadPluginFromManifest,
 } from './DynamicRouter';
 export { eventBus, ModuleEvents } from './EventBus';
+export { useModuleLoadingStore } from '@/store/moduleLoadingStore';
+export type { ModuleLoadingState, ModuleStatus } from '@/store/moduleLoadingStore';

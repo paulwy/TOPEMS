@@ -4,6 +4,14 @@ export interface ModulePermission {
   code: string;
   name: string;
   description?: string;
+  group?: string;
+}
+
+export interface PermissionGroup {
+  id: string;
+  name: string;
+  description: string;
+  modules: ModuleCode[];
 }
 
 export type PermissionAction = 'read' | 'write' | 'delete' | 'approve' | 'admin';
@@ -45,6 +53,39 @@ export const ACTIONS: { action: PermissionAction; name: string; level: number }[
   { action: 'approve', name: '审批', level: 3 },
   { action: 'admin', name: '管理', level: 4 },
 ];
+
+export const PERMISSION_GROUPS: Record<string, PermissionGroup> = {
+  core: {
+    id: 'core',
+    name: '核心模块',
+    description: '系统核心功能模块',
+    modules: ['iam'],
+  },
+  business: {
+    id: 'business',
+    name: '业务模块',
+    description: '核心业务管理模块',
+    modules: ['hrm', 'erp', 'pm', 'rs', 'scm', 'crm'],
+  },
+  advanced: {
+    id: 'advanced',
+    name: '高级模块',
+    description: '高级功能模块',
+    modules: ['ai', 'gis', 'qms', 'ehs', 'mes', 'wms'],
+  },
+  infrastructure: {
+    id: 'infrastructure',
+    name: '基础设施',
+    description: '系统基础设施模块',
+    modules: ['doc', 'file', 'notification', 'im', 'integration'],
+  },
+  system: {
+    id: 'system',
+    name: '系统管理',
+    description: '系统配置与管理',
+    modules: ['system', 'workflow'],
+  },
+};
 
 export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> = {
   [MODULES.IAM]: {
@@ -194,6 +235,38 @@ export const PERMISSIONS: Record<ModuleCode, Record<PermissionAction, string>> =
   },
 };
 
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  ADMIN: ['all'],
+  MANAGER: [
+    ...Object.values(PERMISSIONS.hrm),
+    ...Object.values(PERMISSIONS.pm),
+    ...Object.values(PERMISSIONS.rs),
+    ...Object.values(PERMISSIONS.crm),
+    PERMISSIONS.doc.read,
+    PERMISSIONS.file.read,
+    PERMISSIONS.file.write,
+    PERMISSIONS.notification.read,
+    PERMISSIONS.im.read,
+    PERMISSIONS.workflow.read,
+    PERMISSIONS.workflow.approve,
+  ],
+  USER: [
+    PERMISSIONS.hrm.read,
+    PERMISSIONS.pm.read,
+    PERMISSIONS.rs.read,
+    ...Object.values(PERMISSIONS.doc),
+    ...Object.values(PERMISSIONS.file),
+    ...Object.values(PERMISSIONS.notification),
+    ...Object.values(PERMISSIONS.im),
+    PERMISSIONS.workflow.read,
+    PERMISSIONS.workflow.approve,
+  ],
+  GUEST: [
+    PERMISSIONS.doc.read,
+    PERMISSIONS.notification.read,
+  ],
+};
+
 export const MODULE_INFO: Record<ModuleCode, { name: string; description: string }> = {
   // 核心模块
   [MODULES.IAM]: { name: '身份管理', description: '用户、角色、权限管理' },
@@ -337,17 +410,98 @@ export const getAllPermissions = (): ModulePermission[] => {
   Object.entries(MODULE_INFO).forEach(([module, info]) => {
     ACTIONS.forEach((action) => {
       const code = `${module}:${action.action}`;
+      let group: string | undefined;
+      for (const [groupId, groupInfo] of Object.entries(PERMISSION_GROUPS)) {
+        if (groupInfo.modules.includes(module as ModuleCode)) {
+          group = groupId;
+          break;
+        }
+      }
       perms.push({
         module,
         action: action.action,
         code,
         name: `${info.name} - ${action.name}`,
         description: `${info.description}的${action.name}权限`,
+        group,
       });
     });
   });
 
   return perms;
+};
+
+export const getPermissionsByGroup = (groupId: string): ModulePermission[] => {
+  const group = PERMISSION_GROUPS[groupId];
+  if (!group) return [];
+
+  const perms: ModulePermission[] = [];
+  group.modules.forEach((module) => {
+    ACTIONS.forEach((action) => {
+      const code = `${module}:${action.action}`;
+      const info = MODULE_INFO[module];
+      perms.push({
+        module,
+        action: action.action,
+        code,
+        name: `${info.name} - ${action.name}`,
+        description: `${info.description}的${action.name}权限`,
+        group: groupId,
+      });
+    });
+  });
+
+  return perms;
+};
+
+export const getInheritedPermissions = (userPermissions: string[]): string[] => {
+  const inherited: string[] = [...userPermissions];
+
+  userPermissions.forEach((perm) => {
+    const parts = perm.split(':');
+    if (parts.length === 2) {
+      const [module, action] = parts;
+
+      const actionLevel = ACTIONS.find((a) => a.action === action)?.level || 0;
+      if (actionLevel > 0) {
+        ACTIONS.filter((a) => a.level < actionLevel).forEach((lowerAction) => {
+          const lowerPerm = `${module}:${lowerAction.action}`;
+          if (!inherited.includes(lowerPerm)) {
+            inherited.push(lowerPerm);
+          }
+        });
+      }
+
+      if (action === 'admin') {
+        const infrastructureModules = ['doc', 'file', 'notification', 'im', 'integration'];
+        if (module === 'iam') {
+          infrastructureModules.forEach((infraModule) => {
+            ACTIONS.forEach((a) => {
+              const infraPerm = `${infraModule}:${a.action}`;
+              if (!inherited.includes(infraPerm)) {
+                inherited.push(infraPerm);
+              }
+            });
+          });
+        }
+      }
+    }
+  });
+
+  return inherited;
+};
+
+export const hasPermissionWithInheritance = (userPermissions: string[], requiredPermission: string): boolean => {
+  const allPermissions = getInheritedPermissions(userPermissions);
+  return hasPermission(allPermissions, requiredPermission);
+};
+
+export const getRolePermissions = (roleName: string): string[] => {
+  return ROLE_PERMISSIONS[roleName] || [];
+};
+
+export const getPermissionsByRole = (roleName: string): string[] => {
+  return getRolePermissions(roleName);
 };
 
 export default PERMISSIONS;

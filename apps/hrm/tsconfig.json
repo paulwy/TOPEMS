@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@topems/shared-types": ["../../packages/shared-types/src"],
+      "@topems/shared-utils": ["../../packages/shared-utils/src"],
+      "@topems/shared-components": ["../../packages/shared-components/src"],
+      "@topems/shared-hooks": ["../../packages/shared-hooks/src"],
+      "@topems/shared-constants": ["../../packages/shared-constants/src"]
+    }
+  },
+  "include": ["src"]
+}
