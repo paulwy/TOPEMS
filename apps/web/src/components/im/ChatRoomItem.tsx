@@ -103,7 +103,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
           : chatRoom.is_pinned
             ? 'rgba(251, 191, 36, 0.1)'
             : undefined,
-        borderLeft: isActive ? '4px solid #4f46e5' : '4px solid transparent',
+        borderLeft: isActive ? '4px solid primary.main' : '4px solid transparent',
       }}
     >
       <div
@@ -115,8 +115,8 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
           gap: 4,
         }}
       >
-        {chatRoom.is_pinned && <Pin style={{ width: 12, height: 12, color: '#f59e0b' }} />}
-        {chatRoom.is_muted && <BellOff style={{ width: 12, height: 12, color: '#9ca3af' }} />}
+        {chatRoom.is_pinned && <Pin style={{ width: 12, height: 12, color: 'warning.main' }} />}
+        {chatRoom.is_muted && <BellOff style={{ width: 12, height: 12, color: 'text.disabled' }} />}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -129,8 +129,8 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: isActive ? '#4f46e5' : '#e5e7eb',
-              color: isActive ? '#ffffff' : '#4b5563',
+              backgroundColor: isActive ? 'primary.main' : 'grey.200',
+              color: isActive ? 'white' : 'text.secondary',
             }}
           >
             {getRoomIcon()}
@@ -143,9 +143,9 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 right: -2,
                 width: 14,
                 height: 14,
-                backgroundColor: '#22c55e',
+                backgroundColor: 'success.dark',
                 borderRadius: '9999px',
-                border: '2px solid #ffffff',
+                border: '2px solid white',
               }}
             />
           )}
@@ -161,7 +161,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
             <h3
               style={{
                 fontWeight: 500,
-                color: '#111827',
+                color: 'text.primary',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -174,7 +174,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
               <span
                 style={{
                   fontSize: 12,
-                  color: '#6b7280',
+                  color: 'text.secondary',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
@@ -196,7 +196,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
             <p
               style={{
                 fontSize: 14,
-                color: '#6b7280',
+                color: 'text.secondary',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -210,7 +210,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 <span
                   style={{
                     fontSize: 12,
-                    color: '#9ca3af',
+                    color: 'text.disabled',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 4,
@@ -221,7 +221,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                       style={{
                         width: 6,
                         height: 6,
-                        backgroundColor: '#22c55e',
+                        backgroundColor: 'success.dark',
                         borderRadius: '9999px',
                       }}
                     />
@@ -233,7 +233,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                 <span
                   style={{
                     fontSize: 12,
-                    color: isOnline ? '#16a34a' : '#9ca3af',
+                    color: isOnline ? 'success.dark' : 'text.disabled',
                   }}
                 >
                   {isOnline ? '在线' : '离线'}
@@ -250,7 +250,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  <MoreVertical style={{ width: 16, height: 16, color: '#9ca3af' }} />
+                  <MoreVertical style={{ width: 16, height: 16, color: 'text.disabled' }} />
                 </button>
               )}
             </div>

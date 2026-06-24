@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Box,
+  Button,
   Typography,
   IconButton,
   Tooltip,
@@ -10,7 +11,6 @@ import {
   useMediaQuery,
   Link,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
 import { ArrowLeft, Search, Plus, ChevronRight } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { HelpButton } from '../common/HelpButton';
@@ -180,7 +180,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     style={{
                       width: 16,
                       height: 16,
-                      color: '#9ca3af',
+                      color: 'text.disabled',
                       marginLeft: 4,
                       marginRight: 4,
                     }}

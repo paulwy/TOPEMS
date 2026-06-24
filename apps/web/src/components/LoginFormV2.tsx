@@ -13,7 +13,7 @@ import {
   Checkbox,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -92,11 +92,12 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
         });
         navigate('/dashboard');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('登录错误:', error);
+      const err = error as { message?: string };
       addNotification({
         title: '错误',
-        message: error.message || '登录失败',
+        message: err.message || '登录失败',
         type: 'error',
       });
     } finally {

@@ -9,7 +9,11 @@ import { Box, Typography, Tabs, Tab, Paper } from '@mui/material';
 import { Settings, Mail, MessageSquare, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
-import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import type {
+  FormSection,
+  FormField,
+  FieldDependency,
+} from '@/components/templates/FormPageTemplate';
 
 // ============ Mock 数据 ============
 const mockSettings = {
@@ -258,7 +262,7 @@ export default function SystemSettingsPage() {
 
   // 计算字段依赖：enabled 字段控制其他字段的禁用状态
   const dependencies = useMemo(() => {
-    const deps: any[] = [];
+    const deps: FieldDependency[] = [];
 
     // 邮件设置依赖
     if (activeTab === 'mail') {
@@ -306,12 +310,13 @@ export default function SystemSettingsPage() {
   const sections = useMemo(() => getSections(activeTab), [activeTab]);
 
   const handleSubmit = useCallback(
-    async (data: any) => {
+    async (data: unknown) => {
+      const formData = data as Record<string, unknown>;
       setSettings((prev) => ({
         ...prev,
         [activeTab]: {
           ...prev[activeTab as keyof typeof prev],
-          ...data,
+          ...formData,
         },
       }));
       apiLogger.info('保存设置:', { tab: activeTab, data });

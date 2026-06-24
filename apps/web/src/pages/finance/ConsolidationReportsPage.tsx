@@ -51,7 +51,7 @@ import {
   Typography,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   useConsolidationReports,
   useConsolidationReport,
@@ -166,7 +166,7 @@ export default function ConsolidationReportsPage() {
       accessorKey: 'report_no',
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <GitMerge style={{ width: 16, height: 16, color: '#2563eb' }} />
+          <GitMerge style={{ width: 16, height: 16, color: 'primary.dark' }} />
           <Typography
             variant='body2'
             sx={{ fontFamily: 'monospace' }}
@@ -184,18 +184,18 @@ export default function ConsolidationReportsPage() {
         const reportType = row.getValue<string>('report_type');
         let IconComponent: React.ElementType = FileText;
         let name = reportType;
-        let color = '#4b5563';
+        let color = 'text.secondary';
 
         switch (reportType) {
           case 'consolidated_balance_sheet':
             IconComponent = Building2;
             name = '合并资产负债表';
-            color = '#2563eb';
+            color = 'primary.dark';
             break;
           case 'consolidated_income_statement':
             IconComponent = TrendingUp;
             name = '合并利润表';
-            color = '#16a34a';
+            color = 'success.dark';
             break;
           case 'consolidated_cash_flow':
             IconComponent = DollarSign;
@@ -210,7 +210,7 @@ export default function ConsolidationReportsPage() {
           case 'elimination_work_sheet':
             IconComponent = FileSpreadsheet;
             name = '抵消工作底稿';
-            color = '#4b5563';
+            color = 'text.secondary';
             break;
         }
 
@@ -380,7 +380,7 @@ export default function ConsolidationReportsPage() {
               size='small'
               onClick={() => approveReport.mutate(row.original.id)}
             >
-              <Check style={{ width: 16, height: 16, color: '#16a34a' }} />
+              <Check style={{ width: 16, height: 16, color: 'success.dark' }} />
             </IconButton>
           )}
           {row.original.approval_status === 'approved' && row.original.status === 'completed' && (
@@ -388,7 +388,7 @@ export default function ConsolidationReportsPage() {
               size='small'
               onClick={() => publishReport.mutate(row.original.id)}
             >
-              <Send style={{ width: 16, height: 16, color: '#2563eb' }} />
+              <Send style={{ width: 16, height: 16, color: 'primary.dark' }} />
             </IconButton>
           )}
           <IconButton size='small'>
@@ -464,7 +464,7 @@ export default function ConsolidationReportsPage() {
               gap: 1,
             }}
           >
-            <GitMerge style={{ width: 24, height: 24, color: '#2563eb' }} />
+            <GitMerge style={{ width: 24, height: 24, color: 'primary.dark' }} />
             合并报表
           </Typography>
           <Typography
@@ -582,7 +582,7 @@ export default function ConsolidationReportsPage() {
                     transform: 'translateY(-50%)',
                     width: 16,
                     height: 16,
-                    color: '#9ca3af',
+                    color: 'text.disabled',
                   }}
                 />
                 <TextField
@@ -626,7 +626,7 @@ export default function ConsolidationReportsPage() {
         <CardHeader
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FileSpreadsheet style={{ width: 20, height: 20, color: '#2563eb' }} />
+              <FileSpreadsheet style={{ width: 20, height: 20, color: 'primary.dark' }} />
               <Typography variant='subtitle1'>合并报表列表</Typography>
             </Box>
           }

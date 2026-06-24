@@ -7,7 +7,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Card,
   CardContent,
@@ -46,17 +46,17 @@ interface ProjectReportProps {
 
 const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
   const projectStatusData = [
-    { name: '草稿', value: stats.draft_projects, fill: '#6B7280' },
-    { name: '待审批', value: stats.pending_projects, fill: '#F59E0B' },
-    { name: '进行中', value: stats.active_projects, fill: '#3B82F6' },
-    { name: '已完成', value: stats.completed_projects, fill: '#10B981' },
-    { name: '已取消', value: stats.cancelled_projects, fill: '#EF4444' },
+    { name: '草稿', value: stats.draft_projects, fill: 'grey.500' },
+    { name: '待审批', value: stats.pending_projects, fill: 'warning.main' },
+    { name: '进行中', value: stats.active_projects, fill: 'primary.main' },
+    { name: '已完成', value: stats.completed_projects, fill: 'success.main' },
+    { name: '已取消', value: stats.cancelled_projects, fill: 'error.main' },
   ].filter((d) => d.value > 0);
 
   const riskData = [
-    { name: '高风险', value: stats.high_risk_projects, fill: '#EF4444' },
-    { name: '中风险', value: stats.medium_risk_projects, fill: '#F59E0B' },
-    { name: '低风险', value: stats.low_risk_projects, fill: '#10B981' },
+    { name: '高风险', value: stats.high_risk_projects, fill: 'error.main' },
+    { name: '中风险', value: stats.medium_risk_projects, fill: 'warning.main' },
+    { name: '低风险', value: stats.low_risk_projects, fill: 'success.main' },
   ].filter((d) => d.value > 0);
 
   const trendData = benefits.slice(0, 6).map((b, index) => ({
@@ -339,14 +339,14 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   type='monotone'
                   dataKey='cpi'
                   name='CPI'
-                  stroke='#3B82F6'
+                  stroke='primary.main'
                   strokeWidth={2}
                 />
                 <Line
                   type='monotone'
                   dataKey='spi'
                   name='SPI'
-                  stroke='#10B981'
+                  stroke='success.main'
                   strokeWidth={2}
                 />
               </LineChart>
@@ -484,8 +484,8 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   dataKey='value'
                   name='项目数'
                 >
-                  <Cell fill='#10B981' />
-                  <Cell fill='#EF4444' />
+                  <Cell fill='success.main' />
+                  <Cell fill='error.main' />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

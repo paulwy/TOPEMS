@@ -12,7 +12,7 @@ import {
   DialogActions,
   LinearProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   Opportunity,
@@ -89,7 +89,7 @@ const OpportunityManagementPage: React.FC = () => {
           total: response.data?.total || 0,
         }));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载商机列表失败:', error);
       addNotification({
         type: 'error',
@@ -107,7 +107,7 @@ const OpportunityManagementPage: React.FC = () => {
       if (response.success && response.data) {
         setFunnelData(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载销售漏斗数据失败:', error);
     }
   };
@@ -118,7 +118,7 @@ const OpportunityManagementPage: React.FC = () => {
       if (response.success && response.data) {
         setStats(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载商机统计数据失败:', error);
     }
   };
@@ -147,7 +147,7 @@ const OpportunityManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadOpportunities();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -167,7 +167,7 @@ const OpportunityManagementPage: React.FC = () => {
         message: '商机已删除',
       });
       loadOpportunities();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('删除失败:', error);
       addNotification({
         type: 'error',
@@ -448,12 +448,12 @@ const OpportunityManagementPage: React.FC = () => {
             {funnelData.map((item, index) => {
               const widthPercent = 100 - index * 10;
               const stageColors: Record<string, string> = {
-                prospecting: '#9CA3AF',
-                qualified: '#3B82F6',
+                prospecting: 'text.disabled',
+                qualified: 'primary.main',
                 proposal: '#8B5CF6',
-                negotiation: '#F59E0B',
-                closed_won: '#10B981',
-                closed_lost: '#EF4444',
+                negotiation: 'warning.main',
+                closed_won: 'success.main',
+                closed_lost: 'error.main',
               };
               return (
                 <Box
@@ -481,7 +481,7 @@ const OpportunityManagementPage: React.FC = () => {
                       <Box
                         sx={{
                           height: '100%',
-                          bgcolor: stageColors[item.stage] || '#6B7280',
+                          bgcolor: stageColors[item.stage] || 'grey.500',
                           width: `${widthPercent}%`,
                           display: 'flex',
                           alignItems: 'center',

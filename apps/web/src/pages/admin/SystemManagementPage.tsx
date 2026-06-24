@@ -88,7 +88,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(to bottom right, #f1f5f9, #f8fafc)',
+        background: 'linear-gradient(to bottom right, grey.100, #f8fafc)',
       }}
     >
       <MobileHeader

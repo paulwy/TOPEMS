@@ -23,7 +23,7 @@ import {
   Stack,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface LedgerEntry {
   id: string;

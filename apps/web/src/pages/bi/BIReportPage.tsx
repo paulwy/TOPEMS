@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye, Download, FileText, Calendar, User } from 'lucide-react';
 import { Chip, Box, Typography, Tooltip, IconButton } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -156,7 +156,7 @@ const BIReportPage = () => {
         setReports(mockReports);
         setLoading(false);
       }, 500);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load reports:', error);
       setLoading(false);
     }
@@ -191,7 +191,7 @@ const BIReportPage = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <FileText
               size={18}
-              color='#64748b'
+              color='grey.600'
             />
             <Box>
               <Typography
@@ -232,7 +232,7 @@ const BIReportPage = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <User
               size={14}
-              color='#64748b'
+              color='grey.600'
             />
             <Typography variant='body2'>{row.creator}</Typography>
           </Box>
@@ -245,7 +245,7 @@ const BIReportPage = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Calendar
               size={14}
-              color='#64748b'
+              color='grey.600'
             />
             <Typography
               variant='body2'

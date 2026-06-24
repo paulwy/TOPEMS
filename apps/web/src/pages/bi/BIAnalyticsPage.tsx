@@ -223,7 +223,7 @@ const BIAnalyticsPage = () => {
       if (res.success && res.data) {
         setOverview(res.data);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error('Failed to load overview:', e);
     } finally {
       setLoading(false);

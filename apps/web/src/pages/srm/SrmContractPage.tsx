@@ -12,7 +12,7 @@ import {
   CardHeader,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, ScrollText, Search, FileText } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -54,7 +54,7 @@ const SrmContractPage: React.FC = () => {
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.contracts || [];
-        const adapted = items.map((item: any) => ({
+        const adapted = items.map((item: { [key: string]: unknown }) => ({
           ...item,
           amount: item.amount || 0,
           status:
@@ -72,7 +72,7 @@ const SrmContractPage: React.FC = () => {
       } else {
         setContracts([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载合同数据失败:', err);
       setContracts([]);
     } finally {
@@ -82,12 +82,12 @@ const SrmContractPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      有效: { bg: '#dcfce7', color: '#15803d' },
-      已过期: { bg: '#fee2e2', color: '#b91c1c' },
-      草稿: { bg: '#f1f5f9', color: '#475569' },
-      已终止: { bg: '#fde68a', color: '#92400e' },
+      有效: { bg: 'success.lighter', color: '#15803d' },
+      已过期: { bg: 'error.lighter', color: 'error.darker' },
+      草稿: { bg: 'grey.100', color: '#475569' },
+      已终止: { bg: 'warning.light', color: '#92400e' },
     };
-    const colors = statusMap[status] || { bg: '#f1f5f9', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
     return (
       <Chip
         label={status}
@@ -105,7 +105,7 @@ const SrmContractPage: React.FC = () => {
       accessorKey: 'total_amount',
       header: '合同金额',
       cell: ({ row }) => (
-        <Typography sx={{ fontWeight: 600, color: '#1f2937' }}>
+        <Typography sx={{ fontWeight: 600, color: 'grey.800' }}>
           ¥{(row.original.total_amount || 0).toLocaleString()}
         </Typography>
       ),
@@ -174,7 +174,7 @@ const SrmContractPage: React.FC = () => {
       toast.success('合同创建成功');
       setShowCreateModal(false);
       loadContracts();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建合同失败:', err);
     }
@@ -348,14 +348,14 @@ const SrmContractPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ScrollText sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <ScrollText sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -381,14 +381,14 @@ const SrmContractPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fee2e2',
+                    bgcolor: 'error.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ScrollText sx={{ width: 20, height: 20, color: '#dc2626' }} />
+                  <ScrollText sx={{ width: 20, height: 20, color: 'error.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -414,14 +414,14 @@ const SrmContractPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#f1f5f9',
+                    bgcolor: 'grey.100',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ScrollText sx={{ width: 20, height: 20, color: '#64748b' }} />
+                  <ScrollText sx={{ width: 20, height: 20, color: 'grey.600' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -447,14 +447,14 @@ const SrmContractPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#e0e7ff',
+                    bgcolor: 'secondary.light',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: '#6366f1' }} />
+                  <FileText sx={{ width: 20, height: 20, color: 'primary.light' }} />
                 </Box>
                 <Box>
                   <Typography

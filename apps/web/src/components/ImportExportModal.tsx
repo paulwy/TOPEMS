@@ -15,7 +15,7 @@ import {
   DialogTitle,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useRef } from 'react';
 import { AlertCircle, Download, Upload, FileText, CheckCircle } from 'lucide-react';
 import type { ExportColumn, ImportResult } from '@/utils/importExport';

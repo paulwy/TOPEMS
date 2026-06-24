@@ -11,7 +11,7 @@ import {
   Paper,
   LinearProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -40,12 +40,6 @@ const OpportunityDetailPage: React.FC = () => {
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadOpportunity(id);
-    }
-  }, [id, loadOpportunity]);
-
   const loadOpportunity = useCallback(
     async (opportunityId: string) => {
       setLoading(true);
@@ -60,7 +54,7 @@ const OpportunityDetailPage: React.FC = () => {
             message: response.message || '无法加载商机信息',
           });
         }
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Failed to load opportunity:', err);
         addNotification({
           type: 'error',
@@ -74,6 +68,12 @@ const OpportunityDetailPage: React.FC = () => {
     [addNotification]
   );
 
+  useEffect(() => {
+    if (id) {
+      loadOpportunity(id);
+    }
+  }, [id, loadOpportunity]);
+
   const handleDelete = async () => {
     if (!id || !window.confirm('确定要删除此商机吗？')) return;
     try {
@@ -84,7 +84,7 @@ const OpportunityDetailPage: React.FC = () => {
         message: '商机已删除',
       });
       navigate('/crm/opportunities');
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to delete opportunity:', err);
       addNotification({
         type: 'error',

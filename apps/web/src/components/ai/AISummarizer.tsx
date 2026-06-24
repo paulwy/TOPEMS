@@ -1,5 +1,5 @@
 import { Card, CardContent, Select, MenuItem, FormLabel, Typography, Box } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Copy, Check, Quote } from 'lucide-react';
 
@@ -141,11 +141,11 @@ export function AISummarizer({
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                 <Quote style={{ width: 20, height: 20, color: '#9333ea' }} />
-                <FormLabel sx={{ color: '#7c3aed', fontWeight: 500 }}>生成的摘要</FormLabel>
+                <FormLabel sx={{ color: 'secondary.dark', fontWeight: 500 }}>生成的摘要</FormLabel>
               </Box>
               <Box
                 sx={{
-                  bgcolor: '#faf5ff',
+                  bgcolor: 'secondary.light',
                   border: '1px solid #e9d5ff',
                   borderRadius: 1,
                   p: 2,
@@ -153,7 +153,7 @@ export function AISummarizer({
               >
                 <Typography
                   sx={{
-                    color: '#374151',
+                    color: 'grey.700',
                     lineHeight: 1.7,
                     whiteSpace: 'pre-wrap',
                   }}
@@ -174,7 +174,7 @@ export function AISummarizer({
           </Card>
         ) : (
           <Card>
-            <CardContent sx={{ p: 3, textAlign: 'center', color: '#6b7280' }}>
+            <CardContent sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
               <Sparkles
                 style={{
                   width: 40,

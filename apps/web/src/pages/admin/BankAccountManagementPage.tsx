@@ -24,7 +24,7 @@ import {
   AlertTitle,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ListPageTemplate } from '@/components/mui';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
 

@@ -39,7 +39,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: 12,
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
@@ -54,10 +54,10 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 16px',
-            borderBottom: '1px solid #e5e7eb',
+            borderBottom: '1px solid grey.200',
           }}
         >
-          <h3 style={{ fontWeight: 600, color: '#111827' }}>聊天设置</h3>
+          <h3 style={{ fontWeight: 600, color: 'text.primary' }}>聊天设置</h3>
           <button
             onClick={onClose}
             style={{
@@ -68,7 +68,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
               cursor: 'pointer',
             }}
           >
-            <X style={{ width: 20, height: 20, color: '#6b7280' }} />
+            <X style={{ width: 20, height: 20, color: 'text.secondary' }} />
           </button>
         </div>
 
@@ -80,7 +80,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
               gap: 12,
               marginBottom: 16,
               paddingBottom: 16,
-              borderBottom: '1px solid #f3f4f6',
+              borderBottom: '1px solid grey.100',
             }}
           >
             <div
@@ -88,19 +88,19 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                 width: 48,
                 height: 48,
                 borderRadius: '9999px',
-                backgroundColor: '#e0e7ff',
+                backgroundColor: 'secondary.light',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Users style={{ width: 24, height: 24, color: '#4f46e5' }} />
+              <Users style={{ width: 24, height: 24, color: 'primary.main' }} />
             </div>
             <div>
-              <div style={{ fontWeight: 500, color: '#111827' }}>
+              <div style={{ fontWeight: 500, color: 'text.primary' }}>
                 {chatRoom.name || '未命名会话'}
               </div>
-              <div style={{ fontSize: 14, color: '#6b7280' }}>
+              <div style={{ fontSize: 14, color: 'text.secondary' }}>
                 {chatRoom.room_type === 'direct' ? '私聊' : '群聊'} ·{' '}
                 {chatRoom.members?.length || 0} 人
               </div>
@@ -125,34 +125,34 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             >
               {chatRoom.is_muted ? (
                 <>
-                  <Bell style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                  <Bell style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <div
                       style={{
                         fontSize: 14,
                         fontWeight: 500,
-                        color: '#111827',
+                        color: 'text.primary',
                       }}
                     >
                       取消免打扰
                     </div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>接收新消息通知</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>接收新消息通知</div>
                   </div>
                 </>
               ) : (
                 <>
-                  <BellOff style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                  <BellOff style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <div
                       style={{
                         fontSize: 14,
                         fontWeight: 500,
-                        color: '#111827',
+                        color: 'text.primary',
                       }}
                     >
                       消息免打扰
                     </div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>不再接收新消息通知</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>不再接收新消息通知</div>
                   </div>
                 </>
               )}
@@ -175,34 +175,36 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
             >
               {chatRoom.is_pinned ? (
                 <>
-                  <PinOff style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                  <PinOff style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <div
                       style={{
                         fontSize: 14,
                         fontWeight: 500,
-                        color: '#111827',
+                        color: 'text.primary',
                       }}
                     >
                       取消置顶
                     </div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>从置顶列表移除</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>从置顶列表移除</div>
                   </div>
                 </>
               ) : (
                 <>
-                  <Pin style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                  <Pin style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   <div style={{ flex: 1, textAlign: 'left' }}>
                     <div
                       style={{
                         fontSize: 14,
                         fontWeight: 500,
-                        color: '#111827',
+                        color: 'text.primary',
                       }}
                     >
                       置顶会话
                     </div>
-                    <div style={{ fontSize: 12, color: '#6b7280' }}>将此会话固定在列表顶部</div>
+                    <div style={{ fontSize: 12, color: 'text.secondary' }}>
+                      将此会话固定在列表顶部
+                    </div>
                   </div>
                 </>
               )}
@@ -223,10 +225,10 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
                 transition: 'background-color 0.15s',
               }}
             >
-              <Trash2 style={{ width: 20, height: 20, color: '#ef4444' }} />
+              <Trash2 style={{ width: 20, height: 20, color: 'error.main' }} />
               <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: '#dc2626' }}>删除会话</div>
-                <div style={{ fontSize: 12, color: '#f87171' }}>删除后无法恢复</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'error.dark' }}>删除会话</div>
+                <div style={{ fontSize: 12, color: 'error.light' }}>删除后无法恢复</div>
               </div>
             </button>
           </div>

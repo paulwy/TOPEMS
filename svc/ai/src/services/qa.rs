@@ -125,7 +125,6 @@ impl QAService {
             embedding_client,
         }
     }
-}
 
     /// 创建默认配置的 QAService
     pub fn new_with_defaults(db: Database) -> Self {
@@ -143,8 +142,8 @@ impl QAService {
             ..Default::default()
         };
         
-        let ai_client = UnifiedAIClient::new(create_client(chat_config));
-        let embedding_client = UnifiedAIClient::new(create_client(embedding_config));
+        let ai_client = create_client(chat_config);
+        let embedding_client = create_client(embedding_config);
         
         Self {
             db,

@@ -29,7 +29,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   useErpConnection,
   useAccountMappings,
@@ -42,6 +42,9 @@ import {
   useSyncAccounts,
   useSyncCustomers,
   useSyncSuppliers,
+  useUpdateAccountMapping,
+  useUpdateCustomerMapping,
+  useUpdateSupplierMapping,
 } from '@/hooks/useExternalErp';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
 
@@ -151,6 +154,9 @@ export default function ExternalErpMappingPage() {
   const syncAccounts = useSyncAccounts();
   const syncCustomers = useSyncCustomers();
   const syncSuppliers = useSyncSuppliers();
+  const updateAccountMapping = useUpdateAccountMapping();
+  const updateCustomerMapping = useUpdateCustomerMapping();
+  const updateSupplierMapping = useUpdateSupplierMapping();
 
   // 获取映射数据
   const getMappingsData = () => {
@@ -375,10 +381,43 @@ export default function ExternalErpMappingPage() {
 
   // 处理编辑保存
   const handleEditSave = () => {
-    // TODO: 调用更新API
+    if (!connectionId || !editingMapping?.id) return;
+
+    const updateData = {
+      local_code: editFormData.local_code,
+      local_name: editFormData.local_name,
+      external_code: editFormData.external_code,
+      external_name: editFormData.external_name,
+      direction: editFormData.direction,
+      is_active: editFormData.is_active,
+    };
+
+    switch (activeMappingType) {
+      case 'account':
+        updateAccountMapping.mutate({
+          connectionId,
+          mappingId: editingMapping.id,
+          data: updateData,
+        });
+        break;
+      case 'customer':
+        updateCustomerMapping.mutate({
+          connectionId,
+          mappingId: editingMapping.id,
+          data: updateData,
+        });
+        break;
+      case 'supplier':
+        updateSupplierMapping.mutate({
+          connectionId,
+          mappingId: editingMapping.id,
+          data: updateData,
+        });
+        break;
+    }
+
     setShowEditDialog(false);
     setEditingMapping(null);
-    refetchMappings();
   };
 
   // 处理导入
@@ -755,7 +794,7 @@ export default function ExternalErpMappingPage() {
                     startAdornment: (
                       <Search
                         size={16}
-                        style={{ marginRight: 8, color: '#9ca3af' }}
+                        style={{ marginRight: 8, color: 'text.disabled' }}
                       />
                     ),
                   },
@@ -910,7 +949,7 @@ export default function ExternalErpMappingPage() {
             >
               <Upload
                 size={48}
-                style={{ margin: '0 auto', color: '#9ca3af', marginBottom: 16 }}
+                style={{ margin: '0 auto', color: 'text.disabled', marginBottom: 16 }}
               />
               <Typography
                 variant='body2'

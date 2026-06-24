@@ -159,8 +159,8 @@ const DocumentCenterPage: React.FC = () => {
 
         setLoading(false);
       }, 500);
-    } catch (err: any) {
-      error(err.message || '加载数据失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '加载数据失败');
       setLoading(false);
     }
   };

@@ -13,7 +13,7 @@ import {
   InputLabel,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -43,7 +43,7 @@ export interface FormFieldConfig {
     min?: number;
     max?: number;
     pattern?: RegExp;
-    custom?: (value: any) => string | null;
+    custom?: (value: unknown) => string | null;
   };
   colSpan?: number;
   render?: (props: any) => React.ReactNode;
@@ -280,7 +280,7 @@ export default function FormBuilder({
             return field.render({
               name: field.name,
               value,
-              onChange: (v: any) => handleChange(field.name, v),
+              onChange: (v: unknown) => handleChange(field.name, v),
               isRequired,
               isDisabled,
             });

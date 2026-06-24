@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Plus,
   Save,
@@ -342,7 +342,7 @@ export const DashboardEditor: React.FC<{
         width: 12,
         height: 12,
         cursor: `${position}-resize`,
-        backgroundColor: '#6366f1',
+        backgroundColor: 'primary.light',
         borderRadius: '50%',
         zIndex: 10,
         [position]: -6,
@@ -352,7 +352,7 @@ export const DashboardEditor: React.FC<{
   );
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', backgroundColor: '#f1f5f9' }}>
+    <Box sx={{ display: 'flex', height: '100vh', backgroundColor: 'grey.100' }}>
       <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -429,7 +429,7 @@ export const DashboardEditor: React.FC<{
           sx={{
             position: 'relative',
             minHeight: GRID_ROWS * CELL_HEIGHT,
-            backgroundColor: '#ffffff',
+            backgroundColor: 'white',
             borderRadius: 2,
             boxShadow: 1,
             overflow: 'hidden',
@@ -448,7 +448,7 @@ export const DashboardEditor: React.FC<{
                 y1={0}
                 x2={i * CELL_WIDTH}
                 y2={GRID_ROWS * CELL_HEIGHT}
-                stroke='#e2e8f0'
+                stroke='border.default'
                 strokeWidth={i % 3 === 0 ? 1.5 : 0.5}
                 strokeDasharray={i % 3 === 0 ? 'none' : '4,4'}
               />
@@ -460,7 +460,7 @@ export const DashboardEditor: React.FC<{
                 y1={i * CELL_HEIGHT}
                 x2={GRID_COLS * CELL_WIDTH}
                 y2={i * CELL_HEIGHT}
-                stroke='#e2e8f0'
+                stroke='border.default'
                 strokeWidth={i % 2 === 0 ? 1.5 : 0.5}
                 strokeDasharray={i % 2 === 0 ? 'none' : '4,4'}
               />
@@ -477,11 +477,11 @@ export const DashboardEditor: React.FC<{
                 width: widget.w * CELL_WIDTH - 8,
                 height: widget.h * CELL_HEIGHT - 8,
                 margin: 4,
-                backgroundColor: '#ffffff',
+                backgroundColor: 'white',
                 borderRadius: 1.5,
                 boxShadow:
                   selectedWidgetId === widget.id
-                    ? '0 0 0 2px #6366f1, 0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    ? '0 0 0 2px primary.light, 0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     : '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
                 overflow: 'hidden',
                 cursor: isPreviewMode ? 'default' : 'move',

@@ -23,7 +23,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Edit, Trash2, Eye, Building2, Building, User, Mail, Phone } from 'lucide-react';
 import {
   departmentApi,
@@ -91,10 +91,10 @@ const HrmDepartmentPage: React.FC = () => {
           setDepartments([]);
           setTotalDepartments(0);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '加载失败',
-          message: error.message || '获取部门列表失败',
+          message: (error as { message?: string }).message || '获取部门列表失败',
           type: 'error',
         });
         setDepartments([]);
@@ -129,7 +129,7 @@ const HrmDepartmentPage: React.FC = () => {
       } else {
         setEmployees([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch employees:', error);
       setEmployees([]);
     }
@@ -250,10 +250,10 @@ const HrmDepartmentPage: React.FC = () => {
               type: 'error',
             });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           addNotification({
             title: '失败',
-            message: error.message || '删除部门失败',
+            message: (error as { message?: string }).message || '删除部门失败',
             type: 'error',
           });
         }
@@ -544,7 +544,7 @@ const HrmDepartmentPage: React.FC = () => {
         const data = response.data as PaginatedResult<Company>;
         setCompanies(data.items || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch companies:', error);
     }
   }, []);
@@ -616,10 +616,10 @@ const HrmDepartmentPage: React.FC = () => {
             type: 'error',
           });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '失败',
-          message: error.message || '删除部门失败',
+          message: (error as { message?: string }).message || '删除部门失败',
           type: 'error',
         });
       }
@@ -640,10 +640,10 @@ const HrmDepartmentPage: React.FC = () => {
         setShowCreateModal(false);
         setFormData({});
         fetchDepartments();
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '失败',
-          message: error.message || '创建部门失败',
+          message: (error as { message?: string }).message || '创建部门失败',
           type: 'error',
         });
       }
@@ -665,10 +665,10 @@ const HrmDepartmentPage: React.FC = () => {
         setShowEditModal(false);
         setSelectedDepartment(null);
         fetchDepartments();
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '失败',
-          message: error.message || '更新部门失败',
+          message: (error as { message?: string }).message || '更新部门失败',
           type: 'error',
         });
       }

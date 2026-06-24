@@ -13,7 +13,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import {
   Upload,
@@ -72,7 +72,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
       if (response.success && response.data) {
         setDocuments(response.data.items);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('加载文档失败:', err);
       addNotification({
         title: '加载失败',
@@ -93,7 +93,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         vector_dimension: 384,
       };
       setStats(mockStats);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('加载统计失败:', err);
     }
   };
@@ -122,7 +122,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
       } else {
         throw new Error(response.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('上传文档失败:', err);
       addNotification({
         title: '上传失败',
@@ -154,7 +154,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
       } else {
         throw new Error(response.message);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('删除文档失败:', err);
       addNotification({
         title: '删除失败',
@@ -183,7 +183,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
         }));
         setSearchResults(results);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('搜索失败:', err);
       addNotification({
         title: '搜索失败',
@@ -235,11 +235,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'processed':
-        return { bg: '#e8f5e9', text: '#2e7d32' };
+        return { bg: 'success.light', text: 'success.dark' };
       case 'pending':
-        return { bg: '#fff3e0', text: '#f57c00' };
+        return { bg: 'white3e0', text: '#f57c00' };
       case 'partial':
-        return { bg: '#fff3e0', text: '#ef6c00' };
+        return { bg: 'white3e0', text: '#ef6c00' };
       default:
         return { bg: '#ffebee', text: '#c62828' };
     }

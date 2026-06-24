@@ -16,7 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Box, Paper, Stack, Chip, Typography, CircularProgress } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 type TabKey = 'home' | 'patrol' | 'task' | 'scan' | 'media';
 
@@ -79,7 +79,7 @@ const MobileWorkstationPage: React.FC = () => {
         const videos = Array.isArray(videoRes.data) ? videoRes.data : videoRes.data.items || [];
         setMedia((prev) => [...prev, ...videos]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载数据失败:', error);
     } finally {
       setLoading(false);
@@ -102,7 +102,7 @@ const MobileWorkstationPage: React.FC = () => {
       });
       alert('打卡成功！');
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('打卡失败:', error);
       alert('打卡失败，请检查位置权限');
     }
@@ -126,7 +126,7 @@ const MobileWorkstationPage: React.FC = () => {
       });
       alert('扫码成功！');
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('扫码失败:', error);
       alert('扫码失败');
     }
@@ -135,13 +135,13 @@ const MobileWorkstationPage: React.FC = () => {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'completed':
-        return { bgcolor: '#dcfce7', color: '#15803d' };
+        return { bgcolor: 'success.lighter', color: '#15803d' };
       case 'in_progress':
-        return { bgcolor: '#dbeafe', color: '#1d4ed8' };
+        return { bgcolor: '#dbeafe', color: 'primary.dark' };
       case 'pending':
-        return { bgcolor: '#fef3c7', color: '#b45309' };
+        return { bgcolor: 'warning.light', color: '#b45309' };
       default:
-        return { bgcolor: '#f1f5f9', color: '#475569' };
+        return { bgcolor: 'grey.100', color: '#475569' };
     }
   };
 
@@ -200,7 +200,7 @@ const MobileWorkstationPage: React.FC = () => {
           <Box sx={{ p: 2 }}>
             <Paper
               sx={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
+                background: 'linear-gradient(135deg, primary.main 0%, #9333ea 100%)',
                 color: 'white',
                 p: 3,
                 borderRadius: 2,
@@ -338,7 +338,7 @@ const MobileWorkstationPage: React.FC = () => {
                     fullWidth
                     onClick={handleCreatePatrol}
                     sx={{
-                      bgcolor: '#eff6ff',
+                      bgcolor: 'primary.light',
                       '&:hover': { bgcolor: '#dbeafe' },
                       borderRadius: 1.5,
                       p: 2,
@@ -351,7 +351,7 @@ const MobileWorkstationPage: React.FC = () => {
                       sx={{
                         width: 48,
                         height: 48,
-                        bgcolor: '#3b82f6',
+                        bgcolor: 'primary.main',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
@@ -377,7 +377,7 @@ const MobileWorkstationPage: React.FC = () => {
                     fullWidth
                     onClick={handleScan}
                     sx={{
-                      bgcolor: '#faf5ff',
+                      bgcolor: 'secondary.light',
                       '&:hover': { bgcolor: '#f3e8ff' },
                       borderRadius: 1.5,
                       p: 2,
@@ -416,8 +416,8 @@ const MobileWorkstationPage: React.FC = () => {
                     fullWidth
                     onClick={() => setActiveTab('media')}
                     sx={{
-                      bgcolor: '#f0fdf4',
-                      '&:hover': { bgcolor: '#dcfce7' },
+                      bgcolor: 'success.light',
+                      '&:hover': { bgcolor: 'success.lighter' },
                       borderRadius: 1.5,
                       p: 2,
                       flexDirection: 'column',
@@ -429,7 +429,7 @@ const MobileWorkstationPage: React.FC = () => {
                       sx={{
                         width: 48,
                         height: 48,
-                        bgcolor: '#22c55e',
+                        bgcolor: 'success.dark',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
@@ -455,7 +455,7 @@ const MobileWorkstationPage: React.FC = () => {
                     fullWidth
                     onClick={() => setActiveTab('task')}
                     sx={{
-                      bgcolor: '#fff7ed',
+                      bgcolor: 'white7ed',
                       '&:hover': { bgcolor: '#ffedd5' },
                       borderRadius: 1.5,
                       p: 2,
@@ -503,7 +503,7 @@ const MobileWorkstationPage: React.FC = () => {
                 <Paper sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
                   <MapPin
                     size={48}
-                    color='#cbd5e1'
+                    color='grey.400'
                     style={{ margin: '0 auto 8px' }}
                   />
                   <Typography color='text.secondary'>暂无巡检记录</Typography>
@@ -590,7 +590,7 @@ const MobileWorkstationPage: React.FC = () => {
               <Paper sx={{ p: 4, borderRadius: 2, textAlign: 'center' }}>
                 <MapPin
                   size={64}
-                  color='#cbd5e1'
+                  color='grey.400'
                   style={{ margin: '0 auto 12px' }}
                 />
                 <Typography
@@ -707,8 +707,8 @@ const MobileWorkstationPage: React.FC = () => {
                   key={filter}
                   label={filter}
                   sx={{
-                    bgcolor: '#eff6ff',
-                    color: '#2563eb',
+                    bgcolor: 'primary.light',
+                    color: 'primary.dark',
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
                   }}
@@ -720,7 +720,7 @@ const MobileWorkstationPage: React.FC = () => {
               <Paper sx={{ p: 4, borderRadius: 2, textAlign: 'center' }}>
                 <CheckCircle
                   size={64}
-                  color='#cbd5e1'
+                  color='grey.400'
                   style={{ margin: '0 auto 12px' }}
                 />
                 <Typography color='text.secondary'>暂无任务</Typography>
@@ -830,7 +830,7 @@ const MobileWorkstationPage: React.FC = () => {
               <Paper sx={{ p: 4, borderRadius: 2, textAlign: 'center' }}>
                 <QrCode
                   size={64}
-                  color='#cbd5e1'
+                  color='grey.400'
                   style={{ margin: '0 auto 12px' }}
                 />
                 <Typography
@@ -929,8 +929,8 @@ const MobileWorkstationPage: React.FC = () => {
                 <Button
                   variant='contained'
                   sx={{
-                    bgcolor: '#22c55e',
-                    '&:hover': { bgcolor: '#16a34a' },
+                    bgcolor: 'success.dark',
+                    '&:hover': { bgcolor: 'success.dark' },
                   }}
                   startIcon={<Image size={16} />}
                 >
@@ -956,8 +956,8 @@ const MobileWorkstationPage: React.FC = () => {
                   key={filter}
                   label={filter}
                   sx={{
-                    bgcolor: '#f0fdf4',
-                    color: '#16a34a',
+                    bgcolor: 'success.light',
+                    color: 'success.dark',
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
                   }}
@@ -969,7 +969,7 @@ const MobileWorkstationPage: React.FC = () => {
               <Paper sx={{ p: 4, borderRadius: 2, textAlign: 'center' }}>
                 <Image
                   size={64}
-                  color='#cbd5e1'
+                  color='grey.400'
                   style={{ margin: '0 auto 12px' }}
                 />
                 <Typography
@@ -1002,19 +1002,19 @@ const MobileWorkstationPage: React.FC = () => {
                         {item.media_type === 'photo' && (
                           <Image
                             size={48}
-                            color='#9ca3af'
+                            color='text.disabled'
                           />
                         )}
                         {item.media_type === 'video' && (
                           <Video
                             size={48}
-                            color='#9ca3af'
+                            color='text.disabled'
                           />
                         )}
                         {item.media_type === 'audio' && (
                           <Mic
                             size={48}
-                            color='#9ca3af'
+                            color='text.disabled'
                           />
                         )}
                       </Box>

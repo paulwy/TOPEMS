@@ -36,7 +36,7 @@ import {
   InputAdornment,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useNotification } from '@/hooks/useNotification';
 import { NotificationContainer } from '@/components/notification/NotificationContainer';
 import { StatCardGroup } from '@/components/mui';
@@ -288,12 +288,12 @@ const HrmAttendancePage: React.FC = () => {
       {
         name: '正常',
         value: records.filter((r) => r.status === 'normal').length,
-        color: '#22c55e',
+        color: 'success.dark',
       },
       {
         name: '迟到',
         value: records.filter((r) => r.status === 'late').length,
-        color: '#eab308',
+        color: 'warning.main',
       },
       {
         name: '早退',
@@ -303,12 +303,12 @@ const HrmAttendancePage: React.FC = () => {
       {
         name: '缺勤',
         value: records.filter((r) => r.status === 'absent').length,
-        color: '#ef4444',
+        color: 'error.main',
       },
       {
         name: '请假',
         value: records.filter((r) => r.status === 'leave').length,
-        color: '#3b82f6',
+        color: 'primary.main',
       },
     ],
     [records]
@@ -320,7 +320,8 @@ const HrmAttendancePage: React.FC = () => {
       summaries.map((s) => ({
         name: s.department,
         value: s.on_time_rate,
-        color: s.on_time_rate >= 95 ? '#22c55e' : s.on_time_rate >= 85 ? '#eab308' : '#ef4444',
+        color:
+          s.on_time_rate >= 95 ? 'success.dark' : s.on_time_rate >= 85 ? 'warning.main' : 'error.main',
       })),
     [summaries]
   );
@@ -331,12 +332,12 @@ const HrmAttendancePage: React.FC = () => {
       {
         name: '出勤人数',
         value: summaries.reduce((sum, s) => sum + s.present_count, 0),
-        color: '#22c55e',
+        color: 'success.dark',
       },
       {
         name: '缺勤人数',
         value: summaries.reduce((sum, s) => sum + s.absent_count, 0),
-        color: '#ef4444',
+        color: 'error.main',
       },
     ],
     [summaries]
@@ -377,7 +378,7 @@ const HrmAttendancePage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f9fafb' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}

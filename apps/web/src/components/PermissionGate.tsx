@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, Chip, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { ReactNode } from 'react';
 import React from 'react';
 import { usePermission } from '../hooks/usePermission';
@@ -40,7 +40,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
           sx={{
             width: 16,
             height: 16,
-            color: '#9ca3af',
+            color: 'text.disabled',
             animation: 'spin 1s linear infinite',
           }}
         />
@@ -111,7 +111,7 @@ export const RoleGate: React.FC<RoleGateProps> = ({
           sx={{
             width: 16,
             height: 16,
-            color: '#9ca3af',
+            color: 'text.disabled',
             animation: 'spin 1s linear infinite',
           }}
         />
@@ -182,7 +182,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
           sx={{
             width: 16,
             height: 16,
-            color: '#9ca3af',
+            color: 'text.disabled',
             animation: 'spin 1s linear infinite',
           }}
         />
@@ -255,7 +255,7 @@ export const AdminGate: React.FC<AdminGateProps> = ({
           sx={{
             width: 16,
             height: 16,
-            color: '#9ca3af',
+            color: 'text.disabled',
             animation: 'spin 1s linear infinite',
           }}
         />
@@ -311,7 +311,7 @@ export const SuperuserGate: React.FC<SuperuserGateProps> = ({
           sx={{
             width: 16,
             height: 16,
-            color: '#9ca3af',
+            color: 'text.disabled',
             animation: 'spin 1s linear infinite',
           }}
         />
@@ -404,13 +404,13 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({ permission, si
   const [module, action] = permission.split(':');
 
   const actionColors: Record<string, { bg: string; text: string }> = {
-    read: { bg: '#dcfce7', text: '#15803d' },
-    write: { bg: '#dbeafe', text: '#1d4ed8' },
-    delete: { bg: '#fee2e2', text: '#b91c1c' },
-    admin: { bg: '#f3e8ff', text: '#7c3aed' },
+    read: { bg: 'success.lighter', text: '#15803d' },
+    write: { bg: '#dbeafe', text: 'primary.dark' },
+    delete: { bg: 'error.lighter', text: 'error.darker' },
+    admin: { bg: '#f3e8ff', text: 'secondary.dark' },
   };
 
-  const colorStyle = actionColors[action] || { bg: '#f3f4f6', text: '#374151' };
+  const colorStyle = actionColors[action] || { bg: 'grey.100', text: 'grey.700' };
 
   const sizeStyles = {
     sm: {

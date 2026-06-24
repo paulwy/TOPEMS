@@ -65,9 +65,9 @@ const QUESTION_TYPE_LABELS: Record<string, string> = {
 };
 
 const CONFIDENCE_COLORS: Record<string, string> = {
-  high: '#22c55e',
-  medium: '#eab308',
-  low: '#ef4444',
+  high: 'success.dark',
+  medium: 'warning.main',
+  low: 'error.main',
 };
 
 export const AiChatPage: React.FC = () => {
@@ -115,7 +115,7 @@ export const AiChatPage: React.FC = () => {
         setHistory(response.data.history || []);
         setTotalPages(Math.ceil((response.data.total || 0) / 10));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load QA history:', error);
       addNotification({
         title: '加载失败',
@@ -196,7 +196,7 @@ export const AiChatPage: React.FC = () => {
           },
         ]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to send message:', error);
       addNotification({
         title: '发送失败',
@@ -254,7 +254,7 @@ export const AiChatPage: React.FC = () => {
         });
         setFeedbackDialog({ open: false, qaId: '', answer: '' });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to submit feedback:', error);
       addNotification({
         title: '提交失败',
@@ -277,7 +277,7 @@ export const AiChatPage: React.FC = () => {
         });
         loadHistory();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to delete history:', error);
       addNotification({
         title: '删除失败',
@@ -332,8 +332,8 @@ export const AiChatPage: React.FC = () => {
       <Box
         sx={{
           width: 360,
-          backgroundColor: '#ffffff',
-          borderRight: '1px solid #e5e7eb',
+          backgroundColor: 'white',
+          borderRight: '1px solid grey.200',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -341,7 +341,7 @@ export const AiChatPage: React.FC = () => {
         <Box
           sx={{
             p: 3,
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
             color: 'white',
           }}
         >
@@ -376,14 +376,14 @@ export const AiChatPage: React.FC = () => {
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
+        <Box sx={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
           <Button
             onClick={() => setActiveTab('chat')}
             sx={{
               flex: 1,
               py: 2,
-              borderBottom: `2px solid ${activeTab === 'chat' ? '#3b82f6' : 'transparent'}`,
-              color: activeTab === 'chat' ? '#3b82f6' : '#6b7280',
+              borderBottom: `2px solid ${activeTab === 'chat' ? 'primary.main' : 'transparent'}`,
+              color: activeTab === 'chat' ? 'primary.main' : 'text.secondary',
               fontWeight: activeTab === 'chat' ? 600 : 400,
             }}
           >
@@ -395,8 +395,8 @@ export const AiChatPage: React.FC = () => {
             sx={{
               flex: 1,
               py: 2,
-              borderBottom: `2px solid ${activeTab === 'history' ? '#3b82f6' : 'transparent'}`,
-              color: activeTab === 'history' ? '#3b82f6' : '#6b7280',
+              borderBottom: `2px solid ${activeTab === 'history' ? 'primary.main' : 'transparent'}`,
+              color: activeTab === 'history' ? 'primary.main' : 'text.secondary',
               fontWeight: activeTab === 'history' ? 600 : 400,
             }}
           >
@@ -406,7 +406,7 @@ export const AiChatPage: React.FC = () => {
         </Box>
 
         {activeTab === 'history' && (
-          <Box sx={{ p: 2, borderBottom: '1px solid #e5e7eb' }}>
+          <Box sx={{ p: 2, borderBottom: '1px solid grey.200' }}>
             <TextField
               fullWidth
               size='small'
@@ -419,7 +419,7 @@ export const AiChatPage: React.FC = () => {
               slotProps={{
                 input: {
                   startAdornment: (
-                    <Search sx={{ width: 16, height: 16, mr: 1, color: '#9ca3af' }} />
+                    <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.disabled' }} />
                   ),
                 },
               }}
@@ -481,7 +481,7 @@ export const AiChatPage: React.FC = () => {
                 sx={{
                   width: 48,
                   height: 48,
-                  color: '#d1d5db',
+                  color: 'grey.300',
                   mx: 'auto',
                   mb: 2,
                 }}
@@ -502,11 +502,11 @@ export const AiChatPage: React.FC = () => {
                     p: 2,
                     mb: 1,
                     borderRadius: 1,
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid grey.200',
                     cursor: 'pointer',
                     '&:hover': {
-                      backgroundColor: '#f3f4f6',
-                      borderColor: '#3b82f6',
+                      backgroundColor: 'grey.100',
+                      borderColor: 'primary.main',
                     },
                   }}
                   onClick={() => handleHistoryItemClick(item)}
@@ -537,7 +537,7 @@ export const AiChatPage: React.FC = () => {
                       e.stopPropagation();
                       handleDeleteHistory(item.id);
                     }}
-                    sx={{ color: '#ef4444' }}
+                    sx={{ color: 'error.main' }}
                   >
                     <Trash2 sx={{ width: 16, height: 16 }} />
                   </IconButton>
@@ -551,7 +551,7 @@ export const AiChatPage: React.FC = () => {
           <Box
             sx={{
               p: 2,
-              borderTop: '1px solid #e5e7eb',
+              borderTop: '1px solid grey.200',
               display: 'flex',
               justifyContent: 'center',
             }}
@@ -572,8 +572,8 @@ export const AiChatPage: React.FC = () => {
             <Box
               sx={{
                 p: 3,
-                backgroundColor: '#ffffff',
-                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: 'white',
+                borderBottom: '1px solid grey.200',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -615,7 +615,7 @@ export const AiChatPage: React.FC = () => {
                     sx={{
                       p: 8,
                       textAlign: 'center',
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'white',
                       borderRadius: 2,
                     }}
                   >
@@ -624,7 +624,7 @@ export const AiChatPage: React.FC = () => {
                         width: 80,
                         height: 80,
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                        background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -669,13 +669,13 @@ export const AiChatPage: React.FC = () => {
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
-                          backgroundColor: message.role === 'user' ? '#3b82f6' : '#e5e7eb',
+                          backgroundColor: message.role === 'user' ? 'primary.main' : 'grey.200',
                         }}
                       >
                         {message.role === 'user' ? (
                           <User sx={{ width: 18, height: 18, color: 'white' }} />
                         ) : (
-                          <Bot sx={{ width: 18, height: 18, color: '#6b7280' }} />
+                          <Bot sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                         )}
                       </Box>
                       <Paper
@@ -684,7 +684,7 @@ export const AiChatPage: React.FC = () => {
                           p: 3,
                           borderRadius:
                             message.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                          backgroundColor: message.role === 'user' ? '#3b82f6' : '#ffffff',
+                          backgroundColor: message.role === 'user' ? 'primary.main' : 'white',
                           color: message.role === 'user' ? 'white' : 'inherit',
                         }}
                       >
@@ -695,7 +695,7 @@ export const AiChatPage: React.FC = () => {
                             sx={{
                               mt: 2,
                               pt: 2,
-                              borderTop: '1px solid #e5e7eb',
+                              borderTop: '1px solid grey.200',
                             }}
                           >
                             <Box
@@ -714,8 +714,8 @@ export const AiChatPage: React.FC = () => {
                                   }
                                   size='small'
                                   sx={{
-                                    backgroundColor: '#f3f4f6',
-                                    color: '#374151',
+                                    backgroundColor: 'grey.100',
+                                    color: 'grey.700',
                                     fontSize: 11,
                                   }}
                                 />
@@ -725,7 +725,7 @@ export const AiChatPage: React.FC = () => {
                                   label={`置信度: ${getConfidenceLabel(message.confidence)}`}
                                   size='small'
                                   sx={{
-                                    backgroundColor: '#f3f4f6',
+                                    backgroundColor: 'grey.100',
                                     color:
                                       CONFIDENCE_COLORS[getConfidenceLevel(message.confidence)],
                                     fontSize: 11,
@@ -756,7 +756,7 @@ export const AiChatPage: React.FC = () => {
                                       label={source}
                                       size='small'
                                       sx={{
-                                        backgroundColor: '#fef3c7',
+                                        backgroundColor: 'warning.light',
                                         color: '#92400e',
                                         fontSize: 10,
                                       }}
@@ -791,7 +791,7 @@ export const AiChatPage: React.FC = () => {
                                         onClick={() => handleFollowUp(question)}
                                         sx={{
                                           justifyContent: 'flex-start',
-                                          color: '#3b82f6',
+                                          color: 'primary.main',
                                           textTransform: 'none',
                                           paddingLeft: 0,
                                         }}
@@ -817,8 +817,8 @@ export const AiChatPage: React.FC = () => {
                                     size='small'
                                     onClick={() => handleFeedback(message.qa_id!, message.content)}
                                     sx={{
-                                      color: '#22c55e',
-                                      '&:hover': { backgroundColor: '#dcfce7' },
+                                      color: 'success.dark',
+                                      '&:hover': { backgroundColor: 'success.lighter' },
                                     }}
                                   >
                                     <ThumbsUp sx={{ width: 16, height: 16 }} />
@@ -831,7 +831,7 @@ export const AiChatPage: React.FC = () => {
                                     onClick={() => handleFeedback(message.qa_id!, message.content)}
                                     sx={{
                                       textTransform: 'none',
-                                      color: '#6b7280',
+                                      color: 'text.secondary',
                                     }}
                                   >
                                     反馈
@@ -857,20 +857,20 @@ export const AiChatPage: React.FC = () => {
                           width: 36,
                           height: 36,
                           borderRadius: '50%',
-                          backgroundColor: '#e5e7eb',
+                          backgroundColor: 'grey.200',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        <Bot sx={{ width: 18, height: 18, color: '#6b7280' }} />
+                        <Bot sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                       </Box>
                       <Paper
                         sx={{
                           p: 3,
                           borderRadius: '20px 20px 20px 4px',
-                          backgroundColor: '#ffffff',
+                          backgroundColor: 'white',
                         }}
                       >
                         <Box
@@ -898,8 +898,8 @@ export const AiChatPage: React.FC = () => {
             <Box
               sx={{
                 p: 3,
-                backgroundColor: '#ffffff',
-                borderTop: '1px solid #e5e7eb',
+                backgroundColor: 'white',
+                borderTop: '1px solid grey.200',
               }}
             >
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -917,7 +917,7 @@ export const AiChatPage: React.FC = () => {
                         <IconButton
                           onClick={handleSend}
                           disabled={loading || !inputValue.trim()}
-                          sx={{ color: '#3b82f6' }}
+                          sx={{ color: 'primary.main' }}
                         >
                           <Send sx={{ width: 20, height: 20 }} />
                         </IconButton>
@@ -943,7 +943,7 @@ export const AiChatPage: React.FC = () => {
                 sx={{
                   width: 64,
                   height: 64,
-                  color: '#d1d5db',
+                  color: 'grey.300',
                   mx: 'auto',
                   mb: 4,
                 }}
@@ -981,7 +981,7 @@ export const AiChatPage: React.FC = () => {
             </Typography>
             <Typography
               variant='body1'
-              sx={{ fontSize: 14, color: '#374151' }}
+              sx={{ fontSize: 14, color: 'grey.700' }}
             >
               {feedbackDialog.answer.slice(0, 200)}...
             </Typography>

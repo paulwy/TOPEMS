@@ -8,7 +8,7 @@ import {
   DialogActions,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   Interaction,
@@ -58,7 +58,7 @@ const InteractionManagementPage: React.FC = () => {
       if (response.success && response.data) {
         setInteractions(response.data.items || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载交互记录列表失败:', error);
       addNotification({
         type: 'error',
@@ -94,7 +94,7 @@ const InteractionManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadInteractions();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -114,7 +114,7 @@ const InteractionManagementPage: React.FC = () => {
         message: '交互记录已删除',
       });
       loadInteractions();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('删除失败:', error);
       addNotification({
         type: 'error',

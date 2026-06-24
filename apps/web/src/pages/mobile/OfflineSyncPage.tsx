@@ -109,6 +109,7 @@ export const OfflineSyncPage: React.FC = () => {
       }, 500);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [isSyncing]);
 
   const handleStartSync = () => {
@@ -191,11 +192,7 @@ export const OfflineSyncPage: React.FC = () => {
         container
         spacing={3}
       >
-        <Grid
-          item
-          xs={12}
-          lg={4}
-        >
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card>
             <CardHeader title='同步设置' />
             <CardContent>
@@ -213,7 +210,7 @@ export const OfflineSyncPage: React.FC = () => {
                   <Typography
                     variant='body2'
                     color='text.secondary'
-                    mb={1}
+                    sx={{ mb: 1 }}
                   >
                     同步间隔
                   </Typography>
@@ -228,7 +225,7 @@ export const OfflineSyncPage: React.FC = () => {
                   <Typography
                     variant='body2'
                     color='text.secondary'
-                    mb={1}
+                    sx={{ mb: 1 }}
                   >
                     离线缓存大小
                   </Typography>
@@ -249,11 +246,7 @@ export const OfflineSyncPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={8}
-        >
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card>
             <CardHeader
               title='同步状态'
@@ -302,7 +295,7 @@ export const OfflineSyncPage: React.FC = () => {
                                 <CheckCircle size={14} />
                               ) : record.status === 'failed' ? (
                                 <AlertCircle size={14} />
-                              ) : null
+                              ) : undefined
                             }
                           />
                         </TableCell>

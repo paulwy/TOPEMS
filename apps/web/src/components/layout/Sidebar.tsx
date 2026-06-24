@@ -15,21 +15,14 @@ import {
   ChevronRight,
   ChevronDown,
   Home,
-  Package,
-  Settings,
   Activity,
   AlertTriangle,
   CheckCircle,
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlugins } from '../../context/PluginContext';
-import {
-  coreNavigation,
-  suiteNavigation,
-  adminNavigation,
-  getNavigationForPlugin,
-  type NavigationItem,
-} from '../../config/navigation-v2';
+import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
 import { usePermission } from '../../hooks/usePermission';
 
 interface SidebarProps {
@@ -38,17 +31,17 @@ interface SidebarProps {
   pluginCode?: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const { installedPlugins, pluginHealth, isPluginInstalled, isPluginActive } = usePlugins();
   const { checkPermission, isSuperuser } = usePermission();
 
-  const hasPermission = (permissions?: string[]): boolean => {
+  const hasPermission = (permission?: string): boolean => {
     if (isSuperuser) return true;
-    if (!permissions || permissions.length === 0) return true;
-    return permissions.some((p) => checkPermission(p));
+    if (!permission) return true;
+    return checkPermission(permission);
   };
 
   const toggleExpand = (code: string) => {
@@ -85,26 +78,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     return { status: 'healthy', label: '运行中' };
   };
 
-  const renderNavItem = (item: NavigationItem, depth = 0) => {
+  const renderNavItem = (item: NavItem, depth = 0) => {
     const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedItems.has(item.id);
+    const isExpanded = expandedItems.has(item.code);
     const active = isActive(item.path);
-    const status = item.pluginCode ? getPluginStatus(item.pluginCode) : null;
 
-    if (!hasPermission(item.permissions)) {
+    if (!hasPermission(item.permission)) {
       return null;
     }
 
-    if (item.pluginCode && !isPluginInstalled(item.pluginCode)) {
-      return null;
-    }
+    const IconComponent = item.icon
+      ? (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
+          item.icon
+        ]
+      : null;
 
     return (
-      <div key={item.id}>
+      <div key={item.code}>
         <ListItem
           onClick={() => {
             if (hasChildren) {
-              toggleExpand(item.id);
+              toggleExpand(item.code);
             } else if (item.path) {
               navigate(item.path);
               onClose();
@@ -128,32 +122,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
               ) : (
                 <ChevronRight size={18} />
               )
-            ) : item.icon ? (
-              React.createElement(item.icon, { size: 18 })
+            ) : IconComponent ? (
+              <IconComponent size={18} />
             ) : (
               <ChevronRight size={18} />
             )}
           </ListItemIcon>
-          <ListItemText primary={item.title} />
-          {status && (
+          <ListItemText primary={item.label} />
+          {item.badge && (
             <Chip
               size='small'
-              label={status.label}
+              label={item.badge}
               sx={{
                 backgroundColor:
-                  status.status === 'healthy'
+                  item.badgeColor === 'success'
                     ? 'success.light'
-                    : status.status === 'unhealthy'
-                      ? 'error.light'
-                      : status.status === 'disabled'
-                        ? 'warning.light'
-                        : 'grey.light',
+                    : item.badgeColor === 'warning'
+                      ? 'warning.light'
+                      : item.badgeColor === 'error'
+                        ? 'error.light'
+                        : 'primary.light',
                 color:
-                  status.status === 'healthy'
+                  item.badgeColor === 'success'
                     ? 'success'
-                    : status.status === 'unhealthy'
-                      ? 'error'
-                      : 'default',
+                    : item.badgeColor === 'warning'
+                      ? 'warning'
+                      : item.badgeColor === 'error'
+                        ? 'error'
+                        : 'primary',
               }}
             />
           )}
@@ -172,116 +168,60 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
     );
   };
 
-  const renderNavigationGroup = (group: (typeof coreNavigation)[0]) => {
-    const hasAccessibleItems = group.items.some((item) => {
-      if (!hasPermission(item.permissions)) return false;
-      if (item.pluginCode && !isPluginInstalled(item.pluginCode)) return false;
-      return true;
-    });
-
-    if (!hasAccessibleItems) return null;
-
-    const groupHasChildren = group.items.some((item) => item.children?.length);
-    const isExpanded = expandedItems.has(group.id);
-    const groupActive = group.items.some((item) => isActive(item.path));
+  const renderPluginSidebar = () => {
+    if (!pluginCode) return null;
+    const sidebarItems = navigationRegistry.getSidebarNavItems(pluginCode);
+    if (!sidebarItems.length) return null;
 
     return (
-      <div key={group.id}>
-        {groupHasChildren ? (
-          <>
-            <ListItem
-              onClick={() => toggleExpand(group.id)}
-              sx={{
-                color: groupActive ? 'primary.main' : 'text.secondary',
-                borderRadius: 1,
-                marginY: 0.5,
-                marginX: 1,
-                cursor: 'pointer',
-                '&:hover': { backgroundColor: 'grey.50' },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-              </ListItemIcon>
-              <ListItemText primary={group.title} />
-            </ListItem>
-            <Collapse in={isExpanded}>
-              <List
-                component='div'
-                disablePadding
-                sx={{ pl: 2 }}
-              >
-                {group.items.map((item) => renderNavItem(item, 1))}
-              </List>
-            </Collapse>
-          </>
-        ) : (
-          group.items.map((item) => renderNavItem(item))
-        )}
-      </div>
+      <div key={`sidebar-${pluginCode}`}>{sidebarItems.map((item) => renderNavItem(item))}</div>
     );
   };
 
-  const renderSuiteNavigation = () => {
-    const installedSuiteCodes = new Set(
-      installedPlugins
-        .map((p) => {
-          const suiteCode = Object.entries(suiteNavigation).find(([, suite]) =>
-            suite.items.some((item) => item.pluginCode === p.plugin_code)
-          )?.[0];
-          return suiteCode;
-        })
-        .filter(Boolean)
-    );
+  const renderAllPluginsSidebar = () => {
+    const pluginCodes = navigationRegistry.getAllPluginCodes();
+    return pluginCodes.map((code) => {
+      const card = navigationRegistry.getModuleCard(code);
+      if (!card) return null;
+      if (card.status !== 'online') return null;
+      if (!hasPermission(card.permission)) return null;
 
-    return Array.from(installedSuiteCodes)
-      .filter(
-        (suiteCode): suiteCode is keyof typeof suiteNavigation =>
-          suiteCode !== undefined && suiteCode in suiteNavigation
-      )
-      .map((suiteCode) => suiteNavigation[suiteCode])
-      .filter(Boolean)
-      .map((suite) => {
-        const hasAccessiblePlugins = suite.items.some((item: NavigationItem) => {
-          if (item.pluginCode && !isPluginActive(item.pluginCode)) return false;
-          return true;
-        });
+      const sidebarItems = navigationRegistry.getSidebarNavItems(code);
+      if (!sidebarItems.length) return null;
 
-        if (!hasAccessiblePlugins) return null;
+      const isExpanded = expandedItems.has(code);
+      const groupActive = sidebarItems.some((item) => isActive(item.path));
 
-        const isExpanded = expandedItems.has(suite.id);
-        const suiteActive = suite.items.some((item: NavigationItem) => isActive(item.path));
-
-        return (
-          <div key={suite.id}>
-            <ListItem
-              onClick={() => toggleExpand(suite.id)}
-              sx={{
-                color: suiteActive ? 'primary.main' : 'text.secondary',
-                borderRadius: 1,
-                marginY: 0.5,
-                marginX: 1,
-                cursor: 'pointer',
-                '&:hover': { backgroundColor: 'grey.50' },
-              }}
+      return (
+        <div key={code}>
+          <ListItem
+            onClick={() => toggleExpand(code)}
+            sx={{
+              color: groupActive ? 'primary.main' : 'text.secondary',
+              borderRadius: 1,
+              marginY: 0.5,
+              marginX: 1,
+              cursor: 'pointer',
+              '&:hover': { backgroundColor: 'grey.50' },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+            </ListItemIcon>
+            <ListItemText primary={card.name} />
+          </ListItem>
+          <Collapse in={isExpanded}>
+            <List
+              component='div'
+              disablePadding
+              sx={{ pl: 2 }}
             >
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-              </ListItemIcon>
-              <ListItemText primary={suite.title} />
-            </ListItem>
-            <Collapse in={isExpanded}>
-              <List
-                component='div'
-                disablePadding
-                sx={{ pl: 2 }}
-              >
-                {suite.items.map((item: NavigationItem) => renderNavItem(item, 1))}
-              </List>
-            </Collapse>
-          </div>
-        );
-      });
+              {sidebarItems.map((item) => renderNavItem(item, 1))}
+            </List>
+          </Collapse>
+        </div>
+      );
+    });
   };
 
   return (
@@ -336,7 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         </ListItem>
         <Divider sx={{ my: 1 }} />
 
-        {coreNavigation.map(renderNavigationGroup)}
+        {pluginCode ? renderPluginSidebar() : renderAllPluginsSidebar()}
 
         <Divider sx={{ my: 2 }} />
         <Typography
@@ -345,10 +285,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
         >
           已安装套件
         </Typography>
-        {renderSuiteNavigation()}
 
         <Divider sx={{ my: 2 }} />
-        {adminNavigation.map(renderNavigationGroup)}
       </List>
 
       <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, p: 2 }}>
@@ -357,7 +295,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           <div className='flex items-center gap-2'>
             <Activity
               size={16}
-              className='text-gray-400'
+              sx={{ color: 'grey.400' }}
             />
             <Typography
               variant='caption'
@@ -372,12 +310,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                 {Object.values(pluginHealth).every((h) => h.healthy) ? (
                   <CheckCircle
                     size={16}
-                    className='text-green-500'
+                    sx={{ color: 'success.main' }}
                   />
                 ) : (
                   <AlertTriangle
                     size={16}
-                    className='text-yellow-500'
+                    sx={{ color: 'warning.main' }}
                   />
                 )}
               </>

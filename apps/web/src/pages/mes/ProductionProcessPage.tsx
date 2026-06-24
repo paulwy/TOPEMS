@@ -13,7 +13,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   ProductionProcess,
@@ -74,7 +74,7 @@ const ProductionProcessPage: React.FC = () => {
         setProcesses(response.data.processes || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载工序列表失败:', error);
       addNotification({
         type: 'error',
@@ -110,7 +110,7 @@ const ProductionProcessPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadProcesses();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -152,10 +152,10 @@ const ProductionProcessPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-      active: { label: '启用', bg: '#dcfce7', color: '#16a34a' },
-      inactive: { label: '禁用', bg: '#fee2e2', color: '#dc2626' },
+      active: { label: '启用', bg: 'success.lighter', color: 'success.dark' },
+      inactive: { label: '禁用', bg: 'error.lighter', color: 'error.dark' },
     };
-    const s = statusMap[status] || { label: status, bg: '#f3f4f6', color: '#4b5563' };
+    const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         size='small'
@@ -268,7 +268,7 @@ const ProductionProcessPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -282,7 +282,7 @@ const ProductionProcessPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fee2e2', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

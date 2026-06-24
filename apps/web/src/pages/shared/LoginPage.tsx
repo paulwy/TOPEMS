@@ -17,7 +17,7 @@ import {
   Typography,
   TextField,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { ModeToggle } from '@/components/ModeToggle';
 
@@ -88,11 +88,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('登录错误:', err);
       addNotification({
         title: '错误',
-        message: err.message || '请求失败',
+        message: (err as { message?: string }).message || '请求失败',
         type: 'error',
       });
     } finally {
@@ -350,12 +350,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        bgcolor: form.watch('password')?.match(/[A-Z]/) ? '#22c55e' : '#e5e7eb',
+                        bgcolor: form.watch('password')?.match(/[A-Z]/)
+                          ? 'success.dark'
+                          : 'grey.200',
                       }}
                     ></Box>
                     <Typography
                       variant='caption'
-                      sx={{ color: '#6b7280' }}
+                      sx={{ color: 'text.secondary' }}
                     >
                       大写字母
                     </Typography>
@@ -366,12 +368,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        bgcolor: form.watch('password')?.match(/[a-z]/) ? '#22c55e' : '#e5e7eb',
+                        bgcolor: form.watch('password')?.match(/[a-z]/)
+                          ? 'success.dark'
+                          : 'grey.200',
                       }}
                     ></Box>
                     <Typography
                       variant='caption'
-                      sx={{ color: '#6b7280' }}
+                      sx={{ color: 'text.secondary' }}
                     >
                       小写字母
                     </Typography>
@@ -382,12 +386,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        bgcolor: form.watch('password')?.match(/[0-9]/) ? '#22c55e' : '#e5e7eb',
+                        bgcolor: form.watch('password')?.match(/[0-9]/)
+                          ? 'success.dark'
+                          : 'grey.200',
                       }}
                     ></Box>
                     <Typography
                       variant='caption'
-                      sx={{ color: '#6b7280' }}
+                      sx={{ color: 'text.secondary' }}
                     >
                       数字
                     </Typography>
@@ -399,13 +405,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                         height: 8,
                         borderRadius: '50%',
                         bgcolor: form.watch('password')?.match(/[^a-zA-Z0-9]/)
-                          ? '#22c55e'
-                          : '#e5e7eb',
+                          ? 'success.dark'
+                          : 'grey.200',
                       }}
                     ></Box>
                     <Typography
                       variant='caption'
-                      sx={{ color: '#6b7280' }}
+                      sx={{ color: 'text.secondary' }}
                     >
                       特殊字符
                     </Typography>
@@ -453,10 +459,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </Box>
 
           {isDevelopment() && (
-            <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #e5e7eb' }}>
+            <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>
               <Typography
                 variant='caption'
-                sx={{ color: '#9ca3af', textAlign: 'center', display: 'block' }}
+                sx={{ color: 'text.disabled', textAlign: 'center', display: 'block' }}
               >
                 演示账号: admin / admin123 (管理员) | user / user123 (普通员工)
               </Typography>

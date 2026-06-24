@@ -18,7 +18,7 @@ import {
   Stack,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import {
@@ -97,10 +97,10 @@ const HrmCompanyPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '加载失败',
-        message: error.message || '获取公司列表失败',
+        message: (error as { message?: string }).message || '获取公司列表失败',
         type: 'error',
       });
       setCompanies([]);
@@ -132,7 +132,7 @@ const HrmCompanyPage: React.FC = () => {
 
       const tree = buildTree(depts, emps);
       setTreeData(tree);
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch company details:', error);
     } finally {
       setLoading(false);
@@ -243,10 +243,10 @@ const HrmCompanyPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '删除公司失败',
+        message: (error as { message?: string }).message || '删除公司失败',
         type: 'error',
       });
     }
@@ -268,10 +268,10 @@ const HrmCompanyPage: React.FC = () => {
       setSearchText('');
       setStatusFilter('');
       fetchCompanies({ page: 1, page_size: pageSize });
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '创建公司失败',
+        message: (error as { message?: string }).message || '创建公司失败',
         type: 'error',
       });
     }
@@ -290,10 +290,10 @@ const HrmCompanyPage: React.FC = () => {
       setShowEditModal(false);
       setSelectedCompany(null);
       fetchCompanies({ page: currentPage, page_size: pageSize });
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '更新公司失败',
+        message: (error as { message?: string }).message || '更新公司失败',
         type: 'error',
       });
     }
@@ -1098,7 +1098,8 @@ const HrmCompanyPage: React.FC = () => {
                                     width: 48,
                                     height: 48,
                                     borderRadius: 2,
-                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                    background:
+                                      'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',

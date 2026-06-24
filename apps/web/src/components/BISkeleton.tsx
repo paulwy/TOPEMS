@@ -131,7 +131,7 @@ export const VisualizationCardSkeleton: React.FC<{ className?: string }> = ({ cl
     <Box
       sx={{
         height: 160,
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        background: 'linear-gradient(135deg, grey.50 0%, grey.100 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -222,7 +222,7 @@ export const TableSkeleton: React.FC<{
 );
 
 export const DashboardSkeleton: React.FC = () => (
-  <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc', p: 3 }}>
+  <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50', p: 3 }}>
     <Box
       sx={{
         display: 'flex',
@@ -288,7 +288,7 @@ export const DashboardSkeleton: React.FC = () => (
 );
 
 export const AnalyticsSkeleton: React.FC = () => (
-  <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc', p: 3 }}>
+  <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50', p: 3 }}>
     <Box
       sx={{
         display: 'flex',
@@ -365,7 +365,7 @@ export const AnalyticsSkeleton: React.FC = () => (
 );
 
 export const VisualizationSkeleton: React.FC = () => (
-  <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc', p: 3 }}>
+  <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50', p: 3 }}>
     <Box
       sx={{
         display: 'flex',

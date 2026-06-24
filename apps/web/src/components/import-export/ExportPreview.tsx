@@ -56,7 +56,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
         <div
           style={{
             padding: 24,
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid border.default',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -66,7 +66,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#0f172a',
+              color: 'grey.900',
               margin: 0,
             }}
           >
@@ -89,7 +89,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
         >
           <div
             style={{
-              backgroundColor: '#f0fdf4',
+              backgroundColor: 'success.light',
               border: '1px solid #bbf7d0',
               borderRadius: 8,
               padding: 16,
@@ -101,7 +101,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
                 style={{
                   width: 20,
                   height: 20,
-                  color: '#16a34a',
+                  color: 'success.dark',
                   marginRight: 8,
                 }}
               />
@@ -116,14 +116,14 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
 
           <div
             style={{
-              border: '1px solid #e2e8f0',
+              border: '1px solid border.default',
               borderRadius: 8,
               overflow: 'hidden',
             }}
           >
             <div style={{ overflowX: 'auto' }}>
               <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ backgroundColor: '#f8fafc' }}>
+                <thead style={{ backgroundColor: 'grey.50' }}>
                   <tr>
                     {columns.map((col) => (
                       <th
@@ -133,7 +133,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
                           textAlign: 'left',
                           fontSize: 12,
                           fontWeight: 500,
-                          color: '#64748b',
+                          color: 'grey.600',
                           textTransform: 'uppercase',
                         }}
                       >
@@ -151,7 +151,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
                           style={{
                             padding: '8px 16px',
                             fontSize: 14,
-                            color: '#0f172a',
+                            color: 'grey.900',
                           }}
                         >
                           {String(row[col] || '')}
@@ -166,7 +166,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
               <div
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'grey.50',
                   fontSize: 14,
                   color: '#475569',
                   textAlign: 'center',
@@ -181,7 +181,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
         <div
           style={{
             padding: 24,
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid border.default',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 12,
@@ -192,7 +192,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
             style={{
               padding: '8px 16px',
               color: '#334155',
-              backgroundColor: '#f1f5f9',
+              backgroundColor: 'grey.100',
               borderRadius: 8,
             }}
           >
@@ -202,7 +202,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
             onClick={onDownload}
             style={{
               padding: '8px 16px',
-              backgroundColor: '#16a34a',
+              backgroundColor: 'success.dark',
               color: 'white',
               borderRadius: 8,
             }}

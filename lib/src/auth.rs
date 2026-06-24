@@ -463,6 +463,11 @@ pub async fn auth_middleware(
         return next.run(req).await;
     }
 
+    // Allow plugin health check without auth (used by frontend for service discovery)
+    if path.starts_with("/api/plugins/health") || path.starts_with("/api/plugins/info") {
+        return next.run(req).await;
+    }
+
     // Allow plugin marketplace APIs without auth (public browsing)
     if path.starts_with("/api/core/plugin/marketplace") {
         return next.run(req).await;

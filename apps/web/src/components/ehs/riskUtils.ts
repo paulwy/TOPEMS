@@ -192,21 +192,21 @@ export const riskMatrixData = [
     likelihood: 'high',
     score: 9,
     level: '高',
-    color: '#ef4444',
+    color: 'error.main',
   },
   {
     severity: 'high',
     likelihood: 'medium',
     score: 6,
     level: '高',
-    color: '#ef4444',
+    color: 'error.main',
   },
   {
     severity: 'high',
     likelihood: 'low',
     score: 3,
     level: '中',
-    color: '#f59e0b',
+    color: 'warning.main',
   },
   // Medium severity
   {
@@ -214,21 +214,21 @@ export const riskMatrixData = [
     likelihood: 'high',
     score: 6,
     level: '高',
-    color: '#ef4444',
+    color: 'error.main',
   },
   {
     severity: 'medium',
     likelihood: 'medium',
     score: 4,
     level: '中',
-    color: '#f59e0b',
+    color: 'warning.main',
   },
   {
     severity: 'medium',
     likelihood: 'low',
     score: 2,
     level: '低',
-    color: '#10b981',
+    color: 'success.main',
   },
   // Low severity
   {
@@ -236,21 +236,21 @@ export const riskMatrixData = [
     likelihood: 'high',
     score: 3,
     level: '中',
-    color: '#f59e0b',
+    color: 'warning.main',
   },
   {
     severity: 'low',
     likelihood: 'medium',
     score: 2,
     level: '低',
-    color: '#10b981',
+    color: 'success.main',
   },
   {
     severity: 'low',
     likelihood: 'low',
     score: 1,
     level: '低',
-    color: '#10b981',
+    color: 'success.main',
   },
 ];
 

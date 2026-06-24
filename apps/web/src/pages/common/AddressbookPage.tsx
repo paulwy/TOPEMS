@@ -48,7 +48,7 @@ const AddressbookPage: React.FC = () => {
       if (response.success) {
         setContacts(response.data.items);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载联系人失败:', error);
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ const AddressbookPage: React.FC = () => {
       if (response.success) {
         setDepartments(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载部门失败:', error);
     }
   }, []);
@@ -80,7 +80,7 @@ const AddressbookPage: React.FC = () => {
       if (response.success) {
         setSelectedContact(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载联系人详情失败:', error);
     }
   }, []);
@@ -100,7 +100,7 @@ const AddressbookPage: React.FC = () => {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('导出失败:', error);
     }
   }, [selectedType]);

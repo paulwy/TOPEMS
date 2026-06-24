@@ -17,7 +17,8 @@ pub use event_types::{
     HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload,
     PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
     LimsSampleRegisteredPayload, LimsInspectionResultSubmittedPayload, LimsInspectionAbnormalDetectedPayload,
-    QmsInspectionCompletedPayload, QmsCorrectiveActionCreatedPayload,
+    LimsRecordCompletedPayload, LimsReagentAlertPayload,
+    QmsInspectionCompletedPayload, QmsCorrectiveActionCreatedPayload, QmsQualityIssueCreatedPayload,
     EhsHazardReportedPayload, EhsAccidentReportedPayload,
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};

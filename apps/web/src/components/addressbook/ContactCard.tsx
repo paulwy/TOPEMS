@@ -23,13 +23,13 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
   const getColor = () => {
     switch (contact.contact_type) {
       case 'EMPLOYEE':
-        return { bg: '#dbeafe', color: '#2563eb' };
+        return { bg: '#dbeafe', color: 'primary.dark' };
       case 'DEPARTMENT':
-        return { bg: '#dcfce7', color: '#16a34a' };
+        return { bg: 'success.lighter', color: 'success.dark' };
       case 'COMPANY':
         return { bg: '#f3e8ff', color: '#9333ea' };
       default:
-        return { bg: '#f3f4f6', color: '#6b7280' };
+        return { bg: 'grey.100', color: 'text.secondary' };
     }
   };
 
@@ -41,7 +41,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
       style={{
         backgroundColor: 'white',
         borderRadius: 8,
-        border: '1px solid #e2e8f0',
+        border: '1px solid border.default',
         padding: 16,
         cursor: 'pointer',
         transition: 'box-shadow 0.2s',
@@ -68,7 +68,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#0f172a',
+              color: 'grey.900',
               margin: 0,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -81,7 +81,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
             <p
               style={{
                 fontSize: 14,
-                color: '#64748b',
+                color: 'grey.600',
                 margin: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -112,7 +112,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
                   display: 'flex',
                   alignItems: 'center',
                   fontSize: 14,
-                  color: '#64748b',
+                  color: 'grey.600',
                 }}
               >
                 <Mail sx={{ width: 16, height: 16, marginRight: 8, flexShrink: 0 }} />
@@ -133,7 +133,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
                   display: 'flex',
                   alignItems: 'center',
                   fontSize: 14,
-                  color: '#64748b',
+                  color: 'grey.600',
                 }}
               >
                 <Phone sx={{ width: 16, height: 16, marginRight: 8, flexShrink: 0 }} />
@@ -152,8 +152,8 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
               fontSize: 12,
               fontWeight: 500,
               ...(contact.status === 'active'
-                ? { backgroundColor: '#dcfce7', color: '#15803d' }
-                : { backgroundColor: '#fee2e2', color: '#b91c1c' }),
+                ? { backgroundColor: 'success.lighter', color: '#15803d' }
+                : { backgroundColor: 'error.lighter', color: 'error.darker' }),
             }}
           >
             {contact.status === 'active' ? '在职' : '离职'}

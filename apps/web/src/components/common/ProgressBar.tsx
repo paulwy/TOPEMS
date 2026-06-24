@@ -4,11 +4,11 @@ import { styled } from '@mui/material/styles';
 
 // 渐变颜色配置
 const GRADIENT_COLORS = {
-  primary: 'linear-gradient(90deg, #3b82f6, #2563eb)',
+  primary: 'linear-gradient(90deg, primary.main, primary.dark)',
   success: 'linear-gradient(90deg, #22c55e, #16a34a)',
-  warning: 'linear-gradient(90deg, #f59e0b, #d97706)',
-  error: 'linear-gradient(90deg, #ef4444, #dc2626)',
-  gradient: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)',
+  warning: 'linear-gradient(90deg, warning.main, warning.dark)',
+  error: 'linear-gradient(90deg, error.main, error.dark)',
+  gradient: 'linear-gradient(90deg, primary.main, secondary.main, #ec4899)',
 };
 
 // 实色配置（用于 MUI 组件的 color 属性）
@@ -275,11 +275,11 @@ export default function ProgressBar({
                   <>
                     <stop
                       offset='0%'
-                      stopColor='#3b82f6'
+                      stopColor='primary.main'
                     />
                     <stop
                       offset='50%'
-                      stopColor='#8b5cf6'
+                      stopColor='secondary.main'
                     />
                     <stop
                       offset='100%'
@@ -290,11 +290,15 @@ export default function ProgressBar({
                   <>
                     <stop
                       offset='0%'
-                      stopColor={GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[0] || '#3b82f6'}
+                      stopColor={
+                        GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[0] || 'primary.main'
+                      }
                     />
                     <stop
                       offset='100%'
-                      stopColor={GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[1] || '#2563eb'}
+                      stopColor={
+                        GRADIENT_COLORS[color].match(/#[a-f0-9]{6}/gi)?.[1] || 'primary.dark'
+                      }
                     />
                   </>
                 )}

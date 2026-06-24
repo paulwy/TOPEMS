@@ -179,16 +179,20 @@ export const GisTrackingPage: React.FC = () => {
           </Typography>
         </div>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <IconButton
+          <Button
             variant='contained'
             onClick={() => setIsPlaying(!isPlaying)}
-            color={isPlaying ? 'primary' : 'default'}
+            color={isPlaying ? 'primary' : 'inherit'}
+            size='small'
           >
             {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </IconButton>
-          <IconButton variant='contained'>
+          </Button>
+          <Button
+            variant='contained'
+            size='small'
+          >
             <RotateCcw size={20} />
-          </IconButton>
+          </Button>
         </Box>
       </Box>
 
@@ -197,11 +201,7 @@ export const GisTrackingPage: React.FC = () => {
         spacing={3}
         sx={{ mb: 4 }}
       >
-        <Grid
-          item
-          xs={12}
-          lg={3}
-        >
+        <Grid size={{ xs: 12, lg: 3 }}>
           <Card>
             <CardHeader title='选择设备' />
             <CardContent>
@@ -242,17 +242,13 @@ export const GisTrackingPage: React.FC = () => {
         </Grid>
         {selectedDeviceData && (
           <>
-            <Grid
-              item
-              xs={6}
-              lg={3}
-            >
+            <Grid size={{ xs: 6, lg: 3 }}>
               <Card>
                 <CardContent>
                   <Typography
                     variant='body2'
                     color='text.secondary'
-                    mb={2}
+                    sx={{ mb: 2 }}
                   >
                     当前状态
                   </Typography>
@@ -272,17 +268,13 @@ export const GisTrackingPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid
-              item
-              xs={6}
-              lg={3}
-            >
+            <Grid size={{ xs: 6, lg: 3 }}>
               <Card>
                 <CardContent>
                   <Typography
                     variant='body2'
                     color='text.secondary'
-                    mb={2}
+                    sx={{ mb: 2 }}
                   >
                     当前速度
                   </Typography>
@@ -295,17 +287,13 @@ export const GisTrackingPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid
-              item
-              xs={12}
-              lg={3}
-            >
+            <Grid size={{ xs: 12, lg: 3 }}>
               <Card>
                 <CardContent>
                   <Typography
                     variant='body2'
                     color='text.secondary'
-                    mb={2}
+                    sx={{ mb: 2 }}
                   >
                     电量
                   </Typography>
@@ -333,18 +321,14 @@ export const GisTrackingPage: React.FC = () => {
         container
         spacing={3}
       >
-        <Grid
-          item
-          xs={12}
-          lg={7}
-        >
+        <Grid size={{ xs: 12, lg: 7 }}>
           <Card>
             <CardHeader title='轨迹地图' />
             <CardContent>
               <Box
                 sx={{
                   height: 450,
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: 'grey.100',
                   borderRadius: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -413,11 +397,7 @@ export const GisTrackingPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={5}
-        >
+        <Grid size={{ xs: 12, lg: 5 }}>
           <Card>
             <CardHeader title='轨迹历史' />
             <CardContent>

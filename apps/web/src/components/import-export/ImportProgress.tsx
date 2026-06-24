@@ -20,16 +20,16 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
 }) => {
   const getStatusIcon = () => {
     if (status === 'completed') {
-      return <CheckCircle style={{ width: 20, height: 20, color: '#16a34a' }} />;
+      return <CheckCircle style={{ width: 20, height: 20, color: 'success.dark' }} />;
     } else if (status === 'failed') {
-      return <XCircle style={{ width: 20, height: 20, color: '#dc2626' }} />;
+      return <XCircle style={{ width: 20, height: 20, color: 'error.dark' }} />;
     } else {
       return (
         <Loader2
           style={{
             width: 20,
             height: 20,
-            color: '#2563eb',
+            color: 'primary.dark',
             animation: 'spin 1s linear infinite',
           }}
         />
@@ -69,7 +69,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
           marginBottom: 16,
         }}
       >
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', margin: 0 }}>导入进度</h3>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: 'grey.900', margin: 0 }}>导入进度</h3>
         {getStatusIcon()}
       </div>
 
@@ -89,7 +89,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
         <div
           style={{
             width: '100%',
-            backgroundColor: '#e2e8f0',
+            backgroundColor: 'border.default',
             borderRadius: 9999,
             height: 8,
           }}
@@ -101,7 +101,11 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
               transition: 'all 0.3s',
               width: `${progress}%`,
               backgroundColor:
-                status === 'completed' ? '#16a34a' : status === 'failed' ? '#dc2626' : '#2563eb',
+                status === 'completed'
+                  ? 'success.dark'
+                  : status === 'failed'
+                    ? 'error.dark'
+                    : 'primary.dark',
             }}
           />
         </div>
@@ -121,7 +125,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#0f172a',
+              color: 'grey.900',
               margin: 0,
             }}
           >
@@ -134,7 +138,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#0f172a',
+              color: 'grey.900',
               margin: 0,
             }}
           >
@@ -147,7 +151,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#16a34a',
+              color: 'success.dark',
               margin: 0,
             }}
           >
@@ -160,7 +164,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#dc2626',
+              color: 'error.dark',
               margin: 0,
             }}
           >

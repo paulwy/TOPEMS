@@ -247,9 +247,7 @@ export const MonitorAlertsPage: React.FC = () => {
       >
         {stats.map((stat) => (
           <Grid
-            item
-            xs={6}
-            sm={3}
+            size={{ xs: 6, sm: 3 }}
             key={stat.label}
           >
             <Card>
@@ -286,11 +284,7 @@ export const MonitorAlertsPage: React.FC = () => {
         container
         spacing={3}
       >
-        <Grid
-          item
-          xs={12}
-          lg={8}
-        >
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card>
             <CardHeader
               title='告警历史'
@@ -302,13 +296,15 @@ export const MonitorAlertsPage: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     size='small'
                     sx={{ width: 200 }}
-                    InputProps={{
-                      startAdornment: (
-                        <Search
-                          size={16}
-                          sx={{ mr: 1 }}
-                        />
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <Search
+                            size={16}
+                            sx={{ mr: 1 }}
+                          />
+                        ),
+                      },
                     }}
                   />
                   <Box sx={{ display: 'flex', gap: 1 }}>
@@ -417,11 +413,7 @@ export const MonitorAlertsPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={4}
-        >
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card>
             <CardHeader
               title='告警规则'
@@ -565,10 +557,7 @@ export const MonitorAlertsPage: React.FC = () => {
               container
               spacing={3}
             >
-              <Grid
-                item
-                xs={4}
-              >
+              <Grid size={{ xs: 4 }}>
                 <FormControl fullWidth>
                   <InputLabel>条件</InputLabel>
                   <Select
@@ -581,10 +570,7 @@ export const MonitorAlertsPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid
-                item
-                xs={8}
-              >
+              <Grid size={{ xs: 8 }}>
                 <TextField
                   label='阈值'
                   placeholder='输入阈值'

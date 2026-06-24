@@ -1,12 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  topNavItems,
-  moduleTabsConfig,
-  getModuleFromPath,
-  type NavItem,
-  type TabItem,
-} from '../config/navigation';
+import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import type { TabItem } from '@/types/navigation';
+
+// 从路径解析模块名的辅助函数
+function getModuleFromPath(pathname: string): string | null {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length === 0) return null;
+  // 第一个路径段即为模块名
+  return segments[0];
+}
 
 interface NavState {
   activeModule: string | null;
@@ -34,6 +37,11 @@ export function useTopNav(): UseTopNavReturn {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // 从 NavigationRegistry 动态获取导航项
+  const [navItems, setNavItems] = useState<NavItem[]>(() => {
+    return navigationRegistry.getTopNavItems();
+  });
+
   const [state, setState] = useState<NavState>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -60,6 +68,17 @@ export function useTopNav(): UseTopNavReturn {
       customTabs: {},
     };
   });
+
+  // 监听 NavigationRegistry 更新事件
+  useEffect(() => {
+    const updateNavItems = () => {
+      setNavItems(navigationRegistry.getTopNavItems());
+    };
+    navigationRegistry.emitter.on('navigationUpdated', updateNavItems);
+    return function cleanup() {
+      navigationRegistry.emitter.off('navigationUpdated', updateNavItems);
+    };
+  }, []);
 
   useEffect(() => {
     const module = getModuleFromPath(location.pathname);
@@ -89,7 +108,8 @@ export function useTopNav(): UseTopNavReturn {
   const currentModuleTabs = (): TabItem[] => {
     if (!state.activeModule) return [];
 
-    const configTabs = moduleTabsConfig.find((c) => c.module === state.activeModule)?.tabs || [];
+    // 从 NavigationRegistry 获取模块 Tabs
+    const configTabs = navigationRegistry.getModuleTabs(state.activeModule) || [];
 
     const customTabs = state.customTabs[state.activeModule] || [];
 
@@ -169,7 +189,7 @@ export function useTopNav(): UseTopNavReturn {
     activeModule: state.activeModule,
     activeTab: state.activeTab,
     openMenu: state.openMenu,
-    navItems: topNavItems,
+    navItems,
     currentModuleTabs: currentModuleTabs(),
     setOpenMenu,
     navigateTo,

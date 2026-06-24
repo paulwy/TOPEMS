@@ -17,7 +17,7 @@ import {
   Grid,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Clock,
@@ -43,6 +43,7 @@ import { auditRsApi } from '@/api/rs';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
+import { extractErrorMessage } from '@/utils/errors';
 
 import { ModeToggle } from '@/components/ModeToggle';
 
@@ -76,7 +77,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     setLoading(true);
     try {
       const api = source === 'lims' ? auditLimsApi : auditRsApi;
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         page_size: pageSize,
       };
@@ -103,12 +104,12 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         setLogs([]);
         setTotal(0);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('加载审计日志失败:', error);
       setLogs([]);
       addNotification({
         title: '加载失败',
-        message: error.message || '加载审计日志失败',
+        message: extractErrorMessage(error, '加载审计日志失败'),
         type: 'error',
       });
     } finally {
@@ -120,7 +121,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     setExporting(true);
     try {
       const api = source === 'lims' ? auditLimsApi : auditRsApi;
-      const params: any = {};
+      const params: Record<string, unknown> = {};
       if (filterStatus !== 'all') {
         params.status = filterStatus;
       }
@@ -150,11 +151,11 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         message: '审计日志已导出',
         type: 'success',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('导出审计日志失败:', error);
       addNotification({
         title: '导出失败',
-        message: error.message || '导出审计日志失败',
+        message: extractErrorMessage(error, '导出审计日志失败'),
         type: 'error',
       });
     } finally {
@@ -393,15 +394,15 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     [uniqueActions, uniqueEntityTypes]
   );
 
-  const handleFilterChange = (filters: Record<string, any>) => {
-    if (filters.status !== undefined) {
-      setFilterStatus(filters.status);
+  const handleFilterChange = (filters: Record<string, unknown>) => {
+    if (typeof filters.status === 'string' || filters.status === null) {
+      setFilterStatus(filters.status as string);
     }
-    if (filters.action !== undefined) {
-      setFilterAction(filters.action);
+    if (typeof filters.action === 'string' || filters.action === null) {
+      setFilterAction(filters.action as string);
     }
-    if (filters.entity_type !== undefined) {
-      setFilterEntityType(filters.entity_type);
+    if (typeof filters.entity_type === 'string' || filters.entity_type === null) {
+      setFilterEntityType(filters.entity_type as string);
     }
     setCurrentPage(1);
   };
@@ -530,7 +531,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 setCurrentPage(1);
               }}
               sx={{ width: 220 }}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <Typography
               variant='body2'
@@ -547,7 +548,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 setCurrentPage(1);
               }}
               sx={{ width: 220 }}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             {(startDate || endDate) && (
               <Button
@@ -627,10 +628,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
               container
               spacing={3}
             >
-              <Grid
-                item
-                xs={6}
-              >
+              <Grid size={{ xs: 6 }}>
                 <Paper sx={{ p: 3 }}>
                   <Typography
                     variant='subtitle2'
@@ -643,10 +641,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                     container
                     spacing={2}
                   >
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -662,10 +657,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -681,10 +673,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -700,10 +689,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -719,10 +705,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -736,10 +719,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                   </Grid>
                 </Paper>
               </Grid>
-              <Grid
-                item
-                xs={6}
-              >
+              <Grid size={{ xs: 6 }}>
                 <Paper sx={{ p: 3 }}>
                   <Typography
                     variant='subtitle2'
@@ -752,10 +732,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                     container
                     spacing={2}
                   >
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -771,10 +748,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -790,10 +764,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -809,10 +780,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                    >
+                    <Grid size={{ xs: 12 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography
                           variant='body2'
@@ -832,10 +800,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 </Paper>
               </Grid>
               {selectedLog.error_message && (
-                <Grid
-                  item
-                  xs={12}
-                >
+                <Grid size={{ xs: 12 }}>
                   <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
                     <Typography
                       variant='subtitle2'
@@ -854,10 +819,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 </Grid>
               )}
               {selectedLog.request_details && (
-                <Grid
-                  item
-                  xs={12}
-                >
+                <Grid size={{ xs: 12 }}>
                   <Paper sx={{ p: 3 }}>
                     <Typography
                       variant='subtitle2'
@@ -882,10 +844,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 </Grid>
               )}
               {selectedLog.response_details && (
-                <Grid
-                  item
-                  xs={12}
-                >
+                <Grid size={{ xs: 12 }}>
                   <Paper sx={{ p: 3 }}>
                     <Typography
                       variant='subtitle2'

@@ -10,7 +10,7 @@ import {
   FormControlLabel,
   Switch,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Download,
   X,
@@ -55,7 +55,7 @@ const exportFormats: {
     label: 'Excel',
     description: 'Microsoft Excel 格式，支持复杂表格和公式',
     icon: FileSpreadsheet,
-    color: '#22c55e',
+    color: 'success.dark',
     extension: '.xlsx',
   },
   {
@@ -63,7 +63,7 @@ const exportFormats: {
     label: 'PDF',
     description: '便携文档格式，适合打印和分享',
     icon: File,
-    color: '#ef4444',
+    color: 'error.main',
     extension: '.pdf',
   },
   {
@@ -71,7 +71,7 @@ const exportFormats: {
     label: 'CSV',
     description: '逗号分隔值，兼容各种电子表格软件',
     icon: FileText,
-    color: '#3b82f6',
+    color: 'primary.main',
     extension: '.csv',
   },
   {
@@ -79,7 +79,7 @@ const exportFormats: {
     label: 'JSON',
     description: 'JavaScript对象表示法，适合程序处理',
     icon: FileJson,
-    color: '#8b5cf6',
+    color: 'secondary.main',
     extension: '.json',
   },
   {
@@ -95,7 +95,7 @@ const exportFormats: {
     label: 'Markdown',
     description: '轻量级标记语言，适合文档编写',
     icon: FileText,
-    color: '#6b7280',
+    color: 'text.secondary',
     extension: '.md',
   },
   {
@@ -199,7 +199,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
         {/* Header */}
         <Box
           sx={{
-            background: 'linear-gradient(90deg, #2563eb 0%, #4f46e5 100%)',
+            background: 'linear-gradient(90deg, primary.dark 0%, primary.main 100%)',
             color: 'white',
             p: 6,
           }}
@@ -227,7 +227,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               <X style={{ width: 24, height: 24 }} />
             </IconButton>
           </Box>
-          <Typography sx={{ color: '#bfdbfe', fontSize: '0.875rem', mt: 2 }}>
+          <Typography sx={{ color: 'primary.light', fontSize: '0.875rem', mt: 2 }}>
             {formatDescription()}
           </Typography>
         </Box>
@@ -249,7 +249,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               sx={{
                 fontSize: '1.125rem',
                 fontWeight: 600,
-                color: '#111827',
+                color: 'text.primary',
                 mb: 4,
               }}
             >
@@ -277,12 +277,12 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                       p: 4,
                       borderRadius: 2,
                       border: '2px solid',
-                      borderColor: selectedFormat === format.id ? '#2563eb' : '#e5e7eb',
-                      backgroundColor: selectedFormat === format.id ? '#eff6ff' : 'white',
+                      borderColor: selectedFormat === format.id ? 'primary.dark' : 'grey.200',
+                      backgroundColor: selectedFormat === format.id ? 'primary.light' : 'white',
                       textAlign: 'left',
                       transition: 'all',
                       '&:hover': {
-                        borderColor: selectedFormat === format.id ? '#1d4ed8' : '#bfdbfe',
+                        borderColor: selectedFormat === format.id ? 'primary.dark' : 'primary.light',
                       },
                     }}
                   >
@@ -291,16 +291,16 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                         display: 'inline-flex',
                         p: 2,
                         borderRadius: 2,
-                        backgroundColor: selectedFormat === format.id ? format.color : '#f3f4f6',
-                        color: selectedFormat === format.id ? 'white' : '#6b7280',
+                        backgroundColor: selectedFormat === format.id ? format.color : 'grey.100',
+                        color: selectedFormat === format.id ? 'white' : 'text.secondary',
                       }}
                     >
                       <Icon size={24} />
                     </Box>
-                    <Typography sx={{ mt: 2, fontWeight: 500, color: '#111827' }}>
+                    <Typography sx={{ mt: 2, fontWeight: 500, color: 'text.primary' }}>
                       {format.label}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.75rem', color: '#6b7280', mt: 1 }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 1 }}>
                       {format.extension}
                     </Typography>
                   </Button>
@@ -311,7 +311,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
 
           {/* Basic Options */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>
+            <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}>
               基本选项
             </Typography>
 
@@ -321,13 +321,13 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 p: 4,
-                backgroundColor: '#f9fafb',
+                backgroundColor: 'grey.50',
                 borderRadius: 2,
               }}
             >
               <Box>
-                <Typography sx={{ fontWeight: 500, color: '#111827' }}>包含表头</Typography>
-                <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>包含表头</Typography>
+                <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                   在文件开头包含列标题
                 </Typography>
               </Box>
@@ -343,13 +343,13 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 p: 4,
-                backgroundColor: '#f9fafb',
+                backgroundColor: 'grey.50',
                 borderRadius: 2,
               }}
             >
               <Box>
-                <Typography sx={{ fontWeight: 500, color: '#111827' }}>包含摘要</Typography>
-                <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>包含摘要</Typography>
+                <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                   在文件末尾添加统计摘要
                 </Typography>
               </Box>
@@ -364,7 +364,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 sx={{
                   fontSize: '0.875rem',
                   fontWeight: 500,
-                  color: '#374151',
+                  color: 'grey.700',
                   mb: 2,
                 }}
               >
@@ -389,17 +389,17 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               p: 4,
-              backgroundColor: '#f9fafb',
+              backgroundColor: 'grey.50',
               borderRadius: 2,
-              '&:hover': { backgroundColor: '#f3f4f6' },
+              '&:hover': { backgroundColor: 'grey.100' },
             }}
           >
-            <Typography sx={{ fontWeight: 500, color: '#111827' }}>高级选项</Typography>
+            <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>高级选项</Typography>
             <ChevronRight
               style={{
                 width: 20,
                 height: 20,
-                color: '#6b7280',
+                color: 'text.secondary',
                 transform: showAdvancedOptions ? 'rotate(90deg)' : 'rotate(0deg)',
               }}
             />
@@ -408,7 +408,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
           {/* Advanced Options */}
           {showAdvancedOptions && availableColumns.length > 0 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>
+              <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}>
                 选择列
               </Typography>
 
@@ -420,7 +420,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                   mb: 3,
                 }}
               >
-                <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                   已选择 {selectedColumns.length}/{availableColumns.length} 列
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2 }}>
@@ -428,19 +428,19 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                     onClick={selectAllColumns}
                     sx={{
                       fontSize: '0.875rem',
-                      color: '#2563eb',
-                      '&:hover': { color: '#1d4ed8' },
+                      color: 'primary.dark',
+                      '&:hover': { color: 'primary.dark' },
                     }}
                   >
                     全选
                   </Button>
-                  <Typography sx={{ color: '#d1d5db' }}>|</Typography>
+                  <Typography sx={{ color: 'grey.300' }}>|</Typography>
                   <Button
                     onClick={deselectAllColumns}
                     sx={{
                       fontSize: '0.875rem',
-                      color: '#4b5563',
-                      '&:hover': { color: '#374151' },
+                      color: 'text.secondary',
+                      '&:hover': { color: 'grey.700' },
                     }}
                   >
                     取消全选
@@ -467,13 +467,13 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                       alignItems: 'center',
                       p: 3,
                       border: '1px solid',
-                      borderColor: selectedColumns.includes(column) ? '#2563eb' : '#e5e7eb',
+                      borderColor: selectedColumns.includes(column) ? 'primary.dark' : 'grey.200',
                       borderRadius: 2,
-                      backgroundColor: selectedColumns.includes(column) ? '#eff6ff' : 'white',
+                      backgroundColor: selectedColumns.includes(column) ? 'primary.light' : 'white',
                       cursor: 'pointer',
                       transition: 'all',
                       '&:hover': {
-                        borderColor: selectedColumns.includes(column) ? '#1d4ed8' : '#bfdbfe',
+                        borderColor: selectedColumns.includes(column) ? 'primary.dark' : 'primary.light',
                       },
                     }}
                   >
@@ -483,7 +483,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                       onChange={() => toggleColumn(column)}
                       style={{ width: 16, height: 16 }}
                     />
-                    <Typography sx={{ ml: 2, fontSize: '0.875rem', color: '#374151' }}>
+                    <Typography sx={{ ml: 2, fontSize: '0.875rem', color: 'grey.700' }}>
                       {column}
                     </Typography>
                   </Box>
@@ -496,10 +496,10 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
         {/* Footer */}
         <Box
           sx={{
-            backgroundColor: '#f9fafb',
+            backgroundColor: 'grey.50',
             px: 6,
             py: 4,
-            borderTop: '1px solid #e5e7eb',
+            borderTop: '1px solid grey.200',
           }}
         >
           <Box
@@ -509,7 +509,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
               justifyContent: 'space-between',
             }}
           >
-            <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
               {selectedFormat === 'excel' && '支持 .xlsx 格式'}
               {selectedFormat === 'pdf' && '支持分页和打印'}
               {selectedFormat === 'csv' && '兼容所有电子表格'}
@@ -526,10 +526,10 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                 sx={{
                   px: 6,
                   py: 2,
-                  border: '1px solid #d1d5db',
-                  color: '#374151',
+                  border: '1px solid grey.300',
+                  color: 'grey.700',
                   borderRadius: 2,
-                  '&:hover': { backgroundColor: '#f3f4f6' },
+                  '&:hover': { backgroundColor: 'grey.100' },
                   opacity: isExporting ? 0.5 : 1,
                 }}
               >
@@ -543,10 +543,10 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
                   alignItems: 'center',
                   px: 6,
                   py: 2,
-                  backgroundColor: '#2563eb',
+                  backgroundColor: 'primary.dark',
                   color: 'white',
                   borderRadius: 2,
-                  '&:hover': { backgroundColor: '#1d4ed8' },
+                  '&:hover': { backgroundColor: 'primary.dark' },
                   opacity: isExporting ? 0.5 : 1,
                 }}
               >

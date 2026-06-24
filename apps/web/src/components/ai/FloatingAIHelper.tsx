@@ -15,7 +15,7 @@ import {
   Fade,
   Zoom,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Sparkles,
   MessageSquare,
@@ -235,9 +235,9 @@ export const FloatingAIHelper: React.FC = () => {
             position: 'fixed',
             bottom: 24,
             right: 24,
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+              background: 'linear-gradient(135deg, primary.dark 0%, secondary.dark 100%)',
             },
             boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
           }}
@@ -281,7 +281,7 @@ export const FloatingAIHelper: React.FC = () => {
             <Box
               sx={{
                 p: 2,
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',

@@ -103,7 +103,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
           <div>
             <Typography
               variant='h5'
-              fontWeight='bold'
+              sx={{ fontWeight: 'bold' }}
             >
               {plugin.name}
             </Typography>
@@ -129,7 +129,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
             <div>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 描述
               </Typography>
@@ -144,7 +144,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
             <div>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 版本历史
               </Typography>
@@ -157,7 +157,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                     >
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-2'>
-                          <Typography fontWeight='medium'>{v.version}</Typography>
+                          <Typography sx={{ fontWeight: 'medium' }}>{v.version}</Typography>
                           {v.is_latest && (
                             <Chip
                               label='最新'
@@ -207,7 +207,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
             <div>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 用户评价 ({reviews.length})
               </Typography>
@@ -222,7 +222,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                         <div className='flex items-center gap-2'>
                           <Avatar>{review.user_name?.charAt(0) || 'U'}</Avatar>
                           <div>
-                            <Typography fontWeight='medium'>
+                            <Typography sx={{ fontWeight: 'medium' }}>
                               {review.user_name || '匿名用户'}
                             </Typography>
                             <Typography
@@ -239,7 +239,9 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                           size='small'
                         />
                       </div>
-                      {review.title && <Typography fontWeight='medium'>{review.title}</Typography>}
+                      {review.title && (
+                        <Typography sx={{ fontWeight: 'medium' }}>{review.title}</Typography>
+                      )}
                       {review.content && (
                         <Typography
                           variant='body2'
@@ -254,7 +256,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                           size='small'
                           color='primary'
                           variant='outlined'
-                          className='mt-2'
+                          sx={{ mt: 2 }}
                         />
                       )}
                     </div>
@@ -277,14 +279,14 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 <div className='flex items-center justify-between'>
                   <Typography
                     variant='h6'
-                    fontWeight='bold'
+                    sx={{ fontWeight: 'bold' }}
                   >
                     评分
                   </Typography>
-                  <div className='text-center'>
+                  <div style={{ textAlign: 'center' }}>
                     <Typography
                       variant='h3'
-                      fontWeight='bold'
+                      sx={{ fontWeight: 'bold' }}
                     >
                       {plugin.rating || 0}
                     </Typography>
@@ -298,20 +300,22 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 <Divider />
 
                 <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>下载量</span>
-                  <Typography fontWeight='medium'>
+                  <span style={{ color: 'grey.600' }}>下载量</span>
+                  <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.install_count?.toLocaleString() || 0}
                   </Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>分类</span>
-                  <Typography fontWeight='medium'>{plugin.category}</Typography>
+                  <span style={{ color: 'grey.600' }}>分类</span>
+                  <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>作者</span>
-                  <Typography fontWeight='medium'>{plugin.author_name || '未知'}</Typography>
+                  <span style={{ color: 'grey.600' }}>作者</span>
+                  <Typography sx={{ fontWeight: 'medium' }}>
+                    {plugin.author_name || '未知'}
+                  </Typography>
                 </div>
 
                 <Divider />
@@ -339,8 +343,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
               <CardContent>
                 <Typography
                   variant='h6'
-                  fontWeight='bold'
-                  className='mb-4'
+                  sx={{ fontWeight: 'bold', mb: 4 }}
                 >
                   发表评价
                 </Typography>

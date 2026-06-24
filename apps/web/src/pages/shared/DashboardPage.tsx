@@ -185,7 +185,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       };
 
       setStats(newStats);
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载统计失败:', err);
     }
   }, []);
@@ -271,7 +271,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         await loadRecentActivities().catch((err) => {
           apiLogger.warn('加载最近活动失败:', err);
         });
-      } catch (err) {
+      } catch (err: unknown) {
         apiLogger.error('初始化失败:', err);
       } finally {
         setLoading(false);
@@ -696,7 +696,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)',
+        background: 'linear-gradient(to bottom right, #f8fafc, grey.100)',
       }}
     >
       <MobileHeader

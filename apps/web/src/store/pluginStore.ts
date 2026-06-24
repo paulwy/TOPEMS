@@ -112,8 +112,10 @@ export const usePluginStore = create<PluginState>()(
               lastFetchTime: { ...state.lastFetchTime, installed: now },
             }));
           }
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to fetch installed plugins' });
+        } catch (error: unknown) {
+          set({
+            error: (error as { message?: string }).message || 'Failed to fetch installed plugins',
+          });
         } finally {
           set({ loading: false });
         }
@@ -135,8 +137,10 @@ export const usePluginStore = create<PluginState>()(
               lastFetchTime: { ...state.lastFetchTime, marketplace: now },
             }));
           }
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to fetch marketplace plugins' });
+        } catch (error: unknown) {
+          const msg =
+            error instanceof Error ? (error as { message?: string }).message : String(error);
+          set({ error: msg || 'Failed to fetch marketplace plugins' });
         } finally {
           set({ loading: false });
         }
@@ -156,8 +160,10 @@ export const usePluginStore = create<PluginState>()(
           set((state) => ({
             lastFetchTime: { ...state.lastFetchTime, health: now },
           }));
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to check plugin health' });
+        } catch (error: unknown) {
+          set({
+            error: (error as { message?: string }).message || 'Failed to check plugin health',
+          });
         } finally {
           set({ loading: false });
         }
@@ -181,8 +187,8 @@ export const usePluginStore = create<PluginState>()(
             return true;
           }
           return false;
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to install plugin' });
+        } catch (error: unknown) {
+          set({ error: (error as { message?: string }).message || 'Failed to install plugin' });
           return false;
         } finally {
           set({ loading: false });
@@ -202,8 +208,8 @@ export const usePluginStore = create<PluginState>()(
             return true;
           }
           return false;
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to uninstall plugin' });
+        } catch (error: unknown) {
+          set({ error: (error as { message?: string }).message || 'Failed to uninstall plugin' });
           return false;
         } finally {
           set({ loading: false });
@@ -220,8 +226,8 @@ export const usePluginStore = create<PluginState>()(
             return true;
           }
           return false;
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to enable plugin' });
+        } catch (error: unknown) {
+          set({ error: (error as { message?: string }).message || 'Failed to enable plugin' });
           return false;
         } finally {
           set({ loading: false });
@@ -238,8 +244,10 @@ export const usePluginStore = create<PluginState>()(
             return true;
           }
           return false;
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to disable plugin' });
+        } catch (error: unknown) {
+          const msg =
+            error instanceof Error ? (error as { message?: string }).message : String(error);
+          set({ error: msg || 'Failed to disable plugin' });
           return false;
         } finally {
           set({ loading: false });
@@ -256,8 +264,10 @@ export const usePluginStore = create<PluginState>()(
             return true;
           }
           return false;
-        } catch (error: any) {
-          set({ error: error.message || 'Failed to upgrade plugin' });
+        } catch (error: unknown) {
+          const msg =
+            error instanceof Error ? (error as { message?: string }).message : String(error);
+          set({ error: msg || 'Failed to upgrade plugin' });
           return false;
         } finally {
           set({ loading: false });
@@ -329,11 +339,11 @@ export const usePluginStore = create<PluginState>()(
       },
 
       isPluginInstalled: (code) => {
-        return get().installedPlugins.some((p) => p.plugin_code === code);
+        return get().installedPlugins.some((p) => p.plugin_id === code);
       },
 
       isPluginActive: (code) => {
-        const plugin = get().installedPlugins.find((p) => p.plugin_code === code);
+        const plugin = get().installedPlugins.find((p) => p.plugin_id === code);
         return plugin?.is_active === true;
       },
 
@@ -346,7 +356,7 @@ export const usePluginStore = create<PluginState>()(
       },
 
       getInstalledPlugin: (code) => {
-        return get().installedPlugins.find((p) => p.plugin_code === code);
+        return get().installedPlugins.find((p) => p.plugin_id === code);
       },
 
       getMarketplacePlugin: (code) => {
@@ -391,8 +401,8 @@ export const usePluginStore = create<PluginState>()(
         const query = searchQuery.toLowerCase();
         return installedPlugins.filter(
           (p) =>
-            p.plugin_name.toLowerCase().includes(query) ||
-            p.plugin_code.toLowerCase().includes(query)
+            (p.plugin_name || '').toLowerCase().includes(query) ||
+            (p.plugin_id || '').toLowerCase().includes(query)
         );
       },
 

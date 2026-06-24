@@ -41,7 +41,7 @@ import {
   Tooltip,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { EmptyState } from '@/components/EmptyState';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { Grid } from '@/components/Grid';
@@ -176,7 +176,7 @@ const BIVisualizationPage = () => {
         setLoading(false);
         setIsRefreshing(false);
       }, 500);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load visualization data:', error);
       setLoading(false);
       setIsRefreshing(false);

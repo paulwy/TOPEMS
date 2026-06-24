@@ -7,7 +7,7 @@ import {
   Box,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import type { PurchaseItem, CreatePurchaseItemRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';
@@ -54,7 +54,7 @@ const ScmPurchaseItemPage: React.FC = () => {
         setItems(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载采购明细失败:', error);
       addNotification({
         type: 'error',
@@ -87,7 +87,7 @@ const ScmPurchaseItemPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadItems();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -125,7 +125,7 @@ const ScmPurchaseItemPage: React.FC = () => {
         message: '采购明细已删除',
       });
       loadItems();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('删除失败:', error);
       addNotification({
         type: 'error',

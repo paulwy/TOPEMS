@@ -128,8 +128,9 @@ export function useCrud<
         setError(null);
 
         return responseData;
-      } catch (err: any) {
-        if (err.code !== 'ERR_CANCELED') {
+      } catch (err: unknown) {
+        const error = err as { code?: string };
+        if (error.code !== 'ERR_CANCELED') {
           return handleError(err);
         }
         return data;
@@ -166,8 +167,9 @@ export function useCrud<
         const response = await api.get(`${basePath}/${id}`, config);
         setError(null);
         return response.data?.data || response.data;
-      } catch (err: any) {
-        if (err.code !== 'ERR_CANCELED') {
+      } catch (err: unknown) {
+        const error = err as { code?: string };
+        if (error.code !== 'ERR_CANCELED') {
           return handleError(err);
         }
         throw err;
@@ -190,7 +192,7 @@ export function useCrud<
         clearCache();
         onSuccess?.('创建成功');
         return newItem;
-      } catch (err) {
+      } catch (err: unknown) {
         return handleError(err);
       } finally {
         setLoading(false);
@@ -210,7 +212,7 @@ export function useCrud<
         clearCache();
         onSuccess?.('更新成功');
         return updatedItem;
-      } catch (err) {
+      } catch (err: unknown) {
         return handleError(err);
       } finally {
         setLoading(false);
@@ -228,7 +230,7 @@ export function useCrud<
         setError(null);
         clearCache();
         onSuccess?.('删除成功');
-      } catch (err) {
+      } catch (err: unknown) {
         return handleError(err);
       } finally {
         setLoading(false);
@@ -246,7 +248,7 @@ export function useCrud<
         setError(null);
         clearCache();
         onSuccess?.(`已删除 ${ids.length} 条记录`);
-      } catch (err) {
+      } catch (err: unknown) {
         return handleError(err);
       } finally {
         setLoading(false);

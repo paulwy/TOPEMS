@@ -13,7 +13,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -102,7 +102,7 @@ const StockTakePage: React.FC = () => {
         setStockTakes(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('获取盘点单失败:', error);
       addNotification({
         type: 'error',
@@ -125,7 +125,7 @@ const StockTakePage: React.FC = () => {
       if (response.code === 200 && response.data) {
         setWarehouses(response.data.items || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('获取仓库列表失败:', error);
     }
   };
@@ -152,7 +152,7 @@ const StockTakePage: React.FC = () => {
         setNewStockTake({ stock_take_number: '', warehouse_id: '', remarks: '' });
         fetchStockTakes();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('创建盘点单失败:', error);
       addNotification({
         type: 'error',
@@ -178,7 +178,7 @@ const StockTakePage: React.FC = () => {
           });
           fetchStockTakes();
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('删除盘点单失败:', error);
         addNotification({
           type: 'error',
@@ -202,7 +202,7 @@ const StockTakePage: React.FC = () => {
           });
           fetchStockTakes();
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('开始盘点失败:', error);
         addNotification({
           type: 'error',
@@ -222,7 +222,7 @@ const StockTakePage: React.FC = () => {
         if (response.code === 200 && response.data) {
           setStockTakeItems(response.data.items || []);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('获取盘点明细失败:', error);
         addNotification({
           type: 'error',
@@ -249,7 +249,7 @@ const StockTakePage: React.FC = () => {
         setShowDetailDialog(false);
         fetchStockTakes();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('完成盘点失败:', error);
       addNotification({
         type: 'error',
@@ -273,7 +273,7 @@ const StockTakePage: React.FC = () => {
         setShowDetailDialog(false);
         fetchStockTakes();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('调整库存失败:', error);
       addNotification({
         type: 'error',
@@ -307,7 +307,7 @@ const StockTakePage: React.FC = () => {
           setStockTakeItems(detailResponse.data.items || []);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('更新盘点数量失败:', error);
       addNotification({
         type: 'error',

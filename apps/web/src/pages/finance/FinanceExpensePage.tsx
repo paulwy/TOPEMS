@@ -51,7 +51,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ModeToggle } from '@/components/ModeToggle';
 import { DashboardTemplate } from '@/components/templates/DashboardTemplate';
 
@@ -124,10 +124,10 @@ const FinanceExpensePage: React.FC = () => {
       if (companyRes.code === 200 && companyRes.data) {
         setCompanies(companyRes.data.items || []);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '加载失败',
-        message: err.message || '加载数据失败',
+        message: (err as { message?: string }).message || '加载数据失败',
         type: 'error',
       });
     } finally {
@@ -222,10 +222,10 @@ const FinanceExpensePage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '创建失败',
+        message: (err as { message?: string }).message || '创建失败',
         type: 'error',
       });
     }
@@ -261,10 +261,10 @@ const FinanceExpensePage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '更新失败',
+        message: (err as { message?: string }).message || '更新失败',
         type: 'error',
       });
     }
@@ -289,10 +289,10 @@ const FinanceExpensePage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '删除失败',
+        message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
     }
@@ -318,10 +318,10 @@ const FinanceExpensePage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '审批失败',
+        message: (err as { message?: string }).message || '审批失败',
         type: 'error',
       });
     }
@@ -351,10 +351,10 @@ const FinanceExpensePage: React.FC = () => {
 
       setSelectedIds([]);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '批量审批失败',
+        message: (err as { message?: string }).message || '批量审批失败',
         type: 'error',
       });
     }
@@ -385,10 +385,10 @@ const FinanceExpensePage: React.FC = () => {
 
       setSelectedIds([]);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '批量删除失败',
+        message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
     }
@@ -418,10 +418,10 @@ const FinanceExpensePage: React.FC = () => {
 
       setSelectedIds([]);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '批量拒绝失败',
+        message: (err as { message?: string }).message || '批量拒绝失败',
         type: 'error',
       });
     }
@@ -611,10 +611,10 @@ const FinanceExpensePage: React.FC = () => {
 
   const expenseStatusData = useMemo(
     () => [
-      { name: '待审批', value: pendingCount, color: '#f59e0b' },
-      { name: '已审批', value: approvedCount, color: '#3b82f6' },
-      { name: '已报销', value: reimbursedCount, color: '#22c55e' },
-      { name: '已拒绝', value: rejectedCount, color: '#ef4444' },
+      { name: '待审批', value: pendingCount, color: 'warning.main' },
+      { name: '已审批', value: approvedCount, color: 'primary.main' },
+      { name: '已报销', value: reimbursedCount, color: 'success.dark' },
+      { name: '已拒绝', value: rejectedCount, color: 'error.main' },
     ],
     [pendingCount, approvedCount, reimbursedCount, rejectedCount]
   );
@@ -626,42 +626,42 @@ const FinanceExpensePage: React.FC = () => {
         value: expenses
           .filter((e) => e.expense_type === 'travel')
           .reduce((sum, e) => sum + e.amount, 0),
-        color: '#3b82f6',
+        color: 'primary.main',
       },
       {
         name: '办公费',
         value: expenses
           .filter((e) => e.expense_type === 'office')
           .reduce((sum, e) => sum + e.amount, 0),
-        color: '#22c55e',
+        color: 'success.dark',
       },
       {
         name: '餐费',
         value: expenses
           .filter((e) => e.expense_type === 'meal')
           .reduce((sum, e) => sum + e.amount, 0),
-        color: '#f59e0b',
+        color: 'warning.main',
       },
       {
         name: '交通费',
         value: expenses
           .filter((e) => e.expense_type === 'transportation')
           .reduce((sum, e) => sum + e.amount, 0),
-        color: '#ef4444',
+        color: 'error.main',
       },
       {
         name: '通讯费',
         value: expenses
           .filter((e) => e.expense_type === 'communication')
           .reduce((sum, e) => sum + e.amount, 0),
-        color: '#8b5cf6',
+        color: 'secondary.main',
       },
       {
         name: '培训费',
         value: expenses
           .filter((e) => e.expense_type === 'training')
           .reduce((sum, e) => sum + e.amount, 0),
-        color: '#06b6d4',
+        color: 'info.main',
       },
       {
         name: '其他',

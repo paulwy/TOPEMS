@@ -74,7 +74,7 @@ export const DashboardTemplateManager: React.FC<{
       if (res.success && res.data) {
         setTemplates(res.data.items || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load templates:', error);
     } finally {
       setLoading(false);
@@ -99,7 +99,7 @@ export const DashboardTemplateManager: React.FC<{
           is_active: true,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to create template:', error);
     }
   };
@@ -120,7 +120,7 @@ export const DashboardTemplateManager: React.FC<{
           is_active: true,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to update template:', error);
     }
   };
@@ -132,7 +132,7 @@ export const DashboardTemplateManager: React.FC<{
       if (res.success) {
         loadTemplates();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to delete template:', error);
     }
   };
@@ -145,7 +145,7 @@ export const DashboardTemplateManager: React.FC<{
       if (res.success) {
         onDashboardCreated?.();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to create dashboard from template:', error);
     }
   };
@@ -294,7 +294,9 @@ export const DashboardTemplateManager: React.FC<{
                       justifyContent: 'center',
                     }}
                   >
-                    <LayoutDashboard sx={{ color: template.is_active ? '#6366F1' : '#9CA3AF' }} />
+                    <LayoutDashboard
+                      sx={{ color: template.is_active ? '#6366F1' : 'text.disabled' }}
+                    />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography

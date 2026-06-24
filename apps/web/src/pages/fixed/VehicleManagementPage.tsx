@@ -11,7 +11,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Car, Plus, Edit, Trash2, Calendar, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -110,8 +110,8 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
       if (requestRes.success && requestRes.data) {
         setRequests(requestRes.data.items || []);
       }
-    } catch (err: any) {
-      setError(err.message || '加载数据失败');
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || '加载数据失败');
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -152,10 +152,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建车辆失败',
+        message: (err as { message?: string }).message || '创建车辆失败',
         type: 'error',
       });
     }
@@ -178,10 +178,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除车辆失败',
+        message: (err as { message?: string }).message || '删除车辆失败',
         type: 'error',
       });
     }
@@ -208,10 +208,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新车辆失败',
+        message: (err as { message?: string }).message || '更新车辆失败',
         type: 'error',
       });
     }
@@ -246,10 +246,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建用车申请失败',
+        message: (err as { message?: string }).message || '创建用车申请失败',
         type: 'error',
       });
     }
@@ -310,24 +310,24 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
         id: 'plate_number',
         label: '车牌号',
         render: (row) => (
-          <Typography sx={{ fontWeight: 500, color: '#0f172a' }}>{row.plate_number}</Typography>
+          <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{row.plate_number}</Typography>
         ),
       },
       {
         id: 'brand',
         label: '品牌',
-        render: (row) => <Typography sx={{ color: '#0f172a' }}>{row.brand || '-'}</Typography>,
+        render: (row) => <Typography sx={{ color: 'grey.900' }}>{row.brand || '-'}</Typography>,
       },
       {
         id: 'model',
         label: '型号',
-        render: (row) => <Typography sx={{ color: '#0f172a' }}>{row.model || '-'}</Typography>,
+        render: (row) => <Typography sx={{ color: 'grey.900' }}>{row.model || '-'}</Typography>,
       },
       {
         id: 'vehicle_type',
         label: '车辆类型',
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
             {row.vehicle_type || '-'}
           </Typography>
         ),
@@ -341,10 +341,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
               display: 'flex',
               alignItems: 'center',
               fontSize: '0.875rem',
-              color: '#0f172a',
+              color: 'grey.900',
             }}
           >
-            <User sx={{ width: 12, height: 12, marginRight: 4, color: '#2563eb' }} />
+            <User sx={{ width: 12, height: 12, marginRight: 4, color: 'primary.dark' }} />
             {row.driver || '-'}
           </Box>
         ),
@@ -353,7 +353,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
         id: 'fuel_type',
         label: '燃料类型',
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
             {row.fuel_type || '-'}
           </Typography>
         ),
@@ -362,7 +362,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
         id: 'mileage',
         label: '里程(km)',
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
             {row.mileage ? row.mileage.toLocaleString() : '-'}
           </Typography>
         ),
@@ -413,7 +413,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
       <ListPageTemplate
         title='车辆管理'
         subtitle='管理企业车辆和用车申请'

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Box, Typography, Paper, Chip } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Box, Typography, Paper, Chip, Button } from '@mui/material';
 import { SIDEBAR, COLORS } from '@/constants/colors';
 
 interface SidebarItem {

@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import WorkflowDesigner from '@/components/WorkflowDesigner';
@@ -86,7 +86,7 @@ const WorkflowDesignerPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载工作流失败:', error);
       addNotification({
         title: '加载失败',
@@ -194,7 +194,7 @@ const WorkflowDesignerPage: React.FC = () => {
           });
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('保存工作流失败:', error);
       addNotification({
         title: '保存失败',

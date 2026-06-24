@@ -26,7 +26,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
       sx={{
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(4px)',
-        border: '1px solid #e2e8f0',
+        border: '1px solid border.default',
         borderRadius: 3,
         boxShadow: 10,
         px: 4,
@@ -39,10 +39,10 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
           sx={{
             fontSize: '0.75rem',
             fontWeight: 500,
-            color: '#64748b',
+            color: 'grey.600',
             mb: 2,
             pb: 2,
-            borderBottom: '1px solid #f1f5f9',
+            borderBottom: '1px solid grey.100',
           }}
         >
           {label}
@@ -80,7 +80,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
                   {displayName}
                 </Typography>
               </Box>
-              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'grey.900' }}>
                 {displayValue}
               </Typography>
             </Box>

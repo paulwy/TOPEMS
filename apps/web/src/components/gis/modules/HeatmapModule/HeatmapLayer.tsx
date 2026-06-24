@@ -200,7 +200,7 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
     <Paper sx={{ borderRadius: 2, boxShadow: 3, p: 3 }}>
       <Typography
         variant='caption'
-        sx={{ fontWeight: 500, color: '#374151', mb: 2 }}
+        sx={{ fontWeight: 500, color: 'grey.700', mb: 2 }}
       >
         力图
       </Typography>
@@ -217,31 +217,31 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
         <Typography
           variant='caption'
-          sx={{ color: '#6b7280' }}
+          sx={{ color: 'text.secondary' }}
         >
           低
         </Typography>
         <Typography
           variant='caption'
-          sx={{ color: '#6b7280' }}
+          sx={{ color: 'text.secondary' }}
         >
           高
         </Typography>
       </Box>
       {mode === 'status' && (
-        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: '#e5e7eb' }}>
+        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'grey.200' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
             <Box
               sx={{
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                bgcolor: '#22c55e',
+                bgcolor: 'success.dark',
               }}
             />
             <Typography
               variant='caption'
-              sx={{ color: '#4b5563' }}
+              sx={{ color: 'text.secondary' }}
             >
               活跃
             </Typography>
@@ -252,12 +252,12 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                bgcolor: '#eab308',
+                bgcolor: 'warning.main',
               }}
             />
             <Typography
               variant='caption'
-              sx={{ color: '#4b5563' }}
+              sx={{ color: 'text.secondary' }}
             >
               待处理
             </Typography>
@@ -268,12 +268,12 @@ const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                bgcolor: '#ef4444',
+                bgcolor: 'error.main',
               }}
             />
             <Typography
               variant='caption'
-              sx={{ color: '#4b5563' }}
+              sx={{ color: 'text.secondary' }}
             >
               禁用
             </Typography>

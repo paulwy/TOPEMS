@@ -66,10 +66,10 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
 
   const getToastStyles = (type: Toast['type']) => {
     const styles: Record<Toast['type'], { backgroundColor: string; color: string }> = {
-      success: { backgroundColor: '#22c55e', color: 'white' },
-      error: { backgroundColor: '#ef4444', color: 'white' },
-      warning: { backgroundColor: '#eab308', color: 'white' },
-      info: { backgroundColor: '#3b82f6', color: 'white' },
+      success: { backgroundColor: 'success.dark', color: 'white' },
+      error: { backgroundColor: 'error.main', color: 'white' },
+      warning: { backgroundColor: 'warning.main', color: 'white' },
+      info: { backgroundColor: 'primary.main', color: 'white' },
     };
     return styles[type];
   };

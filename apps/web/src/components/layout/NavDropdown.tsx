@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, createContext, useContext } from 'react';
 import { Box, Typography, Popover, Fade, useMediaQuery, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { type NavItem } from '../../config/navigation';
+import type { NavItem } from '../../lib/NavigationRegistry';
 
 interface DropdownContextType {
   anchorEl: HTMLElement | null;
@@ -80,118 +80,30 @@ export const NavDropdown: React.FC<NavDropdownProps> = ({
 
   const isMenuOpen = Boolean(anchorEl) && Boolean(openMenu?.children);
 
-  // 渲染下拉菜单内容
   const renderDropdownContent = (item: NavItem) => {
     if (!item.children) return null;
 
-    // 如果是分组模式（isGroup: true），children 是分组列表
-    if (item.isGroup) {
-      const groups = item.children as NavItem[];
-      return (
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            minWidth: 500,
-            maxWidth: { lg: 800, md: 600, sm: 450 },
-            p: 2,
-            gap: 2,
-            maxHeight: isMobile ? '70vh' : '80vh',
-            overflowY: 'auto',
-          }}
-          onMouseEnter={() => {
-            if (anchorEl) setAnchorEl(anchorEl);
-          }}
-          onMouseLeave={handleCloseMenu}
-        >
-          {groups.map((group, idx) => (
-            <Box
-              key={idx}
-              sx={{ minWidth: 140, flex: 1 }}
-            >
-              <Typography
-                variant='caption'
-                sx={{
-                  display: 'block',
-                  color: 'text.secondary',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  mb: 1,
-                  px: 1,
-                }}
-              >
-                {group.label}
-              </Typography>
-              {group.children?.map((child: NavItem) => (
-                <Box
-                  key={child.label}
-                  onClick={() => handleMenuItemClick(child)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    p: 1,
-                    borderRadius: 1,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 1,
-                      backgroundColor: 'primary.light',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: 0.8,
-                    }}
-                  >
-                    <Typography
-                      variant='caption'
-                      sx={{ color: 'primary.main', fontWeight: 600 }}
-                    >
-                      {child.label.charAt(0)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {child.label}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          ))}
-        </Box>
-      );
-    }
-
-    // 非分组模式，children 直接是菜单项列表
     const menuItems = item.children as NavItem[];
     return (
       <Box
         sx={{
           minWidth: 200,
-          maxWidth: 320,
+          maxWidth: 500,
           p: 1,
           maxHeight: isMobile ? '60vh' : '70vh',
           overflowY: 'auto',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
         }}
         onMouseEnter={() => {
           if (anchorEl) setAnchorEl(anchorEl);
         }}
         onMouseLeave={handleCloseMenu}
       >
-        {menuItems.map((child, idx) => (
+        {menuItems.map((child) => (
           <Box
-            key={child.label + idx}
+            key={child.code}
             onClick={() => handleMenuItemClick(child)}
             sx={{
               display: 'flex',
@@ -203,6 +115,7 @@ export const NavDropdown: React.FC<NavDropdownProps> = ({
               '&:hover': {
                 backgroundColor: 'action.hover',
               },
+              minWidth: 140,
             }}
           >
             <Box

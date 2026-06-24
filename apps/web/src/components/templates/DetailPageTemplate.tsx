@@ -14,7 +14,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ArrowLeft, Edit, Delete, Share2, MoreHorizontal, Printer, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { BreadcrumbItem, PageAction } from './PageHeader';
@@ -166,7 +166,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
           p: 3,
           mb: 3,
           borderRadius: 2,
-          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+          background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
           color: 'white',
         }}
       >

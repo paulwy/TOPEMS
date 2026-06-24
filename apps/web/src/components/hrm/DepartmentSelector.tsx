@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Paper } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Building2, ChevronRight } from 'lucide-react';
 import { type Department } from '@/api/hrm';
 import type { TreeNode } from '../TreeView';
@@ -75,20 +75,20 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
             gap: 2,
           }}
         >
-          <Building2 style={{ width: 20, height: 20, color: '#10b981' }} />
+          <Building2 style={{ width: 20, height: 20, color: 'success.main' }} />
           部门树
         </Typography>
-        <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+        <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
           {departments.length} 个部门
         </Typography>
       </Box>
       {treeData.length === 0 ? (
-        <Box sx={{ p: 8, textAlign: 'center', color: '#64748b' }}>
+        <Box sx={{ p: 8, textAlign: 'center', color: 'grey.600' }}>
           <Building2
             style={{
               width: 48,
               height: 48,
-              color: '#9ca3af',
+              color: 'text.disabled',
               margin: '0 auto 12px',
             }}
           />
@@ -145,7 +145,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
               onClick={item.onClick}
               sx={{
                 fontSize: '0.875rem',
-                color: '#64748b',
+                color: 'grey.600',
                 transition: 'color',
                 '&:hover': { color: '#334155' },
               }}
@@ -153,7 +153,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
               {item.label}
             </Button>
           ) : (
-            <Typography sx={{ color: '#0f172a', fontWeight: 500 }}>{item.label}</Typography>
+            <Typography sx={{ color: 'grey.900', fontWeight: 500 }}>{item.label}</Typography>
           )}
         </Box>
       ))}

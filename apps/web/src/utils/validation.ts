@@ -102,13 +102,13 @@ export const validationRules = {
     maxLength: 1000,
   },
   amount: {
-    custom: (value: any) => {
+    custom: (value: unknown) => {
       if (!value) return true;
-      const num = parseFloat(value);
+      const num = parseFloat(value as string);
       if (isNaN(num) || num < 0) {
         return '金额必须是正数';
       }
-      if (!patterns.amount.test(value.toString())) {
+      if (!patterns.amount.test(value as string)) {
         return '金额最多保留2位小数';
       }
       return true;

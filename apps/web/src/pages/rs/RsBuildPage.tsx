@@ -11,7 +11,7 @@ import {
   DialogActions,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Play, FileText, Package, Clock, CheckCircle, XCircle, Loader } from 'lucide-react';
 import {
   ListPageTemplate,
@@ -211,7 +211,7 @@ const RsBuildPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Package
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
           {row.build_no}
         </Box>
@@ -315,7 +315,7 @@ const RsBuildPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='构建管理'
         columns={columns}

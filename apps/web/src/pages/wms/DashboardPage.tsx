@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { QuickSearch } from '@/components/common';
 import { Warehouse, Package, AlertCircle, ArrowRight, Truck } from 'lucide-react';
 import BarChartComponent from '../../components/charts/BarChart';

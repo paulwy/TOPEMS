@@ -12,7 +12,7 @@ import {
   Box,
   InputAdornment,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Send } from 'lucide-react';
 
 interface EmployeeFormProps {

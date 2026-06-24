@@ -1,5 +1,5 @@
 import { TextField, InputLabel, Box, Card, CardContent, Select, MenuItem } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { RefreshCw, Copy, Check, Wand2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -134,7 +134,7 @@ export function AITextOptimizer({
       await navigator.clipboard.writeText(optimizedText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
+    } catch (e: unknown) {
       logger.error('Copy failed', e);
     }
   };
@@ -173,14 +173,14 @@ export function AITextOptimizer({
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* 原始文本 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#4b5563' }}>
+          <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
             原始文本
           </InputLabel>
           <TextField
             value={originalText}
             placeholder='暂无原始文本'
             disabled
-            sx={{ bgcolor: '#f9fafb' }}
+            sx={{ bgcolor: 'grey.50' }}
             multiline
             rows={3}
           />
@@ -197,7 +197,7 @@ export function AITextOptimizer({
             }}
             onClick={() => setShowKeywords(!showKeywords)}
           >
-            <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#4b5563' }}>
+            <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
               关键词（可选）
             </InputLabel>
             {showKeywords ? (
@@ -239,8 +239,8 @@ export function AITextOptimizer({
                         px: 1,
                         py: 0.5,
                         borderRadius: 1,
-                        bgcolor: '#f3f4f6',
-                        '&:hover': { bgcolor: '#fef2f2', color: '#b91c1c' },
+                        bgcolor: 'grey.100',
+                        '&:hover': { bgcolor: 'error.light', color: 'error.darker' },
                       }}
                       onClick={() => handleRemoveKeyword(keyword)}
                     >
@@ -255,7 +255,7 @@ export function AITextOptimizer({
 
         {/* 优化风格选择 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#4b5563' }}>
+          <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
             优化风格
           </InputLabel>
           <Select
@@ -277,7 +277,7 @@ export function AITextOptimizer({
                   </Box>
                   <Box
                     component='span'
-                    sx={{ fontSize: '0.75rem', color: '#6b7280', ml: 1 }}
+                    sx={{ fontSize: '0.75rem', color: 'text.secondary', ml: 1 }}
                   >
                     {style.description}
                   </Box>
@@ -289,14 +289,14 @@ export function AITextOptimizer({
 
         {/* 错误提示 */}
         {error && (
-          <Card sx={{ borderColor: '#fecaca', bgcolor: '#fef2f2' }}>
+          <Card sx={{ borderColor: 'error.light', bgcolor: 'error.light' }}>
             <CardContent
               sx={{
                 p: 2,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                color: '#b91c1c',
+                color: 'error.darker',
               }}
             >
               <AlertCircle style={{ width: 16, height: 16 }} />
@@ -347,7 +347,7 @@ export function AITextOptimizer({
                 justifyContent: 'space-between',
               }}
             >
-              <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#7c3aed' }}>
+              <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'secondary.dark' }}>
                 优化后的文本
               </InputLabel>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -363,7 +363,7 @@ export function AITextOptimizer({
                     </Button>
                     <Box
                       component='span'
-                      sx={{ fontSize: '0.75rem', color: '#6b7280' }}
+                      sx={{ fontSize: '0.75rem', color: 'text.secondary' }}
                     >
                       {historyIndex + 1}/{history.length}
                     </Box>

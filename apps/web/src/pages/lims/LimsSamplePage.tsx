@@ -12,7 +12,7 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Edit, Eye, Download, Upload, FlaskConical, Filter } from 'lucide-react';
 import {
   ListPageTemplate,
@@ -110,12 +110,12 @@ const LimsSamplePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待接收: { bg: '#f3f4f6', color: '#4b5563' },
+      待接收: { bg: 'grey.100', color: 'text.secondary' },
       待检测: { bg: '#fef9c3', color: '#ca8a04' },
-      检测中: { bg: '#dbeafe', color: '#2563eb' },
-      已完成: { bg: '#dcfce7', color: '#16a34a' },
+      检测中: { bg: '#dbeafe', color: 'primary.dark' },
+      已完成: { bg: 'success.lighter', color: 'success.dark' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -255,14 +255,14 @@ const LimsSamplePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#d1fae5',
+                bgcolor: 'success.lighter',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FlaskConical sx={{ width: 20, height: 20, color: '#06b6d4' }} />
+              <FlaskConical sx={{ width: 20, height: 20, color: 'info.main' }} />
             </Box>
             <Box>
               <Typography
@@ -288,7 +288,7 @@ const LimsSamplePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fef3c7',
+                bgcolor: 'warning.light',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -328,7 +328,7 @@ const LimsSamplePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FlaskConical sx={{ width: 20, height: 20, color: '#2563eb' }} />
+              <FlaskConical sx={{ width: 20, height: 20, color: 'primary.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -354,14 +354,14 @@ const LimsSamplePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dcfce7',
+                bgcolor: 'success.lighter',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FlaskConical sx={{ width: 20, height: 20, color: '#16a34a' }} />
+              <FlaskConical sx={{ width: 20, height: 20, color: 'success.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -400,7 +400,7 @@ const LimsSamplePage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#06b6d4',
+              borderColor: 'info.main',
               borderTopColor: '#0891b2',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
@@ -515,7 +515,7 @@ const LimsSamplePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#06b6d4' }}
+            sx={{ bgcolor: 'info.main' }}
           >
             保存
           </Button>
@@ -604,7 +604,7 @@ const LimsSamplePage: React.FC = () => {
               setShowDetailModal(false);
               handleEdit(selectedSample!);
             }}
-            sx={{ bgcolor: '#06b6d4' }}
+            sx={{ bgcolor: 'info.main' }}
           >
             编辑
           </Button>

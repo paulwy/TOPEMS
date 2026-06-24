@@ -2,7 +2,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Camera, SwitchCamera, Sun, X, Check } from 'lucide-react';
 import { Box, IconButton, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface PhotoCaptureProps {
@@ -43,7 +43,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           videoRef.current.srcObject = mediaStream;
         }
         setError(null);
-      } catch (err) {
+      } catch (err: unknown) {
         setError('无法访问摄像头，请确保已授予摄像头权限');
         logger.error('Camera error:', err);
       }
@@ -164,16 +164,16 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             }}
           >
             <Box sx={{ textAlign: 'center', color: 'white', p: 16 }}>
-              <Typography sx={{ color: '#f87171', mb: 8 }}>{error}</Typography>
+              <Typography sx={{ color: 'error.light', mb: 8 }}>{error}</Typography>
               <Button
                 onClick={onCancel}
                 sx={{
                   px: 16,
                   py: 8,
-                  bgcolor: '#374151',
+                  bgcolor: 'grey.700',
                   borderRadius: 8,
                   color: 'white',
-                  '&:hover': { bgcolor: '#4b5563' },
+                  '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
                 关闭
@@ -209,9 +209,9 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               onClick={toggleFlash}
               sx={{
                 borderRadius: '9999px',
-                bgcolor: flashOn ? '#eab308' : 'rgba(0,0,0,0.5)',
+                bgcolor: flashOn ? 'warning.main' : 'rgba(0,0,0,0.5)',
                 color: 'white',
-                '&:hover': { bgcolor: flashOn ? '#eab308' : 'rgba(0,0,0,0.7)' },
+                '&:hover': { bgcolor: flashOn ? 'warning.main' : 'rgba(0,0,0,0.7)' },
               }}
             >
               <Sun size={24} />
@@ -246,11 +246,11 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           sx={{
             p: 16,
             borderRadius: '9999px',
-            bgcolor: isCapturing ? '#4b5563' : 'white',
-            color: isCapturing ? '#9ca3af' : '#1f2937',
-            '&:hover': { bgcolor: isCapturing ? '#4b5563' : '#e5e7eb' },
+            bgcolor: isCapturing ? 'text.secondary' : 'white',
+            color: isCapturing ? 'text.disabled' : 'grey.800',
+            '&:hover': { bgcolor: isCapturing ? 'text.secondary' : 'grey.200' },
             '&:active': { transform: 'scale(0.95)' },
-            '&.Mui-disabled': { bgcolor: '#4b5563', color: '#9ca3af' },
+            '&.Mui-disabled': { bgcolor: 'text.secondary', color: 'text.disabled' },
           }}
         >
           <Camera size={32} />

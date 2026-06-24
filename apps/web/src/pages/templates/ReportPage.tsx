@@ -13,7 +13,7 @@ import {
   File,
   Columns,
   Calendar,
-  Template,
+  LayoutTemplate,
   Edit,
   Play,
 } from 'lucide-react';
@@ -33,7 +33,7 @@ import {
   InputLabel,
   Switch,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type {
   ReportData,
   ReportTypeInfo,
@@ -120,6 +120,7 @@ const ReportPage: React.FC = () => {
     description: '',
     category: '',
     report_type: 'rs_project_progress',
+    is_active: true,
     data_source: {
       source_type: 'sql',
       query: '',
@@ -268,7 +269,7 @@ const ReportPage: React.FC = () => {
       if (response.success && response.data) {
         setTemplates(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载模板失败:', err);
     }
   };
@@ -295,7 +296,7 @@ const ReportPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '删除失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '删除报表失败');
       apiLogger.error('删除报表失败:', err);
     }
@@ -322,8 +323,8 @@ const ReportPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '创建失败');
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '创建失败');
+    } catch (err: unknown) {
+      showNotification('error', (err as { message?: string }).message || '创建失败');
     }
   };
 
@@ -340,8 +341,8 @@ const ReportPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '更新失败');
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '更新失败');
+    } catch (err: unknown) {
+      showNotification('error', (err as { message?: string }).message || '更新失败');
     }
   };
 
@@ -356,8 +357,8 @@ const ReportPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '删除失败');
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '删除失败');
+    } catch (err: unknown) {
+      showNotification('error', (err as { message?: string }).message || '删除失败');
     }
   };
 
@@ -375,8 +376,8 @@ const ReportPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '创建失败');
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '创建失败');
+    } catch (err: unknown) {
+      showNotification('error', (err as { message?: string }).message || '创建失败');
     }
   };
 
@@ -388,6 +389,7 @@ const ReportPage: React.FC = () => {
       description: template.description || '',
       category: template.category,
       report_type: template.report_type,
+      is_active: template.is_active,
       data_source: template.data_source,
       layout_config: template.layout_config,
       filter_config: template.filter_config,
@@ -405,6 +407,7 @@ const ReportPage: React.FC = () => {
       description: '',
       category: '',
       report_type: 'rs_project_progress',
+      is_active: true,
       data_source: {
         source_type: 'sql',
         query: '',
@@ -496,7 +499,7 @@ const ReportPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -524,7 +527,7 @@ const ReportPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
         }}
       >
         <Box
@@ -578,7 +581,7 @@ const ReportPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
     >
       <Box
@@ -617,12 +620,12 @@ const ReportPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                    bgcolor: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                    background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
                   }}
                 >
                   <FileText sx={{ width: 24, height: 24, color: 'white' }} />
@@ -754,7 +757,7 @@ const ReportPage: React.FC = () => {
               }}
               sx={{ borderRadius: 1.5, textTransform: 'none' }}
             >
-              <Template sx={{ width: 16, height: 16, mr: 1 }} />
+              <LayoutTemplate sx={{ width: 16, height: 16, mr: 1 }} />
               模板管理 ({templates.length})
             </Button>
           </Box>
@@ -1166,7 +1169,7 @@ const ReportPage: React.FC = () => {
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
               {filteredTemplates.length === 0 ? (
                 <Box sx={{ p: 6, textAlign: 'center' }}>
-                  <Template
+                  <LayoutTemplate
                     sx={{
                       width: 64,
                       height: 64,

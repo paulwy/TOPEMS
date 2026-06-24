@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, ChevronRight, Search, Filter, RefreshCw } from 'lucide-react';
 import { Card, CardHeader, CardContent, TextField, Typography, Chip, Paper } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface DrillDownData extends Record<string, any> {
   id: string;
@@ -10,7 +10,7 @@ interface DrillDownData extends Record<string, any> {
 interface DrillDownColumn {
   key: string;
   label: string;
-  format?: (value: any) => string;
+  format?: (value: unknown) => string;
 }
 
 interface DrillDownPanelProps {
@@ -108,7 +108,7 @@ export function DrillDownPanel({
           }
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <ChevronRight style={{ width: 20, height: 20, color: '#3B82F6' }} />
+            <ChevronRight style={{ width: 20, height: 20, color: 'primary.main' }} />
             <Typography
               variant='h6'
               sx={{ fontWeight: 'semibold' }}
@@ -176,7 +176,7 @@ export function DrillDownPanel({
               <thead>
                 <tr
                   style={{
-                    backgroundColor: '#F8FAFC',
+                    backgroundColor: 'grey.50',
                     position: 'sticky',
                     top: 0,
                   }}
@@ -218,7 +218,7 @@ export function DrillDownPanel({
                     }}
                     onMouseEnter={(e) => {
                       if (onRowClick) {
-                        e.currentTarget.style.backgroundColor = '#F8FAFC';
+                        e.currentTarget.style.backgroundColor = 'grey.50';
                       }
                     }}
                     onMouseLeave={(e) => {

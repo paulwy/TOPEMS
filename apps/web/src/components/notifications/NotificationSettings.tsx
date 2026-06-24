@@ -11,15 +11,15 @@ const NotificationSettings: React.FC = () => {
     <div
       style={{
         padding: 16,
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e5e7eb',
+        backgroundColor: 'white',
+        borderBottom: '1px solid grey.200',
       }}
     >
       <h4
         style={{
           fontSize: 14,
           fontWeight: 500,
-          color: '#111827',
+          color: 'text.primary',
           marginBottom: 16,
         }}
       >
@@ -35,8 +35,8 @@ const NotificationSettings: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Monitor style={{ width: 16, height: 16, color: '#4b5563' }} />
-            <span style={{ fontSize: 14, color: '#374151' }}>桌面通知</span>
+            <Monitor style={{ width: 16, height: 16, color: 'text.secondary' }} />
+            <span style={{ fontSize: 14, color: 'grey.700' }}>桌面通知</span>
           </div>
           <button
             onClick={() => toggleSetting('enableDesktop')}
@@ -48,7 +48,7 @@ const NotificationSettings: React.FC = () => {
               alignItems: 'center',
               borderRadius: 9999,
               transition: 'background-color 0.15s',
-              backgroundColor: settings.enableDesktop ? '#2563eb' : '#e5e7eb',
+              backgroundColor: settings.enableDesktop ? 'primary.dark' : 'grey.200',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -59,7 +59,7 @@ const NotificationSettings: React.FC = () => {
                 height: 16,
                 width: 16,
                 borderRadius: '9999px',
-                backgroundColor: '#ffffff',
+                backgroundColor: 'white',
                 transition: 'transform 0.15s',
                 transform: settings.enableDesktop ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -76,11 +76,11 @@ const NotificationSettings: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {settings.enableSound ? (
-              <Volume2 style={{ width: 16, height: 16, color: '#4b5563' }} />
+              <Volume2 style={{ width: 16, height: 16, color: 'text.secondary' }} />
             ) : (
-              <VolumeX style={{ width: 16, height: 16, color: '#4b5563' }} />
+              <VolumeX style={{ width: 16, height: 16, color: 'text.secondary' }} />
             )}
-            <span style={{ fontSize: 14, color: '#374151' }}>声音提示</span>
+            <span style={{ fontSize: 14, color: 'grey.700' }}>声音提示</span>
           </div>
           <button
             onClick={() => toggleSetting('enableSound')}
@@ -92,7 +92,7 @@ const NotificationSettings: React.FC = () => {
               alignItems: 'center',
               borderRadius: 9999,
               transition: 'background-color 0.15s',
-              backgroundColor: settings.enableSound ? '#2563eb' : '#e5e7eb',
+              backgroundColor: settings.enableSound ? 'primary.dark' : 'grey.200',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -103,7 +103,7 @@ const NotificationSettings: React.FC = () => {
                 height: 16,
                 width: 16,
                 borderRadius: '9999px',
-                backgroundColor: '#ffffff',
+                backgroundColor: 'white',
                 transition: 'transform 0.15s',
                 transform: settings.enableSound ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -119,8 +119,8 @@ const NotificationSettings: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Smartphone style={{ width: 16, height: 16, color: '#4b5563' }} />
-            <span style={{ fontSize: 14, color: '#374151' }}>移动推送</span>
+            <Smartphone style={{ width: 16, height: 16, color: 'text.secondary' }} />
+            <span style={{ fontSize: 14, color: 'grey.700' }}>移动推送</span>
           </div>
           <button
             onClick={() => toggleSetting('enableMobilePush')}
@@ -132,7 +132,7 @@ const NotificationSettings: React.FC = () => {
               alignItems: 'center',
               borderRadius: 9999,
               transition: 'background-color 0.15s',
-              backgroundColor: settings.enableMobilePush ? '#2563eb' : '#e5e7eb',
+              backgroundColor: settings.enableMobilePush ? 'primary.dark' : 'grey.200',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -143,7 +143,7 @@ const NotificationSettings: React.FC = () => {
                 height: 16,
                 width: 16,
                 borderRadius: '9999px',
-                backgroundColor: '#ffffff',
+                backgroundColor: 'white',
                 transition: 'transform 0.15s',
                 transform: settings.enableMobilePush ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -151,12 +151,12 @@ const NotificationSettings: React.FC = () => {
           </button>
         </div>
 
-        <div style={{ paddingTop: 12, borderTop: '1px solid #e5e7eb' }}>
+        <div style={{ paddingTop: 12, borderTop: '1px solid grey.200' }}>
           <h5
             style={{
               fontSize: 12,
               fontWeight: 500,
-              color: '#374151',
+              color: 'grey.700',
               marginBottom: 12,
             }}
           >
@@ -174,7 +174,7 @@ const NotificationSettings: React.FC = () => {
                   justifyContent: 'space-between',
                 }}
               >
-                <span style={{ fontSize: 14, color: '#4b5563' }}>
+                <span style={{ fontSize: 14, color: 'text.secondary' }}>
                   {type === 'system' && '系统通知'}
                   {type === 'workflow' && '审批通知'}
                   {type === 'reminder' && '提醒通知'}
@@ -191,7 +191,7 @@ const NotificationSettings: React.FC = () => {
                     alignItems: 'center',
                     borderRadius: 9999,
                     transition: 'background-color 0.15s',
-                    backgroundColor: enabled ? '#2563eb' : '#e5e7eb',
+                    backgroundColor: enabled ? 'primary.dark' : 'grey.200',
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -202,7 +202,7 @@ const NotificationSettings: React.FC = () => {
                       height: 12,
                       width: 12,
                       borderRadius: '9999px',
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'white',
                       transition: 'transform 0.15s',
                       transform: enabled ? 'translateX(16px)' : 'translateX(4px)',
                     }}
@@ -213,7 +213,7 @@ const NotificationSettings: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ paddingTop: 12, borderTop: '1px solid #e5e7eb' }}>
+        <div style={{ paddingTop: 12, borderTop: '1px solid grey.200' }}>
           <div
             style={{
               display: 'flex',
@@ -222,7 +222,7 @@ const NotificationSettings: React.FC = () => {
               marginBottom: 12,
             }}
           >
-            <span style={{ fontSize: 12, fontWeight: 500, color: '#374151' }}>免打扰时段</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'grey.700' }}>免打扰时段</span>
             <button
               onClick={toggleQuietHours}
               style={{
@@ -233,7 +233,7 @@ const NotificationSettings: React.FC = () => {
                 alignItems: 'center',
                 borderRadius: 9999,
                 transition: 'background-color 0.15s',
-                backgroundColor: settings.quietHours.enabled ? '#2563eb' : '#e5e7eb',
+                backgroundColor: settings.quietHours.enabled ? 'primary.dark' : 'grey.200',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -244,7 +244,7 @@ const NotificationSettings: React.FC = () => {
                   height: 12,
                   width: 12,
                   borderRadius: '9999px',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: 'white',
                   transition: 'transform 0.15s',
                   transform: settings.quietHours.enabled ? 'translateX(16px)' : 'translateX(4px)',
                 }}
@@ -262,12 +262,12 @@ const NotificationSettings: React.FC = () => {
                   flex: 1,
                   padding: '4px 8px',
                   fontSize: 12,
-                  border: '1px solid #d1d5db',
+                  border: '1px solid grey.300',
                   borderRadius: 4,
                   outline: 'none',
                 }}
               />
-              <span style={{ fontSize: 12, color: '#6b7280' }}>至</span>
+              <span style={{ fontSize: 12, color: 'text.secondary' }}>至</span>
               <input
                 type='time'
                 value={settings.quietHours.end}
@@ -276,7 +276,7 @@ const NotificationSettings: React.FC = () => {
                   flex: 1,
                   padding: '4px 8px',
                   fontSize: 12,
-                  border: '1px solid #d1d5db',
+                  border: '1px solid grey.300',
                   borderRadius: 4,
                   outline: 'none',
                 }}

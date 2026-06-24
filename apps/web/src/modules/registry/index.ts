@@ -77,93 +77,26 @@ export function initializeCoreModules() {
 // ============================================================================
 // Business Modules (sold as packages)
 // ============================================================================
-
-// TODO: 这些模块尚未实现，注释掉以避免编译错误
-// 以下模块需要实现后才可启用:
-// - biz-manufacturing (制造执行)
-// - biz-quality (质量管控)
-// - biz-analytics (数据分析)
+// 注意：以下业务模块为 Module Federation 架构预留，当前版本尚未实现
+// 待实现后启用，对应组件路径为 '@/modules/xxx/pages/xxx'
+// 当前页面通过传统路由配置在 'src/pages/' 目录下
 
 export const BUSINESS_MODULES: ModuleConfig[] = [
-  // {
-  //   id: 'biz-manufacturing',
-  //   name: '制造执行',
-  //   description: 'MES 生产执行系统',
-  //   category: 'business',
-  //   version: '1.0.0',
-  //   entry: '@/modules/manufacturing',
-  //   routes: [
-  //     { path: '/mfg/orders', name: '生产工单', component: () => import('@/modules/manufacturing/pages/Orders') },
-  //     { path: '/mfg/process', name: '工序管理', component: () => import('@/modules/manufacturing/pages/Process') },
-  //     { path: '/mfg/equipment', name: '设备管理', component: () => import('@/modules/manufacturing/pages/Equipment') },
-  //   ],
-  //   icon: 'Factory',
-  // },
-  // {
-  //   id: 'biz-quality',
-  //   name: '质量管控',
-  //   description: 'QMS + LIMS + EHS',
-  //   category: 'business',
-  //   version: '1.0.0',
-  //   entry: '@/modules/quality',
-  //   routes: [
-  //     { path: '/qa/inspection', name: '质量检验', component: () => import('@/modules/quality/pages/Inspection') },
-  //     { path: '/qa/lab', name: '实验室', component: () => import('@/modules/quality/pages/Lab') },
-  //     { path: '/qa/ehs', name: '环境健康', component: () => import('@/modules/quality/pages/EHS') },
-  //   ],
-  //   icon: 'Shield',
-  // },
-  // {
-  //   id: 'biz-analytics',
-  //   name: '数据分析',
-  //   description: 'BI 大屏、报表中心',
-  //   category: 'business',
-  //   version: '1.0.0',
-  //   entry: '@/modules/analytics',
-  //   routes: [
-  //     { path: '/analytics/dashboard', name: '数据大屏', component: () => import('@/modules/analytics/pages/Dashboard') },
-  //     { path: '/analytics/reports', name: '报表中心', component: () => import('@/modules/analytics/pages/Reports') },
-  //   ],
-  //   icon: 'BarChart',
-  // },
+  // 待实现：biz-manufacturing (MES 生产执行系统)
+  // 待实现：biz-quality (QMS + LIMS + EHS 质量管控)
+  // 待实现：biz-analytics (BI 大屏、报表中心)
 ];
 
 // ============================================================================
 // Plugin Modules (dynamically loaded from remote)
 // ============================================================================
-
-// TODO: 这些模块尚未实现，注释掉以避免编译错误
-// 以下模块需要实现后才可启用:
-// - plugin-ai (AI 知识库)
-// - plugin-erp (ERP 系统)
+// 注意：以下插件模块为 Module Federation 架构预留，当前版本尚未实现
+// 待实现后启用，对应组件将从远程服务器动态加载
+// 当前插件市场页面通过传统路由配置在 'src/pages/plugin/' 目录下
 
 export const PLUGIN_MODULES: ModuleConfig[] = [
-  // {
-  //   id: 'plugin-ai',
-  //   name: 'AI 知识库',
-  //   description: 'RAG 智能问答',
-  //   category: 'plugin',
-  //   version: '1.0.0',
-  //   entry: '@/modules/ai',
-  //   routes: [
-  //     { path: '/ai/knowledge', name: '知识库', component: () => import('@/modules/ai/pages/Knowledge') },
-  //     { path: '/ai/chat', name: 'AI 助手', component: () => import('@/modules/ai/pages/Chat') },
-  //   ],
-  //   icon: 'Bot',
-  // },
-  // {
-  //   id: 'plugin-erp',
-  //   name: 'ERP 系统',
-  //   description: '企业资源计划',
-  //   category: 'plugin',
-  //   version: '1.0.0',
-  //   entry: '@/modules/erp',
-  //   routes: [
-  //     { path: '/erp/purchase', name: '采购管理', component: () => import('@/modules/erp/pages/Purchase') },
-  //     { path: '/erp/sale', name: '销售管理', component: () => import('@/modules/erp/pages/Sale') },
-  //   ],
-  //   icon: 'DollarSign',
-  // },
+  // 待实现：plugin-ai (AI 知识库)
+  // 待实现：plugin-erp (ERP 系统)
 ];
 
 // ============================================================================

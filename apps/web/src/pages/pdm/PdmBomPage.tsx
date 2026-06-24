@@ -188,17 +188,13 @@ export const PdmBomPage: React.FC = () => {
         spacing={3}
         sx={{ mb: 4 }}
       >
-        <Grid
-          item
-          xs={12}
-          sm={4}
-        >
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
               <Typography
                 variant='body2'
                 color='text.secondary'
-                mb={2}
+                sx={{ mb: 2 }}
               >
                 选择产品
               </Typography>
@@ -237,17 +233,13 @@ export const PdmBomPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid
-          item
-          xs={12}
-          sm={4}
-        >
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
               <Typography
                 variant='body2'
                 color='text.secondary'
-                mb={2}
+                sx={{ mb: 2 }}
               >
                 物料总数
               </Typography>
@@ -260,17 +252,13 @@ export const PdmBomPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid
-          item
-          xs={12}
-          sm={4}
-        >
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
               <Typography
                 variant='body2'
                 color='text.secondary'
-                mb={2}
+                sx={{ mb: 2 }}
               >
                 物料总成本
               </Typography>
@@ -296,13 +284,15 @@ export const PdmBomPage: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 size='small'
                 sx={{ width: 200 }}
-                InputProps={{
-                  startAdornment: (
-                    <Search
-                      size={16}
-                      sx={{ mr: 1 }}
-                    />
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <Search
+                        size={16}
+                        sx={{ mr: 1 }}
+                      />
+                    ),
+                  },
                 }}
               />
             </Box>
@@ -391,10 +381,7 @@ export const PdmBomPage: React.FC = () => {
               container
               spacing={3}
             >
-              <Grid
-                item
-                xs={6}
-              >
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   label='数量'
                   type='number'
@@ -407,10 +394,7 @@ export const PdmBomPage: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid
-                item
-                xs={6}
-              >
+              <Grid size={{ xs: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>单位</InputLabel>
                   <Select

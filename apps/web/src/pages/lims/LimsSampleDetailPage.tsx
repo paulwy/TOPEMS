@@ -28,7 +28,7 @@ import {
   Typography,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -125,7 +125,7 @@ const LimsSampleDetailPage: React.FC = () => {
           }
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载样品详情失败:', error);
     } finally {
       setLoading(false);
@@ -136,16 +136,16 @@ const LimsSampleDetailPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       pending: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
       待测试: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
-      in_progress: { bg: '#dbeafe', color: '#2563eb', label: '测试中' },
-      测试中: { bg: '#dbeafe', color: '#2563eb', label: '测试中' },
-      completed: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
-      已完成: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
-      cancelled: { bg: '#fee2e2', color: '#dc2626', label: '已终止' },
-      已终止: { bg: '#fee2e2', color: '#dc2626', label: '已终止' },
+      in_progress: { bg: '#dbeafe', color: 'primary.dark', label: '测试中' },
+      测试中: { bg: '#dbeafe', color: 'primary.dark', label: '测试中' },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
+      已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
+      cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
+      已终止: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: status,
     };
     return (
@@ -172,7 +172,7 @@ const LimsSampleDetailPage: React.FC = () => {
       } else {
         toast.error('更新失败，请稍后重试');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('更新样品失败:', error);
       toast.error('更新失败，请稍后重试');
     }
@@ -189,7 +189,7 @@ const LimsSampleDetailPage: React.FC = () => {
       } else {
         toast.error('删除失败，请稍后重试');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('删除样品失败:', error);
       toast.error('删除失败，请稍后重试');
     }
@@ -206,21 +206,21 @@ const LimsSampleDetailPage: React.FC = () => {
   };
 
   const chartData = [
-    { name: '已完成', value: records.length, fill: '#10b981' },
+    { name: '已完成', value: records.length, fill: 'success.main' },
     {
       name: '合格',
       value: records.filter((r) => r.conclusion === '合格').length,
-      fill: '#22c55e',
+      fill: 'success.dark',
     },
     {
       name: '不合格',
       value: records.filter((r) => r.conclusion === '不合格').length,
-      fill: '#ef4444',
+      fill: 'error.main',
     },
     {
       name: '待定',
       value: records.filter((r) => r.conclusion === '待定' || r.conclusion === '-').length,
-      fill: '#f59e0b',
+      fill: 'warning.main',
     },
   ];
 
@@ -241,7 +241,7 @@ const LimsSampleDetailPage: React.FC = () => {
         variant='subtitle1'
         sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
       >
-        <FileText sx={{ fontSize: 20, color: '#2563eb' }} />
+        <FileText sx={{ fontSize: 20, color: 'primary.dark' }} />
         关联检验任务
       </Typography>
       {tasks.length > 0 ? (
@@ -265,7 +265,7 @@ const LimsSampleDetailPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ fontWeight: 500, color: '#0f172a' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                       {task.task_no}
                     </Typography>
                     <Typography
@@ -287,15 +287,15 @@ const LimsSampleDetailPage: React.FC = () => {
                     sx={{
                       backgroundColor:
                         task.status === 'completed' || task.status === '已完成'
-                          ? '#dcfce7'
+                          ? 'success.lighter'
                           : task.status === 'in_progress' || task.status === '进行中'
                             ? '#dbeafe'
                             : '#fef9c3',
                       color:
                         task.status === 'completed' || task.status === '已完成'
-                          ? '#16a34a'
+                          ? 'success.dark'
                           : task.status === 'in_progress' || task.status === '进行中'
-                            ? '#2563eb'
+                            ? 'primary.dark'
                             : '#ca8a04',
                     }}
                   />
@@ -358,7 +358,7 @@ const LimsSampleDetailPage: React.FC = () => {
                   formatter={(value: unknown) => [`${value} 条`, '数量']}
                   contentStyle={{
                     backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid border.default',
                     borderRadius: '8px',
                   }}
                 />
@@ -388,11 +388,11 @@ const LimsSampleDetailPage: React.FC = () => {
               sx={{
                 textAlign: 'center',
                 p: 2,
-                bgcolor: '#f8fafc',
+                bgcolor: 'grey.50',
                 borderRadius: 2,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
                 {stats.total}
               </Typography>
               <Typography
@@ -406,16 +406,16 @@ const LimsSampleDetailPage: React.FC = () => {
               sx={{
                 textAlign: 'center',
                 p: 2,
-                bgcolor: '#f0fdf4',
+                bgcolor: 'success.light',
                 borderRadius: 2,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
                 {stats.passed}
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: '#16a34a', mt: 0.5 }}
+                sx={{ color: 'success.dark', mt: 0.5 }}
               >
                 合格
               </Typography>
@@ -424,16 +424,16 @@ const LimsSampleDetailPage: React.FC = () => {
               sx={{
                 textAlign: 'center',
                 p: 2,
-                bgcolor: '#fef2f2',
+                bgcolor: 'error.light',
                 borderRadius: 2,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#dc2626' }}>
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'error.dark' }}>
                 {stats.failed}
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: '#dc2626', mt: 0.5 }}
+                sx={{ color: 'error.dark', mt: 0.5 }}
               >
                 不合格
               </Typography>
@@ -442,7 +442,7 @@ const LimsSampleDetailPage: React.FC = () => {
               sx={{
                 textAlign: 'center',
                 p: 2,
-                bgcolor: '#fefce8',
+                bgcolor: 'warning.lighter',
                 borderRadius: 2,
               }}
             >
@@ -490,7 +490,7 @@ const LimsSampleDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -519,7 +519,7 @@ const LimsSampleDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -527,7 +527,7 @@ const LimsSampleDetailPage: React.FC = () => {
             sx={{
               width: 64,
               height: 64,
-              color: '#ef4444',
+              color: 'error.main',
               margin: '0 auto 16px auto',
             }}
           />

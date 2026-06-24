@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Bell, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, Typography, Badge } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { AlertLevel } from './AlertCard';
 import { AlertCard } from './AlertCard';
 

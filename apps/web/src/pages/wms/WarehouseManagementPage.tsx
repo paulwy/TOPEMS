@@ -7,8 +7,8 @@ import {
   TextField,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
-import React, { useState, useEffect, useMemo } from 'react';
+import { Button } from '@mui/material';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '@/api/shared/wms';
 import { wmsApi } from '@/api/shared/wms';
 import { useAppStore } from '@/store';
@@ -59,7 +59,7 @@ const WarehouseManagementPage: React.FC = () => {
         setWarehouses(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载仓库列表失败:', error);
       addNotification({
         type: 'error',
@@ -96,7 +96,7 @@ const WarehouseManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadWarehouses();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -117,7 +117,7 @@ const WarehouseManagementPage: React.FC = () => {
           message: '仓库已删除',
         });
         loadWarehouses();
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('删除失败:', error);
         addNotification({
           type: 'error',

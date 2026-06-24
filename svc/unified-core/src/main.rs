@@ -36,9 +36,8 @@ use reqwest::Client;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_logging, init_tracing,
-    simple_health_check, trace_middleware, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
-    TracingConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_logging,
+    simple_health_check, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
 };
 
 use crate::middleware::permission::{require_permission, require_superuser};
@@ -76,11 +75,6 @@ async fn main() {
     _ = dotenv::dotenv();
 
     // Initialize OpenTelemetry tracing
-    let tracing_config = TracingConfig::new("topems-unified-core");
-    if let Err(e) = init_tracing(&tracing_config) {
-        tracing::warn!("⚠️ Failed to initialize OpenTelemetry tracing: {}", e);
-    }
-
     tracing::info!("🚀 TOPEMS Unified Core Platform starting...");
     tracing::info!("📦 Contains: IAM + Doc + Flow + File + Communication + AI");
 
@@ -158,6 +152,7 @@ async fn main() {
         .route("/api", get(|| get_api_info_handler("unified-core-service")))
         .route("/api/info", get(|| get_api_info_handler("unified-core-service")))
         .route("/api/plugins/info", get(modules::plugin::handlers::list_plugins_with_status))
+        .route("/api/plugins/health", get(plugin_health_check))
         .route("/metrics", get(move || async move { metric_handle.render() }))
         // Auth endpoints (no auth required for login)
         .route("/api/v1/auth/login", post(modules::iam::auth::login))
@@ -395,6 +390,7 @@ async fn main() {
         .route("/api/core/plugin/runtime/list", get(modules::plugin::handlers::list_plugins_with_status))
         .route("/api/core/plugin/tenant/{tenant_id}/plugins", get(modules::plugin::handlers::list_tenant_plugins))
         .route("/api/core/plugin/tenant/{tenant_id}/available", get(modules::plugin::handlers::get_available_plugins))
+        .route("/api/core/plugins/my", get(modules::plugin::handlers::list_my_plugins))
         .route("/api/core/plugin/plugins/{code}/status", get(modules::plugin::handlers::get_plugin_status))
         .layer(axum::middleware::from_fn_with_state(state.clone(), require_permission("plugin:read")));
 
@@ -511,14 +507,17 @@ async fn main() {
         .merge(ai_write_routes)
         .merge(sync_read_routes)
         .merge(sync_write_routes)
-        .merge(health_routes);
+        .merge(health_routes)
+        .layer(axum::middleware::from_fn_with_state(
+            state.auth_state.clone(),
+            auth_middleware,
+        ));
 
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
         .layer(cors)
         .layer(prometheus_layer)
-        .layer(axum::middleware::from_fn(trace_middleware))
         .with_state(state);
 
     let port = std::env::var("CORE_PORT")
@@ -626,6 +625,10 @@ async fn home() -> &'static str {
 
 async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&state.health_config).await
+}
+
+async fn plugin_health_check() -> Json<ServiceHealth> {
+    Json(topems_shared::build_health_response("topems-workflow", true))
 }
 
 async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {

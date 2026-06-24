@@ -12,12 +12,13 @@ import {
   MenuItem,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Building2, Plus, Edit, Trash2, Folder } from 'lucide-react';
 import { departmentApi, type Department } from '@/api/hrm';
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { extractErrorMessage } from '@/utils/errors';
 
 interface DepartmentManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -60,8 +61,8 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
       } else {
         setDepartments([]);
       }
-    } catch (err: any) {
-      setError(err.message || '加载部门列表失败');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, '加载部门列表失败'));
       addNotification({
         title: '加载失败',
         message: '加载部门列表失败',
@@ -100,10 +101,10 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建部门失败',
+        message: extractErrorMessage(err, '创建部门失败'),
         type: 'error',
       });
     }
@@ -127,10 +128,10 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除部门失败',
+        message: extractErrorMessage(err, '删除部门失败'),
         type: 'error',
       });
     }
@@ -157,10 +158,10 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新部门失败',
+        message: extractErrorMessage(err, '更新部门失败'),
         type: 'error',
       });
     }

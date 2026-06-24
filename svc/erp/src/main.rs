@@ -395,6 +395,7 @@ async fn erp_auth_middleware(
         "/api/v1/auth/login",
         "/api/v1/auth/refresh",
         "/api/plugins/info",
+        "/api/plugins/health",
     ];
     if public_paths.contains(&path) {
         return next.run(req).await;

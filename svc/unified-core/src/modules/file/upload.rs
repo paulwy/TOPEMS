@@ -40,9 +40,21 @@ pub async fn upload_file(
 
     let mut results: Vec<FileUploadResponse> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
+    let mut folder_id: Option<Uuid> = None;
 
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap_or("unknown").to_string();
+        
+        if name == "folder_id" {
+            if let Ok(data) = field.bytes().await {
+                let folder_id_str = String::from_utf8_lossy(&data);
+                if let Ok(fid) = Uuid::parse_str(folder_id_str.trim()) {
+                    folder_id = Some(fid);
+                }
+            }
+            continue;
+        }
+        
         if name != "file" {
             continue;
         }
@@ -76,9 +88,6 @@ pub async fn upload_file(
             failed.push(format!("{}: 不支持的文件类型", file_name));
             continue;
         }
-
-        // 获取文件夹ID（可选）
-        let folder_id: Option<Uuid> = None; // TODO: 从请求中获取
 
         // 生成文件ID和存储路径
         let file_id = Uuid::new_v4();
@@ -127,7 +136,7 @@ pub async fn upload_file(
         )
         .bind(file_id)
         .bind(&file_name)
-        .bind(file_size)
+        .bind(file_size as i64)
         .bind(&content_type)
         .bind(&storage_path)
         .bind(folder_id)
@@ -199,9 +208,21 @@ pub async fn upload_multiple(
 
     let mut results: Vec<FileUploadResponse> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
+    let mut folder_id: Option<Uuid> = None;
 
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap_or("unknown").to_string();
+        
+        if name == "folder_id" {
+            if let Ok(data) = field.bytes().await {
+                let folder_id_str = String::from_utf8_lossy(&data);
+                if let Ok(fid) = Uuid::parse_str(folder_id_str.trim()) {
+                    folder_id = Some(fid);
+                }
+            }
+            continue;
+        }
+        
         if name != "files" && name != "file" {
             continue;
         }
@@ -263,10 +284,10 @@ pub async fn upload_multiple(
         )
         .bind(file_id)
         .bind(&file_name)
-        .bind(file_size)
+        .bind(file_size as i64)
         .bind(&content_type)
         .bind(&storage_path)
-        .bind::<Option<Uuid>>(None)
+        .bind(folder_id)
         .bind(user_id)
         .execute(&state.pool)
         .await
@@ -279,7 +300,7 @@ pub async fn upload_multiple(
                     size: file_size,
                     mime_type: content_type,
                     path: storage_path,
-                    folder_id: None,
+                    folder_id: folder_id.map(|id| id.to_string()),
                     created_at: chrono::Utc::now().to_rfc3339(),
                 });
             }
@@ -294,9 +315,9 @@ pub async fn upload_multiple(
     Json(serde_json::json!({
         "success": !results.is_empty(),
         "message": if failed.is_empty() {
-            "所有文件上传成功"
+            "所有文件上传成功".to_string()
         } else if results.is_empty() {
-            "所有文件上传失败"
+            "所有文件上传失败".to_string()
         } else {
             format!("部分文件上传成功，{} 个成功，{} 个失败", results.len(), failed.len())
         },

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Chip } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type {
   NotificationTemplate,
   CreateTemplateRequest,
@@ -71,7 +71,7 @@ const NotificationTemplatesPage: React.FC = () => {
         setTemplates(response.data.templates);
         setTotal(response.data.total);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Error loading templates:', err);
     } finally {
       setLoading(false);
@@ -88,8 +88,8 @@ const NotificationTemplatesPage: React.FC = () => {
       } else {
         error(res.message || '创建失败');
       }
-    } catch (err: any) {
-      error(err.message || '创建失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '创建失败');
     }
   };
 
@@ -108,8 +108,8 @@ const NotificationTemplatesPage: React.FC = () => {
       } else {
         error(res.message || '更新失败');
       }
-    } catch (err: any) {
-      error(err.message || '更新失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '更新失败');
     }
   };
 
@@ -124,8 +124,8 @@ const NotificationTemplatesPage: React.FC = () => {
       } else {
         error(res.message || '删除失败');
       }
-    } catch (err: any) {
-      error(err.message || '删除失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '删除失败');
     }
   };
 
@@ -147,8 +147,8 @@ const NotificationTemplatesPage: React.FC = () => {
       } else {
         error(res.message || '更新失败');
       }
-    } catch (err: any) {
-      error(err.message || '更新失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '更新失败');
     }
   };
 

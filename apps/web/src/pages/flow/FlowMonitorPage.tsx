@@ -19,7 +19,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Eye, Bell, Ban, RotateCcw, Search, Activity, Loader2 } from 'lucide-react';
 
 interface FlowInstance {
@@ -216,7 +216,7 @@ const FlowMonitorPage: React.FC = () => {
           >
             <Activity
               size={24}
-              style={{ color: '#8b5cf6' }}
+              style={{ color: 'secondary.main' }}
             />
           </Box>
           <Box>
@@ -241,7 +241,7 @@ const FlowMonitorPage: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: '#f59e0b' }}
+                  sx={{ fontWeight: 700, color: 'warning.main' }}
                 >
                   {runningCount}
                 </Typography>
@@ -255,7 +255,7 @@ const FlowMonitorPage: React.FC = () => {
               <Box sx={{ textAlign: 'center' }}>
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: '#16a34a' }}
+                  sx={{ fontWeight: 700, color: 'success.dark' }}
                 >
                   {completedCount}
                 </Typography>
@@ -288,7 +288,7 @@ const FlowMonitorPage: React.FC = () => {
                 startAdornment: (
                   <Search
                     size={20}
-                    style={{ marginRight: 8, color: '#9ca3af' }}
+                    style={{ marginRight: 8, color: 'text.disabled' }}
                   />
                 ),
               },

@@ -10,7 +10,7 @@ import {
   Slider,
   TextField,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Image, X, Upload, Crop, Trash2, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
 import { logger } from '@/utils/logger';
@@ -488,7 +488,7 @@ const ImageOverlay = styled(Box)({
   opacity: 0,
   transition: 'opacity 0.2s',
   '& .MuiIconButton-root': {
-    color: '#fff',
+    color: 'white',
     '&:hover': {
       backgroundColor: 'rgba(255, 255, 255, 0.2)',
     },
@@ -500,7 +500,7 @@ const CropContainer = styled(Box)({
   justifyContent: 'center',
   alignItems: 'center',
   minHeight: 300,
-  backgroundColor: '#f5f5f5',
+  backgroundColor: 'grey.100',
   borderRadius: 8,
   overflow: 'hidden',
 });

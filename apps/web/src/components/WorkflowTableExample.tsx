@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Box, Typography, Chip, Menu, MenuItem, Divider } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 
@@ -29,9 +29,10 @@ export function WorkflowTableExample() {
       } else {
         setError(response.message || '加载工作流失败');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('加载工作流失败:', err);
-      setError('加载工作流失败: ' + (err.message || '未知错误'));
+      const error = err as { message?: string };
+      setError('加载工作流失败: ' + (error.message || '未知错误'));
     } finally {
       setLoading(false);
     }
@@ -88,8 +89,8 @@ export function WorkflowTableExample() {
                 size='small'
                 label={isActive ? '启用' : '禁用'}
                 sx={{
-                  backgroundColor: isActive ? '#e8f5e9' : '#f5f5f5',
-                  color: isActive ? '#2e7d32' : '#616161',
+                  backgroundColor: isActive ? 'success.light' : 'grey.100',
+                  color: isActive ? 'success.dark' : 'grey.600',
                 }}
               />
             </Box>
@@ -203,11 +204,11 @@ export function WorkflowTableExample() {
         </Typography>
         <Box
           sx={{
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
+            backgroundColor: 'error.light',
+            border: '1px solid error.light',
             borderRadius: 1,
             p: 2,
-            color: '#dc2626',
+            color: 'error.dark',
           }}
         >
           {error}

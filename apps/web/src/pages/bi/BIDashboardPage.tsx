@@ -88,7 +88,7 @@ const BIDashboardPage = () => {
       if (res.success && res.data) {
         setDashboards(res.data.items || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load dashboards:', error);
     } finally {
       setLoading(false);
@@ -101,7 +101,7 @@ const BIDashboardPage = () => {
       if (res.success && res.data) {
         setTemplates(res.data.items || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load templates:', error);
     }
   };
@@ -137,7 +137,7 @@ const BIDashboardPage = () => {
           description: '',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to create dashboard:', error);
     }
   };
@@ -149,7 +149,7 @@ const BIDashboardPage = () => {
       if (res.success) {
         loadDashboards();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to delete dashboard:', error);
     }
   };
@@ -160,7 +160,7 @@ const BIDashboardPage = () => {
       if (res.success) {
         loadDashboards();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to clone dashboard:', error);
     }
   };
@@ -173,7 +173,7 @@ const BIDashboardPage = () => {
       if (res.success) {
         loadDashboards();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to update dashboard:', error);
     }
   };
@@ -202,7 +202,7 @@ const BIDashboardPage = () => {
       }
       setViewMode('list');
       loadDashboards();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save dashboard:', error);
     }
   };

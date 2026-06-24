@@ -13,7 +13,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { Box as MuiBox, Typography, Paper, Divider } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { DrawFeature } from '../shared/types';
 
 type ToolMode =
@@ -73,8 +73,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
 }) => {
   const getToolColor = (tool: ToolMode) => {
     return toolMode === tool
-      ? { bgcolor: '#2563eb', color: 'white' }
-      : { bgcolor: 'white', color: '#374151', hover: '#f9fafb' };
+      ? { bgcolor: 'primary.dark', color: 'white' }
+      : { bgcolor: 'white', color: 'grey.700', hover: 'grey.50' };
   };
 
   return (
@@ -88,10 +88,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
         overflow: 'hidden',
       }}
     >
-      <MuiBox sx={{ px: 3, py: 2, borderBottom: 1, borderColor: '#f3f4f6' }}>
+      <MuiBox sx={{ px: 3, py: 2, borderBottom: 1, borderColor: 'grey.100' }}>
         <Typography
           variant='caption'
-          sx={{ fontWeight: 500, color: '#6b7280' }}
+          sx={{ fontWeight: 500, color: 'text.secondary' }}
         >
           工具
         </Typography>
@@ -120,7 +120,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               width: 16,
               height: 16,
               border: 2,
-              borderColor: '#374151',
+              borderColor: 'grey.700',
               borderRadius: 1,
             }}
           />
@@ -249,9 +249,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
-                bgcolor: '#f1f5f9',
-                color: '#374151',
-                '&:hover': { bgcolor: '#e5e7eb' },
+                bgcolor: 'grey.100',
+                color: 'grey.700',
+                '&:hover': { bgcolor: 'grey.200' },
                 textTransform: 'none',
               }}
               title='清除测量'
@@ -270,9 +270,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 2,
-              bgcolor: '#fee2e2',
-              color: '#dc2626',
-              '&:hover': { bgcolor: '#fecaca' },
+              bgcolor: 'error.lighter',
+              color: 'error.dark',
+              '&:hover': { bgcolor: 'error.light' },
               textTransform: 'none',
               mt: 1,
             }}
@@ -292,9 +292,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 2,
-              bgcolor: '#dcfce7',
-              color: '#16a34a',
-              '&:hover': { bgcolor: '#bbf7d0' },
+              bgcolor: 'success.lighter',
+              color: 'success.dark',
+              '&:hover': { bgcolor: 'success.light' },
               textTransform: 'none',
               mt: 1,
             }}
@@ -314,8 +314,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             alignItems: 'center',
             gap: 2,
             bgcolor: showTrackPanel ? '#9333ea' : 'white',
-            color: showTrackPanel ? 'white' : '#374151',
-            '&:hover': { bgcolor: showTrackPanel ? '#7c3aed' : '#f9fafb' },
+            color: showTrackPanel ? 'white' : 'grey.700',
+            '&:hover': { bgcolor: showTrackPanel ? 'secondary.dark' : 'grey.50' },
             textTransform: 'none',
           }}
           title='设备轨迹追踪'
@@ -333,8 +333,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: '#eff6ff',
-            color: '#2563eb',
+            bgcolor: 'primary.light',
+            color: 'primary.dark',
             '&:hover': { bgcolor: '#dbeafe' },
             textTransform: 'none',
           }}
@@ -353,8 +353,8 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             alignItems: 'center',
             gap: 2,
             bgcolor: '#eef2ff',
-            color: '#6366f1',
-            '&:hover': { bgcolor: '#e0e7ff' },
+            color: 'primary.light',
+            '&:hover': { bgcolor: 'secondary.light' },
             textTransform: 'none',
             mt: 1,
           }}
@@ -373,9 +373,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: mapType === 'amap' ? '#2563eb' : 'white',
-            color: mapType === 'amap' ? 'white' : '#374151',
-            '&:hover': { bgcolor: mapType === 'amap' ? '#1d4ed8' : '#f9fafb' },
+            bgcolor: mapType === 'amap' ? 'primary.dark' : 'white',
+            color: mapType === 'amap' ? 'white' : 'grey.700',
+            '&:hover': { bgcolor: mapType === 'amap' ? 'primary.dark' : 'grey.50' },
             textTransform: 'none',
           }}
           title='切换地图'
@@ -393,9 +393,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: showHeatmap ? '#dc2626' : 'white',
-            color: showHeatmap ? 'white' : '#374151',
-            '&:hover': { bgcolor: showHeatmap ? '#b91c1c' : '#f9fafb' },
+            bgcolor: showHeatmap ? 'error.dark' : 'white',
+            color: showHeatmap ? 'white' : 'grey.700',
+            '&:hover': { bgcolor: showHeatmap ? 'error.darker' : 'grey.50' },
             textTransform: 'none',
           }}
           title='热力图'
@@ -412,10 +412,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                 p: 1.5,
                 borderRadius: 1,
                 textAlign: 'left',
-                bgcolor: heatmapMode === 'density' ? '#fee2e2' : 'transparent',
-                color: heatmapMode === 'density' ? '#b91c1c' : '#4b5563',
+                bgcolor: heatmapMode === 'density' ? 'error.lighter' : 'transparent',
+                color: heatmapMode === 'density' ? 'error.darker' : 'text.secondary',
                 '&:hover': {
-                  bgcolor: heatmapMode === 'density' ? '#fee2e2' : '#f3f4f6',
+                  bgcolor: heatmapMode === 'density' ? 'error.lighter' : 'grey.100',
                 },
                 textTransform: 'none',
                 fontSize: '0.75rem',
@@ -430,10 +430,10 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
                 p: 1.5,
                 borderRadius: 1,
                 textAlign: 'left',
-                bgcolor: heatmapMode === 'status' ? '#fee2e2' : 'transparent',
-                color: heatmapMode === 'status' ? '#b91c1c' : '#4b5563',
+                bgcolor: heatmapMode === 'status' ? 'error.lighter' : 'transparent',
+                color: heatmapMode === 'status' ? 'error.darker' : 'text.secondary',
                 '&:hover': {
-                  bgcolor: heatmapMode === 'status' ? '#fee2e2' : '#f3f4f6',
+                  bgcolor: heatmapMode === 'status' ? 'error.lighter' : 'grey.100',
                 },
                 textTransform: 'none',
                 fontSize: '0.75rem',
@@ -453,9 +453,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: showHeatmap ? '#6366f1' : 'white',
-            color: showHeatmap ? 'white' : '#374151',
-            '&:hover': { bgcolor: showHeatmap ? '#4f46e5' : '#f9fafb' },
+            bgcolor: showHeatmap ? 'primary.light' : 'white',
+            color: showHeatmap ? 'white' : 'grey.700',
+            '&:hover': { bgcolor: showHeatmap ? 'primary.main' : 'grey.50' },
             textTransform: 'none',
           }}
           title='3D视图'
@@ -473,9 +473,9 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: offlineMode ? '#16a34a' : 'white',
-            color: offlineMode ? 'white' : '#374151',
-            '&:hover': { bgcolor: offlineMode ? '#15803d' : '#f9fafb' },
+            bgcolor: offlineMode ? 'success.dark' : 'white',
+            color: offlineMode ? 'white' : 'grey.700',
+            '&:hover': { bgcolor: offlineMode ? '#15803d' : 'grey.50' },
             textTransform: 'none',
           }}
           title='离线模式'

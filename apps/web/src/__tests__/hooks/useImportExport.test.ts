@@ -104,7 +104,7 @@ describe("useImportExport hook", () => {
       await act(async () => {
         try {
           await result.current.importData(file, "employee", "create");
-        } catch (e) {
+        } catch (e: unknown) {
           // Expected to throw
         }
       });
@@ -126,7 +126,7 @@ describe("useImportExport hook", () => {
       await act(async () => {
         try {
           await result.current.importData(file, "employee", "create");
-        } catch (e) {
+        } catch (e: unknown) {
           // Expected to throw
         }
       });
@@ -222,7 +222,7 @@ describe("useImportExport hook", () => {
       await act(async () => {
         try {
           await result.current.exportData("employee", "xlsx");
-        } catch (e) {
+        } catch (e: unknown) {
           // Expected to throw
         }
       });
@@ -304,7 +304,7 @@ describe("useImportExport hook", () => {
       await act(async () => {
         try {
           await result.current.getImportTemplates();
-        } catch (e) {
+        } catch (e: unknown) {
           // Expected to throw
         }
       });
@@ -355,7 +355,7 @@ describe("useImportExport hook", () => {
       await act(async () => {
         try {
           await result.current.getImportStatus("import-123");
-        } catch (e) {
+        } catch (e: unknown) {
           // Expected to throw
         }
       });

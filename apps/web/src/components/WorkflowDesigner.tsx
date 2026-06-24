@@ -1,6 +1,6 @@
 import React, { useState, useRef, type ChangeEvent } from 'react';
 import { Box, Typography, TextField, FormLabel, Divider, Paper } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from 'lucide-react';
 
 // --- Types ---
@@ -180,7 +180,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         flexDirection: 'column',
         height: '100vh',
         width: '100%',
-        backgroundColor: '#f9fafb',
+        backgroundColor: 'grey.50',
       }}
     >
       {/* Toolbar */}
@@ -191,7 +191,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           gap: 2,
           p: 4,
           backgroundColor: 'white',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid grey.200',
           boxShadow: 1,
           zIndex: 10,
         }}
@@ -201,7 +201,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
             fontWeight: 700,
             fontSize: '1.125rem',
             mr: 4,
-            color: '#1f2937',
+            color: 'grey.800',
           }}
         >
           流程设计器
@@ -278,7 +278,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         <Box
           sx={{
             flex: 1,
-            backgroundColor: '#f3f4f6',
+            backgroundColor: 'grey.100',
             position: 'relative',
             cursor: 'move',
           }}
@@ -308,7 +308,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 <path
                   d='M 20 0 L 0 0 0 20'
                   fill='none'
-                  stroke='#e5e7eb'
+                  stroke='grey.200'
                   strokeWidth='1'
                 />
               </pattern>
@@ -341,13 +341,13 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     <path
                       d={`M ${s.x} ${s.y} C ${s.x + controlXOffset} ${s.y}, ${t.x - controlXOffset} ${t.y}, ${t.x} ${t.y}`}
                       fill='none'
-                      stroke='#64748b'
+                      stroke='grey.500'
                       strokeWidth='2'
                     />
                     {/* Arrow Head */}
                     <polygon
                       points='0,-4 8,0 0,4'
-                      fill='#64748b'
+                      fill='grey.500'
                       transform={`translate(${t.x - 8}, ${t.y}) rotate(0)`}
                     />
                   </g>
@@ -361,7 +361,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   y1={getNodeCenter(nodes.find((n) => n.id === connectingFrom)!).y}
                   x2={dragStart.x}
                   y2={dragStart.y}
-                  stroke='#3b82f6'
+                  stroke='primary.main'
                   strokeWidth='2'
                   strokeDasharray='5,5'
                 />
@@ -380,7 +380,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     height='60'
                     rx='8'
                     fill='white'
-                    stroke={selectedNode?.id === node.id ? '#3b82f6' : '#d1d5db'}
+                    stroke={selectedNode?.id === node.id ? 'primary.main' : 'grey.300'}
                     strokeWidth='2'
                     style={{
                       transition: 'all',
@@ -396,7 +396,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     width='140'
                     height='60'
                     rx='8'
-                    fill={selectedNode?.id === node.id ? '#3b82f6' : '#000'}
+                    fill={selectedNode?.id === node.id ? 'primary.main' : 'black'}
                     opacity={0.1}
                   />
 
@@ -405,7 +405,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     x='70'
                     y='25'
                     textAnchor='middle'
-                    style={{ fontSize: 12, fontWeight: 700, fill: '#374151' }}
+                    style={{ fontSize: 12, fontWeight: 700, fill: 'grey.700' }}
                   >
                     {NODE_ICONS[node.type]} {node.label}
                   </text>
@@ -413,7 +413,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     x='70'
                     y='42'
                     textAnchor='middle'
-                    style={{ fontSize: 10, fill: '#6b7280' }}
+                    style={{ fontSize: 10, fill: 'text.secondary' }}
                   >
                     {node.type}
                   </text>
@@ -425,7 +425,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     cy='30'
                     r='6'
                     fill='white'
-                    stroke='#9ca3af'
+                    stroke='text.disabled'
                     strokeWidth='2'
                     style={{ cursor: 'pointer' }}
                     onMouseUp={(e) => handlePortMouseUp(e, node.id)}
@@ -436,7 +436,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     cy='30'
                     r='6'
                     fill='white'
-                    stroke='#9ca3af'
+                    stroke='text.disabled'
                     strokeWidth='2'
                     style={{ cursor: 'pointer' }}
                     onMouseDown={(e) => handlePortMouseDown(e, node.id)}
@@ -452,45 +452,45 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           sx={{
             width: 320,
             backgroundColor: 'white',
-            borderLeft: '1px solid #e5e7eb',
+            borderLeft: '1px solid grey.200',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          <Box sx={{ p: 4, borderBottom: '1px solid #e5e7eb' }}>
-            <Typography sx={{ fontWeight: 600, color: '#1f2937' }}>属性</Typography>
+          <Box sx={{ p: 4, borderBottom: '1px solid grey.200' }}>
+            <Typography sx={{ fontWeight: 600, color: 'grey.800' }}>属性</Typography>
           </Box>
           <Box sx={{ p: 4, flex: 1, overflowY: 'auto' }}>
             {selectedNode ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <Box>
-                  <FormLabel sx={{ color: '#6b7280' }}>节点 ID</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>节点 ID</FormLabel>
                   <TextField
                     value={selectedNode.id}
                     disabled
                     sx={{
                       mt: 1,
-                      backgroundColor: '#f3f4f6',
+                      backgroundColor: 'grey.100',
                     }}
                     fullWidth
                   />
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: '#6b7280' }}>类型</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>类型</FormLabel>
                   <Box
                     sx={{
                       mt: 2,
                       fontSize: 14,
                       p: '4px 8px',
                       borderRadius: 1,
-                      backgroundColor: '#f3f4f6',
+                      backgroundColor: 'grey.100',
                     }}
                   >
                     {selectedNode.type}
                   </Box>
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: '#6b7280' }}>标签</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>标签</FormLabel>
                   <TextField
                     value={selectedNode.label}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -501,7 +501,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   />
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: '#6b7280' }}>描述</FormLabel>
+                  <FormLabel sx={{ color: 'text.secondary' }}>描述</FormLabel>
                   <TextField
                     value={selectedNode.description || ''}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -524,7 +524,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 </Button>
               </Box>
             ) : (
-              <Box sx={{ textAlign: 'center', color: '#6b7280', mt: 10 }}>
+              <Box sx={{ textAlign: 'center', color: 'text.secondary', mt: 10 }}>
                 <Move
                   style={{
                     width: 40,

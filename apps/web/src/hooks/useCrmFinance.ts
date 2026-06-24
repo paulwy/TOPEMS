@@ -43,7 +43,7 @@ export function useUpdateCustomerFinanceInfo() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('客户财务信息更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '客户财务信息更新失败');
     },
   });
@@ -97,7 +97,7 @@ export function useCreateSalesInvoice() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('销售发票创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '销售发票创建失败');
     },
   });
@@ -118,7 +118,7 @@ export function useUpdateSalesInvoice() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('销售发票更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '销售发票更新失败');
     },
   });
@@ -138,7 +138,7 @@ export function useDeleteSalesInvoice() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('销售发票删除成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '销售发票删除失败');
     },
   });
@@ -158,7 +158,7 @@ export function useIssueSalesInvoice() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('发票开具成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '发票开具失败');
     },
   });
@@ -179,7 +179,7 @@ export function useVoidSalesInvoice() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('发票已作废');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '发票作废失败');
     },
   });
@@ -200,7 +200,7 @@ export function useRedFlushSalesInvoice() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('发票已红冲');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '发票红冲失败');
     },
   });
@@ -258,7 +258,7 @@ export function useCreateCollectionRecord() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('收款记录创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '收款记录创建失败');
     },
   });
@@ -283,7 +283,7 @@ export function useConfirmCollection() {
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
       success('收款已确认');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '收款确认失败');
     },
   });
@@ -314,7 +314,7 @@ export function useBatchConfirmCollections() {
         success(`成功确认 ${successCount} 条`);
       }
     },
-    onError: (err: any) => {
+    onError: (err) => {
       showError(err.message || '批量确认失败');
     },
   });
@@ -402,7 +402,7 @@ export function useExportSalesInvoices() {
     onSuccess: () => {
       success('销售发票已导出');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });
@@ -435,7 +435,7 @@ export function useExportCollectionRecords() {
     onSuccess: () => {
       success('收款记录已导出');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });
@@ -468,7 +468,7 @@ export function useExportReceivableAging() {
     onSuccess: () => {
       success('应收账龄分析已导出');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });

@@ -13,7 +13,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   AlertCircle,
   CheckCircle,
@@ -135,13 +135,13 @@ const MAX_WIDTH_MAP: Record<DialogSize, 'xs' | 'sm' | 'md' | 'lg' | 'xl'> = {
 // ============ 图标配置 ============
 
 const TYPE_CONFIG: Record<DialogType, { icon: LucideIcon; color: string; bgColor: string }> = {
-  alert: { icon: AlertCircle, color: '#f59e0b', bgColor: '#fffbeb' },
-  confirm: { icon: HelpCircle, color: '#3b82f6', bgColor: '#eff6ff' },
-  prompt: { icon: Info, color: '#06b6d4', bgColor: '#cffafe' },
-  info: { icon: Info, color: '#3b82f6', bgColor: '#eff6ff' },
-  success: { icon: CheckCircle, color: '#10b981', bgColor: '#dcfce7' },
-  warning: { icon: AlertTriangle, color: '#f59e0b', bgColor: '#fffbeb' },
-  error: { icon: AlertCircle, color: '#ef4444', bgColor: '#fee2e2' },
+  alert: { icon: AlertCircle, color: 'warning.main', bgColor: 'warning.light' },
+  confirm: { icon: HelpCircle, color: 'primary.main', bgColor: 'primary.light' },
+  prompt: { icon: Info, color: 'info.main', bgColor: '#cffafe' },
+  info: { icon: Info, color: 'primary.main', bgColor: 'primary.light' },
+  success: { icon: CheckCircle, color: 'success.main', bgColor: 'success.lighter' },
+  warning: { icon: AlertTriangle, color: 'warning.main', bgColor: 'warning.light' },
+  error: { icon: AlertCircle, color: 'error.main', bgColor: 'error.lighter' },
 };
 
 // ============ ConfirmDialog组件 ============
@@ -235,7 +235,7 @@ export default function ConfirmDialog({
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       addNotification({
         title: '操作失败',
         message: error instanceof Error ? error.message : '操作过程中发生错误',
@@ -460,7 +460,7 @@ export default function ConfirmDialog({
               onClick={handleConfirm}
               disabled={confirmDisabled || isLoading}
               sx={{
-                ...(danger ? { bgcolor: '#dc2626', '&:hover': { bgcolor: '#b91c1c' } } : {}),
+                ...(danger ? { bgcolor: 'error.dark', '&:hover': { bgcolor: 'error.darker' } } : {}),
               }}
             >
               {isLoading ? (

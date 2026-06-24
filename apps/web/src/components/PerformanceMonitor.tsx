@@ -215,10 +215,10 @@ const PerformanceMonitor: React.FC = () => {
             right: '16px',
             zIndex: 50,
             width: '384px',
-            backgroundColor: '#ffffff',
+            backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            border: '1px solid #e2e8f0',
+            border: '1px solid border.default',
             padding: '16px',
           }}
         >
@@ -231,8 +231,8 @@ const PerformanceMonitor: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Activity sx={{ width: 20, height: 20, color: '#2563eb' }} />
-              <h3 style={{ fontWeight: 600, color: '#0f172a' }}>性能监控</h3>
+              <Activity sx={{ width: 20, height: 20, color: 'primary.dark' }} />
+              <h3 style={{ fontWeight: 600, color: 'grey.900' }}>性能监控</h3>
             </div>
             <button
               onClick={() => setIsVisible(false)}
@@ -255,7 +255,7 @@ const PerformanceMonitor: React.FC = () => {
               justifyContent: 'center',
               marginBottom: '16px',
               padding: '16px',
-              background: 'linear-gradient(to bottom right, #eff6ff, #faf5ff)',
+              background: 'linear-gradient(to bottom right, primary.light, secondary.light)',
               borderRadius: '12px',
             }}
           >
@@ -265,15 +265,15 @@ const PerformanceMonitor: React.FC = () => {
                   fontSize: '36px',
                   fontWeight: 700,
                   ...(getScoreColor() === 'text-green-500'
-                    ? { color: '#22c55e' }
+                    ? { color: 'success.dark' }
                     : getScoreColor() === 'text-yellow-500'
-                      ? { color: '#eab308' }
-                      : { color: '#ef4444' }),
+                      ? { color: 'warning.main' }
+                      : { color: 'error.main' }),
                 }}
               >
                 {getPerformanceScore()}
               </div>
-              <div style={{ fontSize: '14px', color: '#64748b', marginTop: '4px' }}>性能评分</div>
+              <div style={{ fontSize: '14px', color: 'grey.600', marginTop: '4px' }}>性能评分</div>
             </div>
           </div>
 
@@ -282,7 +282,7 @@ const PerformanceMonitor: React.FC = () => {
               style={{
                 marginBottom: '16px',
                 padding: '12px',
-                backgroundColor: '#fef2f2',
+                backgroundColor: 'error.light',
                 borderRadius: '8px',
               }}
             >
@@ -291,7 +291,7 @@ const PerformanceMonitor: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  color: '#dc2626',
+                  color: 'error.dark',
                   fontSize: '14px',
                 }}
               >
@@ -313,7 +313,7 @@ const PerformanceMonitor: React.FC = () => {
                     key={index}
                     style={{
                       fontSize: '12px',
-                      color: '#ef4444',
+                      color: 'error.main',
                       marginLeft: '24px',
                     }}
                   >
@@ -339,24 +339,24 @@ const PerformanceMonitor: React.FC = () => {
                   height: 16,
                   color:
                     getStatusColor(metrics.fps, [45, 55]) === 'text-green-500'
-                      ? '#22c55e'
+                      ? 'success.dark'
                       : getStatusColor(metrics.fps, [45, 55]) === 'text-yellow-500'
-                        ? '#eab308'
-                        : '#ef4444',
+                        ? 'warning.main'
+                        : 'error.main',
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>帧率</div>
+                <div style={{ fontSize: '12px', color: 'grey.600' }}>帧率</div>
                 <div
                   style={{
                     fontSize: '14px',
                     fontWeight: 500,
                     color:
                       getStatusColor(metrics.fps, [45, 55]) === 'text-green-500'
-                        ? '#22c55e'
+                        ? 'success.dark'
                         : getStatusColor(metrics.fps, [45, 55]) === 'text-yellow-500'
-                          ? '#eab308'
-                          : '#ef4444',
+                          ? 'warning.main'
+                          : 'error.main',
                   }}
                 >
                   {metrics.fps} FPS
@@ -370,24 +370,24 @@ const PerformanceMonitor: React.FC = () => {
                   height: 16,
                   color:
                     getStatusColor(metrics.cpu, [20, 50]) === 'text-green-500'
-                      ? '#22c55e'
+                      ? 'success.dark'
                       : getStatusColor(metrics.cpu, [20, 50]) === 'text-yellow-500'
-                        ? '#eab308'
-                        : '#ef4444',
+                        ? 'warning.main'
+                        : 'error.main',
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>CPU</div>
+                <div style={{ fontSize: '12px', color: 'grey.600' }}>CPU</div>
                 <div
                   style={{
                     fontSize: '14px',
                     fontWeight: 500,
                     color:
                       getStatusColor(metrics.cpu, [20, 50]) === 'text-green-500'
-                        ? '#22c55e'
+                        ? 'success.dark'
                         : getStatusColor(metrics.cpu, [20, 50]) === 'text-yellow-500'
-                          ? '#eab308'
-                          : '#ef4444',
+                          ? 'warning.main'
+                          : 'error.main',
                   }}
                 >
                   {metrics.cpu}%
@@ -401,24 +401,24 @@ const PerformanceMonitor: React.FC = () => {
                   height: 16,
                   color:
                     getStatusColor(metrics.networkLatency, [200, 500]) === 'text-green-500'
-                      ? '#22c55e'
+                      ? 'success.dark'
                       : getStatusColor(metrics.networkLatency, [200, 500]) === 'text-yellow-500'
-                        ? '#eab308'
-                        : '#ef4444',
+                        ? 'warning.main'
+                        : 'error.main',
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>网络延迟</div>
+                <div style={{ fontSize: '12px', color: 'grey.600' }}>网络延迟</div>
                 <div
                   style={{
                     fontSize: '14px',
                     fontWeight: 500,
                     color:
                       getStatusColor(metrics.networkLatency, [200, 500]) === 'text-green-500'
-                        ? '#22c55e'
+                        ? 'success.dark'
                         : getStatusColor(metrics.networkLatency, [200, 500]) === 'text-yellow-500'
-                          ? '#eab308'
-                          : '#ef4444',
+                          ? 'warning.main'
+                          : 'error.main',
                   }}
                 >
                   {metrics.networkLatency}ms
@@ -432,24 +432,24 @@ const PerformanceMonitor: React.FC = () => {
                   height: 16,
                   color:
                     getStatusColor(metrics.lcp, [1200, 2500]) === 'text-green-500'
-                      ? '#22c55e'
+                      ? 'success.dark'
                       : getStatusColor(metrics.lcp, [1200, 2500]) === 'text-yellow-500'
-                        ? '#eab308'
-                        : '#ef4444',
+                        ? 'warning.main'
+                        : 'error.main',
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>LCP</div>
+                <div style={{ fontSize: '12px', color: 'grey.600' }}>LCP</div>
                 <div
                   style={{
                     fontSize: '14px',
                     fontWeight: 500,
                     color:
                       getStatusColor(metrics.lcp, [1200, 2500]) === 'text-green-500'
-                        ? '#22c55e'
+                        ? 'success.dark'
                         : getStatusColor(metrics.lcp, [1200, 2500]) === 'text-yellow-500'
-                          ? '#eab308'
-                          : '#ef4444',
+                          ? 'warning.main'
+                          : 'error.main',
                   }}
                 >
                   {metrics.lcp}ms
@@ -460,7 +460,7 @@ const PerformanceMonitor: React.FC = () => {
 
           <div
             style={{
-              borderTop: '1px solid #f1f5f9',
+              borderTop: '1px solid grey.100',
               paddingTop: '12px',
               marginBottom: '16px',
             }}
@@ -473,8 +473,8 @@ const PerformanceMonitor: React.FC = () => {
                 marginBottom: '8px',
               }}
             >
-              <History sx={{ width: 16, height: 16, color: '#64748b' }} />
-              <span style={{ fontSize: '12px', color: '#64748b' }}>实时趋势</span>
+              <History sx={{ width: 16, height: 16, color: 'grey.600' }} />
+              <span style={{ fontSize: '12px', color: 'grey.600' }}>实时趋势</span>
             </div>
             <div
               style={{
@@ -494,10 +494,10 @@ const PerformanceMonitor: React.FC = () => {
                     height: `${(item.metrics.fps / 60) * 100}%`,
                     backgroundColor:
                       item.metrics.fps >= 45
-                        ? '#22c55e'
+                        ? 'success.dark'
                         : item.metrics.fps >= 30
-                          ? '#eab308'
-                          : '#ef4444',
+                          ? 'warning.main'
+                          : 'error.main',
                   }}
                   title={`${item.metrics.fps} FPS`}
                 />
@@ -511,10 +511,10 @@ const PerformanceMonitor: React.FC = () => {
               disabled={isReporting}
               sx={{
                 flex: 1,
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
+                backgroundColor: 'primary.dark',
+                color: 'white',
                 fontSize: '14px',
-                '&:hover': { backgroundColor: '#1d4ed8' },
+                '&:hover': { backgroundColor: 'primary.dark' },
               }}
             >
               <Send sx={{ width: 16, height: 16, marginRight: '8px' }} />
@@ -525,7 +525,7 @@ const PerformanceMonitor: React.FC = () => {
                 sx={{
                   width: 20,
                   height: 20,
-                  color: '#22c55e',
+                  color: 'success.dark',
                   alignSelf: 'center',
                 }}
               />
@@ -535,7 +535,7 @@ const PerformanceMonitor: React.FC = () => {
                 sx={{
                   width: 20,
                   height: 20,
-                  color: '#ef4444',
+                  color: 'error.main',
                   alignSelf: 'center',
                 }}
               />
@@ -546,7 +546,7 @@ const PerformanceMonitor: React.FC = () => {
             style={{
               marginTop: '12px',
               paddingTop: '12px',
-              borderTop: '1px solid #f1f5f9',
+              borderTop: '1px solid grey.100',
             }}
           >
             <div
@@ -555,7 +555,7 @@ const PerformanceMonitor: React.FC = () => {
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '8px',
                 fontSize: '12px',
-                color: '#64748b',
+                color: 'grey.600',
               }}
             >
               <div>
@@ -591,11 +591,11 @@ const PerformanceMonitor: React.FC = () => {
           justifyContent: 'center',
           transition: 'all 0.2s',
           backgroundColor: isVisible
-            ? '#2563eb'
+            ? 'primary.dark'
             : performanceIssues.length > 0
-              ? '#ef4444'
+              ? 'error.main'
               : '#334155',
-          color: '#ffffff',
+          color: 'white',
           animation: performanceIssues.length > 0 && !isVisible ? 'pulse 2s infinite' : 'none',
           cursor: 'pointer',
           border: 'none',

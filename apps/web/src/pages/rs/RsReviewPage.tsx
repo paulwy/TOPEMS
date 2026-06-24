@@ -13,7 +13,7 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Eye, Check, X, GitPullRequest, Clock, User } from 'lucide-react';
 import {
   ListPageTemplate,
@@ -190,7 +190,7 @@ const RsReviewPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <GitPullRequest
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
           {row.title}
         </Box>
@@ -326,7 +326,7 @@ const RsReviewPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='代码评审'
         columns={columns}
@@ -381,7 +381,7 @@ const RsReviewPage: React.FC = () => {
                   评审人: {selectedReview.reviewer}
                 </Typography>
               </Stack>
-              <Paper sx={{ p: 2, mt: 3, bgcolor: '#f5f5f5' }}>
+              <Paper sx={{ p: 2, mt: 3, bgcolor: 'grey.100' }}>
                 <Typography variant='body2'>评审内容区域 - 待实现</Typography>
               </Paper>
             </Box>
@@ -435,7 +435,7 @@ const RsReviewPage: React.FC = () => {
           <Button onClick={() => setNewReviewDialogOpen(false)}>取消</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
             onClick={handleCreateReview}
           >
             创建

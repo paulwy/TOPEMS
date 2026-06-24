@@ -17,7 +17,7 @@ import {
   Tab,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   Mail,
@@ -171,10 +171,10 @@ const MailPage: React.FC = () => {
       if (res.success && res.data) {
         setStats(res.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '加载失败',
-        message: err.message || '加载统计数据失败',
+        message: (err as { message?: string }).message || '加载统计数据失败',
         type: 'error',
       });
     } finally {
@@ -196,10 +196,10 @@ const MailPage: React.FC = () => {
         setEmails(res.data.items || []);
         setTotalEmails(res.data.total || 0);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '加载失败',
-        message: err.message || '加载邮件列表失败',
+        message: (err as { message?: string }).message || '加载邮件列表失败',
         type: 'error',
       });
     } finally {
@@ -220,10 +220,10 @@ const MailPage: React.FC = () => {
         setTemplates(res.data.items || []);
         setTotalTemplates(res.data.total || 0);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '加载失败',
-        message: err.message || '加载模板列表失败',
+        message: (err as { message?: string }).message || '加载模板列表失败',
         type: 'error',
       });
     } finally {
@@ -355,10 +355,10 @@ const MailPage: React.FC = () => {
           });
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '发送邮件失败',
+        message: (err as { message?: string }).message || '发送邮件失败',
         type: 'error',
       });
     } finally {
@@ -400,10 +400,10 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除失败',
+        message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
     }
@@ -453,10 +453,10 @@ const MailPage: React.FC = () => {
           });
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '重发邮件失败',
+        message: (err as { message?: string }).message || '重发邮件失败',
         type: 'error',
       });
     }
@@ -505,10 +505,10 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '批量重发失败',
+        message: (err as { message?: string }).message || '批量重发失败',
         type: 'error',
       });
     }
@@ -535,10 +535,10 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新状态失败',
+        message: (err as { message?: string }).message || '更新状态失败',
         type: 'error',
       });
     }
@@ -577,10 +577,10 @@ const MailPage: React.FC = () => {
         });
         setShowEyeModal(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '预览模板失败',
+        message: (err as { message?: string }).message || '预览模板失败',
         type: 'error',
       });
     }
@@ -629,10 +629,10 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建模板失败',
+        message: (err as { message?: string }).message || '创建模板失败',
         type: 'error',
       });
     }
@@ -689,10 +689,10 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新模板失败',
+        message: (err as { message?: string }).message || '更新模板失败',
         type: 'error',
       });
     }
@@ -716,10 +716,10 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除失败',
+        message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
     }
@@ -860,7 +860,7 @@ const MailPage: React.FC = () => {
                 >
                   <Mail
                     size={28}
-                    color='#2563eb'
+                    color='primary.dark'
                     style={{ marginRight: 12 }}
                   />
                   邮件管理
@@ -944,7 +944,7 @@ const MailPage: React.FC = () => {
                   >
                     <Search
                       size={20}
-                      color='#9ca3af'
+                      color='text.disabled'
                     />
                   </Box>
                   <TextField
@@ -1023,7 +1023,7 @@ const MailPage: React.FC = () => {
               >
                 <Card
                   sx={{
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
                     border: 'none',
                   }}
                 >
@@ -1036,7 +1036,7 @@ const MailPage: React.FC = () => {
                       }}
                     >
                       <Box>
-                        <Typography sx={{ color: '#bfdbfe', fontSize: '0.875rem' }}>
+                        <Typography sx={{ color: 'primary.light', fontSize: '0.875rem' }}>
                           邮件总数
                         </Typography>
                         <Typography
@@ -1084,7 +1084,7 @@ const MailPage: React.FC = () => {
                       }}
                     >
                       <Box>
-                        <Typography sx={{ color: '#bbf7d0', fontSize: '0.875rem' }}>
+                        <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>
                           已发送
                         </Typography>
                         <Typography
@@ -1167,7 +1167,7 @@ const MailPage: React.FC = () => {
                 </Card>
                 <Card
                   sx={{
-                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    background: 'linear-gradient(135deg, error.main 0%, error.dark 100%)',
                     border: 'none',
                   }}
                 >
@@ -1180,7 +1180,7 @@ const MailPage: React.FC = () => {
                       }}
                     >
                       <Box>
-                        <Typography sx={{ color: '#fecaca', fontSize: '0.875rem' }}>
+                        <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>
                           发送失败
                         </Typography>
                         <Typography
@@ -1282,7 +1282,7 @@ const MailPage: React.FC = () => {
                     <Box sx={{ p: 4, textAlign: 'center' }}>
                       <Mail
                         size={48}
-                        color='#9ca3af'
+                        color='text.disabled'
                         style={{ margin: '0 auto 12px' }}
                       />
                       <Typography sx={{ color: 'grey.500' }}>暂无邮件记录</Typography>
@@ -1322,8 +1322,8 @@ const MailPage: React.FC = () => {
                                 checked={selectedEmails.length === emails.length}
                                 style={{
                                   borderRadius: 4,
-                                  borderColor: '#d1d5db',
-                                  color: '#2563eb',
+                                  borderColor: 'grey.300',
+                                  color: 'primary.dark',
                                 }}
                               />
                             </Box>
@@ -1449,8 +1449,8 @@ const MailPage: React.FC = () => {
                                   }}
                                   style={{
                                     borderRadius: 4,
-                                    borderColor: '#d1d5db',
-                                    color: '#2563eb',
+                                    borderColor: 'grey.300',
+                                    color: 'primary.dark',
                                   }}
                                 />
                               </Box>
@@ -1539,7 +1539,7 @@ const MailPage: React.FC = () => {
                                     {copiedId === `email-${email.id}` ? (
                                       <Check
                                         size={16}
-                                        color='#16a34a'
+                                        color='success.dark'
                                       />
                                     ) : (
                                       <Copy size={16} />
@@ -1650,7 +1650,7 @@ const MailPage: React.FC = () => {
                   >
                     <Search
                       size={20}
-                      color='#9ca3af'
+                      color='text.disabled'
                     />
                   </Box>
                   <TextField
@@ -1717,7 +1717,7 @@ const MailPage: React.FC = () => {
                     <Box sx={{ p: 4, textAlign: 'center' }}>
                       <FileText
                         size={48}
-                        color='#9ca3af'
+                        color='text.disabled'
                         style={{ margin: '0 auto 12px' }}
                       />
                       <Typography sx={{ color: 'grey.500' }}>暂无邮件模板</Typography>

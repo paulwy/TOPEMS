@@ -28,13 +28,14 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
   FormPageTemplate,
   type ColumnDef,
   type RowAction,
+  type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
 import type { LimsQmsSync, CreateLimsQmsSyncRequest } from '@/api/integration';
@@ -51,7 +52,7 @@ const STATUS_CONFIG: Record<
 };
 
 // 表单字段配置
-const FORM_SECTIONS = [
+const FORM_SECTIONS: FormSection[] = [
   {
     id: 'basic',
     title: '基本信息',
@@ -109,7 +110,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setSyncs(res.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error loading LIMS-QMS syncs:', error);
     } finally {
       setLoading(false);
@@ -125,7 +126,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
   const filteredData = React.useMemo(() => {
     if (!searchValue) return syncs;
     const keyword = searchValue.toLowerCase();
-    return syns.filter(
+    return syncs.filter(
       (sync) =>
         sync.sample_name.toLowerCase().includes(keyword) ||
         sync.lims_sample_id.toLowerCase().includes(keyword)
@@ -211,7 +212,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
   ];
 
   // 处理创建/编辑提交
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: unknown) => {
     try {
       setSubmitting(true);
       if (editingSync) {
@@ -219,17 +220,19 @@ const IntegrationLimsQmsPage: React.FC = () => {
         logger.warn('Update not implemented');
       } else {
         const request: CreateLimsQmsSyncRequest = {
-          lims_sample_id: data.lims_sample_id,
-          sample_name: data.sample_name,
-          inspection_result: data.inspection_result || undefined,
-          inspection_notes: data.inspection_notes || undefined,
+          lims_sample_id: (data as Record<string, unknown>).lims_sample_id as string,
+          sample_name: (data as Record<string, unknown>).sample_name as string,
+          inspection_result:
+            ((data as Record<string, unknown>).inspection_result as string) || undefined,
+          inspection_notes:
+            ((data as Record<string, unknown>).inspection_notes as string) || undefined,
         };
         await integrationApi.createLimsQmsSync(request);
       }
       setShowCreateModal(false);
       setEditingSync(null);
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error saving sync:', error);
       throw error;
     } finally {
@@ -242,7 +245,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
     try {
       await integrationApi.syncLimsQms(id);
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error syncing:', error);
     }
   };
@@ -253,7 +256,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
     try {
       // 后端可能未实现删除接口
       logger.warn('Delete not implemented');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error deleting:', error);
     }
   };
@@ -311,6 +314,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
         <DialogTitle>{editingSync ? '查看同步详情' : '创建 LIMS-QMS 同步'}</DialogTitle>
         <DialogContent>
           <FormPageTemplate
+            title={editingSync ? '查看同步详情' : '创建 LIMS-QMS 同步'}
             sections={FORM_SECTIONS}
             defaultValues={editingSync || {}}
             onSubmit={handleSubmit}

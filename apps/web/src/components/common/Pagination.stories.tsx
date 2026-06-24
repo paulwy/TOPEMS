@@ -47,7 +47,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const Template = (args: any) => {
+const Template = (args: unknown) => {
   const [page, setPage] = React.useState(args.page || 1);
   const [pageSize, setPageSize] = React.useState(args.pageSize || 10);
 

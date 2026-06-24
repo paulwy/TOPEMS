@@ -13,7 +13,7 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   GitBranch,
@@ -74,7 +74,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         const versionList = Array.isArray(data) ? data : data.items || [];
         setVersions(versionList);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载数据失败:', err);
       addNotification({
         title: '错误',
@@ -129,7 +129,7 @@ const FlowVersionHistoryPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('创建版本失败:', err);
       addNotification({
         title: '错误',
@@ -162,7 +162,7 @@ const FlowVersionHistoryPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('激活版本失败:', err);
       addNotification({
         title: '错误',
@@ -203,7 +203,7 @@ const FlowVersionHistoryPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('回滚失败:', err);
       addNotification({ title: '错误', message: '回滚失败', type: 'error' });
     } finally {
@@ -241,7 +241,7 @@ const FlowVersionHistoryPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('删除版本失败:', err);
       addNotification({
         title: '错误',
@@ -271,7 +271,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         <Loader2
           size={32}
           className='animate-spin'
-          style={{ color: '#7c3aed' }}
+          style={{ color: 'secondary.dark' }}
         />
       </Box>
     );
@@ -307,7 +307,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               >
                 <GitBranch
                   size={24}
-                  style={{ color: '#7c3aed' }}
+                  style={{ color: 'secondary.dark' }}
                 />
               </Box>
               <Box>
@@ -351,7 +351,7 @@ const FlowVersionHistoryPage: React.FC = () => {
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <GitBranch
                 size={64}
-                style={{ color: '#d1d5db', margin: '0 auto', marginBottom: 16 }}
+                style={{ color: 'grey.300', margin: '0 auto', marginBottom: 16 }}
               />
               <Typography sx={{ color: 'grey.500' }}>暂无版本历史</Typography>
               <Button

@@ -321,11 +321,17 @@ export const gisApi = {
     if (response.success && response.data) {
       const adapted = adaptResponse<any>(response.data, 'device_locations');
       // 转换 position.{lat,lng} 到 latitude/longitude
-      adapted.data = adapted.data.map((item: any) => ({
-        ...item,
-        latitude: item.position?.lat ?? item.latitude ?? 0,
-        longitude: item.position?.lng ?? item.longitude ?? 0,
-      }));
+      adapted.data = adapted.data.map(
+        (item: {
+          position?: { lat?: number; lng?: number };
+          latitude?: number;
+          longitude?: number;
+        }) => ({
+          ...item,
+          latitude: item.position?.lat ?? item.latitude ?? 0,
+          longitude: item.position?.lng ?? item.longitude ?? 0,
+        })
+      );
       response.data = adapted;
     }
     return response as ApiResponse<PaginatedResponse<DevicePoint>>;

@@ -26,7 +26,7 @@ const getNotificationIcon = (type: string) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#2563eb' }}
+            style={{ width: 20, height: 20, color: 'primary.dark' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -81,14 +81,14 @@ const getNotificationIcon = (type: string) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: '#fee2e2',
+            backgroundColor: 'error.lighter',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#dc2626' }}
+            style={{ width: 20, height: 20, color: 'error.dark' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -137,14 +137,14 @@ const getNotificationIcon = (type: string) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: '#dcfce7',
+            backgroundColor: 'success.lighter',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#16a34a' }}
+            style={{ width: 20, height: 20, color: 'success.dark' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -165,14 +165,14 @@ const getNotificationIcon = (type: string) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: '#f3f4f6',
+            backgroundColor: 'grey.100',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#4b5563' }}
+            style={{ width: 20, height: 20, color: 'text.secondary' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -190,10 +190,10 @@ const getNotificationIcon = (type: string) => {
 };
 
 const getPriorityColor = (priority: number) => {
-  if (priority >= 4) return { color: '#dc2626' };
+  if (priority >= 4) return { color: 'error.dark' };
   if (priority >= 3) return { color: '#ea580c' };
   if (priority >= 2) return { color: '#ca8a04' };
-  return { color: '#4b5563' };
+  return { color: 'text.secondary' };
 };
 
 const getPriorityLabel = (priority: number) => {
@@ -220,7 +220,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       if (response.success && response.data) {
         onUpdate(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to mark as read:', error);
     }
   };
@@ -233,7 +233,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       if (response.success) {
         onDelete(notification.id);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to delete notification:', error);
       setIsDeleting(false);
     }
@@ -299,7 +299,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                color: !notification.is_read ? '#111827' : '#374151',
+                color: !notification.is_read ? 'text.primary' : 'grey.700',
               }}
             >
               {notification.title}
@@ -309,7 +309,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 style={{
                   width: 8,
                   height: 8,
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: 'primary.main',
                   borderRadius: '9999px',
                   flexShrink: 0,
                   marginTop: 6,
@@ -321,7 +321,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           <p
             style={{
               fontSize: 14,
-              color: '#4b5563',
+              color: 'text.secondary',
               marginBottom: 8,
               overflow: 'hidden',
               display: '-webkit-box',
@@ -338,7 +338,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               alignItems: 'center',
               gap: 12,
               fontSize: 12,
-              color: '#6b7280',
+              color: 'text.secondary',
             }}
           >
             <span>{formatTime(notification.created_at)}</span>
@@ -369,7 +369,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               onClick={handleMarkAsRead}
               style={{
                 padding: 6,
-                color: '#6b7280',
+                color: 'text.secondary',
                 backgroundColor: 'transparent',
                 border: 'none',
                 borderRadius: 8,
@@ -385,7 +385,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             onClick={handleDelete}
             style={{
               padding: 6,
-              color: '#6b7280',
+              color: 'text.secondary',
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -404,7 +404,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               }}
               style={{
                 padding: 6,
-                color: '#6b7280',
+                color: 'text.secondary',
                 backgroundColor: 'transparent',
                 border: 'none',
                 borderRadius: 8,

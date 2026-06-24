@@ -10,7 +10,7 @@ import {
   Typography,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import { Plus, Trash2, GripVertical, Sparkles, Eye, EyeOff } from 'lucide-react';
@@ -332,14 +332,14 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     alignItems: 'flex-start',
                     gap: 1,
                     p: 2,
-                    backgroundColor: '#f9fafb',
+                    backgroundColor: 'grey.50',
                     borderRadius: 1,
                   }}
                 >
                   <GripVertical
                     size={16}
                     style={{
-                      color: '#9ca3af',
+                      color: 'text.disabled',
                       marginTop: 8,
                       cursor: 'move',
                       flexShrink: 0,
@@ -419,7 +419,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             handleVariableChange(index, 'required', e.target.checked)
                           }
                         />
-                        <Typography sx={{ fontSize: '0.75rem', color: '#4b5563' }}>必填</Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                          必填
+                        </Typography>
                       </Box>
                       <Button
                         size='small'
@@ -463,9 +465,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Box
                 sx={{
                   p: 2,
-                  backgroundColor: '#f9fafb',
+                  backgroundColor: 'grey.50',
                   borderRadius: 1,
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid grey.200',
                   minHeight: 200,
                   whiteSpace: 'pre-wrap',
                 }}
@@ -552,7 +554,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 >
                   <Sparkles
                     size={16}
-                    style={{ color: '#f59e0b' }}
+                    style={{ color: 'warning.main' }}
                   />
                   AI 辅助
                 </FormLabel>

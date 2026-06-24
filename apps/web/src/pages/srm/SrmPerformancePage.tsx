@@ -40,7 +40,7 @@ const SrmPerformancePage: React.FC = () => {
       if (distributionRes.success && distributionRes.data) {
         setScoreDistribution(distributionRes.data.distribution);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载绩效数据失败:', err);
     } finally {
       setLoading(false);
@@ -49,21 +49,21 @@ const SrmPerformancePage: React.FC = () => {
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return '#15803d';
-    if (score >= 80) return '#1d4ed8';
+    if (score >= 80) return 'primary.dark';
     if (score >= 70) return '#b45309';
     if (score >= 60) return '#92400e';
-    return '#b91c1c';
+    return 'error.darker';
   };
 
   const getLevelColor = (level: string) => {
     const colorMap: Record<string, { bg: string; color: string }> = {
-      A: { bg: '#dcfce7', color: '#15803d' },
-      B: { bg: '#dbeafe', color: '#1d4ed8' },
-      C: { bg: '#fef3c7', color: '#b45309' },
-      D: { bg: '#fde68a', color: '#92400e' },
-      E: { bg: '#fee2e2', color: '#b91c1c' },
+      A: { bg: 'success.lighter', color: '#15803d' },
+      B: { bg: '#dbeafe', color: 'primary.dark' },
+      C: { bg: 'warning.light', color: '#b45309' },
+      D: { bg: 'warning.light', color: '#92400e' },
+      E: { bg: 'error.lighter', color: 'error.darker' },
     };
-    return colorMap[level] || { bg: '#f1f5f9', color: '#475569' };
+    return colorMap[level] || { bg: 'grey.100', color: '#475569' };
   };
 
   if (loading) {
@@ -74,7 +74,7 @@ const SrmPerformancePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #fef3c7 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, warning.light 0%, #f8fafc 100%)',
         }}
       >
         <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
@@ -86,7 +86,7 @@ const SrmPerformancePage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #fef3c7 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, warning.light 0%, #f8fafc 100%)',
       }}
     >
       <Box
@@ -115,7 +115,7 @@ const SrmPerformancePage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  background: 'linear-gradient(135deg, warning.main 0%, warning.dark 100%)',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -160,21 +160,21 @@ const SrmPerformancePage: React.FC = () => {
             xs={12}
             md={3}
           >
-            <Card sx={{ bgcolor: '#fef3c7' }}>
+            <Card sx={{ bgcolor: 'warning.light' }}>
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box
                     sx={{
                       width: 48,
                       height: 48,
-                      bgcolor: '#fde68a',
+                      bgcolor: 'warning.light',
                       borderRadius: 2,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Award sx={{ width: 24, height: 24, color: '#d97706' }} />
+                    <Award sx={{ width: 24, height: 24, color: 'warning.dark' }} />
                   </Box>
                   <Box>
                     <Typography
@@ -214,7 +214,7 @@ const SrmPerformancePage: React.FC = () => {
                       justifyContent: 'center',
                     }}
                   >
-                    <BarChart3 sx={{ width: 24, height: 24, color: '#3b82f6' }} />
+                    <BarChart3 sx={{ width: 24, height: 24, color: 'primary.main' }} />
                   </Box>
                   <Box>
                     <Typography
@@ -247,14 +247,14 @@ const SrmPerformancePage: React.FC = () => {
                     sx={{
                       width: 48,
                       height: 48,
-                      bgcolor: '#dcfce7',
+                      bgcolor: 'success.lighter',
                       borderRadius: 2,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Users sx={{ width: 24, height: 24, color: '#16a34a' }} />
+                    <Users sx={{ width: 24, height: 24, color: 'success.dark' }} />
                   </Box>
                   <Box>
                     <Typography
@@ -287,14 +287,14 @@ const SrmPerformancePage: React.FC = () => {
                     sx={{
                       width: 48,
                       height: 48,
-                      bgcolor: '#e0e7ff',
+                      bgcolor: 'secondary.light',
                       borderRadius: 2,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Users sx={{ width: 24, height: 24, color: '#6366f1' }} />
+                    <Users sx={{ width: 24, height: 24, color: 'primary.light' }} />
                   </Box>
                   <Box>
                     <Typography
@@ -338,7 +338,7 @@ const SrmPerformancePage: React.FC = () => {
                     gap: 1,
                   }}
                 >
-                  <ArrowUp style={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <ArrowUp style={{ width: 20, height: 20, color: 'success.dark' }} />
                   TOP供应商（按评分）
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -351,7 +351,7 @@ const SrmPerformancePage: React.FC = () => {
                         gap: 2,
                         p: 2,
                         borderRadius: 1,
-                        bgcolor: index === 0 ? '#fef3c7' : '#f8fafc',
+                        bgcolor: index === 0 ? 'warning.light' : 'grey.50',
                       }}
                     >
                       <Box
@@ -359,7 +359,7 @@ const SrmPerformancePage: React.FC = () => {
                           width: 28,
                           height: 28,
                           borderRadius: '50%',
-                          bgcolor: index === 0 ? '#f59e0b' : '#94a3b8',
+                          bgcolor: index === 0 ? 'warning.main' : '#94a3b8',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -417,7 +417,7 @@ const SrmPerformancePage: React.FC = () => {
                     gap: 1,
                   }}
                 >
-                  <BarChart3 style={{ width: 20, height: 20, color: '#3b82f6' }} />
+                  <BarChart3 style={{ width: 20, height: 20, color: 'primary.main' }} />
                   评分等级分布
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -443,7 +443,7 @@ const SrmPerformancePage: React.FC = () => {
                           sx={{
                             flex: 1,
                             height: 20,
-                            bgcolor: '#e2e8f0',
+                            bgcolor: 'border.default',
                             borderRadius: 1,
                             overflow: 'hidden',
                           }}
@@ -482,27 +482,27 @@ const SrmPerformancePage: React.FC = () => {
                   <Chip
                     label='A: 优秀(90+)'
                     size='small'
-                    sx={{ bgcolor: '#dcfce7', color: '#15803d' }}
+                    sx={{ bgcolor: 'success.lighter', color: '#15803d' }}
                   />
                   <Chip
                     label='B: 良好(80-89)'
                     size='small'
-                    sx={{ bgcolor: '#dbeafe', color: '#1d4ed8' }}
+                    sx={{ bgcolor: '#dbeafe', color: 'primary.dark' }}
                   />
                   <Chip
                     label='C: 中等(70-79)'
                     size='small'
-                    sx={{ bgcolor: '#fef3c7', color: '#b45309' }}
+                    sx={{ bgcolor: 'warning.light', color: '#b45309' }}
                   />
                   <Chip
                     label='D: 及格(60-69)'
                     size='small'
-                    sx={{ bgcolor: '#fde68a', color: '#92400e' }}
+                    sx={{ bgcolor: 'warning.light', color: '#92400e' }}
                   />
                   <Chip
                     label='E: 较差(<60)'
                     size='small'
-                    sx={{ bgcolor: '#fee2e2', color: '#b91c1c' }}
+                    sx={{ bgcolor: 'error.lighter', color: 'error.darker' }}
                   />
                 </Box>
               </CardContent>
@@ -531,7 +531,7 @@ const SrmPerformancePage: React.FC = () => {
                     gap: 1,
                   }}
                 >
-                  <BarChart3 style={{ width: 20, height: 20, color: '#8b5cf6' }} />
+                  <BarChart3 style={{ width: 20, height: 20, color: 'secondary.main' }} />
                   各品类供应商评分对比
                 </Typography>
                 <Box sx={{ overflowX: 'auto' }}>
@@ -551,9 +551,9 @@ const SrmPerformancePage: React.FC = () => {
                           sx={{
                             p: 3,
                             borderRadius: 2,
-                            bgcolor: '#f8fafc',
+                            bgcolor: 'grey.50',
                             border: 1,
-                            borderColor: '#e2e8f0',
+                            borderColor: 'border.default',
                           }}
                         >
                           <Typography
@@ -599,14 +599,14 @@ const SrmPerformancePage: React.FC = () => {
               xs={12}
               md={6}
             >
-              <Card sx={{ bgcolor: '#dcfce7' }}>
+              <Card sx={{ bgcolor: 'success.lighter' }}>
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box
                       sx={{
                         width: 56,
                         height: 56,
-                        bgcolor: '#bbf7d0',
+                        bgcolor: 'success.light',
                         borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
@@ -649,27 +649,27 @@ const SrmPerformancePage: React.FC = () => {
               xs={12}
               md={6}
             >
-              <Card sx={{ bgcolor: '#fee2e2' }}>
+              <Card sx={{ bgcolor: 'error.lighter' }}>
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box
                       sx={{
                         width: 56,
                         height: 56,
-                        bgcolor: '#fecaca',
+                        bgcolor: 'error.light',
                         borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      <ArrowDown sx={{ width: 28, height: 28, color: '#b91c1c' }} />
+                      <ArrowDown sx={{ width: 28, height: 28, color: 'error.darker' }} />
                     </Box>
                     <Box>
                       <Typography
                         variant='body2'
                         sx={{
-                          color: '#b91c1c',
+                          color: 'error.darker',
                           fontSize: '0.875rem',
                           fontWeight: 600,
                         }}
@@ -684,7 +684,7 @@ const SrmPerformancePage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='body1'
-                        sx={{ color: '#b91c1c', fontWeight: 600 }}
+                        sx={{ color: 'error.darker', fontWeight: 600 }}
                       >
                         评分: {performanceSummary.bottom_supplier.avg_score.toFixed(1)}
                       </Typography>

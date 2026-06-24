@@ -11,7 +11,7 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -55,7 +55,7 @@ const SupplierDetailPage: React.FC = () => {
       if (res.success && res.data) {
         setSupplier(res.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to load supplier:', err);
       error('加载供应商信息失败');
     } finally {

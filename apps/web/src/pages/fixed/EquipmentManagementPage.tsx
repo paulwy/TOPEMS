@@ -11,7 +11,7 @@ import {
   MenuItem,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit, Trash2, DollarSign, ClipboardCheck, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -99,8 +99,8 @@ const EquipmentManagementPage: React.FC = () => {
       if (employeeRes.success && employeeRes.data) {
         setEmployees(employeeRes.data.items || []);
       }
-    } catch (err: any) {
-      setError(err.message || '加载数据失败');
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || '加载数据失败');
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -142,10 +142,10 @@ const EquipmentManagementPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建设备失败',
+        message: (err as { message?: string }).message || '创建设备失败',
         type: 'error',
       });
     }
@@ -169,10 +169,10 @@ const EquipmentManagementPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除设备失败',
+        message: (err as { message?: string }).message || '删除设备失败',
         type: 'error',
       });
     }
@@ -199,10 +199,10 @@ const EquipmentManagementPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新设备失败',
+        message: (err as { message?: string }).message || '更新设备失败',
         type: 'error',
       });
     }
@@ -263,19 +263,19 @@ const EquipmentManagementPage: React.FC = () => {
         id: 'asset_number',
         label: '设备编号',
         render: (row) => (
-          <Typography sx={{ fontWeight: 500, color: '#0f172a' }}>{row.asset_number}</Typography>
+          <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{row.asset_number}</Typography>
         ),
       },
       {
         id: 'name',
         label: '设备名称',
-        render: (row) => <Typography sx={{ color: '#0f172a' }}>{row.name}</Typography>,
+        render: (row) => <Typography sx={{ color: 'grey.900' }}>{row.name}</Typography>,
       },
       {
         id: 'category',
         label: '类别',
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
             {row.category || '-'}
           </Typography>
         ),
@@ -284,7 +284,7 @@ const EquipmentManagementPage: React.FC = () => {
         id: 'brand',
         label: '品牌',
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
             {row.brand || '-'}
           </Typography>
         ),
@@ -293,7 +293,7 @@ const EquipmentManagementPage: React.FC = () => {
         id: 'department',
         label: '部门',
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
             {row.department || '-'}
           </Typography>
         ),
@@ -308,10 +308,10 @@ const EquipmentManagementPage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               fontSize: '0.875rem',
-              color: '#0f172a',
+              color: 'grey.900',
             }}
           >
-            <DollarSign sx={{ width: 12, height: 12, marginRight: 4, color: '#16a34a' }} />
+            <DollarSign sx={{ width: 12, height: 12, marginRight: 4, color: 'success.dark' }} />
             {row.purchase_amount ? `¥${row.purchase_amount.toLocaleString()}` : '-'}
           </Box>
         ),
@@ -350,7 +350,7 @@ const EquipmentManagementPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
       <ListPageTemplate
         title='设备管理'
         subtitle='设备台账管理'

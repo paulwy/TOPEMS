@@ -13,7 +13,7 @@ import {
   Stack,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Edit, History } from 'lucide-react';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 

@@ -29,6 +29,7 @@ pub enum EventType {
     QmsInspectionCompleted,
     QmsCorrectiveActionCreated,
     QmsCorrectiveActionUpdated,
+    QmsQualityIssueCreated,
 
     // EHS Events
     EhsHazardReported,
@@ -36,6 +37,10 @@ pub enum EventType {
     EhsHazardVerified,
     EhsAccidentReported,
     EhsAccidentInvestigated,
+
+    // LIMS Events Extended
+    LimsRecordCompleted,
+    LimsReagentAlert,
 
     // Integration Events
     QmsToLimsSyncTriggered,
@@ -201,6 +206,17 @@ pub struct QmsCorrectiveActionCreatedPayload {
     pub assigned_to: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QmsQualityIssueCreatedPayload {
+    pub issue_id: Uuid,
+    pub issue_no: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub severity: Option<String>,
+    pub created_by: Option<String>,
+    pub related_inspection_id: Option<Uuid>,
+}
+
 // --- EHS Events ---
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -223,6 +239,34 @@ pub struct EhsAccidentReportedPayload {
     pub severity: String,
     pub location: Option<String>,
     pub occurred_at: Option<String>,
+}
+
+// --- LIMS Events Extended ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LimsRecordCompletedPayload {
+    pub record_id: Uuid,
+    pub record_no: String,
+    pub task_id: Uuid,
+    pub task_no: String,
+    pub sample_id: Uuid,
+    pub sample_no: String,
+    pub conclusion: String,
+    pub test_data: serde_json::Value,
+    pub related_inspection_no: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LimsReagentAlertPayload {
+    pub reagent_id: Uuid,
+    pub reagent_no: String,
+    pub reagent_name: String,
+    pub alert_type: Option<String>,
+    pub severity: Option<String>,
+    pub description: Option<String>,
+    pub current_stock: Option<i32>,
+    pub min_stock: Option<i32>,
+    pub expiry_date: Option<String>,
 }
 
 impl std::fmt::Display for EventType {

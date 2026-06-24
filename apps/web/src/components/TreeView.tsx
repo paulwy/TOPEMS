@@ -43,12 +43,12 @@ const TreeView: React.FC<TreeViewProps> = ({
 
     const getIcon = () => {
       if (node.type === 'employee') {
-        return <User sx={{ width: 16, height: 16, color: '#3b82f6' }} />;
+        return <User sx={{ width: 16, height: 16, color: 'primary.main' }} />;
       }
       if (hasChildren && isExpanded) {
-        return <FolderOpen sx={{ width: 16, height: 16, color: '#f59e0b' }} />;
+        return <FolderOpen sx={{ width: 16, height: 16, color: 'warning.main' }} />;
       }
-      return <Folder sx={{ width: 16, height: 16, color: '#f59e0b' }} />;
+      return <Folder sx={{ width: 16, height: 16, color: 'warning.main' }} />;
     };
 
     return (
@@ -64,8 +64,8 @@ const TreeView: React.FC<TreeViewProps> = ({
             paddingRight: '12px',
             cursor: 'pointer',
             transition: 'background-color 0.2s',
-            backgroundColor: isSelected ? '#eff6ff' : 'transparent',
-            color: isSelected ? '#1d4ed8' : '#334155',
+            backgroundColor: isSelected ? 'primary.light' : 'transparent',
+            color: isSelected ? 'primary.dark' : '#334155',
             fontWeight: isSelected ? 500 : 400,
             ...(paddingLeft ? { paddingLeft } : {}),
           }}
@@ -108,7 +108,7 @@ const TreeView: React.FC<TreeViewProps> = ({
               style={{
                 fontSize: '12px',
                 color: '#94a3b8',
-                backgroundColor: '#f1f5f9',
+                backgroundColor: 'grey.100',
                 paddingLeft: '8px',
                 paddingRight: '8px',
                 paddingTop: '2px',

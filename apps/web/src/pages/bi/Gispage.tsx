@@ -66,7 +66,7 @@ import {
   InputAdornment,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 type TabType =
   | 'map'
@@ -294,7 +294,7 @@ const GisContent: React.FC = () => {
       }
       showNotification('success', '创建成功');
       resetModal();
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '创建失败');
       apiLogger.error('创建失败:', err);
     }
@@ -386,7 +386,7 @@ const GisContent: React.FC = () => {
       }
       showNotification('success', '更新成功');
       resetModal();
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '更新失败');
       apiLogger.error('更新失败:', err);
     }
@@ -415,7 +415,7 @@ const GisContent: React.FC = () => {
           break;
       }
       showNotification('success', '删除成功');
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '删除失败');
       apiLogger.error('删除失败:', err);
     }
@@ -428,10 +428,16 @@ const GisContent: React.FC = () => {
     setShowModal(true);
   };
 
-  const openEditModal = (item: any) => {
+  const openEditModal = (item: {
+    position?: { lat?: number; lng?: number };
+    start_point?: [number, number];
+    end_point?: [number, number];
+    properties?: Record<string, unknown>;
+    [key: string]: unknown;
+  }) => {
     setModalType('edit');
     setEditingItem(item);
-    const initialFormData: any = { ...item };
+    const initialFormData: Record<string, unknown> = { ...item };
     if (item.position?.lat !== undefined) {
       initialFormData.lat = item.position.lat;
       initialFormData.lng = item.position.lng;
@@ -471,14 +477,14 @@ const GisContent: React.FC = () => {
   ];
 
   const getStatusStyle = (status: string) => {
-    if (!status) return { bgcolor: '#f1f5f9', color: '#475569' };
+    if (!status) return { bgcolor: 'grey.100', color: '#475569' };
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用')) return { bgcolor: '#dcfce7', color: '#15803d' };
+    if (s.includes('active') || s.includes('启用')) return { bgcolor: 'success.lighter', color: '#15803d' };
     if (s.includes('pending') || s.includes('待处理'))
-      return { bgcolor: '#fef3c7', color: '#b45309' };
+      return { bgcolor: 'warning.light', color: '#b45309' };
     if (s.includes('inactive') || s.includes('禁用'))
-      return { bgcolor: '#fee2e2', color: '#b91c1c' };
-    return { bgcolor: '#f1f5f9', color: '#475569' };
+      return { bgcolor: 'error.lighter', color: 'error.darker' };
+    return { bgcolor: 'grey.100', color: '#475569' };
   };
 
   const StatusChip: React.FC<{ status: string }> = ({ status }) => {
@@ -746,7 +752,7 @@ const GisContent: React.FC = () => {
           const lines = text.split('\n').filter((line) => line.trim());
           const preview = lines.slice(0, 10).map((line) => line.split(','));
           setImportPreview(preview);
-        } catch (err) {
+        } catch (err: unknown) {
           showNotification('error', '文件解析失败');
         }
       };
@@ -763,7 +769,7 @@ const GisContent: React.FC = () => {
       setImportPreview(null);
       setImportConfirm(false);
       await loadAllData(true);
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '导入失败');
       apiLogger.error('导入失败:', err);
     }
@@ -836,7 +842,7 @@ const GisContent: React.FC = () => {
     name: string;
     type?: string;
     value: any;
-    onChange: (value: any) => void;
+    onChange: (value: unknown) => void;
     error?: string;
     placeholder?: string;
     required?: boolean;
@@ -846,7 +852,7 @@ const GisContent: React.FC = () => {
         variant='body2'
         sx={{ fontWeight: 500, mb: 0.5 }}
       >
-        {label} {required && <span style={{ color: '#ef4444' }}>*</span>}
+        {label} {required && <span style={{ color: 'error.main' }}>*</span>}
       </Typography>
       <TextField
         fullWidth
@@ -863,7 +869,7 @@ const GisContent: React.FC = () => {
   const TextAreaField: React.FC<{
     label: string;
     value: any;
-    onChange: (value: any) => void;
+    onChange: (value: unknown) => void;
     rows?: number;
   }> = ({ label, value, onChange, rows = 3 }) => (
     <Box>
@@ -939,7 +945,7 @@ const GisContent: React.FC = () => {
               <Button
                 variant='contained'
                 sx={{
-                  bgcolor: '#06b6d4',
+                  bgcolor: 'info.main',
                   '&:hover': { bgcolor: '#0891b2' },
                 }}
                 startIcon={<Plus size={16} />}
@@ -1022,7 +1028,7 @@ const GisContent: React.FC = () => {
               title='仓储位置'
               value={statistics?.storage_locations || 0}
               icon={<Warehouse size={24} />}
-              gradient={['#F59E0B', '#D97706']}
+              gradient={['warning.main', '#D97706']}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -1074,7 +1080,7 @@ const GisContent: React.FC = () => {
                 {
                   name: '仓储位置',
                   value: statistics?.storage_locations || 0,
-                  color: '#F59E0B',
+                  color: 'warning.main',
                 },
                 {
                   name: '厂区地图',
@@ -1164,7 +1170,7 @@ const GisContent: React.FC = () => {
                   height: '100%',
                 }}
               >
-                <CircularProgress sx={{ color: '#06b6d4' }} />
+                <CircularProgress sx={{ color: 'info.main' }} />
               </Box>
             ) : (
               <MapView
@@ -1234,7 +1240,7 @@ const GisContent: React.FC = () => {
                     py: 6,
                   }}
                 >
-                  <CircularProgress sx={{ color: '#06b6d4' }} />
+                  <CircularProgress sx={{ color: 'info.main' }} />
                 </Box>
               ) : filteredData.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 6 }}>
@@ -1253,7 +1259,7 @@ const GisContent: React.FC = () => {
                   >
                     <SearchIcon
                       size={32}
-                      color='#9ca3af'
+                      color='text.disabled'
                     />
                   </Box>
                   <Typography color='text.secondary'>暂无数据</Typography>
@@ -1723,7 +1729,7 @@ const GisContent: React.FC = () => {
               onClick={modalType === 'create' ? handleCreate : handleEdit}
               variant='contained'
               sx={{
-                bgcolor: '#06b6d4',
+                bgcolor: 'info.main',
                 '&:hover': { bgcolor: '#0891b2' },
               }}
             >
@@ -1789,7 +1795,7 @@ const GisContent: React.FC = () => {
                     p: 4,
                     textAlign: 'center',
                     cursor: 'pointer',
-                    '&:hover': { borderColor: '#06b6d4' },
+                    '&:hover': { borderColor: 'info.main' },
                   }}
                   component='label'
                   htmlFor='csv-upload'
@@ -1803,7 +1809,7 @@ const GisContent: React.FC = () => {
                   />
                   <Upload
                     size={48}
-                    color='#9ca3af'
+                    color='text.disabled'
                     style={{ marginBottom: 8 }}
                   />
                   <Typography color='text.secondary'>点击或拖拽文件到此处</Typography>
@@ -1832,7 +1838,7 @@ const GisContent: React.FC = () => {
                     >
                       <FileText
                         size={32}
-                        color='#6b7280'
+                        color='text.secondary'
                       />
                       <Box>
                         <Typography

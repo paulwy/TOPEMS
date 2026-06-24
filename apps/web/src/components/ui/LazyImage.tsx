@@ -15,7 +15,7 @@ interface LazyImageProps {
 const DefaultPlaceholder = () => (
   <Box
     sx={{
-      backgroundColor: '#e5e7eb',
+      backgroundColor: 'grey.200',
       borderRadius: '4px',
       display: 'flex',
       alignItems: 'center',
@@ -29,7 +29,7 @@ const DefaultPlaceholder = () => (
       height='32'
       viewBox='0 0 24 24'
       fill='none'
-      stroke='#9ca3af'
+      stroke='text.disabled'
       strokeWidth='2'
       strokeLinecap='round'
       strokeLinejoin='round'

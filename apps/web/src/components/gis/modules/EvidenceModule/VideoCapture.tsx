@@ -2,7 +2,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Video, Square, Pause, Play, SwitchCamera, X, Check } from 'lucide-react';
 import { Box, IconButton, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface VideoCaptureProps {
@@ -61,7 +61,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
         videoRef.current.srcObject = stream;
       }
       setError(null);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('无法访问摄像头，请确保已授予摄像头和麦克风权限');
       logger.error('Camera error:', err);
     }
@@ -107,7 +107,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
           return prev + 1;
         });
       }, 1000);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('无法开始录制，请重试');
       logger.error('Recording error:', err);
     }
@@ -237,7 +237,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  bgcolor: '#ef4444',
+                  bgcolor: 'error.main',
                   px: 12,
                   py: 4,
                   borderRadius: '9999px',
@@ -292,13 +292,13 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                 sx={{
                   borderRadius: '9999px',
                   bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.5)',
-                  color: isRecording ? '#6b7280' : 'white',
+                  color: isRecording ? 'text.secondary' : 'white',
                   '&:hover': {
                     bgcolor: isRecording ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.7)',
                   },
                   '&.Mui-disabled': {
                     bgcolor: 'rgba(31,41,55,0.5)',
-                    color: '#6b7280',
+                    color: 'text.secondary',
                   },
                 }}
               >
@@ -327,16 +327,16 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
             }}
           >
             <Box sx={{ textAlign: 'center', color: 'white', p: 16 }}>
-              <Typography sx={{ color: '#f87171', mb: 8 }}>{error}</Typography>
+              <Typography sx={{ color: 'error.light', mb: 8 }}>{error}</Typography>
               <Button
                 onClick={onCancel}
                 sx={{
                   px: 16,
                   py: 8,
-                  bgcolor: '#374151',
+                  bgcolor: 'grey.700',
                   borderRadius: 8,
                   color: 'white',
-                  '&:hover': { bgcolor: '#4b5563' },
+                  '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
                 关闭
@@ -377,10 +377,10 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
             onClick={startRecording}
             sx={{
               p: 16,
-              bgcolor: '#ef4444',
+              bgcolor: 'error.main',
               borderRadius: '9999px',
               color: 'white',
-              '&:hover': { bgcolor: '#dc2626' },
+              '&:hover': { bgcolor: 'error.dark' },
             }}
           >
             <Video size={32} />
@@ -393,11 +393,11 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               onClick={togglePause}
               sx={{
                 p: 12,
-                bgcolor: '#374151',
+                bgcolor: 'grey.700',
                 borderRadius: '9999px',
                 color: 'white',
                 mx: 8,
-                '&:hover': { bgcolor: '#4b5563' },
+                '&:hover': { bgcolor: 'text.secondary' },
               }}
             >
               {isPaused ? <Play size={24} /> : <Pause size={24} />}
@@ -406,11 +406,11 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               onClick={stopRecording}
               sx={{
                 p: 16,
-                bgcolor: '#ef4444',
+                bgcolor: 'error.main',
                 borderRadius: '9999px',
                 color: 'white',
                 mx: 8,
-                '&:hover': { bgcolor: '#dc2626' },
+                '&:hover': { bgcolor: 'error.dark' },
               }}
             >
               <Square size={32} />
@@ -430,10 +430,10 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               sx={{
                 px: 16,
                 py: 8,
-                bgcolor: '#374151',
+                bgcolor: 'grey.700',
                 borderRadius: 8,
                 color: 'white',
-                '&:hover': { bgcolor: '#4b5563' },
+                '&:hover': { bgcolor: 'text.secondary' },
               }}
             >
               重新录制
@@ -444,10 +444,10 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               sx={{
                 px: 16,
                 py: 8,
-                bgcolor: '#22c55e',
+                bgcolor: 'success.dark',
                 borderRadius: 8,
                 color: 'white',
-                '&:hover': { bgcolor: '#16a34a' },
+                '&:hover': { bgcolor: 'success.dark' },
               }}
             >
               保存

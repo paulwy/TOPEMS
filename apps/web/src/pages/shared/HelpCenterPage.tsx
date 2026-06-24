@@ -16,7 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Box, Typography, Tabs, Tab, Chip } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useNotification } from '@/hooks/useNotification';
 import { NotificationContainer } from '@/components/NotificationContainer';
 
@@ -320,7 +320,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       {/* Header */}
       <Box
         sx={{
-          background: 'linear-gradient(to right, #2563eb, #9333ea)',
+          background: 'linear-gradient(to right, primary.dark, #9333ea)',
           color: 'white',
         }}
       >
@@ -405,7 +405,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           {[
             {
               icon: Book,
-              iconColor: '#2563eb',
+              iconColor: 'primary.dark',
               iconBg: '#dbeafe',
               title: '使用文档',
               desc: '详细的功能说明',
@@ -413,8 +413,8 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
             },
             {
               icon: Video,
-              iconColor: '#16a34a',
-              iconBg: '#dcfce7',
+              iconColor: 'success.dark',
+              iconBg: 'success.lighter',
               title: '视频教程',
               desc: '直观的学习方式',
             },
@@ -427,8 +427,8 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
             },
             {
               icon: ExternalLink,
-              iconColor: '#dc2626',
-              iconBg: '#fee2e2',
+              iconColor: 'error.dark',
+              iconBg: 'error.lighter',
               title: '内网文档中心',
               desc: '完整用户手册',
               onClick: () => window.open(DOCS_CENTER_URL, '_blank'),

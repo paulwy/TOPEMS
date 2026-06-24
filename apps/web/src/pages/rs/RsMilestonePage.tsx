@@ -11,7 +11,7 @@ import {
   DialogActions,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Flag, Calendar, Link2, Eye, Edit } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 
@@ -173,7 +173,7 @@ const RsMilestonePage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Flag
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
           {row.name}
         </Box>
@@ -285,7 +285,7 @@ const RsMilestonePage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='里程碑'
         columns={columns}
@@ -404,7 +404,7 @@ const RsMilestonePage: React.FC = () => {
           <Button onClick={() => setNewMilestoneDialogOpen(false)}>取消</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
             onClick={handleCreateMilestone}
           >
             创建

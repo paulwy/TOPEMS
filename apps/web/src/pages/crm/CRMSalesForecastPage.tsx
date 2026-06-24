@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, Chip, Typography, Box } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import type { SalesForecast, ForecastFactor } from '@/api/modules/crm/crm';
@@ -42,7 +42,7 @@ const CRMSalesForecastPage: React.FC = () => {
         period_type: periodType,
       });
       setForecasts(response.data?.items || []);
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载销售预测数据失败:', error);
       addNotification({
         type: 'error',
@@ -72,7 +72,7 @@ const CRMSalesForecastPage: React.FC = () => {
         message: '销售预测生成成功',
       });
       loadForecasts();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('生成销售预测失败:', error);
       addNotification({
         type: 'error',
@@ -205,7 +205,7 @@ const CRMSalesForecastPage: React.FC = () => {
           >
             <Box
               sx={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
                 borderRadius: 2,
                 p: 2,
                 color: 'white',
@@ -241,7 +241,7 @@ const CRMSalesForecastPage: React.FC = () => {
 
             <Box
               sx={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: 'linear-gradient(135deg, success.main 0%, success.dark 100%)',
                 borderRadius: 2,
                 p: 2,
                 color: 'white',
@@ -277,7 +277,7 @@ const CRMSalesForecastPage: React.FC = () => {
 
             <Box
               sx={{
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                background: 'linear-gradient(135deg, secondary.main 0%, secondary.dark 100%)',
                 borderRadius: 2,
                 p: 2,
                 color: 'white',
@@ -313,7 +313,7 @@ const CRMSalesForecastPage: React.FC = () => {
 
             <Box
               sx={{
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                background: 'linear-gradient(135deg, warning.main 0%, warning.dark 100%)',
                 borderRadius: 2,
                 p: 2,
                 color: 'white',
@@ -397,12 +397,12 @@ const CRMSalesForecastPage: React.FC = () => {
                       <Legend />
                       <Bar
                         dataKey='predicted'
-                        fill='#3b82f6'
+                        fill='primary.main'
                         name='预测值'
                       />
                       <Bar
                         dataKey='actual'
-                        fill='#10b981'
+                        fill='success.main'
                         name='实际值'
                       />
                     </BarChart>
@@ -449,7 +449,7 @@ const CRMSalesForecastPage: React.FC = () => {
                       <Line
                         type='monotone'
                         dataKey='confidence'
-                        stroke='#8b5cf6'
+                        stroke='secondary.main'
                         name='置信度'
                       />
                     </LineChart>

@@ -86,6 +86,7 @@ export interface CreateTemplateRequest {
   description?: string;
   category: string;
   report_type: ReportType;
+  is_active: boolean;
   data_source: DataSourceConfig;
   layout_config: LayoutConfig;
   filter_config: FilterConfig;

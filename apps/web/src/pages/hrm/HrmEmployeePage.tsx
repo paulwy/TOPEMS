@@ -23,7 +23,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import {
   Users,
@@ -139,10 +139,10 @@ const HrmEmployeePage: React.FC = () => {
             setFilteredEmployees(responseData.items || []);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '失败',
-          message: error.message || '获取员工数据失败',
+          message: (error as { message?: string }).message || '获取员工数据失败',
           type: 'error',
         });
       } finally {
@@ -161,7 +161,7 @@ const HrmEmployeePage: React.FC = () => {
         const depts = responseData.items || [];
         setDepartments(depts);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch departments:', error);
     }
   }, []);
@@ -174,7 +174,7 @@ const HrmEmployeePage: React.FC = () => {
         const responseData = response.data as any;
         setCompanies(responseData.items || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch companies:', error);
     }
   }, []);
@@ -325,10 +325,10 @@ const HrmEmployeePage: React.FC = () => {
             type: 'error',
           });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '失败',
-          message: error.message || '删除员工失败',
+          message: (error as { message?: string }).message || '删除员工失败',
           type: 'error',
         });
       }
@@ -354,10 +354,10 @@ const HrmEmployeePage: React.FC = () => {
         } else {
           fetchEmployees({ page_size: 100 });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '失败',
-          message: error.message || '创建员工失败',
+          message: (error as { message?: string }).message || '创建员工失败',
           type: 'error',
         });
       }
@@ -384,10 +384,10 @@ const HrmEmployeePage: React.FC = () => {
         } else {
           fetchEmployees({ page_size: 100 });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         addNotification({
           title: '失败',
-          message: error.message || '更新员工失败',
+          message: (error as { message?: string }).message || '更新员工失败',
           type: 'error',
         });
       }
@@ -510,38 +510,41 @@ const HrmEmployeePage: React.FC = () => {
   // 卡片配置
   const cardConfig = useMemo<CardRenderConfig>(
     () => ({
-      title: (item: Employee) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar
-            sx={{
-              width: 40,
-              height: 40,
-              bgcolor: 'primary.light',
-              color: 'primary.main',
-              fontSize: '0.875rem',
-            }}
-          >
-            {item.name?.charAt(0) || '?'}
-          </Avatar>
-          <Box>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500 }}
+      title: (item) => {
+        const emp = item as Employee;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: 'primary.light',
+                color: 'primary.main',
+                fontSize: '0.875rem',
+              }}
             >
-              {item.name}
-            </Typography>
-            {item.employee_no && (
+              {emp.name?.charAt(0) || '?'}
+            </Avatar>
+            <Box>
               <Typography
-                variant='caption'
-                color='text.secondary'
+                variant='body2'
+                sx={{ fontWeight: 500 }}
               >
-                {item.employee_no}
+                {emp.name}
               </Typography>
-            )}
+              {emp.employee_no && (
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  {emp.employee_no}
+                </Typography>
+              )}
+            </Box>
           </Box>
-        </Box>
-      ),
-      description: (item: Employee) => item.position || '未设置职位',
+        );
+      },
+      description: (item) => (item as Employee).position || '未设置职位',
       status: {
         field: 'status',
         options: {
@@ -580,19 +583,19 @@ const HrmEmployeePage: React.FC = () => {
       {
         label: '查看',
         icon: <Eye style={{ width: 14, height: 14 }} />,
-        onClick: handleView,
+        onClick: (item) => handleView(item as Employee),
         color: 'primary',
       },
       {
         label: '编辑',
         icon: <Edit style={{ width: 14, height: 14 }} />,
-        onClick: handleEdit,
+        onClick: (item) => handleEdit(item as Employee),
         color: 'secondary',
       },
       {
         label: '删除',
         icon: <Trash2 style={{ width: 14, height: 14 }} />,
-        onClick: (item: Employee) => handleDelete(item.id),
+        onClick: (item) => handleDelete((item as Employee).id),
         color: 'error',
         divider: true,
       },
@@ -1014,7 +1017,7 @@ const HrmEmployeePage: React.FC = () => {
             onPageChange: (page) => fetchEmployees({ page }),
           }}
           cardActions={cardActions}
-          onCardClick={handleView}
+          onCardClick={(item) => handleView(item as Employee)}
           showStatsOverview={false}
           gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
           customToolbar={
@@ -1522,7 +1525,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
 interface TreeViewComponentProps {
   data: any[];
   selectedId?: string;
-  onSelect: (node: any) => void;
+  onSelect: (node: { id: string; name: string; children?: any[] }) => void;
 }
 
 const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId, onSelect }) => {

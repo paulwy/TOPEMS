@@ -62,13 +62,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#f3f4f6',
+            backgroundColor: 'grey.100',
             padding: '16px',
           }}
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: 'white',
               borderRadius: '12px',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
               padding: '32px',
@@ -81,7 +81,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               style={{
                 width: '64px',
                 height: '64px',
-                backgroundColor: '#fef2f2',
+                backgroundColor: 'error.light',
                 borderRadius: '9999px',
                 display: 'flex',
                 alignItems: 'center',
@@ -89,27 +89,27 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 margin: '0 auto 16px',
               }}
             >
-              <AlertTriangle sx={{ width: 32, height: 32, color: '#ef4444' }} />
+              <AlertTriangle sx={{ width: 32, height: 32, color: 'error.main' }} />
             </div>
             <h2
               style={{
                 fontSize: '20px',
                 fontWeight: 700,
-                color: '#111827',
+                color: 'text.primary',
                 marginBottom: '8px',
               }}
             >
               页面出现错误
             </h2>
-            <p style={{ color: '#6b7280', marginBottom: '16px' }}>
+            <p style={{ color: 'text.secondary', marginBottom: '16px' }}>
               {this.state.error?.message || '发生了未知错误，请重试'}
             </p>
 
             {showDetails && this.state.error && this.state.errorInfo && (
               <div
                 style={{
-                  backgroundColor: '#1f2937',
-                  color: '#f9fafb',
+                  backgroundColor: 'grey.800',
+                  color: 'grey.50',
                   borderRadius: '8px',
                   padding: '16px',
                   marginBottom: '24px',
@@ -133,7 +133,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   <div
                     style={{
                       fontSize: '12px',
-                      color: '#9ca3af',
+                      color: 'text.disabled',
                       marginBottom: '4px',
                     }}
                   >
@@ -147,7 +147,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   <div
                     style={{
                       fontSize: '12px',
-                      color: '#9ca3af',
+                      color: 'text.disabled',
                       marginBottom: '4px',
                     }}
                   >
@@ -172,8 +172,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '12px 24px',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
+                backgroundColor: 'primary.dark',
+                color: 'white',
                 borderRadius: '8px',
                 border: 'none',
                 cursor: 'pointer',

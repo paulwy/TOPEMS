@@ -1,7 +1,7 @@
 //! Dashboard handlers
 
 use axum::{extract::State, Json};
-use bigdecimal::BigDecimal;
+use bigdecimal::{BigDecimal, ToPrimitive};
 use serde::Serialize;
 use topems_shared::ApiResponse;
 

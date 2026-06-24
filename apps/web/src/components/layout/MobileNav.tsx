@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Drawer,
@@ -11,86 +11,123 @@ import {
   Divider,
   IconButton,
   Typography,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import {
   Home,
-  Users,
-  Building2,
-  Briefcase,
-  BarChart3,
-  Settings,
   Bell,
   ChevronDown,
   ChevronRight,
-  ChevronLeft,
-  Menu,
   X,
-  FolderOpen,
-  Workflow,
-  MessageSquare,
-  Mail,
-  FileText,
-  Map,
-  Shield,
+  Menu,
   Lightbulb,
   HelpCircle,
+  Building,
+  FolderKanban,
+  FlaskConical,
+  Truck,
+  Users,
+  Bot,
+  Map,
+  MessageCircle,
+  DollarSign,
+  Package,
+  ShoppingCart,
+  ListTodo,
+  Calendar,
+  BarChart3,
+  FileText,
+  CheckSquare,
+  Rocket,
+  Warehouse,
+  Target,
+  LayoutDashboard,
+  UserPlus,
+  GraduationCap,
+  Award,
+  Layers,
+  TrendingUp,
+  MessageSquare,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import type { NavigationItem } from '../../config/navigation-v2';
+import { usePermission } from '../../hooks/usePermission';
+import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
 
-// 模块图标映射
-const moduleIconMap: Record<string, React.ReactNode> = {
-  首页: <Home style={{ width: 20, height: 20 }} />,
-  人力: <Users style={{ width: 20, height: 20 }} />,
-  客户: <Building2 style={{ width: 20, height: 20 }} />,
-  项目: <Briefcase style={{ width: 20, height: 20 }} />,
-  数据: <BarChart3 style={{ width: 20, height: 20 }} />,
-  财务: <BarChart3 style={{ width: 20, height: 20 }} />,
-  运营: <Settings style={{ width: 20, height: 20 }} />,
-  工作流: <Workflow style={{ width: 20, height: 20 }} />,
-  协作: <MessageSquare style={{ width: 20, height: 20 }} />,
-  更多: <ChevronRight style={{ width: 20, height: 20 }} />,
+const iconMap: Record<string, React.ReactNode> = {
+  Home: <Home style={{ width: 20, height: 20 }} />,
+  Building: <Building style={{ width: 20, height: 20 }} />,
+  FolderKanban: <FolderKanban style={{ width: 20, height: 20 }} />,
+  FlaskConical: <FlaskConical style={{ width: 20, height: 20 }} />,
+  Truck: <Truck style={{ width: 20, height: 20 }} />,
+  Users: <Users style={{ width: 20, height: 20 }} />,
+  Bot: <Bot style={{ width: 20, height: 20 }} />,
+  Map: <Map style={{ width: 20, height: 20 }} />,
+  MessageCircle: <MessageCircle style={{ width: 20, height: 20 }} />,
+  DollarSign: <DollarSign style={{ width: 20, height: 20 }} />,
+  Package: <Package style={{ width: 20, height: 20 }} />,
+  ShoppingCart: <ShoppingCart style={{ width: 20, height: 20 }} />,
+  ListTodo: <ListTodo style={{ width: 20, height: 20 }} />,
+  Calendar: <Calendar style={{ width: 20, height: 20 }} />,
+  BarChart3: <BarChart3 style={{ width: 20, height: 20 }} />,
+  FileText: <FileText style={{ width: 20, height: 20 }} />,
+  CheckSquare: <CheckSquare style={{ width: 20, height: 20 }} />,
+  Rocket: <Rocket style={{ width: 20, height: 20 }} />,
+  Warehouse: <Warehouse style={{ width: 20, height: 20 }} />,
+  Target: <Target style={{ width: 20, height: 20 }} />,
+  LayoutDashboard: <LayoutDashboard style={{ width: 20, height: 20 }} />,
+  UserPlus: <UserPlus style={{ width: 20, height: 20 }} />,
+  GraduationCap: <GraduationCap style={{ width: 20, height: 20 }} />,
+  Award: <Award style={{ width: 20, height: 20 }} />,
+  Layers: <Layers style={{ width: 20, height: 20 }} />,
+  TrendingUp: <TrendingUp style={{ width: 20, height: 20 }} />,
+  GitBranch: <TrendingUp style={{ width: 20, height: 20 }} />,
+  MessageSquare: <MessageSquare style={{ width: 20, height: 20 }} />,
 };
 
 interface MobileNavProps {
-  navItems: NavigationItem[];
   open: boolean;
   onClose: () => void;
   onOpen: () => void;
 }
 
-export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, onOpen }) => {
+export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
+  const { checkPermission } = usePermission();
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
 
-  // 切换展开状态
-  const toggleExpand = useCallback((label: string) => {
+  useEffect(() => {
+    const topNavItems = navigationRegistry.getNavItemsByPermission(checkPermission);
+    setNavItems(topNavItems);
+
+    const handleUpdate = () => {
+      setNavItems(navigationRegistry.getNavItemsByPermission(checkPermission));
+    };
+
+    navigationRegistry.emitter.on('navigationUpdated', handleUpdate);
+    return function cleanup() {
+      navigationRegistry.emitter.off('navigationUpdated', handleUpdate);
+    };
+  }, [checkPermission]);
+
+  const toggleExpand = useCallback((code: string) => {
     setExpandedItems((prev) => {
       const next = new Set(prev);
-      if (next.has(label)) {
-        next.delete(label);
+      if (next.has(code)) {
+        next.delete(code);
       } else {
-        next.add(label);
+        next.add(code);
       }
       return next;
     });
   }, []);
 
-  // 处理菜单项点击
   const handleItemClick = useCallback(
-    (item: NavigationItem) => {
+    (item: NavItem) => {
       if (item.children && !item.path) {
-        // 有子菜单但没有路径，展开子菜单
-        toggleExpand(item.label);
-        setActiveGroup(item.label);
+        toggleExpand(item.code);
       } else if (item.path) {
-        // 有路径，跳转并关闭菜单
         navigate(item.path);
         onClose();
       }
@@ -98,15 +135,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
     [navigate, onClose, toggleExpand]
   );
 
-  // 渲染菜单项
-  const renderMenuItem = (item: NavigationItem, depth: number = 0) => {
+  const renderNavItem = (item: NavItem, depth: number = 0) => {
     const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedItems.has(item.label);
+    const isExpanded = expandedItems.has(item.code);
     const isActive = item.path === location.pathname;
-    const icon = moduleIconMap[item.label] || <FolderOpen style={{ width: 20, height: 20 }} />;
+    const icon = iconMap[item.icon || 'Home'] || <Home style={{ width: 20, height: 20 }} />;
 
     return (
-      <React.Fragment key={item.label + depth}>
+      <React.Fragment key={item.code + depth}>
         <ListItem
           disablePadding
           sx={{ display: 'block' }}
@@ -148,7 +184,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
           </ListItemButton>
         </ListItem>
 
-        {/* 子菜单 */}
         {hasChildren && (
           <Collapse
             in={isExpanded}
@@ -159,7 +194,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
               component='div'
               disablePadding
             >
-              {(item.children as NavigationItem[]).map((child) => renderMenuItem(child, depth + 1))}
+              {(item.children as NavItem[]).map((child) => renderNavItem(child, depth + 1))}
             </List>
           </Collapse>
         )}
@@ -167,112 +202,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
     );
   };
 
-  // 渲染分组模式的内容
-  const renderGroupContent = (item: NavigationItem) => {
-    if (!item.children || !item.isGroup) return null;
-
-    const groups = item.children as NavigationItem[];
-    const isExpanded = expandedItems.has(item.label) || activeGroup === item.label;
-
-    return (
-      <React.Fragment key={item.label}>
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={() => toggleExpand(item.label)}
-            sx={{
-              py: 1.5,
-              backgroundColor: isExpanded ? 'primary.light' : 'transparent',
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              {moduleIconMap[item.label] || <FolderOpen style={{ width: 20, height: 20 }} />}
-            </ListItemIcon>
-            <Typography sx={{ fontWeight: 500 }}>{item.label}</Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s',
-              }}
-            >
-              <ChevronDown style={{ width: 18, height: 18 }} />
-            </Box>
-          </ListItemButton>
-        </ListItem>
-
-        <Collapse
-          in={isExpanded}
-          timeout='auto'
-          unmountOnExit
-        >
-          <Box sx={{ py: 1 }}>
-            {groups.map((group) => (
-              <Box
-                key={group.label}
-                sx={{ mb: 1.5 }}
-              >
-                <Typography
-                  variant='caption'
-                  sx={{
-                    display: 'block',
-                    px: 3,
-                    py: 0.5,
-                    color: 'text.secondary',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    fontSize: '0.7rem',
-                  }}
-                >
-                  {group.label}
-                </Typography>
-                <List
-                  component='div'
-                  disablePadding
-                >
-                  {group.children &&
-                    (group.children as NavigationItem[]).map((child) => (
-                      <ListItem
-                        key={child.label}
-                        disablePadding
-                      >
-                        <ListItemButton
-                          onClick={() => {
-                            if (child.path) {
-                              navigate(child.path);
-                              onClose();
-                            }
-                          }}
-                          sx={{
-                            pl: 4,
-                            py: 1,
-                            backgroundColor:
-                              child.path === location.pathname ? 'primary.light' : 'transparent',
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontWeight: child.path === location.pathname ? 600 : 400,
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            {child.label}
-                          </Typography>
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                </List>
-              </Box>
-            ))}
-          </Box>
-        </Collapse>
-      </React.Fragment>
-    );
-  };
-
   return (
     <>
-      {/* 汉堡菜单按钮 */}
       <IconButton
         onClick={onOpen}
         sx={{
@@ -283,7 +214,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
         <Menu style={{ width: 24, height: 24 }} />
       </IconButton>
 
-      {/* 抽屉导航 */}
       <Drawer
         anchor='left'
         open={open}
@@ -295,7 +225,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
           },
         }}
       >
-        {/* 头部 */}
         <Box
           sx={{
             p: 2,
@@ -304,7 +233,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
             justifyContent: 'space-between',
             borderBottom: 1,
             borderColor: 'divider',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
             color: 'white',
           }}
         >
@@ -337,18 +266,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, o
           </IconButton>
         </Box>
 
-        {/* 导航菜单 */}
-        <Box
-          sx={{
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-          }}
-        >
-          <List component='nav'>{navItems.map((item) => renderGroupContent(item))}</List>
+        <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <List component='nav'>{navItems.map((item) => renderNavItem(item))}</List>
         </Box>
 
-        {/* 底部快捷入口 */}
         <Box
           sx={{
             p: 2,

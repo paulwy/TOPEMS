@@ -12,7 +12,7 @@ import {
   Typography,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Download, Eye, Edit, Trash2 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 
@@ -266,7 +266,7 @@ const RsProjectListPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#fff', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'white', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='研发项目管理'
         subtitle='管理研发项目、跟踪进度、分配资源'

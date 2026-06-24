@@ -110,7 +110,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       setTimeout(() => {
         setExportComplete(false);
       }, 2000);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('导出失败:', error);
       onExportError?.(error as Error);
     } finally {
@@ -130,8 +130,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        backgroundColor: disabled ? '#cbd5e1' : exportComplete ? '#22c55e' : '#2563eb',
-        color: disabled ? '#64748b' : '#ffffff',
+        backgroundColor: disabled ? 'grey.400' : exportComplete ? 'success.dark' : 'primary.dark',
+        color: disabled ? 'grey.600' : 'white',
         cursor: disabled || exporting ? 'not-allowed' : 'pointer',
         border: 'none',
         ...(buttonClassName ? {} : {}),

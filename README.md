@@ -109,12 +109,40 @@ topems/
 
 ## 🚀 快速开始
 
+> **默认部署方式：本地进程（无需 Docker）。** Docker 仅作为可选的容器化打包方案。
+
 ### 系统要求
 
 - **前端**: Node.js 18+, pnpm 8+
 - **后端**: Rust 1.76+, Cargo
-- **数据库**: PostgreSQL 16+, Redis 7+
-- **工具**: 可选 Docker, Docker Compose（仅用于开发环境快速启动）
+- **数据库**: PostgreSQL 16+ （本地安装，推荐 Homebrew 或 apt）
+- **缓存**: Redis 7+ （本地安装，可选）
+- **工具**: 可选 Docker（仅用于容器化打包场景）
+
+### ⚡ 一键启动（推荐）
+
+```bash
+# 1. 克隆项目
+git clone <repository-url>
+cd TOPEMS
+
+# 2. 安装依赖
+pnpm install
+cargo build --workspace  # 首次需要 5-10 分钟
+
+# 3. 启动本地 PostgreSQL/Redis（macOS）
+brew services start postgresql@16
+brew services start redis
+createdb topems
+
+# 4. 一键启动所有服务（前端 + 后端 + 数据库）
+./scripts/start-local.sh
+```
+
+启动后访问：
+- **前端**: http://localhost:3000
+- **后端 API**: http://localhost:8000
+- **默认账号**: admin / admin123
 
 ### 环境配置
 
@@ -127,43 +155,36 @@ cp .env.example .env
 openssl rand -base64 32
 ```
 
-编辑 `.env` 文件，设置必要的配置项。
+`.env` 文件已配置为本地默认值，开箱即用。
 
-### 启动数据库（方式一：本地安装，推荐）
+### 启动数据库（方式一：本地安装，默认推荐）
 
 **macOS (Homebrew):**
 
 ```bash
-# 安装 PostgreSQL
-brew install postgresql@16
+brew install postgresql@16 redis
 brew services start postgresql@16
-
-# 创建数据库
-createdb topems
-
-# 安装 Redis（可选）
-brew install redis
 brew services start redis
+createdb topems
 ```
 
 **Linux (Ubuntu/Debian):**
 
 ```bash
-# 安装 PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
-sudo systemctl enable postgresql
-sudo systemctl start postgresql
-
-# 创建数据库用户和数据库
+sudo apt install -y postgresql postgresql-contrib redis-server
+sudo systemctl enable postgresql redis-server
+sudo systemctl start postgresql redis-server
 sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD 'your_password';"
 sudo -u postgres psql -c "CREATE DATABASE topems OWNER topems;"
 ```
 
-### 启动数据库（方式二：Docker）
+### 启动数据库（方式二：Docker，可选）
+
+仅在需要容器化时使用：
 
 ```bash
-cd deploy/monitoring
-docker-compose up -d postgres redis
+cd docker
+docker compose up -d postgres redis
 ```
 
 ### 前端开发
@@ -183,9 +204,10 @@ pnpm run dev
 ```bash
 cd apps/core
 pnpm install
-pnpm run dev:watch    # 自动构建模式
-pnpm run preview      # 预览服务器（端口 3001）
+pnpm run dev
 ```
+
+访问 http://localhost:3001
 
 ### 后端开发
 
@@ -198,9 +220,6 @@ cargo build --workspace
 # 运行统一核心服务
 cd svc/unified-core
 cargo run
-
-# 检查编译
-cargo check --workspace
 ```
 
 ### 一键启动所有服务（开发环境）
@@ -209,8 +228,8 @@ cargo check --workspace
 # 使用统一服务管理脚本
 ./scripts/topems.sh start-all
 
-# 或只启动开发环境（不包含前端）
-./scripts/topems.sh dev
+# 或使用一键启动脚本（含数据库和前端）
+./scripts/start-local.sh
 ```
 
 ## 🔌 端口配置规范

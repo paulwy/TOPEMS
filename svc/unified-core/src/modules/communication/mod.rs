@@ -84,15 +84,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS core_emails (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            from_address VARCHAR(256) NOT NULL,
-            to_addresses TEXT[] NOT NULL,
-            cc_addresses TEXT[],
+            from_email VARCHAR(256) NOT NULL,
+            to_email VARCHAR(256) NOT NULL,
             subject VARCHAR(512),
             body TEXT,
+            html_body TEXT,
+            cc TEXT[],
+            bcc TEXT[],
             is_read BOOLEAN DEFAULT FALSE,
-            is_starred BOOLEAN DEFAULT FALSE,
-            folder VARCHAR(32) DEFAULT 'inbox',
-            user_id UUID NOT NULL,
+            is_deleted BOOLEAN DEFAULT FALSE,
+            sent_at TIMESTAMP,
+            read_at TIMESTAMP,
+            deleted_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW()
         )
         "#,
@@ -103,15 +106,41 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Mail Templates table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_mail_templates (
+        CREATE TABLE IF NOT EXISTS core_email_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
-            subject VARCHAR(512),
-            content TEXT NOT NULL,
-            variables JSONB,
-            created_by UUID NOT NULL,
+            subject_template VARCHAR(512) NOT NULL,
+            body_template TEXT NOT NULL,
+            description TEXT,
+            is_deleted BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            updated_at TIMESTAMP DEFAULT NOW(),
+            deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Email Queue table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_email_queue (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            from_email VARCHAR(256) NOT NULL,
+            to_email VARCHAR(256) NOT NULL,
+            subject VARCHAR(512),
+            body TEXT,
+            html_body TEXT,
+            cc TEXT[],
+            bcc TEXT[],
+            attempts INTEGER DEFAULT 0,
+            max_attempts INTEGER DEFAULT 3,
+            status VARCHAR(32) DEFAULT 'pending',
+            error_message TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            sent_at TIMESTAMP
         )
         "#,
     )

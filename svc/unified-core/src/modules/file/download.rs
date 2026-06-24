@@ -1,7 +1,7 @@
 //! Download submodule - File download handlers
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path as AxumPath, State},
     http::{header, StatusCode},
     response::{IntoResponse, Response},
     Json,
@@ -19,7 +19,7 @@ use uuid::Uuid;
 pub async fn download_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
+    AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     tracing::info!("File download download_file called with id: {} for user: {}", id, claims.username);
 
@@ -143,7 +143,7 @@ pub async fn download_file(
 pub async fn preview_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
+    AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     tracing::info!("File preview preview_file called with id: {} for user: {}", id, claims.username);
 
@@ -267,7 +267,7 @@ pub async fn preview_file(
 pub async fn get_thumbnail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
+    AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     tracing::info!("File thumbnail get_thumbnail called with id: {} for user: {}", id, claims.username);
 

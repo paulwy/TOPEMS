@@ -1,5 +1,6 @@
 import { Grid } from '@/components/Grid';
 import { apiLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -48,7 +49,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   dbStructureApi,
   type TableInfo,
@@ -106,8 +107,8 @@ const DatabaseStructurePage: React.FC = () => {
       if (res.success && res.data) {
         setTables(res.data);
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '加载表列表失败');
+    } catch (err: unknown) {
+      showNotification('error', extractErrorMessage(err, '加载表列表失败'));
     } finally {
       setLoading(false);
     }
@@ -120,8 +121,8 @@ const DatabaseStructurePage: React.FC = () => {
       if (res.success && res.data) {
         setSelectedTable(res.data);
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '加载表结构失败');
+    } catch (err: unknown) {
+      showNotification('error', extractErrorMessage(err, '加载表结构失败'));
     } finally {
       setDetailLoading(false);
     }
@@ -133,7 +134,7 @@ const DatabaseStructurePage: React.FC = () => {
       if (res.success && res.data) {
         setDbChanges(res.data.items || []);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载变更历史失败:', err);
     }
   };
@@ -162,8 +163,8 @@ const DatabaseStructurePage: React.FC = () => {
         setPendingColumn(newColumn);
         setShowPreviewModal(true);
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '生成SQL预览失败');
+    } catch (err: unknown) {
+      showNotification('error', extractErrorMessage(err, '生成SQL预览失败'));
     }
   };
 
@@ -191,8 +192,8 @@ const DatabaseStructurePage: React.FC = () => {
       } else {
         showNotification('error', res.message || '添加字段失败');
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '添加字段失败');
+    } catch (err: unknown) {
+      showNotification('error', extractErrorMessage(err, '添加字段失败'));
     }
   };
 
@@ -209,8 +210,8 @@ const DatabaseStructurePage: React.FC = () => {
       } else {
         showNotification('error', res.message || '删除字段失败');
       }
-    } catch (err: any) {
-      showNotification('error', err.message || '删除字段失败');
+    } catch (err: unknown) {
+      showNotification('error', extractErrorMessage(err, '删除字段失败'));
     }
   };
 
@@ -239,16 +240,16 @@ const DatabaseStructurePage: React.FC = () => {
   const getChangeTypeColor = (type: string) => {
     switch (type) {
       case 'add_column':
-        return { bgcolor: '#dcfce7', color: '#15803d' };
+        return { bgcolor: 'success.lighter', color: '#15803d' };
       case 'drop_column':
-        return { bgcolor: '#fee2e2', color: '#b91c1c' };
+        return { bgcolor: 'error.lighter', color: 'error.darker' };
       default:
-        return { bgcolor: '#fef3c7', color: '#b45309' };
+        return { bgcolor: 'warning.light', color: '#b45309' };
     }
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', pb: 6 }}>
       {/* 顶部 Header */}
       <Paper
         elevation={0}
@@ -290,7 +291,7 @@ const DatabaseStructurePage: React.FC = () => {
               >
                 <Database
                   size={28}
-                  color='#2563eb'
+                  color='primary.dark'
                 />
                 数据库结构管理
               </Typography>
@@ -366,7 +367,7 @@ const DatabaseStructurePage: React.FC = () => {
                       width: 6,
                     },
                     '&::-webkit-scrollbar-thumb': {
-                      bgcolor: '#cbd5e1',
+                      bgcolor: 'grey.400',
                       borderRadius: 3,
                     },
                   }}
@@ -391,10 +392,10 @@ const DatabaseStructurePage: React.FC = () => {
                             cursor: 'pointer',
                             transition: 'all 0.15s',
                             border: '1px solid',
-                            borderColor: isSelected ? '#2563eb' : 'transparent',
-                            bgcolor: isSelected ? '#eff6ff' : 'transparent',
+                            borderColor: isSelected ? 'primary.dark' : 'transparent',
+                            bgcolor: isSelected ? 'primary.light' : 'transparent',
                             '&:hover': {
-                              bgcolor: isSelected ? '#eff6ff' : '#f1f5f9',
+                              bgcolor: isSelected ? 'primary.light' : 'grey.100',
                             },
                           }}
                         >
@@ -405,13 +406,13 @@ const DatabaseStructurePage: React.FC = () => {
                           >
                             <Table
                               size={16}
-                              color={isSelected ? '#2563eb' : '#94a3b8'}
+                              color={isSelected ? 'primary.dark' : '#94a3b8'}
                             />
                             <Typography
                               variant='body2'
                               sx={{
                                 fontWeight: isSelected ? 600 : 500,
-                                color: isSelected ? '#1d4ed8' : 'text.primary',
+                                color: isSelected ? 'primary.dark' : 'text.primary',
                                 wordBreak: 'break-all',
                               }}
                             >
@@ -513,8 +514,8 @@ const DatabaseStructurePage: React.FC = () => {
                         startIcon={<Plus size={16} />}
                         onClick={() => setShowAddColumnModal(true)}
                         sx={{
-                          bgcolor: '#2563eb',
-                          '&:hover': { bgcolor: '#1d4ed8' },
+                          bgcolor: 'primary.dark',
+                          '&:hover': { bgcolor: 'primary.dark' },
                           textTransform: 'none',
                           borderRadius: 1.5,
                         }}
@@ -608,7 +609,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 <TableRow
                                   key={col.column_name}
                                   sx={{
-                                    '&:hover': { bgcolor: '#f8fafc' },
+                                    '&:hover': { bgcolor: 'grey.50' },
                                   }}
                                 >
                                   <TableCell
@@ -642,7 +643,8 @@ const DatabaseStructurePage: React.FC = () => {
                                       label={col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL'}
                                       size='small'
                                       sx={{
-                                        bgcolor: col.is_nullable === 'YES' ? '#fef3c7' : '#dcfce7',
+                                        bgcolor:
+                                          col.is_nullable === 'YES' ? 'warning.light' : 'success.lighter',
                                         color: col.is_nullable === 'YES' ? '#b45309' : '#15803d',
                                         fontWeight: 500,
                                         fontSize: '0.75rem',
@@ -666,7 +668,7 @@ const DatabaseStructurePage: React.FC = () => {
                                         color='error'
                                         onClick={() => handleDropColumn(col.column_name)}
                                         sx={{
-                                          '&:hover': { bgcolor: '#fee2e2' },
+                                          '&:hover': { bgcolor: 'error.lighter' },
                                         }}
                                       >
                                         <Trash2 size={16} />
@@ -767,7 +769,7 @@ const DatabaseStructurePage: React.FC = () => {
                                 <TableRow
                                   key={change.id}
                                   sx={{
-                                    '&:hover': { bgcolor: '#f8fafc' },
+                                    '&:hover': { bgcolor: 'grey.50' },
                                   }}
                                 >
                                   <TableCell
@@ -953,8 +955,8 @@ const DatabaseStructurePage: React.FC = () => {
             sx={{
               textTransform: 'none',
               color: 'text.secondary',
-              bgcolor: '#f1f5f9',
-              '&:hover': { bgcolor: '#e2e8f0' },
+              bgcolor: 'grey.100',
+              '&:hover': { bgcolor: 'border.default' },
             }}
           >
             取消
@@ -964,8 +966,8 @@ const DatabaseStructurePage: React.FC = () => {
             onClick={handlePreviewAddColumn}
             sx={{
               textTransform: 'none',
-              bgcolor: '#2563eb',
-              '&:hover': { bgcolor: '#1d4ed8' },
+              bgcolor: 'primary.dark',
+              '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
             预览 SQL
@@ -1009,7 +1011,7 @@ const DatabaseStructurePage: React.FC = () => {
           <Paper
             elevation={0}
             sx={{
-              bgcolor: '#0f172a',
+              bgcolor: 'grey.900',
               p: 2,
               borderRadius: 1.5,
               mb: 2,
@@ -1057,8 +1059,8 @@ const DatabaseStructurePage: React.FC = () => {
             sx={{
               textTransform: 'none',
               color: 'text.secondary',
-              bgcolor: '#f1f5f9',
-              '&:hover': { bgcolor: '#e2e8f0' },
+              bgcolor: 'grey.100',
+              '&:hover': { bgcolor: 'border.default' },
             }}
           >
             取消
@@ -1070,8 +1072,8 @@ const DatabaseStructurePage: React.FC = () => {
             startIcon={<CheckCircle size={16} />}
             sx={{
               textTransform: 'none',
-              bgcolor: '#dc2626',
-              '&:hover': { bgcolor: '#b91c1c' },
+              bgcolor: 'error.dark',
+              '&:hover': { bgcolor: 'error.darker' },
             }}
           >
             确认执行

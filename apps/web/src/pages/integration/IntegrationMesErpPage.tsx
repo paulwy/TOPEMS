@@ -6,13 +6,14 @@
 import React, { useState, useCallback } from 'react';
 import { Plus, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import { Box, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
   FormPageTemplate,
   type ColumnDef,
   type RowAction,
+  type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
 import type { MesErpSync, CreateMesErpSyncRequest } from '@/api/integration';
@@ -29,7 +30,7 @@ const STATUS_CONFIG: Record<
 };
 
 // 表单字段配置
-const FORM_SECTIONS = [
+const FORM_SECTIONS: FormSection[] = [
   {
     id: 'basic',
     title: '基本信息',
@@ -84,7 +85,7 @@ const IntegrationMesErpPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setSyncs(res.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error loading MES-ERP syncs:', error);
     } finally {
       setLoading(false);
@@ -193,23 +194,25 @@ const IntegrationMesErpPage: React.FC = () => {
   ];
 
   // 处理创建提交
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: unknown) => {
     try {
       setSubmitting(true);
       if (editingSync) {
         logger.warn('Update not implemented');
       } else {
         const request: CreateMesErpSyncRequest = {
-          mes_order_id: data.mes_order_id,
-          order_number: data.order_number,
-          product_name: data.product_name || undefined,
-          quantity: data.quantity ? parseFloat(data.quantity) : undefined,
+          mes_order_id: (data as Record<string, unknown>).mes_order_id as string,
+          order_number: (data as Record<string, unknown>).order_number as string,
+          product_name: ((data as Record<string, unknown>).product_name as string) || undefined,
+          quantity: ((data as Record<string, unknown>).quantity as string)
+            ? parseFloat((data as Record<string, unknown>).quantity as string)
+            : undefined,
         };
         await integrationApi.createMesErpSync(request);
       }
       handleCloseModal();
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error saving sync:', error);
       throw error;
     } finally {
@@ -222,7 +225,7 @@ const IntegrationMesErpPage: React.FC = () => {
     try {
       await integrationApi.syncMesErp(id);
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error syncing:', error);
     }
   };
@@ -232,7 +235,7 @@ const IntegrationMesErpPage: React.FC = () => {
     if (!confirm('确定要删除此同步记录吗？')) return;
     try {
       logger.warn('Delete not implemented');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error deleting:', error);
     }
   };
@@ -285,6 +288,7 @@ const IntegrationMesErpPage: React.FC = () => {
         <DialogTitle>{editingSync ? '查看同步详情' : '创建 MES-ERP 同步'}</DialogTitle>
         <DialogContent>
           <FormPageTemplate
+            title={editingSync ? '查看同步详情' : '创建 MES-ERP 同步'}
             sections={FORM_SECTIONS}
             defaultValues={editingSync || {}}
             onSubmit={handleSubmit}

@@ -20,7 +20,7 @@ import {
   Tab,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Timeline,
   TimelineItem,

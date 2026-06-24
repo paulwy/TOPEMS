@@ -3,7 +3,7 @@ import { apiLogger } from '@/utils/logger';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileUpload } from '@/components/common';
 import type { Project } from '@/api/pm';
 import { pmApi } from '@/api/pm';
@@ -65,7 +65,7 @@ const PmContractCreatePage: React.FC = () => {
       if (response.success && response.data) {
         setProjects(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to load projects', error);
     }
   };
@@ -78,7 +78,7 @@ const PmContractCreatePage: React.FC = () => {
       if (response.success) {
         navigate('/pm/contracts');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to create contract', error);
     } finally {
       setLoading(false);
@@ -107,7 +107,7 @@ const PmContractCreatePage: React.FC = () => {
     <div
       style={{
         padding: '1.5rem',
-        backgroundColor: '#f9fafb',
+        backgroundColor: 'grey.50',
         minHeight: '100vh',
       }}
     >
@@ -126,8 +126,8 @@ const PmContractCreatePage: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              color: '#4b5563',
-              '&:hover': { color: '#111827' },
+              color: 'text.secondary',
+              '&:hover': { color: 'text.primary' },
               transition: 'color 0.15s',
             }}
           >
@@ -138,12 +138,12 @@ const PmContractCreatePage: React.FC = () => {
               style={{
                 fontSize: '1.5rem',
                 fontWeight: 'bold',
-                color: '#111827',
+                color: 'text.primary',
               }}
             >
               创建合同
             </h1>
-            <p style={{ color: '#6b7280' }}>填写合同基本信息</p>
+            <p style={{ color: 'text.secondary' }}>填写合同基本信息</p>
           </div>
         </div>
 
@@ -153,7 +153,7 @@ const PmContractCreatePage: React.FC = () => {
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: 'white',
               borderRadius: '0.5rem',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
               padding: '1.5rem',
@@ -172,7 +172,7 @@ const PmContractCreatePage: React.FC = () => {
                   style={{
                     fontSize: '1.125rem',
                     fontWeight: '600',
-                    color: '#111827',
+                    color: 'text.primary',
                   }}
                 >
                   基本信息
@@ -192,7 +192,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -209,10 +209,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   >
                     <option value=''>请选择项目</option>
@@ -241,7 +241,7 @@ const PmContractCreatePage: React.FC = () => {
                         display: 'block',
                         fontSize: '0.875rem',
                         fontWeight: '500',
-                        color: '#374151',
+                        color: 'grey.700',
                       }}
                     >
                       合同编号
@@ -250,7 +250,7 @@ const PmContractCreatePage: React.FC = () => {
                       type='button'
                       onClick={() => setShowCodeGenerator(true)}
                       style={{
-                        color: '#2563eb',
+                        color: 'primary.dark',
                         fontSize: '0.875rem',
                         background: 'none',
                         border: 'none',
@@ -274,10 +274,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -296,7 +296,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -315,10 +315,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -329,7 +329,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -346,10 +346,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   >
                     {CONTRACT_TYPES.map((type) => (
@@ -370,7 +370,7 @@ const PmContractCreatePage: React.FC = () => {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '500',
-                    color: '#374151',
+                    color: 'grey.700',
                     marginBottom: '0.25rem',
                   }}
                 >
@@ -387,10 +387,10 @@ const PmContractCreatePage: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    border: '1px solid #d1d5db',
+                    border: '1px solid grey.300',
                     borderRadius: '0.5rem',
                     outline: 'none',
-                    boxShadow: '0 0 0 2px #3b82f6',
+                    boxShadow: '0 0 0 2px primary.main',
                   }}
                 >
                   {CONTRACT_CATEGORIES.map((category) => (
@@ -407,7 +407,7 @@ const PmContractCreatePage: React.FC = () => {
 
             <div
               style={{
-                borderTop: '1px solid #e5e7eb',
+                borderTop: '1px solid grey.200',
                 paddingTop: '1rem',
                 marginTop: '1.5rem',
               }}
@@ -424,7 +424,7 @@ const PmContractCreatePage: React.FC = () => {
                   style={{
                     fontSize: '1.125rem',
                     fontWeight: '600',
-                    color: '#111827',
+                    color: 'text.primary',
                   }}
                 >
                   合同双方
@@ -444,7 +444,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -463,10 +463,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -477,7 +477,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -496,10 +496,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -508,7 +508,7 @@ const PmContractCreatePage: React.FC = () => {
 
             <div
               style={{
-                borderTop: '1px solid #e5e7eb',
+                borderTop: '1px solid grey.200',
                 paddingTop: '1rem',
                 marginTop: '1.5rem',
               }}
@@ -525,7 +525,7 @@ const PmContractCreatePage: React.FC = () => {
                   style={{
                     fontSize: '1.125rem',
                     fontWeight: '600',
-                    color: '#111827',
+                    color: 'text.primary',
                   }}
                 >
                   金额与时间
@@ -545,7 +545,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -564,10 +564,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -578,7 +578,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -597,10 +597,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -611,7 +611,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -628,10 +628,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   >
                     <option value='CNY'>人民币</option>
@@ -655,7 +655,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -673,10 +673,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -687,7 +687,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -705,10 +705,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -719,7 +719,7 @@ const PmContractCreatePage: React.FC = () => {
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'grey.700',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -737,10 +737,10 @@ const PmContractCreatePage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid grey.300',
                       borderRadius: '0.5rem',
                       outline: 'none',
-                      boxShadow: '0 0 0 2px #3b82f6',
+                      boxShadow: '0 0 0 2px primary.main',
                     }}
                   />
                 </div>
@@ -749,7 +749,7 @@ const PmContractCreatePage: React.FC = () => {
 
             <div
               style={{
-                borderTop: '1px solid #e5e7eb',
+                borderTop: '1px solid grey.200',
                 paddingTop: '1rem',
                 marginTop: '1.5rem',
               }}
@@ -766,7 +766,7 @@ const PmContractCreatePage: React.FC = () => {
                   style={{
                     fontSize: '1.125rem',
                     fontWeight: '600',
-                    color: '#111827',
+                    color: 'text.primary',
                   }}
                 >
                   合同描述
@@ -782,7 +782,7 @@ const PmContractCreatePage: React.FC = () => {
                     type='button'
                     onClick={() => setShowTextOptimizer(true)}
                     style={{
-                      color: '#2563eb',
+                      color: 'primary.dark',
                       fontSize: '0.875rem',
                       background: 'none',
                       border: 'none',
@@ -796,7 +796,7 @@ const PmContractCreatePage: React.FC = () => {
                     type='button'
                     onClick={() => setShowDataCompleter(true)}
                     style={{
-                      color: '#2563eb',
+                      color: 'primary.dark',
                       fontSize: '0.875rem',
                       background: 'none',
                       border: 'none',
@@ -810,7 +810,7 @@ const PmContractCreatePage: React.FC = () => {
                     type='button'
                     onClick={() => setShowValidator(true)}
                     style={{
-                      color: '#2563eb',
+                      color: 'primary.dark',
                       fontSize: '0.875rem',
                       background: 'none',
                       border: 'none',
@@ -836,17 +836,17 @@ const PmContractCreatePage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '0.5rem 0.75rem',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid grey.300',
                   borderRadius: '0.5rem',
                   outline: 'none',
-                  boxShadow: '0 0 0 2px #3b82f6',
+                  boxShadow: '0 0 0 2px primary.main',
                 }}
               />
             </div>
 
             <div
               style={{
-                borderTop: '1px solid #e5e7eb',
+                borderTop: '1px solid grey.200',
                 paddingTop: '1rem',
                 marginTop: '1.5rem',
               }}
@@ -863,7 +863,7 @@ const PmContractCreatePage: React.FC = () => {
                   style={{
                     fontSize: '1.125rem',
                     fontWeight: '600',
-                    color: '#111827',
+                    color: 'text.primary',
                   }}
                 >
                   合同附件
@@ -893,8 +893,8 @@ const PmContractCreatePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1.5rem',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
+                backgroundColor: 'primary.dark',
+                color: 'white',
                 borderRadius: '0.5rem',
                 border: 'none',
                 cursor: 'pointer',
@@ -910,8 +910,8 @@ const PmContractCreatePage: React.FC = () => {
               onClick={() => navigate('/pm/contracts')}
               style={{
                 padding: '0.75rem 1.5rem',
-                border: '1px solid #d1d5db',
-                color: '#374151',
+                border: '1px solid grey.300',
+                color: 'grey.700',
                 borderRadius: '0.5rem',
                 backgroundColor: 'transparent',
                 cursor: 'pointer',

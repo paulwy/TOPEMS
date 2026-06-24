@@ -19,7 +19,7 @@ interface RadarChartProps {
   height?: number;
   showLegend?: boolean;
   animate?: boolean;
-  onRadarClick?: (data: any) => void;
+  onRadarClick?: (data: unknown) => void;
 }
 
 export const RadarChart: React.FC<RadarChartProps> = ({
@@ -31,7 +31,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
   animate = true,
   onRadarClick,
 }) => {
-  const handleClick = (data: any) => {
+  const handleClick = (data: unknown) => {
     onRadarClick?.(data);
   };
 

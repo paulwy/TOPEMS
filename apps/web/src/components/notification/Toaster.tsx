@@ -32,28 +32,28 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle2 sx={{ height: 20, width: 20, color: '#22c55e' }} />;
+        return <CheckCircle2 sx={{ height: 20, width: 20, color: 'success.dark' }} />;
       case 'error':
-        return <AlertCircle sx={{ height: 20, width: 20, color: '#ef4444' }} />;
+        return <AlertCircle sx={{ height: 20, width: 20, color: 'error.main' }} />;
       case 'warning':
-        return <AlertTriangle sx={{ height: 20, width: 20, color: '#eab308' }} />;
+        return <AlertTriangle sx={{ height: 20, width: 20, color: 'warning.main' }} />;
       case 'info':
       default:
-        return <Info sx={{ height: 20, width: 20, color: '#3b82f6' }} />;
+        return <Info sx={{ height: 20, width: 20, color: 'primary.main' }} />;
     }
   };
 
   const getBgColor = () => {
     switch (type) {
       case 'success':
-        return { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' };
+        return { backgroundColor: 'success.light', borderColor: 'success.light' };
       case 'error':
-        return { backgroundColor: '#fef2f2', borderColor: '#fecaca' };
+        return { backgroundColor: 'error.light', borderColor: 'error.light' };
       case 'warning':
-        return { backgroundColor: '#fefce8', borderColor: '#fef08a' };
+        return { backgroundColor: 'warning.lighter', borderColor: 'warning.light' };
       case 'info':
       default:
-        return { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' };
+        return { backgroundColor: 'primary.light', borderColor: 'primary.light' };
     }
   };
 
@@ -78,9 +78,9 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
     >
       {getIcon()}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 500, color: '#111827' }}>{title}</p>
+        <p style={{ fontWeight: 500, color: 'text.primary' }}>{title}</p>
         {message && (
-          <p style={{ fontSize: '14px', color: '#374151', marginTop: '4px' }}>{message}</p>
+          <p style={{ fontSize: '14px', color: 'grey.700', marginTop: '4px' }}>{message}</p>
         )}
       </div>
       <button
@@ -89,7 +89,7 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
           setTimeout(onClose, 300);
         }}
         style={{
-          color: '#9ca3af',
+          color: 'text.disabled',
           border: 'none',
           background: 'transparent',
           cursor: 'pointer',

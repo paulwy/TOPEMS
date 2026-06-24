@@ -38,7 +38,7 @@ import {
   Tooltip,
   InputAdornment,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface Asset {
   id: string;

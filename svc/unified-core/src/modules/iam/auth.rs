@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use topems_shared::auth::Claims;
 use topems_shared::generate_refresh_token;
+use crate::modules::communication::mail::send_email_async;
 
 #[derive(Debug, Clone, Deserialize)]
 struct LoginRequest {
@@ -617,15 +618,48 @@ pub async fn forgot_password(
         }
     }
     
-    // TODO: 实际发送邮件（这里只是模拟）
-    tracing::info!("Password reset email would be sent to: {} with token: {}", email, reset_token);
+    // 发送密码重置邮件
+    let subject = "TOPEMS 密码重置".to_string();
+    let body = format!(
+        "尊敬的用户：\n\n您请求重置 TOPEMS 账户密码。\n\n重置令牌：{}\n\n请在1小时内使用此令牌重置密码。\n如果您没有发起此请求，请忽略此邮件。\n\n此致\nTOPEMS 团队",
+        reset_token
+    );
+    let html_body = format!(
+        r#"
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">密码重置</h2>
+            <p>尊敬的用户：</p>
+            <p>您请求重置 TOPEMS 账户密码。</p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <strong>重置令牌：</strong>
+                <code style="font-size: 16px; color: #2563eb;">{}</code>
+            </div>
+            <p>请在1小时内使用此令牌重置密码。</p>
+            <p>如果您没有发起此请求，请忽略此邮件。</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px;">此致<br>TOPEMS 团队</p>
+        </div>
+        "#,
+        reset_token
+    );
+    
+    let from_email = std::env::var("SMTP_FROM").unwrap_or_else(|_| "noreply@topems.local".to_string());
+    send_email_async(
+        from_email,
+        email.to_string(),
+        subject,
+        body,
+        Some(html_body),
+        None,
+        None,
+    );
+    
+    tracing::info!("Password reset email sent to: {}", email);
     
     Json(serde_json::json!({
         "success": true,
         "message": "如果该邮箱已注册，您将收到密码重置邮件",
-        "data": {
-            "reset_token": reset_token  // 仅用于测试，生产环境不应返回此值
-        },
+        "data": null,
         "code": 0
     }))
 }

@@ -95,7 +95,7 @@ export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperRe
           }
 
           throw new Error(response.message || '请求失败');
-        } catch (err) {
+        } catch (err: unknown) {
           lastError = err instanceof Error ? err : new Error(String(err));
           setRetryCount(attempt + 1);
 

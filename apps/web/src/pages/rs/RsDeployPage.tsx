@@ -10,7 +10,7 @@ import {
   DialogActions,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Play, Rocket, RotateCcw, Eye, Server } from 'lucide-react';
 import {
   ListPageTemplate,
@@ -211,7 +211,7 @@ const RsDeployPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Rocket
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
           {row.deploy_no}
         </Box>
@@ -329,7 +329,7 @@ const RsDeployPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='部署管理'
         columns={columns}

@@ -57,7 +57,7 @@ class PerformanceMonitor {
 
     try {
       fpObserver.observe({ type: 'paint', buffered: true });
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('FP observer not supported');
     }
 
@@ -72,7 +72,7 @@ class PerformanceMonitor {
 
     try {
       fcpObserver.observe({ type: 'paint', buffered: true });
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('FCP observer not supported');
     }
 
@@ -86,7 +86,7 @@ class PerformanceMonitor {
 
     try {
       resourceObserver.observe({ type: 'resource', buffered: true });
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('Resource observer not supported');
     }
   }
@@ -209,7 +209,7 @@ export async function measureApiCall<T>(endpoint: string, apiCall: () => Promise
     performanceMonitor.recordApiCall(endpoint, duration, 'success');
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     const duration = performance.now() - startTime;
 
     performanceMonitor.recordApiCall(endpoint, duration, 'error');
@@ -241,7 +241,7 @@ export function useApiCall<T, A extends any[] = any[]>(
       const result = await measureApiCall(callApi.current.name, () => callApi.current(...args));
       setData(result);
       return result;
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err as Error);
       throw err;
     } finally {
@@ -269,7 +269,7 @@ export function PerformanceWarnings() {
         position: 'fixed',
         bottom: 16,
         right: 16,
-        backgroundColor: '#fef3c7',
+        backgroundColor: 'warning.light',
         border: '1px solid #fde68a',
         borderRadius: 2,
         p: 4,

@@ -12,7 +12,7 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Eye, AlertTriangle } from 'lucide-react';
 import {
   ListPageTemplate,
@@ -120,11 +120,11 @@ const QmsNonconformancePage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
-      严重: { bg: '#fee2e2', color: '#dc2626' },
+      严重: { bg: 'error.lighter', color: 'error.dark' },
       一般: { bg: '#fef9c3', color: '#ca8a04' },
-      轻微: { bg: '#dcfce7', color: '#16a34a' },
+      轻微: { bg: 'success.lighter', color: 'success.dark' },
     };
-    const colors = severityMap[severity] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = severityMap[severity] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={severity}
@@ -141,10 +141,10 @@ const QmsNonconformancePage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       待评审: { bg: '#fef9c3', color: '#ca8a04' },
-      处理中: { bg: '#dbeafe', color: '#2563eb' },
-      已关闭: { bg: '#dcfce7', color: '#16a34a' },
+      处理中: { bg: '#dbeafe', color: 'primary.dark' },
+      已关闭: { bg: 'success.lighter', color: 'success.dark' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -300,21 +300,21 @@ const QmsNonconformancePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: '#eff6ff' }}>
+      <Card sx={{ bgcolor: 'primary.light' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fee2e2',
+                bgcolor: 'error.lighter',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: '#dc2626' }} />
+              <AlertTriangle sx={{ width: 20, height: 20, color: 'error.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -340,7 +340,7 @@ const QmsNonconformancePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fef3c7',
+                bgcolor: 'warning.light',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -380,7 +380,7 @@ const QmsNonconformancePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: '#2563eb' }} />
+              <AlertTriangle sx={{ width: 20, height: 20, color: 'primary.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -406,14 +406,14 @@ const QmsNonconformancePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dcfce7',
+                bgcolor: 'success.lighter',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: '#16a34a' }} />
+              <AlertTriangle sx={{ width: 20, height: 20, color: 'success.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -443,7 +443,7 @@ const QmsNonconformancePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -452,8 +452,8 @@ const QmsNonconformancePage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#3b82f6',
-              borderTopColor: '#2563eb',
+              borderColor: 'primary.main',
+              borderTopColor: 'primary.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -470,7 +470,7 @@ const QmsNonconformancePage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
       }}
     >
       <ListPageTemplate
@@ -592,7 +592,7 @@ const QmsNonconformancePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             保存
           </Button>
@@ -691,7 +691,7 @@ const QmsNonconformancePage: React.FC = () => {
                 handleClose(selectedNC);
                 setShowDetailModal(false);
               }}
-              sx={{ bgcolor: '#16a34a' }}
+              sx={{ bgcolor: 'success.dark' }}
             >
               关闭
             </Button>

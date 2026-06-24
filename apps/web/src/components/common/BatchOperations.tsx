@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Box, Checkbox, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 export interface BatchAction {
   id: string;

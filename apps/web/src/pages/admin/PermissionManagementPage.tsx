@@ -11,7 +11,7 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Key, Plus, Trash2, ChevronLeft, Shield, AlertCircle, RefreshCw, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { authApi, type Permission } from '@/api/iam';
 import { useAppStore } from '../../store';
 import { ModeToggle } from '@/components/ModeToggle';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { extractErrorMessage } from '@/utils/errors';
 
 interface PermissionManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -75,8 +76,8 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
       if (res.success && res.data) {
         setPermissions(res.data);
       }
-    } catch (err: any) {
-      setError(err.message || '加载权限失败');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, '加载权限失败'));
       addNotification({
         title: '失败',
         message: '加载权限失败',
@@ -118,10 +119,10 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建权限失败',
+        message: extractErrorMessage(err, '创建权限失败'),
         type: 'error',
       });
     }
@@ -151,10 +152,10 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新权限失败',
+        message: extractErrorMessage(err, '更新权限失败'),
         type: 'error',
       });
     }
@@ -179,10 +180,10 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除权限失败',
+        message: extractErrorMessage(err, '删除权限失败'),
         type: 'error',
       });
     }

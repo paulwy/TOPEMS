@@ -33,7 +33,7 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ModeToggle } from '@/components/ModeToggle';
 import OrganizationFilter, {
   type OrganizationFilterValue,
@@ -77,10 +77,10 @@ const BudgetManagementPage: React.FC = () => {
       setShowBatchStatusModal(false);
       setBatchStatus('');
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '批量更新失败',
-        message: err.message || '批量更新状态失败',
+        message: (err as { message?: string }).message || '批量更新状态失败',
         type: 'error',
       });
     }
@@ -102,10 +102,10 @@ const BudgetManagementPage: React.FC = () => {
 
       setSelectedIds([]);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '批量删除失败',
-        message: err.message || '批量删除失败',
+        message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
     }
@@ -133,10 +133,10 @@ const BudgetManagementPage: React.FC = () => {
       if (deptRes.success && deptRes.data) {
         setDepartments(deptRes.data.items || []);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '加载失败',
-        message: err.message || '加载数据失败',
+        message: (err as { message?: string }).message || '加载数据失败',
         type: 'error',
       });
     } finally {
@@ -185,9 +185,9 @@ const BudgetManagementPage: React.FC = () => {
   };
 
   const getProgressColor = (rate: number) => {
-    if (rate >= 90) return '#ef4444';
-    if (rate >= 70) return '#eab308';
-    return '#3b82f6';
+    if (rate >= 90) return 'error.main';
+    if (rate >= 70) return 'warning.main';
+    return 'primary.main';
   };
 
   const handleCreate = async () => {
@@ -220,10 +220,10 @@ const BudgetManagementPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '创建失败',
+        message: (err as { message?: string }).message || '创建失败',
         type: 'error',
       });
     }
@@ -257,10 +257,10 @@ const BudgetManagementPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '更新失败',
+        message: (err as { message?: string }).message || '更新失败',
         type: 'error',
       });
     }
@@ -285,10 +285,10 @@ const BudgetManagementPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '删除失败',
+        message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
     }

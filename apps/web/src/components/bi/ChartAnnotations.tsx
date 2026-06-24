@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
 import { TextField, Chip, Paper } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 export interface Annotation {
   id: string;
@@ -24,13 +24,13 @@ const annotationTypes = [
     id: 'flag',
     label: '标记',
     icon: Flag,
-    colors: ['#EF4444', '#F59E0B', '#10B981'],
+    colors: ['error.main', 'warning.main', 'success.main'],
   },
   {
     id: 'note',
     label: '注释',
     icon: MessageSquare,
-    colors: ['#3B82F6', '#8B5CF6', '#06B6D4'],
+    colors: ['primary.main', '#8B5CF6', '#06B6D4'],
   },
   {
     id: 'tag',
@@ -49,7 +49,7 @@ export function ChartAnnotations({
 }: ChartAnnotationsProps) {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [selectedType, setSelectedType] = useState<'flag' | 'note' | 'tag'>('flag');
-  const [selectedColor, setSelectedColor] = useState('#EF4444');
+  const [selectedColor, setSelectedColor] = useState('error.main');
   const [content, setContent] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');

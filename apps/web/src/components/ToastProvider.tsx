@@ -66,15 +66,15 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
   const getToastColor = (type: Toast['type']) => {
     switch (type) {
       case 'success':
-        return '#22c55e';
+        return 'success.dark';
       case 'error':
-        return '#ef4444';
+        return 'error.main';
       case 'warning':
-        return '#f59e0b';
+        return 'warning.main';
       case 'info':
-        return '#3b82f6';
+        return 'primary.main';
       default:
-        return '#3b82f6';
+        return 'primary.main';
     }
   };
 
@@ -111,7 +111,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => 
           <Typography sx={{ flex: 1 }}>{toast.message}</Typography>
           <IconButton
             size='small'
-            sx={{ color: 'white', '&:hover': { color: '#e5e7eb' } }}
+            sx={{ color: 'white', '&:hover': { color: 'grey.200' } }}
           >
             ×
           </IconButton>

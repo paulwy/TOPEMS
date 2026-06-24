@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Box, Typography, Avatar, TextField, Chip, Divider, Paper } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Send, ThumbsUp, MoreHorizontal, Reply, User } from 'lucide-react';
 
 export interface Comment {
@@ -89,7 +89,7 @@ const CommentItem: React.FC<{
               >
                 <ThumbsUp
                   size={14}
-                  sx={{ color: comment.liked ? '#3b82f6' : 'text.secondary' }}
+                  sx={{ color: comment.liked ? 'primary.main' : 'text.secondary' }}
                 />
                 <Typography
                   variant='caption'

@@ -24,7 +24,7 @@ import {
   useMediaQuery,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Search, RefreshCw, Download, Filter, ChevronDown, Calendar } from 'lucide-react';
 import { EmptyState } from '@/components/mui';
 

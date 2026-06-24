@@ -1,17 +1,15 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Box, IconButton, Typography, Avatar, Badge, Tooltip } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Bell, ChevronDown } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { topNavItems } from '../../config/navigation';
-import type { NavigationItem } from '../../config/navigation-v2';
+import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
 import { ModeToggle } from '../ModeToggle';
 import LanguageSelector from '../LanguageSelector';
 import { NavDropdown } from './NavDropdown';
 import { MobileNav } from './MobileNav';
 import { useInstalledPlugins } from '../../context/PluginContext';
 
-// 菜单模块到插件代码的映射
 const menuModuleMapping: Record<string, string> = {
   '/finance': 'erp',
   '/hrm': 'hrm',
@@ -33,7 +31,7 @@ const menuModuleMapping: Record<string, string> = {
 };
 
 interface TopNavProps {
-  onNavHover?: (event: React.MouseEvent<HTMLElement>, item: NavigationItem) => void;
+  onNavHover?: (event: React.MouseEvent<HTMLElement>, item: NavItem) => void;
   onNavLeave?: () => void;
 }
 
@@ -42,24 +40,31 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   const location = useLocation();
   const { isPluginInstalled, isLoading } = useInstalledPlugins();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [openMenu, setOpenMenu] = useState<NavigationItem | null>(null);
-
+  const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
 
-  // 过滤后的导航菜单（根据插件安装状态）
-  const filteredNavigationItems = useMemo(() => {
-    return topNavItems.filter((item) => {
-      // 首页始终显示
-      if (item.path === '/dashboard') return true;
-      // 检查是否需要插件
-      const pluginCode = item.path ? menuModuleMapping[item.path] : null;
-      if (!pluginCode) return true; // 没有映射的菜单默认显示
-      return isPluginInstalled(pluginCode);
-    });
+  useEffect(() => {
+    const updateNav = () => {
+      const allItems = navigationRegistry.getTopNavItems();
+      const filtered = allItems.filter((item) => {
+        if (item.path === '/dashboard') return true;
+        const pluginCode = item.path ? menuModuleMapping[item.path] : null;
+        if (!pluginCode) return true;
+        return isPluginInstalled(pluginCode);
+      });
+      setNavItems(filtered);
+    };
+
+    updateNav();
+    navigationRegistry.emitter.on('navigationUpdated', updateNav);
+    return function cleanup() {
+      navigationRegistry.emitter.off('navigationUpdated', updateNav);
+    };
   }, [isPluginInstalled]);
 
   const handleNavHover = useCallback(
-    (event: React.MouseEvent<HTMLElement>, item: NavigationItem) => {
+    (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
       if (item.children) {
         setAnchorEl(event.currentTarget);
         setOpenMenu(item);
@@ -87,9 +92,9 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   }, []);
 
   const handleNavClick = useCallback(
-    (item: NavigationItem) => {
+    (item: NavItem) => {
       if (item.children) {
-        if (openMenu?.label === item.label) {
+        if (openMenu?.code === item.code) {
           setAnchorEl(null);
           setOpenMenu(null);
         } else {
@@ -102,15 +107,15 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
     [navigate, openMenu]
   );
 
-  const renderNavigationItem = (item: NavigationItem) => {
+  const renderNavigationItem = (item: NavItem) => {
     const isActive =
       item.path === location.pathname ||
       (item.path && location.pathname.startsWith(item.path + '/'));
-    const isMenuOpen = openMenu?.label === item.label;
+    const isMenuOpen = openMenu?.code === item.code;
 
     return (
       <Box
-        key={item.label}
+        key={item.code}
         onMouseEnter={(e) => handleNavHover(e, item)}
         onMouseLeave={handleNavLeave}
         sx={{
@@ -174,7 +179,6 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
           width: '100%',
         }}
       >
-        {/* Logo */}
         <Box
           sx={{
             display: 'flex',
@@ -190,7 +194,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
               width: 36,
               height: 36,
               borderRadius: 1.5,
-              background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+              background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -202,7 +206,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
             variant='h6'
             sx={{
               fontWeight: 700,
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+              background: 'linear-gradient(135deg, primary.main, secondary.main)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -213,7 +217,6 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
           </Typography>
         </Box>
 
-        {/* 导航菜单 - 桌面端 */}
         <Box
           sx={{
             display: { xs: 'none', md: 'flex' },
@@ -223,10 +226,9 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
             overflow: 'auto',
           }}
         >
-          {filteredNavigationItems.map((item) => renderNavigationItem(item))}
+          {navItems.map((item) => renderNavigationItem(item))}
         </Box>
 
-        {/* 右侧工具 */}
         <Box
           sx={{
             display: 'flex',
@@ -253,16 +255,14 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
                   width: 32,
                   height: 32,
                   fontSize: 14,
-                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  background: 'linear-gradient(135deg, primary.main, secondary.main)',
                 }}
               >
                 陈
               </Avatar>
             </IconButton>
           </Tooltip>
-          {/* 移动端汉堡菜单 */}
           <MobileNav
-            navItems={topNavItems}
             open={mobileMenuOpen}
             onClose={() => setMobileMenuOpen(false)}
             onOpen={() => setMobileMenuOpen(true)}
@@ -270,7 +270,6 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
         </Box>
       </Box>
 
-      {/* 下拉菜单 */}
       <NavDropdown
         anchorEl={anchorEl}
         openMenu={openMenu}

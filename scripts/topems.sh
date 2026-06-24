@@ -291,12 +291,31 @@ start_service() {
     [ ! -f "$executable_path" ] && { warning "可执行文件不存在，开始编译..."; build_service "$service_name" || return 1; }
 
     load_env
+
+    if [ "$service_name" = "ai" ]; then
+        if ! curl -s -f http://localhost:11434/api/tags >/dev/null 2>&1; then
+            info "AI 服务需要 Ollama，正在启动..."
+            if command -v ollama &> /dev/null; then
+                nohup ollama serve > /tmp/ollama.log 2>&1 &
+                sleep 5
+                if curl -s -f http://localhost:11434/api/tags >/dev/null 2>&1; then
+                    success "Ollama 启动成功"
+                else
+                    warning "Ollama 启动失败，请手动启动: ollama serve"
+                fi
+            else
+                warning "Ollama 未安装，请先安装: brew install ollama"
+            fi
+        fi
+    fi
+
     cd "$PROJECT_ROOT/$service_path"
     # 设置环境变量并启动服务
     local env_cmd="env"
     case "$service_name" in
         iam) env_cmd="env CORE_PORT=$port" ;;
         pm) env_cmd="env PM_PORT=$port" ;;
+        erp) env_cmd="env ERP_PORT=$port" ;;
         mes) env_cmd="env MES_PORT=$port" ;;
         pdm) env_cmd="env PDM_PORT=$port" ;;
         qms) env_cmd="env QMS_PORT=$port" ;;

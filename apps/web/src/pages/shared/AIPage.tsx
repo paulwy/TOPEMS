@@ -11,7 +11,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Bot,
   Send,
@@ -231,7 +231,7 @@ const AIPage: React.FC = () => {
         const docs = 'items' in response.data ? response.data.items : response.data;
         setDocuments(docs);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载文档列表失败:', err);
       addNotification({
         title: '加载失败',
@@ -319,7 +319,7 @@ const AIPage: React.FC = () => {
         message: '代码已复制到剪贴板',
         type: 'success',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '复制失败',
         message: '无法复制代码',
@@ -390,7 +390,7 @@ const AIPage: React.FC = () => {
                     padding: '0.125rem 0.375rem',
                     borderRadius: '0.25rem',
                     fontSize: '0.875rem',
-                    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+                    backgroundColor: isDark ? 'grey.700' : 'grey.100',
                     color: isDark ? '#f9a8d4' : '#db2777',
                   }}
                   {...props}
@@ -469,7 +469,7 @@ const AIPage: React.FC = () => {
           ),
           a: ({ ...props }) => (
             <a
-              style={{ color: '#2563eb', textDecoration: 'none' }}
+              style={{ color: 'primary.dark', textDecoration: 'none' }}
               target='_blank'
               rel='noopener noreferrer'
               {...props}
@@ -481,7 +481,7 @@ const AIPage: React.FC = () => {
                 style={{
                   minWidth: '100%',
                   borderCollapse: 'collapse',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid grey.300',
                 }}
                 {...props}
               />
@@ -489,14 +489,14 @@ const AIPage: React.FC = () => {
           ),
           thead: ({ ...props }) => (
             <thead
-              style={{ backgroundColor: '#f3f4f6' }}
+              style={{ backgroundColor: 'grey.100' }}
               {...props}
             />
           ),
           th: ({ ...props }) => (
             <th
               style={{
-                border: '1px solid #d1d5db',
+                border: '1px solid grey.300',
                 padding: '0.5rem 1rem',
                 textAlign: 'left',
                 fontWeight: 600,
@@ -507,7 +507,7 @@ const AIPage: React.FC = () => {
           td: ({ ...props }) => (
             <td
               style={{
-                border: '1px solid #d1d5db',
+                border: '1px solid grey.300',
                 padding: '0.5rem 1rem',
               }}
               {...props}
@@ -618,7 +618,7 @@ const AIPage: React.FC = () => {
         message: 'AI已收到回复',
         type: 'success',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('AI 问答失败:', err);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -857,7 +857,9 @@ const AIPage: React.FC = () => {
                           {!conv.assistantRole && (
                             <MessageSquare
                               size={20}
-                              color={currentConversationId === conv.id ? '#a855f7' : '#9ca3af'}
+                              color={
+                                currentConversationId === conv.id ? '#a855f7' : 'text.disabled'
+                              }
                             />
                           )}
                         </Box>
@@ -1065,7 +1067,7 @@ const AIPage: React.FC = () => {
                     sx={{
                       width: 40,
                       height: 40,
-                      background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)',
+                      background: 'linear-gradient(135deg, #a855f7 0%, primary.main 100%)',
                       borderRadius: 2,
                       display: 'flex',
                       alignItems: 'center',
@@ -1149,7 +1151,8 @@ const AIPage: React.FC = () => {
                           ...(message.role === 'user'
                             ? { bgcolor: 'primary.main' }
                             : {
-                                background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)',
+                                background:
+                                  'linear-gradient(135deg, #a855f7 0%, primary.main 100%)',
                               }),
                         }}
                       >
@@ -1215,7 +1218,7 @@ const AIPage: React.FC = () => {
                       sx={{
                         width: 32,
                         height: 32,
-                        background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)',
+                        background: 'linear-gradient(135deg, #a855f7 0%, primary.main 100%)',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
@@ -1403,7 +1406,7 @@ const AIPage: React.FC = () => {
                 <Box sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}>
                   <Wand2
                     size={64}
-                    color='#9ca3af'
+                    color='text.disabled'
                     style={{ margin: '0 auto 16px', opacity: 0.5 }}
                   />
                   <Typography>点击"开始创建"选择模板并生成文档</Typography>
@@ -1421,7 +1424,7 @@ const AIPage: React.FC = () => {
                   <Box sx={{ p: 1, bgcolor: 'blue.100', borderRadius: 2 }}>
                     <BarChart2
                       size={24}
-                      color='#2563eb'
+                      color='primary.dark'
                     />
                   </Box>
                   <Box>

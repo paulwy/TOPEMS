@@ -84,7 +84,7 @@ const ReportSubscriptionPage: React.FC = () => {
       } else {
         setError(response.message || '获取订阅列表失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('获取订阅列表失败');
     } finally {
       setLoading(false);
@@ -97,7 +97,7 @@ const ReportSubscriptionPage: React.FC = () => {
       if (response.success && response.data) {
         setTemplates(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('获取报表模板失败', err);
     }
   };
@@ -166,7 +166,7 @@ const ReportSubscriptionPage: React.FC = () => {
           setError(response.message || '创建订阅失败');
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(editMode ? '更新订阅失败' : '创建订阅失败');
     }
   };
@@ -181,7 +181,7 @@ const ReportSubscriptionPage: React.FC = () => {
       } else {
         setError(response.message || '删除订阅失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('删除订阅失败');
     }
   };
@@ -197,7 +197,7 @@ const ReportSubscriptionPage: React.FC = () => {
       } else {
         setError(response.message || '切换订阅状态失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('切换订阅状态失败');
     }
   };

@@ -8,7 +8,7 @@ import {
   Tab,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState } from 'react';
 import { X, Users, User, Save, MessageSquare } from 'lucide-react';
 
@@ -119,7 +119,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           type: 'error',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to create chat room:', error);
       addNotification({
         title: 'Error',
@@ -166,7 +166,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           type: 'error',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to create project group:', error);
       addNotification({
         title: 'Error',
@@ -226,7 +226,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         {activeTab === 'chat' && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>聊天室类型</label>
+              <label style={{ fontSize: 14, fontWeight: 500, color: 'grey.700' }}>聊天室类型</label>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant={chatRoomType === 'direct' ? 'contained' : 'outlined'}
@@ -257,7 +257,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>添加成员</label>
+              <label style={{ fontSize: 14, fontWeight: 500, color: 'grey.700' }}>添加成员</label>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'
@@ -310,7 +310,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       <button
                         onClick={() => removeMember(chatRoomMembers, setChatRoomMembers, member)}
                         style={{
-                          color: '#6b7280',
+                          color: 'text.secondary',
                           backgroundColor: 'transparent',
                           border: 'none',
                           cursor: 'pointer',
@@ -358,7 +358,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>添加成员</label>
+              <label style={{ fontSize: 14, fontWeight: 500, color: 'grey.700' }}>添加成员</label>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'
@@ -411,7 +411,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       <button
                         onClick={() => removeMember(groupMembers, setGroupMembers, member)}
                         style={{
-                          color: '#6b7280',
+                          color: 'text.secondary',
                           backgroundColor: 'transparent',
                           border: 'none',
                           cursor: 'pointer',

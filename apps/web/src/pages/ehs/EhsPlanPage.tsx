@@ -12,7 +12,7 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Eye, FileText, Users } from 'lucide-react';
 import { ListPageTemplate } from '@/components/mui';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
@@ -51,7 +51,7 @@ const EhsPlanPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listPlans();
       if (response.success && response.data) {
-        const adapted = (response.data as any).data.map((item: any) => ({
+        const adapted = (response.data as any).data.map((item: { [key: string]: unknown }) => ({
           ...item,
           status:
             item.status === 'active' ? '有效' : item.status === 'inactive' ? '无效' : item.status,
@@ -60,7 +60,7 @@ const EhsPlanPage: React.FC = () => {
       } else {
         setPlans([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载应急预案数据失败:', err);
       setPlans([]);
     } finally {
@@ -70,10 +70,10 @@ const EhsPlanPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      有效: { bg: '#dcfce7', color: '#16a34a' },
-      无效: { bg: '#fee2e2', color: '#dc2626' },
+      有效: { bg: 'success.lighter', color: 'success.dark' },
+      无效: { bg: 'error.lighter', color: 'error.dark' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -235,7 +235,7 @@ const EhsPlanPage: React.FC = () => {
       toast.success('应急预案创建成功');
       setShowCreateModal(false);
       loadPlans();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建应急预案失败:', err);
     }
@@ -254,7 +254,7 @@ const EhsPlanPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
       }}
     >
       <Box
@@ -315,7 +315,7 @@ const EhsPlanPage: React.FC = () => {
               variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
+              sx={{ bgcolor: 'success.dark', '&:hover': { bgcolor: 'success.dark' } }}
             >
               新增预案
             </Button>
@@ -335,21 +335,21 @@ const EhsPlanPage: React.FC = () => {
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: '#f0fdf4' }}>
+          <Card sx={{ bgcolor: 'success.light' }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: '#22c55e' }} />
+                  <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -375,14 +375,14 @@ const EhsPlanPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -408,14 +408,14 @@ const EhsPlanPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fee2e2',
+                    bgcolor: 'error.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: '#dc2626' }} />
+                  <FileText sx={{ width: 20, height: 20, color: 'error.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -544,7 +544,7 @@ const EhsPlanPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#22c55e' }}
+            sx={{ bgcolor: 'success.dark' }}
           >
             保存
           </Button>

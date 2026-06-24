@@ -101,7 +101,7 @@ const ReportSchedulePage: React.FC = () => {
       } else {
         setError(response.message || '获取定时任务列表失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('获取定时任务列表失败');
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ const ReportSchedulePage: React.FC = () => {
       if (response.success && response.data) {
         setTemplates(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('获取报表模板失败', err);
     }
   };
@@ -201,7 +201,7 @@ const ReportSchedulePage: React.FC = () => {
           setError(response.message || '创建定时任务失败');
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(editMode ? '更新定时任务失败' : '创建定时任务失败');
     }
   };
@@ -216,7 +216,7 @@ const ReportSchedulePage: React.FC = () => {
       } else {
         setError(response.message || '删除定时任务失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('删除定时任务失败');
     }
   };
@@ -230,7 +230,7 @@ const ReportSchedulePage: React.FC = () => {
       } else {
         setError(response.message || '执行定时任务失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('执行定时任务失败');
     }
   };
@@ -245,7 +245,7 @@ const ReportSchedulePage: React.FC = () => {
       } else {
         setError(response.message || '获取执行历史失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError('获取执行历史失败');
     }
   };

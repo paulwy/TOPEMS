@@ -36,7 +36,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 import {
   Package,
@@ -61,6 +61,7 @@ import {
   type PluginRuntimeInfo,
 } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
+import { extractErrorMessage } from '@/utils/errors';
 
 interface MarketplacePlugin {
   code: string;
@@ -176,7 +177,7 @@ export const PluginManagementPage: React.FC = () => {
         }));
         setPlugins(runtimePlugins);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load plugins:', err);
     }
   }, [fetchInstalledPlugins, fetchHealthStatus]);
@@ -267,8 +268,8 @@ export const PluginManagementPage: React.FC = () => {
         } else {
           setInstallError('安装失败');
         }
-      } catch (err: any) {
-        setInstallError(err.message || '安装失败');
+      } catch (err: unknown) {
+        setInstallError(extractErrorMessage(err, '安装失败'));
       } finally {
         setInstallLoading(false);
       }
@@ -360,7 +361,7 @@ export const PluginManagementPage: React.FC = () => {
 
   const installedCodes = [
     ...plugins.map((p) => p.code),
-    ...installedPlugins.map((p) => p.plugin_code),
+    ...installedPlugins.map((p) => p.plugin_id),
   ];
 
   if (loading) {

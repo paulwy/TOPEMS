@@ -115,7 +115,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           pre.textContent = text;
           pre.style.whiteSpace = 'pre-wrap';
           pre.style.padding = '16px';
-          pre.style.backgroundColor = '#f9fafb';
+          pre.style.backgroundColor = 'grey.50';
           pre.style.borderRadius = '8px';
           pre.style.overflow = 'auto';
           pre.style.maxHeight = '80vh';
@@ -126,9 +126,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           logger.info('不支持的文件类型');
           setError(`不支持直接预览 ${fileName}，请下载后查看`);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Preview error:', err);
-        setError(`预览失败: ${err instanceof Error ? err.message : '未知错误'}`);
+        setError(
+          `预览失败: ${err instanceof Error ? (err as { message?: string }).message : '未知错误'}`
+        );
       } finally {
         setLoading(false);
       }
@@ -174,7 +176,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
@@ -191,16 +193,16 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px',
-            borderBottom: '1px solid #e5e7eb',
+            borderBottom: '1px solid grey.200',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <FileText sx={{ width: 24, height: 24, color: '#2563eb' }} />
+            <FileText sx={{ width: 24, height: 24, color: 'primary.dark' }} />
             <h2
               style={{
                 fontSize: '18px',
                 fontWeight: 600,
-                color: '#111827',
+                color: 'text.primary',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -220,7 +222,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               transition: 'background-color 0.2s',
             }}
           >
-            <X sx={{ width: 20, height: 20, color: '#6b7280' }} />
+            <X sx={{ width: 20, height: 20, color: 'text.secondary' }} />
           </button>
         </div>
 
@@ -229,7 +231,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           style={{
             flex: 1,
             overflow: 'auto',
-            backgroundColor: '#f9fafb',
+            backgroundColor: 'grey.50',
             position: 'relative',
           }}
         >
@@ -251,12 +253,12 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 sx={{
                   width: 40,
                   height: 40,
-                  color: '#2563eb',
+                  color: 'primary.dark',
                   animation: 'spin 1s linear infinite',
                   marginBottom: '12px',
                 }}
               />
-              <p style={{ color: '#6b7280' }}>正在加载文档...</p>
+              <p style={{ color: 'text.secondary' }}>正在加载文档...</p>
             </div>
           )}
 
@@ -277,17 +279,17 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 sx={{
                   width: 40,
                   height: 40,
-                  color: '#ef4444',
+                  color: 'error.main',
                   marginBottom: '12px',
                 }}
               />
-              <p style={{ color: '#dc2626', marginBottom: '16px' }}>{error}</p>
+              <p style={{ color: 'error.dark', marginBottom: '16px' }}>{error}</p>
               <button
                 onClick={onClose}
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: '#e5e7eb',
-                  color: '#374151',
+                  backgroundColor: 'grey.200',
+                  color: 'grey.700',
                   borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
@@ -310,8 +312,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         <div
           style={{
             padding: '16px',
-            borderTop: '1px solid #e5e7eb',
-            backgroundColor: '#f9fafb',
+            borderTop: '1px solid grey.200',
+            backgroundColor: 'grey.50',
           }}
         >
           <button
@@ -319,8 +321,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             style={{
               width: '100%',
               padding: '8px 16px',
-              backgroundColor: '#e5e7eb',
-              color: '#374151',
+              backgroundColor: 'grey.200',
+              color: 'grey.700',
               borderRadius: '8px',
               border: 'none',
               cursor: 'pointer',

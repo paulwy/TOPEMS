@@ -17,7 +17,7 @@ import {
   Typography,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Eye, Edit, Bug, User, CheckCircle } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
@@ -235,7 +235,7 @@ const RsBugPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Bug
               size={16}
-              color='#3b82f6'
+              color='primary.main'
             />
             <Typography
               variant='body2'
@@ -483,7 +483,7 @@ const RsBugPage: React.FC = () => {
           <Button onClick={() => setNewBugDialogOpen(false)}>取消</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
             onClick={handleCreateBug}
           >
             创建
@@ -569,7 +569,7 @@ const RsBugPage: React.FC = () => {
                 >
                   缺陷描述
                 </Typography>
-                <Paper sx={{ p: 2, mt: 1, bgcolor: '#f5f5f5' }}>
+                <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.100' }}>
                   <Typography variant='body2'>{selectedBug.description || '无描述'}</Typography>
                 </Paper>
               </Box>

@@ -15,7 +15,7 @@ export const FieldError: React.FC<FieldErrorProps> = ({ error, showIcon = true }
         display: 'flex',
         alignItems: 'center',
         gap: '4px',
-        color: '#dc2626',
+        color: 'error.dark',
         fontSize: '14px',
         marginTop: '4px',
       }}
@@ -42,7 +42,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
   return (
     <div
       style={{
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'error.light',
         border: '1px solid #fecaca',
         borderRadius: '8px',
         padding: '16px',
@@ -50,7 +50,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        <AlertCircle sx={{ width: 20, height: 20, color: '#dc2626', marginTop: '2px' }} />
+        <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark', marginTop: '2px' }} />
         <div style={{ flex: 1 }}>
           <h4
             style={{
@@ -65,7 +65,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
           <ul
             style={{
               fontSize: '14px',
-              color: '#b91c1c',
+              color: 'error.darker',
               display: 'flex',
               flexDirection: 'column',
               gap: '4px',
@@ -84,7 +84,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
                   style={{
                     width: '4px',
                     height: '4px',
-                    backgroundColor: '#dc2626',
+                    backgroundColor: 'error.dark',
                     borderRadius: '9999px',
                     marginTop: '8px',
                     flexShrink: 0,
@@ -107,7 +107,7 @@ interface ValidationHintProps {
 
 export const ValidationHint: React.FC<ValidationHintProps> = ({ field, rules }) => {
   return (
-    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+    <div style={{ fontSize: '12px', color: 'grey.600', marginTop: '4px' }}>
       <span style={{ fontWeight: 500 }}>{field}要求：</span>
       <ul
         style={{
@@ -207,7 +207,7 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '4px',
-        color: '#dc2626',
+        color: 'error.dark',
         fontSize: '14px',
         marginTop: '4px',
       }}
@@ -227,7 +227,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
   return (
     <div
       style={{
-        backgroundColor: '#f0fdf4',
+        backgroundColor: 'success.light',
         border: '1px solid #bbf7d0',
         borderRadius: '8px',
         padding: '16px',
@@ -241,7 +241,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
           style={{
             width: '32px',
             height: '32px',
-            backgroundColor: '#dcfce7',
+            backgroundColor: 'success.lighter',
             borderRadius: '9999px',
             display: 'flex',
             alignItems: 'center',
@@ -249,7 +249,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: '#22c55e' }}
+            style={{ width: 20, height: 20, color: 'success.dark' }}
             fill='none'
             viewBox='0 0 24 24'
             stroke='currentColor'
@@ -271,7 +271,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#22c55e',
+            color: 'success.dark',
             padding: '4px',
           }}
         >

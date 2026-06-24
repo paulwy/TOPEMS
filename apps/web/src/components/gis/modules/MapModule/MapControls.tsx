@@ -36,13 +36,13 @@ const MapControls: React.FC<MapControlsProps> = ({
           bgcolor: 'white',
           borderRadius: 2,
           boxShadow: 2,
-          '&:hover': { bgcolor: '#f9fafb' },
+          '&:hover': { bgcolor: 'grey.50' },
         }}
         title='放大'
       >
         <ZoomIn
           size={20}
-          style={{ color: '#374151' }}
+          style={{ color: 'grey.700' }}
         />
       </IconButton>
       <IconButton
@@ -52,13 +52,13 @@ const MapControls: React.FC<MapControlsProps> = ({
           bgcolor: 'white',
           borderRadius: 2,
           boxShadow: 2,
-          '&:hover': { bgcolor: '#f9fafb' },
+          '&:hover': { bgcolor: 'grey.50' },
         }}
         title='缩小'
       >
         <ZoomOut
           size={20}
-          style={{ color: '#374151' }}
+          style={{ color: 'grey.700' }}
         />
       </IconButton>
       {bounds && bounds.length >= 2 && (
@@ -69,13 +69,13 @@ const MapControls: React.FC<MapControlsProps> = ({
             bgcolor: 'white',
             borderRadius: 2,
             boxShadow: 2,
-            '&:hover': { bgcolor: '#f9fafb' },
+            '&:hover': { bgcolor: 'grey.50' },
           }}
           title='缩放到所有标记'
         >
           <Maximize2
             size={20}
-            style={{ color: '#374151' }}
+            style={{ color: 'grey.700' }}
           />
         </IconButton>
       )}

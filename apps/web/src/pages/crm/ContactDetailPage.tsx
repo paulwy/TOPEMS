@@ -11,7 +11,7 @@ import {
   Paper,
   Avatar,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Building2, Phone, Mail, Edit2, Trash2, MapPin } from 'lucide-react';
@@ -39,12 +39,6 @@ const ContactDetailPage: React.FC = () => {
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadContact(id);
-    }
-  }, [id, loadContact]);
-
   const loadContact = useCallback(
     async (contactId: string) => {
       setLoading(true);
@@ -61,7 +55,7 @@ const ContactDetailPage: React.FC = () => {
           is_primary: true,
           notes: '主要对接人，负责采购决策',
         });
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Failed to load contact:', err);
         error('加载联系人信息失败');
       } finally {
@@ -70,6 +64,12 @@ const ContactDetailPage: React.FC = () => {
     },
     [error]
   );
+
+  useEffect(() => {
+    if (id) {
+      loadContact(id);
+    }
+  }, [id, loadContact]);
 
   const handleDelete = async () => {
     if (!id || !window.confirm('确定要删除此联系人吗？')) return;

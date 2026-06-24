@@ -14,7 +14,7 @@ import {
   Tab,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
@@ -99,7 +99,7 @@ const FinanceVoucherPage: React.FC = () => {
       if (subjectResult.success && subjectResult.data) {
         setSubjects(subjectResult.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载数据失败:', err);
       addNotification({
         title: '错误',
@@ -117,7 +117,7 @@ const FinanceVoucherPage: React.FC = () => {
       if (result.success && result.data) {
         setVoucherItems(result.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载凭证明细失败:', err);
     }
   };
@@ -166,7 +166,7 @@ const FinanceVoucherPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({ title: '错误', message: '操作失败', type: 'error' });
     }
   };
@@ -190,7 +190,7 @@ const FinanceVoucherPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({ title: '错误', message: '操作失败', type: 'error' });
     }
   };
@@ -220,10 +220,10 @@ const FinanceVoucherPage: React.FC = () => {
 
       setSelectedIds([]);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '批量删除失败',
+        message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
     }
@@ -253,10 +253,10 @@ const FinanceVoucherPage: React.FC = () => {
 
       setSelectedIds([]);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '批量审核失败',
+        message: (err as { message?: string }).message || '批量审核失败',
         type: 'error',
       });
     }
@@ -289,7 +289,7 @@ const FinanceVoucherPage: React.FC = () => {
         setShowImportModal(false);
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({ title: '错误', message: '导入失败', type: 'error' });
     }
   };

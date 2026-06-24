@@ -16,7 +16,7 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         return await factory();
-      } catch (error) {
+      } catch (error: unknown) {
         lastError = error instanceof Error ? error : new Error(String(error));
         logger.error(
           '[Lazy Load] Failed to load component ' +

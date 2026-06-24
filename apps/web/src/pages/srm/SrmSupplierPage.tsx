@@ -12,7 +12,7 @@ import {
   Typography,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Eye, Users, TrendingUp, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
@@ -54,7 +54,7 @@ const SrmSupplierPage: React.FC = () => {
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.suppliers || [];
-        const adapted = items.map((item: any) => ({
+        const adapted = items.map((item: { [key: string]: unknown }) => ({
           ...item,
           supplier_no: item.supplier_no || item.supplierNo || '',
           contact_phone: item.phone || item.contactPhone || item.contact_phone || '',
@@ -65,7 +65,7 @@ const SrmSupplierPage: React.FC = () => {
       } else {
         setSuppliers([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载供应商数据失败:', err);
       setSuppliers([]);
     } finally {
@@ -79,7 +79,7 @@ const SrmSupplierPage: React.FC = () => {
       if (response.success && response.data) {
         setPerformanceSummary(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载绩效汇总失败:', err);
     }
   };
@@ -90,23 +90,23 @@ const SrmSupplierPage: React.FC = () => {
       if (response.success && response.data) {
         setScoreDistribution(response.data.distribution);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载评分分布失败:', err);
     }
   };
 
   const getRiskStyle = (level: string) => {
-    if (level === 'low') return { bgcolor: '#dcfce7', color: '#15803d', label: '低' };
-    if (level === 'medium') return { bgcolor: '#fef3c7', color: '#b45309', label: '中' };
-    return { bgcolor: '#fee2e2', color: '#b91c1c', label: '高' };
+    if (level === 'low') return { bgcolor: 'success.lighter', color: '#15803d', label: '低' };
+    if (level === 'medium') return { bgcolor: 'warning.light', color: '#b45309', label: '中' };
+    return { bgcolor: 'error.lighter', color: 'error.darker', label: '高' };
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: '#dcfce7', color: '#15803d' },
-      禁用: { bg: '#fee2e2', color: '#b91c1c' },
+      启用: { bg: 'success.lighter', color: '#15803d' },
+      禁用: { bg: 'error.lighter', color: 'error.darker' },
     };
-    const colors = statusMap[status] || { bg: '#f1f5f9', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
     return (
       <Chip
         label={status}
@@ -209,7 +209,7 @@ const SrmSupplierPage: React.FC = () => {
       setShowCreateModal(false);
       loadSuppliers();
       loadPerformanceSummary();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建供应商失败:', err);
     }
@@ -226,13 +226,13 @@ const SrmSupplierPage: React.FC = () => {
 
   const getLevelColor = (level: string) => {
     const colorMap: Record<string, { bg: string; color: string }> = {
-      A: { bg: '#dcfce7', color: '#15803d' },
-      B: { bg: '#dbeafe', color: '#1d4ed8' },
-      C: { bg: '#fef3c7', color: '#b45309' },
-      D: { bg: '#fde68a', color: '#92400e' },
-      E: { bg: '#fee2e2', color: '#b91c1c' },
+      A: { bg: 'success.lighter', color: '#15803d' },
+      B: { bg: '#dbeafe', color: 'primary.dark' },
+      C: { bg: 'warning.light', color: '#b45309' },
+      D: { bg: 'warning.light', color: '#92400e' },
+      E: { bg: 'error.lighter', color: 'error.darker' },
     };
-    return colorMap[level] || { bg: '#f1f5f9', color: '#475569' };
+    return colorMap[level] || { bg: 'grey.100', color: '#475569' };
   };
 
   const headerContent = useMemo(
@@ -246,14 +246,14 @@ const SrmSupplierPage: React.FC = () => {
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: '#faf5ff' }}>
+          <Card sx={{ bgcolor: 'secondary.light' }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#ede9fe',
+                    bgcolor: 'secondary.light',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
@@ -286,14 +286,14 @@ const SrmSupplierPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <Users sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -319,14 +319,14 @@ const SrmSupplierPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <Users sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -352,14 +352,14 @@ const SrmSupplierPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fee2e2',
+                    bgcolor: 'error.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: '#dc2626' }} />
+                  <Users sx={{ width: 20, height: 20, color: 'error.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -392,21 +392,21 @@ const SrmSupplierPage: React.FC = () => {
               mb: 4,
             }}
           >
-            <Card sx={{ bgcolor: '#fef3c7' }}>
+            <Card sx={{ bgcolor: 'warning.light' }}>
               <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Box
                     sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: '#fde68a',
+                      bgcolor: 'warning.light',
                       borderRadius: 2,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Award sx={{ width: 20, height: 20, color: '#d97706' }} />
+                    <Award sx={{ width: 20, height: 20, color: 'warning.dark' }} />
                   </Box>
                   <Box>
                     <Typography
@@ -439,7 +439,7 @@ const SrmSupplierPage: React.FC = () => {
                       justifyContent: 'center',
                     }}
                   >
-                    <TrendingUp sx={{ width: 20, height: 20, color: '#3b82f6' }} />
+                    <TrendingUp sx={{ width: 20, height: 20, color: 'primary.main' }} />
                   </Box>
                   <Box>
                     <Typography
@@ -465,14 +465,14 @@ const SrmSupplierPage: React.FC = () => {
                     sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: '#dcfce7',
+                      bgcolor: 'success.lighter',
                       borderRadius: 2,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Award sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                    <Award sx={{ width: 20, height: 20, color: 'success.dark' }} />
                   </Box>
                   <Box>
                     <Typography
@@ -538,7 +538,7 @@ const SrmSupplierPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, secondary.light 0%, #f8fafc 100%)',
       }}
     >
       <ListPageTemplate

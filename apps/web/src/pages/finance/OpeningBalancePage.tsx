@@ -22,7 +22,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { StatCardGroup } from '@/components/mui';
 /**
  * 期初余额管理页面
@@ -199,7 +199,7 @@ export default function OpeningBalancePage() {
               gap: 1,
             }}
           >
-            <Calculator sx={{ width: 24, height: 24, color: '#2563eb' }} />
+            <Calculator sx={{ width: 24, height: 24, color: 'primary.dark' }} />
             期初余额管理
           </Typography>
           <Typography
@@ -278,7 +278,7 @@ export default function OpeningBalancePage() {
                 input: {
                   startAdornment: (
                     <Box sx={{ mr: 1, display: 'flex' }}>
-                      <Search sx={{ width: 16, height: 16, color: '#9ca3af' }} />
+                      <Search sx={{ width: 16, height: 16, color: 'text.disabled' }} />
                     </Box>
                   ),
                 },
@@ -341,7 +341,7 @@ export default function OpeningBalancePage() {
       <Card>
         <CardHeader>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FileText sx={{ width: 20, height: 20, color: '#2563eb' }} />
+            <FileText sx={{ width: 20, height: 20, color: 'primary.dark' }} />
             <Typography
               variant='h6'
               sx={{ fontWeight: 600 }}
@@ -367,7 +367,7 @@ export default function OpeningBalancePage() {
                   <TableRow key={account.id}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <BookOpen sx={{ width: 16, height: 16, color: '#9ca3af' }} />
+                        <BookOpen sx={{ width: 16, height: 16, color: 'text.disabled' }} />
                         <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                           {account.code}
                         </Typography>

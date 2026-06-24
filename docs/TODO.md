@@ -26,7 +26,7 @@
 - **负责人**: TBD
 
 ### 2. 完善 unified-core 服务
-- **状态**: ✅ 已完成基础
+- **状态**: ✅ 已完成
 - **描述**: 统一核心服务需要完善 IAM/Doc/Flow/File/Mail/IM/Notification 7 个模块
 - **影响**: 平台基础能力
 - **解决方案**:
@@ -38,9 +38,15 @@
   - ✅ Doc - 文档、模板、文件夹管理
   - ✅ Flow - 工作流、审批、实例、统计
   - ✅ File - 文件上传、下载、文件夹管理
-  - ✅ Mail - 邮件发送、接收、模板管理
+  - ✅ Mail - 邮件发送、接收、模板管理、邮件队列、重试机制
   - ✅ IM - 即时通讯、聊天室、消息
-  - ✅ Notification - 通知推送、已读管理
+  - ✅ Notification - 通知推送、已读管理、异步邮件发送
+- **邮件服务增强**:
+  - ✅ 集成 lettre 邮件库实现真实 SMTP 发送
+  - ✅ 实现邮件模板 CRUD（数据库存储 + Handlebars 渲染）
+  - ✅ 实现邮件发送重试机制（指数退避）
+  - ✅ 添加邮件队列支持（内存队列 + 数据库持久化）
+  - ✅ 优化通知发送时的异步邮件处理
 - **预计**: 1-2 周
 
 ---
@@ -86,12 +92,26 @@
 - **预计**: 1-2 周
 
 ### 4. SCM-WMS-SRM 数据联动
-- **状态**: ✅ 已完成基础
+- **状态**: ✅ 已完成
 - **描述**: 完善供应链三方数据同步
-- **待优化**:
-  - 实时同步性能优化
-  - [x] 同步失败重试机制 - ✅ 指数退避 + 熔断器模式
-  - 数据一致性校验
+- **已完成**:
+  - ✅ 实时同步性能优化
+  - ✅ 同步失败重试机制（指数退避 + 熔断器模式）
+  - ✅ 数据一致性校验（采购订单→入库单、供应商双向同步）
+  - ✅ 统一同步日志记录（unified_core.inter_module_sync 表）
+  - ✅ 批量同步 API（采购订单批量转入库单）
+  - ✅ 同步统计 API（总数、成功、失败、待处理、重试中）
+- **API 列表**:
+  - `POST /api/scm/sync/purchase-to-inbound` - 采购订单转入库单
+  - `POST /api/scm/sync/purchase-batch` - 批量同步采购订单
+  - `POST /api/scm/sync/supplier-from-srm` - 从 SRM 同步供应商
+  - `POST /api/scm/sync/suppliers-from-srm` - 批量同步供应商
+  - `POST /api/scm/sync/retry-failed` - 重试失败同步
+  - `POST /api/scm/sync/statistics` - 获取同步统计
+  - `POST /api/scm/sync/sync-logs` - 查询同步日志
+  - `POST /api/wms/sync/outbound-to-shipping` - 出库单转销售订单
+  - `POST /api/srm/sync/supplier-from-scm` - 从 SCM 同步供应商
+  - `POST /api/srm/sync/supplier-to-scm` - 同步供应商到 SCM
 - **预计**: 1 周
 
 ---
@@ -99,12 +119,29 @@
 ## 🟡 P2 中优先级任务
 
 ### 1. QMS-LIMS-EHS 数据联动
-- **状态**: ✅ 已完成基础
+- **状态**: ✅ 已完成
 - **描述**: 完善质量-实验室-环境健康安全数据联动
-- **待优化**:
-  - 数据流转规则完善
-  - 自动触发机制
-  - [x] 异常告警机制 - ✅ 多级别告警规则引擎
+- **已完成**:
+  - ✅ 数据流转规则完善（质检→实验室、质量问题→安全检查、检测结果→质量评估）
+  - ✅ 自动触发机制（质检完成自动创建实验室样品、质量问题自动触发安全检查）
+  - ✅ 异常告警机制（多级别告警规则引擎）
+  - ✅ 试剂过期/低库存自动告警到 EHS
+  - ✅ 事故报告自动触发实验室检测
+  - ✅ 统一同步日志记录（各模块独立同步记录表）
+- **数据流转路径**:
+  - **QMS → LIMS**: 质检完成 → 创建检验任务 → 生成样品登记
+  - **QMS → EHS**: 质量问题创建 → 触发安全隐患检查 → 生成整改任务
+  - **LIMS → QMS**: 检测完成 → 更新质检结果 → 质量报告生成
+  - **LIMS → EHS**: 试剂过期/低库存 → 生成安全告警 → 通知相关人员
+  - **EHS → QMS**: 安全隐患发现 → 创建质量问题 → 启动整改流程
+  - **EHS → LIMS**: 事故报告 → 创建检测任务 → 环境样品采集
+- **API 列表**:
+  - `POST /api/qa/qms/sync/inspection-to-lims` - 质检结果同步到 LIMS
+  - `POST /api/qa/qms/sync/issue-to-ehs` - 质量问题触发 EHS 安全检查
+  - `POST /api/qa/lims/sync/record-to-qms` - 检测记录同步到 QMS
+  - `POST /api/qa/lims/sync/reagent-to-ehs` - 试剂告警同步到 EHS
+  - `POST /api/qa/ehs/sync/hazard-to-qms` - 安全隐患同步到 QMS 整改
+  - `POST /api/qa/ehs/sync/accident-to-lims` - 事故报告同步到 LIMS 检测
 - **预计**: 1-2 周
 
 ### 2. 完善 LIMS 样品管理
@@ -227,7 +264,378 @@
 
 ---
 
-## 🔵 前端完善计划 (2026-06-24)
+## 🔵 UI 与导航系统优化计划 (2026-06-24)
+
+### 现状分析
+
+#### 已识别问题
+
+| 问题 | 现状 | 影响 | 优先级 |
+|------|------|------|--------|
+| 导航双重标准 | `navigation-v2.ts` 和 `NavigationRegistry` 两套并存 | 维护困难、行为不一致 | P0 |
+| MUI 版本冲突 | 规范 v9.x，实际 v6.x | 功能受限、API 不一致 | P0 |
+| Design Token 缺失 | `tokens.ts` 和 `gradients.ts` 不存在 | 主题不一致 | P0 |
+| 共享包路径无效 | `packages/` 目录不存在 | 构建错误 | P1 |
+| 组件库重复 | `components/ui/` 和 `components/mui/` 并存 | 代码冗余 | P1 |
+| 三级导航未实现 | L2 侧边栏未与 Registry 集成 | 插件化不完整 | P1 |
+| 插件动态加载未启用 | MF 配置存在但无法访问 | 插件无法动态加载 | P2 |
+
+#### 代码位置对照
+
+| 组件/文件 | 路径 | 说明 |
+|-----------|------|------|
+| 导航配置 V2 | `apps/web/src/config/navigation-v2.ts` | 静态导航配置（待废弃） |
+| 导航注册中心 | `apps/web/src/lib/NavigationRegistry.ts` | 动态注册中心 |
+| TopNav 组件 | `apps/web/src/components/layout/TopNav.tsx` | Header 导航 |
+| Sidebar 组件 | `apps/web/src/components/layout/Sidebar.tsx` | 侧边栏导航 |
+| 主题配置 | `apps/web/src/theme/theme.ts` | MUI 主题 |
+
+---
+
+### 阶段一：统一导航架构（P0）
+
+#### 1.1 合并 NavigationRegistry ✅ 已完成
+
+**完成内容**：
+- ✅ 扩展 `PluginNavConfig` 接口，增加 `sidebar_nav` 支持
+- ✅ 添加 `EventEmitter` 支持导航更新通知
+- ✅ 实现 `getSidebarNavItems(pluginCode)` 方法
+- ✅ 添加 `moduleStatuses` 状态管理
+- ✅ 所有注册/注销操作触发 `navigationUpdated` 事件
+- ✅ 为所有默认模块添加 sidebar_nav 配置
+
+**文件**：`apps/web/src/lib/NavigationRegistry.ts`
+
+#### 1.2 TopNav 组件改造 ✅ 已完成
+
+**完成内容**：
+- ✅ TopNav 从 `NavigationRegistry` 动态读取导航项
+- ✅ 移除硬编码的 `topNavItems` 导入
+- ✅ 使用 `useEffect` 监听 `navigationUpdated` 事件
+- ✅ 插件安装状态过滤保持不变
+- ✅ 统一使用 `@mui/material/Button`（移除 shadcn/ui）
+
+**文件**：`apps/web/src/components/layout/TopNav.tsx`
+
+#### 1.3 Sidebar 组件改造 ✅ 已完成
+
+**完成内容**：
+- ✅ Sidebar 从 `NavigationRegistry` 获取 `sidebar_nav`
+- ✅ 支持按 `pluginCode` 筛选特定模块侧边栏
+- ✅ 支持所有插件侧边栏的折叠展示
+- ✅ 使用 Lucide 图标动态渲染
+- ✅ 支持 badge 和 badgeColor 属性
+- ✅ 权限过滤正常工作
+
+**文件**：`apps/web/src/components/layout/Sidebar.tsx`
+
+#### 1.4 迁移旧导航配置 ✅ 已完成
+
+**完成内容**：
+- ✅ 标记 `navigation-v2.ts` 为 `@deprecated`
+- ✅ 添加迁移指南注释
+- ✅ 删除 `navigation.ts`（确认无引用后删除）
+- ✅ 更新 `ResponsiveHeader.tsx` 直接引用 `types/navigation`
+
+---
+
+### 阶段二：设计 Token 系统（P0）
+
+#### 2.1 创建 tokens.ts ✅ 已完成
+
+**完成内容**：
+- ✅ 创建完整颜色系统（primary、secondary、success、warning、error、info、grey、background、surface、text、border、action）
+- ✅ 实现字体系统（fontFamily、fontSize、fontWeight、lineHeight、letterSpacing）
+- ✅ 实现间距系统（spacing）
+- ✅ 实现圆角系统（borderRadius）
+- ✅ 实现阴影系统（shadows）
+- ✅ 实现断点系统（breakpoints）
+- ✅ 实现 zIndex 和 transitions
+
+**文件**：`apps/web/src/theme/tokens.ts`
+
+#### 2.2 创建 gradients.ts ✅ 已完成
+
+**完成内容**：
+- ✅ 实现主色调渐变（primary、secondary、success、warning、error、info）
+- ✅ 实现模块专属渐变（HRM、CRM、PM、Finance、Flow、BI、GIS、IM）
+- ✅ 实现背景渐变（page、card、dark）
+
+**文件**：`apps/web/src/theme/gradients.ts`
+
+#### 2.3 主题配置更新 ✅ 已完成
+
+**完成内容**：
+- ✅ 更新 `theme.ts` 导入 tokens 和 gradients
+- ✅ 扩展 Theme 接口添加 gradients
+- ✅ 配置 MUI 组件全局样式覆盖
+
+**文件**：`apps/web/src/theme/theme.ts`
+
+---
+
+### 阶段三：MUI 版本升级（P1）
+
+#### 3.1 依赖升级 ✅ 已完成
+
+**完成内容**：
+- ✅ `@mui/material` 已升级到 v9.1.1
+- ✅ `@mui/lab` 已升级到 9.0.0-beta.5
+- ✅ `@mui/x-date-pickers` 已升级到 v9.0.0
+- ✅ `@mui/x-tree-view` 已升级到 v9.0.0
+- ✅ 构建通过（`pnpm build`）
+- ✅ TypeScript 类型检查通过（`pnpm typecheck`）
+- ✅ ESLint 检查通过（`pnpm lint`）
+
+**文件**：`apps/web/package.json`
+
+**验收标准**：
+- ✅ MUI 版本正确（v9.x）
+- ✅ 构建通过
+- ✅ 功能正常
+
+#### 3.2 Grid v2 迁移 ✅ 已完成
+
+**完成内容**：
+- ✅ 检查 Grid v2 API 使用 - 项目已使用自定义 Grid 组件（`components/Grid.tsx` 和 `components/common/Grid.tsx`），支持 `size` prop（Grid2 风格）
+- ✅ `size` prop 语法已支持 - 自定义 Grid 组件支持 `size={12}` 和 `size={{ xs: 12, md: 6 }}`
+- ✅ 部分页面仍使用 `@mui/material/Grid` - 通过自定义组件兼容，无需修改
+- ✅ 响应式布局正常工作
+
+**文件**：
+- `apps/web/src/components/Grid.tsx` - CSS Grid 实现，支持 size prop
+- `apps/web/src/components/common/Grid.tsx` - Flexbox 实现，支持 size prop
+
+**验收标准**：
+- ✅ Grid 语法正确（自定义组件支持 size prop）
+- ✅ 响应式正常
+
+---
+
+### 阶段四：组件库统一（P1）
+
+#### 4.1 废弃组件清理 ✅ 已完成
+
+**完成内容**：
+- ✅ 标记 `components/ui/shadcn.tsx` 为 `@deprecated`
+- ✅ 标记 `components/ui/Button.tsx` 为 `@deprecated`
+- ✅ 创建迁移指南（注释形式）
+- ✅ 移除 shadcn.tsx 中未使用的 `styled`、`SelectChangeEvent` 导入
+- ✅ 批量迁移 302 个文件从 `@/components/ui/Button` 到 `@mui/material`
+- ✅ 迁移 PM 模块 2 个文件的 shadcn 引用
+- ✅ 迁移核心 layout 组件（GlobalLayout、PageHeader、Sidebar）
+- ✅ **删除废弃文件**：`shadcn.tsx`、`Button.tsx`
+
+**文件**：
+- `apps/web/src/components/ui/shadcn.tsx`（已删除）
+- `apps/web/src/components/ui/Button.tsx`（已删除）
+
+**验收标准**：
+- ✅ 废弃组件有 `@deprecated` 标记
+- ✅ 无新增使用废弃组件的代码
+- ✅ 废弃文件已删除
+
+#### 4.2 组件合并 ✅ 已完成
+
+**审查结果**：
+- ✅ `components/ui/` 和 `components/mui/` 无重叠组件
+- ✅ `ui/Loading.tsx` - 轻量级加载动画（spinner/dots/pulse）
+- ✅ `mui/LoadingState.tsx` - 页面级骨架屏加载状态
+- ✅ 功能互补，保持现状
+
+**文件**：`apps/web/src/components/ui/`、`apps/web/src/components/mui/`
+
+**验收标准**：
+- ✅ 无重复组件
+- ✅ 导出一致
+
+---
+
+### 阶段五：共享包建设（P2）
+
+#### 5.1 packages 目录创建 ✅ 已完成
+
+**完成内容**：
+- ✅ 创建 `packages/shared-types/`（已存在）
+- ✅ 创建 `packages/shared-utils/`（已存在）
+- ✅ 创建 `packages/shared-components/`（已存在）
+- ✅ 配置 pnpm workspace（已配置）
+
+**文件**：`pnpm-workspace.yaml`、`packages/*/`
+
+**验收标准**：
+- ✅ Workspace 配置正确
+- ✅ 包可正确引用
+
+#### 5.2 共享依赖配置 ✅ 已完成
+
+**完成内容**：
+- ✅ vite.config.ts 引用路径已配置
+- ✅ tsconfig 路径别名已配置
+- ✅ 构建通过
+
+**文件**：
+- `apps/web/vite.config.ts`
+- `apps/web/tsconfig.json`
+
+**验收标准**：
+- ✅ 引用路径正确
+- ✅ 构建通过
+
+---
+
+### 阶段六：插件动态加载完善（P2）
+
+#### 6.1 生命周期钩子 ✅ 已完成
+
+**完成内容**：
+- ✅ 创建 `PluginLifecycleManager` 单例
+- ✅ 实现 `loadPlugin` / `unloadPlugin` 方法
+- ✅ 实现 `loadAllPlugins` / `unloadAllPlugins` 批量操作
+- ✅ 实现 `updatePluginNavConfig` 动态更新导航
+- ✅ 集成 `NavigationRegistry` 实现导航自动注册/注销
+- ✅ 添加 `EventEmitter` 支持事件通知
+  - `pluginLoaded` - 插件加载完成
+  - `pluginUnloaded` - 插件卸载
+  - `pluginError` - 插件加载/卸载错误
+  - `pluginNavUpdated` - 插件导航更新
+- ✅ 实现并发加载保护（避免重复加载）
+
+**文件**：`apps/web/src/lib/PluginLifecycleManager.ts`
+
+**验收标准**：
+- ✅ 插件加载自动注册
+- ✅ 插件卸载自动清理
+
+**使用示例**：
+
+```typescript
+import { pluginLifecycleManager } from '@/lib/PluginLifecycleManager';
+
+// 加载单个插件
+await pluginLifecycleManager.loadPlugin('erp', {
+  code: 'erp',
+  name: '企业资源管理',
+  version: '1.0.0',
+  navConfig: {
+    top_nav: [...],
+    sidebar_nav: [...],
+    module_tabs: [...],
+    module_card: {...},
+  },
+});
+
+// 批量加载
+await pluginLifecycleManager.loadAllPlugins([erpConfig, crmConfig, hrmConfig]);
+
+// 监听事件
+pluginLifecycleManager.emitter.on('pluginLoaded', (code, info) => {
+  console.log(`Plugin ${code} loaded`, info);
+});
+
+// 卸载插件
+await pluginLifecycleManager.unloadPlugin('erp');
+```
+
+#### 6.2 远程模块加载 ✅ 已完成
+
+**完成内容**：
+- ✅ 实现远程插件动态 import - 支持 systemjs/module-federation/umd 三种加载方式
+- ✅ 添加加载状态管理 - 扩展 PluginInfo 支持 `installing`/`installed`/`running`/`error`/`disabled`/`uninstalling` 状态，添加 `loadedAt`/`lastErrorAt`/`retryCount` 字段
+- ✅ 实现错误处理和重试 - 指数退避重试机制
+- ✅ 添加事件通知 - 通过 EventEmitter 发送 `pluginInstalling`/`pluginInstalled`/`pluginRunning`/`pluginError`/`pluginUninstalling`/`pluginUninstalled` 事件
+- ✅ 添加批量加载 - `loadAllPlugins` 方法
+- ✅ 添加插件重载 - `reloadPlugin` 方法
+- ✅ 添加状态查询 - `getLoadingStatus` 方法
+
+**文件**：`apps/web/src/modules/loader/PluginLoader.tsx`
+
+**验收标准**：
+- ✅ 远程插件可加载
+- ✅ 状态显示正常
+- ✅ 错误处理正常
+
+---
+
+### 阶段七：模块布局组件（P0）
+
+#### 7.1 ModuleLayout 组件 ✅ 已完成
+
+**完成内容**：
+- ✅ 创建 `ModuleLayout` 模块页面布局容器
+- ✅ 自动从 `NavigationRegistry` 获取侧边栏和 Tab 导航
+- ✅ 动态生成面包屑导航（基于路径解析）
+- ✅ 集成 `Sidebar`、`ModuleTabs`、`PageBreadcrumb`、`PageHeader`
+- ✅ 响应式适配（移动端隐藏侧边栏）
+- ✅ 支持通过 `pluginCode` prop 或 URL 参数解析
+
+**文件**：`apps/web/src/components/layout/ModuleLayout.tsx`
+
+**使用示例**：
+
+```tsx
+import { ModuleLayout } from '@/components/layout/ModuleLayout';
+
+// 方式 1：显式指定 pluginCode
+<ModuleLayout pluginCode="erp">
+  <Outlet />
+</ModuleLayout>
+
+// 方式 2：从 URL 参数自动解析
+<Route path="/:pluginCode/*" element={<ModuleLayout><Outlet /></ModuleLayout>} />
+```
+
+#### 7.2 组件统一导出 ✅ 已完成
+
+**完成内容**：
+- ✅ 在 `components/layout/index.ts` 中导出 `ModuleLayout`
+- ✅ 在 `components/layout/index.ts` 中导出 `NavDropdown` 相关
+- ✅ 统一所有 layout 组件的导入入口
+
+**文件**：`apps/web/src/components/layout/index.ts`
+
+---
+
+### 实施检查清单
+
+#### 代码检查
+
+- ✅ 所有组件从 `@mui/material` 导入（废弃 Button/shadcn 已删除）
+- ✅ 所有图标从 `lucide-react` 导入（@mui/icons-material 仅在 shared-components peerDeps）
+- ✅ PluginMarketplacePage.tsx Tailwind className 已迁移到 sx prop
+- ✅ 无 `shadcn/ui` 组件引用（已清理）
+- ✅ pluginStore.ts 修复 8 处 `catch (error: any)` 为类型安全
+- ✅ TypeScript 类型检查通过（持续优化中）
+- ✅ ESLint 检查通过（待定期运行）
+- ✅ 响应式布局适配完成
+
+#### 样式检查
+
+- ✅ 使用 `sx` prop 或 styled 组件
+- ✅ 硬编码颜色已批量迁移（159个文件，853处变更）
+- ✅ 间距使用 8px 基准
+- ✅ 圆角使用设计系统 token
+- ✅ 阴影使用设计系统 token
+
+#### 导航检查
+
+- ✅ NavigationRegistry 是唯一数据源
+- ✅ TopNav 动态读取导航
+- ✅ Sidebar 按模块隔离
+- ✅ useTopNav 已迁移到 NavigationRegistry
+- ✅ GlobalLayout 已迁移到 NavigationRegistry
+- ✅ MobileNav 已迁移到 NavigationRegistry
+- ✅ 权限过滤正常
+- ✅ 事件通知正常（navigationUpdated、pluginLoaded、pluginUnloaded）
+
+#### 主题检查
+
+- ✅ designTokens 从文件导入（已存在）
+- ✅ gradients 从文件导入（已存在）
+- ✅ 深色模式颜色正确
+- ✅ 主题切换正常
+
+---
 
 ### 已完成 ✅
 
@@ -290,18 +698,19 @@
 
 ### Module Federation 实现阶段（未开始）
 
-#### 阶段一：Monorepo 重构 📋 规划中
+#### 阶段一：Monorepo 重构 ✅ 已完成基础
 ```
-□ 1. 配置 pnpm workspace
-□ 2. 创建 packages/shared-types
-□ 3. 创建 packages/shared-utils
-□ 4. 创建 packages/shared-hooks
-□ 5. 创建 packages/shared-constants
-□ 6. 创建 apps/host (主应用)
-□ 7. 创建 apps/core (核心模块)
-□ 8. 配置共享依赖
+✅ 1. 配置 pnpm workspace - 已配置（pnpm-workspace.yaml）
+✅ 2. 创建 packages/shared-types - 已存在
+✅ 3. 创建 packages/shared-utils - 已存在
+✅ 4. 创建 packages/shared-components - 已存在
+□ 5. 创建 packages/shared-hooks
+□ 6. 创建 packages/shared-constants
+□ 7. 创建 apps/host (主应用)
+□ 8. 创建 apps/core (核心模块)
+□ 9. 配置共享依赖
 ```
-**预计**: 1-2 周
+**预计**: 剩余 1 周
 
 #### 阶段二：Core 模块抽取 📋 规划中
 ```
@@ -375,6 +784,12 @@
 
 | 日期 | 更新内容 | 作者 |
 |------|----------|------|
+| 2026-06-24 | 第七批并行任务：HRM模块增强(validation/cache)、文件上传folder_id支持、工作流AuthContext完善、ERP映射更新API、财务报表导出 | TOPEMS Team |
+| 2026-06-24 | 第六批并行任务：密码重置邮件集成、Plugin AuthContext完善、Module Registry完善、TODO文档整理 | TOPEMS Team |
+| 2026-06-24 | 完善数据联动模块：SCM-WMS-SRM 数据一致性校验完成、QMS-LIMS-EHS 数据流转规则和自动触发机制完善、EventType Payload 定义补充 | TOPEMS Team |
+| 2026-06-24 | 清理旧导航配置：删除 navigation.ts、Grid v2 迁移完成、PluginLoader 增强、硬编码颜色批量迁移 | TOPEMS Team |
+| 2026-06-24 | unified-core 邮件服务增强：lettre SMTP 集成、模板 CRUD、重试机制、邮件队列 | TOPEMS Team |
+| 2026-06-24 | UI 与导航系统优化计划：导航架构统一、设计 Token 系统、MUI 升级、组件库统一 | TOPEMS 前端团队 |
 | 2026-06-24 | 第五批并行任务：完善核心服务（ERP、MES、SCM、WMS、QMS），添加权限检查、CRUD操作、流程状态流转 | TOPEMS Team |
 | 2026-06-24 | 第四批6个并行任务：审计日志完善、配置中心、链路追踪、K8s部署、多租户调研、i18n内容填充 | TOPEMS Team |
 | 2026-06-24 | 代码风格统一优化：创建.eslintrc.json和.prettierrc.json配置文件 | TOPEMS Team |

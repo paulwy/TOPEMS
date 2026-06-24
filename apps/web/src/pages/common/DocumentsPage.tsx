@@ -49,7 +49,7 @@ import {
   Stack,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ModeToggle } from '@/components/ModeToggle';
 
 interface File {
@@ -104,9 +104,10 @@ const CreateFolderModal: React.FC<{
       } else {
         setError(response.message || '创建失败，请重试');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('创建文件夹失败:', err);
-      const errorMessage = err.response?.data?.message || err.message || '创建失败，请重试';
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage = error.response?.data?.message || error.message || '创建失败，请重试';
       setError(errorMessage);
     } finally {
       setCreating(false);
@@ -209,7 +210,7 @@ const DocumentsPage: React.FC = () => {
       if (response.success && response.data?.folders) {
         setFolders(response.data.folders);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载文件夹列表失败:', err);
     }
   };
@@ -232,7 +233,7 @@ const DocumentsPage: React.FC = () => {
         }));
         setFiles(mappedFiles);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载文件列表失败:', err);
       addNotification({
         title: '加载失败',
@@ -295,10 +296,11 @@ const DocumentsPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearInterval(progressInterval);
       apiLogger.error('上传文件失败:', err);
-      const errorMessage = err.response?.data?.message || err.message || '文件上传失败';
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage = error.response?.data?.message || error.message || '文件上传失败';
       addNotification({ title: '失败', message: errorMessage, type: 'error' });
     } finally {
       setUploading(false);
@@ -328,7 +330,7 @@ const DocumentsPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('删除文件失败:', err);
       addNotification({
         title: '失败',
@@ -353,7 +355,7 @@ const DocumentsPage: React.FC = () => {
         message: '文件夹删除成功',
         type: 'success',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('删除文件夹失败:', err);
       addNotification({
         title: '失败',
@@ -379,7 +381,7 @@ const DocumentsPage: React.FC = () => {
         message: '文件下载成功',
         type: 'success',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('下载失败:', err);
       addNotification({
         title: '失败',
@@ -449,7 +451,7 @@ const DocumentsPage: React.FC = () => {
         message: `已删除 ${selectedFiles.length} 个文件`,
         type: 'success',
       });
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('批量删除失败:', err);
       addNotification({
         title: '失败',
@@ -488,7 +490,7 @@ const DocumentsPage: React.FC = () => {
           if (response.success && response.data) {
             uploadedCount++;
           }
-        } catch (err) {
+        } catch (err: unknown) {
           apiLogger.error(`上传文件 ${file.name} 失败:`, err);
         }
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
@@ -1510,10 +1512,10 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, color }) => {
   const colors: Record<string, string> = {
-    blue: '#3b82f6',
-    purple: '#8b5cf6',
-    yellow: '#eab308',
-    green: '#22c55e',
+    blue: 'primary.main',
+    purple: 'secondary.main',
+    yellow: 'warning.main',
+    green: 'success.dark',
   };
 
   return (

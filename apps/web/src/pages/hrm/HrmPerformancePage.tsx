@@ -119,7 +119,7 @@ const HrmPerformancePage: React.FC = () => {
       {
         name: '已完成',
         value: reviews.filter((r) => r.status === 'completed').length,
-        color: '#22c55e',
+        color: 'success.dark',
       },
       {
         name: '待开始',
@@ -129,12 +129,12 @@ const HrmPerformancePage: React.FC = () => {
       {
         name: '自评中',
         value: reviews.filter((r) => r.status === 'self_review').length,
-        color: '#3b82f6',
+        color: 'primary.main',
       },
       {
         name: '待上级评价',
         value: reviews.filter((r) => r.status === 'manager_review').length,
-        color: '#eab308',
+        color: 'warning.main',
       },
     ],
     [reviews]
@@ -146,12 +146,12 @@ const HrmPerformancePage: React.FC = () => {
       {
         name: '已完成',
         value: goals.filter((g) => g.status === 'completed').length,
-        color: '#22c55e',
+        color: 'success.dark',
       },
       {
         name: '进行中',
         value: goals.filter((g) => g.status === 'in_progress').length,
-        color: '#3b82f6',
+        color: 'primary.main',
       },
       {
         name: '未开始',
@@ -161,7 +161,7 @@ const HrmPerformancePage: React.FC = () => {
       {
         name: '已取消',
         value: goals.filter((g) => g.status === 'cancelled').length,
-        color: '#ef4444',
+        color: 'error.main',
       },
     ],
     [goals]
@@ -170,11 +170,11 @@ const HrmPerformancePage: React.FC = () => {
   // 部门绩效得分数据
   const departmentScoreData = useMemo(
     () => [
-      { name: '研发部', value: 85, color: '#3b82f6' },
-      { name: '产品部', value: 88, color: '#22c55e' },
-      { name: '销售部', value: 82, color: '#f59e0b' },
-      { name: '财务部', value: 90, color: '#ef4444' },
-      { name: '人事部', value: 86, color: '#8b5cf6' },
+      { name: '研发部', value: 85, color: 'primary.main' },
+      { name: '产品部', value: 88, color: 'success.dark' },
+      { name: '销售部', value: 82, color: 'warning.main' },
+      { name: '财务部', value: 90, color: 'error.main' },
+      { name: '人事部', value: 86, color: 'secondary.main' },
     ],
     []
   );
@@ -265,7 +265,7 @@ const HrmPerformancePage: React.FC = () => {
           review_period: review.review_period,
         }));
       setRankings(rankings);
-    } catch (err) {
+    } catch (err: unknown) {
       error('加载数据失败');
       apiLogger.error('Failed to load performance data:', err);
     } finally {
@@ -431,7 +431,7 @@ const HrmPerformancePage: React.FC = () => {
               >
                 <Search
                   size={20}
-                  color='#9ca3af'
+                  color='text.disabled'
                 />
               </Box>
               <Box

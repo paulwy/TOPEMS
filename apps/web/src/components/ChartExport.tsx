@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Image, Download, FileImage, Copy, Check } from 'lucide-react';
 import { Menu, MenuItem } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface ChartExportProps {
@@ -43,7 +43,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
           URL.revokeObjectURL(url);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to export chart:', error);
       alert('导出失败，请重试');
     }
@@ -66,7 +66,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
           setTimeout(() => setCopied(false), 2000);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to copy chart:', error);
       alert('复制失败，请重试');
     }
@@ -104,7 +104,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
         <MenuItem onClick={handleCopy}>
           {copied ? (
             <>
-              <Check sx={{ width: 16, height: 16, marginRight: 8, color: '#10B981' }} />
+              <Check sx={{ width: 16, height: 16, marginRight: 8, color: 'success.main' }} />
               已复制
             </>
           ) : (

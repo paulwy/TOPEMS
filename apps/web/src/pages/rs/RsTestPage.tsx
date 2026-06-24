@@ -15,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileUpload } from '@/components/common';
 import {
   Plus,
@@ -224,7 +224,7 @@ const RsTestPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <ClipboardList
               size={16}
-              color='#3b82f6'
+              color='primary.main'
             />
             <Typography
               variant='body2'
@@ -477,7 +477,7 @@ const RsTestPage: React.FC = () => {
           <Button onClick={() => setNewCaseDialogOpen(false)}>取消</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
             onClick={handleCreateCase}
           >
             创建

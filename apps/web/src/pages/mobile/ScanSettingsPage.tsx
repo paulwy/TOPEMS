@@ -152,11 +152,7 @@ export const ScanSettingsPage: React.FC = () => {
         container
         spacing={3}
       >
-        <Grid
-          item
-          xs={12}
-          lg={4}
-        >
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card>
             <CardHeader title='支持的码制' />
             <CardContent>
@@ -254,11 +250,7 @@ export const ScanSettingsPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={8}
-        >
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card>
             <CardHeader
               title='扫描历史'
@@ -330,7 +322,7 @@ export const ScanSettingsPage: React.FC = () => {
                             : '识别失败'
                       }
                       color={getStatusColor(record.status)}
-                      icon={record.status === 'success' ? <CheckCircle size={14} /> : null}
+                      icon={record.status === 'success' ? <CheckCircle size={14} /> : undefined}
                     />
                   </Box>
                 ))}
@@ -344,7 +336,7 @@ export const ScanSettingsPage: React.FC = () => {
               <Typography
                 variant='body2'
                 color='text.secondary'
-                mb={2}
+                sx={{ mb: 2 }}
               >
                 扫码后自动关联的业务模块
               </Typography>
@@ -359,8 +351,7 @@ export const ScanSettingsPage: React.FC = () => {
                   { name: '设备管理', code: 'equipment', enabled: true },
                 ].map((item) => (
                   <Grid
-                    item
-                    xs={6}
+                    size={{ xs: 6 }}
                     key={item.code}
                   >
                     <Box

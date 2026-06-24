@@ -20,7 +20,7 @@ import {
   Divider,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useMemo, useCallback } from 'react';
 import type {
   ColumnDef,

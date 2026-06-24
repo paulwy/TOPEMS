@@ -21,7 +21,7 @@ import {
   Tooltip,
   Skeleton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Search,
   Filter,
@@ -497,7 +497,7 @@ export function DataTable<TData, TValue>({
                   borderColor: '#e0e0e0',
                   borderRadius: 4,
                   fontSize: 14,
-                  backgroundColor: '#fff',
+                  backgroundColor: 'white',
                   outline: 'none',
                 }}
               />
@@ -978,7 +978,7 @@ export function DataTable<TData, TValue>({
                     borderRadius: 4,
                     padding: '4px 8px',
                     fontSize: 14,
-                    backgroundColor: '#fff',
+                    backgroundColor: 'white',
                   }}
                 >
                   <option value={10}>10</option>

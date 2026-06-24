@@ -1,12 +1,12 @@
 export interface NavMenuItem {
-  label: string;
+  title: string;
   path?: string;
   icon?: string;
   badge?: string | number;
 }
 
 export interface NavGroup {
-  label: string;
+  title: string;
   path?: string;
   isGroup?: boolean;
   children?: NavMenuItem[] | NavGroup[];

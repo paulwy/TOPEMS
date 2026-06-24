@@ -14,7 +14,7 @@ import {
   CircularProgress,
   Skeleton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Save, X } from 'lucide-react';
@@ -56,14 +56,6 @@ const HrmEmployeeEditPage: React.FC = () => {
     emergency_contact_phone: '',
   });
 
-  useEffect(() => {
-    if (id) {
-      loadEmployee(id);
-    }
-    loadDepartments();
-    loadPositions();
-  }, [id, loadEmployee]);
-
   const loadEmployee = useCallback(
     async (employeeId: string) => {
       setLoading(true);
@@ -87,7 +79,7 @@ const HrmEmployeeEditPage: React.FC = () => {
             emergency_contact_phone: res.data.emergency_contact_phone || '',
           });
         }
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Failed to load employee:', err);
         error('加载员工信息失败');
       } finally {
@@ -97,13 +89,21 @@ const HrmEmployeeEditPage: React.FC = () => {
     [error]
   );
 
+  useEffect(() => {
+    if (id) {
+      loadEmployee(id);
+    }
+    loadDepartments();
+    loadPositions();
+  }, [id, loadEmployee]);
+
   const loadDepartments = async () => {
     try {
       const res = await departmentApi.list({ page_size: 100 });
       if (res.code === 200 && res.data) {
         setDepartments(res.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to load departments:', err);
     }
   };
@@ -114,7 +114,7 @@ const HrmEmployeeEditPage: React.FC = () => {
       if (res.code === 200 && res.data) {
         setPositions(res.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to load positions:', err);
     }
   };
@@ -138,7 +138,7 @@ const HrmEmployeeEditPage: React.FC = () => {
       } else {
         error(res.message || '更新失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to update employee:', err);
       error('更新员工信息失败');
     } finally {

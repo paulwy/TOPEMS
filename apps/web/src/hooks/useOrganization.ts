@@ -57,9 +57,10 @@ export const useOrganization = (): UseOrganizationReturn => {
       if (response.code === 200 && response.data) {
         setCompanies(response.data.items || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 忽略请求被取消的错误
-      if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED') {
+      const err = error as { name?: string; code?: string };
+      if (err?.name === 'AbortError' || err?.code === 'ERR_CANCELED') {
         return;
       }
       logger.error('Failed to load companies:', error);
@@ -82,9 +83,10 @@ export const useOrganization = (): UseOrganizationReturn => {
       if (response.code === 200 && response.data) {
         setDepartments(response.data.items || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 忽略请求被取消的错误
-      if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED') {
+      const err = error as { name?: string; code?: string };
+      if (err?.name === 'AbortError' || err?.code === 'ERR_CANCELED') {
         return;
       }
       logger.error('Failed to load departments:', error);
@@ -107,9 +109,10 @@ export const useOrganization = (): UseOrganizationReturn => {
       if (response.code === 200 && response.data) {
         setEmployees(response.data.items || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 忽略请求被取消的错误
-      if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED') {
+      const err = error as { name?: string; code?: string };
+      if (err?.name === 'AbortError' || err?.code === 'ERR_CANCELED') {
         return;
       }
       logger.error('Failed to load employees:', error);

@@ -27,7 +27,7 @@ export class EventBus {
       this.listeners[eventName].forEach((handler) => {
         try {
           handler(data);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`Error handling event ${eventName}:`, error);
         }
       });

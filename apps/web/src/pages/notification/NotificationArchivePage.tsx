@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { ArchiveConfig, ArchivedNotification, NotificationTypeEnum } from '@/api/notification';
 import {
   getArchivedNotifications,
@@ -73,7 +73,7 @@ const NotificationArchivePage: React.FC = () => {
       if (configRes.success && configRes.data) {
         setArchiveConfig(configRes.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Error loading data:', err);
     } finally {
       setLoading(false);
@@ -90,8 +90,8 @@ const NotificationArchivePage: React.FC = () => {
       } else {
         error(res.message || '更新失败');
       }
-    } catch (err: any) {
-      error(err.message || '更新失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '更新失败');
     }
   };
 
@@ -104,8 +104,8 @@ const NotificationArchivePage: React.FC = () => {
       } else {
         error(res.message || '执行失败');
       }
-    } catch (err: any) {
-      error(err.message || '执行失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '执行失败');
     }
   };
 
@@ -134,17 +134,17 @@ const NotificationArchivePage: React.FC = () => {
 
   const getTypeColor = (type: NotificationTypeEnum) => {
     const colors: Record<NotificationTypeEnum, { bgcolor: string; color: string }> = {
-      system: { bgcolor: '#dbeafe', color: '#1d4ed8' },
-      workflow: { bgcolor: '#ede9fe', color: '#7c3aed' },
+      system: { bgcolor: '#dbeafe', color: 'primary.dark' },
+      workflow: { bgcolor: 'secondary.light', color: 'secondary.dark' },
       reminder: { bgcolor: '#fef9c3', color: '#a16207' },
-      alert: { bgcolor: '#fee2e2', color: '#dc2626' },
-      message: { bgcolor: '#dcfce7', color: '#16a34a' },
+      alert: { bgcolor: 'error.lighter', color: 'error.dark' },
+      message: { bgcolor: 'success.lighter', color: 'success.dark' },
       info: { bgcolor: '#cffafe', color: '#0891b2' },
-      success: { bgcolor: '#d1fae5', color: '#059669' },
+      success: { bgcolor: 'success.lighter', color: 'success.dark' },
       warning: { bgcolor: '#ffedd5', color: '#ea580c' },
       error: { bgcolor: '#ffe4e6', color: '#e11d48' },
     };
-    return colors[type] || { bgcolor: '#f3f4f6', color: '#374151' };
+    return colors[type] || { bgcolor: 'grey.100', color: 'grey.700' };
   };
 
   const columns: ColumnDef<ArchivedNotification>[] = useMemo(

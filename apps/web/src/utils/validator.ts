@@ -7,7 +7,7 @@
  * 验证规则类型
  */
 export interface ValidationRule {
-  validate: (value: any) => boolean;
+  validate: (value: unknown) => boolean;
   message: string;
 }
 
@@ -15,7 +15,7 @@ export interface ValidationRule {
  * 必填验证
  */
 export const required = (message: string = '此字段为必填项'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (value === null || value === undefined) return false;
     if (typeof value === 'string') return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
@@ -28,7 +28,7 @@ export const required = (message: string = '此字段为必填项'): ValidationR
  * 最小长度验证
  */
 export const minLength = (min: number, message?: string): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     return String(value).length >= min;
   },
@@ -39,7 +39,7 @@ export const minLength = (min: number, message?: string): ValidationRule => ({
  * 最大长度验证
  */
 export const maxLength = (max: number, message?: string): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     return String(value).length <= max;
   },
@@ -50,7 +50,7 @@ export const maxLength = (max: number, message?: string): ValidationRule => ({
  * 邮箱验证
  */
 export const email = (message: string = '请输入有效的邮箱地址'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(String(value));
@@ -62,7 +62,7 @@ export const email = (message: string = '请输入有效的邮箱地址'): Valid
  * 手机号验证
  */
 export const phone = (message: string = '请输入有效的手机号'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     const phoneRegex = /^1[3-9]\d{9}$/;
     return phoneRegex.test(String(value));
@@ -74,7 +74,7 @@ export const phone = (message: string = '请输入有效的手机号'): Validati
  * 固定电话验证
  */
 export const telephone = (message: string = '请输入有效的电话号码'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     const telephoneRegex = /^(\d{3,4}-)?\d{7,8}$/;
     return telephoneRegex.test(String(value));
@@ -86,7 +86,7 @@ export const telephone = (message: string = '请输入有效的电话号码'): V
  * URL验证
  */
 export const url = (message: string = '请输入有效的URL地址'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     try {
       new URL(String(value));
@@ -102,7 +102,7 @@ export const url = (message: string = '请输入有效的URL地址'): Validation
  * 数字范围验证
  */
 export const range = (min: number, max: number, message?: string): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value && value !== 0) return true;
     const num = Number(value);
     return !isNaN(num) && num >= min && num <= max;
@@ -114,7 +114,7 @@ export const range = (min: number, max: number, message?: string): ValidationRul
  * 最小值验证
  */
 export const min = (minValue: number, message?: string): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value && value !== 0) return true;
     const num = Number(value);
     return !isNaN(num) && num >= minValue;
@@ -126,7 +126,7 @@ export const min = (minValue: number, message?: string): ValidationRule => ({
  * 最大值验证
  */
 export const max = (maxValue: number, message?: string): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value && value !== 0) return true;
     const num = Number(value);
     return !isNaN(num) && num <= maxValue;
@@ -138,7 +138,7 @@ export const max = (maxValue: number, message?: string): ValidationRule => ({
  * 整数验证
  */
 export const integer = (message: string = '请输入整数'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value && value !== 0) return true;
     return /^-?\d+$/.test(String(value));
   },
@@ -149,7 +149,7 @@ export const integer = (message: string = '请输入整数'): ValidationRule => 
  * 正整数验证
  */
 export const positiveInteger = (message: string = '请输入正整数'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     return /^[1-9]\d*$/.test(String(value));
   },
@@ -160,7 +160,7 @@ export const positiveInteger = (message: string = '请输入正整数'): Validat
  * 身份证验证
  */
 export const idCard = (message: string = '请输入有效的身份证号'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     const idCardRegex = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
     return idCardRegex.test(String(value));
@@ -172,7 +172,7 @@ export const idCard = (message: string = '请输入有效的身份证号'): Vali
  * 银行卡验证
  */
 export const bankCard = (message: string = '请输入有效的银行卡号'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     const bankCardRegex = /^[1-9]\d{9,29}$/;
     return bankCardRegex.test(String(value).replace(/\s/g, ''));
@@ -202,7 +202,7 @@ export const passwordStrength = (
   } = options;
 
   return {
-    validate: (value: any) => {
+    validate: (value: unknown) => {
       if (!value) return true;
       const str = String(value);
 
@@ -225,7 +225,7 @@ export const match = (
   matchValue: () => any,
   message: string = '两次输入不一致'
 ): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     return value === matchValue();
   },
   message,
@@ -235,7 +235,7 @@ export const match = (
  * 自定义正则验证
  */
 export const pattern = (regex: RegExp, message: string = '格式不正确'): ValidationRule => ({
-  validate: (value: any) => {
+  validate: (value: unknown) => {
     if (!value) return true;
     return regex.test(String(value));
   },

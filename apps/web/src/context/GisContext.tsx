@@ -14,6 +14,12 @@ import type {
   FactoryMap,
   BusinessLocation,
   GisStatistics,
+  CreateDevicePointRequest,
+  CreatePipelineRequest,
+  CreateStorageLocationRequest,
+  CreateEvidenceRecordRequest,
+  CreateFactoryMapRequest,
+  CreateBusinessLocationRequest,
 } from '../api/gis';
 import { gisApi } from '../api/gis';
 import { logger } from '@/utils/logger';
@@ -214,22 +220,22 @@ function gisReducer(state: GisState, action: GisAction): GisState {
 interface GisContextType {
   state: GisState;
   loadAllData: (forceRefresh?: boolean) => Promise<void>;
-  createDevicePoint: (data: any) => Promise<void>;
-  updateDevicePoint: (id: string, data: any) => Promise<void>;
+  createDevicePoint: (data: CreateDevicePointRequest) => Promise<void>;
+  updateDevicePoint: (id: string, data: CreateDevicePointRequest) => Promise<void>;
   deleteDevicePoint: (id: string) => Promise<void>;
-  createPipeline: (data: any) => Promise<void>;
-  updatePipeline: (id: string, data: any) => Promise<void>;
+  createPipeline: (data: CreatePipelineRequest) => Promise<void>;
+  updatePipeline: (id: string, data: CreatePipelineRequest) => Promise<void>;
   deletePipeline: (id: string) => Promise<void>;
-  createStorageLocation: (data: any) => Promise<void>;
-  updateStorageLocation: (id: string, data: any) => Promise<void>;
+  createStorageLocation: (data: CreateStorageLocationRequest) => Promise<void>;
+  updateStorageLocation: (id: string, data: CreateStorageLocationRequest) => Promise<void>;
   deleteStorageLocation: (id: string) => Promise<void>;
-  createEvidenceRecord: (data: any) => Promise<void>;
+  createEvidenceRecord: (data: CreateEvidenceRecordRequest) => Promise<void>;
   deleteEvidenceRecord: (id: string) => Promise<void>;
-  createFactoryMap: (data: any) => Promise<void>;
-  updateFactoryMap: (id: string, data: any) => Promise<void>;
+  createFactoryMap: (data: CreateFactoryMapRequest) => Promise<void>;
+  updateFactoryMap: (id: string, data: CreateFactoryMapRequest) => Promise<void>;
   deleteFactoryMap: (id: string) => Promise<void>;
-  createBusinessLocation: (data: any) => Promise<void>;
-  updateBusinessLocation: (id: string, data: any) => Promise<void>;
+  createBusinessLocation: (data: CreateBusinessLocationRequest) => Promise<void>;
+  updateBusinessLocation: (id: string, data: CreateBusinessLocationRequest) => Promise<void>;
   deleteBusinessLocation: (id: string) => Promise<void>;
   setActiveTab: (tab: string) => void;
   clearError: () => void;
@@ -267,7 +273,7 @@ const saveCache = (state: GisState) => {
       timestamp: Date.now(),
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('Failed to save cache:', e);
   }
 };
@@ -292,7 +298,7 @@ const loadCache = (): Partial<GisState> | null => {
       statistics: cacheData.statistics || null,
       cacheTimestamp: cacheData.timestamp,
     };
-  } catch (e) {
+  } catch (e: unknown) {
     logger.warn('Failed to load cache:', e);
     return null;
   }
@@ -418,11 +424,11 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setTimeout(() => {
           try {
             localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
-          } catch (e) {
+          } catch (e: unknown) {
             logger.warn('Failed to save cache:', e);
           }
         }, 100);
-      } catch (err) {
+      } catch (err: unknown) {
         const errorMessage = getErrorMessage(err);
         setError(errorMessage);
         logger.error('加载GIS数据失败:', err);
@@ -434,7 +440,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createDevicePoint = useCallback(
-    async (data: any) => {
+    async (data: CreateDevicePointRequest) => {
       try {
         const res = await gisApi.createDevicePoint(data);
         if (res.success && res.data) {
@@ -443,7 +449,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '创建失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`创建设备点位失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -452,7 +458,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const updateDevicePoint = useCallback(
-    async (id: string, data: any) => {
+    async (id: string, data: CreateDevicePointRequest) => {
       try {
         const res = await gisApi.updateDevicePoint(id, data);
         if (res.success && res.data) {
@@ -461,7 +467,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '更新失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`更新设备点位失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -479,7 +485,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '删除失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`删除设备点位失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -488,7 +494,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createPipeline = useCallback(
-    async (data: any) => {
+    async (data: CreatePipelineRequest) => {
       try {
         const res = await gisApi.createPipeline(data);
         if (res.success && res.data) {
@@ -497,7 +503,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '创建失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`创建管线失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -506,7 +512,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const updatePipeline = useCallback(
-    async (id: string, data: any) => {
+    async (id: string, data: CreatePipelineRequest) => {
       try {
         const res = await gisApi.updatePipeline(id, data);
         if (res.success && res.data) {
@@ -515,7 +521,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '更新失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`更新管线失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -533,7 +539,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '删除失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`删除管线失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -542,7 +548,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createStorageLocation = useCallback(
-    async (data: any) => {
+    async (data: CreateStorageLocationRequest) => {
       try {
         const res = await gisApi.createStorageLocation(data);
         if (res.success && res.data) {
@@ -551,7 +557,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '创建失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`创建仓储位置失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -560,7 +566,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const updateStorageLocation = useCallback(
-    async (id: string, data: any) => {
+    async (id: string, data: CreateStorageLocationRequest) => {
       try {
         const res = await gisApi.updateStorageLocation(id, data);
         if (res.success && res.data) {
@@ -569,7 +575,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '更新失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`更新仓储位置失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -587,7 +593,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '删除失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`删除仓储位置失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -596,7 +602,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createEvidenceRecord = useCallback(
-    async (data: any) => {
+    async (data: CreateEvidenceRecordRequest) => {
       try {
         const res = await gisApi.createEvidenceRecord(data);
         if (res.success && res.data) {
@@ -605,7 +611,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '创建失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`创建现场取证失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -623,7 +629,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '删除失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`删除现场取证失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -632,7 +638,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createFactoryMap = useCallback(
-    async (data: any) => {
+    async (data: CreateFactoryMapRequest) => {
       try {
         const res = await gisApi.createFactoryMap(data);
         if (res.success && res.data) {
@@ -641,7 +647,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '创建失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`创建厂区地图失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -650,7 +656,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const updateFactoryMap = useCallback(
-    async (id: string, data: any) => {
+    async (id: string, data: CreateFactoryMapRequest) => {
       try {
         const res = await gisApi.updateFactoryMap(id, data);
         if (res.success && res.data) {
@@ -659,7 +665,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '更新失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`更新厂区地图失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -677,7 +683,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '删除失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`删除厂区地图失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -686,7 +692,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createBusinessLocation = useCallback(
-    async (data: any) => {
+    async (data: CreateBusinessLocationRequest) => {
       try {
         const res = await gisApi.createBusinessLocation(data);
         if (res.success && res.data) {
@@ -695,7 +701,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '创建失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`创建业务位置失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -704,7 +710,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const updateBusinessLocation = useCallback(
-    async (id: string, data: any) => {
+    async (id: string, data: CreateBusinessLocationRequest) => {
       try {
         const res = await gisApi.updateBusinessLocation(id, data);
         if (res.success && res.data) {
@@ -713,7 +719,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '更新失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`更新业务位置失败: ${getErrorMessage(err)}`);
         throw err;
       }
@@ -731,7 +737,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           throw new Error(res.message || '删除失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setError(`删除业务位置失败: ${getErrorMessage(err)}`);
         throw err;
       }

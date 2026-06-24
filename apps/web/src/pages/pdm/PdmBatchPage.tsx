@@ -9,7 +9,7 @@ import {
   Chip,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -42,7 +42,7 @@ const PdmBatchPage: React.FC = () => {
       setLoading(true);
       const response = await pdmApi.listBatches();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: any) => ({
+        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
           ...item,
           quantity: item.planned_quantity || item.actual_quantity || 0,
           status:
@@ -60,7 +60,7 @@ const PdmBatchPage: React.FC = () => {
       } else {
         setBatches([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载生产批次数据失败:', err);
       setBatches([]);
     } finally {
@@ -71,11 +71,11 @@ const PdmBatchPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       规划中: { bg: '#fef9c3', color: '#ca8a04' },
-      进行中: { bg: '#dbeafe', color: '#1d4ed8' },
-      已完成: { bg: '#dcfce7', color: '#16a34a' },
-      已取消: { bg: '#fee2e2', color: '#dc2626' },
+      进行中: { bg: '#dbeafe', color: 'primary.dark' },
+      已完成: { bg: 'success.lighter', color: 'success.dark' },
+      已取消: { bg: 'error.lighter', color: 'error.dark' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -178,7 +178,7 @@ const PdmBatchPage: React.FC = () => {
       toast.success('生产批次创建成功');
       setShowCreateModal(false);
       loadBatches();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建生产批次失败:', err);
     }
@@ -242,7 +242,7 @@ const PdmBatchPage: React.FC = () => {
           {stats.inProgress}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -343,7 +343,7 @@ const PdmBatchPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#06b6d4' }}
+            sx={{ bgcolor: 'info.main' }}
           >
             保存
           </Button>

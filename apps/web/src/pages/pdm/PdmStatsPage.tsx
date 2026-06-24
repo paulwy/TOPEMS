@@ -35,7 +35,7 @@ const PdmStatsPage: React.FC = () => {
         const data = processRes.data as any;
         const items = Array.isArray(data) ? data : data.processes || [];
         setProcesses(
-          items.map((item: any) => ({
+          items.map((item: { [key: string]: unknown }) => ({
             ...item,
             status:
               item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
@@ -46,7 +46,7 @@ const PdmStatsPage: React.FC = () => {
         const data = stepRes.data as any;
         const items = Array.isArray(data) ? data : data.steps || [];
         setSteps(
-          items.map((item: any) => ({
+          items.map((item: { [key: string]: unknown }) => ({
             ...item,
             status:
               item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
@@ -57,7 +57,7 @@ const PdmStatsPage: React.FC = () => {
         const data = formulaRes.data as any;
         const items = Array.isArray(data) ? data : data.formulas || [];
         setFormulas(
-          items.map((item: any) => ({
+          items.map((item: { [key: string]: unknown }) => ({
             ...item,
             status:
               item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
@@ -68,7 +68,7 @@ const PdmStatsPage: React.FC = () => {
         const data = batchRes.data as any;
         const items = Array.isArray(data) ? data : data.batches || [];
         setBatches(
-          items.map((item: any) => ({
+          items.map((item: { [key: string]: unknown }) => ({
             ...item,
             status:
               item.status === 'planning'
@@ -83,7 +83,7 @@ const PdmStatsPage: React.FC = () => {
           }))
         );
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('加载统计数据失败:', err);
     } finally {
       setLoading(false);
@@ -126,7 +126,7 @@ const PdmStatsPage: React.FC = () => {
       title: '生产配方',
       value: stats.totalFormulas,
       icon: <Package sx={{ width: 24, height: 24 }} />,
-      gradient: ['#F59E0B', '#D97706'] as [string, string],
+      gradient: ['warning.main', '#D97706'] as [string, string],
       description: `活跃 ${stats.activeFormulas}`,
       trend: { value: 0, direction: 'neutral' as const },
     },
@@ -165,10 +165,10 @@ const PdmStatsPage: React.FC = () => {
       dataKey: 'value',
       nameKey: 'name',
       data: [
-        { name: '规划中', value: stats.planningBatches, color: '#F59E0B' },
+        { name: '规划中', value: stats.planningBatches, color: 'warning.main' },
         { name: '进行中', value: stats.inProgressBatches, color: '#6366F1' },
         { name: '已完成', value: stats.completedBatches, color: '#00C897' },
-        { name: '已取消', value: stats.cancelledBatches, color: '#6B7280' },
+        { name: '已取消', value: stats.cancelledBatches, color: 'grey.500' },
       ].filter((d) => d.value > 0),
     },
     {
@@ -179,7 +179,7 @@ const PdmStatsPage: React.FC = () => {
       nameKey: 'name',
       data: [
         { name: '活跃工艺', value: stats.activeProcesses, color: '#14B8A6' },
-        { name: '活跃配方', value: stats.activeFormulas, color: '#F59E0B' },
+        { name: '活跃配方', value: stats.activeFormulas, color: 'warning.main' },
         { name: '总工序', value: stats.totalSteps, color: '#8B5CF6' },
       ].filter((d) => d.value > 0),
     },

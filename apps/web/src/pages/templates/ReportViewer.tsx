@@ -26,7 +26,7 @@ import {
   Paper,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { ReportData } from '@/api/report';
 
 interface ReportViewerProps {
@@ -131,7 +131,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         {/* Header */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+            background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
             color: 'white',
             p: 3,
           }}

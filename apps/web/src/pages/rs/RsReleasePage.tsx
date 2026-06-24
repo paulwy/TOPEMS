@@ -17,7 +17,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileUpload } from '@/components/common';
 import { Plus, Eye, RotateCcw, Tag, Calendar, User } from 'lucide-react';
 import {
@@ -223,7 +223,7 @@ const RsReleasePage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Tag
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
           {row.version}
         </Box>
@@ -365,7 +365,7 @@ const RsReleasePage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='发布管理'
         columns={columns}
@@ -421,7 +421,7 @@ const RsReleasePage: React.FC = () => {
                 >
                   发布说明
                 </Typography>
-                <Paper sx={{ p: 2, mt: 1, bgcolor: '#f5f5f5' }}>
+                <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.100' }}>
                   <Typography variant='body2'>{selectedRelease.release_note}</Typography>
                 </Paper>
               </Box>
@@ -544,7 +544,7 @@ const RsReleasePage: React.FC = () => {
           <Button onClick={() => setNewReleaseDialogOpen(false)}>取消</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
             onClick={handleCreateRelease}
           >
             创建

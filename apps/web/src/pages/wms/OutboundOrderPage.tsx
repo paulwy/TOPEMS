@@ -7,7 +7,7 @@ import {
   TextField,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   OutboundOrder,
@@ -86,7 +86,7 @@ const OutboundOrderPage: React.FC = () => {
         setOrders(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载出库订单失败:', error);
       addNotification({
         type: 'error',
@@ -124,7 +124,7 @@ const OutboundOrderPage: React.FC = () => {
         resetForm();
         loadOrders();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('创建出库订单失败:', error);
       addNotification({
         type: 'error',
@@ -148,7 +148,7 @@ const OutboundOrderPage: React.FC = () => {
         setShowEditDialog(false);
         loadOrders();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('更新出库订单失败:', error);
       addNotification({
         type: 'error',
@@ -174,7 +174,7 @@ const OutboundOrderPage: React.FC = () => {
           });
           loadOrders();
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('删除出库订单失败:', error);
         addNotification({
           type: 'error',

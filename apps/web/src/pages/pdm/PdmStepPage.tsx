@@ -13,7 +13,7 @@ import {
   Typography,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, ClipboardList, Clock, ListOrdered } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -51,7 +51,7 @@ const PdmStepPage: React.FC = () => {
       setLoading(true);
       const response = await pdmApi.listSteps();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: any) => ({
+        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
           ...item,
           sort_order: item.sort_order || item.order || 0,
           duration: item.duration_hours || item.duration || 0,
@@ -66,7 +66,7 @@ const PdmStepPage: React.FC = () => {
       } else {
         setSteps([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载工序步骤数据失败:', err);
       setSteps([]);
     } finally {
@@ -76,11 +76,11 @@ const PdmStepPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: '#dcfce7', color: '#16a34a' },
-      禁用: { bg: '#fee2e2', color: '#dc2626' },
-      正常: { bg: '#dbeafe', color: '#3b82f6' },
+      启用: { bg: 'success.lighter', color: 'success.dark' },
+      禁用: { bg: 'error.lighter', color: 'error.dark' },
+      正常: { bg: '#dbeafe', color: 'primary.main' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -188,7 +188,7 @@ const PdmStepPage: React.FC = () => {
       toast.success('工序步骤创建成功');
       setShowCreateModal(false);
       loadSteps();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建工序步骤失败:', err);
     }
@@ -204,7 +204,7 @@ const PdmStepPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
       }}
     >
       <Box
@@ -265,7 +265,7 @@ const PdmStepPage: React.FC = () => {
               variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
+              sx={{ bgcolor: 'success.dark', '&:hover': { bgcolor: 'success.dark' } }}
             >
               新增步骤
             </Button>
@@ -285,21 +285,21 @@ const PdmStepPage: React.FC = () => {
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: '#f0fdf4' }}>
+          <Card sx={{ bgcolor: 'success.light' }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ClipboardList sx={{ width: 20, height: 20, color: '#22c55e' }} />
+                  <ClipboardList sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -325,14 +325,14 @@ const PdmStepPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ClipboardList sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <ClipboardList sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -358,14 +358,14 @@ const PdmStepPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fee2e2',
+                    bgcolor: 'error.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ClipboardList sx={{ width: 20, height: 20, color: '#dc2626' }} />
+                  <ClipboardList sx={{ width: 20, height: 20, color: 'error.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -400,7 +400,7 @@ const PdmStepPage: React.FC = () => {
               variant='h6'
               sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
-              <ClipboardList style={{ width: 20, height: 20, color: '#22c55e' }} />
+              <ClipboardList style={{ width: 20, height: 20, color: 'success.dark' }} />
               工序步骤列表
             </Typography>
           </CardHeader>
@@ -505,7 +505,7 @@ const PdmStepPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#22c55e' }}
+            sx={{ bgcolor: 'success.dark' }}
           >
             保存
           </Button>

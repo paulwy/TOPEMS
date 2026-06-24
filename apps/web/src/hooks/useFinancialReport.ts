@@ -30,7 +30,7 @@ export function useGenerateBalanceSheet() {
       queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
       success('资产负债表生成成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '资产负债表生成失败');
     },
   });
@@ -90,7 +90,7 @@ export function useGenerateIncomeStatement() {
       queryClient.invalidateQueries({ queryKey: ['income-statement'] });
       success('利润表生成成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '利润表生成失败');
     },
   });
@@ -150,7 +150,7 @@ export function useGenerateCashFlowStatement() {
       queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
       success('现金流量表生成成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '现金流量表生成失败');
     },
   });
@@ -213,7 +213,7 @@ export function useSubmitReportForApproval() {
       queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
       success('报表已提交审批');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '报表提交审批失败');
     },
   });
@@ -238,7 +238,7 @@ export function useApproveReport() {
       queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
       success('报表审批通过');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '报表审批失败');
     },
   });
@@ -263,7 +263,7 @@ export function useRejectReport() {
       queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
       success('报表已驳回');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '报表驳回失败');
     },
   });
@@ -287,7 +287,7 @@ export function useLockReport() {
       queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
       success('报表已锁定');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '报表锁定失败');
     },
   });
@@ -311,7 +311,7 @@ export function useUnlockReport() {
       queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
       success('报表已解锁');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '报表解锁失败');
     },
   });
@@ -427,7 +427,7 @@ export function useGenerateConsolidatedReport() {
       queryClient.invalidateQueries({ queryKey: ['consolidated-reports'] });
       success('合并报表生成成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '合并报表生成失败');
     },
   });
@@ -488,7 +488,7 @@ export function useCreateConsolidationEntity() {
       queryClient.invalidateQueries({ queryKey: ['consolidation-entities'] });
       success('合并主体创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '合并主体创建失败');
     },
   });
@@ -508,7 +508,7 @@ export function useUpdateConsolidationEntity() {
       queryClient.invalidateQueries({ queryKey: ['consolidation-entities'] });
       success('合并主体更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '合并主体更新失败');
     },
   });
@@ -527,7 +527,7 @@ export function useDeleteConsolidationEntity() {
       queryClient.invalidateQueries({ queryKey: ['consolidation-entities'] });
       success('合并主体删除成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '合并主体删除失败');
     },
   });
@@ -568,7 +568,7 @@ export function useExportFinancialReport() {
     onSuccess: () => {
       success('财务报表导出成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });
@@ -602,7 +602,7 @@ export function useExportConsolidatedReport() {
     onSuccess: () => {
       success('合并报表导出成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });

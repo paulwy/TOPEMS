@@ -66,19 +66,19 @@ export interface ErpAdapter {
 
   /** 获取科目列表 */
   getAccounts(params?: { page?: number; pageSize?: number }): Promise<{
-    items: any[];
+    items: Record<string, unknown>[];
     total: number;
   }>;
 
   /** 获取客户列表 */
   getCustomers(params?: { page?: number; pageSize?: number }): Promise<{
-    items: any[];
+    items: Record<string, unknown>[];
     total: number;
   }>;
 
   /** 获取供应商列表 */
   getSuppliers(params?: { page?: number; pageSize?: number }): Promise<{
-    items: any[];
+    items: Record<string, unknown>[];
     total: number;
   }>;
 
@@ -88,7 +88,7 @@ export interface ErpAdapter {
     end_date?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }>;
+  }): Promise<{ items: Record<string, unknown>[]; total: number }>;
 
   /** 创建凭证 */
   createVoucher(voucher: CreateVoucherRequest): Promise<string>;
@@ -122,21 +122,21 @@ abstract class BaseAdapter implements ErpAdapter {
   abstract getAccounts(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }>;
+  }): Promise<{ items: Record<string, unknown>[]; total: number }>;
   abstract getCustomers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }>;
+  }): Promise<{ items: Record<string, unknown>[]; total: number }>;
   abstract getSuppliers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }>;
+  }): Promise<{ items: Record<string, unknown>[]; total: number }>;
   abstract getVouchers(params?: {
     start_date?: string;
     end_date?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }>;
+  }): Promise<{ items: Record<string, unknown>[]; total: number }>;
   abstract createVoucher(voucher: CreateVoucherRequest): Promise<string>;
   abstract batchCreateVouchers(vouchers: CreateVoucherRequest[]): Promise<SyncResult>;
 
@@ -153,12 +153,12 @@ abstract class BaseAdapter implements ErpAdapter {
     for (let i = 0; i <= maxRetries; i++) {
       try {
         return await fn();
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         // 判断是否可重试
         if (!this.isRetryable(error) || i === maxRetries) {
-          throw error;
+          throw lastError;
         }
 
         // 指数退避
@@ -173,14 +173,15 @@ abstract class BaseAdapter implements ErpAdapter {
   /**
    * 判断错误是否可重试
    */
-  protected isRetryable(error: any): boolean {
-    if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND') {
+  protected isRetryable(error: unknown): boolean {
+    const err = error as { code?: string; response?: { status?: number } };
+    if (err.code === 'ECONNABORTED' || err.code === 'ENOTFOUND') {
       return true;
     }
-    if (error.response?.status >= 500) {
+    if (err.response?.status && err.response.status >= 500) {
       return true;
     }
-    if (error.response?.status === 429) {
+    if (err.response?.status === 429) {
       return true;
     }
     return false;
@@ -231,7 +232,7 @@ export class KingdeeAdapter extends BaseAdapter {
   async getAccounts(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -256,7 +257,7 @@ export class KingdeeAdapter extends BaseAdapter {
   async getCustomers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -281,7 +282,7 @@ export class KingdeeAdapter extends BaseAdapter {
   async getSuppliers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -308,7 +309,7 @@ export class KingdeeAdapter extends BaseAdapter {
     end_date?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -375,11 +376,12 @@ export class KingdeeAdapter extends BaseAdapter {
           )
         );
         result.created += batch.length;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
         result.failed += batch.length;
         result.errors.push({
           id: `batch-${i}`,
-          error: error.message || '批量创建失败',
+          error: msg || '批量创建失败',
         });
       }
     }
@@ -392,12 +394,12 @@ export class KingdeeAdapter extends BaseAdapter {
   /**
    * 转换为金蝶格式
    */
-  private transformToKingdeeFormat(voucher: CreateVoucherRequest): any {
+  private transformToKingdeeFormat(voucher: CreateVoucherRequest): Record<string, unknown> {
     return {
       FDate: voucher.voucher_date,
       FPeriod: voucher.period,
       FExplanation: voucher.summary,
-      FEntity: voucher.entries.map((entry: any, index: number) => ({
+      FEntity: voucher.entries.map((entry, index) => ({
         FSeq: index + 1,
         FAccountID: entry.account_id,
         FDebitAmountFor: entry.debit_amount || 0,
@@ -454,7 +456,7 @@ export class YonyouAdapter extends BaseAdapter {
   async getAccounts(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -480,7 +482,7 @@ export class YonyouAdapter extends BaseAdapter {
   async getCustomers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -506,7 +508,7 @@ export class YonyouAdapter extends BaseAdapter {
   async getSuppliers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -534,7 +536,7 @@ export class YonyouAdapter extends BaseAdapter {
     end_date?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -592,11 +594,12 @@ export class YonyouAdapter extends BaseAdapter {
       try {
         await this.createVoucher(voucher);
         result.created++;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
         result.failed++;
         result.errors.push({
           id: voucher.entries[0]?.account_id || 'unknown',
-          error: error.message || '创建失败',
+          error: msg || '创建失败',
         });
       }
     }
@@ -609,7 +612,7 @@ export class YonyouAdapter extends BaseAdapter {
   /**
    * 转换为用友格式
    */
-  private transformToYonyouFormat(voucher: CreateVoucherRequest): any {
+  private transformToYonyouFormat(voucher: CreateVoucherRequest): Record<string, unknown> {
     return {
       vouch_type: '记',
       date: voucher.voucher_date,
@@ -666,7 +669,7 @@ export class SapAdapter extends BaseAdapter {
   async getAccounts(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -692,7 +695,7 @@ export class SapAdapter extends BaseAdapter {
   async getCustomers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -718,7 +721,7 @@ export class SapAdapter extends BaseAdapter {
   async getSuppliers(params?: {
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
@@ -746,7 +749,7 @@ export class SapAdapter extends BaseAdapter {
     end_date?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<{ items: any[]; total: number }> {
+  }): Promise<{ items: Record<string, unknown>[]; total: number }> {
     await this.authenticate();
 
     const filter = params?.start_date
@@ -785,10 +788,9 @@ export class SapAdapter extends BaseAdapter {
     );
 
     // 检查错误
-    const errors = response.data.RETURN?.filter((r: any) => r.TYPE === 'E');
-
-    if (errors?.length > 0) {
-      throw new Error(errors.map((e: any) => e.MESSAGE).join('; '));
+    const errors = response.data.RETURN?.filter((r: { TYPE: string }) => r.TYPE === 'E');
+    if (errors && errors.length > 0) {
+      throw new Error(errors.map((e: { MESSAGE: string }) => e.MESSAGE).join('; '));
     }
 
     // 提交事务
@@ -820,11 +822,12 @@ export class SapAdapter extends BaseAdapter {
       try {
         await this.createVoucher(voucher);
         result.created++;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
         result.failed++;
         result.errors.push({
           id: voucher.entries[0]?.account_id || 'unknown',
-          error: error.message || '创建失败',
+          error: msg || '创建失败',
         });
       }
     }
@@ -837,9 +840,9 @@ export class SapAdapter extends BaseAdapter {
   /**
    * 转换为SAP格式 (BAPI参数)
    */
-  private transformToSapFormat(voucher: CreateVoucherRequest): any {
+  private transformToSapFormat(voucher: CreateVoucherRequest): Record<string, unknown> {
     const lines = voucher.entries
-      .flatMap((entry: any, index: number) => [
+      .flatMap((entry, index) => [
         {
           ITEMNO_ACC: String(index * 10 + 1),
           GL_ACCOUNT: entry.account_id,
@@ -867,7 +870,7 @@ export class SapAdapter extends BaseAdapter {
         USERNAME: this.config.username,
       },
       ACCOUNTGL: lines,
-      CURRENCYAMOUNT: lines.map((line: any) => ({
+      CURRENCYAMOUNT: lines.map((line: { ITEMNO_ACC: string; AMT_DOCCUR?: number }) => ({
         ITEMNO_ACC: line.ITEMNO_ACC,
         CURRENCY: 'CNY',
         AMT_DOCCUR: line.AMT_DOCCUR || 0,

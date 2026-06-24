@@ -21,7 +21,7 @@ import {
   Stack,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Grid } from '@/components/Grid';
 import {
   ChevronLeft,

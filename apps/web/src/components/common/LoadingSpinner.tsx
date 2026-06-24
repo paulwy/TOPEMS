@@ -56,7 +56,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, child
             <p
               style={{
                 marginTop: '16px',
-                color: isDark ? '#d1d5db' : '#6b7280',
+                color: isDark ? 'grey.300' : 'text.secondary',
               }}
             >
               {message}
@@ -73,7 +73,7 @@ export const SkeletonLoader: React.FC<{ className?: string }> = ({ className = '
     <div
       style={{
         animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        backgroundColor: '#e5e7eb',
+        backgroundColor: 'grey.200',
         borderRadius: '8px',
       }}
     />

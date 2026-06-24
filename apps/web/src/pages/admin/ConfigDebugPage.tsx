@@ -1,12 +1,12 @@
 import React from 'react';
 import { Chip, Card, CardContent, CardHeader, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Settings, Database, Code, Server } from 'lucide-react';
 import config from '../../config/runtime';
 
 const ConfigDebugPage: React.FC = () => {
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: 24 }}>
+    <div style={{ minHeight: '100vh', backgroundColor: 'grey.50', padding: 24 }}>
       <div style={{ maxWidth: 896, margin: 'auto' }}>
         <div
           style={{
@@ -17,11 +17,11 @@ const ConfigDebugPage: React.FC = () => {
           }}
         >
           <div style={{ padding: 8, backgroundColor: '#dbeafe', borderRadius: 8 }}>
-            <Settings sx={{ width: 24, height: 24, color: '#2563eb' }} />
+            <Settings sx={{ width: 24, height: 24, color: 'primary.dark' }} />
           </div>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>配置诊断</h1>
-            <p style={{ fontSize: 14, color: '#6b7280' }}>系统配置信息和环境变量</p>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: 'text.primary' }}>配置诊断</h1>
+            <p style={{ fontSize: 14, color: 'text.secondary' }}>系统配置信息和环境变量</p>
           </div>
         </div>
 
@@ -29,7 +29,7 @@ const ConfigDebugPage: React.FC = () => {
           <Card>
             <CardHeader>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Server sx={{ width: 20, height: 20, color: '#4f46e5' }} />
+                <Server sx={{ width: 20, height: 20, color: 'primary.main' }} />
                 <Typography
                   variant='h6'
                   sx={{ fontWeight: 600 }}
@@ -47,8 +47,8 @@ const ConfigDebugPage: React.FC = () => {
             <CardContent>
               <pre
                 style={{
-                  backgroundColor: '#111827',
-                  color: '#d1d5db',
+                  backgroundColor: 'text.primary',
+                  color: 'grey.300',
                   padding: 16,
                   borderRadius: 8,
                   overflow: 'auto',
@@ -63,7 +63,7 @@ const ConfigDebugPage: React.FC = () => {
           <Card>
             <CardHeader>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Database sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                <Database sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 <Typography
                   variant='h6'
                   sx={{ fontWeight: 600 }}
@@ -81,8 +81,8 @@ const ConfigDebugPage: React.FC = () => {
             <CardContent>
               <pre
                 style={{
-                  backgroundColor: '#111827',
-                  color: '#d1d5db',
+                  backgroundColor: 'text.primary',
+                  color: 'grey.300',
                   padding: 16,
                   borderRadius: 8,
                   overflow: 'auto',
@@ -115,8 +115,8 @@ const ConfigDebugPage: React.FC = () => {
             <CardContent>
               <pre
                 style={{
-                  backgroundColor: '#111827',
-                  color: '#d1d5db',
+                  backgroundColor: 'text.primary',
+                  color: 'grey.300',
                   padding: 16,
                   borderRadius: 8,
                   overflow: 'auto',

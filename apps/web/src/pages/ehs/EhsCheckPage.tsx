@@ -19,7 +19,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Plus,
   Eye,
@@ -95,7 +95,7 @@ const EhsCheckPage: React.FC = () => {
       const response = await ehsApi.listInspectionPlans({ page_size: 100 });
       if (response.success && response.data) {
         const plansData = Array.isArray(response.data) ? response.data : response.data.data || [];
-        const adapted = plansData.map((item: any) => ({
+        const adapted = plansData.map((item: InspectionPlan) => ({
           ...item,
           status:
             item.status === 'active' ? '启用' : item.status === 'inactive' ? '停用' : item.status,
@@ -104,7 +104,7 @@ const EhsCheckPage: React.FC = () => {
       } else {
         setPlans([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检查计划失败:', err);
       setPlans([]);
     } finally {
@@ -118,7 +118,7 @@ const EhsCheckPage: React.FC = () => {
       const response = await ehsApi.listInspectionRecords({ page_size: 100 });
       if (response.success && response.data) {
         const recordsData = Array.isArray(response.data) ? response.data : response.data.data || [];
-        const adapted = recordsData.map((item: any) => ({
+        const adapted = recordsData.map((item: InspectionRecord) => ({
           ...item,
           status:
             item.status === 'completed'
@@ -133,7 +133,7 @@ const EhsCheckPage: React.FC = () => {
       } else {
         setRecords([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检查记录失败:', err);
       setRecords([]);
     } finally {
@@ -150,7 +150,7 @@ const EhsCheckPage: React.FC = () => {
       } else {
         setPlanItems([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检查项失败:', err);
       setPlanItems([]);
     }
@@ -164,20 +164,20 @@ const EhsCheckPage: React.FC = () => {
         setSelectedRecord(data.record);
         setRecordItems(data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检查记录详情失败:', err);
     }
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      已完成: { bg: '#dcfce7', color: '#16a34a' },
+      已完成: { bg: 'success.lighter', color: 'success.dark' },
       进行中: { bg: '#fef9c3', color: '#ca8a04' },
-      待处理: { bg: '#fee2e2', color: '#dc2626' },
-      启用: { bg: '#dcfce7', color: '#16a34a' },
-      停用: { bg: '#f3f4f6', color: '#4b5563' },
+      待处理: { bg: 'error.lighter', color: 'error.dark' },
+      启用: { bg: 'success.lighter', color: 'success.dark' },
+      停用: { bg: 'grey.100', color: 'text.secondary' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -404,7 +404,7 @@ const EhsCheckPage: React.FC = () => {
       toast.success('检查计划创建成功');
       setShowCreatePlanModal(false);
       loadPlans();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建检查计划失败:', err);
     }
@@ -430,7 +430,7 @@ const EhsCheckPage: React.FC = () => {
       toast.success('检查记录创建成功');
       setShowCreateRecordModal(false);
       loadRecords();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建检查记录失败:', err);
     }
@@ -531,7 +531,7 @@ const EhsCheckPage: React.FC = () => {
         >
           {activeTab === 'plans' ? (
             <>
-              <Card sx={{ bgcolor: '#eff6ff' }}>
+              <Card sx={{ bgcolor: 'primary.light' }}>
                 <CardContent sx={{ p: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Box
@@ -545,7 +545,7 @@ const EhsCheckPage: React.FC = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <ClipboardCheck sx={{ width: 20, height: 20, color: '#3b82f6' }} />
+                      <ClipboardCheck sx={{ width: 20, height: 20, color: 'primary.main' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -571,14 +571,14 @@ const EhsCheckPage: React.FC = () => {
                       sx={{
                         width: 40,
                         height: 40,
-                        bgcolor: '#dcfce7',
+                        bgcolor: 'success.lighter',
                         borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      <ClipboardCheck sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                      <ClipboardCheck sx={{ width: 20, height: 20, color: 'success.dark' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -600,7 +600,7 @@ const EhsCheckPage: React.FC = () => {
             </>
           ) : (
             <>
-              <Card sx={{ bgcolor: '#eff6ff' }}>
+              <Card sx={{ bgcolor: 'primary.light' }}>
                 <CardContent sx={{ p: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Box
@@ -614,7 +614,7 @@ const EhsCheckPage: React.FC = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <FileText sx={{ width: 20, height: 20, color: '#3b82f6' }} />
+                      <FileText sx={{ width: 20, height: 20, color: 'primary.main' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -640,14 +640,14 @@ const EhsCheckPage: React.FC = () => {
                       sx={{
                         width: 40,
                         height: 40,
-                        bgcolor: '#dcfce7',
+                        bgcolor: 'success.lighter',
                         borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      <FileText sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                      <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -673,7 +673,7 @@ const EhsCheckPage: React.FC = () => {
                       sx={{
                         width: 40,
                         height: 40,
-                        bgcolor: '#fef3c7',
+                        bgcolor: 'warning.light',
                         borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
@@ -733,9 +733,9 @@ const EhsCheckPage: React.FC = () => {
                 key={`detail-${record.id}`}
                 sx={{
                   borderLeft: 4,
-                  borderLeftColor: '#3b82f6',
+                  borderLeftColor: 'primary.main',
                   p: 3,
-                  bg: '#f8fafc',
+                  bg: 'grey.50',
                   mt: 1,
                   mb: 1,
                 }}
@@ -860,7 +860,7 @@ const EhsCheckPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSavePlan}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             保存
           </Button>
@@ -1049,7 +1049,7 @@ const EhsCheckPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSaveRecord}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             保存
           </Button>
@@ -1247,16 +1247,16 @@ const EhsCheckPage: React.FC = () => {
                           sx={{
                             bgcolor:
                               item.result === 'pass'
-                                ? '#dcfce7'
+                                ? 'success.lighter'
                                 : item.result === 'fail'
-                                  ? '#fee2e2'
-                                  : '#f3f4f6',
+                                  ? 'error.lighter'
+                                  : 'grey.100',
                             color:
                               item.result === 'pass'
-                                ? '#16a34a'
+                                ? 'success.dark'
                                 : item.result === 'fail'
-                                  ? '#dc2626'
-                                  : '#4b5563',
+                                  ? 'error.dark'
+                                  : 'text.secondary',
                           }}
                         />
                       </Box>

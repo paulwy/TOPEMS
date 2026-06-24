@@ -59,10 +59,6 @@ async fn main() -> Result<()> {
         max_lifetime: Some(1800),
         test_interval: Some(60),
         enable_connection_reuse: Some(true),
-        acquire_max_retries: Some(3),
-        acquire_retry_interval_ms: Some(100),
-        acquire_timeout: None,
-        enable_exponential_backoff: Some(true),
     };
 
     let pool = create_database_pool(&db_config).await?;
@@ -303,6 +299,7 @@ async fn hrm_auth_middleware(
         "/",
         "/health",
         "/api/plugins/info",
+        "/api/plugins/health",
         "/api/v1/health/detailed",
         "/api/v1/metrics",
     ];

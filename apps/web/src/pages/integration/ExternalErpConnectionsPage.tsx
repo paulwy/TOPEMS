@@ -20,13 +20,14 @@ import {
   Switch,
   FormControlLabel,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
   FormPageTemplate,
   type ColumnDef,
   type RowAction,
+  type FormSection,
 } from '@/components/templates';
 
 import {
@@ -43,17 +44,17 @@ const ERP_TYPE_CONFIG: Record<string, { name: string; logo: string; color: strin
   kingdee: {
     name: '金蝶K/3',
     logo: 'K',
-    color: '#3b82f6',
+    color: 'primary.main',
   },
   yonyou: {
     name: '用友U8',
     logo: 'Y',
-    color: '#f59e0b',
+    color: 'warning.main',
   },
   sap: {
     name: 'SAP S/4',
     logo: 'S',
-    color: '#22c55e',
+    color: 'success.dark',
   },
 };
 
@@ -96,7 +97,7 @@ interface ErpConnection {
 }
 
 // 创建/编辑表单配置
-const CONNECTION_FORM_SECTIONS = [
+const CONNECTION_FORM_SECTIONS: FormSection[] = [
   {
     id: 'basic',
     title: '基本信息',
@@ -208,7 +209,7 @@ export default function ExternalErpConnectionsPage() {
     if (!searchValue) return list;
     const keyword = searchValue.toLowerCase();
     return list.filter(
-      (conn) =>
+      (conn: ErpConnection) =>
         conn.name.toLowerCase().includes(keyword) ||
         ERP_TYPE_CONFIG[conn.type]?.name.toLowerCase().includes(keyword)
     );
@@ -226,7 +227,7 @@ export default function ExternalErpConnectionsPage() {
               width: 32,
               height: 32,
               borderRadius: 1,
-              bgcolor: ERP_TYPE_CONFIG[row.type]?.color || '#9ca3af',
+              bgcolor: ERP_TYPE_CONFIG[row.type]?.color || 'text.disabled',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -371,7 +372,7 @@ export default function ExternalErpConnectionsPage() {
           app_secret: connection.app_secret || '',
           timeout: connection.timeout || 30000,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('Test connection failed:', error);
       }
     },
@@ -383,7 +384,7 @@ export default function ExternalErpConnectionsPage() {
     async (connectionId: string) => {
       try {
         await deleteConnection.mutateAsync(connectionId);
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('Delete connection failed:', error);
       }
     },
@@ -391,36 +392,36 @@ export default function ExternalErpConnectionsPage() {
   );
 
   // 处理创建/更新提交
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: unknown) => {
     try {
       setSubmitting(true);
       if (editingConnection) {
         await updateConnection.mutateAsync({
           connectionId: editingConnection.id,
           data: {
-            name: data.name,
-            api_url: data.api_url,
-            app_key: data.app_key,
-            app_secret: data.app_secret,
-            timeout: data.timeout,
-            sync_direction: data.sync_direction,
-            sync_mode: data.sync_mode,
+            name: (data as Record<string, unknown>).name as string,
+            api_url: (data as Record<string, unknown>).api_url as string,
+            app_key: (data as Record<string, unknown>).app_key as string,
+            app_secret: (data as Record<string, unknown>).app_secret as string,
+            timeout: (data as Record<string, unknown>).timeout as number,
+            sync_direction: (data as Record<string, unknown>).sync_direction as any,
+            sync_mode: (data as Record<string, unknown>).sync_mode as any,
           },
         });
         setEditingConnection(null);
       } else {
         await createConnection.mutateAsync({
-          type: data.type,
-          name: data.name,
-          api_url: data.api_url,
-          app_key: data.app_key,
-          app_secret: data.app_secret,
-          sync_direction: data.sync_direction,
-          sync_mode: data.sync_mode,
+          type: (data as Record<string, unknown>).type as any,
+          name: (data as Record<string, unknown>).name as string,
+          api_url: (data as Record<string, unknown>).api_url as string,
+          app_key: (data as Record<string, unknown>).app_key as string,
+          app_secret: (data as Record<string, unknown>).app_secret as string,
+          sync_direction: (data as Record<string, unknown>).sync_direction as any,
+          sync_mode: (data as Record<string, unknown>).sync_mode as any,
         });
         setShowCreateModal(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Save connection failed:', error);
       throw error;
     } finally {
@@ -476,6 +477,7 @@ export default function ExternalErpConnectionsPage() {
         <DialogTitle>新建ERP连接</DialogTitle>
         <DialogContent>
           <FormPageTemplate
+            title='新建ERP连接'
             sections={CONNECTION_FORM_SECTIONS}
             defaultValues={{
               type: 'kingdee',
@@ -501,6 +503,7 @@ export default function ExternalErpConnectionsPage() {
         <DialogTitle>编辑ERP连接</DialogTitle>
         <DialogContent>
           <FormPageTemplate
+            title='编辑ERP连接'
             sections={CONNECTION_FORM_SECTIONS}
             defaultValues={editingConnection || {}}
             onSubmit={handleSubmit}

@@ -130,11 +130,7 @@ export const MonitorMetricsPage: React.FC = () => {
         spacing={3}
         sx={{ mb: 4 }}
       >
-        <Grid
-          item
-          xs={12}
-          lg={9}
-        >
+        <Grid size={{ xs: 12, lg: 9 }}>
           <Card>
             <CardHeader
               title='指标趋势图'
@@ -214,11 +210,7 @@ export const MonitorMetricsPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={3}
-        >
+        <Grid size={{ xs: 12, lg: 3 }}>
           <Card>
             <CardHeader title='指标状态' />
             <CardContent>
@@ -250,7 +242,8 @@ export const MonitorMetricsPage: React.FC = () => {
                         disabled
                         sx={{
                           flex: 1,
-                          color: metric.value > metric.threshold * 0.8 ? '#f59e0b' : '#22c55e',
+                          color:
+                            metric.value > metric.threshold * 0.8 ? 'warning.main' : 'success.dark',
                         }}
                       />
                       <Chip

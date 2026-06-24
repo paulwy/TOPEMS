@@ -16,7 +16,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface CreateEmployeeFormProps {
   open: boolean;
@@ -77,10 +77,10 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建员工失败',
+        message: (err as { message?: string }).message || '创建员工失败',
         type: 'error',
       });
     }

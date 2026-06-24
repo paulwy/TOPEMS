@@ -7,7 +7,7 @@ import {
   Typography,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState } from 'react';
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from 'lucide-react';
@@ -223,7 +223,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   return (
     <Card
       sx={{
-        background: 'linear-gradient(to bottom right, #fffbeb, #ffedd5)',
+        background: 'linear-gradient(to bottom right, warning.light, #ffedd5)',
         border: '1px solid #fcd34d',
       }}
     >
@@ -243,7 +243,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
         </Typography>
         <Typography
           variant='body2'
-          sx={{ color: '#d97706', mt: 0.5 }}
+          sx={{ color: 'warning.dark', mt: 0.5 }}
         >
           智能生成和优化模板内容
         </Typography>
@@ -268,9 +268,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             sx={{
               width: '100%',
               mt: 1,
-              backgroundColor: '#f59e0b',
+              backgroundColor: 'warning.main',
               color: 'white',
-              '&:hover': { backgroundColor: '#d97706' },
+              '&:hover': { backgroundColor: 'warning.dark' },
             }}
             startIcon={
               isGenerating ? (
@@ -295,7 +295,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             sx={{
               borderColor: '#fcd34d',
               color: '#b45309',
-              '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' },
+              '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
             }}
             startIcon={<Lightbulb style={{ width: 16, height: 16 }} />}
           >
@@ -308,7 +308,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             sx={{
               borderColor: '#fcd34d',
               color: '#b45309',
-              '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' },
+              '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
             }}
             startIcon={<TrendingUp style={{ width: 16, height: 16 }} />}
           >
@@ -324,7 +324,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             width: '100%',
             borderColor: '#fcd34d',
             color: '#b45309',
-            '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' },
+            '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
           }}
           startIcon={
             isAnalyzing ? (
@@ -350,7 +350,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                   style={{
                     fontSize: 14,
                     color: '#92400e',
-                    backgroundColor: '#fef3c7',
+                    backgroundColor: 'warning.light',
                     borderRadius: 8,
                     padding: '8px 12px',
                   }}
@@ -375,11 +375,11 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                     padding: '8px 12px',
                     backgroundColor:
                       suggestion.includes('未使用') || suggestion.includes('未定义')
-                        ? '#fef2f2'
-                        : '#f0fdf4',
+                        ? 'error.light'
+                        : 'success.light',
                     color:
                       suggestion.includes('未使用') || suggestion.includes('未定义')
-                        ? '#b91c1c'
+                        ? 'error.darker'
                         : '#15803d',
                   }}
                 >

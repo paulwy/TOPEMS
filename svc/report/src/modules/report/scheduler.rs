@@ -1,4 +1,4 @@
-use chrono::Utc;
+use sqlx::types::chrono::Utc;
 use job_scheduler_ng::{Job, JobScheduler, Schedule};
 use sqlx::{PgPool, Row};
 use std::str::FromStr;
@@ -202,7 +202,7 @@ async fn check_and_execute_schedules(pool: &PgPool) -> Result<(), anyhow::Error>
 
 pub async fn execute_schedule_job(pool: &PgPool, schedule_id: Uuid, schedule_name: &str) -> Result<(), anyhow::Error> {
     let execution_id = Uuid::new_v4();
-    let started_at = Utc::now();
+    let started_at = Utc::now().naive_utc();
 
     sqlx::query!(
         r#"
@@ -228,7 +228,7 @@ pub async fn execute_schedule_job(pool: &PgPool, schedule_id: Uuid, schedule_nam
                 "#,
                 "completed",
                 output_path,
-                Utc::now(),
+                Utc::now().naive_utc(),
                 execution_id,
             )
             .execute(pool)
@@ -240,7 +240,7 @@ pub async fn execute_schedule_job(pool: &PgPool, schedule_id: Uuid, schedule_nam
                 SET last_run_at = $1, run_count = run_count + 1, error_message = NULL
                 WHERE id = $2
                 "#,
-                Utc::now(),
+                Utc::now().naive_utc(),
                 schedule_id,
             )
             .execute(pool)
@@ -257,7 +257,7 @@ pub async fn execute_schedule_job(pool: &PgPool, schedule_id: Uuid, schedule_nam
                 "#,
                 "failed",
                 e.to_string(),
-                Utc::now(),
+                Utc::now().naive_utc(),
                 execution_id,
             )
             .execute(pool)
@@ -269,7 +269,7 @@ pub async fn execute_schedule_job(pool: &PgPool, schedule_id: Uuid, schedule_nam
                 SET last_run_at = $1, error_message = $2
                 WHERE id = $3
                 "#,
-                Utc::now(),
+                Utc::now().naive_utc(),
                 e.to_string(),
                 schedule_id,
             )

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Checkbox, LinearProgress } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   X,
   FileSpreadsheet,
@@ -34,27 +34,27 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       label: 'Excel (.xlsx)',
       icon: FileSpreadsheet,
       description: '适合数据分析，支持公式和图表',
-      color: '#16a34a',
-      bgColor: '#f0fdf4',
-      borderColor: '#bbf7d0',
+      color: 'success.dark',
+      bgColor: 'success.light',
+      borderColor: 'success.light',
     },
     {
       value: 'pdf' as ExportFormat,
       label: 'PDF (.pdf)',
       icon: File,
       description: '适合打印和文档分享',
-      color: '#dc2626',
-      bgColor: '#fef2f2',
-      borderColor: '#fecaca',
+      color: 'error.dark',
+      bgColor: 'error.light',
+      borderColor: 'error.light',
     },
     {
       value: 'csv' as ExportFormat,
       label: 'CSV (.csv)',
       icon: FileText,
       description: '适合数据交换和程序读取',
-      color: '#2563eb',
-      bgColor: '#eff6ff',
-      borderColor: '#bfdbfe',
+      color: 'primary.dark',
+      bgColor: 'primary.light',
+      borderColor: 'primary.light',
     },
   ];
 
@@ -83,7 +83,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (err) {
+    } catch (err: unknown) {
       setExportError('导出失败，请重试');
       logger.error('导出失败:', err);
     } finally {
@@ -196,8 +196,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
         <Box
           sx={{
             padding: 3,
-            borderBottom: '1px solid #e2e8f0',
-            background: 'linear-gradient(90deg, #f0fdf4, #ecfdf5)',
+            borderBottom: '1px solid border.default',
+            background: 'linear-gradient(90deg, success.light, success.light)',
           }}
         >
           <Box
@@ -212,7 +212,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   fontSize: '1.25rem',
                   fontWeight: 'semibold',
-                  color: '#0f172a',
+                  color: 'grey.900',
                 }}
               >
                 导出报表
@@ -225,9 +225,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
               onClick={onClose}
               sx={{
                 padding: 1,
-                '&:hover': { backgroundColor: '#f1f5f9' },
+                '&:hover': { backgroundColor: 'grey.100' },
                 borderRadius: '0.5rem',
-                color: '#64748b',
+                color: 'grey.600',
               }}
             >
               <X sx={{ width: 20, height: 20 }} />
@@ -267,9 +267,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                           padding: 3,
                           borderRadius: '0.5rem',
                           border: isSelected
-                            ? '2px solid #2563eb'
+                            ? '2px solid primary.dark'
                             : `2px solid ${option.borderColor}`,
-                          backgroundColor: isSelected ? '#eff6ff' : option.bgColor,
+                          backgroundColor: isSelected ? 'primary.light' : option.bgColor,
                           cursor: 'pointer',
                           transition: 'all 0.2s',
                           '&:hover': { transform: 'scale(1.02)' },
@@ -286,7 +286,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                             sx={{
                               width: 32,
                               height: 32,
-                              color: isSelected ? '#2563eb' : option.color,
+                              color: isSelected ? 'primary.dark' : option.color,
                             }}
                           />
                         </Box>
@@ -294,7 +294,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                           sx={{
                             fontSize: '0.875rem',
                             fontWeight: 'medium',
-                            color: '#0f172a',
+                            color: 'grey.900',
                             textAlign: 'center',
                           }}
                         >
@@ -303,7 +303,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                         <Typography
                           sx={{
                             fontSize: '0.75rem',
-                            color: '#64748b',
+                            color: 'grey.600',
                             textAlign: 'center',
                             marginTop: 0.5,
                           }}
@@ -342,7 +342,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   <Typography
                     sx={{
                       fontSize: '0.75rem',
-                      color: '#64748b',
+                      color: 'grey.600',
                       marginTop: 0.5,
                     }}
                   >
@@ -356,8 +356,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                       checked={includeHeaders}
                       onChange={(e) => setIncludeHeaders(e.target.checked)}
                       sx={{
-                        color: '#2563eb',
-                        '&.Mui-checked': { color: '#2563eb' },
+                        color: 'primary.dark',
+                        '&.Mui-checked': { color: 'primary.dark' },
                       }}
                     />
                     <Typography sx={{ fontSize: '0.875rem', color: '#334155' }}>
@@ -369,7 +369,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
 
               <Box
                 sx={{
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'grey.50',
                   borderRadius: '0.5rem',
                   padding: 2,
                 }}
@@ -382,7 +382,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                     marginBottom: 1,
                   }}
                 >
-                  <Columns sx={{ width: 16, height: 16, color: '#64748b' }} />
+                  <Columns sx={{ width: 16, height: 16, color: 'grey.600' }} />
                   <Typography
                     sx={{
                       fontSize: '0.875rem',
@@ -420,7 +420,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   width: 64,
                   height: 64,
-                  color: '#2563eb',
+                  color: 'primary.dark',
                   margin: '0 auto 16px',
                   animation: 'spin 1s linear infinite',
                 }}
@@ -429,7 +429,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   fontSize: '1.125rem',
                   fontWeight: 'medium',
-                  color: '#0f172a',
+                  color: 'grey.900',
                 }}
               >
                 正在导出报表...
@@ -441,10 +441,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   sx={{
                     height: 10,
                     borderRadius: 5,
-                    backgroundColor: '#e2e8f0',
+                    backgroundColor: 'border.default',
                     '& .MuiLinearProgress-bar': {
                       borderRadius: 5,
-                      backgroundColor: '#2563eb',
+                      backgroundColor: 'primary.dark',
                     },
                   }}
                 />
@@ -461,7 +461,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   width: 64,
                   height: 64,
-                  backgroundColor: '#dcfce7',
+                  backgroundColor: 'success.lighter',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -469,13 +469,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   margin: '0 auto 16px',
                 }}
               >
-                <CheckCircle sx={{ width: 32, height: 32, color: '#16a34a' }} />
+                <CheckCircle sx={{ width: 32, height: 32, color: 'success.dark' }} />
               </Box>
               <Typography
                 sx={{
                   fontSize: '1.125rem',
                   fontWeight: 'medium',
-                  color: '#0f172a',
+                  color: 'grey.900',
                 }}
               >
                 导出成功！
@@ -492,7 +492,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   width: 64,
                   height: 64,
-                  backgroundColor: '#fee2e2',
+                  backgroundColor: 'error.lighter',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -500,13 +500,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   margin: '0 auto 16px',
                 }}
               >
-                <X sx={{ width: 32, height: 32, color: '#dc2626' }} />
+                <X sx={{ width: 32, height: 32, color: 'error.dark' }} />
               </Box>
               <Typography
                 sx={{
                   fontSize: '1.125rem',
                   fontWeight: 'medium',
-                  color: '#7f1d1d',
+                  color: 'error.dark',
                 }}
               >
                 {exportError}
@@ -517,10 +517,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   marginTop: 2,
                   paddingX: 2,
                   paddingY: 1,
-                  backgroundColor: '#dc2626',
+                  backgroundColor: 'error.dark',
                   color: 'white',
                   borderRadius: '0.5rem',
-                  '&:hover': { backgroundColor: '#b91c1c' },
+                  '&:hover': { backgroundColor: 'error.darker' },
                 }}
               >
                 重试
@@ -533,7 +533,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
           <Box
             sx={{
               padding: 3,
-              borderTop: '1px solid #e2e8f0',
+              borderTop: '1px solid border.default',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: 2,
@@ -545,9 +545,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 paddingX: 2,
                 paddingY: 1,
                 color: '#334155',
-                backgroundColor: '#f1f5f9',
+                backgroundColor: 'grey.100',
                 borderRadius: '0.5rem',
-                '&:hover': { backgroundColor: '#e2e8f0' },
+                '&:hover': { backgroundColor: 'border.default' },
               }}
             >
               取消
@@ -559,7 +559,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
               sx={{
                 paddingX: 3,
                 paddingY: 1,
-                backgroundColor: '#16a34a',
+                backgroundColor: 'success.dark',
                 color: 'white',
                 borderRadius: '0.5rem',
                 '&:hover': { backgroundColor: '#15803d' },

@@ -12,19 +12,19 @@ interface ServiceStatusCardProps {
 
 const statusColors = {
   online: {
-    bg: '#f0fdf4',
-    iconBg: '#22c55e',
-    iconColor: '#ffffff',
-    dot: '#22c55e',
-    border: '#bbf7d0',
+    bg: 'success.light',
+    iconBg: 'success.dark',
+    iconColor: 'white',
+    dot: 'success.dark',
+    border: 'success.light',
     textColor: '#166534',
   },
   offline: {
-    bg: '#fef2f2',
-    iconBg: '#ef4444',
-    iconColor: '#ffffff',
-    dot: '#ef4444',
-    border: '#fecaca',
+    bg: 'error.light',
+    iconBg: 'error.main',
+    iconColor: 'white',
+    dot: 'error.main',
+    border: 'error.light',
     textColor: '#991b1b',
   },
 };
@@ -104,8 +104,8 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
           justifyContent: 'space-between',
         }}
       >
-        <Typography sx={{ fontSize: 10, fontWeight: 500, color: '#64748b' }}>{service}</Typography>
-        <Typography sx={{ fontSize: 10, color: '#64748b' }}>:{port}</Typography>
+        <Typography sx={{ fontSize: 10, fontWeight: 500, color: 'grey.600' }}>{service}</Typography>
+        <Typography sx={{ fontSize: 10, color: 'grey.600' }}>:{port}</Typography>
       </Box>
     </Box>
   );

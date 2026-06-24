@@ -45,7 +45,7 @@ export const getDateRange = (range: string): { start: string; end: string } => {
   }
 
   return {
-    start: formatDate(startDate),
-    end: formatDate(endDate),
+    start: formatDate(startDate.toISOString()),
+    end: formatDate(endDate.toISOString()),
   };
 };

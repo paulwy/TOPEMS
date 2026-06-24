@@ -39,7 +39,7 @@ const parseTokenExpiryFromJWT = (token: string): number => {
       // JWT 的 exp 是 Unix 时间戳（秒），转为毫秒
       return payload.exp * 1000;
     }
-  } catch (e) {
+  } catch (e: unknown) {
     authLogger.warn('Failed to parse token expiry from JWT:', e);
   }
   // 解析失败时返回默认过期时间
@@ -194,7 +194,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setState((prev) => ({ ...prev, token: access_token }));
         return true;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       authLogger.error('Token refresh failed:', error);
       localStorage.removeItem('token');
       localStorage.removeItem('refresh_token');
@@ -249,7 +249,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             },
             REFRESH_INTERVAL.MINUTE_5 // 5分钟刷新一次
           );
-        } catch (error) {
+        } catch (error: unknown) {
           authLogger.error('Failed to initialize auth:', error);
           logout();
         }
@@ -311,7 +311,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       authLogger.error('Login error:', error);
       throw error;
     }
@@ -371,7 +371,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (permissionsStr) {
         permissions = JSON.parse(permissionsStr);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       authLogger.error('Failed to parse auth data from localStorage:', e);
     }
 
@@ -397,7 +397,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (permissionsStr) {
         permissions = JSON.parse(permissionsStr);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       authLogger.error('Failed to parse auth data from localStorage:', e);
     }
 
@@ -423,7 +423,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (permissionsStr) {
         permissions = JSON.parse(permissionsStr);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       authLogger.error('Failed to parse auth data from localStorage:', e);
     }
 
@@ -448,7 +448,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           permissions: permissions.map((p) => p.id),
         }));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       authLogger.error('Failed to refresh permissions:', error);
     }
   }, []);

@@ -313,7 +313,7 @@ describe("CustomerManagementPage 客户管理页面", () => {
     });
 
     it("应该验证必填字段", () => {
-      const validateForm = (data: any) => {
+      const validateForm = (data: { name?: string; code?: string }) => {
         const errors: string[] = [];
         if (!data.name) errors.push("客户名称不能为空");
         if (!data.code) errors.push("客户代码不能为空");

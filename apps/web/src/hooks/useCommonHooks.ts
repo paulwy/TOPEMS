@@ -27,7 +27,7 @@ export function useLocalStorage<T>(
         const valueToStore = value instanceof Function ? value(prev) : value;
         try {
           localStorage.setItem(key, JSON.stringify(valueToStore));
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('useLocalStorage setItem error:', error);
         }
         return valueToStore;
@@ -61,7 +61,7 @@ export function useSessionStorage<T>(
         const valueToStore = value instanceof Function ? value(prev) : value;
         try {
           sessionStorage.setItem(key, JSON.stringify(valueToStore));
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('useSessionStorage setItem error:', error);
         }
         return valueToStore;
@@ -207,7 +207,7 @@ export function useFetch<T>(url: string, options?: RequestInit) {
       }
       const data = await response.json();
       setState({ data, loading: false, error: null });
-    } catch (error) {
+    } catch (error: unknown) {
       setState({ data: null, loading: false, error: error as Error });
     }
   }, [url, options]);

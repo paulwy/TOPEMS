@@ -43,7 +43,7 @@ export function useUpdateSupplierFinanceInfo() {
       queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
       success('供应商财务信息更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '供应商财务信息更新失败');
     },
   });
@@ -97,7 +97,7 @@ export function useCreatePurchaseInvoice() {
       queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
       success('采购发票创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '采购发票创建失败');
     },
   });
@@ -118,7 +118,7 @@ export function useUpdatePurchaseInvoice() {
       queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
       success('采购发票更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '采购发票更新失败');
     },
   });
@@ -138,7 +138,7 @@ export function useDeletePurchaseInvoice() {
       queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
       success('采购发票删除成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '采购发票删除失败');
     },
   });
@@ -158,7 +158,7 @@ export function useConfirmPurchaseInvoice() {
       queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
       success('发票已确认');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '发票确认失败');
     },
   });
@@ -177,7 +177,7 @@ export function useVerifyPurchaseInvoice() {
       queryClient.invalidateQueries({ queryKey: ['srm-purchase-invoices'] });
       success('发票验证通过');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '发票验证失败');
     },
   });
@@ -229,7 +229,7 @@ export function useCreatePaymentRequest() {
       queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
       success('付款申请创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '付款申请创建失败');
     },
   });
@@ -249,7 +249,7 @@ export function useUpdatePaymentRequest() {
       queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
       success('付款申请更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '付款申请更新失败');
     },
   });
@@ -268,7 +268,7 @@ export function useDeletePaymentRequest() {
       queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
       success('付款申请删除成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '付款申请删除失败');
     },
   });
@@ -287,7 +287,7 @@ export function useSubmitPaymentRequest() {
       queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
       success('付款申请已提交');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '付款申请提交失败');
     },
   });
@@ -314,7 +314,7 @@ export function useApprovePaymentRequest() {
       queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
       success('付款申请审批完成');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '付款申请审批失败');
     },
   });
@@ -341,7 +341,7 @@ export function useConfirmPayment() {
       queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
       success('付款确认成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '付款确认失败');
     },
   });
@@ -430,7 +430,7 @@ export function useExportPurchaseInvoices() {
     onSuccess: () => {
       success('采购发票已导出');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });
@@ -464,7 +464,7 @@ export function useExportPaymentRequests() {
     onSuccess: () => {
       success('付款申请已导出');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });
@@ -497,7 +497,7 @@ export function useExportPayableAging() {
     onSuccess: () => {
       success('应付账龄分析已导出');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });

@@ -80,7 +80,7 @@ const MapEvents: React.FC<MapEventsProps> = ({
           id: `point-${Date.now()}`,
           type: 'point',
           points: [{ lat: point[0], lng: point[1], timestamp: Date.now() }],
-          color: '#EF4444',
+          color: 'error.main',
         };
         setDrawFeatures([...drawFeatures, newFeature]);
       } else if (toolMode === 'draw-line') {
@@ -89,7 +89,7 @@ const MapEvents: React.FC<MapEventsProps> = ({
             id: `line-${Date.now()}`,
             type: 'line',
             points: [{ lat: point[0], lng: point[1] }],
-            color: '#3B82F6',
+            color: 'primary.main',
           });
         } else {
           const updatedDrawing = {
@@ -104,7 +104,7 @@ const MapEvents: React.FC<MapEventsProps> = ({
             id: `polygon-${Date.now()}`,
             type: 'polygon',
             points: [{ lat: point[0], lng: point[1] }],
-            color: '#10B981',
+            color: 'success.main',
           });
         } else {
           const updatedDrawing = {

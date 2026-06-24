@@ -15,7 +15,7 @@ import {
   Autocomplete,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -70,7 +70,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
       if (res.code === 200 && res.data) {
         setDepartments(res.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to load departments:', err);
     }
   };
@@ -81,7 +81,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
       if (res.code === 200 && res.data) {
         setPositions(res.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to load positions:', err);
     }
   };
@@ -105,7 +105,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
       } else {
         error(res.message || '创建失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to create employee:', err);
       error('创建员工失败');
     } finally {

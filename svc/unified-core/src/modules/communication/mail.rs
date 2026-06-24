@@ -1,4 +1,4 @@
-//! Mail submodule - Email handlers
+//! Mail submodule - Email handlers with database support and real mail sending
 
 use axum::{extract::{Path, State}, Json};
 use serde::{Deserialize, Serialize};
@@ -7,6 +7,53 @@ use uuid::Uuid;
 use crate::AppState;
 use topems_shared::auth::Claims;
 use axum::Extension;
+use lettre::{
+    message::{Mailbox, Message},
+    transport::smtp::{authentication::Credentials, client::Tls, client::TlsParameters, SmtpTransport},
+    Transport,
+};
+use handlebars::Handlebars;
+use dashmap::DashMap;
+use std::sync::Arc;
+
+#[derive(Debug, Clone)]
+pub struct QueuedEmail {
+    pub id: String,
+    pub from: String,
+    pub to: String,
+    pub subject: String,
+    pub body: String,
+    pub html_body: Option<String>,
+    pub cc: Option<Vec<String>>,
+    pub bcc: Option<Vec<String>>,
+    pub attempts: usize,
+    pub max_attempts: usize,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub status: EmailQueueStatus,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EmailQueueStatus {
+    Pending,
+    Sending,
+    Sent,
+    Failed,
+}
+
+impl ToString for EmailQueueStatus {
+    fn to_string(&self) -> String {
+        match self {
+            EmailQueueStatus::Pending => "pending".to_string(),
+            EmailQueueStatus::Sending => "sending".to_string(),
+            EmailQueueStatus::Sent => "sent".to_string(),
+            EmailQueueStatus::Failed => "failed".to_string(),
+        }
+    }
+}
+
+lazy_static::lazy_static! {
+    static ref EMAIL_QUEUE: DashMap<String, QueuedEmail> = DashMap::new();
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct SendEmailRequest {
@@ -45,7 +92,14 @@ pub struct SendWithTemplateRequest {
     pub bcc: Option<Vec<String>>,
 }
 
-/// 列出用户邮件
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateTemplateRequest {
+    pub name: Option<String>,
+    pub subject_template: Option<String>,
+    pub body_template: Option<String>,
+    pub description: Option<String>,
+}
+
 pub async fn list_emails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -65,7 +119,6 @@ pub async fn list_emails(
         }
     };
 
-    // 查询用户的邮件记录
     let result = sqlx::query(
         r#"
         SELECT id, from_email, to_email, subject, sent_at, is_read 
@@ -111,7 +164,6 @@ pub async fn list_emails(
     }
 }
 
-/// 发送邮件
 pub async fn send_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -119,7 +171,6 @@ pub async fn send_email(
 ) -> Json<serde_json::Value> {
     tracing::info!("Communication mail send_email called with: {:?} by user: {}", payload, claims.username);
 
-    // 验证输入
     if payload.to.is_empty() || payload.subject.is_empty() || payload.body.is_empty() {
         return Json(serde_json::json!({
             "success": false,
@@ -129,7 +180,6 @@ pub async fn send_email(
         }));
     }
 
-    // 检查权限：只有管理员可以发送邮件
     if !claims.is_superuser && !claims.has_permission("notification:write") {
         return Json(serde_json::json!({
             "success": false,
@@ -139,7 +189,6 @@ pub async fn send_email(
         }));
     }
 
-    // 获取发送者信息
     let sender_email = match sqlx::query_scalar(
         "SELECT email FROM core_users WHERE id = $1",
     )
@@ -155,9 +204,7 @@ pub async fn send_email(
         }
     };
 
-    // 发送邮件
-    let result = send_email_internal(
-        &state,
+    let result = send_email_with_lettre(
         &sender_email,
         &payload.to,
         &payload.subject,
@@ -165,11 +212,10 @@ pub async fn send_email(
         payload.html_body.as_deref(),
         payload.cc.as_ref(),
         payload.bcc.as_ref(),
-    ).await;
+    );
 
     match result {
         Ok(_) => {
-            // 保存邮件记录到数据库
             let email_id = Uuid::new_v4();
             let _ = sqlx::query(
                 r#"
@@ -209,7 +255,6 @@ pub async fn send_email(
     }
 }
 
-/// 获取邮件详情
 pub async fn get_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -243,7 +288,6 @@ pub async fn get_email(
         }
     };
 
-    // 查询邮件并验证权限
     let result = sqlx::query(
         r#"
         SELECT e.id, e.from_email, e.to_email, e.subject, e.body, e.html_body, e.sent_at, e.is_read,
@@ -293,7 +337,6 @@ pub async fn get_email(
     }
 }
 
-/// 删除邮件（软删除）
 pub async fn delete_email(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -327,7 +370,6 @@ pub async fn delete_email(
         }
     };
 
-    // 检查权限：只有管理员或邮件所有者可以删除
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
         let belongs_to_user = sqlx::query_scalar::<_, bool>(
             r#"
@@ -386,7 +428,6 @@ pub async fn delete_email(
     }
 }
 
-/// 标记邮件为已读
 pub async fn mark_as_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -420,7 +461,6 @@ pub async fn mark_as_read(
         }
     };
 
-    // 检查权限：只能标记自己的邮件为已读
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
         r#"
         SELECT EXISTS(
@@ -476,14 +516,12 @@ pub async fn mark_as_read(
     }
 }
 
-/// 列出邮件模板
 pub async fn list_templates(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     tracing::info!("Communication mail list_templates called for user: {}", claims.username);
 
-    // 检查权限
     if !claims.is_superuser && !claims.has_permission("notification:read") {
         return Json(serde_json::json!({
             "success": false,
@@ -493,22 +531,56 @@ pub async fn list_templates(
         }));
     }
 
-    Json(serde_json::json!({
-        "success": true,
-        "message": "list_templates success",
-        "data": []
-    }))
+    let result = sqlx::query(
+        r#"
+        SELECT id, name, subject_template, body_template, description, created_at, updated_at
+        FROM core_email_templates
+        WHERE is_deleted = FALSE
+        ORDER BY created_at DESC
+        "#,
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let templates: Vec<EmailTemplate> = rows
+                .into_iter()
+                .map(|row| EmailTemplate {
+                    id: row.get::<Uuid, _>("id").to_string(),
+                    name: row.get::<String, _>("name"),
+                    subject_template: row.get::<String, _>("subject_template"),
+                    body_template: row.get::<String, _>("body_template"),
+                    description: row.get::<Option<String>, _>("description"),
+                    created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+                    updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "success": true,
+                "message": "list_templates success",
+                "data": templates
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to list templates: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("获取模板列表失败: {}", e),
+                "data": []
+            }))
+        }
+    }
 }
 
-/// 创建邮件模板
 pub async fn create_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateTemplateRequest>,
 ) -> Json<serde_json::Value> {
     tracing::info!("Communication mail create_template called with: {:?} by user: {}", payload, claims.username);
 
-    // 检查权限
     if !claims.is_superuser && !claims.has_permission("notification:write") {
         return Json(serde_json::json!({
             "success": false,
@@ -518,7 +590,6 @@ pub async fn create_template(
         }));
     }
 
-    // 验证输入
     if payload.name.is_empty() || payload.subject_template.is_empty() || payload.body_template.is_empty() {
         return Json(serde_json::json!({
             "success": false,
@@ -528,29 +599,56 @@ pub async fn create_template(
         }));
     }
 
-    Json(serde_json::json!({
-        "success": true,
-        "message": "邮件模板创建成功",
-        "data": {
-            "id": Uuid::new_v4().to_string(),
-            "name": payload.name,
-            "subject_template": payload.subject_template,
-            "body_template": payload.body_template,
-            "description": payload.description
-        },
-        "code": 0
-    }))
+    let id = Uuid::new_v4();
+    let result = sqlx::query(
+        r#"
+        INSERT INTO core_email_templates (id, name, subject_template, body_template, description, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        RETURNING id, name, subject_template, body_template, description, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&payload.name)
+    .bind(&payload.subject_template)
+    .bind(&payload.body_template)
+    .bind(&payload.description)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(row) => Json(serde_json::json!({
+            "success": true,
+            "message": "邮件模板创建成功",
+            "data": EmailTemplate {
+                id: row.get::<Uuid, _>("id").to_string(),
+                name: row.get::<String, _>("name"),
+                subject_template: row.get::<String, _>("subject_template"),
+                body_template: row.get::<String, _>("body_template"),
+                description: row.get::<Option<String>, _>("description"),
+                created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+                updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+            },
+            "code": 0
+        })),
+        Err(e) => {
+            tracing::error!("Failed to create template: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("创建模板失败: {}", e),
+                "data": null,
+                "code": 500
+            }))
+        }
+    }
 }
 
-/// 获取邮件模板详情
 pub async fn get_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("Communication mail get_template called with id: {} for user: {}", id, claims.username);
 
-    // 检查权限
     if !claims.is_superuser && !claims.has_permission("notification:read") {
         return Json(serde_json::json!({
             "success": false,
@@ -560,23 +658,70 @@ pub async fn get_template(
         }));
     }
 
-    Json(serde_json::json!({
-        "success": true,
-        "message": "get_template success",
-        "data": null
-    }))
+    let template_id = match Uuid::parse_str(&id) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid template ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "无效的模板ID",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
+
+    let result = sqlx::query(
+        r#"
+        SELECT id, name, subject_template, body_template, description, created_at, updated_at
+        FROM core_email_templates
+        WHERE id = $1 AND is_deleted = FALSE
+        "#,
+    )
+    .bind(template_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(row)) => Json(serde_json::json!({
+            "success": true,
+            "message": "get_template success",
+            "data": EmailTemplate {
+                id: row.get::<Uuid, _>("id").to_string(),
+                name: row.get::<String, _>("name"),
+                subject_template: row.get::<String, _>("subject_template"),
+                body_template: row.get::<String, _>("body_template"),
+                description: row.get::<Option<String>, _>("description"),
+                created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+                updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+            }
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": false,
+            "message": "模板不存在",
+            "data": null,
+            "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to get template: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("获取模板失败: {}", e),
+                "data": null,
+                "code": 500
+            }))
+        }
+    }
 }
 
-/// 更新邮件模板
 pub async fn update_template(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Json(payload): Json<CreateTemplateRequest>,
+    Json(payload): Json<UpdateTemplateRequest>,
 ) -> Json<serde_json::Value> {
     tracing::info!("Communication mail update_template called with id: {} and payload: {:?} by user: {}", id, payload, claims.username);
 
-    // 检查权限
     if !claims.is_superuser && !claims.has_permission("notification:write") {
         return Json(serde_json::json!({
             "success": false,
@@ -586,15 +731,132 @@ pub async fn update_template(
         }));
     }
 
-    Json(serde_json::json!({
-        "success": true,
-        "message": "邮件模板更新成功",
-        "data": null,
-        "code": 0
-    }))
+    let template_id = match Uuid::parse_str(&id) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid template ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "无效的模板ID",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
+
+    let result = sqlx::query(
+        r#"
+        UPDATE core_email_templates
+        SET name = COALESCE($1, name),
+            subject_template = COALESCE($2, subject_template),
+            body_template = COALESCE($3, body_template),
+            description = COALESCE($4, description),
+            updated_at = NOW()
+        WHERE id = $5 AND is_deleted = FALSE
+        RETURNING id, name, subject_template, body_template, description, created_at, updated_at
+        "#,
+    )
+    .bind(&payload.name)
+    .bind(&payload.subject_template)
+    .bind(&payload.body_template)
+    .bind(&payload.description)
+    .bind(template_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(row)) => Json(serde_json::json!({
+            "success": true,
+            "message": "邮件模板更新成功",
+            "data": EmailTemplate {
+                id: row.get::<Uuid, _>("id").to_string(),
+                name: row.get::<String, _>("name"),
+                subject_template: row.get::<String, _>("subject_template"),
+                body_template: row.get::<String, _>("body_template"),
+                description: row.get::<Option<String>, _>("description"),
+                created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+                updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+            },
+            "code": 0
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": false,
+            "message": "模板不存在",
+            "data": null,
+            "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to update template: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("更新模板失败: {}", e),
+                "data": null,
+                "code": 500
+            }))
+        }
+    }
 }
 
-/// 使用模板发送邮件
+pub async fn delete_template(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Communication mail delete_template called with id: {} for user: {}", id, claims.username);
+
+    if !claims.is_superuser && !claims.has_permission("notification:admin") {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "没有权限删除邮件模板",
+            "data": null,
+            "code": 403
+        }));
+    }
+
+    let template_id = match Uuid::parse_str(&id) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid template ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "无效的模板ID",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
+
+    match sqlx::query(
+        "UPDATE core_email_templates SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1 AND is_deleted = FALSE",
+    )
+    .bind(template_id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
+            "success": true,
+            "message": "邮件模板删除成功",
+            "data": null,
+            "code": 0
+        })),
+        Ok(_) => Json(serde_json::json!({
+            "success": false,
+            "message": "模板不存在",
+            "data": null,
+            "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to delete template: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("删除模板失败: {}", e),
+                "data": null,
+                "code": 500
+            }))
+        }
+    }
+}
+
 pub async fn send_with_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -603,7 +865,6 @@ pub async fn send_with_template(
 ) -> Json<serde_json::Value> {
     tracing::info!("Communication mail send_with_template called with id: {} and payload: {:?} by user: {}", id, payload, claims.username);
 
-    // 检查权限
     if !claims.is_superuser && !claims.has_permission("notification:write") {
         return Json(serde_json::json!({
             "success": false,
@@ -613,27 +874,78 @@ pub async fn send_with_template(
         }));
     }
 
-    // 获取模板（简化实现）
-    let subject = "通知邮件";
-    let body = "这是一封通知邮件";
+    let template_id = match Uuid::parse_str(&id) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid template ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "无效的模板ID",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
 
-    // 发送邮件
-    let result = send_email_internal(
-        &state,
+    let result = sqlx::query(
+        r#"
+        SELECT subject_template, body_template
+        FROM core_email_templates
+        WHERE id = $1 AND is_deleted = FALSE
+        "#,
+    )
+    .bind(template_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    let (subject_template, body_template) = match result {
+        Ok(Some(row)) => (
+            row.get::<String, _>("subject_template"),
+            row.get::<String, _>("body_template"),
+        ),
+        Ok(None) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "模板不存在",
+                "data": null,
+                "code": 404
+            }));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get template: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("获取模板失败: {}", e),
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
+    let mut handlebars = Handlebars::new();
+    let subject = handlebars.render_template(&subject_template, &payload.variables)
+        .unwrap_or_else(|_| subject_template.clone());
+    let body = handlebars.render_template(&body_template, &payload.variables)
+        .unwrap_or_else(|_| body_template);
+
+    let result = send_email_with_lettre(
         "system@topems.io",
         &payload.to,
-        subject,
-        body,
+        &subject,
+        &body,
         None,
         payload.cc.as_ref(),
         payload.bcc.as_ref(),
-    ).await;
+    );
 
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
             "message": "使用模板发送邮件成功",
-            "data": null,
+            "data": {
+                "to": payload.to,
+                "subject": subject
+            },
             "code": 0
         })),
         Err(e) => Json(serde_json::json!({
@@ -645,17 +957,15 @@ pub async fn send_with_template(
     }
 }
 
-/// 发送通知邮件（内部辅助函数）
 pub async fn send_notification_email(
-    state: &AppState,
+    _state: &AppState,
     to: &str,
     subject: &str,
     body: &str,
 ) -> Result<(), String> {
     tracing::info!("Sending notification email to: {}", to);
 
-    send_email_internal(
-        state,
+    send_email_with_lettre(
         "system@topems.io",
         to,
         subject,
@@ -663,12 +973,90 @@ pub async fn send_notification_email(
         None,
         None,
         None,
-    ).await
+    )
 }
 
-/// 内部邮件发送函数
-async fn send_email_internal(
-    state: &AppState,
+fn build_message(
+    from: &str,
+    to: &str,
+    subject: &str,
+    body: &str,
+    html_body: Option<&str>,
+    cc: Option<&Vec<String>>,
+    bcc: Option<&Vec<String>>,
+) -> Result<Message, String> {
+    let from_addr = Mailbox::new(Some(from.to_string()), from.parse().map_err(|e| format!("Invalid from email: {}", e))?);
+    let to_addr = Mailbox::new(Some(to.to_string()), to.parse().map_err(|e| format!("Invalid to email: {}", e))?);
+
+    let mut message_builder = Message::builder()
+        .from(from_addr)
+        .to(to_addr)
+        .subject(subject);
+
+    if let Some(cc_list) = cc {
+        for cc_email in cc_list {
+            let cc_addr = Mailbox::new(Some(cc_email.to_string()), cc_email.parse().map_err(|e| format!("Invalid CC email: {}", e))?);
+            message_builder = message_builder.cc(cc_addr);
+        }
+    }
+
+    if let Some(bcc_list) = bcc {
+        for bcc_email in bcc_list {
+            let bcc_addr = Mailbox::new(Some(bcc_email.to_string()), bcc_email.parse().map_err(|e| format!("Invalid BCC email: {}", e))?);
+            message_builder = message_builder.bcc(bcc_addr);
+        }
+    }
+
+    if let Some(html) = html_body {
+        message_builder.body(format!("{}\n\n{}", body, html)).map_err(|e| format!("Failed to build message: {}", e))
+    } else {
+        message_builder.body(body.to_string()).map_err(|e| format!("Failed to build message: {}", e))
+    }
+}
+
+fn create_mailer() -> Result<SmtpTransport, String> {
+    let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
+    let smtp_port = std::env::var("SMTP_PORT")
+        .unwrap_or_else(|_| "587".to_string())
+        .parse::<u16>()
+        .unwrap_or(587);
+    let smtp_user = std::env::var("SMTP_USER").unwrap_or_else(|_| "".to_string());
+    let smtp_password = std::env::var("SMTP_PASSWORD").unwrap_or_else(|_| "".to_string());
+    let smtp_tls = std::env::var("SMTP_TLS").unwrap_or_else(|_| "starttls".to_string());
+
+    let tls_config = match smtp_tls.as_str() {
+        "none" => Tls::None,
+        "starttls" => {
+            if let Ok(params) = TlsParameters::new(smtp_host.clone()) {
+                Tls::Opportunistic(params)
+            } else {
+                Tls::None
+            }
+        }
+        "tls" => {
+            if let Ok(params) = TlsParameters::new(smtp_host.clone()) {
+                Tls::Wrapper(params)
+            } else {
+                Tls::None
+            }
+        }
+        _ => {
+            if let Ok(params) = TlsParameters::new(smtp_host.clone()) {
+                Tls::Opportunistic(params)
+            } else {
+                Tls::None
+            }
+        }
+    };
+
+    Ok(SmtpTransport::builder_dangerous(smtp_host)
+        .port(smtp_port)
+        .tls(tls_config)
+        .credentials(Credentials::new(smtp_user, smtp_password))
+        .build())
+}
+
+fn send_email_with_lettre(
     from: &str,
     to: &str,
     subject: &str,
@@ -677,30 +1065,13 @@ async fn send_email_internal(
     cc: Option<&Vec<String>>,
     bcc: Option<&Vec<String>>,
 ) -> Result<(), String> {
-    // 尝试从环境变量获取邮件配置
     let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
     let smtp_port = std::env::var("SMTP_PORT")
         .unwrap_or_else(|_| "587".to_string())
         .parse::<u16>()
         .unwrap_or(587);
-    let smtp_user = std::env::var("SMTP_USER").unwrap_or_else(|_| "".to_string());
-    let smtp_password = std::env::var("SMTP_PASSWORD").unwrap_or_else(|_| "".to_string());
 
-    // 使用 reqwest 发送简单的 HTTP 请求到邮件服务
-    // 在实际生产环境中，应该使用专门的邮件库如 lettre
-    let email_data = serde_json::json!({
-        "from": from,
-        "to": to,
-        "subject": subject,
-        "body": body,
-        "html_body": html_body,
-        "cc": cc,
-        "bcc": bcc
-    });
-
-    // 尝试调用外部邮件服务或输出日志（开发模式）
     if smtp_host == "localhost" && smtp_port == 587 {
-        // 开发模式：只记录日志
         tracing::info!("=== 邮件预览 ===");
         tracing::info!("发件人: {}", from);
         tracing::info!("收件人: {}", to);
@@ -716,16 +1087,159 @@ async fn send_email_internal(
         return Ok(());
     }
 
-    // 生产模式：调用邮件服务
-    let mail_service_url = format!("http://{}:{}/send", smtp_host, smtp_port);
-    let response = state.http_client
-        .post(&mail_service_url)
-        .json(&email_data)
-        .send()
-        .await;
+    let message = build_message(from, to, subject, body, html_body, cc, bcc)?;
+    let max_retries = std::env::var("SMTP_MAX_RETRIES")
+        .unwrap_or_else(|_| "3".to_string())
+        .parse::<usize>()
+        .unwrap_or(3);
+    let retry_delay_ms = std::env::var("SMTP_RETRY_DELAY_MS")
+        .unwrap_or_else(|_| "2000".to_string())
+        .parse::<u64>()
+        .unwrap_or(2000);
 
-    match response {
-        Ok(_) => Ok(()),
-        Err(e) => Err(format!("Failed to send email: {}", e)),
+    for attempt in 1..=max_retries {
+        let mailer = create_mailer()?;
+        match mailer.send(&message) {
+            Ok(_) => {
+                tracing::info!("Email sent successfully to: {} (attempt {}/{})", to, attempt, max_retries);
+                return Ok(());
+            }
+            Err(e) => {
+                tracing::warn!("Failed to send email to {} (attempt {}/{}): {}", to, attempt, max_retries, e);
+                if attempt < max_retries {
+                    std::thread::sleep(std::time::Duration::from_millis(retry_delay_ms * attempt as u64));
+                } else {
+                    tracing::error!("Failed to send email after {} attempts: {}", max_retries, e);
+                    return Err(format!("Failed to send email after {} attempts: {}", max_retries, e));
+                }
+            }
+        }
     }
+
+    Err("Max retries exceeded".to_string())
+}
+
+pub fn send_email_async(
+    from: String,
+    to: String,
+    subject: String,
+    body: String,
+    html_body: Option<String>,
+    cc: Option<Vec<String>>,
+    bcc: Option<Vec<String>>,
+) {
+    tokio::spawn(async move {
+        match send_email_with_lettre(
+            &from,
+            &to,
+            &subject,
+            &body,
+            html_body.as_deref(),
+            cc.as_ref(),
+            bcc.as_ref(),
+        ) {
+            Ok(_) => tracing::info!("Async email sent successfully to: {}", to),
+            Err(e) => tracing::error!("Async email sending failed: {}", e),
+        }
+    });
+}
+
+pub fn queue_email(
+    from: String,
+    to: String,
+    subject: String,
+    body: String,
+    html_body: Option<String>,
+    cc: Option<Vec<String>>,
+    bcc: Option<Vec<String>>,
+) -> String {
+    let id = Uuid::new_v4().to_string();
+    let queued_email = QueuedEmail {
+        id: id.clone(),
+        from,
+        to,
+        subject,
+        body,
+        html_body,
+        cc,
+        bcc,
+        attempts: 0,
+        max_attempts: 3,
+        created_at: chrono::Utc::now(),
+        status: EmailQueueStatus::Pending,
+    };
+    
+    EMAIL_QUEUE.insert(id.clone(), queued_email);
+    tracing::info!("Email queued: {}", id);
+    
+    process_queue();
+    
+    id
+}
+
+pub fn process_queue() {
+    tokio::spawn(async move {
+        let pending_emails: Vec<(String, QueuedEmail)> = EMAIL_QUEUE
+            .iter()
+            .filter(|entry| entry.status == EmailQueueStatus::Pending)
+            .map(|entry| (entry.id.clone(), entry.clone()))
+            .collect();
+        
+        for (id, mut email) in pending_emails {
+            if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
+                entry.status = EmailQueueStatus::Sending;
+                entry.attempts += 1;
+            }
+            
+            email.attempts += 1;
+            email.status = EmailQueueStatus::Sending;
+            
+            match send_email_with_lettre(
+                &email.from,
+                &email.to,
+                &email.subject,
+                &email.body,
+                email.html_body.as_deref(),
+                email.cc.as_ref(),
+                email.bcc.as_ref(),
+            ) {
+                Ok(_) => {
+                    if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
+                        entry.status = EmailQueueStatus::Sent;
+                    }
+                    tracing::info!("Email queued {} sent successfully", id);
+                }
+                Err(e) => {
+                    if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
+                        if entry.attempts >= entry.max_attempts {
+                            entry.status = EmailQueueStatus::Failed;
+                            tracing::error!("Email queued {} failed after {} attempts: {}", id, entry.attempts, e);
+                        } else {
+                            entry.status = EmailQueueStatus::Pending;
+                            tracing::warn!("Email queued {} failed attempt {}/{}: {}", id, entry.attempts, entry.max_attempts, e);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+pub fn get_queue_status(id: &str) -> Option<EmailQueueStatus> {
+    EMAIL_QUEUE.get(id).map(|entry| entry.status.clone())
+}
+
+pub fn get_queue_stats() -> serde_json::Value {
+    let pending = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Pending).count();
+    let sending = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Sending).count();
+    let sent = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Sent).count();
+    let failed = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Failed).count();
+    
+    serde_json::json!({
+        "pending": pending,
+        "sending": sending,
+        "sent": sent,
+        "failed": failed,
+        "total": EMAIL_QUEUE.len()
+    })
 }

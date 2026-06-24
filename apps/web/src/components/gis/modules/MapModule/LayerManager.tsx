@@ -2,7 +2,7 @@
 import React from 'react';
 import { Layers, ChevronDown, ChevronUp, MapPin, Navigation, Info, Pencil } from 'lucide-react';
 import { Box, Typography, Paper, IconButton } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface LayerToggleProps {
   label: string;
@@ -19,7 +19,7 @@ const LayerToggle: React.FC<LayerToggleProps> = ({ label, icon: _, checked, onCh
       alignItems: 'center',
       gap: 2,
       cursor: 'pointer',
-      '&:hover': { bgcolor: '#f9fafb' },
+      '&:hover': { bgcolor: 'grey.50' },
       px: 2,
       py: 1,
       borderRadius: 1,
@@ -31,12 +31,12 @@ const LayerToggle: React.FC<LayerToggleProps> = ({ label, icon: _, checked, onCh
         width: 12,
         height: 12,
         borderRadius: '50%',
-        bgcolor: checked ? color : '#d1d5db',
+        bgcolor: checked ? color : 'grey.300',
       }}
     />
     <Typography
       variant='body2'
-      sx={{ color: '#374151' }}
+      sx={{ color: 'grey.700' }}
     >
       {label}
     </Typography>
@@ -82,7 +82,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          '&:hover': { bgcolor: '#f9fafb' },
+          '&:hover': { bgcolor: 'grey.50' },
           textTransform: 'none',
           bgcolor: 'transparent',
         }}
@@ -90,11 +90,11 @@ const LayerManager: React.FC<LayerManagerProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Layers
             size={20}
-            style={{ color: '#374151' }}
+            style={{ color: 'grey.700' }}
           />
           <Typography
             variant='body2'
-            sx={{ fontWeight: 500, color: '#374151' }}
+            sx={{ fontWeight: 500, color: 'grey.700' }}
           >
             图层
           </Typography>
@@ -102,17 +102,17 @@ const LayerManager: React.FC<LayerManagerProps> = ({
         {showPanel ? (
           <ChevronUp
             size={16}
-            style={{ color: '#6b7280' }}
+            style={{ color: 'text.secondary' }}
           />
         ) : (
           <ChevronDown
             size={16}
-            style={{ color: '#6b7280' }}
+            style={{ color: 'text.secondary' }}
           />
         )}
       </Button>
       {showPanel && (
-        <Box sx={{ px: 3, py: 3, borderTop: 1, borderColor: '#e5e7eb' }}>
+        <Box sx={{ px: 3, py: 3, borderTop: 1, borderColor: 'grey.200' }}>
           <LayerToggle
             label='设备点位'
             icon={<MapPin size={16} />}
@@ -132,16 +132,16 @@ const LayerManager: React.FC<LayerManagerProps> = ({
             icon={<Info size={16} />}
             checked={visibleLayers.storage}
             onChange={() => onToggleLayer('storage')}
-            color='#F59E0B'
+            color='warning.main'
           />
           {drawFeaturesLength > 0 && (
-            <Box sx={{ borderTop: 1, borderColor: '#e5e7eb', pt: 2, mt: 2 }}>
+            <Box sx={{ borderTop: 1, borderColor: 'grey.200', pt: 2, mt: 2 }}>
               <LayerToggle
                 label='绘制图形'
                 icon={<Pencil size={16} />}
                 checked={true}
                 onChange={() => {}}
-                color='#EF4444'
+                color='error.main'
               />
             </Box>
           )}

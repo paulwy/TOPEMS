@@ -120,7 +120,7 @@ export const useBIStore = create<BIStore>((set, get) => ({
         lastUpdated: new Date(),
         error: null,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to load BI data:', err);
       set({
         loading: false,

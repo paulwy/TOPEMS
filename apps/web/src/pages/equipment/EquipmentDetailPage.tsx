@@ -10,7 +10,7 @@ import {
   Divider,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Wrench, MapPin, Calendar, User, Edit2, Trash2, FileText } from 'lucide-react';
@@ -25,12 +25,6 @@ const EquipmentDetailPage: React.FC = () => {
   const [equipment, setEquipment] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadEquipment(id);
-    }
-  }, [id, loadEquipment]);
-
   const loadEquipment = useCallback(
     async (equipmentId: string) => {
       setLoading(true);
@@ -39,7 +33,7 @@ const EquipmentDetailPage: React.FC = () => {
         if (res.code === 200 && res.data) {
           setEquipment(res.data);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         addNotification({
           title: '错误',
           message: '加载设备信息失败',
@@ -51,6 +45,12 @@ const EquipmentDetailPage: React.FC = () => {
     },
     [addNotification]
   );
+
+  useEffect(() => {
+    if (id) {
+      loadEquipment(id);
+    }
+  }, [id, loadEquipment]);
 
   const handleDelete = async () => {
     if (!id || !window.confirm('确定要删除此设备吗？')) return;
@@ -71,7 +71,7 @@ const EquipmentDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: '删除设备失败',

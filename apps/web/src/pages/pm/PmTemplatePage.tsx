@@ -11,7 +11,7 @@ import {
   Typography,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { ProjectTemplate } from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateCard from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateModal from '@/components/pm/ProjectTemplateModal';
@@ -115,7 +115,7 @@ const PmTemplatePage: React.FC = () => {
       if (response.success) {
         navigate('/pm/projects');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to create project:', error);
     } finally {
       setLoading(false);
@@ -123,7 +123,7 @@ const PmTemplatePage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'grey.100' }}>
       <Box sx={{ flex: 1, p: 3 }}>
         <Box
           sx={{
@@ -136,11 +136,11 @@ const PmTemplatePage: React.FC = () => {
           <Box>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: '#111827' }}
+              sx={{ fontWeight: 700, color: 'text.primary' }}
             >
               项目模板
             </Typography>
-            <Typography sx={{ color: '#6b7280', mt: 0.5 }}>
+            <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>
               选择模板快速创建项目，提高工作效率
             </Typography>
           </Box>
@@ -194,7 +194,7 @@ const PmTemplatePage: React.FC = () => {
         {filteredTemplates.length === 0 && (
           <Card>
             <CardContent sx={{ p: 6, textAlign: 'center' }}>
-              <Typography sx={{ color: '#6b7280' }}>未找到匹配的模板</Typography>
+              <Typography sx={{ color: 'text.secondary' }}>未找到匹配的模板</Typography>
             </CardContent>
           </Card>
         )}

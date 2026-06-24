@@ -1,5 +1,5 @@
 import { Chip, Typography, Box, InputLabel } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -58,7 +58,7 @@ const CustomerDetailPage: React.FC = () => {
       if (res.success && res.data) {
         setCustomer(res.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to load customer:', err);
       error('加载客户信息失败');
     } finally {

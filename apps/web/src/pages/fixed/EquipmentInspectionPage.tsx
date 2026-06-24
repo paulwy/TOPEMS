@@ -15,7 +15,7 @@ import {
   MenuItem,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, ChevronLeft, AlertCircle, ClipboardCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -70,8 +70,8 @@ const EquipmentInspectionPage: React.FC = () => {
       if (inspectionRes.success && inspectionRes.data) {
         setInspections(inspectionRes.data.items || []);
       }
-    } catch (err: any) {
-      setError(err.message || '加载数据失败');
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || '加载数据失败');
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -115,10 +115,10 @@ const EquipmentInspectionPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建点检记录失败',
+        message: (err as { message?: string }).message || '创建点检记录失败',
         type: 'error',
       });
     }
@@ -172,8 +172,8 @@ const EquipmentInspectionPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
-      <Box sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.100' }}>
+      <Box sx={{ backgroundColor: 'white', borderBottom: '1px solid border.default' }}>
         <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
           <Box
             sx={{
@@ -195,7 +195,7 @@ const EquipmentInspectionPage: React.FC = () => {
                   sx={{
                     fontSize: '1.5rem',
                     fontWeight: 700,
-                    color: '#0f172a',
+                    color: 'grey.900',
                     display: 'flex',
                     alignItems: 'center',
                   }}
@@ -205,12 +205,12 @@ const EquipmentInspectionPage: React.FC = () => {
                       width: 28,
                       height: 28,
                       marginRight: 3,
-                      color: '#2563eb',
+                      color: 'primary.dark',
                     }}
                   />
                   设备点检记录
                 </Typography>
-                <Typography sx={{ mt: 0.5, fontSize: '0.875rem', color: '#64748b' }}>
+                <Typography sx={{ mt: 0.5, fontSize: '0.875rem', color: 'grey.600' }}>
                   设备点检记录管理
                 </Typography>
               </Box>
@@ -239,13 +239,13 @@ const EquipmentInspectionPage: React.FC = () => {
                     display: 'inline-block',
                     width: 32,
                     height: 32,
-                    border: '4px solid #2563eb',
+                    border: '4px solid primary.dark',
                     borderTopColor: 'transparent',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite',
                   }}
                 />
-                <Typography sx={{ mt: 2, color: '#64748b' }}>加载中...</Typography>
+                <Typography sx={{ mt: 2, color: 'grey.600' }}>加载中...</Typography>
               </Box>
             ) : error ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -253,12 +253,12 @@ const EquipmentInspectionPage: React.FC = () => {
                   sx={{
                     width: 48,
                     height: 48,
-                    color: '#ef4444',
+                    color: 'error.main',
                     mx: 'auto',
                     mb: 2,
                   }}
                 />
-                <Typography sx={{ color: '#dc2626' }}>{error}</Typography>
+                <Typography sx={{ color: 'error.dark' }}>{error}</Typography>
                 <Button
                   sx={{ mt: 2 }}
                   onClick={loadData}
@@ -288,7 +288,7 @@ const EquipmentInspectionPage: React.FC = () => {
         <DialogContent>
           <form onSubmit={handleCreateInspection}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ backgroundColor: '#f8fafc', p: 2, borderRadius: 2 }}>
+              <Box sx={{ backgroundColor: 'grey.50', p: 2, borderRadius: 2 }}>
                 <Typography
                   sx={{
                     fontSize: '0.875rem',

@@ -26,7 +26,7 @@ import {
   Collapse,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 export type ExportFormat = 'excel' | 'pdf' | 'csv' | 'json' | 'html' | 'markdown' | 'image' | 'xml';
 

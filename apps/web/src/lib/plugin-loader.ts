@@ -116,7 +116,7 @@ class PluginLoader {
       this.options.onLoaded?.(loadedPlugin);
 
       return loadedPlugin;
-    } catch (error) {
+    } catch (error: unknown) {
       this.options.onError?.(pluginCode, error as Error);
       throw error;
     }
@@ -134,7 +134,7 @@ class PluginLoader {
       try {
         const loaded = await this.loadPlugin(plugin.code, plugin.manifestUrl);
         results.push(loaded);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error(`Failed to load plugin ${plugin.code}:`, error);
       }
     }

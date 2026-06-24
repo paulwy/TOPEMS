@@ -41,10 +41,16 @@ export const useServiceStatus = (autoRefreshInterval: number = PLUGIN_TIMEOUT.DE
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), PLUGIN_TIMEOUT.DEFAULT);
 
+      const headers: Record<string, string> = { 'Cache-Control': 'no-cache' };
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`/${serviceKey}/health`, {
         signal: controller.signal,
         method: 'GET',
-        headers: { 'Cache-Control': 'no-cache' },
+        headers,
       });
 
       clearTimeout(timeoutId);

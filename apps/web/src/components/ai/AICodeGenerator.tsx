@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Box, Typography, TextField } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import type { CodeGenerateContext } from '@/types/ai';
 
@@ -430,7 +430,7 @@ export function AICodeGenerator({
                   style={{
                     width: 20,
                     height: 20,
-                    color: '#8b5cf6',
+                    color: 'secondary.main',
                     opacity: 0,
                     transition: 'opacity 0.2s',
                   }}

@@ -42,7 +42,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
 import { ModeToggle } from '../ModeToggle';
-import type { NavItem } from '../../config/navigation';
+import type { NavGroup as NavItem } from '@/types/navigation';
 
 // 模块图标映射
 const moduleIconMap: Record<string, React.ReactNode> = {
@@ -103,7 +103,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
           onNavClick(item);
         }
       } else if (item.children) {
-        toggleExpand(item.label);
+        toggleExpand(item.title);
       }
     },
     [navigate, onNavClick, toggleExpand]
@@ -116,7 +116,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
 
     return (
       <Box
-        key={item.label + index}
+        key={item.title + index}
         sx={{
           position: 'relative',
         }}
@@ -140,7 +140,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
             transition: 'all 0.2s',
           }}
         >
-          <Typography sx={{ fontSize: '0.9rem' }}>{item.label}</Typography>
+          <Typography sx={{ fontSize: '0.9rem' }}>{item.title}</Typography>
           {item.children && <ChevronDown style={{ width: 14, height: 14 }} />}
         </Box>
       </Box>
@@ -150,12 +150,12 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
   // 渲染移动端菜单项
   const renderMobileMenuItem = (item: NavItem, depth: number = 0) => {
     const hasChildren = item.children && item.children.length > 0;
-    const isExpanded = expandedItems.has(item.label);
+    const isExpanded = expandedItems.has(item.title);
     const isActive = item.path === location.pathname;
-    const icon = moduleIconMap[item.label] || <FolderOpen style={{ width: 20, height: 20 }} />;
+    const icon = moduleIconMap[item.title] || <FolderOpen style={{ width: 20, height: 20 }} />;
 
     return (
-      <React.Fragment key={item.label + depth}>
+      <React.Fragment key={item.title + depth}>
         <ListItemButton
           onClick={() => handleItemClick(item)}
           sx={{
@@ -178,7 +178,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
                   color: isActive ? 'primary.main' : 'text.primary',
                 }}
               >
-                {item.label}
+                {item.title}
               </Typography>
             }
           />
@@ -270,15 +270,15 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
             >
               {moreItems.map((item, index) => (
                 <MenuItem
-                  key={item.label + index}
+                  key={item.title + index}
                   onClick={() => handleItemClick(item)}
                   sx={{
                     minWidth: 150,
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {moduleIconMap[item.label]}
-                    <Typography>{item.label}</Typography>
+                    {moduleIconMap[item.title]}
+                    <Typography>{item.title}</Typography>
                   </Box>
                 </MenuItem>
               ))}
@@ -311,7 +311,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
           justifyContent: 'space-between',
           borderBottom: 1,
           borderColor: 'divider',
-          background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+          background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
           color: 'white',
         }}
       >
@@ -382,7 +382,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
                   width: 28,
                   height: 28,
                   fontSize: 12,
-                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  background: 'linear-gradient(135deg, primary.main, secondary.main)',
                 }}
               >
                 陈
@@ -430,7 +430,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
                 width: 36,
                 height: 36,
                 borderRadius: 1.5,
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -442,7 +442,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
               variant='h6'
               sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                background: 'linear-gradient(135deg, primary.main, secondary.main)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -496,7 +496,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
                         width: 32,
                         height: 32,
                         fontSize: 14,
-                        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                        background: 'linear-gradient(135deg, primary.main, secondary.main)',
                       }}
                     >
                       陈

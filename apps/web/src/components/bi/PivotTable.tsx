@@ -160,7 +160,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
     return (
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
           padding: '24px',
@@ -176,7 +176,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             style={{
               fontSize: '18px',
               fontWeight: 600,
-              color: '#0f172a',
+              color: 'grey.900',
               marginBottom: '16px',
             }}
           >
@@ -221,7 +221,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
   return (
     <div
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         padding: '24px',
@@ -239,7 +239,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
           style={{
             fontSize: '18px',
             fontWeight: 600,
-            color: '#0f172a',
+            color: 'grey.900',
             margin: 0,
           }}
         >
@@ -266,16 +266,16 @@ export const PivotTable: React.FC<PivotConfig> = ({
               style={{
                 padding: '6px 12px 6px 32px',
                 borderRadius: 6,
-                border: '1px solid #e2e8f0',
+                border: '1px solid border.default',
                 fontSize: 14,
                 outline: 'none',
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#6366f1';
+                e.target.style.borderColor = 'primary.light';
                 e.target.style.boxShadow = '0 0 0 2px rgba(99, 102, 241, 0.2)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
+                e.target.style.borderColor = 'border.default';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -285,9 +285,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
             style={{
               padding: 6,
               borderRadius: 6,
-              border: '1px solid #e2e8f0',
-              backgroundColor: showFilters ? '#eff6ff' : '#f8fafc',
-              color: showFilters ? '#6366f1' : '#64748b',
+              border: '1px solid border.default',
+              backgroundColor: showFilters ? 'primary.light' : 'grey.50',
+              color: showFilters ? 'primary.light' : 'grey.600',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -303,17 +303,17 @@ export const PivotTable: React.FC<PivotConfig> = ({
             style={{
               padding: '6px 12px',
               borderRadius: 6,
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#f8fafc',
+              border: '1px solid border.default',
+              backgroundColor: 'grey.50',
               fontSize: 12,
               cursor: 'pointer',
               outline: 'none',
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = '#6366f1';
+              e.target.style.borderColor = 'primary.light';
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = '#e2e8f0';
+              e.target.style.borderColor = 'border.default';
             }}
           >
             {Object.entries(aggregatorLabels).map(([key, label]) => (
@@ -331,9 +331,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
               style={{
                 padding: 6,
                 borderRadius: 6,
-                border: '1px solid #e2e8f0',
-                backgroundColor: '#f8fafc',
-                color: '#64748b',
+                border: '1px solid border.default',
+                backgroundColor: 'grey.50',
+                color: 'grey.600',
                 cursor: 'pointer',
               }}
               title='刷新'
@@ -347,9 +347,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
               style={{
                 padding: 6,
                 borderRadius: 6,
-                border: '1px solid #e2e8f0',
-                backgroundColor: '#f8fafc',
-                color: '#64748b',
+                border: '1px solid border.default',
+                backgroundColor: 'grey.50',
+                color: 'grey.600',
                 cursor: 'pointer',
               }}
               title='导出'
@@ -365,9 +365,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
           style={{
             marginBottom: '16px',
             padding: '12px',
-            backgroundColor: '#f8fafc',
+            backgroundColor: 'grey.50',
             borderRadius: 8,
-            border: '1px solid #e2e8f0',
+            border: '1px solid border.default',
           }}
         >
           <div
@@ -383,12 +383,12 @@ export const PivotTable: React.FC<PivotConfig> = ({
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
             {rows.map((row) => (
               <div key={row}>
-                <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{row}</div>
+                <div style={{ fontSize: 12, color: 'grey.600', marginBottom: 4 }}>{row}</div>
                 <select
                   style={{
                     padding: 4,
                     borderRadius: 4,
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid border.default',
                     fontSize: 12,
                   }}
                 >
@@ -406,12 +406,12 @@ export const PivotTable: React.FC<PivotConfig> = ({
             ))}
             {cols.map((col) => (
               <div key={col}>
-                <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>{col}</div>
+                <div style={{ fontSize: 12, color: 'grey.600', marginBottom: 4 }}>{col}</div>
                 <select
                   style={{
                     padding: 4,
                     borderRadius: 4,
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid border.default',
                     fontSize: 12,
                   }}
                 >
@@ -443,13 +443,13 @@ export const PivotTable: React.FC<PivotConfig> = ({
             <tr>
               <th
                 style={{
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'grey.50',
                   padding: '12px 16px',
                   textAlign: 'left',
                   fontWeight: 600,
                   color: '#334155',
-                  borderBottom: '2px solid #e2e8f0',
-                  borderRight: '1px solid #e2e8f0',
+                  borderBottom: '2px solid border.default',
+                  borderRight: '1px solid border.default',
                 }}
               >
                 {rows[0]}
@@ -458,15 +458,15 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 <th
                   key={String(col)}
                   style={{
-                    backgroundColor: '#f8fafc',
+                    backgroundColor: 'grey.50',
                     padding: '12px 16px',
                     textAlign: 'right',
                     fontWeight: 600,
                     color: '#334155',
-                    borderBottom: '2px solid #e2e8f0',
+                    borderBottom: '2px solid border.default',
                     borderRight:
                       col !== pivotResult.cols[pivotResult.cols.length - 1]
-                        ? '1px solid #e2e8f0'
+                        ? '1px solid border.default'
                         : 'none',
                   }}
                 >
@@ -475,12 +475,12 @@ export const PivotTable: React.FC<PivotConfig> = ({
               ))}
               <th
                 style={{
-                  backgroundColor: '#f1f5f9',
+                  backgroundColor: 'grey.100',
                   padding: '12px 16px',
                   textAlign: 'right',
                   fontWeight: 600,
                   color: '#1e293b',
-                  borderBottom: '2px solid #e2e8f0',
+                  borderBottom: '2px solid border.default',
                 }}
               >
                 总计
@@ -490,14 +490,14 @@ export const PivotTable: React.FC<PivotConfig> = ({
           <tbody>
             {sortedRows.map((row) => (
               <React.Fragment key={String(row)}>
-                <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <tr style={{ borderBottom: '1px solid border.default' }}>
                   <td
                     style={{
                       cursor: 'pointer',
                       padding: '12px 16px',
                       fontWeight: 500,
                       color: '#1e293b',
-                      borderRight: '1px solid #e2e8f0',
+                      borderRight: '1px solid border.default',
                     }}
                     onClick={() => {
                       handleSort(row as string);
@@ -506,16 +506,16 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       {expandedRows.has(row as string) ? (
-                        <ChevronDown style={{ width: 14, height: 14, color: '#64748b' }} />
+                        <ChevronDown style={{ width: 14, height: 14, color: 'grey.600' }} />
                       ) : (
-                        <ChevronUp style={{ width: 14, height: 14, color: '#64748b' }} />
+                        <ChevronUp style={{ width: 14, height: 14, color: 'grey.600' }} />
                       )}
                       {row}
                       {sortConfig?.key === row && (
                         <span
                           style={{
                             marginLeft: '8px',
-                            color: '#6366f1',
+                            color: 'primary.light',
                             fontSize: 12,
                           }}
                         >
@@ -533,7 +533,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                         color: '#475569',
                         borderRight:
                           col !== pivotResult.cols[pivotResult.cols.length - 1]
-                            ? '1px solid #e2e8f0'
+                            ? '1px solid border.default'
                             : 'none',
                       }}
                     >
@@ -550,7 +550,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                       textAlign: 'right',
                       fontWeight: 600,
                       color: '#1e293b',
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: 'grey.50',
                     }}
                   >
                     {typeof rowTotals[row as string] === 'number'
@@ -562,13 +562,13 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 </tr>
               </React.Fragment>
             ))}
-            <tr style={{ backgroundColor: '#f1f5f9' }}>
+            <tr style={{ backgroundColor: 'grey.100' }}>
               <td
                 style={{
                   padding: '12px 16px',
                   fontWeight: 600,
                   color: '#1e293b',
-                  borderRight: '1px solid #e2e8f0',
+                  borderRight: '1px solid border.default',
                 }}
               >
                 总计
@@ -583,7 +583,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                     color: '#1e293b',
                     borderRight:
                       col !== pivotResult.cols[pivotResult.cols.length - 1]
-                        ? '1px solid #e2e8f0'
+                        ? '1px solid border.default'
                         : 'none',
                   }}
                 >
@@ -599,8 +599,8 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   padding: '12px 16px',
                   textAlign: 'right',
                   fontWeight: 700,
-                  color: '#6366f1',
-                  backgroundColor: '#e0e7ff',
+                  color: 'primary.light',
+                  backgroundColor: 'secondary.light',
                 }}
               >
                 {typeof grandTotal === 'number'

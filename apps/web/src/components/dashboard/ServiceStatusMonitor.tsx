@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { SvgIconProps } from '@mui/material';
 import { Box, Typography, Chip } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Activity,
   CircleDot,
@@ -40,53 +40,53 @@ const groupColors: Record<
   }
 > = {
   核心服务: {
-    bg: '#eff6ff',
-    border: '#bfdbfe',
-    titleColor: '#1d4ed8',
+    bg: 'primary.light',
+    border: 'primary.light',
+    titleColor: 'primary.dark',
     iconBg: '#dbeafe',
-    iconColor: '#2563eb',
+    iconColor: 'primary.dark',
   },
   业务运营: {
-    bg: '#f0fdf4',
-    border: '#bbf7d0',
+    bg: 'success.light',
+    border: 'success.light',
     titleColor: '#15803d',
-    iconBg: '#dcfce7',
-    iconColor: '#22c55e',
+    iconBg: 'success.lighter',
+    iconColor: 'success.dark',
   },
   研发管理: {
-    bg: '#faf5ff',
+    bg: 'secondary.light',
     border: '#ddd6fe',
     titleColor: '#6d28d9',
-    iconBg: '#ede9fe',
-    iconColor: '#8b5cf6',
+    iconBg: 'secondary.light',
+    iconColor: 'secondary.main',
   },
   生产管理: {
-    bg: '#fff7ed',
+    bg: 'white7ed',
     border: '#fed7aa',
     titleColor: '#c2410c',
     iconBg: '#ffedd5',
     iconColor: '#f97316',
   },
   质量管理: {
-    bg: '#fff1f2',
+    bg: 'white1f2',
     border: '#fecdd3',
     titleColor: '#be123c',
     iconBg: '#ffe4e6',
     iconColor: '#e11d48',
   },
   供应链: {
-    bg: '#ecfdf5',
+    bg: 'success.light',
     border: '#a7f3d0',
     titleColor: '#065f46',
-    iconBg: '#d1fae5',
-    iconColor: '#10b981',
+    iconBg: 'success.lighter',
+    iconColor: 'success.main',
   },
   专业服务: {
     bg: '#eef2ff',
-    border: '#c7d2fe',
+    border: 'secondary.main',
     titleColor: '#4338ca',
     iconBg: '#ddd6fe',
-    iconColor: '#6366f1',
+    iconColor: 'primary.light',
   },
   '数据/门户': {
     bg: '#fdf4ff',
@@ -338,7 +338,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
   return (
     <Box
       sx={{
-        backgroundColor: '#ffffff',
+        backgroundColor: 'white',
         borderRadius: 3,
         padding: 3,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -357,7 +357,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
             sx={{
               width: 40,
               height: 40,
-              backgroundColor: '#dcfce7',
+              backgroundColor: 'success.lighter',
               borderRadius: 1.5,
               display: 'flex',
               alignItems: 'center',
@@ -365,13 +365,13 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               marginRight: 2,
             }}
           >
-            <Activity sx={{ width: 20, height: 20, color: '#22c55e' }} />
+            <Activity sx={{ width: 20, height: 20, color: 'success.dark' }} />
           </Box>
           <Box>
             <Typography sx={{ fontSize: 18, fontWeight: 600, color: '#1e293b' }}>
               服务状态监测
             </Typography>
-            <Typography sx={{ fontSize: 12, color: '#64748b' }}>实时监控各服务运行状态</Typography>
+            <Typography sx={{ fontSize: 12, color: 'grey.600' }}>实时监控各服务运行状态</Typography>
             <Typography sx={{ fontSize: 11, color: '#94a3b8', mt: 0.5 }}>
               最后更新: {lastUpdate.toLocaleTimeString('zh-CN')}
             </Typography>
@@ -382,7 +382,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
             <Chip
               label={`在线 ${onlineCount}`}
               sx={{
-                backgroundColor: '#dcfce7',
+                backgroundColor: 'success.lighter',
                 color: '#166534',
                 fontWeight: 500,
                 fontSize: 11,
@@ -393,7 +393,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               <Chip
                 label={`离线 ${offlineCount}`}
                 sx={{
-                  backgroundColor: '#fee2e2',
+                  backgroundColor: 'error.lighter',
                   color: '#991b1b',
                   fontWeight: 500,
                   fontSize: 11,
@@ -412,11 +412,11 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               paddingX: 2,
               paddingY: 1,
               borderRadius: 1,
-              backgroundColor: '#f1f5f9',
-              color: '#64748b',
+              backgroundColor: 'grey.100',
+              color: 'grey.600',
               fontSize: 12,
               fontWeight: 500,
-              '&:hover': { backgroundColor: '#e2e8f0' },
+              '&:hover': { backgroundColor: 'border.default' },
               '&:disabled': { opacity: 0.5 },
             }}
           >

@@ -66,7 +66,7 @@ const PmContractDetailPage: React.FC = () => {
       if (paymentsRes.success && paymentsRes.data) {
         setPayments(paymentsRes.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load contract data:', error);
     } finally {
       setLoading(false);
@@ -125,7 +125,7 @@ const PmContractDetailPage: React.FC = () => {
             width: 48,
             height: 48,
             borderRadius: '50%',
-            border: '2px solid #2563eb',
+            border: '2px solid primary.dark',
             borderTopColor: 'transparent',
             animation: 'spin 1s linear infinite',
             '@keyframes spin': {
@@ -169,7 +169,7 @@ const PmContractDetailPage: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                color: '#4b5563',
+                color: 'text.secondary',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -198,8 +198,8 @@ const PmContractDetailPage: React.FC = () => {
                 paddingRight: 16,
                 paddingTop: 8,
                 paddingBottom: 8,
-                backgroundColor: '#f3f4f6',
-                color: '#374151',
+                backgroundColor: 'grey.100',
+                color: 'grey.700',
                 borderRadius: 8,
                 border: 'none',
                 cursor: 'pointer',
@@ -231,7 +231,7 @@ const PmContractDetailPage: React.FC = () => {
               <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
                 <FileText
                   size={24}
-                  color='#2563eb'
+                  color='primary.dark'
                 />
               </Box>
               <Box>
@@ -302,7 +302,7 @@ const PmContractDetailPage: React.FC = () => {
               <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
                 <Building
                   size={24}
-                  color='#16a34a'
+                  color='success.dark'
                 />
               </Box>
               <Box>
@@ -368,7 +368,7 @@ const PmContractDetailPage: React.FC = () => {
               >
                 <Building
                   size={16}
-                  color='#9ca3af'
+                  color='text.disabled'
                 />
                 {contract.party_a_name || '-'}
               </Box>
@@ -390,7 +390,7 @@ const PmContractDetailPage: React.FC = () => {
               >
                 <Building
                   size={16}
-                  color='#9ca3af'
+                  color='text.disabled'
                 />
                 {contract.party_b_name || '-'}
               </Box>
@@ -412,7 +412,7 @@ const PmContractDetailPage: React.FC = () => {
               >
                 <Calendar
                   size={16}
-                  color='#9ca3af'
+                  color='text.disabled'
                 />
                 {formatDate(contract.signing_date)}
               </Box>
@@ -434,14 +434,14 @@ const PmContractDetailPage: React.FC = () => {
               >
                 <Calendar
                   size={16}
-                  color='#9ca3af'
+                  color='text.disabled'
                 />
                 {formatDate(contract.end_date)}
               </Box>
             </Box>
           </Box>
           {contract.description && (
-            <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #e5e7eb' }}>
+            <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>
               <Typography
                 variant='body2'
                 sx={{ color: 'grey.500', mb: 1 }}
@@ -475,7 +475,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <CheckCircle
                 size={20}
-                color='#2563eb'
+                color='primary.dark'
               />
               合同里程碑
             </Typography>
@@ -484,7 +484,7 @@ const PmContractDetailPage: React.FC = () => {
                 <Box
                   key={milestone.id}
                   sx={{
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid grey.200',
                     borderRadius: 2,
                     p: 2,
                     transition: 'border-color 0.2s',

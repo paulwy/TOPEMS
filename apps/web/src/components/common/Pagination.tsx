@@ -1,5 +1,5 @@
 import { Box, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface PaginationConfig {
@@ -51,7 +51,7 @@ export default function PaginationComponent({
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
       {showTotal && totalItems && (
-        <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>
+        <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
           显示 {startItem}-{endItem} / 共 {totalItems} 条
         </Typography>
       )}
@@ -62,8 +62,8 @@ export default function PaginationComponent({
           sx={{
             p: 2,
             borderRadius: 2,
-            color: '#4b5563',
-            '&:hover': { backgroundColor: '#f3f4f6' },
+            color: 'text.secondary',
+            '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -79,8 +79,8 @@ export default function PaginationComponent({
           sx={{
             p: 2,
             borderRadius: 2,
-            color: '#4b5563',
-            '&:hover': { backgroundColor: '#f3f4f6' },
+            color: 'text.secondary',
+            '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -94,7 +94,7 @@ export default function PaginationComponent({
           pageNum === '...' ? (
             <Typography
               key={index}
-              sx={{ px: 2, color: '#9ca3af' }}
+              sx={{ px: 2, color: 'text.disabled' }}
             >
               ...
             </Typography>
@@ -109,10 +109,10 @@ export default function PaginationComponent({
                 borderRadius: 2,
                 fontSize: '0.875rem',
                 fontWeight: 500,
-                backgroundColor: page === pageNum ? '#2563eb' : 'transparent',
-                color: page === pageNum ? 'white' : '#4b5563',
+                backgroundColor: page === pageNum ? 'primary.dark' : 'transparent',
+                color: page === pageNum ? 'white' : 'text.secondary',
                 '&:hover': {
-                  backgroundColor: page === pageNum ? '#1d4ed8' : '#f3f4f6',
+                  backgroundColor: page === pageNum ? 'primary.dark' : 'grey.100',
                 },
               }}
             >
@@ -126,8 +126,8 @@ export default function PaginationComponent({
           sx={{
             p: 2,
             borderRadius: 2,
-            color: '#4b5563',
-            '&:hover': { backgroundColor: '#f3f4f6' },
+            color: 'text.secondary',
+            '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -143,8 +143,8 @@ export default function PaginationComponent({
           sx={{
             p: 2,
             borderRadius: 2,
-            color: '#4b5563',
-            '&:hover': { backgroundColor: '#f3f4f6' },
+            color: 'text.secondary',
+            '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -157,7 +157,7 @@ export default function PaginationComponent({
       </Box>
       {showPageSize && onPageSizeChange && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>每页</Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>每页</Typography>
           <FormControl size='small'>
             <Select
               value={pageSize}

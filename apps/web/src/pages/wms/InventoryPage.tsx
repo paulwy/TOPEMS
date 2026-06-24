@@ -13,7 +13,7 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -97,7 +97,7 @@ const InventoryPage: React.FC = () => {
         setInventory(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('获取库存列表失败:', error);
       addNotification({
         type: 'error',
@@ -115,7 +115,7 @@ const InventoryPage: React.FC = () => {
       if (response.code === 200 && response.data) {
         setWarehouses(response.data.items || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('获取仓库列表失败:', error);
     }
   };
@@ -147,7 +147,7 @@ const InventoryPage: React.FC = () => {
         resetNewItem();
         fetchInventory();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('创建库存失败:', error);
       addNotification({
         type: 'error',
@@ -171,7 +171,7 @@ const InventoryPage: React.FC = () => {
         setShowEditDialog(false);
         fetchInventory();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('更新库存失败:', error);
       addNotification({
         type: 'error',
@@ -197,7 +197,7 @@ const InventoryPage: React.FC = () => {
           });
           fetchInventory();
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('删除库存失败:', error);
         addNotification({
           type: 'error',

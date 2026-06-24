@@ -15,7 +15,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
     <div
       style={{
         backgroundColor: 'white',
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: '1px solid border.default',
         padding: 16,
       }}
     >
@@ -55,11 +55,11 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
                 outline: 'none',
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6';
+                e.target.style.borderColor = 'primary.main';
                 e.target.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.2)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#cbd5e1';
+                e.target.style.borderColor = 'grey.400';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -88,7 +88,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
               transition: 'colors 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f8fafc';
+              e.currentTarget.style.backgroundColor = 'grey.50';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'white';

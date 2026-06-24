@@ -14,7 +14,7 @@ import {
   Server,
 } from 'lucide-react';
 import { Chip, Box, Typography, Tooltip, IconButton } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -179,7 +179,7 @@ const BIDataSourcePage = () => {
           dataVolume: 8500,
         },
       ]);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load datasources:', error);
     } finally {
       setLoading(false);
@@ -223,7 +223,7 @@ const BIDataSourcePage = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Database
               size={18}
-              color='#64748b'
+              color='grey.600'
             />
             <Box>
               <Typography

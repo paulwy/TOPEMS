@@ -45,7 +45,7 @@ import {
   CircularProgress,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface ActivityItem {
   id: string;
@@ -140,8 +140,9 @@ const ProfilePage: React.FC = () => {
       } else {
         setError(res.message || '获取用户信息失败');
       }
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || err.message || '获取用户信息失败';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = error.response?.data?.message || error.message || '获取用户信息失败';
       setError(errorMsg);
       addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
     } finally {
@@ -159,7 +160,7 @@ const ProfilePage: React.FC = () => {
       if (res.success && res.data) {
         setActivities(res.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载活动记录失败', err);
     } finally {
       setLoadingActivities(false);
@@ -264,8 +265,9 @@ const ProfilePage: React.FC = () => {
             type: 'error',
           });
         }
-      } catch (err: any) {
-        const errorMsg = err.response?.data?.message || err.message || '更新失败';
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } }; message?: string };
+        const errorMsg = error.response?.data?.message || error.message || '更新失败';
         addNotification({ title: '失败', message: errorMsg, type: 'error' });
       }
     },
@@ -321,8 +323,9 @@ const ProfilePage: React.FC = () => {
             type: 'error',
           });
         }
-      } catch (err: any) {
-        const errorMsg = err.response?.data?.message || err.message || '修改密码失败';
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } }; message?: string };
+        const errorMsg = error.response?.data?.message || error.message || '修改密码失败';
         addNotification({ title: '失败', message: errorMsg, type: 'error' });
       }
     },
@@ -343,7 +346,7 @@ const ProfilePage: React.FC = () => {
           message: `${key}通知设置已更新`,
           type: 'success',
         });
-      } catch (err) {
+      } catch (err: unknown) {
         apiLogger.error('保存通知设置失败', err);
         addNotification({
           title: '错误',
@@ -418,7 +421,7 @@ const ProfilePage: React.FC = () => {
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle
             size={48}
-            style={{ color: '#ef4444', marginBottom: 12 }}
+            style={{ color: 'error.main', marginBottom: 12 }}
           />
           <Typography color='error'>{error || '无法获取用户信息'}</Typography>
           <Button
@@ -465,7 +468,7 @@ const ProfilePage: React.FC = () => {
                 >
                   <User
                     size={28}
-                    style={{ marginRight: 12, color: '#2563eb' }}
+                    style={{ marginRight: 12, color: 'primary.dark' }}
                   />
                   个人中心
                 </Typography>
@@ -719,7 +722,7 @@ const ProfilePage: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Shield
                           size={20}
-                          style={{ color: '#2563eb' }}
+                          style={{ color: 'primary.dark' }}
                         />
                         <Box>
                           <Typography
@@ -757,7 +760,7 @@ const ProfilePage: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Mail
                           size={20}
-                          style={{ color: '#16a34a' }}
+                          style={{ color: 'success.dark' }}
                         />
                         <Box>
                           <Typography
@@ -776,7 +779,7 @@ const ProfilePage: React.FC = () => {
                       </Box>
                       <CheckCircle2
                         size={20}
-                        style={{ color: '#22c55e' }}
+                        style={{ color: 'success.dark' }}
                       />
                     </Box>
 
@@ -863,7 +866,7 @@ const ProfilePage: React.FC = () => {
                       <Box sx={{ textAlign: 'center', py: 4 }}>
                         <Clock
                           size={48}
-                          style={{ color: '#9ca3af', marginBottom: 12 }}
+                          style={{ color: 'text.disabled', marginBottom: 12 }}
                         />
                         <Typography color='text.secondary'>暂无活动记录</Typography>
                       </Box>
@@ -955,7 +958,7 @@ const ProfilePage: React.FC = () => {
                           icon: Mail,
                           label: '邮件通知',
                           desc: '接收重要信息的邮件通知',
-                          color: '#2563eb',
+                          color: 'primary.dark',
                         },
                         {
                           key: 'system_enabled' as const,
@@ -969,7 +972,7 @@ const ProfilePage: React.FC = () => {
                           icon: Activity,
                           label: '工作流通知',
                           desc: '接收工作流审批和任务提醒',
-                          color: '#16a34a',
+                          color: 'success.dark',
                         },
                         {
                           key: 'document_enabled' as const,
@@ -983,7 +986,7 @@ const ProfilePage: React.FC = () => {
                           icon: Shield,
                           label: '安全通知',
                           desc: '接收登录和账户安全提醒',
-                          color: '#dc2626',
+                          color: 'error.dark',
                         },
                       ].map(({ key, icon: Icon, label, desc, color }) => (
                         <Box
@@ -1064,14 +1067,14 @@ const ProfilePage: React.FC = () => {
                           title: '仪表盘',
                           icon: Activity,
                           path: '/dashboard',
-                          color: '#3b82f6',
+                          color: 'primary.main',
                         },
                         {
                           id: '2',
                           title: '文档中心',
                           icon: FileText,
                           path: '/documents',
-                          color: '#22c55e',
+                          color: 'success.dark',
                         },
                         {
                           id: '3',
@@ -1085,7 +1088,7 @@ const ProfilePage: React.FC = () => {
                           title: '通知中心',
                           icon: Bell,
                           path: '/notifications',
-                          color: '#eab308',
+                          color: 'warning.main',
                         },
                         {
                           id: '5',
@@ -1099,7 +1102,7 @@ const ProfilePage: React.FC = () => {
                           title: '消息中心',
                           icon: MessageSquare,
                           path: '/im',
-                          color: '#6366f1',
+                          color: 'primary.light',
                         },
                       ].map((item) => {
                         const isSelected = shortcuts.some((s) => s.id === item.id);

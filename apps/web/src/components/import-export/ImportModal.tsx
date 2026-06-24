@@ -72,8 +72,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
     try {
       await onImport(selectedFile, entityType, importMode);
-    } catch (err: any) {
-      setError(err.message || '导入失败');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || '导入失败');
     } finally {
       setIsImporting(false);
     }
@@ -115,7 +116,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         <div
           style={{
             padding: 24,
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid border.default',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -125,7 +126,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#0f172a',
+              color: 'grey.900',
               margin: 0,
             }}
           >
@@ -169,7 +170,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid border.default',
                     borderRadius: 8,
                     outline: 'none',
                   }}
@@ -204,7 +205,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid border.default',
                     borderRadius: 8,
                     outline: 'none',
                   }}
@@ -256,7 +257,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                         style={{
                           width: 32,
                           height: 32,
-                          color: '#16a34a',
+                          color: 'success.dark',
                           marginRight: 8,
                         }}
                       />
@@ -275,7 +276,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       <p style={{ color: '#475569', margin: '8px 0 0' }}>
                         点击选择文件 或 拖拽文件到此处
                       </p>
-                      <p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>
+                      <p style={{ fontSize: 14, color: 'grey.600', marginTop: 4 }}>
                         支持 .xlsx, .csv 格式
                       </p>
                     </>
@@ -288,7 +289,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    color: '#dc2626',
+                    color: 'error.dark',
                     fontSize: 14,
                   }}
                 >
@@ -301,7 +302,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div
                 style={{
-                  backgroundColor: '#f0fdf4',
+                  backgroundColor: 'success.light',
                   border: '1px solid #bbf7d0',
                   borderRadius: 8,
                   padding: 16,
@@ -318,7 +319,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     style={{
                       width: 20,
                       height: 20,
-                      color: '#16a34a',
+                      color: 'success.dark',
                       marginRight: 8,
                     }}
                   />
@@ -352,7 +353,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   </h4>
                   <div
                     style={{
-                      backgroundColor: '#fef2f2',
+                      backgroundColor: 'error.light',
                       border: '1px solid #fecaca',
                       borderRadius: 8,
                       padding: 16,
@@ -365,7 +366,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                         key={idx}
                         style={{
                           fontSize: 14,
-                          color: '#b91c1c',
+                          color: 'error.darker',
                           marginBottom: 8,
                         }}
                       >
@@ -374,7 +375,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       </div>
                     ))}
                     {importResult.failed_rows.length > 10 && (
-                      <p style={{ fontSize: 14, color: '#dc2626', marginTop: 8 }}>
+                      <p style={{ fontSize: 14, color: 'error.dark', marginTop: 8 }}>
                         ... 还有 {importResult.failed_rows.length - 10} 个错误
                       </p>
                     )}
@@ -388,7 +389,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         <div
           style={{
             padding: 24,
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid border.default',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 12,
@@ -399,7 +400,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             style={{
               padding: '8px 16px',
               color: '#334155',
-              backgroundColor: '#f1f5f9',
+              backgroundColor: 'grey.100',
               borderRadius: 8,
             }}
           >
@@ -411,7 +412,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               disabled={!selectedFile || !entityType || isImporting}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#2563eb',
+                backgroundColor: 'primary.dark',
                 color: 'white',
                 borderRadius: 8,
               }}

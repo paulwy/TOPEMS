@@ -82,7 +82,7 @@ class LocalStorage {
         expires: expires,
       };
       localStorage.setItem(createKey(key, this.prefix), this.serialize(item));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('LocalStorage set error:', error);
     }
   }
@@ -102,7 +102,7 @@ class LocalStorage {
       }
 
       return item.value;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('LocalStorage get error:', error);
       return defaultValue;
     }
@@ -114,7 +114,7 @@ class LocalStorage {
   remove(key: string): void {
     try {
       localStorage.removeItem(createKey(key, this.prefix));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('LocalStorage remove error:', error);
     }
   }
@@ -130,7 +130,7 @@ class LocalStorage {
           localStorage.removeItem(key);
         }
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('LocalStorage clear error:', error);
     }
   }
@@ -151,7 +151,7 @@ class LocalStorage {
       return keys
         .filter((key) => key.startsWith(this.prefix))
         .map((key) => key.replace(this.prefix, ''));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('LocalStorage keys error:', error);
       return [];
     }
@@ -182,7 +182,7 @@ class SessionStorage {
         timestamp: Date.now(),
       };
       sessionStorage.setItem(createKey(key, this.prefix), this.serialize(item));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('SessionStorage set error:', error);
     }
   }
@@ -197,7 +197,7 @@ class SessionStorage {
 
       const item = this.deserialize<StorageItem<T>>(raw);
       return item.value;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('SessionStorage get error:', error);
       return defaultValue;
     }
@@ -209,7 +209,7 @@ class SessionStorage {
   remove(key: string): void {
     try {
       sessionStorage.removeItem(createKey(key, this.prefix));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('SessionStorage remove error:', error);
     }
   }
@@ -225,7 +225,7 @@ class SessionStorage {
           sessionStorage.removeItem(key);
         }
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('SessionStorage clear error:', error);
     }
   }

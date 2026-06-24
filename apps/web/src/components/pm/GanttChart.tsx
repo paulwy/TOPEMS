@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Paper, IconButton } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ChevronRight, ChevronLeft, ZoomIn, ZoomOut } from 'lucide-react';
 import type { GanttPhase, GanttMilestone } from '@/api/pm';
 
@@ -104,7 +104,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
       sx={{
         backgroundColor: 'white',
         borderRadius: 2,
-        border: '1px solid #e5e7eb',
+        border: '1px solid grey.200',
         overflow: 'hidden',
       }}
     >
@@ -115,8 +115,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
           justifyContent: 'space-between',
           px: 4,
           py: 3,
-          backgroundColor: '#f9fafb',
-          borderBottom: '1px solid #e5e7eb',
+          backgroundColor: 'grey.50',
+          borderBottom: '1px solid grey.200',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -125,7 +125,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             sx={{
               p: 1.5,
               borderRadius: 1,
-              '&:hover': { backgroundColor: '#e5e7eb' },
+              '&:hover': { backgroundColor: 'grey.200' },
             }}
           >
             <ChevronLeft style={{ width: 16, height: 16 }} />
@@ -135,7 +135,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             sx={{
               p: 1.5,
               borderRadius: 1,
-              '&:hover': { backgroundColor: '#e5e7eb' },
+              '&:hover': { backgroundColor: 'grey.200' },
             }}
           >
             <ChevronRight style={{ width: 16, height: 16 }} />
@@ -147,19 +147,19 @@ const GanttChart: React.FC<GanttChartProps> = ({
             sx={{
               p: 1.5,
               borderRadius: 1,
-              '&:hover': { backgroundColor: '#e5e7eb' },
+              '&:hover': { backgroundColor: 'grey.200' },
             }}
             title='缩小'
           >
             <ZoomOut style={{ width: 16, height: 16 }} />
           </IconButton>
-          <Typography sx={{ fontSize: '0.875rem', color: '#4b5563' }}>{zoom}%</Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>{zoom}%</Typography>
           <IconButton
             onClick={() => handleZoom(10)}
             sx={{
               p: 1.5,
               borderRadius: 1,
-              '&:hover': { backgroundColor: '#e5e7eb' },
+              '&:hover': { backgroundColor: 'grey.200' },
             }}
             title='放大'
           >
@@ -169,19 +169,19 @@ const GanttChart: React.FC<GanttChartProps> = ({
       </Box>
 
       <Box sx={{ display: 'flex' }}>
-        <Box sx={{ width: 192, flexShrink: 0, borderRight: '1px solid #e5e7eb' }}>
+        <Box sx={{ width: 192, flexShrink: 0, borderRight: '1px solid grey.200' }}>
           <Box
             sx={{
               height: 64,
               px: 3,
               py: 2,
-              backgroundColor: '#f9fafb',
-              borderBottom: '1px solid #e5e7eb',
+              backgroundColor: 'grey.50',
+              borderBottom: '1px solid grey.200',
               display: 'flex',
               alignItems: 'center',
             }}
           >
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#4b5563' }}>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>
               任务
             </Typography>
           </Box>
@@ -193,10 +193,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   height: 48,
                   px: 3,
                   py: 2,
-                  borderBottom: '1px solid #f3f4f6',
+                  borderBottom: '1px solid grey.100',
                   display: 'flex',
                   alignItems: 'center',
-                  '&:hover': { backgroundColor: '#f9fafb' },
+                  '&:hover': { backgroundColor: 'grey.50' },
                 }}
               >
                 <Box sx={{ overflow: 'hidden' }}>
@@ -204,7 +204,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     sx={{
                       fontWeight: 500,
                       fontSize: '0.875rem',
-                      color: '#111827',
+                      color: 'text.primary',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                     }}
@@ -212,7 +212,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                     {phase.name}
                   </Typography>
                   {phase.progress > 0 && (
-                    <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                       {phase.progress}% 完成
                     </Typography>
                   )}
@@ -236,19 +236,19 @@ const GanttChart: React.FC<GanttChartProps> = ({
               width: `${daysToShow * (zoom / 100) * 20}px`,
             }}
           >
-            <Box sx={{ height: 64, borderBottom: '1px solid #e5e7eb' }}>
+            <Box sx={{ height: 64, borderBottom: '1px solid grey.200' }}>
               <Box sx={{ display: 'flex' }}>
                 {monthLabels.map((label, index) => (
                   <Box
                     key={index}
                     sx={{
                       position: 'absolute',
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: 'grey.50',
                       px: 2,
                       py: 1,
                       fontSize: '0.75rem',
                       fontWeight: 500,
-                      color: '#4b5563',
+                      color: 'text.secondary',
                       left: `${48 + label.offset * (zoom / 100) * 20}px`,
                       top: 0,
                     }}
@@ -257,7 +257,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   </Box>
                 ))}
               </Box>
-              <Box sx={{ display: 'flex', pt: 6, borderTop: '1px solid #e5e7eb' }}>
+              <Box sx={{ display: 'flex', pt: 6, borderTop: '1px solid grey.200' }}>
                 {dayLabels.map((label, index) => (
                   <Box
                     key={index}
@@ -265,7 +265,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                       flexShrink: 0,
                       textAlign: 'center',
                       fontSize: '0.75rem',
-                      color: '#9ca3af',
+                      color: 'text.disabled',
                       width: `${(zoom / 100) * 140}px`,
                     }}
                   >
@@ -275,13 +275,13 @@ const GanttChart: React.FC<GanttChartProps> = ({
               </Box>
             </Box>
 
-            <Box sx={{ borderTop: '1px solid #f3f4f6' }}>
+            <Box sx={{ borderTop: '1px solid grey.100' }}>
               {phases.map((phase) => (
                 <Box
                   key={phase.id}
                   sx={{
                     height: 48,
-                    borderBottom: '1px solid #f3f4f6',
+                    borderBottom: '1px solid grey.100',
                     position: 'relative',
                   }}
                 >
@@ -301,10 +301,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
                       width: `${getBarWidth(phase.start_date, phase.end_date) * (zoom / 100) * 20 - 4}px`,
                       backgroundColor:
                         phase.status === 'completed'
-                          ? '#10B981'
+                          ? 'success.main'
                           : phase.status === 'active'
-                            ? '#3B82F6'
-                            : '#9CA3AF',
+                            ? 'primary.main'
+                            : 'text.disabled',
                     }}
                   >
                     <Typography
@@ -344,8 +344,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
                           width: 12,
                           height: 12,
                           borderRadius: '50%',
-                          border: '2px solid #facc15',
-                          backgroundColor: '#fef3c7',
+                          border: '2px solid warning.main',
+                          backgroundColor: 'warning.light',
                           left: `${48 + getDayOffset(milestone.date) * (zoom / 100) * 20 - 6}px`,
                         }}
                         title={milestone.name}
@@ -362,8 +362,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
         sx={{
           px: 4,
           py: 3,
-          backgroundColor: '#f9fafb',
-          borderTop: '1px solid #e5e7eb',
+          backgroundColor: 'grey.50',
+          borderTop: '1px solid grey.200',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
@@ -375,10 +375,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
               width: 12,
               height: 12,
               borderRadius: 1,
-              backgroundColor: '#3b82f6',
+              backgroundColor: 'primary.main',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: '#4b5563' }}>进行中</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>进行中</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -386,10 +386,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
               width: 12,
               height: 12,
               borderRadius: 1,
-              backgroundColor: '#22c55e',
+              backgroundColor: 'success.dark',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: '#4b5563' }}>已完成</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>已完成</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -397,11 +397,11 @@ const GanttChart: React.FC<GanttChartProps> = ({
               width: 12,
               height: 12,
               borderRadius: '50%',
-              border: '2px solid #facc15',
-              backgroundColor: '#fef3c7',
+              border: '2px solid warning.main',
+              backgroundColor: 'warning.light',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: '#4b5563' }}>里程碑</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>里程碑</Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
@@ -409,10 +409,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
               width: 12,
               height: 12,
               borderRadius: 1,
-              backgroundColor: '#9ca3af',
+              backgroundColor: 'text.disabled',
             }}
           />
-          <Typography sx={{ fontSize: '0.75rem', color: '#4b5563' }}>未开始</Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>未开始</Typography>
         </Box>
       </Box>
     </Paper>

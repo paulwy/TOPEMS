@@ -64,7 +64,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
                 right: 0,
                 width: '8px',
                 height: '8px',
-                backgroundColor: '#ef4444',
+                backgroundColor: 'error.main',
                 borderRadius: '9999px',
               }}
             />

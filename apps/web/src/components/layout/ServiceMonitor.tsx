@@ -20,17 +20,17 @@ interface ServiceMonitorProps {
 const statusConfig = {
   online: {
     icon: CheckCircle,
-    color: '#22c55e',
+    color: 'success.dark',
     label: '在线',
   },
   warning: {
     icon: AlertTriangle,
-    color: '#f59e0b',
+    color: 'warning.main',
     label: '异常',
   },
   offline: {
     icon: XCircle,
-    color: '#ef4444',
+    color: 'error.main',
     label: '离线',
   },
 };
@@ -101,7 +101,7 @@ export default function ServiceMonitor({
               label={`在线 ${onlineCount}`}
               sx={{
                 bgcolor: '#22c55e20',
-                color: '#22c55e',
+                color: 'success.dark',
                 fontWeight: 500,
               }}
             />
@@ -110,8 +110,8 @@ export default function ServiceMonitor({
                 size='small'
                 label={`异常 ${warningCount}`}
                 sx={{
-                  bgcolor: '#f59e0b20',
-                  color: '#f59e0b',
+                  bgcolor: 'warning.main20',
+                  color: 'warning.main',
                   fontWeight: 500,
                 }}
               />
@@ -121,8 +121,8 @@ export default function ServiceMonitor({
                 size='small'
                 label={`离线 ${offlineCount}`}
                 sx={{
-                  bgcolor: '#ef444420',
-                  color: '#ef4444',
+                  bgcolor: 'error.main20',
+                  color: 'error.main',
                   fontWeight: 500,
                 }}
               />

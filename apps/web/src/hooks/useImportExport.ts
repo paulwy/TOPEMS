@@ -36,8 +36,9 @@ export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
 
       const result = await response.json();
       return result.data;
-    } catch (err: any) {
-      setError(err.message || 'Import failed');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Import failed');
       throw err;
     } finally {
       setIsImporting(false);
@@ -73,8 +74,9 @@ export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
 
       const result = await response.json();
       return result.data;
-    } catch (err: any) {
-      setError(err.message || 'Export failed');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Export failed');
       throw err;
     } finally {
       setIsExporting(false);
@@ -89,8 +91,9 @@ export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
       }
       const result = await response.json();
       return result.data;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch templates');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Failed to fetch templates');
       throw err;
     }
   };
@@ -103,8 +106,9 @@ export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
       }
       const result = await response.json();
       return result.data;
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch import status');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || 'Failed to fetch import status');
       throw err;
     }
   };

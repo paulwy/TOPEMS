@@ -319,7 +319,7 @@ export function useTriggerSync() {
       queryClient.invalidateQueries({ queryKey: ['exchange', 'sync-history'] });
       success(`同步任务 ${variables.taskId} 已触发`);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       notifyError(error.message || '触发同步任务失败');
     },
   });
@@ -368,7 +368,7 @@ export function useCreateSubscription() {
       });
       success('新的数据订阅已创建');
     },
-    onError: (error: any) => {
+    onError: (error) => {
       notifyError(error.message || '创建数据订阅失败');
     },
   });
@@ -390,7 +390,7 @@ export function useUpdateSubscription() {
       });
       success('数据订阅已更新');
     },
-    onError: (error: any) => {
+    onError: (error) => {
       notifyError(error.message || '更新数据订阅失败');
     },
   });
@@ -411,7 +411,7 @@ export function useDeleteSubscription() {
       });
       success('数据订阅已删除');
     },
-    onError: (error: any) => {
+    onError: (error) => {
       notifyError(error.message || '删除数据订阅失败');
     },
   });
@@ -470,7 +470,7 @@ export function useRetryDeadLetter() {
       queryClient.invalidateQueries({ queryKey: ['exchange', 'dead-letter'] });
       success('死信消息已重新投递');
     },
-    onError: (error: any) => {
+    onError: (error) => {
       notifyError(error.message || '消息重试失败');
     },
   });

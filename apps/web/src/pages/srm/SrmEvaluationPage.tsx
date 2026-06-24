@@ -12,7 +12,7 @@ import {
   CardHeader,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Award, Search, Star } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -46,7 +46,7 @@ const SrmEvaluationPage: React.FC = () => {
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.evaluations || [];
-        const adapted = items.map((item: any) => ({
+        const adapted = items.map((item: { [key: string]: unknown }) => ({
           ...item,
           evaluation_date: item.evaluation_date || item.created_at,
           overall_score: item.overall_score || 0,
@@ -55,7 +55,7 @@ const SrmEvaluationPage: React.FC = () => {
       } else {
         setEvaluations([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载评估数据失败:', err);
       setEvaluations([]);
     } finally {
@@ -64,10 +64,10 @@ const SrmEvaluationPage: React.FC = () => {
   };
 
   const getScoreBadge = (score: number) => {
-    if (score >= 80) return { bg: '#dcfce7', color: '#15803d', label: '优秀' };
-    if (score >= 60) return { bg: '#fef3c7', color: '#b45309', label: '良好' };
-    if (score >= 40) return { bg: '#fde68a', color: '#92400e', label: '一般' };
-    return { bg: '#fee2e2', color: '#b91c1c', label: '较差' };
+    if (score >= 80) return { bg: 'success.lighter', color: '#15803d', label: '优秀' };
+    if (score >= 60) return { bg: 'warning.light', color: '#b45309', label: '良好' };
+    if (score >= 40) return { bg: 'warning.light', color: '#92400e', label: '一般' };
+    return { bg: 'error.lighter', color: 'error.darker', label: '较差' };
   };
 
   const ScoreChip: React.FC<{ score: number }> = ({ score }) => {
@@ -102,8 +102,8 @@ const SrmEvaluationPage: React.FC = () => {
                 style={{
                   width: 16,
                   height: 16,
-                  color: i <= stars ? '#fbbf24' : '#e5e7eb',
-                  fill: i <= stars ? '#fbbf24' : 'none',
+                  color: i <= stars ? 'warning.light' : 'grey.200',
+                  fill: i <= stars ? 'warning.light' : 'none',
                 }}
               />
             ))}
@@ -152,7 +152,7 @@ const SrmEvaluationPage: React.FC = () => {
       toast.success('评估创建成功');
       setShowCreateModal(false);
       loadEvaluations();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建评估失败:', err);
     }
@@ -178,7 +178,7 @@ const SrmEvaluationPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, secondary.light 0%, #f8fafc 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -187,8 +187,8 @@ const SrmEvaluationPage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#f59e0b',
-              borderTopColor: '#d97706',
+              borderColor: 'warning.main',
+              borderTopColor: 'warning.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -205,7 +205,7 @@ const SrmEvaluationPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #fef3c7 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, warning.light 0%, #f8fafc 100%)',
       }}
     >
       <Box
@@ -234,7 +234,7 @@ const SrmEvaluationPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  background: 'linear-gradient(135deg, warning.main 0%, warning.dark 100%)',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -266,7 +266,7 @@ const SrmEvaluationPage: React.FC = () => {
               variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: '#f59e0b', '&:hover': { bgcolor: '#d97706' } }}
+              sx={{ bgcolor: 'warning.main', '&:hover': { bgcolor: 'warning.dark' } }}
             >
               新增评估
             </Button>
@@ -286,21 +286,21 @@ const SrmEvaluationPage: React.FC = () => {
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: '#fef3c7' }}>
+          <Card sx={{ bgcolor: 'warning.light' }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fde68a',
+                    bgcolor: 'warning.light',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Award sx={{ width: 20, height: 20, color: '#d97706' }} />
+                  <Award sx={{ width: 20, height: 20, color: 'warning.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -326,14 +326,14 @@ const SrmEvaluationPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Star sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <Star sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -359,14 +359,14 @@ const SrmEvaluationPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Star sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <Star sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -392,14 +392,14 @@ const SrmEvaluationPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fee2e2',
+                    bgcolor: 'error.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Star sx={{ width: 20, height: 20, color: '#dc2626' }} />
+                  <Star sx={{ width: 20, height: 20, color: 'error.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -434,7 +434,7 @@ const SrmEvaluationPage: React.FC = () => {
               variant='h6'
               sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
-              <Award style={{ width: 20, height: 20, color: '#f59e0b' }} />
+              <Award style={{ width: 20, height: 20, color: 'warning.main' }} />
               评估列表
             </Typography>
           </CardHeader>
@@ -531,7 +531,7 @@ const SrmEvaluationPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#f59e0b' }}
+            sx={{ bgcolor: 'warning.main' }}
           >
             保存
           </Button>
