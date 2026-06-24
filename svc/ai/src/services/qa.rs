@@ -1,24 +1,25 @@
 use crate::api::models::{QAHistory, SearchResult};
 use crate::services::db::Database;
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Row};
+use std::sync::Arc;
+use topems_shared::ai_client::{
+    AIClient, AIModelConfig, AIClientError, ChatMessage, ChatCompletionRequest, UnifiedAIClient,
+    create_client, AIProviderType,
+};
 use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct QAService {
     db: Database,
-    http_client: Client,
-    config: QAConfig,
+    ai_client: UnifiedAIClient,
+    embedding_client: UnifiedAIClient,
 }
 
 #[derive(Clone)]
 pub struct QAConfig {
-    pub base_url: String,
-    pub api_key: Option<String>,
-    pub model: String,
-    #[allow(dead_code)]
-    pub embedding_model: String,
+    pub chat_model: AIModelConfig,
+    pub embedding_model: AIModelConfig,
 }
 
 /// 问题分类
@@ -115,11 +116,40 @@ const ANSWER_QUALITY_PROMPT: &str = r#"
 "#;
 
 impl QAService {
-    pub fn new(db: Database, http_client: Client, config: QAConfig) -> Self {
+    pub fn new(db: Database, config: QAConfig) -> Self {
+        let ai_client = create_client(config.chat_model);
+        let embedding_client = create_client(config.embedding_model);
         Self {
             db,
-            http_client,
-            config,
+            ai_client,
+            embedding_client,
+        }
+    }
+}
+
+    /// 创建默认配置的 QAService
+    pub fn new_with_defaults(db: Database) -> Self {
+        let chat_config = AIModelConfig {
+            provider: AIProviderType::Ollama,
+            model_name: "qwen2.5:7b-instruct".to_string(),
+            base_url: "http://localhost:11434/v1".to_string(),
+            ..Default::default()
+        };
+        
+        let embedding_config = AIModelConfig {
+            provider: AIProviderType::Ollama,
+            model_name: "nomic-embed-text".to_string(),
+            base_url: "http://localhost:11434/api".to_string(),
+            ..Default::default()
+        };
+        
+        let ai_client = UnifiedAIClient::new(create_client(chat_config));
+        let embedding_client = UnifiedAIClient::new(create_client(embedding_config));
+        
+        Self {
+            db,
+            ai_client,
+            embedding_client,
         }
     }
 
@@ -390,78 +420,10 @@ impl QAService {
         Ok(())
     }
 
-    /// 调用 AI API
+    /// 调用 AI API（使用统一客户端）
     async fn call_ai_api(&self, prompt: &str) -> Result<String, String> {
-        let api_url = format!("{}/chat/completions", self.config.base_url);
-
-        #[derive(Serialize)]
-        struct OpenAIRequest {
-            model: String,
-            messages: Vec<OpenAIMessage>,
-            temperature: f64,
-        }
-
-        #[derive(Serialize, Deserialize)]
-        struct OpenAIMessage {
-            role: String,
-            content: String,
-        }
-
-        #[derive(Deserialize)]
-        struct OpenAIResponse {
-            choices: Vec<OpenAIChoice>,
-        }
-
-        #[derive(Deserialize)]
-        struct OpenAIChoice {
-            message: OpenAIMessage,
-        }
-
-        let request = OpenAIRequest {
-            model: self.config.model.clone(),
-            messages: vec![OpenAIMessage {
-                role: "user".to_string(),
-                content: prompt.to_string(),
-            }],
-            temperature: 0.7,
-        };
-
-        let mut req_builder = self
-            .http_client
-            .post(&api_url)
-            .header("Content-Type", "application/json");
-
-        if let Some(key) = &self.config.api_key {
-            if key != "ollama" {
-                req_builder = req_builder.header("Authorization", format!("Bearer {}", key));
-            }
-        }
-
-        let response = req_builder
-            .json(&request)
-            .send()
-            .await
-            .map_err(|e| format!("调用 AI API 失败: {}", e))?;
-
-        let status = response.status();
-        if !status.is_success() {
-            let error_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(format!("AI API 错误: {} - {}", status, error_text));
-        }
-
-        let openai_response: OpenAIResponse = response
-            .json()
-            .await
-            .map_err(|e| format!("解析 AI 响应失败: {}", e))?;
-
-        if let Some(choice) = openai_response.choices.first() {
-            Ok(choice.message.content.clone())
-        } else {
-            Err("AI 未返回有效响应".to_string())
-        }
+        let messages = vec![ChatMessage::user(prompt)];
+        self.ai_client.chat(messages).await.map_err(|e| format!("调用 AI API 失败: {}", e))
     }
 
     /// 计算置信度
@@ -944,67 +906,9 @@ impl QAService {
         Ok(results.into_iter().take(top_k).collect())
     }
 
-    /// 生成查询向量嵌入
+    /// 生成查询向量嵌入（使用统一客户端）
     async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>, String> {
-        let embedding_url = format!("{}/embeddings", self.config.base_url);
-        
-        #[derive(Serialize)]
-        struct EmbeddingRequest {
-            model: String,
-            input: String,
-        }
-        
-        #[derive(Deserialize)]
-        struct EmbeddingResponse {
-            data: Vec<EmbeddingData>,
-        }
-        
-        #[derive(Deserialize)]
-        struct EmbeddingData {
-            embedding: Vec<f32>,
-        }
-        
-        let request = EmbeddingRequest {
-            model: self.config.embedding_model.clone(),
-            input: query.to_string(),
-        };
-        
-        let mut req_builder = self
-            .http_client
-            .post(&embedding_url)
-            .header("Content-Type", "application/json");
-        
-        if let Some(key) = &self.config.api_key {
-            if key != "ollama" {
-                req_builder = req_builder.header("Authorization", format!("Bearer {}", key));
-            }
-        }
-        
-        let response = req_builder
-            .json(&request)
-            .send()
-            .await
-            .map_err(|e| format!("调用嵌入 API 失败: {}", e))?;
-        
-        let status = response.status();
-        if !status.is_success() {
-            let error_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(format!("嵌入 API 错误: {} - {}", status, error_text));
-        }
-        
-        let embedding_response: EmbeddingResponse = response
-            .json()
-            .await
-            .map_err(|e| format!("解析嵌入响应失败: {}", e))?;
-        
-        if let Some(data) = embedding_response.data.first() {
-            Ok(data.embedding.clone())
-        } else {
-            Err("嵌入 API 未返回有效响应".to_string())
-        }
+        self.embedding_client.embed(query).await.map_err(|e| format!("生成嵌入失败: {}", e))
     }
 
     /// 多轮对话优化 - 检测问题是否需要上下文

@@ -3,7 +3,7 @@
  * 管理企业固定资产信息，包括折旧跟踪和会计集成
  */
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Plus,
   Edit,
@@ -13,67 +13,82 @@ import {
   Calculator,
   TrendingDown,
   DollarSign,
-} from "lucide-react";
-import { Card, CardContent, TextField, Chip, FormControl, InputLabel, Select, MenuItem, Drawer, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Box, Typography, Stack,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { apiLogger } from "@/utils/logger";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
-import { ImageUpload } from "@/components/common";
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  TextField,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Drawer,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Box,
+  Typography,
+  Stack,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { apiLogger } from '@/utils/logger';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { ImageUpload } from '@/components/common';
 
 /** 资产状态配置 */
 const STATUS_CONFIG: Record<string, { label: string; sx: object }> = {
-  normal: { label: "正常", sx: { bgcolor: "success.main", color: "white" } },
-  disposed: { label: "已处置", sx: { bgcolor: "grey.500", color: "white" } },
-  impaired: { label: "减值", sx: { bgcolor: "warning.main", color: "white" } },
-  scrapped: { label: "报废", sx: { bgcolor: "error.main", color: "white" } },
+  normal: { label: '正常', sx: { bgcolor: 'success.main', color: 'white' } },
+  disposed: { label: '已处置', sx: { bgcolor: 'grey.500', color: 'white' } },
+  impaired: { label: '减值', sx: { bgcolor: 'warning.main', color: 'white' } },
+  scrapped: { label: '报废', sx: { bgcolor: 'error.main', color: 'white' } },
 };
 
 /** 折旧方法配置 */
-const DEPRECIATION_METHOD_CONFIG: Record<
-  string,
-  { label: string; sx: object }
-> = {
+const DEPRECIATION_METHOD_CONFIG: Record<string, { label: string; sx: object }> = {
   straight_line: {
-    label: "直线法",
-    sx: { bgcolor: "primary.main", color: "white" },
+    label: '直线法',
+    sx: { bgcolor: 'primary.main', color: 'white' },
   },
   declining_balance: {
-    label: "双倍余额递减",
-    sx: { bgcolor: "secondary.main", color: "white" },
+    label: '双倍余额递减',
+    sx: { bgcolor: 'secondary.main', color: 'white' },
   },
   sum_of_years: {
-    label: "年数总和法",
-    sx: { bgcolor: "info.main", color: "white" },
+    label: '年数总和法',
+    sx: { bgcolor: 'info.main', color: 'white' },
   },
   units_of_production: {
-    label: "工作量法",
-    sx: { bgcolor: "warning.main", color: "white" },
+    label: '工作量法',
+    sx: { bgcolor: 'warning.main', color: 'white' },
   },
 };
 
 /** 资产类别配置 */
 const ASSET_CATEGORY_CONFIG: Record<string, { label: string; sx: object }> = {
   building: {
-    label: "房屋建筑物",
-    sx: { bgcolor: "indigo.100", color: "indigo.800" },
+    label: '房屋建筑物',
+    sx: { bgcolor: 'indigo.100', color: 'indigo.800' },
   },
   vehicle: {
-    label: "运输设备",
-    sx: { bgcolor: "cyan.100", color: "cyan.800" },
+    label: '运输设备',
+    sx: { bgcolor: 'cyan.100', color: 'cyan.800' },
   },
   equipment: {
-    label: "生产设备",
-    sx: { bgcolor: "emerald.100", color: "emerald.800" },
+    label: '生产设备',
+    sx: { bgcolor: 'emerald.100', color: 'emerald.800' },
   },
   office: {
-    label: "办公设备",
-    sx: { bgcolor: "amber.100", color: "amber.800" },
+    label: '办公设备',
+    sx: { bgcolor: 'amber.100', color: 'amber.800' },
   },
   electronic: {
-    label: "电子设备",
-    sx: { bgcolor: "rose.100", color: "rose.800" },
+    label: '电子设备',
+    sx: { bgcolor: 'rose.100', color: 'rose.800' },
   },
-  other: { label: "其他", sx: { bgcolor: "grey.100", color: "grey.800" } },
+  other: { label: '其他', sx: { bgcolor: 'grey.100', color: 'grey.800' } },
 };
 
 interface FixedAsset {
@@ -126,101 +141,101 @@ interface FixedAssetFormData {
 // 模拟数据
 const mockFixedAssets: FixedAsset[] = [
   {
-    id: "1",
-    asset_code: "FA-2024-001",
-    asset_name: "办公楼",
-    category: "building",
-    specification: "钢筋混凝土结构",
-    location: "北京总部大厦18层",
-    acquisition_date: "2020-01-15",
+    id: '1',
+    asset_code: 'FA-2024-001',
+    asset_name: '办公楼',
+    category: 'building',
+    specification: '钢筋混凝土结构',
+    location: '北京总部大厦18层',
+    acquisition_date: '2020-01-15',
     useful_life: 30,
-    depreciation_method: "straight_line",
+    depreciation_method: 'straight_line',
     original_value: 50000000,
     accumulated_depreciation: 8333333.33,
     net_value: 41666666.67,
     impairment_loss: 0,
     residual_value: 2500000,
-    depreciation_status: "depreciating",
-    status: "normal",
-    department_id: "D001",
-    department_name: "行政部",
-    description: "北京总部办公楼",
-    created_at: "2020-01-15",
+    depreciation_status: 'depreciating',
+    status: 'normal',
+    department_id: 'D001',
+    department_name: '行政部',
+    description: '北京总部办公楼',
+    created_at: '2020-01-15',
   },
   {
-    id: "2",
-    asset_code: "FA-2024-002",
-    asset_name: "奥迪A6L轿车",
-    category: "vehicle",
-    specification: "2023款 45 TFSI quattro",
-    location: "北京总部地下车库",
-    acquisition_date: "2023-06-20",
+    id: '2',
+    asset_code: 'FA-2024-002',
+    asset_name: '奥迪A6L轿车',
+    category: 'vehicle',
+    specification: '2023款 45 TFSI quattro',
+    location: '北京总部地下车库',
+    acquisition_date: '2023-06-20',
     useful_life: 5,
-    depreciation_method: "straight_line",
+    depreciation_method: 'straight_line',
     original_value: 450000,
     accumulated_depreciation: 67500,
     net_value: 382500,
     impairment_loss: 0,
     residual_value: 22500,
-    depreciation_status: "depreciating",
-    status: "normal",
-    department_id: "D002",
-    department_name: "销售部",
-    project_id: "P001",
-    project_name: "市场拓展项目",
-    description: "商务接待用车",
-    created_at: "2023-06-20",
+    depreciation_status: 'depreciating',
+    status: 'normal',
+    department_id: 'D002',
+    department_name: '销售部',
+    project_id: 'P001',
+    project_name: '市场拓展项目',
+    description: '商务接待用车',
+    created_at: '2023-06-20',
   },
   {
-    id: "3",
-    asset_code: "FA-2024-003",
-    asset_name: "Dell服务器",
-    category: "equipment",
-    specification: "PowerEdge R740",
-    location: "北京数据中心",
-    acquisition_date: "2022-03-10",
+    id: '3',
+    asset_code: 'FA-2024-003',
+    asset_name: 'Dell服务器',
+    category: 'equipment',
+    specification: 'PowerEdge R740',
+    location: '北京数据中心',
+    acquisition_date: '2022-03-10',
     useful_life: 5,
-    depreciation_method: "declining_balance",
+    depreciation_method: 'declining_balance',
     original_value: 120000,
     accumulated_depreciation: 69120,
     net_value: 50880,
     impairment_loss: 0,
     residual_value: 6000,
-    depreciation_status: "depreciating",
-    status: "normal",
-    department_id: "D003",
-    department_name: "IT部",
-    description: "核心业务服务器",
-    created_at: "2022-03-10",
+    depreciation_status: 'depreciating',
+    status: 'normal',
+    department_id: 'D003',
+    department_name: 'IT部',
+    description: '核心业务服务器',
+    created_at: '2022-03-10',
   },
   {
-    id: "4",
-    asset_code: "FA-2024-004",
-    asset_name: "ThinkPad X1笔记本",
-    category: "electronic",
-    specification: "Carbon Gen 11",
-    location: "北京总部",
-    acquisition_date: "2023-09-01",
+    id: '4',
+    asset_code: 'FA-2024-004',
+    asset_name: 'ThinkPad X1笔记本',
+    category: 'electronic',
+    specification: 'Carbon Gen 11',
+    location: '北京总部',
+    acquisition_date: '2023-09-01',
     useful_life: 3,
-    depreciation_method: "straight_line",
+    depreciation_method: 'straight_line',
     original_value: 15000,
     accumulated_depreciation: 3750,
     net_value: 11250,
     impairment_loss: 0,
     residual_value: 750,
-    depreciation_status: "depreciating",
-    status: "normal",
-    department_id: "D004",
-    department_name: "财务部",
-    description: "财务人员办公电脑",
-    created_at: "2023-09-01",
+    depreciation_status: 'depreciating',
+    status: 'normal',
+    department_id: 'D004',
+    department_name: '财务部',
+    description: '财务人员办公电脑',
+    created_at: '2023-09-01',
   },
 ];
 
 export default function FixedAssetManagementPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedAsset, setSelectedAsset] = useState<FixedAsset | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -238,15 +253,10 @@ export default function FixedAssetManagementPage() {
         !searchQuery ||
         asset.asset_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         asset.asset_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (asset.department_name
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ??
-          false);
+        (asset.department_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
-      const matchesCategory =
-        categoryFilter === "all" || asset.category === categoryFilter;
-      const matchesStatus =
-        statusFilter === "all" || asset.status === statusFilter;
+      const matchesCategory = categoryFilter === 'all' || asset.category === categoryFilter;
+      const matchesStatus = statusFilter === 'all' || asset.status === statusFilter;
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -264,26 +274,23 @@ export default function FixedAssetManagementPage() {
   }, []);
 
   // 计算统计数据
-  const totalOriginalValue = fixedAssets.reduce(
-    (sum, a) => sum + a.original_value,
-    0,
-  );
+  const totalOriginalValue = fixedAssets.reduce((sum, a) => sum + a.original_value, 0);
   const totalAccumulatedDepreciation = fixedAssets.reduce(
     (sum, a) => sum + a.accumulated_depreciation,
-    0,
+    0
   );
   const totalNetValue = fixedAssets.reduce((sum, a) => sum + a.net_value, 0);
 
   // 处理创建
   const handleCreate = (data: FixedAssetFormData) => {
-    apiLogger.info("创建固定资产:", data);
+    apiLogger.info('创建固定资产:', data);
     setIsCreating(false);
   };
 
   // 处理更新
   const handleUpdate = (data: FixedAssetFormData) => {
     if (!selectedAsset) return;
-    apiLogger.info("更新固定资产:", selectedAsset.id, data);
+    apiLogger.info('更新固定资产:', selectedAsset.id, data);
     setIsEditing(false);
     setSelectedAsset(null);
   };
@@ -291,7 +298,7 @@ export default function FixedAssetManagementPage() {
   // 处理删除
   const handleDelete = () => {
     if (!deletingId) return;
-    apiLogger.info("删除固定资产:", deletingId);
+    apiLogger.info('删除固定资产:', deletingId);
     setDeletingId(null);
   };
 
@@ -299,29 +306,38 @@ export default function FixedAssetManagementPage() {
   const columns: ColumnDef<FixedAsset>[] = useMemo(
     () => [
       {
-        id: "asset_code",
-        label: "资产编号",
+        id: 'asset_code',
+        label: '资产编号',
         sortable: true,
         render: (asset) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Building size={16} style={{ color: "grey" }} />
-            <Typography sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Building
+              size={16}
+              style={{ color: 'grey' }}
+            />
+            <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
               {asset.asset_code}
             </Typography>
           </Box>
         ),
       },
       {
-        id: "asset_name",
-        label: "资产名称",
+        id: 'asset_name',
+        label: '资产名称',
         sortable: true,
         render: (asset) => (
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {asset.asset_name}
             </Typography>
             {asset.specification && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {asset.specification}
               </Typography>
             )}
@@ -329,26 +345,32 @@ export default function FixedAssetManagementPage() {
         ),
       },
       {
-        id: "category",
-        label: "资产类别",
+        id: 'category',
+        label: '资产类别',
         sortable: true,
         render: (asset) => {
           const config = ASSET_CATEGORY_CONFIG[asset.category] || {
             label: asset.category,
-            sx: { bgcolor: "grey.100", color: "grey.800" },
+            sx: { bgcolor: 'grey.100', color: 'grey.800' },
           };
-          return <Chip label={config.label} size="small" sx={config.sx} />;
+          return (
+            <Chip
+              label={config.label}
+              size='small'
+              sx={config.sx}
+            />
+          );
         },
       },
       {
-        id: "original_value",
-        label: "原值",
+        id: 'original_value',
+        label: '原值',
         sortable: true,
-        align: "right",
+        align: 'right',
         render: (asset) => (
-          <Typography sx={{ fontFamily: "monospace", textAlign: "right" }}>
+          <Typography sx={{ fontFamily: 'monospace', textAlign: 'right' }}>
             ¥
-            {asset.original_value.toLocaleString("zh-CN", {
+            {asset.original_value.toLocaleString('zh-CN', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -356,20 +378,20 @@ export default function FixedAssetManagementPage() {
         ),
       },
       {
-        id: "accumulated_depreciation",
-        label: "累计折旧",
+        id: 'accumulated_depreciation',
+        label: '累计折旧',
         sortable: true,
-        align: "right",
+        align: 'right',
         render: (asset) => (
           <Typography
             sx={{
-              fontFamily: "monospace",
-              textAlign: "right",
-              color: "warning.main",
+              fontFamily: 'monospace',
+              textAlign: 'right',
+              color: 'warning.main',
             }}
           >
             ¥
-            {asset.accumulated_depreciation.toLocaleString("zh-CN", {
+            {asset.accumulated_depreciation.toLocaleString('zh-CN', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -377,20 +399,20 @@ export default function FixedAssetManagementPage() {
         ),
       },
       {
-        id: "net_value",
-        label: "净值",
+        id: 'net_value',
+        label: '净值',
         sortable: true,
-        align: "right",
+        align: 'right',
         render: (asset) => (
           <Typography
             sx={{
-              fontFamily: "monospace",
-              textAlign: "right",
+              fontFamily: 'monospace',
+              textAlign: 'right',
               fontWeight: 500,
             }}
           >
             ¥
-            {asset.net_value.toLocaleString("zh-CN", {
+            {asset.net_value.toLocaleString('zh-CN', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -398,47 +420,57 @@ export default function FixedAssetManagementPage() {
         ),
       },
       {
-        id: "depreciation_method",
-        label: "折旧方法",
+        id: 'depreciation_method',
+        label: '折旧方法',
         sortable: true,
         render: (asset) => {
-          const config = DEPRECIATION_METHOD_CONFIG[
-            asset.depreciation_method
-          ] || {
+          const config = DEPRECIATION_METHOD_CONFIG[asset.depreciation_method] || {
             label: asset.depreciation_method,
-            sx: { bgcolor: "grey.100", color: "grey.800" },
+            sx: { bgcolor: 'grey.100', color: 'grey.800' },
           };
-          return <Chip label={config.label} size="small" sx={config.sx} />;
+          return (
+            <Chip
+              label={config.label}
+              size='small'
+              sx={config.sx}
+            />
+          );
         },
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         sortable: true,
         render: (asset) => {
           const config = STATUS_CONFIG[asset.status] || {
             label: asset.status,
-            sx: { bgcolor: "grey.100", color: "grey.800" },
+            sx: { bgcolor: 'grey.100', color: 'grey.800' },
           };
-          return <Chip label={config.label} size="small" sx={config.sx} />;
+          return (
+            <Chip
+              label={config.label}
+              size='small'
+              sx={config.sx}
+            />
+          );
         },
       },
       {
-        id: "actions",
-        label: "操作",
-        align: "right",
+        id: 'actions',
+        label: '操作',
+        align: 'right',
         render: (asset) => (
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 0.5,
-              justifyContent: "flex-end",
+              justifyContent: 'flex-end',
             }}
           >
             <Button
-              variant="text"
-              size="small"
+              variant='text'
+              size='small'
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedAsset(asset);
@@ -448,9 +480,9 @@ export default function FixedAssetManagementPage() {
               <Edit size={16} />
             </Button>
             <Button
-              variant="text"
-              size="small"
-              color="error"
+              variant='text'
+              size='small'
+              color='error'
               onClick={(e) => {
                 e.stopPropagation();
                 setDeletingId(asset.id);
@@ -462,50 +494,50 @@ export default function FixedAssetManagementPage() {
         ),
       },
     ],
-    [],
+    []
   );
 
   // 筛选器定义
   const filters = useMemo(
     () => [
       {
-        id: "category",
-        label: "资产类别",
-        type: "select" as const,
+        id: 'category',
+        label: '资产类别',
+        type: 'select' as const,
         options: [
-          { label: "全部类别", value: "all" },
-          { label: "房屋建筑物", value: "building" },
-          { label: "运输设备", value: "vehicle" },
-          { label: "生产设备", value: "equipment" },
-          { label: "办公设备", value: "office" },
-          { label: "电子设备", value: "electronic" },
-          { label: "其他", value: "other" },
+          { label: '全部类别', value: 'all' },
+          { label: '房屋建筑物', value: 'building' },
+          { label: '运输设备', value: 'vehicle' },
+          { label: '生产设备', value: 'equipment' },
+          { label: '办公设备', value: 'office' },
+          { label: '电子设备', value: 'electronic' },
+          { label: '其他', value: 'other' },
         ],
       },
       {
-        id: "status",
-        label: "资产状态",
-        type: "select" as const,
+        id: 'status',
+        label: '资产状态',
+        type: 'select' as const,
         options: [
-          { label: "全部状态", value: "all" },
-          { label: "正常", value: "normal" },
-          { label: "已处置", value: "disposed" },
-          { label: "减值", value: "impaired" },
-          { label: "报废", value: "scrapped" },
+          { label: '全部状态', value: 'all' },
+          { label: '正常', value: 'normal' },
+          { label: '已处置', value: 'disposed' },
+          { label: '减值', value: 'impaired' },
+          { label: '报废', value: 'scrapped' },
         ],
       },
     ],
-    [],
+    []
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <Box
         sx={{
           maxWidth: 1280,
-          mx: "auto",
-          display: "flex",
-          flexDirection: "column",
+          mx: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
           gap: 3,
           p: 3,
         }}
@@ -513,46 +545,52 @@ export default function FixedAssetManagementPage() {
         {/* 头部 */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 48,
                 height: 48,
                 borderRadius: 2,
-                bgcolor: "indigo.600",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                bgcolor: 'indigo.600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Building size={24} style={{ color: "white" }} />
+              <Building
+                size={24}
+                style={{ color: 'white' }}
+              />
             </Box>
             <Box>
               <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "grey.900" }}
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'grey.900' }}
               >
                 固定资产管理
               </Typography>
-              <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>
+              <Typography sx={{ fontSize: '0.875rem', color: 'grey.500' }}>
                 管理企业固定资产及折旧信息
               </Typography>
             </Box>
           </Box>
           <Button
-            size="small"
-            variant="contained"
+            size='small'
+            variant='contained'
             onClick={() => {
               setSelectedAsset(null);
               setIsCreating(true);
             }}
           >
-            <Plus size={16} style={{ marginRight: 8 }} />
+            <Plus
+              size={16}
+              style={{ marginRight: 8 }}
+            />
             新增资产
           </Button>
         </Box>
@@ -560,139 +598,143 @@ export default function FixedAssetManagementPage() {
         {/* 统计卡片 */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
             gap: 2,
           }}
         >
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
                     borderRadius: 2,
-                    bgcolor: "blue.100",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    bgcolor: 'blue.100',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Building size={20} style={{ color: "blue[600]" }} />
+                  <Building
+                    size={20}
+                    style={{ color: 'blue[600]' }}
+                  />
                 </Box>
                 <Box>
                   <Typography
                     sx={{
-                      fontSize: "1.5rem",
+                      fontSize: '1.5rem',
                       fontWeight: 700,
-                      color: "blue.600",
+                      color: 'blue.600',
                     }}
                   >
                     {fixedAssets.length}
                   </Typography>
-                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>
-                    资产总数
-                  </Typography>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.500' }}>资产总数</Typography>
                 </Box>
               </Box>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
                     borderRadius: 2,
-                    bgcolor: "green.100",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    bgcolor: 'green.100',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <DollarSign size={20} style={{ color: "green[600]" }} />
+                  <DollarSign
+                    size={20}
+                    style={{ color: 'green[600]' }}
+                  />
                 </Box>
                 <Box>
                   <Typography
                     sx={{
-                      fontSize: "1.5rem",
+                      fontSize: '1.5rem',
                       fontWeight: 700,
-                      color: "green.600",
+                      color: 'green.600',
                     }}
                   >
                     ¥{(totalOriginalValue / 10000).toFixed(0)}万
                   </Typography>
-                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>
-                    资产原值
-                  </Typography>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.500' }}>资产原值</Typography>
                 </Box>
               </Box>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
                     borderRadius: 2,
-                    bgcolor: "orange.100",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    bgcolor: 'orange.100',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <TrendingDown size={20} style={{ color: "orange[600]" }} />
+                  <TrendingDown
+                    size={20}
+                    style={{ color: 'orange[600]' }}
+                  />
                 </Box>
                 <Box>
                   <Typography
                     sx={{
-                      fontSize: "1.5rem",
+                      fontSize: '1.5rem',
                       fontWeight: 700,
-                      color: "orange.600",
+                      color: 'orange.600',
                     }}
                   >
                     ¥{(totalAccumulatedDepreciation / 10000).toFixed(0)}万
                   </Typography>
-                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>
-                    累计折旧
-                  </Typography>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.500' }}>累计折旧</Typography>
                 </Box>
               </Box>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
                     borderRadius: 2,
-                    bgcolor: "indigo.100",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    bgcolor: 'indigo.100',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Calculator size={20} style={{ color: "indigo[600]" }} />
+                  <Calculator
+                    size={20}
+                    style={{ color: 'indigo[600]' }}
+                  />
                 </Box>
                 <Box>
                   <Typography
                     sx={{
-                      fontSize: "1.5rem",
+                      fontSize: '1.5rem',
                       fontWeight: 700,
-                      color: "indigo.600",
+                      color: 'indigo.600',
                     }}
                   >
                     ¥{(totalNetValue / 10000).toFixed(0)}万
                   </Typography>
-                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>
-                    资产净值
-                  </Typography>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.500' }}>资产净值</Typography>
                 </Box>
               </Box>
             </CardContent>
@@ -701,7 +743,7 @@ export default function FixedAssetManagementPage() {
 
         {/* 资产列表 */}
         <ListPageTemplate
-          title="固定资产列表"
+          title='固定资产列表'
           subtitle={`共 ${filteredAssets.length} 项资产`}
           columns={columns}
           data={paginatedAssets}
@@ -712,29 +754,29 @@ export default function FixedAssetManagementPage() {
             onPageChange: handlePageChange,
           }}
           searchable
-          searchPlaceholder="搜索资产名称、编号或部门..."
+          searchPlaceholder='搜索资产名称、编号或部门...'
           searchValue={searchQuery}
           onSearch={setSearchQuery}
           filters={filters}
           actions={[
             {
-              label: "新增资产",
+              label: '新增资产',
               icon: <Plus size={16} />,
               onClick: () => {
                 setSelectedAsset(null);
                 setIsCreating(true);
               },
-              variant: "contained",
+              variant: 'contained',
             },
           ]}
           onRefresh={() => {}}
-          emptyMessage="暂无固定资产"
+          emptyMessage='暂无固定资产'
         />
       </Box>
 
       {/* 创建/编辑侧边栏 */}
       <Drawer
-        anchor="right"
+        anchor='right'
         open={isCreating || isEditing}
         onClose={() => {
           setIsCreating(false);
@@ -743,13 +785,18 @@ export default function FixedAssetManagementPage() {
         }}
       >
         <Box sx={{ width: 500, p: 3 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            {isCreating ? "新增固定资产" : "编辑固定资产"}
+          <Typography
+            variant='h6'
+            sx={{ mb: 1 }}
+          >
+            {isCreating ? '新增固定资产' : '编辑固定资产'}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {isCreating
-              ? "创建新的固定资产记录"
-              : `编辑资产: ${selectedAsset?.asset_name}`}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ mb: 2 }}
+          >
+            {isCreating ? '创建新的固定资产记录' : `编辑资产: ${selectedAsset?.asset_name}`}
           </Typography>
           <FixedAssetForm
             asset={selectedAsset}
@@ -764,16 +811,21 @@ export default function FixedAssetManagementPage() {
       </Drawer>
 
       {/* 删除确认对话框 */}
-      <Dialog open={!!deletingId} onClose={() => setDeletingId(null)}>
+      <Dialog
+        open={!!deletingId}
+        onClose={() => setDeletingId(null)}
+      >
         <DialogTitle>确认删除</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            确定要删除该固定资产吗？此操作不可恢复。
-          </DialogContentText>
+          <DialogContentText>确定要删除该固定资产吗？此操作不可恢复。</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeletingId(null)}>取消</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
+          <Button
+            onClick={handleDelete}
+            color='error'
+            variant='contained'
+          >
             删除
           </Button>
         </DialogActions>
@@ -791,22 +843,22 @@ interface FixedAssetFormProps {
 
 function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
   const [formData, setFormData] = useState<FixedAssetFormData>({
-    asset_code: asset?.asset_code || "",
-    asset_name: asset?.asset_name || "",
-    category: asset?.category || "equipment",
-    specification: asset?.specification || "",
-    location: asset?.location || "",
-    acquisition_date: asset?.acquisition_date || "",
+    asset_code: asset?.asset_code || '',
+    asset_name: asset?.asset_name || '',
+    category: asset?.category || 'equipment',
+    specification: asset?.specification || '',
+    location: asset?.location || '',
+    acquisition_date: asset?.acquisition_date || '',
     useful_life: asset?.useful_life || 5,
-    depreciation_method: asset?.depreciation_method || "straight_line",
+    depreciation_method: asset?.depreciation_method || 'straight_line',
     original_value: asset?.original_value || 0,
     residual_value: asset?.residual_value || 0,
-    depreciation_status: asset?.depreciation_status || "depreciating",
-    status: asset?.status || "normal",
-    account_id: asset?.account_id || "",
-    department_id: asset?.department_id || "",
-    project_id: asset?.project_id || "",
-    description: asset?.description || "",
+    depreciation_status: asset?.depreciation_status || 'depreciating',
+    status: asset?.status || 'normal',
+    account_id: asset?.account_id || '',
+    department_id: asset?.department_id || '',
+    project_id: asset?.project_id || '',
+    description: asset?.description || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -816,110 +868,113 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
 
   return (
     <Box
-      component="form"
+      component='form'
       onSubmit={handleSubmit}
-      sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 3 }}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 3 }}
     >
       <Stack spacing={3}>
-        <Stack direction="row" spacing={2}>
+        <Stack
+          direction='row'
+          spacing={2}
+        >
           <TextField
-            label="资产编号"
+            label='资产编号'
             value={formData.asset_code}
-            onChange={(e) =>
-              setFormData({ ...formData, asset_code: e.target.value })
-            }
-            placeholder="例如：FA-2024-001"
+            onChange={(e) => setFormData({ ...formData, asset_code: e.target.value })}
+            placeholder='例如：FA-2024-001'
             required
             fullWidth
-            size="small"
+            size='small'
           />
           <TextField
-            label="资产名称"
+            label='资产名称'
             value={formData.asset_name}
-            onChange={(e) =>
-              setFormData({ ...formData, asset_name: e.target.value })
-            }
-            placeholder="请输入资产名称"
+            onChange={(e) => setFormData({ ...formData, asset_name: e.target.value })}
+            placeholder='请输入资产名称'
             required
             fullWidth
-            size="small"
+            size='small'
           />
         </Stack>
 
-        <Stack direction="row" spacing={2}>
-          <FormControl size="small" fullWidth required>
+        <Stack
+          direction='row'
+          spacing={2}
+        >
+          <FormControl
+            size='small'
+            fullWidth
+            required
+          >
             <InputLabel>资产类别</InputLabel>
             <Select
               value={formData.category}
-              label="资产类别"
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
+              label='资产类别'
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             >
-              <MenuItem value="building">房屋建筑物</MenuItem>
-              <MenuItem value="vehicle">运输设备</MenuItem>
-              <MenuItem value="equipment">生产设备</MenuItem>
-              <MenuItem value="office">办公设备</MenuItem>
-              <MenuItem value="electronic">电子设备</MenuItem>
-              <MenuItem value="other">其他</MenuItem>
+              <MenuItem value='building'>房屋建筑物</MenuItem>
+              <MenuItem value='vehicle'>运输设备</MenuItem>
+              <MenuItem value='equipment'>生产设备</MenuItem>
+              <MenuItem value='office'>办公设备</MenuItem>
+              <MenuItem value='electronic'>电子设备</MenuItem>
+              <MenuItem value='other'>其他</MenuItem>
             </Select>
           </FormControl>
 
-          <FormControl size="small" fullWidth required>
+          <FormControl
+            size='small'
+            fullWidth
+            required
+          >
             <InputLabel>资产状态</InputLabel>
             <Select
               value={formData.status}
-              label="资产状态"
-              onChange={(e) =>
-                setFormData({ ...formData, status: e.target.value })
-              }
+              label='资产状态'
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
             >
-              <MenuItem value="normal">正常</MenuItem>
-              <MenuItem value="disposed">已处置</MenuItem>
-              <MenuItem value="impaired">减值</MenuItem>
-              <MenuItem value="scrapped">报废</MenuItem>
+              <MenuItem value='normal'>正常</MenuItem>
+              <MenuItem value='disposed'>已处置</MenuItem>
+              <MenuItem value='impaired'>减值</MenuItem>
+              <MenuItem value='scrapped'>报废</MenuItem>
             </Select>
           </FormControl>
         </Stack>
 
         <TextField
-          label="规格型号"
-          value={formData.specification || ""}
-          onChange={(e) =>
-            setFormData({ ...formData, specification: e.target.value })
-          }
-          placeholder="请输入规格型号"
+          label='规格型号'
+          value={formData.specification || ''}
+          onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
+          placeholder='请输入规格型号'
           fullWidth
-          size="small"
+          size='small'
         />
 
         <TextField
-          label="存放地点"
-          value={formData.location || ""}
-          onChange={(e) =>
-            setFormData({ ...formData, location: e.target.value })
-          }
-          placeholder="请输入资产存放地点"
+          label='存放地点'
+          value={formData.location || ''}
+          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          placeholder='请输入资产存放地点'
           fullWidth
-          size="small"
+          size='small'
         />
 
-        <Stack direction="row" spacing={2}>
+        <Stack
+          direction='row'
+          spacing={2}
+        >
           <TextField
-            label="购置日期"
-            type="date"
+            label='购置日期'
+            type='date'
             value={formData.acquisition_date}
-            onChange={(e) =>
-              setFormData({ ...formData, acquisition_date: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, acquisition_date: e.target.value })}
             required
             fullWidth
-            size="small"
+            size='small'
             slotProps={{ inputLabel: { shrink: true } }}
           />
           <TextField
-            label="使用寿命（年）"
-            type="number"
+            label='使用寿命（年）'
+            type='number'
             value={formData.useful_life}
             onChange={(e) =>
               setFormData({
@@ -928,17 +983,23 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
               })
             }
             fullWidth
-            size="small"
+            size='small'
             slotProps={{ input: { inputProps: { min: 1 } } }}
           />
         </Stack>
 
-        <Stack direction="row" spacing={2}>
-          <FormControl size="small" fullWidth>
+        <Stack
+          direction='row'
+          spacing={2}
+        >
+          <FormControl
+            size='small'
+            fullWidth
+          >
             <InputLabel>折旧方法</InputLabel>
             <Select
               value={formData.depreciation_method}
-              label="折旧方法"
+              label='折旧方法'
               onChange={(e) =>
                 setFormData({
                   ...formData,
@@ -946,18 +1007,21 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
                 })
               }
             >
-              <MenuItem value="straight_line">直线法</MenuItem>
-              <MenuItem value="declining_balance">双倍余额递减法</MenuItem>
-              <MenuItem value="sum_of_years">年数总和法</MenuItem>
-              <MenuItem value="units_of_production">工作量法</MenuItem>
+              <MenuItem value='straight_line'>直线法</MenuItem>
+              <MenuItem value='declining_balance'>双倍余额递减法</MenuItem>
+              <MenuItem value='sum_of_years'>年数总和法</MenuItem>
+              <MenuItem value='units_of_production'>工作量法</MenuItem>
             </Select>
           </FormControl>
 
-          <FormControl size="small" fullWidth>
+          <FormControl
+            size='small'
+            fullWidth
+          >
             <InputLabel>折旧状态</InputLabel>
             <Select
               value={formData.depreciation_status}
-              label="折旧状态"
+              label='折旧状态'
               onChange={(e) =>
                 setFormData({
                   ...formData,
@@ -965,17 +1029,20 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
                 })
               }
             >
-              <MenuItem value="not_started">未开始</MenuItem>
-              <MenuItem value="depreciating">折旧中</MenuItem>
-              <MenuItem value="completed">已提足</MenuItem>
+              <MenuItem value='not_started'>未开始</MenuItem>
+              <MenuItem value='depreciating'>折旧中</MenuItem>
+              <MenuItem value='completed'>已提足</MenuItem>
             </Select>
           </FormControl>
         </Stack>
 
-        <Stack direction="row" spacing={2}>
+        <Stack
+          direction='row'
+          spacing={2}
+        >
           <TextField
-            label="原值"
-            type="number"
+            label='原值'
+            type='number'
             value={formData.original_value}
             onChange={(e) =>
               setFormData({
@@ -983,15 +1050,15 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
                 original_value: parseFloat(e.target.value) || 0,
               })
             }
-            placeholder="0.00"
+            placeholder='0.00'
             required
             fullWidth
-            size="small"
+            size='small'
             slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
           />
           <TextField
-            label="残值"
-            type="number"
+            label='残值'
+            type='number'
             value={formData.residual_value}
             onChange={(e) =>
               setFormData({
@@ -999,31 +1066,29 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
                 residual_value: parseFloat(e.target.value) || 0,
               })
             }
-            placeholder="0.00"
+            placeholder='0.00'
             fullWidth
-            size="small"
+            size='small'
             slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
           />
         </Stack>
 
         <TextField
-          label="备注"
-          value={formData.description || ""}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
-          placeholder="可选描述信息"
+          label='备注'
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder='可选描述信息'
           fullWidth
-          size="small"
+          size='small'
           multiline
           rows={2}
         />
 
         <Box>
           <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ mb: 1, display: "block" }}
+            variant='caption'
+            color='text.secondary'
+            sx={{ mb: 1, display: 'block' }}
           >
             资产图片
           </Typography>
@@ -1031,7 +1096,7 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
             value={formData.images || []}
             onChange={(files) => setFormData({ ...formData, images: files })}
             maxCount={9}
-            accept="image/*"
+            accept='image/*'
             cropEnabled
             height={150}
           />
@@ -1039,20 +1104,27 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
       </Stack>
 
       <Stack
-        direction="row"
+        direction='row'
         spacing={2}
         sx={{
-          justifyContent: "flex-end",
+          justifyContent: 'flex-end',
           mt: 3,
           pt: 2,
           borderTop: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Button type="button" variant="outlined" onClick={onCancel}>
+        <Button
+          type='button'
+          variant='outlined'
+          onClick={onCancel}
+        >
           取消
         </Button>
-        <Button type="submit" variant="contained">
+        <Button
+          type='submit'
+          variant='contained'
+        >
           保存
         </Button>
       </Stack>

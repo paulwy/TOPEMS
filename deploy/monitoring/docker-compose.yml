@@ -6,7 +6,13 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - ./prometheus/rules:/etc/prometheus/rules
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
     networks:
       - monitoring
     restart: unless-stopped
@@ -63,8 +69,28 @@ services:
       - "9093:9093"
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./alertmanager/templates:/etc/alertmanager/templates
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.enable-lifecycle'
     networks:
       - monitoring
+    restart: unless-stopped
+
+  # 可选的告警管理界面
+  alertmanager-web:
+    image: quay.io/banzaicloud/cloud-oracle:latest
+    container_name: topems-alertmanager-web
+    ports:
+      - "9094:9094"
+    environment:
+      - ALERTMANAGER_URL=http://alertmanager:9093
+    networks:
+      - monitoring
+    depends_on:
+      - alertmanager
     restart: unless-stopped
 
 networks:
@@ -73,3 +99,5 @@ networks:
 
 volumes:
   grafana_data:
+  prometheus_data:
+  alertmanager_data:

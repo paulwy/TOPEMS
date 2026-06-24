@@ -1,131 +1,345 @@
-import { Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
-import type { InboundOrder, CreateInboundOrderRequest } from "@/api/shared/wms";
-import { wmsApi } from "@/api/shared/wms";
-import { useAppStore } from "@/store";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
-import { Plus } from "lucide-react";
-import { apiLogger } from "@/utils/logger";
+import {
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import type {
+  InboundOrder,
+  CreateInboundOrderRequest,
+  UpdateInboundOrderRequest,
+} from '@/api/shared/wms';
+import { wmsApi } from '@/api/shared/wms';
+import { useAppStore } from '@/store';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
+import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { apiLogger } from '@/utils/logger';
+
+const orderTypeConfig: Record<string, string> = {
+  purchase_in: '采购入库',
+  return_in: '退货入库',
+  transfer_in: '调拨入库',
+  other_in: '其他入库',
+};
+
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'success' | 'warning' | 'error' }
+> = {
+  pending: { label: '待处理', color: 'warning' },
+  confirmed: { label: '已确认', color: 'success' },
+  receiving: { label: '收货中', color: 'default' },
+  completed: { label: '已完成', color: 'default' },
+  cancelled: { label: '已取消', color: 'error' },
+};
 
 const InboundOrderPage: React.FC = () => {
+  const { addNotification } = useAppStore();
+
   const [orders, setOrders] = useState<InboundOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [showDialog, setShowDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+
+  // Dialog states
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<InboundOrder | null>(null);
+
+  // Form states
   const [formData, setFormData] = useState<CreateInboundOrderRequest>({
-    order_number: "",
-    warehouse_id: "",
-    supplier_id: "",
-    order_date: "",
-    expected_arrival: "",
-    total_amount: 0,
-    remarks: "",
+    order_number: '',
+    order_type: 'purchase_in',
+    warehouse_id: '',
+    supplier_id: '',
+    supplier_name: '',
+    expected_date: '',
+    items: [],
   });
 
-  const { addNotification } = useAppStore();
+  const [editFormData, setEditFormData] = useState<UpdateInboundOrderRequest>({});
 
-  useEffect(() => {
-    loadOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await wmsApi.inboundOrders.list({
+      const params: any = {
         page: currentPage,
         page_size: pageSize,
-      });
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter) params.status = statusFilter;
+
+      const response = await wmsApi.inboundOrders.list(params);
       if (response.success && response.data) {
         setOrders(response.data.items || []);
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      apiLogger.error("加载入库订单失败:", error);
+      apiLogger.error('加载入库订单失败:', error);
       addNotification({
-        type: "error",
-        title: "加载失败",
-        message: "无法加载入库订单",
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载入库订单',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  const handleCreate = async () => {
+    if (!formData.order_number) {
+      addNotification({
+        type: 'warning',
+        title: '验证错误',
+        message: '请填写订单号',
+      });
+      return;
+    }
+
     try {
-      await wmsApi.inboundOrders.create(formData);
-      addNotification({
-        type: "success",
-        title: "创建成功",
-        message: "新入库订单已创建",
-      });
-      setShowDialog(false);
-      setFormData({
-        order_number: "",
-        warehouse_id: "",
-        supplier_id: "",
-        order_date: "",
-        expected_arrival: "",
-        total_amount: 0,
-        remarks: "",
-      });
-      loadOrders();
+      const response = await wmsApi.inboundOrders.create(formData);
+      if (response.success) {
+        addNotification({
+          type: 'success',
+          title: '创建成功',
+          message: '新入库订单已创建',
+        });
+        setShowCreateDialog(false);
+        resetForm();
+        loadOrders();
+      }
     } catch (error) {
-      apiLogger.error("操作失败:", error);
+      apiLogger.error('创建入库订单失败:', error);
       addNotification({
-        type: "error",
-        title: "操作失败",
-        message: "创建入库订单失败",
+        type: 'error',
+        title: '创建失败',
+        message: '创建入库订单失败',
       });
     }
   };
 
-  const columns: ColumnDef<InboundOrder>[] = useMemo(
-    () => [
-      { id: "order_number", label: "订单号", sortable: true },
-      { id: "warehouse_id", label: "仓库" },
-      { id: "supplier_id", label: "供应商" },
-      {
-        id: "order_date",
-        label: "订单日期",
-        render: (row) => new Date(row.order_date).toLocaleDateString("zh-CN"),
-      },
-      {
-        id: "expected_arrival",
-        label: "预计到货",
-        render: (row) =>
-          row.expected_arrival
-            ? new Date(row.expected_arrival).toLocaleDateString("zh-CN")
-            : "-",
-      },
-      { id: "total_amount", label: "总金额" },
-      {
-        id: "status",
-        label: "状态",
-        render: (row) => (
-          <Chip size="small" label={row.status} variant="outlined" />
-        ),
-      },
-    ],
-    [],
+  const handleUpdate = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      const response = await wmsApi.inboundOrders.update(selectedOrder.id, editFormData);
+      if (response.success) {
+        addNotification({
+          type: 'success',
+          title: '更新成功',
+          message: '入库订单已更新',
+        });
+        setShowEditDialog(false);
+        loadOrders();
+      }
+    } catch (error) {
+      apiLogger.error('更新入库订单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '更新失败',
+        message: '更新入库订单失败',
+      });
+    }
+  };
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!window.confirm('确定要删除这个入库订单吗？此操作不可撤销。')) {
+        return;
+      }
+
+      try {
+        const response = await wmsApi.inboundOrders.delete(id);
+        if (response.success) {
+          addNotification({
+            type: 'success',
+            title: '删除成功',
+            message: '入库订单已删除',
+          });
+          loadOrders();
+        }
+      } catch (error) {
+        apiLogger.error('删除入库订单失败:', error);
+        addNotification({
+          type: 'error',
+          title: '删除失败',
+          message: '删除入库订单失败',
+        });
+      }
+    },
+    [addNotification, loadOrders]
   );
 
-  if (loading) return <LoadingSpinner />;
+  const handleEdit = (order: InboundOrder) => {
+    setSelectedOrder(order);
+    setEditFormData({
+      order_number: order.order_number,
+      order_type: order.order_type,
+      warehouse_id: order.warehouse_id,
+      supplier_id: order.supplier_id,
+      supplier_name: order.supplier_name,
+      expected_date: order.expected_date,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleViewDetail = (order: InboundOrder) => {
+    setSelectedOrder(order);
+    setShowDetailDialog(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      order_number: '',
+      order_type: 'purchase_in',
+      warehouse_id: '',
+      supplier_id: '',
+      supplier_name: '',
+      expected_date: '',
+      items: [],
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const config = statusConfig[status] || { label: status, color: 'default' as const };
+    return (
+      <Chip
+        size='small'
+        color={config.color}
+        label={config.label}
+        variant='outlined'
+      />
+    );
+  };
+
+  const getOrderTypeLabel = (type: string) => {
+    return orderTypeConfig[type] || type;
+  };
+
+  const columns: ColumnDef<InboundOrder>[] = useMemo(
+    () => [
+      { id: 'order_number', label: '订单号', sortable: true },
+      {
+        id: 'order_type',
+        label: '订单类型',
+        render: (row) => getOrderTypeLabel(row.order_type),
+      },
+      { id: 'warehouse_id', label: '仓库' },
+      { id: 'supplier_name', label: '供应商' },
+      {
+        id: 'expected_date',
+        label: '预计日期',
+        render: (row) =>
+          row.expected_date ? new Date(row.expected_date).toLocaleDateString('zh-CN') : '-',
+      },
+      { id: 'total_amount', label: '总金额' },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    []
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '全部状态', value: '' },
+          { label: '待处理', value: 'pending' },
+          { label: '已确认', value: 'confirmed' },
+          { label: '收货中', value: 'receiving' },
+          { label: '已完成', value: 'completed' },
+          { label: '已取消', value: 'cancelled' },
+        ],
+        value: statusFilter,
+        onChange: (value) => {
+          setStatusFilter(value);
+          setCurrentPage(1);
+        },
+      },
+    ],
+    [statusFilter]
+  );
+
+  const rowActions: RowAction<InboundOrder>[] = useMemo(
+    () => [
+      {
+        label: '查看详情',
+        icon: <Eye size={16} />,
+        onClick: handleViewDetail,
+      },
+      {
+        label: '编辑',
+        icon: <Edit size={16} />,
+        onClick: handleEdit,
+      },
+      {
+        label: '删除',
+        icon: <Trash2 size={16} />,
+        color: 'error',
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: '确定要删除这个入库订单吗？',
+      },
+    ],
+    [handleDelete]
+  );
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setShowCreateDialog(true);
+  };
 
   return (
     <>
       <ListPageTemplate
-        title="入库订单管理"
-        subtitle="管理入库订单,包括订单号、仓库、供应商、订单日期等"
+        title='入库订单管理'
+        subtitle='管理入库订单,包括订单号、仓库、供应商、订单日期等'
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '仓储', href: '/wms' },
+          { label: '入库订单' },
+        ]}
         columns={columns}
         data={orders}
         loading={loading}
+        filters={filters}
+        searchable
+        searchPlaceholder='搜索订单号或供应商...'
+        onSearch={handleSearch}
+        searchValue={searchTerm}
         pagination={{
           page: currentPage,
           pageSize,
@@ -134,116 +348,290 @@ const InboundOrderPage: React.FC = () => {
         }}
         actions={[
           {
-            label: "新增入库订单",
+            label: '新增入库订单',
             icon: <Plus size={16} />,
-            onClick: () => setShowDialog(true),
+            onClick: handleOpenCreate,
           },
         ]}
-        emptyMessage="暂无入库订单数据"
+        rowActions={rowActions}
+        emptyMessage='暂无入库订单数据'
         getRowId={(row) => row.id}
       />
 
+      {/* 新增对话框 */}
       <Dialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
-        maxWidth="md"
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>新增入库订单</DialogTitle>
         <DialogContent>
-          <form onSubmit={handleSubmit}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 2,
+              py: 2,
+            }}
+          >
+            <TextField
+              label='订单号 *'
+              value={formData.order_number}
+              onChange={(e) => setFormData({ ...formData, order_number: e.target.value })}
+              size='small'
+              required
+              fullWidth
+            />
+            <FormControl
+              size='small'
+              fullWidth
+            >
+              <InputLabel>订单类型 *</InputLabel>
+              <Select
+                value={formData.order_type}
+                label='订单类型 *'
+                onChange={(e) => setFormData({ ...formData, order_type: e.target.value })}
+              >
+                <MenuItem value='purchase_in'>采购入库</MenuItem>
+                <MenuItem value='return_in'>退货入库</MenuItem>
+                <MenuItem value='transfer_in'>调拨入库</MenuItem>
+                <MenuItem value='other_in'>其他入库</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label='仓库ID'
+              value={formData.warehouse_id}
+              onChange={(e) => setFormData({ ...formData, warehouse_id: e.target.value })}
+              size='small'
+              fullWidth
+            />
+            <TextField
+              label='供应商ID'
+              value={formData.supplier_id}
+              onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+              size='small'
+              fullWidth
+            />
+            <TextField
+              label='供应商名称'
+              value={formData.supplier_name}
+              onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+              size='small'
+              fullWidth
+            />
+            <TextField
+              label='预计到货日期'
+              type='date'
+              value={formData.expected_date}
+              onChange={(e) => setFormData({ ...formData, expected_date: e.target.value })}
+              size='small'
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Box>
+          <DialogActions sx={{ mt: 2 }}>
+            <Button
+              variant='outlined'
+              onClick={() => setShowCreateDialog(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleCreate}
+            >
+              保存
+            </Button>
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
+
+      {/* 编辑对话框 */}
+      <Dialog
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>编辑入库订单</DialogTitle>
+        <DialogContent>
+          {selectedOrder && (
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
                 gap: 2,
                 py: 2,
               }}
             >
               <TextField
-                label="订单号 *"
-                value={formData.order_number}
-                onChange={(e) =>
-                  setFormData({ ...formData, order_number: e.target.value })
-                }
-                size="small"
-                required
+                label='订单号'
+                value={editFormData.order_number || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, order_number: e.target.value })}
+                size='small'
+                fullWidth
+              />
+              <FormControl
+                size='small'
+                fullWidth
+              >
+                <InputLabel>订单类型</InputLabel>
+                <Select
+                  value={editFormData.order_type || ''}
+                  label='订单类型'
+                  onChange={(e) => setEditFormData({ ...editFormData, order_type: e.target.value })}
+                >
+                  <MenuItem value='purchase_in'>采购入库</MenuItem>
+                  <MenuItem value='return_in'>退货入库</MenuItem>
+                  <MenuItem value='transfer_in'>调拨入库</MenuItem>
+                  <MenuItem value='other_in'>其他入库</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label='仓库ID'
+                value={editFormData.warehouse_id || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, warehouse_id: e.target.value })}
+                size='small'
+                fullWidth
               />
               <TextField
-                label="仓库ID"
-                value={formData.warehouse_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, warehouse_id: e.target.value })
-                }
-                size="small"
+                label='供应商ID'
+                value={editFormData.supplier_id || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, supplier_id: e.target.value })}
+                size='small'
+                fullWidth
               />
               <TextField
-                label="供应商ID"
-                value={formData.supplier_id}
+                label='供应商名称'
+                value={editFormData.supplier_name || ''}
                 onChange={(e) =>
-                  setFormData({ ...formData, supplier_id: e.target.value })
+                  setEditFormData({ ...editFormData, supplier_name: e.target.value })
                 }
-                size="small"
+                size='small'
+                fullWidth
               />
               <TextField
-                label="订单日期 *"
-                type="date"
-                value={formData.order_date}
+                label='预计到货日期'
+                type='date'
+                value={editFormData.expected_date || ''}
                 onChange={(e) =>
-                  setFormData({ ...formData, order_date: e.target.value })
+                  setEditFormData({ ...editFormData, expected_date: e.target.value })
                 }
-                size="small"
-                required
+                size='small'
+                fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
-              />
-              <TextField
-                label="预计到货"
-                type="date"
-                value={formData.expected_arrival}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    expected_arrival: e.target.value,
-                  })
-                }
-                size="small"
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-              <TextField
-                label="总金额"
-                type="number"
-                value={formData.total_amount}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    total_amount: parseFloat(e.target.value),
-                  })
-                }
-                size="small"
               />
             </Box>
-            <TextField
-              label="备注"
-              multiline
-              rows={2}
-              value={formData.remarks}
-              onChange={(e) =>
-                setFormData({ ...formData, remarks: e.target.value })
-              }
-              fullWidth
-              size="small"
-              sx={{ mt: 2 }}
-            />
-            <DialogActions sx={{ mt: 2 }}>
-              <Button variant="outlined" onClick={() => setShowDialog(false)}>
-                取消
-              </Button>
-              <Button type="submit" variant="contained">
-                保存
-              </Button>
-            </DialogActions>
-          </form>
+          )}
+          <DialogActions sx={{ mt: 2 }}>
+            <Button
+              variant='outlined'
+              onClick={() => setShowEditDialog(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleUpdate}
+            >
+              保存
+            </Button>
+          </DialogActions>
         </DialogContent>
+      </Dialog>
+
+      {/* 详情对话框 */}
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>入库订单详情</DialogTitle>
+        <DialogContent>
+          {selectedOrder && (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 2,
+                py: 2,
+              }}
+            >
+              <TextField
+                label='订单号'
+                value={selectedOrder.order_number}
+                size='small'
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                label='订单类型'
+                value={getOrderTypeLabel(selectedOrder.order_type)}
+                size='small'
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                label='仓库'
+                value={selectedOrder.warehouse_id}
+                size='small'
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                label='供应商'
+                value={selectedOrder.supplier_name || selectedOrder.supplier_id || '-'}
+                size='small'
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                label='预计日期'
+                value={
+                  selectedOrder.expected_date
+                    ? new Date(selectedOrder.expected_date).toLocaleDateString('zh-CN')
+                    : '-'
+                }
+                size='small'
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                label='总金额'
+                value={selectedOrder.total_amount || '-'}
+                size='small'
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <Box>
+                <TextField
+                  label='状态'
+                  value={statusConfig[selectedOrder.status]?.label || selectedOrder.status}
+                  size='small'
+                  fullWidth
+                  slotProps={{ input: { readOnly: true } }}
+                />
+              </Box>
+              <TextField
+                label='创建时间'
+                value={new Date(selectedOrder.created_at).toLocaleString('zh-CN')}
+                size='small'
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowDetailDialog(false)}
+          >
+            关闭
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

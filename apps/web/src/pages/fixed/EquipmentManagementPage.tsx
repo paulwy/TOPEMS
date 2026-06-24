@@ -1,24 +1,29 @@
-import { Chip, Typography, TextField, Dialog, DialogTitle, DialogContent, FormControl, InputLabel, Select, MenuItem, Box,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
 import {
-  Plus,
-  Edit,
-  Trash2,
-  DollarSign,
-  ClipboardCheck,
-  Wrench,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { assetApi, type Asset } from "@/api/erp";
-import { employeeApi, type Employee } from "@/api/hrm";
-import { useAppStore } from "../../store";
+  Chip,
+  Typography,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Edit, Trash2, DollarSign, ClipboardCheck, Wrench } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { assetApi, type Asset } from '@/api/erp';
+import { employeeApi, type Employee } from '@/api/hrm';
+import { useAppStore } from '../../store';
 import {
   ListPageTemplate,
   type ColumnDef,
   type RowAction,
   type FilterConfig,
-} from "@/components/templates";
+} from '@/components/templates';
 
 const EquipmentManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,9 +33,9 @@ const EquipmentManagementPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const [totalAssets, setTotalAssets] = useState(0);
@@ -40,16 +45,16 @@ const EquipmentManagementPage: React.FC = () => {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   const [newAsset, setNewAsset] = useState<Partial<Asset>>({
-    asset_number: "",
-    name: "",
-    category: "",
-    brand: "",
-    model: "",
-    purchase_date: "",
+    asset_number: '',
+    name: '',
+    category: '',
+    brand: '',
+    model: '',
+    purchase_date: '',
     purchase_amount: 0,
-    location: "",
-    responsible_id: "",
-    status: "idle",
+    location: '',
+    responsible_id: '',
+    status: 'idle',
   });
 
   // 防抖搜索
@@ -77,7 +82,7 @@ const EquipmentManagementPage: React.FC = () => {
       if (debouncedSearch) {
         params.search = debouncedSearch;
       }
-      if (filterStatus !== "all") {
+      if (filterStatus !== 'all') {
         params.status = filterStatus;
       }
 
@@ -95,11 +100,11 @@ const EquipmentManagementPage: React.FC = () => {
         setEmployees(employeeRes.data.items || []);
       }
     } catch (err: any) {
-      setError(err.message || "加载数据失败");
+      setError(err.message || '加载数据失败');
       addNotification({
-        title: "加载失败",
-        message: "加载数据失败",
-        type: "error",
+        title: '加载失败',
+        message: '加载数据失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -112,63 +117,63 @@ const EquipmentManagementPage: React.FC = () => {
       const res = await assetApi.create(newAsset);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "设备创建成功",
-          type: "success",
+          title: '成功',
+          message: '设备创建成功',
+          type: 'success',
         });
         setShowCreateModal(false);
         setNewAsset({
-          asset_number: "",
-          name: "",
-          category: "",
-          brand: "",
-          model: "",
-          purchase_date: "",
+          asset_number: '',
+          name: '',
+          category: '',
+          brand: '',
+          model: '',
+          purchase_date: '',
           purchase_amount: 0,
-          location: "",
-          responsible_id: "",
-          status: "idle",
+          location: '',
+          responsible_id: '',
+          status: 'idle',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "创建设备失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '创建设备失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "创建设备失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '创建设备失败',
+        type: 'error',
       });
     }
   };
 
   const handleDeleteAsset = async (id: string) => {
-    if (!confirm("确定要删除这个设备吗？")) return;
+    if (!confirm('确定要删除这个设备吗？')) return;
     try {
       const res = await assetApi.delete(id);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "设备删除成功",
-          type: "success",
+          title: '成功',
+          message: '设备删除成功',
+          type: 'success',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "删除设备失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '删除设备失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "删除设备失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '删除设备失败',
+        type: 'error',
       });
     }
   };
@@ -180,48 +185,48 @@ const EquipmentManagementPage: React.FC = () => {
       const res = await assetApi.update(selectedAsset.id, selectedAsset);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "设备信息更新成功",
-          type: "success",
+          title: '成功',
+          message: '设备信息更新成功',
+          type: 'success',
         });
         setShowEditModal(false);
         setSelectedAsset(null);
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "更新设备失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '更新设备失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "失败",
-        message: err.message || "更新设备失败",
-        type: "error",
+        title: '失败',
+        message: err.message || '更新设备失败',
+        type: 'error',
       });
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, "success" | "info" | "warning" | "error"> = {
-      in_use: "success",
-      idle: "info",
-      maintenance: "warning",
-      scrapped: "error",
+    const colors: Record<string, 'success' | 'info' | 'warning' | 'error'> = {
+      in_use: 'success',
+      idle: 'info',
+      maintenance: 'warning',
+      scrapped: 'error',
     };
     const labels: Record<string, string> = {
-      in_use: "使用中",
-      idle: "闲置",
-      maintenance: "维护中",
-      scrapped: "报废",
+      in_use: '使用中',
+      idle: '闲置',
+      maintenance: '维护中',
+      scrapped: '报废',
     };
     return (
       <Chip
-        size="small"
-        color={colors[status] || "default"}
+        size='small'
+        color={colors[status] || 'default'}
         label={labels[status] || status}
-        variant="outlined"
+        variant='outlined'
       />
     );
   };
@@ -229,20 +234,20 @@ const EquipmentManagementPage: React.FC = () => {
   const filters: FilterConfig[] = useMemo(
     () => [
       {
-        id: "status",
-        label: "状态",
-        type: "select",
+        id: 'status',
+        label: '状态',
+        type: 'select',
         options: [
-          { value: "all", label: "全部状态" },
-          { value: "idle", label: "闲置" },
-          { value: "in_use", label: "使用中" },
-          { value: "maintenance", label: "维护中" },
-          { value: "scrapped", label: "报废" },
+          { value: 'all', label: '全部状态' },
+          { value: 'idle', label: '闲置' },
+          { value: 'in_use', label: '使用中' },
+          { value: 'maintenance', label: '维护中' },
+          { value: 'scrapped', label: '报废' },
         ],
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+
+    []
   );
 
   const handleFilterChange = (filters: Record<string, any>) => {
@@ -255,84 +260,76 @@ const EquipmentManagementPage: React.FC = () => {
   const columns = useMemo<ColumnDef<Asset>[]>(
     () => [
       {
-        id: "asset_number",
-        label: "设备编号",
+        id: 'asset_number',
+        label: '设备编号',
         render: (row) => (
-          <Typography sx={{ fontWeight: 500, color: "#0f172a" }}>
-            {row.asset_number}
+          <Typography sx={{ fontWeight: 500, color: '#0f172a' }}>{row.asset_number}</Typography>
+        ),
+      },
+      {
+        id: 'name',
+        label: '设备名称',
+        render: (row) => <Typography sx={{ color: '#0f172a' }}>{row.name}</Typography>,
+      },
+      {
+        id: 'category',
+        label: '类别',
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+            {row.category || '-'}
           </Typography>
         ),
       },
       {
-        id: "name",
-        label: "设备名称",
+        id: 'brand',
+        label: '品牌',
         render: (row) => (
-          <Typography sx={{ color: "#0f172a" }}>{row.name}</Typography>
-        ),
-      },
-      {
-        id: "category",
-        label: "类别",
-        render: (row) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
-            {row.category || "-"}
+          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+            {row.brand || '-'}
           </Typography>
         ),
       },
       {
-        id: "brand",
-        label: "品牌",
+        id: 'department',
+        label: '部门',
         render: (row) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
-            {row.brand || "-"}
+          <Typography sx={{ fontSize: '0.875rem', color: '#64748b' }}>
+            {row.department || '-'}
           </Typography>
         ),
       },
       {
-        id: "department",
-        label: "部门",
-        render: (row) => (
-          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
-            {row.department || "-"}
-          </Typography>
-        ),
-      },
-      {
-        id: "purchase_amount",
-        label: "采购金额",
-        align: "right",
+        id: 'purchase_amount',
+        label: '采购金额',
+        align: 'right',
         render: (row) => (
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: "0.875rem",
-              color: "#0f172a",
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: '0.875rem',
+              color: '#0f172a',
             }}
           >
-            <DollarSign
-              sx={{ width: 12, height: 12, marginRight: 4, color: "#16a34a" }}
-            />
-            {row.purchase_amount
-              ? `¥${row.purchase_amount.toLocaleString()}`
-              : "-"}
+            <DollarSign sx={{ width: 12, height: 12, marginRight: 4, color: '#16a34a' }} />
+            {row.purchase_amount ? `¥${row.purchase_amount.toLocaleString()}` : '-'}
           </Box>
         ),
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [employees],
+    [employees]
   );
 
   const rowActions = useMemo<RowAction<Asset>[]>(
     () => [
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit sx={{ width: 16, height: 16 }} />,
         onClick: (row) => {
           setSelectedAsset(row);
@@ -340,25 +337,25 @@ const EquipmentManagementPage: React.FC = () => {
         },
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
-        color: "error",
+        color: 'error',
         onClick: (row) => handleDeleteAsset(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这个设备吗？",
+        confirmMessage: '确定要删除这个设备吗？',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       <ListPageTemplate
-        title="设备管理"
-        subtitle="设备台账管理"
+        title='设备管理'
+        subtitle='设备台账管理'
         backButton={{
-          onClick: () => navigate("/dashboard"),
+          onClick: () => navigate('/dashboard'),
         }}
         columns={columns}
         data={assets}
@@ -366,7 +363,7 @@ const EquipmentManagementPage: React.FC = () => {
         error={error || undefined}
         getRowId={(row) => row.id}
         searchable
-        searchPlaceholder="搜索设备名称、编号、品牌、型号..."
+        searchPlaceholder='搜索设备名称、编号、品牌、型号...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         filters={filters}
@@ -382,22 +379,22 @@ const EquipmentManagementPage: React.FC = () => {
         onRefresh={loadData}
         actions={[
           {
-            label: "点检记录",
+            label: '点检记录',
             icon: <ClipboardCheck sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate("/equipment/inspections"),
-            variant: "outlined",
+            onClick: () => navigate('/equipment/inspections'),
+            variant: 'outlined',
           },
           {
-            label: "维护维修",
+            label: '维护维修',
             icon: <Wrench sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate("/equipment/maintenances"),
-            variant: "outlined",
+            onClick: () => navigate('/equipment/maintenances'),
+            variant: 'outlined',
           },
           {
-            label: "新增设备",
+            label: '新增设备',
             icon: <Plus sx={{ width: 16, height: 16 }} />,
             onClick: () => setShowCreateModal(true),
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
       />
@@ -405,35 +402,31 @@ const EquipmentManagementPage: React.FC = () => {
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="lg"
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle>新增设备</DialogTitle>
-        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+        <DialogContent sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <form onSubmit={handleCreateAsset}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
                   gap: 16,
                 }}
               >
                 <TextField
-                  label="设备编号 *"
-                  value={newAsset.asset_number || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, asset_number: e.target.value })
-                  }
+                  label='设备编号 *'
+                  value={newAsset.asset_number || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, asset_number: e.target.value })}
                   fullWidth
                   required
                 />
                 <TextField
-                  label="设备名称 *"
-                  value={newAsset.name || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, name: e.target.value })
-                  }
+                  label='设备名称 *'
+                  value={newAsset.name || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, name: e.target.value })}
                   fullWidth
                   required
                 />
@@ -441,47 +434,41 @@ const EquipmentManagementPage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
                   gap: 16,
                 }}
               >
                 <TextField
-                  label="类别"
-                  value={newAsset.category || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, category: e.target.value })
-                  }
+                  label='类别'
+                  value={newAsset.category || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value })}
                   fullWidth
                 />
                 <TextField
-                  label="品牌"
-                  value={newAsset.brand || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, brand: e.target.value })
-                  }
+                  label='品牌'
+                  value={newAsset.brand || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, brand: e.target.value })}
                   fullWidth
                 />
                 <TextField
-                  label="型号"
-                  value={newAsset.model || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, model: e.target.value })
-                  }
+                  label='型号'
+                  value={newAsset.model || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, model: e.target.value })}
                   fullWidth
                 />
               </div>
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
                   gap: 16,
                 }}
               >
                 <TextField
-                  label="序列号"
-                  value={newAsset.serial_number || ""}
+                  label='序列号'
+                  value={newAsset.serial_number || ''}
                   onChange={(e) =>
                     setNewAsset({
                       ...newAsset,
@@ -491,35 +478,31 @@ const EquipmentManagementPage: React.FC = () => {
                   fullWidth
                 />
                 <TextField
-                  label="制造商"
-                  value={newAsset.manufacturer || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, manufacturer: e.target.value })
-                  }
+                  label='制造商'
+                  value={newAsset.manufacturer || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, manufacturer: e.target.value })}
                   fullWidth
                 />
                 <TextField
-                  label="部门"
-                  value={newAsset.department || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, department: e.target.value })
-                  }
+                  label='部门'
+                  value={newAsset.department || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, department: e.target.value })}
                   fullWidth
                 />
               </div>
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
                   gap: 16,
                 }}
               >
                 <TextField
-                  label="额定功率 (kW)"
-                  type="number"
-                  slotProps={{ htmlInput: { step: "0.01" } }}
-                  value={newAsset.rated_power || ""}
+                  label='额定功率 (kW)'
+                  type='number'
+                  slotProps={{ htmlInput: { step: '0.01' } }}
+                  value={newAsset.rated_power || ''}
                   onChange={(e) =>
                     setNewAsset({
                       ...newAsset,
@@ -529,10 +512,10 @@ const EquipmentManagementPage: React.FC = () => {
                   fullWidth
                 />
                 <TextField
-                  label="额定电压 (V)"
-                  type="number"
-                  slotProps={{ htmlInput: { step: "0.01" } }}
-                  value={newAsset.rated_voltage || ""}
+                  label='额定电压 (V)'
+                  type='number'
+                  slotProps={{ htmlInput: { step: '0.01' } }}
+                  value={newAsset.rated_voltage || ''}
                   onChange={(e) =>
                     setNewAsset({
                       ...newAsset,
@@ -542,10 +525,10 @@ const EquipmentManagementPage: React.FC = () => {
                   fullWidth
                 />
                 <TextField
-                  label="额定电流 (A)"
-                  type="number"
-                  slotProps={{ htmlInput: { step: "0.01" } }}
-                  value={newAsset.rated_current || ""}
+                  label='额定电流 (A)'
+                  type='number'
+                  slotProps={{ htmlInput: { step: '0.01' } }}
+                  value={newAsset.rated_current || ''}
                   onChange={(e) =>
                     setNewAsset({
                       ...newAsset,
@@ -558,15 +541,15 @@ const EquipmentManagementPage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
                   gap: 16,
                 }}
               >
                 <TextField
-                  label="采购日期"
-                  type="date"
-                  value={newAsset.purchase_date || ""}
+                  label='采购日期'
+                  type='date'
+                  value={newAsset.purchase_date || ''}
                   onChange={(e) =>
                     setNewAsset({
                       ...newAsset,
@@ -577,10 +560,10 @@ const EquipmentManagementPage: React.FC = () => {
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <TextField
-                  label="采购金额"
-                  type="number"
-                  slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
-                  value={newAsset.purchase_amount || ""}
+                  label='采购金额'
+                  type='number'
+                  slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+                  value={newAsset.purchase_amount || ''}
                   onChange={(e) =>
                     setNewAsset({
                       ...newAsset,
@@ -593,24 +576,22 @@ const EquipmentManagementPage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
                   gap: 16,
                 }}
               >
                 <TextField
-                  label="存放位置"
-                  value={newAsset.location || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, location: e.target.value })
-                  }
+                  label='存放位置'
+                  value={newAsset.location || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, location: e.target.value })}
                   fullWidth
                 />
                 <FormControl fullWidth>
                   <InputLabel>负责人</InputLabel>
                   <Select
-                    value={newAsset.responsible_id || ""}
-                    label="负责人"
+                    value={newAsset.responsible_id || ''}
+                    label='负责人'
                     onChange={(e) =>
                       setNewAsset({
                         ...newAsset,
@@ -618,9 +599,12 @@ const EquipmentManagementPage: React.FC = () => {
                       })
                     }
                   >
-                    <MenuItem value="none">无</MenuItem>
+                    <MenuItem value='none'>无</MenuItem>
                     {employees.map((emp) => (
-                      <MenuItem key={emp.id} value={emp.id}>
+                      <MenuItem
+                        key={emp.id}
+                        value={emp.id}
+                      >
                         {emp.name}
                       </MenuItem>
                     ))}
@@ -630,63 +614,60 @@ const EquipmentManagementPage: React.FC = () => {
 
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
                   gap: 16,
                 }}
               >
                 <FormControl fullWidth>
                   <InputLabel>状态</InputLabel>
                   <Select
-                    value={newAsset.status || "idle"}
-                    label="状态"
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, status: e.target.value })
-                    }
+                    value={newAsset.status || 'idle'}
+                    label='状态'
+                    onChange={(e) => setNewAsset({ ...newAsset, status: e.target.value })}
                   >
-                    <MenuItem value="idle">闲置</MenuItem>
-                    <MenuItem value="in_use">使用中</MenuItem>
-                    <MenuItem value="maintenance">维护中</MenuItem>
-                    <MenuItem value="scrapped">报废</MenuItem>
+                    <MenuItem value='idle'>闲置</MenuItem>
+                    <MenuItem value='in_use'>使用中</MenuItem>
+                    <MenuItem value='maintenance'>维护中</MenuItem>
+                    <MenuItem value='scrapped'>报废</MenuItem>
                   </Select>
                 </FormControl>
                 <TextField
-                  label="图片URL"
-                  value={newAsset.image_url || ""}
-                  onChange={(e) =>
-                    setNewAsset({ ...newAsset, image_url: e.target.value })
-                  }
+                  label='图片URL'
+                  value={newAsset.image_url || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, image_url: e.target.value })}
                   fullWidth
                 />
               </div>
 
               <TextField
-                label="技术规格"
+                label='技术规格'
                 multiline
                 rows={3}
-                value={newAsset.specifications || ""}
-                onChange={(e) =>
-                  setNewAsset({ ...newAsset, specifications: e.target.value })
-                }
+                value={newAsset.specifications || ''}
+                onChange={(e) => setNewAsset({ ...newAsset, specifications: e.target.value })}
                 fullWidth
               />
             </div>
 
             <div
               style={{
-                display: "flex",
-                justifyContent: "flex-end",
+                display: 'flex',
+                justifyContent: 'flex-end',
                 gap: 8,
                 marginTop: 24,
               }}
             >
               <Button
-                variant="outlined"
+                variant='outlined'
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
               </Button>
-              <Button variant="contained" type="submit">
+              <Button
+                variant='contained'
+                type='submit'
+              >
                 创建
               </Button>
             </div>
@@ -697,25 +678,23 @@ const EquipmentManagementPage: React.FC = () => {
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
-        maxWidth="lg"
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle>编辑设备</DialogTitle>
-        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+        <DialogContent sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {selectedAsset && (
             <form onSubmit={handleEditAsset}>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 16 }}
-              >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     gap: 16,
                   }}
                 >
                   <TextField
-                    label="设备编号 *"
+                    label='设备编号 *'
                     value={selectedAsset.asset_number}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -727,7 +706,7 @@ const EquipmentManagementPage: React.FC = () => {
                     required
                   />
                   <TextField
-                    label="设备名称 *"
+                    label='设备名称 *'
                     value={selectedAsset.name}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -742,14 +721,14 @@ const EquipmentManagementPage: React.FC = () => {
 
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
                     gap: 16,
                   }}
                 >
                   <TextField
-                    label="类别"
-                    value={selectedAsset.category || ""}
+                    label='类别'
+                    value={selectedAsset.category || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -759,8 +738,8 @@ const EquipmentManagementPage: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="品牌"
-                    value={selectedAsset.brand || ""}
+                    label='品牌'
+                    value={selectedAsset.brand || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -770,8 +749,8 @@ const EquipmentManagementPage: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="型号"
-                    value={selectedAsset.model || ""}
+                    label='型号'
+                    value={selectedAsset.model || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -784,14 +763,14 @@ const EquipmentManagementPage: React.FC = () => {
 
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
                     gap: 16,
                   }}
                 >
                   <TextField
-                    label="序列号"
-                    value={selectedAsset.serial_number || ""}
+                    label='序列号'
+                    value={selectedAsset.serial_number || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -801,8 +780,8 @@ const EquipmentManagementPage: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="制造商"
-                    value={selectedAsset.manufacturer || ""}
+                    label='制造商'
+                    value={selectedAsset.manufacturer || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -812,8 +791,8 @@ const EquipmentManagementPage: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="部门"
-                    value={selectedAsset.department || ""}
+                    label='部门'
+                    value={selectedAsset.department || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -826,16 +805,16 @@ const EquipmentManagementPage: React.FC = () => {
 
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
                     gap: 16,
                   }}
                 >
                   <TextField
-                    label="额定功率 (kW)"
-                    type="number"
-                    slotProps={{ htmlInput: { step: "0.01" } }}
-                    value={selectedAsset.rated_power || ""}
+                    label='额定功率 (kW)'
+                    type='number'
+                    slotProps={{ htmlInput: { step: '0.01' } }}
+                    value={selectedAsset.rated_power || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -845,10 +824,10 @@ const EquipmentManagementPage: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="额定电压 (V)"
-                    type="number"
-                    slotProps={{ htmlInput: { step: "0.01" } }}
-                    value={selectedAsset.rated_voltage || ""}
+                    label='额定电压 (V)'
+                    type='number'
+                    slotProps={{ htmlInput: { step: '0.01' } }}
+                    value={selectedAsset.rated_voltage || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -858,10 +837,10 @@ const EquipmentManagementPage: React.FC = () => {
                     fullWidth
                   />
                   <TextField
-                    label="额定电流 (A)"
-                    type="number"
-                    slotProps={{ htmlInput: { step: "0.01" } }}
-                    value={selectedAsset.rated_current || ""}
+                    label='额定电流 (A)'
+                    type='number'
+                    slotProps={{ htmlInput: { step: '0.01' } }}
+                    value={selectedAsset.rated_current || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -874,15 +853,15 @@ const EquipmentManagementPage: React.FC = () => {
 
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     gap: 16,
                   }}
                 >
                   <TextField
-                    label="采购日期"
-                    type="date"
-                    value={selectedAsset.purchase_date || ""}
+                    label='采购日期'
+                    type='date'
+                    value={selectedAsset.purchase_date || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -893,10 +872,10 @@ const EquipmentManagementPage: React.FC = () => {
                     slotProps={{ inputLabel: { shrink: true } }}
                   />
                   <TextField
-                    label="采购金额"
-                    type="number"
-                    slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
-                    value={selectedAsset.purchase_amount || ""}
+                    label='采购金额'
+                    type='number'
+                    slotProps={{ htmlInput: { min: 0, step: '0.01' } }}
+                    value={selectedAsset.purchase_amount || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
@@ -908,8 +887,8 @@ const EquipmentManagementPage: React.FC = () => {
                 </div>
 
                 <TextField
-                  label="存放位置"
-                  value={selectedAsset.location || ""}
+                  label='存放位置'
+                  value={selectedAsset.location || ''}
                   onChange={(e) =>
                     setSelectedAsset({
                       ...selectedAsset,
@@ -921,16 +900,16 @@ const EquipmentManagementPage: React.FC = () => {
 
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     gap: 16,
                   }}
                 >
                   <FormControl fullWidth>
                     <InputLabel>负责人</InputLabel>
                     <Select
-                      value={selectedAsset.responsible_id || ""}
-                      label="负责人"
+                      value={selectedAsset.responsible_id || ''}
+                      label='负责人'
                       onChange={(e) =>
                         setSelectedAsset({
                           ...selectedAsset,
@@ -938,9 +917,12 @@ const EquipmentManagementPage: React.FC = () => {
                         })
                       }
                     >
-                      <MenuItem value="none">无</MenuItem>
+                      <MenuItem value='none'>无</MenuItem>
                       {employees.map((emp) => (
-                        <MenuItem key={emp.id} value={emp.id}>
+                        <MenuItem
+                          key={emp.id}
+                          value={emp.id}
+                        >
                           {emp.name}
                         </MenuItem>
                       ))}
@@ -950,7 +932,7 @@ const EquipmentManagementPage: React.FC = () => {
                     <InputLabel>状态</InputLabel>
                     <Select
                       value={selectedAsset.status}
-                      label="状态"
+                      label='状态'
                       onChange={(e) =>
                         setSelectedAsset({
                           ...selectedAsset,
@@ -958,10 +940,10 @@ const EquipmentManagementPage: React.FC = () => {
                         })
                       }
                     >
-                      <MenuItem value="idle">闲置</MenuItem>
-                      <MenuItem value="in_use">使用中</MenuItem>
-                      <MenuItem value="maintenance">维护中</MenuItem>
-                      <MenuItem value="scrapped">报废</MenuItem>
+                      <MenuItem value='idle'>闲置</MenuItem>
+                      <MenuItem value='in_use'>使用中</MenuItem>
+                      <MenuItem value='maintenance'>维护中</MenuItem>
+                      <MenuItem value='scrapped'>报废</MenuItem>
                     </Select>
                   </FormControl>
                 </div>
@@ -969,14 +951,14 @@ const EquipmentManagementPage: React.FC = () => {
 
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
+                  display: 'flex',
+                  justifyContent: 'flex-end',
                   gap: 8,
                   marginTop: 24,
                 }}
               >
                 <Button
-                  variant="outlined"
+                  variant='outlined'
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedAsset(null);
@@ -984,7 +966,10 @@ const EquipmentManagementPage: React.FC = () => {
                 >
                   取消
                 </Button>
-                <Button variant="contained" type="submit">
+                <Button
+                  variant='contained'
+                  type='submit'
+                >
                   保存
                 </Button>
               </div>

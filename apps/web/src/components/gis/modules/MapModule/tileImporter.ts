@@ -8,12 +8,12 @@
  * 2. 在浏览器控制台或通过 importTilesFromManifest() 导入
  */
 
-import { openDB } from "idb";
-import { logger } from "@/utils/logger";
+import { openDB } from 'idb';
+import { logger } from '@/utils/logger';
 
-const DB_NAME = "gis_offline_db";
+const DB_NAME = 'gis_offline_db';
 const DB_VERSION = 1;
-const TILE_STORE = "tiles";
+const TILE_STORE = 'tiles';
 
 interface TileManifest {
   version: string;
@@ -38,7 +38,7 @@ async function openTileDB() {
   return openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
       if (!db.objectStoreNames.contains(TILE_STORE)) {
-        db.createObjectStore(TILE_STORE, { keyPath: "key" });
+        db.createObjectStore(TILE_STORE, { keyPath: 'key' });
       }
     },
   });
@@ -52,8 +52,8 @@ async function openTileDB() {
  */
 export async function importTilesFromManifest(
   manifest: TileManifest,
-  basePath: string = "./offline_tiles",
-  onProgress?: (current: number, total: number, tile: string) => void,
+  basePath: string = './offline_tiles',
+  onProgress?: (current: number, total: number, tile: string) => void
 ): Promise<{ success: number; failed: number }> {
   const db = await openTileDB();
   let success = 0;
@@ -114,7 +114,7 @@ export async function isTileCached(
   source: string,
   z: number,
   x: number,
-  y: number,
+  y: number
 ): Promise<boolean> {
   const db = await openTileDB();
   const key = `${source}:${z}:${x}:${y}`;
@@ -163,12 +163,7 @@ export async function getTileCacheInfo(): Promise<{
  */
 export function createOfflineTileProvider(
   source: string,
-  getTile: (
-    source: string,
-    z: number,
-    x: number,
-    y: number,
-  ) => Promise<string | null>,
+  getTile: (source: string, z: number, x: number, y: number) => Promise<string | null>
 ) {
   return function (tileCoord: [number, number, number]): string {
     const [z, x, y] = tileCoord;
@@ -179,7 +174,7 @@ export function createOfflineTileProvider(
 }
 
 // 浏览器控制台暴露的全局函数
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   (window as unknown as Record<string, unknown>).gisOffline = {
     importTilesFromManifest,
     getStoredTileCount,
@@ -189,6 +184,4 @@ if (typeof window !== "undefined") {
   };
 }
 
-logger.info(
-  "离线瓦片工具已加载。使用 gisOffline.importTilesFromManifest(manifest) 导入瓦片。",
-);
+logger.info('离线瓦片工具已加载。使用 gisOffline.importTilesFromManifest(manifest) 导入瓦片。');

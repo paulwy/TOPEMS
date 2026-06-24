@@ -1,5 +1,5 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
 export interface PatrolRecord {
   id: string;
@@ -162,105 +162,63 @@ export interface ListResponse<T> {
 
 export const mobileApi = {
   getDashboardStats: async (): Promise<ApiResponse<DashboardStats>> => {
-    return apiClient.mobile.get<DashboardStats>("/api/mobile/dashboard/stats");
+    return apiClient.mobile.get<DashboardStats>('/api/mobile/dashboard/stats');
   },
 
-  listPatrolRecords: async (): Promise<
-    ApiResponse<ListResponse<PatrolRecord>>
-  > => {
-    return apiClient.mobile.get<ListResponse<PatrolRecord>>(
-      "/api/mobile/patrol-records",
-    );
+  listPatrolRecords: async (): Promise<ApiResponse<ListResponse<PatrolRecord>>> => {
+    return apiClient.mobile.get<ListResponse<PatrolRecord>>('/api/mobile/patrol-records');
   },
   createPatrolRecord: async (
-    data: CreatePatrolRecordRequest,
+    data: CreatePatrolRecordRequest
   ): Promise<ApiResponse<PatrolRecord>> => {
-    return apiClient.mobile.post<PatrolRecord>(
-      "/api/mobile/patrol-records",
-      data,
-    );
+    return apiClient.mobile.post<PatrolRecord>('/api/mobile/patrol-records', data);
   },
 
   listScanRecords: async (): Promise<ApiResponse<ListResponse<ScanRecord>>> => {
-    return apiClient.mobile.get<ListResponse<ScanRecord>>(
-      "/api/mobile/scan-records",
-    );
+    return apiClient.mobile.get<ListResponse<ScanRecord>>('/api/mobile/scan-records');
   },
-  createScanRecord: async (
-    data: CreateScanRecordRequest,
-  ): Promise<ApiResponse<ScanRecord>> => {
-    return apiClient.mobile.post<ScanRecord>("/api/mobile/scan-records", data);
+  createScanRecord: async (data: CreateScanRecordRequest): Promise<ApiResponse<ScanRecord>> => {
+    return apiClient.mobile.post<ScanRecord>('/api/mobile/scan-records', data);
   },
 
-  listPhotoEvidences: async (): Promise<
-    ApiResponse<ListResponse<PhotoEvidence>>
-  > => {
-    return apiClient.mobile.get<ListResponse<PhotoEvidence>>(
-      "/api/mobile/photo-evidences",
-    );
+  listPhotoEvidences: async (): Promise<ApiResponse<ListResponse<PhotoEvidence>>> => {
+    return apiClient.mobile.get<ListResponse<PhotoEvidence>>('/api/mobile/photo-evidences');
   },
   createPhotoEvidence: async (
-    data: CreatePhotoEvidenceRequest,
+    data: CreatePhotoEvidenceRequest
   ): Promise<ApiResponse<PhotoEvidence>> => {
-    return apiClient.mobile.post<PhotoEvidence>(
-      "/api/mobile/photo-evidences",
-      data,
-    );
+    return apiClient.mobile.post<PhotoEvidence>('/api/mobile/photo-evidences', data);
   },
 
-  listAudioRecordings: async (): Promise<
-    ApiResponse<ListResponse<AudioRecording>>
-  > => {
-    return apiClient.mobile.get<ListResponse<AudioRecording>>(
-      "/api/mobile/audio-recordings",
-    );
+  listAudioRecordings: async (): Promise<ApiResponse<ListResponse<AudioRecording>>> => {
+    return apiClient.mobile.get<ListResponse<AudioRecording>>('/api/mobile/audio-recordings');
   },
   createAudioRecording: async (
-    data: CreateAudioRecordingRequest,
+    data: CreateAudioRecordingRequest
   ): Promise<ApiResponse<AudioRecording>> => {
-    return apiClient.mobile.post<AudioRecording>(
-      "/api/mobile/audio-recordings",
-      data,
-    );
+    return apiClient.mobile.post<AudioRecording>('/api/mobile/audio-recordings', data);
   },
 
-  listVideoRecordings: async (): Promise<
-    ApiResponse<ListResponse<VideoRecording>>
-  > => {
-    return apiClient.mobile.get<ListResponse<VideoRecording>>(
-      "/api/mobile/video-recordings",
-    );
+  listVideoRecordings: async (): Promise<ApiResponse<ListResponse<VideoRecording>>> => {
+    return apiClient.mobile.get<ListResponse<VideoRecording>>('/api/mobile/video-recordings');
   },
   createVideoRecording: async (
-    data: CreateVideoRecordingRequest,
+    data: CreateVideoRecordingRequest
   ): Promise<ApiResponse<VideoRecording>> => {
-    return apiClient.mobile.post<VideoRecording>(
-      "/api/mobile/video-recordings",
-      data,
-    );
+    return apiClient.mobile.post<VideoRecording>('/api/mobile/video-recordings', data);
   },
 
   listMobileTasks: async (): Promise<ApiResponse<ListResponse<MobileTask>>> => {
-    return apiClient.mobile.get<ListResponse<MobileTask>>(
-      "/api/mobile/mobile-tasks",
-    );
+    return apiClient.mobile.get<ListResponse<MobileTask>>('/api/mobile/mobile-tasks');
   },
-  createMobileTask: async (
-    data: CreateMobileTaskRequest,
-  ): Promise<ApiResponse<MobileTask>> => {
-    return apiClient.mobile.post<MobileTask>("/api/mobile/mobile-tasks", data);
+  createMobileTask: async (data: CreateMobileTaskRequest): Promise<ApiResponse<MobileTask>> => {
+    return apiClient.mobile.post<MobileTask>('/api/mobile/mobile-tasks', data);
   },
-  updateTaskStatus: async (
-    id: string,
-    status: string,
-  ): Promise<ApiResponse<MobileTask>> => {
-    return apiClient.mobile.put<MobileTask>(
-      `/api/mobile/mobile-tasks/${id}/status`,
-      { status },
-    );
+  updateTaskStatus: async (id: string, status: string): Promise<ApiResponse<MobileTask>> => {
+    return apiClient.mobile.put<MobileTask>(`/api/mobile/mobile-tasks/${id}/status`, { status });
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.mobile.get<string>("/health");
+    return apiClient.mobile.get<string>('/health');
   },
 };

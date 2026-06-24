@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { logger } from "@/utils/logger";
+import { create } from 'zustand';
+import { logger } from '@/utils/logger';
 import {
   fetchSummaryDashboard,
   fetchDevelopmentAnalytics,
@@ -15,7 +15,7 @@ import {
   type QualityAnalytics,
   type ProductionAnalytics,
   type LaboratoryAnalytics,
-} from "../api/bi";
+} from '../api/bi';
 
 interface BIStore {
   // 数据状态
@@ -121,11 +121,11 @@ export const useBIStore = create<BIStore>((set, get) => ({
         error: null,
       });
     } catch (err) {
-      logger.error("Failed to load BI data:", err);
+      logger.error('Failed to load BI data:', err);
       set({
         loading: false,
         refreshing: false,
-        error: err instanceof Error ? err.message : "加载数据失败",
+        error: err instanceof Error ? err.message : '加载数据失败',
       });
     }
   },

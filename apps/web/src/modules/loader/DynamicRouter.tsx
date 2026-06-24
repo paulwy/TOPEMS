@@ -1,9 +1,10 @@
-import React, { useEffect, useState, Suspense, lazy, useCallback } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
-import { ModuleLoadingFallback, ModuleErrorFallback, PluginLoader, PluginManifest, PluginRoute } from "./PluginLoader";
-import { moduleRegistry } from "../registry";
-import { eventBus, ModuleEvents } from "./EventBus";
-import { logger } from "@/utils/logger";
+import React, { useEffect, useState, Suspense, lazy, useCallback } from 'react';
+import { Route, Routes, useLocation } from 'react-router-dom';
+import type { PluginManifest, PluginRoute } from './PluginLoader';
+import { ModuleLoadingFallback, ModuleErrorFallback, PluginLoader } from './PluginLoader';
+import { moduleRegistry } from '../registry';
+import { eventBus, ModuleEvents } from './EventBus';
+import { logger } from '@/utils/logger';
 
 declare const __webpack_share_scopes__: any;
 declare const __webpack_init_sharing__: (scope: string) => Promise<void>;
@@ -12,7 +13,7 @@ const remoteModuleCache: Map<string, any> = new Map();
 
 async function loadRemoteModule(
   remoteName: string,
-  modulePath: string,
+  modulePath: string
 ): Promise<React.ComponentType> {
   const cacheKey = `${remoteName}:${modulePath}`;
 
@@ -21,14 +22,12 @@ async function loadRemoteModule(
   }
 
   try {
-    await __webpack_init_sharing__("default");
+    await __webpack_init_sharing__('default');
 
     const container = (window as any)[remoteName];
 
     if (!container) {
-      throw new Error(
-        `Remote module "${remoteName}" not found. Make sure the remote is loaded.`,
-      );
+      throw new Error(`Remote module "${remoteName}" not found. Make sure the remote is loaded.`);
     }
 
     await container.init(__webpack_share_scopes__.default);
@@ -40,10 +39,7 @@ async function loadRemoteModule(
 
     return resolvedModule;
   } catch (error) {
-    logger.error(
-      `[DynamicRouter] Failed to load remote module ${remoteName}:${modulePath}`,
-      error,
-    );
+    logger.error(`[DynamicRouter] Failed to load remote module ${remoteName}:${modulePath}`, error);
     throw error;
   }
 }
@@ -52,7 +48,7 @@ function createRemoteLazyComponent(
   remoteName: string,
   modulePath: string,
   onLoad?: () => void,
-  onError?: (error: Error) => void,
+  onError?: (error: Error) => void
 ): React.LazyExoticComponent<React.ComponentType> {
   return lazy(async () => {
     try {
@@ -79,44 +75,47 @@ export const DynamicRouter: React.FC = () => {
 
   const pluginLoaderRef = React.useRef(new PluginLoader());
 
-  const loadPluginRoutes = useCallback(async (manifest: PluginManifest): Promise<DynamicRouteProps[]> => {
-    const pluginRoutes: DynamicRouteProps[] = [];
+  const loadPluginRoutes = useCallback(
+    async (manifest: PluginManifest): Promise<DynamicRouteProps[]> => {
+      const pluginRoutes: DynamicRouteProps[] = [];
 
-    if (!manifest.routes || manifest.routes.length === 0) {
-      return pluginRoutes;
-    }
-
-    for (const route of manifest.routes) {
-      try {
-        const LazyComponent = await createPluginLazyComponent(manifest, route);
-        pluginRoutes.push({
-          path: route.path,
-          element: (
-            <Suspense fallback={<ModuleLoadingFallback />}>
-              <LazyComponent />
-            </Suspense>
-          ),
-        });
-      } catch (error) {
-        logger.error(`[DynamicRouter] Failed to create route for ${route.path}`, error);
-        setErrors(prev => ({
-          ...prev,
-          [route.path]: error instanceof Error ? error.message : "Unknown error",
-        }));
+      if (!manifest.routes || manifest.routes.length === 0) {
+        return pluginRoutes;
       }
-    }
 
-    return pluginRoutes;
-  }, []);
+      for (const route of manifest.routes) {
+        try {
+          const LazyComponent = await createPluginLazyComponent(manifest, route);
+          pluginRoutes.push({
+            path: route.path,
+            element: (
+              <Suspense fallback={<ModuleLoadingFallback />}>
+                <LazyComponent />
+              </Suspense>
+            ),
+          });
+        } catch (error) {
+          logger.error(`[DynamicRouter] Failed to create route for ${route.path}`, error);
+          setErrors((prev) => ({
+            ...prev,
+            [route.path]: error instanceof Error ? error.message : 'Unknown error',
+          }));
+        }
+      }
+
+      return pluginRoutes;
+    },
+    []
+  );
 
   const createPluginLazyComponent = async (
     manifest: PluginManifest,
-    route: PluginRoute,
+    route: PluginRoute
   ): Promise<React.LazyExoticComponent<React.ComponentType>> => {
     const { frontend } = manifest;
 
     switch (frontend.type) {
-      case "module-federation":
+      case 'module-federation':
         return createRemoteLazyComponent(
           frontend.entry,
           route.component,
@@ -131,10 +130,10 @@ export const DynamicRouter: React.FC = () => {
               moduleId: manifest.pluginCode,
               error,
             });
-          },
+          }
         );
 
-      case "systemjs":
+      case 'systemjs':
         return lazy(async () => {
           try {
             const module = await pluginLoaderRef.current.loadBundle(frontend);
@@ -153,7 +152,7 @@ export const DynamicRouter: React.FC = () => {
           }
         });
 
-      case "umd":
+      case 'umd':
         return lazy(async () => {
           try {
             const module = await pluginLoaderRef.current.loadBundle(frontend);
@@ -203,7 +202,7 @@ export const DynamicRouter: React.FC = () => {
                 moduleId: route.path,
                 error,
               });
-            },
+            }
           );
 
           dynamicRoutes.push({
@@ -231,7 +230,7 @@ export const DynamicRouter: React.FC = () => {
                   error,
                 });
                 throw error;
-              }),
+              })
           );
 
           dynamicRoutes.push({
@@ -256,10 +255,7 @@ export const DynamicRouter: React.FC = () => {
     };
 
     const handleModuleError = (data: { moduleId: string; error: Error }) => {
-      logger.error(
-        `[DynamicRouter] Module load error: ${data.moduleId}`,
-        data.error,
-      );
+      logger.error(`[DynamicRouter] Module load error: ${data.moduleId}`, data.error);
     };
 
     eventBus.on(ModuleEvents.MODULE_LOADED, handleModuleLoaded);
@@ -281,9 +277,12 @@ export const DynamicRouter: React.FC = () => {
 
   if (Object.keys(errors).length > 0) {
     return (
-      <div style={{ padding: "20px" }}>
+      <div style={{ padding: '20px' }}>
         {Object.entries(errors).map(([path, message]) => (
-          <div key={path} style={{ color: "red", marginBottom: "10px" }}>
+          <div
+            key={path}
+            style={{ color: 'red', marginBottom: '10px' }}
+          >
             {path}: {message}
           </div>
         ))}
@@ -294,7 +293,11 @@ export const DynamicRouter: React.FC = () => {
   return (
     <Routes>
       {routes.map((route) => (
-        <Route key={route.path} path={route.path} element={route.element} />
+        <Route
+          key={route.path}
+          path={route.path}
+          element={route.element}
+        />
       ))}
     </Routes>
   );
@@ -311,21 +314,18 @@ export async function preloadRemoteModules(): Promise<void> {
   await Promise.all(
     remotes.map(async (remote) => {
       try {
-        await loadRemoteModule(remote.name, "./store");
+        await loadRemoteModule(remote.name, './store');
         logger.info(`[DynamicRouter] Preloaded remote: ${remote.name}`);
       } catch (error) {
-        logger.warn(
-          `[DynamicRouter] Failed to preload remote: ${remote.name}`,
-          error,
-        );
+        logger.warn(`[DynamicRouter] Failed to preload remote: ${remote.name}`, error);
       }
-    }),
+    })
   );
 }
 
 export async function loadRemotePage(
   remoteName: string,
-  pagePath: string,
+  pagePath: string
 ): Promise<React.ComponentType> {
   return loadRemoteModule(remoteName, pagePath);
 }

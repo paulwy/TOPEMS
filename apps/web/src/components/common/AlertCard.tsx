@@ -3,9 +3,18 @@
  * 整合了common和根目录两个版本的AlertCard组件
  * 支持卡片模式和面板模式，多种样式变体，操作按钮等
  */
-import React from "react";
-import { Box, Typography, Card, CardContent, IconButton, Divider, Alert, AlertTitle,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  IconButton,
+  Divider,
+  Alert,
+  AlertTitle,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   AlertTriangle,
   AlertCircle,
@@ -14,24 +23,24 @@ import {
   X,
   RefreshCw,
   HelpCircle,
-} from "lucide-react";
+} from 'lucide-react';
 
 // ============ 类型定义 ============
 
 /**
  * 警告级别类型
  */
-export type AlertLevel = "success" | "warning" | "error" | "info";
+export type AlertLevel = 'success' | 'warning' | 'error' | 'info';
 
 /**
  * 展示模式类型
  */
-export type AlertDisplayMode = "card" | "alert" | "inline";
+export type AlertDisplayMode = 'card' | 'alert' | 'inline';
 
 /**
  * 尺寸类型
  */
-export type AlertSize = "sm" | "md" | "lg";
+export type AlertSize = 'sm' | 'md' | 'lg';
 
 /**
  * 操作按钮配置
@@ -139,39 +148,39 @@ export interface AlertCardProps {
 const LEVEL_CONFIG = {
   success: {
     icon: CheckCircle,
-    color: "#22c55e",
-    bgColor: "#f0fdf4",
-    borderColor: "#bbf7d0",
-    titleColor: "#166534",
-    messageColor: "#15803d",
-    alertColor: "success" as const,
+    color: '#22c55e',
+    bgColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+    titleColor: '#166534',
+    messageColor: '#15803d',
+    alertColor: 'success' as const,
   },
   warning: {
     icon: AlertTriangle,
-    color: "#f59e0b",
-    bgColor: "#fffbeb",
-    borderColor: "#fde68a",
-    titleColor: "#92400e",
-    messageColor: "#b45309",
-    alertColor: "warning" as const,
+    color: '#f59e0b',
+    bgColor: '#fffbeb',
+    borderColor: '#fde68a',
+    titleColor: '#92400e',
+    messageColor: '#b45309',
+    alertColor: 'warning' as const,
   },
   error: {
     icon: AlertCircle,
-    color: "#ef4444",
-    bgColor: "#fef2f2",
-    borderColor: "#fecaca",
-    titleColor: "#991b1b",
-    messageColor: "#b91c1c",
-    alertColor: "error" as const,
+    color: '#ef4444',
+    bgColor: '#fef2f2',
+    borderColor: '#fecaca',
+    titleColor: '#991b1b',
+    messageColor: '#b91c1c',
+    alertColor: 'error' as const,
   },
   info: {
     icon: Info,
-    color: "#3b82f6",
-    bgColor: "#eff6ff",
-    borderColor: "#bfdbfe",
-    titleColor: "#1e40af",
-    messageColor: "#1d4ed8",
-    alertColor: "info" as const,
+    color: '#3b82f6',
+    bgColor: '#eff6ff',
+    borderColor: '#bfdbfe',
+    titleColor: '#1e40af',
+    messageColor: '#1d4ed8',
+    alertColor: 'info' as const,
   },
 };
 
@@ -180,25 +189,25 @@ const LEVEL_CONFIG = {
  */
 const SIZE_STYLES = {
   sm: {
-    padding: "8px 12px",
+    padding: '8px 12px',
     iconSize: 16,
-    titleSize: "0.875rem",
-    messageSize: "0.75rem",
-    gap: "8px",
+    titleSize: '0.875rem',
+    messageSize: '0.75rem',
+    gap: '8px',
   },
   md: {
-    padding: "12px 16px",
+    padding: '12px 16px',
     iconSize: 20,
-    titleSize: "0.875rem",
-    messageSize: "0.875rem",
-    gap: "12px",
+    titleSize: '0.875rem',
+    messageSize: '0.875rem',
+    gap: '12px',
   },
   lg: {
-    padding: "16px 20px",
+    padding: '16px 20px',
     iconSize: 24,
-    titleSize: "1rem",
-    messageSize: "1rem",
-    gap: "16px",
+    titleSize: '1rem',
+    messageSize: '1rem',
+    gap: '16px',
   },
 };
 
@@ -283,8 +292,8 @@ export const AlertCard: React.FC<AlertCardProps> = ({
   level,
   title,
   message,
-  displayMode = "card",
-  size = "md",
+  displayMode = 'card',
+  size = 'md',
   closable = false,
   expandable = false,
   expanded,
@@ -300,9 +309,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
   showDivider = true,
   render,
 }) => {
-  const [internalExpanded, setInternalExpanded] = React.useState(
-    expanded ?? true,
-  );
+  const [internalExpanded, setInternalExpanded] = React.useState(expanded ?? true);
 
   const isExpanded = expanded !== undefined ? expanded : internalExpanded;
   const handleExpandedChange = (newExpanded: boolean) => {
@@ -344,9 +351,9 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         action={
           closable ? (
             <IconButton
-              size="small"
+              size='small'
               onClick={onClose}
-              sx={{ color: "inherit" }}
+              sx={{ color: 'inherit' }}
             >
               {closeIcon || <X size={16} />}
             </IconButton>
@@ -354,7 +361,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         }
         sx={{
           borderRadius: 2,
-          alignItems: "center",
+          alignItems: 'center',
           ...sx,
         }}
       >
@@ -363,18 +370,21 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         {actions && actions.length > 0 && (
           <>
             <Divider sx={{ my: 1 }} />
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {actions.map((action, index) => (
                 <Button
                   key={index}
-                  size="small"
-                  variant={action.primary ? "contained" : "outlined"}
+                  size='small'
+                  variant={action.primary ? 'contained' : 'outlined'}
                   color={config.alertColor}
                   onClick={action.onClick}
                   disabled={action.loading}
                   startIcon={
                     action.loading ? (
-                      <RefreshCw size={14} className="animate-spin" />
+                      <RefreshCw
+                        size={14}
+                        className='animate-spin'
+                      />
                     ) : undefined
                   }
                 >
@@ -389,21 +399,21 @@ export const AlertCard: React.FC<AlertCardProps> = ({
   }
 
   // Card模式
-  if (useCard || displayMode === "card") {
+  if (useCard || displayMode === 'card') {
     return (
       <Card
         onClick={onClick}
         sx={{
           borderRadius: 2,
-          border: "1px solid",
+          border: '1px solid',
           borderColor: config.borderColor,
           bgcolor: config.bgColor,
-          cursor: onClick ? "pointer" : "default",
-          transition: "all 0.2s",
-          "&:hover": onClick
+          cursor: onClick ? 'pointer' : 'default',
+          transition: 'all 0.2s',
+          '&:hover': onClick
             ? {
                 boxShadow: 2,
-                transform: "translateY(-1px)",
+                transform: 'translateY(-1px)',
               }
             : {},
           ...sx,
@@ -412,13 +422,13 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         <CardContent
           sx={{
             p: `${sizeStyles.padding} !important`,
-            "&:last-child": { pb: `${sizeStyles.padding} !important` },
+            '&:last-child': { pb: `${sizeStyles.padding} !important` },
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              alignItems: "flex-start",
+              display: 'flex',
+              alignItems: 'flex-start',
               gap: sizeStyles.gap,
             }}
           >
@@ -426,8 +436,8 @@ export const AlertCard: React.FC<AlertCardProps> = ({
               sx={{
                 color: config.color,
                 flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               <IconComponent size={sizeStyles.iconSize} />
@@ -439,9 +449,9 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                     fontWeight: 600,
                     color: config.titleColor,
                     fontSize: sizeStyles.titleSize,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {title}
@@ -460,7 +470,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
               )}
               {expandable && (
                 <Button
-                  size="small"
+                  size='small'
                   onClick={(e) => {
                     e.stopPropagation();
                     handleExpandedChange(!isExpanded);
@@ -468,61 +478,52 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   sx={{
                     mt: title ? 0.5 : 0,
                     p: 0,
-                    minWidth: "auto",
+                    minWidth: 'auto',
                     color: config.messageColor,
                     fontSize: sizeStyles.messageSize,
-                    textTransform: "none",
+                    textTransform: 'none',
                   }}
                 >
-                  {isExpanded ? "收起" : "展开详情"}
+                  {isExpanded ? '收起' : '展开详情'}
                 </Button>
               )}
-              {actions &&
-                actions.length > 0 &&
-                (!expandable || isExpanded) &&
-                showDivider && (
-                  <>
-                    <Divider sx={{ my: 1, borderColor: config.borderColor }} />
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                      {actions.map((action, index) => (
-                        <Button
-                          key={index}
-                          size="small"
-                          variant={action.primary ? "contained" : "outlined"}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            action.onClick();
-                          }}
-                          disabled={action.loading}
-                          startIcon={
-                            action.loading ? <RefreshCw size={14} /> : undefined
-                          }
-                          sx={{
+              {actions && actions.length > 0 && (!expandable || isExpanded) && showDivider && (
+                <>
+                  <Divider sx={{ my: 1, borderColor: config.borderColor }} />
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {actions.map((action, index) => (
+                      <Button
+                        key={index}
+                        size='small'
+                        variant={action.primary ? 'contained' : 'outlined'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          action.onClick();
+                        }}
+                        disabled={action.loading}
+                        startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
+                        sx={{
+                          borderColor: config.borderColor,
+                          color: action.primary ? '#fff' : config.titleColor,
+                          bgcolor: action.primary ? config.color : 'transparent',
+                          '&:hover': {
+                            bgcolor: action.primary ? config.color : config.bgColor,
                             borderColor: config.borderColor,
-                            color: action.primary ? "#fff" : config.titleColor,
-                            bgcolor: action.primary
-                              ? config.color
-                              : "transparent",
-                            "&:hover": {
-                              bgcolor: action.primary
-                                ? config.color
-                                : config.bgColor,
-                              borderColor: config.borderColor,
-                            },
-                            fontSize: sizeStyles.messageSize,
-                            py: 0.5,
-                          }}
-                        >
-                          {action.label}
-                        </Button>
-                      ))}
-                    </Box>
-                  </>
-                )}
+                          },
+                          fontSize: sizeStyles.messageSize,
+                          py: 0.5,
+                        }}
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                  </Box>
+                </>
+              )}
             </Box>
             {closable && (
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose?.();
@@ -547,17 +548,17 @@ export const AlertCard: React.FC<AlertCardProps> = ({
     <Box
       onClick={onClick}
       sx={{
-        display: "flex",
-        alignItems: "flex-start",
+        display: 'flex',
+        alignItems: 'flex-start',
         gap: sizeStyles.gap,
         p: sizeStyles.padding,
         borderRadius: 2,
-        border: "1px solid",
+        border: '1px solid',
         borderColor: config.borderColor,
         bgcolor: config.bgColor,
-        cursor: onClick ? "pointer" : "default",
-        transition: "all 0.2s",
-        "&:hover": onClick
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.2s',
+        '&:hover': onClick
           ? {
               boxShadow: 1,
             }
@@ -569,8 +570,8 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         sx={{
           color: config.color,
           flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <IconComponent size={sizeStyles.iconSize} />
@@ -582,9 +583,9 @@ export const AlertCard: React.FC<AlertCardProps> = ({
               fontWeight: 600,
               color: config.titleColor,
               fontSize: sizeStyles.titleSize,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {title}
@@ -603,7 +604,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         )}
         {expandable && (
           <Button
-            size="small"
+            size='small'
             onClick={(e) => {
               e.stopPropagation();
               handleExpandedChange(!isExpanded);
@@ -611,57 +612,52 @@ export const AlertCard: React.FC<AlertCardProps> = ({
             sx={{
               mt: title ? 0.5 : 0,
               p: 0,
-              minWidth: "auto",
+              minWidth: 'auto',
               color: config.messageColor,
               fontSize: sizeStyles.messageSize,
-              textTransform: "none",
+              textTransform: 'none',
             }}
           >
-            {isExpanded ? "收起" : "展开详情"}
+            {isExpanded ? '收起' : '展开详情'}
           </Button>
         )}
-        {actions &&
-          actions.length > 0 &&
-          (!expandable || isExpanded) &&
-          showDivider && (
-            <>
-              <Divider sx={{ my: 1, borderColor: config.borderColor }} />
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {actions.map((action, index) => (
-                  <Button
-                    key={index}
-                    size="small"
-                    variant={action.primary ? "contained" : "outlined"}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      action.onClick();
-                    }}
-                    disabled={action.loading}
-                    startIcon={
-                      action.loading ? <RefreshCw size={14} /> : undefined
-                    }
-                    sx={{
+        {actions && actions.length > 0 && (!expandable || isExpanded) && showDivider && (
+          <>
+            <Divider sx={{ my: 1, borderColor: config.borderColor }} />
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {actions.map((action, index) => (
+                <Button
+                  key={index}
+                  size='small'
+                  variant={action.primary ? 'contained' : 'outlined'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    action.onClick();
+                  }}
+                  disabled={action.loading}
+                  startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
+                  sx={{
+                    borderColor: config.borderColor,
+                    color: action.primary ? '#fff' : config.titleColor,
+                    bgcolor: action.primary ? config.color : 'transparent',
+                    '&:hover': {
+                      bgcolor: action.primary ? config.color : config.bgColor,
                       borderColor: config.borderColor,
-                      color: action.primary ? "#fff" : config.titleColor,
-                      bgcolor: action.primary ? config.color : "transparent",
-                      "&:hover": {
-                        bgcolor: action.primary ? config.color : config.bgColor,
-                        borderColor: config.borderColor,
-                      },
-                      fontSize: sizeStyles.messageSize,
-                      py: 0.5,
-                    }}
-                  >
-                    {action.label}
-                  </Button>
-                ))}
-              </Box>
-            </>
-          )}
+                    },
+                    fontSize: sizeStyles.messageSize,
+                    py: 0.5,
+                  }}
+                >
+                  {action.label}
+                </Button>
+              ))}
+            </Box>
+          </>
+        )}
       </Box>
       {closable && (
         <IconButton
-          size="small"
+          size='small'
           onClick={(e) => {
             e.stopPropagation();
             onClose?.();
@@ -684,30 +680,42 @@ export const AlertCard: React.FC<AlertCardProps> = ({
 /**
  * 成功警告卡片
  */
-export const SuccessAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
-  props,
-) => <AlertCard {...props} level="success" />;
+export const SuccessAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+  <AlertCard
+    {...props}
+    level='success'
+  />
+);
 
 /**
  * 警告警告卡片
  */
-export const WarningAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
-  props,
-) => <AlertCard {...props} level="warning" />;
+export const WarningAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+  <AlertCard
+    {...props}
+    level='warning'
+  />
+);
 
 /**
  * 错误警告卡片
  */
-export const ErrorAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
-  props,
-) => <AlertCard {...props} level="error" />;
+export const ErrorAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+  <AlertCard
+    {...props}
+    level='error'
+  />
+);
 
 /**
  * 信息警告卡片
  */
-export const InfoAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
-  props,
-) => <AlertCard {...props} level="info" />;
+export const InfoAlertCard: React.FC<Omit<AlertCardProps, 'level'>> = (props) => (
+  <AlertCard
+    {...props}
+    level='info'
+  />
+);
 
 // ============ 默认导出 ============
 

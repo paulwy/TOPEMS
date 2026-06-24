@@ -1,40 +1,39 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Box, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import type {
-  Contact,
-  CreateContactRequest,
-  UpdateContactRequest,
-} from "@/api/modules/crm/crm";
-import { crmApi } from "@/api/modules/crm/crm";
-import { useAppStore } from "@/store";
-import { logger } from "@/utils/logger";
-import { DataExport } from "@/components/common";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
-import { ListPageTemplate } from "@/components/templates";
-import type {
-  ColumnDef,
-  RowAction,
-  FilterConfig,
-} from "@/components/templates";
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
+  Box,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/modules/crm/crm';
+import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
+import { DataExport } from '@/components/common';
+import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 
 const ContactManagementPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [formData, setFormData] = useState<
-    CreateContactRequest & { customer_id?: string }
-  >({
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone: "",
-    position: "",
-    notes: "",
+  const [formData, setFormData] = useState<CreateContactRequest & { customer_id?: string }>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    position: '',
+    notes: '',
   });
   const [pagination, setPagination] = useState({
     page: 0,
@@ -68,11 +67,11 @@ const ContactManagementPage: React.FC = () => {
         }));
       }
     } catch (error) {
-      logger.error("加载联系人列表失败:", error);
+      logger.error('加载联系人列表失败:', error);
       addNotification({
-        type: "error",
-        title: "加载失败",
-        message: "无法加载联系人列表",
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载联系人列表',
       });
     } finally {
       setLoading(false);
@@ -83,52 +82,49 @@ const ContactManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedContact) {
-        await crmApi.contacts.update(
-          selectedContact.id,
-          formData as UpdateContactRequest,
-        );
+        await crmApi.contacts.update(selectedContact.id, formData as UpdateContactRequest);
         addNotification({
-          type: "success",
-          title: "更新成功",
-          message: "联系人信息已更新",
+          type: 'success',
+          title: '更新成功',
+          message: '联系人信息已更新',
         });
       } else {
         await crmApi.contacts.create(formData);
         addNotification({
-          type: "success",
-          title: "创建成功",
-          message: "新联系人已创建",
+          type: 'success',
+          title: '创建成功',
+          message: '新联系人已创建',
         });
       }
       setShowDialog(false);
       resetForm();
       loadContacts();
     } catch (error) {
-      logger.error("操作失败:", error);
+      logger.error('操作失败:', error);
       addNotification({
-        type: "error",
-        title: "操作失败",
-        message: selectedContact ? "更新联系人失败" : "创建联系人失败",
+        type: 'error',
+        title: '操作失败',
+        message: selectedContact ? '更新联系人失败' : '创建联系人失败',
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("确定要删除这个联系人吗?")) return;
+    if (!window.confirm('确定要删除这个联系人吗?')) return;
     try {
       await crmApi.contacts.delete(id);
       addNotification({
-        type: "success",
-        title: "删除成功",
-        message: "联系人已删除",
+        type: 'success',
+        title: '删除成功',
+        message: '联系人已删除',
       });
       loadContacts();
     } catch (error) {
-      logger.error("删除失败:", error);
+      logger.error('删除失败:', error);
       addNotification({
-        type: "error",
-        title: "删除失败",
-        message: "无法删除联系人",
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除联系人',
       });
     }
   };
@@ -138,11 +134,11 @@ const ContactManagementPage: React.FC = () => {
     setFormData({
       customer_id: contact.customer_id,
       first_name: contact.first_name,
-      last_name: contact.last_name || "",
-      email: contact.email || "",
-      phone: contact.phone || "",
-      position: contact.position || "",
-      notes: contact.notes || "",
+      last_name: contact.last_name || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      position: contact.position || '',
+      notes: contact.notes || '',
     });
     setShowDialog(true);
   };
@@ -155,12 +151,12 @@ const ContactManagementPage: React.FC = () => {
   const resetForm = () => {
     setSelectedContact(null);
     setFormData({
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      position: "",
-      notes: "",
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      position: '',
+      notes: '',
     });
   };
 
@@ -169,93 +165,95 @@ const ContactManagementPage: React.FC = () => {
       string,
       {
         label: string;
-        color:
-          | "default"
-          | "primary"
-          | "secondary"
-          | "error"
-          | "info"
-          | "success"
-          | "warning";
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      active: { label: "活跃", color: "success" },
-      inactive: { label: "非活跃", color: "default" },
+      active: { label: '活跃', color: 'success' },
+      inactive: { label: '非活跃', color: 'default' },
     };
-    const s = statusMap[status] || { label: status, color: "default" };
-    return <Chip size="small" color={s.color} label={s.label} />;
+    const s = statusMap[status] || { label: status, color: 'default' };
+    return (
+      <Chip
+        size='small'
+        color={s.color}
+        label={s.label}
+      />
+    );
   };
 
   const columns = useMemo<ColumnDef<Contact>[]>(
     () => [
       {
-        id: "name",
-        label: "姓名",
+        id: 'name',
+        label: '姓名',
         render: (row) => (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            {row.first_name} {row.last_name || ""}
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
+            {row.first_name} {row.last_name || ''}
           </Typography>
         ),
       },
       {
-        id: "email",
-        label: "邮箱",
-        render: (row) => row.email || "-",
+        id: 'email',
+        label: '邮箱',
+        render: (row) => row.email || '-',
       },
       {
-        id: "phone",
-        label: "电话",
-        render: (row) => row.phone || "-",
+        id: 'phone',
+        label: '电话',
+        render: (row) => row.phone || '-',
       },
       {
-        id: "position",
-        label: "职位",
-        render: (row) => row.position || "-",
+        id: 'position',
+        label: '职位',
+        render: (row) => row.position || '-',
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    [],
+    []
   );
 
   const rowActions = useMemo<RowAction<Contact>[]>(
     () => [
       {
-        label: "查看",
+        label: '查看',
         icon: <Eye size={16} />,
         onClick: (row) => handleViewDetail(row),
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: (row) => handleEdit(row),
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error",
+        color: 'error',
         onClick: (row) => handleDelete(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这个联系人吗?",
+        confirmMessage: '确定要删除这个联系人吗?',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
-        id: "status",
-        label: "状态",
-        type: "select",
+        id: 'status',
+        label: '状态',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "active", label: "活跃" },
-          { value: "inactive", label: "非活跃" },
+          { value: '', label: '全部' },
+          { value: 'active', label: '活跃' },
+          { value: 'inactive', label: '非活跃' },
         ],
         value: statusFilter,
         onChange: (value) => {
@@ -263,34 +261,34 @@ const ContactManagementPage: React.FC = () => {
         },
       },
     ],
-    [statusFilter],
+    [statusFilter]
   );
 
   const exportFields = useMemo(
     () => [
-      { key: "first_name", title: "名" },
-      { key: "last_name", title: "姓" },
-      { key: "email", title: "邮箱" },
-      { key: "phone", title: "电话" },
-      { key: "position", title: "职位" },
-      { key: "status", title: "状态" },
+      { key: 'first_name', title: '名' },
+      { key: 'last_name', title: '姓' },
+      { key: 'email', title: '邮箱' },
+      { key: 'phone', title: '电话' },
+      { key: 'position', title: '职位' },
+      { key: 'status', title: '状态' },
     ],
-    [],
+    []
   );
 
   return (
     <>
       <ListPageTemplate<Contact>
-        title="联系人管理"
-        subtitle="管理联系人信息，包括姓名、联系方式、职位等"
+        title='联系人管理'
+        subtitle='管理联系人信息，包括姓名、联系方式、职位等'
         backButton={{
-          href: "/dashboard",
+          href: '/dashboard',
         }}
         columns={columns}
         data={contacts}
         loading={loading}
         searchable
-        searchPlaceholder="搜索联系人姓名或邮箱..."
+        searchPlaceholder='搜索联系人姓名或邮箱...'
         searchValue={searchTerm}
         onSearch={(value) => {
           setSearchTerm(value);
@@ -310,27 +308,27 @@ const ContactManagementPage: React.FC = () => {
         }}
         actions={[
           {
-            label: "导出",
+            label: '导出',
             icon: <Eye size={18} />,
             onClick: () => {},
-            variant: "outlined",
+            variant: 'outlined',
           },
           {
-            label: "新增联系人",
+            label: '新增联系人',
             icon: <Plus size={18} />,
             onClick: () => {
               resetForm();
               setShowDialog(true);
             },
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
         headerContent={
           <DataExport
             data={contacts as unknown as Record<string, unknown>[]}
             fields={exportFields}
-            defaultFileName="联系人数据"
-            buttonText=""
+            defaultFileName='联系人数据'
+            buttonText=''
           />
         }
       />
@@ -338,81 +336,70 @@ const ContactManagementPage: React.FC = () => {
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
-        <DialogTitle>
-          {selectedContact ? "编辑联系人" : "新增联系人"}
-        </DialogTitle>
+        <DialogTitle>{selectedContact ? '编辑联系人' : '新增联系人'}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 2,
                 pt: 1,
               }}
             >
               <TextField
-                label="名 *"
+                label='名 *'
                 required
                 value={formData.first_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, first_name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                 fullWidth
               />
               <TextField
-                label="姓"
+                label='姓'
                 value={formData.last_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, last_name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                 fullWidth
               />
               <TextField
-                label="邮箱"
-                type="email"
+                label='邮箱'
+                type='email'
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 fullWidth
               />
               <TextField
-                label="电话"
+                label='电话'
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 fullWidth
               />
               <TextField
-                label="职位"
+                label='职位'
                 value={formData.position}
-                onChange={(e) =>
-                  setFormData({ ...formData, position: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                 fullWidth
-                sx={{ gridColumn: "span 2" }}
+                sx={{ gridColumn: 'span 2' }}
               />
               <TextField
-                label="备注"
+                label='备注'
                 multiline
                 rows={3}
                 value={formData.notes}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 fullWidth
-                sx={{ gridColumn: "span 2" }}
+                sx={{ gridColumn: 'span 2' }}
               />
             </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               保存
             </Button>
           </DialogActions>
@@ -422,7 +409,7 @@ const ContactManagementPage: React.FC = () => {
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>联系人详情</DialogTitle>
@@ -430,72 +417,95 @@ const ContactManagementPage: React.FC = () => {
           <DialogContent>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 2,
               }}
             >
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   名
                 </Typography>
-                <Typography sx={{ fontWeight: "medium" }}>
-                  {selectedContact.first_name}
-                </Typography>
+                <Typography sx={{ fontWeight: 'medium' }}>{selectedContact.first_name}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   姓
                 </Typography>
-                <Typography>{selectedContact.last_name || "-"}</Typography>
+                <Typography>{selectedContact.last_name || '-'}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   邮箱
                 </Typography>
-                <Typography>{selectedContact.email || "-"}</Typography>
+                <Typography>{selectedContact.email || '-'}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   电话
                 </Typography>
-                <Typography>{selectedContact.phone || "-"}</Typography>
+                <Typography>{selectedContact.phone || '-'}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   职位
                 </Typography>
-                <Typography>{selectedContact.position || "-"}</Typography>
+                <Typography>{selectedContact.position || '-'}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   状态
                 </Typography>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(selectedContact.status)}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedContact.status)}</Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   创建时间
                 </Typography>
                 <Typography>
-                  {new Date(selectedContact.created_at).toLocaleString("zh-CN")}
+                  {new Date(selectedContact.created_at).toLocaleString('zh-CN')}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   更新时间
                 </Typography>
                 <Typography>
-                  {new Date(selectedContact.updated_at).toLocaleString("zh-CN")}
+                  {new Date(selectedContact.updated_at).toLocaleString('zh-CN')}
                 </Typography>
               </Box>
-              <Box sx={{ gridColumn: "span 2" }}>
-                <Typography variant="caption" color="text.secondary">
+              <Box sx={{ gridColumn: 'span 2' }}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   备注
                 </Typography>
-                <Typography>{selectedContact.notes || "-"}</Typography>
+                <Typography>{selectedContact.notes || '-'}</Typography>
               </Box>
             </Box>
           </DialogContent>

@@ -73,3 +73,6 @@ node_modules
 
 # Debug tools
 debug_jwt.rs
+
+*storybook.log
+storybook-static

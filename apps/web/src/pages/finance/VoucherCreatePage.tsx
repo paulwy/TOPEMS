@@ -1,7 +1,26 @@
-import { Card, CardContent, TextField, Typography, Box, Stack, Divider, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Autocomplete, Chip, Alert,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  TextField,
+  Typography,
+  Box,
+  Stack,
+  Divider,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Autocomplete,
+  Chip,
+  Alert,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Plus,
@@ -12,16 +31,16 @@ import {
   AlertCircle,
   FileText,
   Info,
-} from "lucide-react";
-import { FormPageTemplate } from "@/components/templates";
+} from 'lucide-react';
+import { FormPageTemplate } from '@/components/templates';
 import {
   voucherApi,
   accountingSubjectApi,
   type AccountingSubject,
   type VoucherItemRequest,
-} from "@/api/erp";
-import { useAppStore } from "@/store";
-import { apiLogger } from "@/utils/logger";
+} from '@/api/erp';
+import { useAppStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
 interface FormSection {
   id: string;
@@ -29,7 +48,7 @@ interface FormSection {
   fields: Array<{
     name: string;
     label: string;
-    type: "text" | "number" | "date" | "select" | "autocomplete";
+    type: 'text' | 'number' | 'date' | 'select' | 'autocomplete';
     required?: boolean;
     span?: number;
     options?: Array<{ value: string; label: string }>;
@@ -47,11 +66,11 @@ const VoucherCreatePage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    voucher_number: "",
-    voucher_date: "",
-    period: "",
+    voucher_number: '',
+    voucher_date: '',
+    period: '',
     attachment_count: 0,
-    summary: "",
+    summary: '',
   });
 
   const [voucherItems, setVoucherItems] = useState<VoucherItemRequest[]>([]);
@@ -70,11 +89,11 @@ const VoucherCreatePage: React.FC = () => {
         setSubjects(result.data.items || []);
       }
     } catch (err) {
-      apiLogger.error("加载会计科目失败:", err);
+      apiLogger.error('加载会计科目失败:', err);
       addNotification({
-        title: "错误",
-        message: "加载会计科目失败",
-        type: "error",
+        title: '错误',
+        message: '加载会计科目失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -83,7 +102,7 @@ const VoucherCreatePage: React.FC = () => {
 
   const initializeForm = () => {
     const today = new Date();
-    const period = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+    const period = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     setFormData((prev) => ({
       ...prev,
       period,
@@ -104,28 +123,24 @@ const VoucherCreatePage: React.FC = () => {
   const addVoucherItem = () => {
     const newItem: VoucherItemRequest = {
       line_number: voucherItems.length + 1,
-      subject_code: "",
-      subject_name: "",
-      summary: "",
+      subject_code: '',
+      subject_name: '',
+      summary: '',
       debit_amount: 0,
       credit_amount: 0,
     };
     setVoucherItems((prev) => [...prev, newItem]);
   };
 
-  const updateVoucherItem = (
-    index: number,
-    field: keyof VoucherItemRequest,
-    value: any,
-  ) => {
+  const updateVoucherItem = (index: number, field: keyof VoucherItemRequest, value: any) => {
     const items = [...voucherItems];
 
-    if (field === "subject_code") {
+    if (field === 'subject_code') {
       const subject = subjects.find((s) => s.code === value);
       items[index] = {
         ...items[index],
         subject_code: value,
-        subject_name: subject?.name || "",
+        subject_name: subject?.name || '',
       };
     } else {
       items[index] = { ...items[index], [field]: value };
@@ -142,54 +157,48 @@ const VoucherCreatePage: React.FC = () => {
   const validateForm = (): boolean => {
     if (!formData.voucher_number) {
       addNotification({
-        title: "验证错误",
-        message: "请输入凭证编号",
-        type: "warning",
+        title: '验证错误',
+        message: '请输入凭证编号',
+        type: 'warning',
       });
       return false;
     }
 
     if (!formData.voucher_date) {
       addNotification({
-        title: "验证错误",
-        message: "请输入凭证日期",
-        type: "warning",
+        title: '验证错误',
+        message: '请输入凭证日期',
+        type: 'warning',
       });
       return false;
     }
 
     if (!formData.period) {
       addNotification({
-        title: "验证错误",
-        message: "请输入会计期间",
-        type: "warning",
+        title: '验证错误',
+        message: '请输入会计期间',
+        type: 'warning',
       });
       return false;
     }
 
     if (voucherItems.length < 2) {
       addNotification({
-        title: "验证错误",
-        message: "请至少添加两条凭证明细",
-        type: "warning",
+        title: '验证错误',
+        message: '请至少添加两条凭证明细',
+        type: 'warning',
       });
       return false;
     }
 
-    const totalDebit = voucherItems.reduce(
-      (sum, item) => sum + (item.debit_amount || 0),
-      0,
-    );
-    const totalCredit = voucherItems.reduce(
-      (sum, item) => sum + (item.credit_amount || 0),
-      0,
-    );
+    const totalDebit = voucherItems.reduce((sum, item) => sum + (item.debit_amount || 0), 0);
+    const totalCredit = voucherItems.reduce((sum, item) => sum + (item.credit_amount || 0), 0);
 
     if (totalDebit !== totalCredit || totalDebit === 0) {
       addNotification({
-        title: "验证错误",
-        message: "借贷不平衡或金额为零",
-        type: "error",
+        title: '验证错误',
+        message: '借贷不平衡或金额为零',
+        type: 'error',
       });
       return false;
     }
@@ -205,31 +214,29 @@ const VoucherCreatePage: React.FC = () => {
       const result = await voucherApi.create({
         ...formData,
         items: voucherItems.filter(
-          (item) =>
-            item.subject_code &&
-            (item.debit_amount > 0 || item.credit_amount > 0),
+          (item) => item.subject_code && (item.debit_amount > 0 || item.credit_amount > 0)
         ),
       });
 
       if (result.success) {
         addNotification({
-          title: "成功",
-          message: "凭证创建成功",
-          type: "success",
+          title: '成功',
+          message: '凭证创建成功',
+          type: 'success',
         });
-        navigate("/finance/vouchers");
+        navigate('/finance/vouchers');
       } else {
         addNotification({
-          title: "失败",
-          message: result.message || "创建失败",
-          type: "error",
+          title: '失败',
+          message: result.message || '创建失败',
+          type: 'error',
         });
       }
     } catch (err: any) {
       addNotification({
-        title: "错误",
-        message: err.message || "创建失败",
-        type: "error",
+        title: '错误',
+        message: err.message || '创建失败',
+        type: 'error',
       });
     } finally {
       setSubmitting(false);
@@ -237,93 +244,88 @@ const VoucherCreatePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate("/finance/vouchers");
+    navigate('/finance/vouchers');
   };
 
   const formatCurrency = (amount: number) => {
-    return `¥${amount.toLocaleString("zh-CN", {
+    return `¥${amount.toLocaleString('zh-CN', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
   };
 
-  const totalDebit = voucherItems.reduce(
-    (sum, item) => sum + (item.debit_amount || 0),
-    0,
-  );
-  const totalCredit = voucherItems.reduce(
-    (sum, item) => sum + (item.credit_amount || 0),
-    0,
-  );
+  const totalDebit = voucherItems.reduce((sum, item) => sum + (item.debit_amount || 0), 0);
+  const totalCredit = voucherItems.reduce((sum, item) => sum + (item.credit_amount || 0), 0);
   const isBalanced = totalDebit === totalCredit && totalDebit > 0;
 
   const basicInfoSection = (
     <Card>
       <CardContent>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 3 }}
+        >
           基本信息
         </Typography>
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
             gap: 3,
           }}
         >
           <TextField
-            label="凭证编号 *"
+            label='凭证编号 *'
             value={formData.voucher_number}
-            onChange={(e) =>
-              handleFieldChange("voucher_number", e.target.value)
-            }
-            placeholder="例如: 记-2024-001"
+            onChange={(e) => handleFieldChange('voucher_number', e.target.value)}
+            placeholder='例如: 记-2024-001'
             required
             fullWidth
-            size="small"
+            size='small'
           />
           <TextField
-            label="凭证日期 *"
-            type="date"
+            label='凭证日期 *'
+            type='date'
             value={formData.voucher_date}
-            onChange={(e) => handleFieldChange("voucher_date", e.target.value)}
+            onChange={(e) => handleFieldChange('voucher_date', e.target.value)}
             required
             fullWidth
-            size="small"
+            size='small'
             slotProps={{ inputLabel: { shrink: true } }}
           />
           <TextField
-            label="会计期间 *"
+            label='会计期间 *'
             value={formData.period}
-            onChange={(e) => handleFieldChange("period", e.target.value)}
-            placeholder="例如: 2024-01"
+            onChange={(e) => handleFieldChange('period', e.target.value)}
+            placeholder='例如: 2024-01'
             required
             fullWidth
-            size="small"
-            helperText="格式: YYYY-MM"
+            size='small'
+            helperText='格式: YYYY-MM'
           />
           <TextField
-            label="附件数量"
-            type="number"
+            label='附件数量'
+            type='number'
             value={formData.attachment_count}
             onChange={(e) => {
               const val = parseInt(e.target.value);
               if (!isNaN(val) && val >= 0) {
-                handleFieldChange("attachment_count", val);
-              } else if (e.target.value === "") {
-                handleFieldChange("attachment_count", 0);
+                handleFieldChange('attachment_count', val);
+              } else if (e.target.value === '') {
+                handleFieldChange('attachment_count', 0);
               }
             }}
             fullWidth
-            size="small"
+            size='small'
           />
-          <Box sx={{ gridColumn: "span 2" }}>
+          <Box sx={{ gridColumn: 'span 2' }}>
             <TextField
-              label="凭证摘要"
+              label='凭证摘要'
               value={formData.summary}
-              onChange={(e) => handleFieldChange("summary", e.target.value)}
-              placeholder="输入凭证摘要"
+              onChange={(e) => handleFieldChange('summary', e.target.value)}
+              placeholder='输入凭证摘要'
               fullWidth
-              size="small"
+              size='small'
               multiline
               rows={1}
             />
@@ -338,29 +340,32 @@ const VoucherCreatePage: React.FC = () => {
       <CardContent>
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             mb: 3,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
               凭证明细
             </Typography>
             {!isBalanced && totalDebit > 0 && (
               <Chip
-                size="small"
+                size='small'
                 icon={<AlertCircle size={14} />}
-                label="借贷不平衡"
-                color="warning"
-                variant="outlined"
+                label='借贷不平衡'
+                color='warning'
+                variant='outlined'
               />
             )}
           </Box>
           <Button
-            variant="outlined"
-            size="small"
+            variant='outlined'
+            size='small'
             startIcon={<Plus size={16} />}
             onClick={addVoucherItem}
           >
@@ -368,21 +373,20 @@ const VoucherCreatePage: React.FC = () => {
           </Button>
         </Box>
 
-        <TableContainer component={Paper} variant="outlined">
+        <TableContainer
+          component={Paper}
+          variant='outlined'
+        >
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "grey.100" }}>
+              <TableRow sx={{ bgcolor: 'grey.100' }}>
                 <TableCell sx={{ fontWeight: 600, width: 80 }}>行号</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>会计科目</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>摘要</TableCell>
-                <TableCell
-                  sx={{ fontWeight: 600, width: 180, textAlign: "right" }}
-                >
+                <TableCell sx={{ fontWeight: 600, width: 180, textAlign: 'right' }}>
                   借方金额
                 </TableCell>
-                <TableCell
-                  sx={{ fontWeight: 600, width: 180, textAlign: "right" }}
-                >
+                <TableCell sx={{ fontWeight: 600, width: 180, textAlign: 'right' }}>
                   贷方金额
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 80 }}>操作</TableCell>
@@ -392,66 +396,49 @@ const VoucherCreatePage: React.FC = () => {
               {voucherItems.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell>
-                    <Typography
-                      sx={{ fontWeight: 600, color: "text.secondary" }}
-                    >
+                    <Typography sx={{ fontWeight: 600, color: 'text.secondary' }}>
                       {item.line_number}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Autocomplete
-                      size="small"
+                      size='small'
                       options={subjects}
-                      getOptionLabel={(option) =>
-                        `${option.code} - ${option.name}`
-                      }
-                      value={
-                        subjects.find((s) => s.code === item.subject_code) ||
-                        null
-                      }
+                      getOptionLabel={(option) => `${option.code} - ${option.name}`}
+                      value={subjects.find((s) => s.code === item.subject_code) || null}
                       onChange={(_, newValue) => {
-                        updateVoucherItem(
-                          index,
-                          "subject_code",
-                          newValue?.code || "",
-                        );
+                        updateVoucherItem(index, 'subject_code', newValue?.code || '');
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          placeholder="选择或搜索科目"
-                          size="small"
+                          placeholder='选择或搜索科目'
+                          size='small'
                         />
                       )}
                     />
                   </TableCell>
                   <TableCell>
                     <TextField
-                      size="small"
-                      placeholder="分录摘要"
+                      size='small'
+                      placeholder='分录摘要'
                       value={item.summary}
-                      onChange={(e) =>
-                        updateVoucherItem(index, "summary", e.target.value)
-                      }
+                      onChange={(e) => updateVoucherItem(index, 'summary', e.target.value)}
                     />
                   </TableCell>
                   <TableCell>
                     <TextField
-                      size="small"
-                      type="number"
-                      placeholder="0.00"
-                      value={item.debit_amount || ""}
+                      size='small'
+                      type='number'
+                      placeholder='0.00'
+                      value={item.debit_amount || ''}
                       onChange={(e) =>
-                        updateVoucherItem(
-                          index,
-                          "debit_amount",
-                          parseFloat(e.target.value) || 0,
-                        )
+                        updateVoucherItem(index, 'debit_amount', parseFloat(e.target.value) || 0)
                       }
                       sx={{
-                        "& input": {
-                          textAlign: "right",
-                          color: "error.main",
+                        '& input': {
+                          textAlign: 'right',
+                          color: 'error.main',
                           fontWeight: 500,
                         },
                       }}
@@ -460,9 +447,9 @@ const VoucherCreatePage: React.FC = () => {
                           startAdornment: (
                             <Typography
                               sx={{
-                                color: "error.main",
+                                color: 'error.main',
                                 mr: 0.5,
-                                fontSize: "0.875rem",
+                                fontSize: '0.875rem',
                               }}
                             >
                               ¥
@@ -474,21 +461,17 @@ const VoucherCreatePage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <TextField
-                      size="small"
-                      type="number"
-                      placeholder="0.00"
-                      value={item.credit_amount || ""}
+                      size='small'
+                      type='number'
+                      placeholder='0.00'
+                      value={item.credit_amount || ''}
                       onChange={(e) =>
-                        updateVoucherItem(
-                          index,
-                          "credit_amount",
-                          parseFloat(e.target.value) || 0,
-                        )
+                        updateVoucherItem(index, 'credit_amount', parseFloat(e.target.value) || 0)
                       }
                       sx={{
-                        "& input": {
-                          textAlign: "right",
-                          color: "success.main",
+                        '& input': {
+                          textAlign: 'right',
+                          color: 'success.main',
                           fontWeight: 500,
                         },
                       }}
@@ -497,9 +480,9 @@ const VoucherCreatePage: React.FC = () => {
                           startAdornment: (
                             <Typography
                               sx={{
-                                color: "success.main",
+                                color: 'success.main',
                                 mr: 0.5,
-                                fontSize: "0.875rem",
+                                fontSize: '0.875rem',
                               }}
                             >
                               ¥
@@ -511,8 +494,8 @@ const VoucherCreatePage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <IconButton
-                      size="small"
-                      color="error"
+                      size='small'
+                      color='error'
                       onClick={() => removeVoucherItem(index)}
                       disabled={voucherItems.length <= 1}
                     >
@@ -527,38 +510,44 @@ const VoucherCreatePage: React.FC = () => {
 
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "flex-end",
+            display: 'flex',
+            justifyContent: 'flex-end',
             gap: 4,
             mt: 3,
             pt: 2,
             borderTop: 2,
-            borderColor: "divider",
+            borderColor: 'divider',
           }}
         >
-          <Box sx={{ textAlign: "right" }}>
-            <Typography variant="body2" color="text.secondary">
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               借方合计
             </Typography>
             <Typography
-              variant="h6"
+              variant='h6'
               sx={{
-                fontWeight: "bold",
-                color: isBalanced ? "error.main" : "error.main",
+                fontWeight: 'bold',
+                color: isBalanced ? 'error.main' : 'error.main',
               }}
             >
               {formatCurrency(totalDebit)}
             </Typography>
           </Box>
-          <Box sx={{ textAlign: "right" }}>
-            <Typography variant="body2" color="text.secondary">
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               贷方合计
             </Typography>
             <Typography
-              variant="h6"
+              variant='h6'
               sx={{
-                fontWeight: "bold",
-                color: isBalanced ? "success.main" : "error.main",
+                fontWeight: 'bold',
+                color: isBalanced ? 'success.main' : 'error.main',
               }}
             >
               {formatCurrency(totalCredit)}
@@ -568,13 +557,13 @@ const VoucherCreatePage: React.FC = () => {
 
         {!isBalanced && totalDebit > 0 && (
           <Alert
-            severity="warning"
+            severity='warning'
             icon={<Calculator size={20} />}
             sx={{ mt: 2 }}
           >
-            <Typography variant="body2">
-              <strong>借贷不平衡:</strong> 借方合计 {formatCurrency(totalDebit)}{" "}
-              ≠ 贷方合计 {formatCurrency(totalCredit)},差额{" "}
+            <Typography variant='body2'>
+              <strong>借贷不平衡:</strong> 借方合计 {formatCurrency(totalDebit)} ≠ 贷方合计{' '}
+              {formatCurrency(totalCredit)},差额{' '}
               {formatCurrency(Math.abs(totalDebit - totalCredit))}
             </Typography>
           </Alert>
@@ -582,13 +571,12 @@ const VoucherCreatePage: React.FC = () => {
 
         {isBalanced && (
           <Alert
-            severity="success"
+            severity='success'
             icon={<Calculator size={20} />}
             sx={{ mt: 2 }}
           >
-            <Typography variant="body2">
-              <strong>借贷平衡</strong> - 借方合计 = 贷方合计 ={" "}
-              {formatCurrency(totalDebit)}
+            <Typography variant='body2'>
+              <strong>借贷平衡</strong> - 借方合计 = 贷方合计 = {formatCurrency(totalDebit)}
             </Typography>
           </Alert>
         )}
@@ -598,15 +586,15 @@ const VoucherCreatePage: React.FC = () => {
 
   const sections = [
     {
-      id: "basic",
-      title: "基本信息",
+      id: 'basic',
+      title: '基本信息',
       content: basicInfoSection,
       collapsible: false,
       fields: [],
     },
     {
-      id: "items",
-      title: "凭证明细",
+      id: 'items',
+      title: '凭证明细',
       content: voucherItemsSection,
       collapsible: false,
       fields: [],
@@ -615,17 +603,17 @@ const VoucherCreatePage: React.FC = () => {
 
   return (
     <FormPageTemplate
-      title="新建凭证"
+      title='新建凭证'
       breadcrumbs={[
-        { label: "首页", href: "/dashboard" },
-        { label: "财务", href: "/finance" },
-        { label: "凭证管理", href: "/finance/vouchers" },
-        { label: "新建凭证" },
+        { label: '首页', href: '/dashboard' },
+        { label: '财务', href: '/finance' },
+        { label: '凭证管理', href: '/finance/vouchers' },
+        { label: '新建凭证' },
       ]}
       sections={sections}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
-      submitText="保存凭证"
+      submitText='保存凭证'
       submitting={submitting}
     />
   );

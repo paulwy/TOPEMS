@@ -1,24 +1,12 @@
-import React, { useState, useEffect } from "react";
-import {
-  Bell,
-  ChevronLeft,
-  Check,
-  Trash2,
-  ExternalLink,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
-import type { Notification, NotificationTypeEnum } from "@/api/notification";
-import {
-  markAsRead,
-  deleteNotification,
-  getNotifications,
-} from "@/api/notification";
-import { useNotification } from "@/hooks/useNotification";
-import { NotificationContainer } from "@/components/NotificationContainer";
-import { apiLogger } from "@/utils/logger";
+import React, { useState, useEffect } from 'react';
+import { Bell, ChevronLeft, Check, Trash2, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
+import type { Notification, NotificationTypeEnum } from '@/api/notification';
+import { markAsRead, deleteNotification, getNotifications } from '@/api/notification';
+import { useNotification } from '@/hooks/useNotification';
+import { NotificationContainer } from '@/components/NotificationContainer';
+import { apiLogger } from '@/utils/logger';
 
 const NotificationDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,7 +38,7 @@ const NotificationDetailPage: React.FC = () => {
         }
       }
     } catch (err) {
-      apiLogger.error("Error loading notification:", err);
+      apiLogger.error('Error loading notification:', err);
     } finally {
       setLoading(false);
     }
@@ -64,12 +52,12 @@ const NotificationDetailPage: React.FC = () => {
       const res = await markAsRead(notification.id);
       if (res.success && res.data) {
         setNotification(res.data);
-        success("已标记为已读");
+        success('已标记为已读');
       } else {
-        error(res.message || "操作失败");
+        error(res.message || '操作失败');
       }
     } catch (err: any) {
-      error(err.message || "操作失败");
+      error(err.message || '操作失败');
     } finally {
       setActionLoading(false);
     }
@@ -77,19 +65,19 @@ const NotificationDetailPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!notification) return;
-    if (!confirm("确定要删除这条通知吗？")) return;
+    if (!confirm('确定要删除这条通知吗？')) return;
 
     setActionLoading(true);
     try {
       const res = await deleteNotification(notification.id);
       if (res.success) {
-        success("通知已删除");
-        navigate("/notifications");
+        success('通知已删除');
+        navigate('/notifications');
       } else {
-        error(res.message || "删除失败");
+        error(res.message || '删除失败');
       }
     } catch (err: any) {
-      error(err.message || "删除失败");
+      error(err.message || '删除失败');
     } finally {
       setActionLoading(false);
     }
@@ -97,62 +85,62 @@ const NotificationDetailPage: React.FC = () => {
 
   const getTypeLabel = (type: NotificationTypeEnum) => {
     const labels: Record<NotificationTypeEnum, string> = {
-      system: "系统通知",
-      workflow: "审批通知",
-      reminder: "提醒通知",
-      alert: "告警通知",
-      message: "消息通知",
-      info: "信息通知",
-      success: "成功通知",
-      warning: "警告通知",
-      error: "错误通知",
+      system: '系统通知',
+      workflow: '审批通知',
+      reminder: '提醒通知',
+      alert: '告警通知',
+      message: '消息通知',
+      info: '信息通知',
+      success: '成功通知',
+      warning: '警告通知',
+      error: '错误通知',
     };
     return labels[type] || type;
   };
 
   const getTypeColor = (type: NotificationTypeEnum) => {
     const colors: Record<NotificationTypeEnum, { bg: string; text: string }> = {
-      system: { bg: "primary.100", text: "primary.700" },
-      workflow: { bg: "purple.100", text: "purple.700" },
-      reminder: { bg: "warning.100", text: "warning.700" },
-      alert: { bg: "error.100", text: "error.700" },
-      message: { bg: "success.100", text: "success.700" },
-      info: { bg: "info.100", text: "info.700" },
-      success: { bg: "success.100", text: "success.700" },
-      warning: { bg: "warning.100", text: "warning.700" },
-      error: { bg: "error.100", text: "error.700" },
+      system: { bg: 'primary.100', text: 'primary.700' },
+      workflow: { bg: 'purple.100', text: 'purple.700' },
+      reminder: { bg: 'warning.100', text: 'warning.700' },
+      alert: { bg: 'error.100', text: 'error.700' },
+      message: { bg: 'success.100', text: 'success.700' },
+      info: { bg: 'info.100', text: 'info.700' },
+      success: { bg: 'success.100', text: 'success.700' },
+      warning: { bg: 'warning.100', text: 'warning.700' },
+      error: { bg: 'error.100', text: 'error.700' },
     };
-    return colors[type] || { bg: "grey.100", text: "grey.700" };
+    return colors[type] || { bg: 'grey.100', text: 'grey.700' };
   };
 
   const getPriorityLabel = (priority: number) => {
-    if (priority >= 4)
-      return { label: "紧急", bg: "error.100", text: "error.700" };
-    if (priority >= 3)
-      return { label: "高", bg: "warning.100", text: "warning.700" };
-    if (priority >= 2)
-      return { label: "中", bg: "warning.100", text: "warning.700" };
-    return { label: "低", bg: "grey.100", text: "grey.700" };
+    if (priority >= 4) return { label: '紧急', bg: 'error.100', text: 'error.700' };
+    if (priority >= 3) return { label: '高', bg: 'warning.100', text: 'warning.700' };
+    if (priority >= 2) return { label: '中', bg: 'warning.100', text: 'warning.700' };
+    return { label: '低', bg: 'grey.100', text: 'grey.700' };
   };
 
   if (loading) {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          bgcolor: "grey.100",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100vh',
+          bgcolor: 'grey.100',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
+        <Box sx={{ textAlign: 'center' }}>
           <Loader2
             size={48}
-            color="#1976d2"
-            style={{ margin: "0 auto", animation: "spin 1s linear infinite" }}
+            color='#1976d2'
+            style={{ margin: '0 auto', animation: 'spin 1s linear infinite' }}
           />
-          <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>
+          <Typography
+            variant='body2'
+            sx={{ mt: 1, color: 'grey.500' }}
+          >
             加载中...
           </Typography>
         </Box>
@@ -162,7 +150,7 @@ const NotificationDetailPage: React.FC = () => {
 
   if (!notification) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
         <NotificationContainer
           notifications={notifications}
           onClose={hideNotification}
@@ -171,37 +159,40 @@ const NotificationDetailPage: React.FC = () => {
         {/* Header */}
         <Box
           sx={{
-            bgcolor: "background.paper",
+            bgcolor: 'background.paper',
             boxShadow: 1,
             borderBottom: 1,
-            borderColor: "divider",
+            borderColor: 'divider',
           }}
         >
           <Box
             sx={{
               maxWidth: 900,
-              mx: "auto",
+              mx: 'auto',
               px: { xs: 2, sm: 3, lg: 4 },
               py: 3,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
-                component="button"
-                onClick={() => navigate("/notifications")}
+                component='button'
+                onClick={() => navigate('/notifications')}
                 sx={{
                   p: 1,
                   borderRadius: 2,
-                  "&:hover": { bgcolor: "grey.100" },
-                  transition: "background-color 0.2s",
+                  '&:hover': { bgcolor: 'grey.100' },
+                  transition: 'background-color 0.2s',
                 }}
               >
-                <ChevronLeft size={20} color="#666" />
+                <ChevronLeft
+                  size={20}
+                  color='#666'
+                />
               </Box>
               <Box>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "grey.900" }}
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'grey.900' }}
                 >
                   通知详情
                 </Typography>
@@ -210,42 +201,43 @@ const NotificationDetailPage: React.FC = () => {
           </Box>
         </Box>
 
-        <Box
-          sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
-        >
+        <Box sx={{ maxWidth: 900, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
           <Box
             sx={{
-              bgcolor: "background.paper",
+              bgcolor: 'background.paper',
               borderRadius: 2,
               boxShadow: 1,
               p: 6,
-              textAlign: "center",
+              textAlign: 'center',
             }}
           >
             <AlertCircle
               size={64}
-              color="#666"
-              style={{ margin: "0 auto 16px" }}
+              color='#666'
+              style={{ margin: '0 auto 16px' }}
             />
             <Typography
-              variant="h6"
-              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+              variant='h6'
+              sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
             >
               通知不存在
             </Typography>
-            <Typography variant="body2" sx={{ color: "grey.500", mb: 3 }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.500', mb: 3 }}
+            >
               该通知可能被已删除或不存在
             </Typography>
             <Box
-              component="button"
-              onClick={() => navigate("/notifications")}
+              component='button'
+              onClick={() => navigate('/notifications')}
               sx={{
                 px: 2,
                 py: 1,
-                bgcolor: "primary.main",
-                color: "white",
+                bgcolor: 'primary.main',
+                color: 'white',
                 borderRadius: 2,
-                "&:hover": { bgcolor: "primary.dark" },
+                '&:hover': { bgcolor: 'primary.dark' },
               }}
             >
               返回通知列表
@@ -260,7 +252,7 @@ const NotificationDetailPage: React.FC = () => {
   const typeColor = getTypeColor(notification.notification_type);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
@@ -269,111 +261,125 @@ const NotificationDetailPage: React.FC = () => {
       {/* Header */}
       <Box
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           boxShadow: 1,
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Box
-          sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
-        >
+        <Box sx={{ maxWidth: 900, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
-                component="button"
-                onClick={() => navigate("/notifications")}
+                component='button'
+                onClick={() => navigate('/notifications')}
                 sx={{
                   p: 1,
                   borderRadius: 2,
-                  "&:hover": { bgcolor: "grey.100" },
-                  transition: "background-color 0.2s",
+                  '&:hover': { bgcolor: 'grey.100' },
+                  transition: 'background-color 0.2s',
                 }}
               >
-                <ChevronLeft size={20} color="#666" />
+                <ChevronLeft
+                  size={20}
+                  color='#666'
+                />
               </Box>
               <Box>
                 <Typography
-                  variant="h5"
+                  variant='h5'
                   sx={{
                     fontWeight: 700,
-                    color: "grey.900",
-                    display: "flex",
-                    alignItems: "center",
+                    color: 'grey.900',
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
-                  <Bell size={24} style={{ marginRight: 12 }} color="#1976d2" />
+                  <Bell
+                    size={24}
+                    style={{ marginRight: 12 }}
+                    color='#1976d2'
+                  />
                   通知详情
                 </Typography>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               {!notification.is_read && (
                 <Box
-                  component="button"
+                  component='button'
                   onClick={handleMarkAsRead}
                   disabled={actionLoading}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     px: 2,
                     py: 1,
-                    color: "primary.700",
-                    bgcolor: "primary.100",
+                    color: 'primary.700',
+                    bgcolor: 'primary.100',
                     borderRadius: 2,
-                    "&:hover": { bgcolor: "primary.200" },
-                    disabled: { opacity: 0.5, cursor: "not-allowed" },
+                    '&:hover': { bgcolor: 'primary.200' },
+                    disabled: { opacity: 0.5, cursor: 'not-allowed' },
                   }}
                 >
-                  <Check size={20} style={{ marginRight: 8 }} />
+                  <Check
+                    size={20}
+                    style={{ marginRight: 8 }}
+                  />
                   标记已读
                 </Box>
               )}
               {notification.data?.link && (
                 <Box
-                  component="a"
+                  component='a'
                   href={notification.data.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target='_blank'
+                  rel='noopener noreferrer'
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     px: 2,
                     py: 1,
-                    color: "primary.700",
-                    bgcolor: "primary.100",
+                    color: 'primary.700',
+                    bgcolor: 'primary.100',
                     borderRadius: 2,
-                    textDecoration: "none",
-                    "&:hover": { bgcolor: "primary.200" },
+                    textDecoration: 'none',
+                    '&:hover': { bgcolor: 'primary.200' },
                   }}
                 >
-                  <ExternalLink size={20} style={{ marginRight: 8 }} />
+                  <ExternalLink
+                    size={20}
+                    style={{ marginRight: 8 }}
+                  />
                   查看详情
                 </Box>
               )}
               <Box
-                component="button"
+                component='button'
                 onClick={handleDelete}
                 disabled={actionLoading}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   px: 2,
                   py: 1,
-                  color: "error.700",
-                  bgcolor: "error.100",
+                  color: 'error.700',
+                  bgcolor: 'error.100',
                   borderRadius: 2,
-                  "&:hover": { bgcolor: "error.200" },
-                  disabled: { opacity: 0.5, cursor: "not-allowed" },
+                  '&:hover': { bgcolor: 'error.200' },
+                  disabled: { opacity: 0.5, cursor: 'not-allowed' },
                 }}
               >
-                <Trash2 size={20} style={{ marginRight: 8 }} />
+                <Trash2
+                  size={20}
+                  style={{ marginRight: 8 }}
+                />
                 删除
               </Box>
             </Box>
@@ -382,34 +388,32 @@ const NotificationDetailPage: React.FC = () => {
       </Box>
 
       {/* Content */}
-      <Box
-        sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
-      >
+      <Box sx={{ maxWidth: 900, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
         <Box
           sx={{
-            bgcolor: "background.paper",
+            bgcolor: 'background.paper',
             borderRadius: 2,
             boxShadow: 1,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           {/* Header */}
-          <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+          <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
                 mb: 2,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box
-                  component="span"
+                  component='span'
                   sx={{
                     px: 1.5,
                     py: 0.5,
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                     borderRadius: 4,
                     bgcolor: typeColor.bg,
                     color: typeColor.text,
@@ -418,11 +422,11 @@ const NotificationDetailPage: React.FC = () => {
                   {getTypeLabel(notification.notification_type)}
                 </Box>
                 <Box
-                  component="span"
+                  component='span'
                   sx={{
                     px: 1.5,
                     py: 0.5,
-                    fontSize: "0.875rem",
+                    fontSize: '0.875rem',
                     borderRadius: 4,
                     bgcolor: priorityInfo.bg,
                     color: priorityInfo.text,
@@ -432,42 +436,45 @@ const NotificationDetailPage: React.FC = () => {
                 </Box>
                 {notification.is_read ? (
                   <Box
-                    component="span"
+                    component='span'
                     sx={{
                       px: 1.5,
                       py: 0.5,
-                      fontSize: "0.875rem",
+                      fontSize: '0.875rem',
                       borderRadius: 4,
-                      bgcolor: "success.100",
-                      color: "success.700",
+                      bgcolor: 'success.100',
+                      color: 'success.700',
                     }}
                   >
                     已读
                   </Box>
                 ) : (
                   <Box
-                    component="span"
+                    component='span'
                     sx={{
                       px: 1.5,
                       py: 0.5,
-                      fontSize: "0.875rem",
+                      fontSize: '0.875rem',
                       borderRadius: 4,
-                      bgcolor: "error.100",
-                      color: "error.700",
+                      bgcolor: 'error.100',
+                      color: 'error.700',
                     }}
                   >
                     未读
                   </Box>
                 )}
               </Box>
-              <Typography variant="body2" sx={{ color: "grey.500" }}>
-                {new Date(notification.created_at).toLocaleString("zh-CN")}
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.500' }}
+              >
+                {new Date(notification.created_at).toLocaleString('zh-CN')}
               </Typography>
             </Box>
 
             <Typography
-              variant="h6"
-              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+              variant='h6'
+              sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
             >
               {notification.title}
             </Typography>
@@ -475,8 +482,11 @@ const NotificationDetailPage: React.FC = () => {
 
           {/* Content */}
           <Box sx={{ p: 3 }}>
-            <Box sx={{ "& p": { color: "grey.700", whiteSpace: "pre-wrap" } }}>
-              <Typography variant="body1" component="p">
+            <Box sx={{ '& p': { color: 'grey.700', whiteSpace: 'pre-wrap' } }}>
+              <Typography
+                variant='body1'
+                component='p'
+              >
                 {notification.content}
               </Typography>
             </Box>
@@ -487,62 +497,61 @@ const NotificationDetailPage: React.FC = () => {
             <Box
               sx={{
                 p: 3,
-                bgcolor: "grey.50",
+                bgcolor: 'grey.50',
                 borderTop: 1,
-                borderColor: "divider",
+                borderColor: 'divider',
               }}
             >
               {notification.read_at && (
-                <Box sx={{ fontSize: "0.875rem", color: "grey.500", mb: 1 }}>
+                <Box sx={{ fontSize: '0.875rem', color: 'grey.500', mb: 1 }}>
                   阅读时间：
-                  {new Date(notification.read_at).toLocaleString("zh-CN")}
+                  {new Date(notification.read_at).toLocaleString('zh-CN')}
                 </Box>
               )}
 
-              {notification.data &&
-                Object.keys(notification.data).length > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 500, color: "grey.700", mb: 1 }}
-                    >
-                      附加数据
-                    </Typography>
-                    <Box
-                      component="pre"
-                      sx={{
-                        fontSize: "0.75rem",
-                        color: "grey.600",
-                        bgcolor: "background.paper",
-                        p: 1.5,
-                        borderRadius: 1,
-                        border: 1,
-                        borderColor: "grey.200",
-                        overflow: "auto",
-                      }}
-                    >
-                      {JSON.stringify(notification.data, null, 2)}
-                    </Box>
+              {notification.data && Object.keys(notification.data).length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500, color: 'grey.700', mb: 1 }}
+                  >
+                    附加数据
+                  </Typography>
+                  <Box
+                    component='pre'
+                    sx={{
+                      fontSize: '0.75rem',
+                      color: 'grey.600',
+                      bgcolor: 'background.paper',
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: 'grey.200',
+                      overflow: 'auto',
+                    }}
+                  >
+                    {JSON.stringify(notification.data, null, 2)}
                   </Box>
-                )}
+                </Box>
+              )}
             </Box>
           )}
         </Box>
 
         {/* Navigation */}
-        <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-start" }}>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-start' }}>
           <Box
-            component="button"
-            onClick={() => navigate("/notifications")}
+            component='button'
+            onClick={() => navigate('/notifications')}
             sx={{
               px: 2,
               py: 1,
-              color: "grey.700",
-              bgcolor: "background.paper",
+              color: 'grey.700',
+              bgcolor: 'background.paper',
               border: 1,
-              borderColor: "grey.300",
+              borderColor: 'grey.300',
               borderRadius: 2,
-              "&:hover": { bgcolor: "grey.50" },
+              '&:hover': { bgcolor: 'grey.50' },
             }}
           >
             返回通知列表

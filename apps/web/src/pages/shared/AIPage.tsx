@@ -1,6 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Card, CardContent, CardHeader, TextField, Menu, MenuItem, Tabs, Tab, Box, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  TextField,
+  Menu,
+  MenuItem,
+  Tabs,
+  Tab,
+  Box,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   Bot,
   Send,
@@ -23,30 +34,23 @@ import {
   Wand2,
   BarChart2,
   FileStack,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {
-  vscDarkPlus,
-  vs,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
-import { aiApi } from "@/api/ai";
-import { apiLogger } from "@/utils/logger";
-import { useAppStore } from "../../store";
-import AISettingsModal from "@/components/AISettingsModal";
-import {
-  AIDocumentGenerator,
-  DocumentManager,
-  AIAnalyzer,
-} from "@/components/ai";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { aiApi } from '@/api/ai';
+import { apiLogger } from '@/utils/logger';
+import { useAppStore } from '../../store';
+import AISettingsModal from '@/components/AISettingsModal';
+import { AIDocumentGenerator, DocumentManager, AIAnalyzer } from '@/components/ai';
 
-import { ModeToggle } from "@/components/ModeToggle";
+import { ModeToggle } from '@/components/ModeToggle';
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
@@ -60,7 +64,7 @@ interface Conversation {
   assistantRole?: AssistantRole;
 }
 
-type AssistantRole = "general" | "data" | "document" | "code";
+type AssistantRole = 'general' | 'data' | 'document' | 'code';
 
 interface AssistantRoleConfig {
   id: AssistantRole;
@@ -70,40 +74,40 @@ interface AssistantRoleConfig {
   systemPrompt: string;
 }
 
-const STORAGE_KEY = "topems_ai_conversations";
-const CURRENT_CONVO_KEY = "topems_ai_current_conversation";
+const STORAGE_KEY = 'topems_ai_conversations';
+const CURRENT_CONVO_KEY = 'topems_ai_current_conversation';
 
 const ASSISTANT_ROLES: AssistantRoleConfig[] = [
   {
-    id: "general",
-    name: "通用助手",
-    description: "全能型 AI 助手,可处理各种问题",
+    id: 'general',
+    name: '通用助手',
+    description: '全能型 AI 助手,可处理各种问题',
     icon: <Sparkles size={16} />,
-    systemPrompt: "你是 TOPEMS 智能助手。请根据以下知识库内容回答用户的问题。",
+    systemPrompt: '你是 TOPEMS 智能助手。请根据以下知识库内容回答用户的问题。',
   },
   {
-    id: "data",
-    name: "数据分析助手",
-    description: "专注于数据处理、分析和可视化",
+    id: 'data',
+    name: '数据分析助手',
+    description: '专注于数据处理、分析和可视化',
     icon: <BarChart3 size={16} />,
     systemPrompt:
-      "你是 TOPEMS 数据分析助手。专注于帮助用户分析数据、生成统计报告、解释数据趋势和提供数据可视化建议。",
+      '你是 TOPEMS 数据分析助手。专注于帮助用户分析数据、生成统计报告、解释数据趋势和提供数据可视化建议。',
   },
   {
-    id: "document",
-    name: "文档助手",
-    description: "帮助理解文档、提取信息和总结内容",
+    id: 'document',
+    name: '文档助手',
+    description: '帮助理解文档、提取信息和总结内容',
     icon: <FileSearch size={16} />,
     systemPrompt:
-      "你是 TOPEMS 文档助手。专注于帮助用户理解文档内容、提取关键信息、总结文档要点和回答与文档相关的问题。",
+      '你是 TOPEMS 文档助手。专注于帮助用户理解文档内容、提取关键信息、总结文档要点和回答与文档相关的问题。',
   },
   {
-    id: "code",
-    name: "编程助手",
-    description: "提供代码审查、调试和最佳实践建议",
+    id: 'code',
+    name: '编程助手',
+    description: '提供代码审查、调试和最佳实践建议',
     icon: <FileText size={16} />,
     systemPrompt:
-      "你是 TOPEMS 编程助手。专注于帮助用户编写、审查和调试代码,提供编程最佳实践建议,并解释技术概念。",
+      '你是 TOPEMS 编程助手。专注于帮助用户编写、审查和调试代码,提供编程最佳实践建议,并解释技术概念。',
   },
 ];
 
@@ -111,22 +115,18 @@ const AIPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [activeTab, setActiveTab] = useState<
-    "chat" | "documents" | "analysis" | "manage"
-  >("chat");
+  const [activeTab, setActiveTab] = useState<'chat' | 'documents' | 'analysis' | 'manage'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [showDocuments, setShowDocuments] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentConversationId, setCurrentConversationId] = useState<
-    string | null
-  >(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [currentRole, setCurrentRole] = useState<AssistantRole>("general");
+  const [currentRole, setCurrentRole] = useState<AssistantRole>('general');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false);
   const [showAnalyzer, setShowAnalyzer] = useState(false);
@@ -139,26 +139,21 @@ const AIPage: React.FC = () => {
     const savedCurrentConvo = localStorage.getItem(CURRENT_CONVO_KEY);
 
     if (savedConversations) {
-      const parsedConversations: Conversation[] = JSON.parse(
-        savedConversations,
-      ).map((conv: any) => ({
-        ...conv,
-        updatedAt: new Date(conv.updatedAt),
-        messages: conv.messages.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp),
-        })),
-      }));
+      const parsedConversations: Conversation[] = JSON.parse(savedConversations).map(
+        (conv: any) => ({
+          ...conv,
+          updatedAt: new Date(conv.updatedAt),
+          messages: conv.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })),
+        })
+      );
       setConversations(parsedConversations);
 
-      if (
-        savedCurrentConvo &&
-        parsedConversations.some((conv) => conv.id === savedCurrentConvo)
-      ) {
+      if (savedCurrentConvo && parsedConversations.some((conv) => conv.id === savedCurrentConvo)) {
         setCurrentConversationId(savedCurrentConvo);
-        const currentConv = parsedConversations.find(
-          (conv) => conv.id === savedCurrentConvo,
-        );
+        const currentConv = parsedConversations.find((conv) => conv.id === savedCurrentConvo);
         if (currentConv) {
           setMessages(currentConv.messages);
           if (currentConv.assistantRole) {
@@ -184,46 +179,40 @@ const AIPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   // 保存对话到本地存储
-  const saveConversations = useCallback(
-    (updatedConversations: Conversation[]) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConversations));
-      setConversations(updatedConversations);
-    },
-    [],
-  );
+  const saveConversations = useCallback((updatedConversations: Conversation[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConversations));
+    setConversations(updatedConversations);
+  }, []);
 
   // 保存当前对话 ID
-  const saveCurrentConversation = useCallback(
-    (conversationId: string | null) => {
-      if (conversationId) {
-        localStorage.setItem(CURRENT_CONVO_KEY, conversationId);
-      } else {
-        localStorage.removeItem(CURRENT_CONVO_KEY);
-      }
-      setCurrentConversationId(conversationId);
-    },
-    [],
-  );
+  const saveCurrentConversation = useCallback((conversationId: string | null) => {
+    if (conversationId) {
+      localStorage.setItem(CURRENT_CONVO_KEY, conversationId);
+    } else {
+      localStorage.removeItem(CURRENT_CONVO_KEY);
+    }
+    setCurrentConversationId(conversationId);
+  }, []);
 
   // 创建新对话
   const createNewConversation = useCallback(() => {
     const id = Date.now().toString();
     const welcomeMessage: Message = {
-      id: "welcome",
-      role: "assistant",
+      id: 'welcome',
+      role: 'assistant',
       content: `你好!我是 TOPEMS ${ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name},基于本地知识库为您提供服务。请告诉我有什么可以帮助您的?`,
       timestamp: new Date(),
     };
 
     const newConversation: Conversation = {
       id,
-      title: "新对话",
+      title: '新对话',
       messages: [welcomeMessage],
-      lastMessage: "新对话已创建",
+      lastMessage: '新对话已创建',
       updatedAt: new Date(),
       assistantRole: currentRole,
     };
@@ -232,23 +221,22 @@ const AIPage: React.FC = () => {
     saveConversations(updatedConversations);
     saveCurrentConversation(id);
     setMessages([welcomeMessage]);
-    setInputText("");
+    setInputText('');
   }, [currentRole, conversations, saveConversations, saveCurrentConversation]);
 
   const loadDocuments = async () => {
     try {
       const response = await aiApi.listDocuments();
       if (response.success && response.data) {
-        const docs =
-          "items" in response.data ? response.data.items : response.data;
+        const docs = 'items' in response.data ? response.data.items : response.data;
         setDocuments(docs);
       }
     } catch (err) {
-      apiLogger.error("加载文档列表失败:", err);
+      apiLogger.error('加载文档列表失败:', err);
       addNotification({
-        title: "加载失败",
-        message: "加载文档列表失败",
-        type: "error",
+        title: '加载失败',
+        message: '加载文档列表失败',
+        type: 'error',
       });
     }
   };
@@ -275,29 +263,27 @@ const AIPage: React.FC = () => {
   const handleSearch = () => {
     if (searchQuery.trim()) {
       const filteredMessages = messages.filter((msg) =>
-        msg.content.toLowerCase().includes(searchQuery.toLowerCase()),
+        msg.content.toLowerCase().includes(searchQuery.toLowerCase())
       );
       if (filteredMessages.length > 0) {
         addNotification({
-          title: "搜索结果",
+          title: '搜索结果',
           message: `找到 ${filteredMessages.length} 条匹配结果`,
-          type: "success",
+          type: 'success',
         });
       } else {
         addNotification({
-          title: "搜索结果",
-          message: "未找到匹配结果",
-          type: "info",
+          title: '搜索结果',
+          message: '未找到匹配结果',
+          type: 'info',
         });
       }
     }
   };
 
   const handleDeleteConversation = (conversationId: string) => {
-    if (confirm("确定要删除这个对话吗?")) {
-      const updatedConversations = conversations.filter(
-        (c) => c.id !== conversationId,
-      );
+    if (confirm('确定要删除这个对话吗?')) {
+      const updatedConversations = conversations.filter((c) => c.id !== conversationId);
       saveConversations(updatedConversations);
 
       if (currentConversationId === conversationId) {
@@ -316,9 +302,7 @@ const AIPage: React.FC = () => {
     // 更新当前对话的角色
     if (currentConversationId) {
       const updatedConversations = conversations.map((conv) =>
-        conv.id === currentConversationId
-          ? { ...conv, assistantRole: role }
-          : conv,
+        conv.id === currentConversationId ? { ...conv, assistantRole: role } : conv
       );
       saveConversations(updatedConversations);
     }
@@ -331,57 +315,54 @@ const AIPage: React.FC = () => {
       setCopiedCode(code);
       setTimeout(() => setCopiedCode(null), 2000);
       addNotification({
-        title: "已复制",
-        message: "代码已复制到剪贴板",
-        type: "success",
+        title: '已复制',
+        message: '代码已复制到剪贴板',
+        type: 'success',
       });
     } catch (err) {
       addNotification({
-        title: "复制失败",
-        message: "无法复制代码",
-        type: "error",
+        title: '复制失败',
+        message: '无法复制代码',
+        type: 'error',
       });
     }
   };
 
   // Markdown 渲染组件
-  const MarkdownRenderer = ({
-    content,
-    isDark,
-  }: {
-    content: string;
-    isDark: boolean;
-  }) => {
+  const MarkdownRenderer = ({ content, isDark }: { content: string; isDark: boolean }) => {
     return (
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           code({ node, inline, className, children, ...props }: any) {
-            const match = /language-(\w+)/.exec(className || "");
-            const codeContent = String(children).replace(/\n$/, "");
+            const match = /language-(\w+)/.exec(className || '');
+            const codeContent = String(children).replace(/\n$/, '');
 
             if (!inline && match) {
               return (
-                <Box sx={{ position: "relative" }}>
+                <Box sx={{ position: 'relative' }}>
                   <Button
                     onClick={() => handleCopyCode(codeContent)}
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       right: 1,
                       top: 1,
                       p: 0.5,
                       borderRadius: 1,
-                      bgcolor: "grey.700",
-                      color: "grey.300",
-                      "&:hover": { bgcolor: "grey.600" },
+                      bgcolor: 'grey.700',
+                      color: 'grey.300',
+                      '&:hover': { bgcolor: 'grey.600' },
                       opacity: 0,
-                      transition: "opacity 0.2s",
-                      ".group:hover &": { opacity: 1 },
+                      transition: 'opacity 0.2s',
+                      '.group:hover &': { opacity: 1 },
                     }}
-                    title="复制代码"
+                    title='复制代码'
                   >
                     {copiedCode === codeContent ? (
-                      <Check size={16} color="#4ade80" />
+                      <Check
+                        size={16}
+                        color='#4ade80'
+                      />
                     ) : (
                       <Copy size={16} />
                     )}
@@ -389,11 +370,11 @@ const AIPage: React.FC = () => {
                   <SyntaxHighlighter
                     style={isDark ? vscDarkPlus : vs}
                     language={match[1]}
-                    PreTag="div"
+                    PreTag='div'
                     customStyle={{
                       margin: 0,
-                      borderRadius: "0.5rem",
-                      fontSize: "0.875rem",
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
                     }}
                     {...props}
                   >
@@ -406,11 +387,11 @@ const AIPage: React.FC = () => {
                 <code
                   className={className}
                   style={{
-                    padding: "0.125rem 0.375rem",
-                    borderRadius: "0.25rem",
-                    fontSize: "0.875rem",
-                    backgroundColor: isDark ? "#374151" : "#f3f4f6",
-                    color: isDark ? "#f9a8d4" : "#db2777",
+                    padding: '0.125rem 0.375rem',
+                    borderRadius: '0.25rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: isDark ? '#374151' : '#f3f4f6',
+                    color: isDark ? '#f9a8d4' : '#db2777',
                   }}
                   {...props}
                 >
@@ -422,95 +403,102 @@ const AIPage: React.FC = () => {
           // 其他 Markdown 元素的样式
           h1: ({ ...props }) => (
             <Typography
-              variant="h4"
-              component="h1"
+              variant='h4'
+              component='h1'
               sx={{ fontWeight: 700, mb: 2, mt: 3 }}
               {...props}
             />
           ),
           h2: ({ ...props }) => (
             <Typography
-              variant="h5"
-              component="h2"
+              variant='h5'
+              component='h2'
               sx={{ fontWeight: 600, mb: 1.5, mt: 2.5 }}
               {...props}
             />
           ),
           h3: ({ ...props }) => (
             <Typography
-              variant="h6"
-              component="h3"
+              variant='h6'
+              component='h3'
               sx={{ fontWeight: 600, mb: 1, mt: 2 }}
               {...props}
             />
           ),
           p: ({ ...props }) => (
             <Typography
-              component="p"
+              component='p'
               sx={{ mb: 1.5, lineHeight: 1.625 }}
               {...props}
             />
           ),
           ul: ({ ...props }) => (
             <Box
-              component="ul"
-              sx={{ pl: 3, mb: 1.5, listStyleType: "disc" }}
+              component='ul'
+              sx={{ pl: 3, mb: 1.5, listStyleType: 'disc' }}
               {...props}
             />
           ),
           ol: ({ ...props }) => (
             <Box
-              component="ol"
-              sx={{ pl: 3, mb: 1.5, listStyleType: "decimal" }}
+              component='ol'
+              sx={{ pl: 3, mb: 1.5, listStyleType: 'decimal' }}
               {...props}
             />
           ),
           li: ({ ...props }) => (
-            <Box component="li" sx={{ mb: 0.5 }} {...props} />
+            <Box
+              component='li'
+              sx={{ mb: 0.5 }}
+              {...props}
+            />
           ),
           blockquote: ({ ...props }) => (
             <Box
-              component="blockquote"
+              component='blockquote'
               sx={{
                 borderLeft: 4,
-                borderColor: "divider",
+                borderColor: 'divider',
                 pl: 2,
                 py: 0.5,
                 my: 1.5,
-                bgcolor: "grey.50",
+                bgcolor: 'grey.50',
               }}
               {...props}
             />
           ),
           a: ({ ...props }) => (
             <a
-              style={{ color: "#2563eb", textDecoration: "none" }}
-              target="_blank"
-              rel="noopener noreferrer"
+              style={{ color: '#2563eb', textDecoration: 'none' }}
+              target='_blank'
+              rel='noopener noreferrer'
               {...props}
             />
           ),
           table: ({ ...props }) => (
-            <Box sx={{ overflowX: "auto", my: 1.5 }}>
+            <Box sx={{ overflowX: 'auto', my: 1.5 }}>
               <table
                 style={{
-                  minWidth: "100%",
-                  borderCollapse: "collapse",
-                  border: "1px solid #d1d5db",
+                  minWidth: '100%',
+                  borderCollapse: 'collapse',
+                  border: '1px solid #d1d5db',
                 }}
                 {...props}
               />
             </Box>
           ),
           thead: ({ ...props }) => (
-            <thead style={{ backgroundColor: "#f3f4f6" }} {...props} />
+            <thead
+              style={{ backgroundColor: '#f3f4f6' }}
+              {...props}
+            />
           ),
           th: ({ ...props }) => (
             <th
               style={{
-                border: "1px solid #d1d5db",
-                padding: "0.5rem 1rem",
-                textAlign: "left",
+                border: '1px solid #d1d5db',
+                padding: '0.5rem 1rem',
+                textAlign: 'left',
                 fontWeight: 600,
               }}
               {...props}
@@ -519,8 +507,8 @@ const AIPage: React.FC = () => {
           td: ({ ...props }) => (
             <td
               style={{
-                border: "1px solid #d1d5db",
-                padding: "0.5rem 1rem",
+                border: '1px solid #d1d5db',
+                padding: '0.5rem 1rem',
               }}
               {...props}
             />
@@ -541,21 +529,21 @@ const AIPage: React.FC = () => {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: "user",
+      role: 'user',
       content: inputText,
       timestamp: new Date(),
     };
 
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
-    setInputText("");
+    setInputText('');
     setIsTyping(true);
     setLoading(true);
 
     try {
-      let assistantContent = "";
+      let assistantContent = '';
 
-      if (currentRole === "document" && documents.length > 0) {
+      if (currentRole === 'document' && documents.length > 0) {
         const documentIds = documents.map((doc) => doc.id);
         const response = await aiApi.documentQA({
           question: userMessage.content,
@@ -565,16 +553,16 @@ const AIPage: React.FC = () => {
 
         if (response.success && response.data) {
           let content = response.data.answer;
-          
+
           if (response.data.sources && response.data.sources.length > 0) {
-            content += "\n\n**参考来源：**\n";
+            content += '\n\n**参考来源：**\n';
             response.data.sources.forEach((source: any, index: number) => {
               content += `${index + 1}. ${source.document_title}\n`;
             });
           }
 
           if (response.data.follow_up_questions && response.data.follow_up_questions.length > 0) {
-            content += "\n\n**建议后续问题：**\n";
+            content += '\n\n**建议后续问题：**\n';
             response.data.follow_up_questions.forEach((q: string, index: number) => {
               content += `${index + 1}. ${q}\n`;
             });
@@ -582,18 +570,18 @@ const AIPage: React.FC = () => {
 
           assistantContent = content;
         } else {
-          assistantContent = response.message || "抱歉,处理您的请求时出现了问题。";
+          assistantContent = response.message || '抱歉,处理您的请求时出现了问题。';
         }
       } else {
         const response = await aiApi.chat({ query: userMessage.content });
         assistantContent = response.success
-          ? (response.data?.answer ?? "抱歉,处理您的请求时出现了问题。")
-          : "抱歉,处理您的请求时出现了问题。";
+          ? (response.data?.answer ?? '抱歉,处理您的请求时出现了问题。')
+          : '抱歉,处理您的请求时出现了问题。';
       }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: "assistant",
+        role: 'assistant',
         content: assistantContent,
         timestamp: new Date(),
       };
@@ -604,12 +592,10 @@ const AIPage: React.FC = () => {
       if (currentConversationId) {
         const updatedConversations = conversations.map((conv) => {
           if (conv.id === currentConversationId) {
-            const firstUserMessage = finalMessages.find(
-              (m) => m.role === "user",
-            );
+            const firstUserMessage = finalMessages.find((m) => m.role === 'user');
             const title = firstUserMessage
               ? firstUserMessage.content.substring(0, 30) +
-                (firstUserMessage.content.length > 30 ? "..." : "")
+                (firstUserMessage.content.length > 30 ? '...' : '')
               : conv.title;
 
             return {
@@ -618,7 +604,7 @@ const AIPage: React.FC = () => {
               title,
               lastMessage:
                 assistantMessage.content.substring(0, 50) +
-                (assistantMessage.content.length > 50 ? "..." : ""),
+                (assistantMessage.content.length > 50 ? '...' : ''),
               updatedAt: new Date(),
             };
           }
@@ -628,16 +614,16 @@ const AIPage: React.FC = () => {
       }
 
       addNotification({
-        title: "回复完成",
-        message: "AI已收到回复",
-        type: "success",
+        title: '回复完成',
+        message: 'AI已收到回复',
+        type: 'success',
       });
     } catch (err) {
-      apiLogger.error("AI 问答失败:", err);
+      apiLogger.error('AI 问答失败:', err);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "抱歉,连接 AI 服务时出现了问题,请稍后重试。",
+        role: 'assistant',
+        content: '抱歉,连接 AI 服务时出现了问题,请稍后重试。',
         timestamp: new Date(),
       };
 
@@ -648,15 +634,15 @@ const AIPage: React.FC = () => {
         const updatedConversations = conversations.map((conv) =>
           conv.id === currentConversationId
             ? { ...conv, messages: finalMessages, updatedAt: new Date() }
-            : conv,
+            : conv
         );
         saveConversations(updatedConversations);
       }
 
       addNotification({
-        title: "AI服务错误",
-        message: "连接AI服务失败",
-        type: "error",
+        title: 'AI服务错误',
+        message: '连接AI服务失败',
+        type: 'error',
       });
     } finally {
       setIsTyping(false);
@@ -665,47 +651,53 @@ const AIPage: React.FC = () => {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("zh-CN", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
   const handleDocumentGenerated = (content: string) => {
     addNotification({
-      title: "文档生成成功",
-      message: "文档已成功生成",
-      type: "success",
+      title: '文档生成成功',
+      message: '文档已成功生成',
+      type: 'success',
     });
     setShowDocumentGenerator(false);
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", bgcolor: "grey.50" }}>
+    <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'grey.50' }}>
       <Box
         sx={{
           width: 288,
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           borderRight: 1,
-          borderColor: "divider",
-          display: "flex",
-          flexDirection: "column",
+          borderColor: 'divider',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               mb: 2,
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 700 }}
+            >
               AI 智能助手
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Button variant="text" onClick={() => navigate("/dashboard")}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button
+                variant='text'
+                onClick={() => navigate('/dashboard')}
+              >
                 <ChevronLeft size={20} />
               </Button>
               <ModeToggle />
@@ -713,58 +705,62 @@ const AIPage: React.FC = () => {
           </Box>
           <Tabs
             value={activeTab}
-            onChange={(_, v) =>
-              setActiveTab(v as "chat" | "documents" | "analysis" | "manage")
-            }
-            sx={{ width: "100%", mb: 2, display: "flex" }}
+            onChange={(_, v) => setActiveTab(v as 'chat' | 'documents' | 'analysis' | 'manage')}
+            sx={{ width: '100%', mb: 2, display: 'flex' }}
           >
             <Tab
-              value="chat"
+              value='chat'
               icon={<MessageSquare size={16} />}
-              iconPosition="start"
-              label="AI 聊天"
-              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              iconPosition='start'
+              label='AI 聊天'
+              sx={{ flex: 1, minHeight: 48, fontSize: '0.75rem' }}
             />
             <Tab
-              value="documents"
+              value='documents'
               icon={<Wand2 size={16} />}
-              iconPosition="start"
-              label="文档生成"
-              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              iconPosition='start'
+              label='文档生成'
+              sx={{ flex: 1, minHeight: 48, fontSize: '0.75rem' }}
             />
             <Tab
-              value="analysis"
+              value='analysis'
               icon={<BarChart2 size={16} />}
-              iconPosition="start"
-              label="文本分析"
-              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              iconPosition='start'
+              label='文本分析'
+              sx={{ flex: 1, minHeight: 48, fontSize: '0.75rem' }}
             />
             <Tab
-              value="manage"
+              value='manage'
               icon={<FileStack size={16} />}
-              iconPosition="start"
-              label="文档管理"
-              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              iconPosition='start'
+              label='文档管理'
+              sx={{ flex: 1, minHeight: 48, fontSize: '0.75rem' }}
             />
           </Tabs>
-          {activeTab === "chat" && (
-            <Button onClick={handleNewConversation} sx={{ width: "100%" }}>
-              <Plus size={16} style={{ marginRight: 8 }} />
+          {activeTab === 'chat' && (
+            <Button
+              onClick={handleNewConversation}
+              sx={{ width: '100%' }}
+            >
+              <Plus
+                size={16}
+                style={{ marginRight: 8 }}
+              />
               新对话
             </Button>
           )}
         </Box>
 
-        {activeTab === "chat" && (
-          <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
+        {activeTab === 'chat' && (
+          <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
             <Button
-              variant="text"
+              variant='text'
               onClick={(e) => setMenuAnchor(e.currentTarget)}
-              sx={{ width: "100%", justifyContent: "flex-start" }}
+              sx={{ width: '100%', justifyContent: 'flex-start' }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.icon}
-                <Typography variant="body2">
+                <Typography variant='body2'>
                   {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
                 </Typography>
               </Box>
@@ -782,13 +778,19 @@ const AIPage: React.FC = () => {
                     setMenuAnchor(null);
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {role.icon}
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
                         {role.name}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "grey.500" }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.500' }}
+                      >
                         {role.description}
                       </Typography>
                     </Box>
@@ -799,21 +801,21 @@ const AIPage: React.FC = () => {
           </Box>
         )}
 
-        {activeTab === "chat" && (
-          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+        {activeTab === 'chat' && (
+          <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
             <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, color: "grey.500", mb: 1.5 }}
+              variant='body2'
+              sx={{ fontWeight: 600, color: 'grey.500', mb: 1.5 }}
             >
               最近对话
             </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {conversations.map((conv) => (
                 <Box
                   key={conv.id}
                   sx={{
-                    "& .conv-delete-btn": { opacity: 0 },
-                    "&:hover .conv-delete-btn": { opacity: 1 },
+                    '& .conv-delete-btn': { opacity: 0 },
+                    '&:hover .conv-delete-btn': { opacity: 1 },
                   }}
                 >
                   <Box
@@ -821,74 +823,66 @@ const AIPage: React.FC = () => {
                     sx={{
                       p: 1.5,
                       borderRadius: 2,
-                      cursor: "pointer",
-                      transition: "background-color 0.2s",
-                      "&:hover": { bgcolor: "grey.100" },
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                      '&:hover': { bgcolor: 'grey.100' },
                       ...(currentConversationId === conv.id
                         ? {
-                            bgcolor: "purple.50",
+                            bgcolor: 'purple.50',
                             border: 1,
-                            borderColor: "purple.200",
+                            borderColor: 'purple.200',
                           }
                         : {}),
                     }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
                       }}
                     >
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "flex-start",
+                          display: 'flex',
+                          alignItems: 'flex-start',
                           gap: 1.5,
                           flex: 1,
                           minWidth: 0,
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           {conv.assistantRole &&
-                            ASSISTANT_ROLES.find(
-                              (r) => r.id === conv.assistantRole,
-                            )?.icon}
+                            ASSISTANT_ROLES.find((r) => r.id === conv.assistantRole)?.icon}
                           {!conv.assistantRole && (
                             <MessageSquare
                               size={20}
-                              color={
-                                currentConversationId === conv.id
-                                  ? "#a855f7"
-                                  : "#9ca3af"
-                              }
+                              color={currentConversationId === conv.id ? '#a855f7' : '#9ca3af'}
                             />
                           )}
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
-                            variant="body2"
+                            variant='body2'
                             sx={{
                               fontWeight: 500,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
                               color:
-                                currentConversationId === conv.id
-                                  ? "purple.700"
-                                  : "text.primary",
+                                currentConversationId === conv.id ? 'purple.700' : 'text.primary',
                             }}
                           >
                             {conv.title}
                           </Typography>
                           <Typography
-                            variant="caption"
+                            variant='caption'
                             sx={{
-                              color: "grey.500",
-                              display: "-webkit-box",
+                              color: 'grey.500',
+                              display: '-webkit-box',
                               WebkitLineClamp: 1,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
                             }}
                           >
                             {conv.lastMessage}
@@ -896,17 +890,17 @@ const AIPage: React.FC = () => {
                         </Box>
                       </Box>
                       <Button
-                        variant="text"
-                        size="small"
-                        className="conv-delete-btn"
+                        variant='text'
+                        size='small'
+                        className='conv-delete-btn'
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConversation(conv.id);
                         }}
                         sx={{
-                          color: "error.main",
-                          "&:hover": {
-                            bgcolor: "error.light",
+                          color: 'error.main',
+                          '&:hover': {
+                            bgcolor: 'error.light',
                           },
                         }}
                       >
@@ -914,15 +908,18 @@ const AIPage: React.FC = () => {
                       </Button>
                     </Box>
                     <Typography
-                      variant="caption"
+                      variant='caption'
                       sx={{
-                        color: "grey.400",
+                        color: 'grey.400',
                         mt: 0.5,
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                       }}
                     >
-                      <Clock size={12} style={{ marginRight: 4 }} />
+                      <Clock
+                        size={12}
+                        style={{ marginRight: 4 }}
+                      />
                       {formatTime(conv.updatedAt)}
                     </Typography>
                   </Box>
@@ -932,33 +929,42 @@ const AIPage: React.FC = () => {
           </Box>
         )}
 
-        {activeTab === "documents" && (
-          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+        {activeTab === 'documents' && (
+          <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
             <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, color: "grey.500", mb: 1.5 }}
+              variant='body2'
+              sx={{ fontWeight: 600, color: 'grey.500', mb: 1.5 }}
             >
               快速开始
             </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               <Card
                 sx={{
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                  "&:hover": { bgcolor: "purple.50" },
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  '&:hover': { bgcolor: 'purple.50' },
                 }}
                 onClick={() => setShowDocumentGenerator(true)}
               >
                 <CardContent sx={{ p: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box sx={{ p: 1, bgcolor: "purple.100", borderRadius: 2 }}>
-                      <Wand2 size={20} color="#9333ea" />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, bgcolor: 'purple.100', borderRadius: 2 }}>
+                      <Wand2
+                        size={20}
+                        color='#9333ea'
+                      />
                     </Box>
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
                         新建文档
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "grey.500" }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.500' }}
+                      >
                         选择模板,AI 自动生成
                       </Typography>
                     </Box>
@@ -969,41 +975,47 @@ const AIPage: React.FC = () => {
           </Box>
         )}
 
-        <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {activeTab === "chat" && (
+        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {activeTab === 'chat' && (
               <Button
-                variant="text"
+                variant='text'
                 onClick={handleToggleDocuments}
-                sx={{ width: "100%", justifyContent: "flex-start" }}
+                sx={{ width: '100%', justifyContent: 'flex-start' }}
               >
-                <BookOpen size={16} style={{ marginRight: 12 }} />
+                <BookOpen
+                  size={16}
+                  style={{ marginRight: 12 }}
+                />
                 文档库 ({documents.length})
               </Button>
             )}
             <Button
-              variant="text"
+              variant='text'
               onClick={handleSettings}
-              sx={{ width: "100%", justifyContent: "flex-start" }}
+              sx={{ width: '100%', justifyContent: 'flex-start' }}
             >
-              <Settings size={16} style={{ marginRight: 12 }} />
+              <Settings
+                size={16}
+                style={{ marginRight: 12 }}
+              />
               设置
             </Button>
           </Box>
-          {showDocuments && activeTab === "chat" && (
+          {showDocuments && activeTab === 'chat' && (
             <Box
               sx={{
                 mt: 1,
                 p: 1.5,
-                bgcolor: "grey.100",
+                bgcolor: 'grey.100',
                 borderRadius: 2,
                 maxHeight: 160,
-                overflowY: "auto",
+                overflowY: 'auto',
               }}
             >
               <Typography
-                variant="caption"
-                sx={{ color: "grey.500", mb: 1, display: "block" }}
+                variant='caption'
+                sx={{ color: 'grey.500', mb: 1, display: 'block' }}
               >
                 知识库文档列表:
               </Typography>
@@ -1011,14 +1023,14 @@ const AIPage: React.FC = () => {
                 <Box
                   key={doc.id}
                   sx={{
-                    fontSize: "0.875rem",
-                    color: "grey.700",
+                    fontSize: '0.875rem',
+                    color: 'grey.700',
                     py: 0.5,
-                    cursor: "pointer",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    "&:hover": { color: "purple.600" },
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    '&:hover': { color: 'purple.600' },
                   }}
                 >
                   • {doc.title}
@@ -1029,60 +1041,68 @@ const AIPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {activeTab === "chat" && (
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {activeTab === 'chat' && (
           <>
             <Box
-              component="header"
+              component='header'
               sx={{
-                bgcolor: "background.paper",
+                bgcolor: 'background.paper',
                 borderBottom: 1,
-                borderColor: "divider",
+                borderColor: 'divider',
                 p: 2,
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Box
                     sx={{
                       width: 40,
                       height: 40,
-                      background:
-                        "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                      background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)',
                       borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <Brain size={24} color="white" />
+                    <Brain
+                      size={24}
+                      color='white'
+                    />
                   </Box>
                   <Box>
                     <Typography sx={{ fontWeight: 600 }}>
-                      TOPEMS{" "}
-                      {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
+                      TOPEMS {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "success.main" }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'success.main' }}
+                    >
                       在线
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <TextField
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    placeholder="搜索对话..."
-                    size="small"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder='搜索对话...'
+                    size='small'
                     sx={{ width: 200 }}
                   />
-                  <Button variant="text" size="small" onClick={handleSearch}>
+                  <Button
+                    variant='text'
+                    size='small'
+                    onClick={handleSearch}
+                  >
                     <Search size={16} />
                   </Button>
                 </Box>
@@ -1092,10 +1112,10 @@ const AIPage: React.FC = () => {
             <Box
               sx={{
                 flex: 1,
-                overflowY: "auto",
+                overflowY: 'auto',
                 p: 3,
-                display: "flex",
-                flexDirection: "column",
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 3,
               }}
             >
@@ -1103,43 +1123,40 @@ const AIPage: React.FC = () => {
                 <Box
                   key={message.id}
                   sx={{
-                    display: "flex",
-                    justifyContent:
-                      message.role === "user" ? "flex-end" : "flex-start",
+                    display: 'flex',
+                    justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
                   }}
                 >
-                  <Box sx={{ maxWidth: 768, width: "100%" }}>
+                  <Box sx={{ maxWidth: 768, width: '100%' }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
+                        display: 'flex',
+                        alignItems: 'flex-start',
                         gap: 1.5,
-                        flexDirection:
-                          message.role === "user" ? "row-reverse" : "row",
+                        flexDirection: message.role === 'user' ? 'row-reverse' : 'row',
                       }}
                     >
                       <Box
                         sx={{
                           width: 32,
                           height: 32,
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           flexShrink: 0,
-                          color: "common.white",
-                          ...(message.role === "user"
-                            ? { bgcolor: "primary.main" }
+                          color: 'common.white',
+                          ...(message.role === 'user'
+                            ? { bgcolor: 'primary.main' }
                             : {
-                                background:
-                                  "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                                background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)',
                               }),
                         }}
                       >
-                        {message.role === "user" ? (
+                        {message.role === 'user' ? (
                           <Typography
-                            variant="body2"
-                            sx={{ color: "common.white" }}
+                            variant='body2'
+                            sx={{ color: 'common.white' }}
                           >
                             U
                           </Typography>
@@ -1152,19 +1169,19 @@ const AIPage: React.FC = () => {
                           borderRadius: 2,
                           p: 2,
                           maxWidth: 672,
-                          ...(message.role === "user"
-                            ? { bgcolor: "primary.main", color: "common.white" }
+                          ...(message.role === 'user'
+                            ? { bgcolor: 'primary.main', color: 'common.white' }
                             : {
-                                bgcolor: "background.paper",
+                                bgcolor: 'background.paper',
                                 boxShadow: 1,
                               }),
                         }}
                       >
-                        {message.role === "user" ? (
+                        {message.role === 'user' ? (
                           <Typography
                             sx={{
-                              color: "common.white",
-                              whiteSpace: "pre-wrap",
+                              color: 'common.white',
+                              whiteSpace: 'pre-wrap',
                             }}
                           >
                             {message.content}
@@ -1176,14 +1193,11 @@ const AIPage: React.FC = () => {
                           />
                         )}
                         <Typography
-                          variant="caption"
+                          variant='caption'
                           sx={{
                             mt: 1,
-                            display: "block",
-                            color:
-                              message.role === "user"
-                                ? "rgba(255,255,255,0.8)"
-                                : "grey.500",
+                            display: 'block',
+                            color: message.role === 'user' ? 'rgba(255,255,255,0.8)' : 'grey.500',
                           }}
                         >
                           {formatTime(message.timestamp)}
@@ -1195,49 +1209,55 @@ const AIPage: React.FC = () => {
               ))}
 
               {isTyping && (
-                <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                  <Box
-                    sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}
-                  >
+                <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                     <Box
                       sx={{
                         width: 32,
                         height: 32,
-                        background:
-                          "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Bot size={20} color="white" />
+                      <Bot
+                        size={20}
+                        color='white'
+                      />
                     </Box>
                     <Box
                       sx={{
-                        bgcolor: "background.paper",
+                        bgcolor: 'background.paper',
                         borderRadius: 2,
                         px: 2,
                         py: 1.5,
                         boxShadow: 1,
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 1,
                       }}
                     >
                       <Box
                         sx={{
-                          display: "inline-flex",
-                          animation: "spin 1s linear infinite",
-                          "@keyframes spin": {
-                            "0%": { transform: "rotate(0deg)" },
-                            "100%": { transform: "rotate(360deg)" },
+                          display: 'inline-flex',
+                          animation: 'spin 1s linear infinite',
+                          '@keyframes spin': {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' },
                           },
                         }}
                       >
-                        <Loader2 size={16} color="#a855f7" />
+                        <Loader2
+                          size={16}
+                          color='#a855f7'
+                        />
                       </Box>
-                      <Typography variant="body2" sx={{ color: "grey.600" }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.600' }}
+                      >
                         正在思考...
                       </Typography>
                     </Box>
@@ -1250,45 +1270,49 @@ const AIPage: React.FC = () => {
             <Box
               sx={{
                 p: 2,
-                bgcolor: "background.paper",
+                bgcolor: 'background.paper',
                 borderTop: 1,
-                borderColor: "divider",
+                borderColor: 'divider',
               }}
             >
-              <Box sx={{ maxWidth: 896, mx: "auto" }}>
+              <Box sx={{ maxWidth: 896, mx: 'auto' }}>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
                     p: 2,
-                    bgcolor: "grey.100",
+                    bgcolor: 'grey.100',
                     borderRadius: 3,
                     border: 1,
-                    borderColor: "divider",
+                    borderColor: 'divider',
                   }}
                 >
-                  <Button variant="text" size="small">
+                  <Button
+                    variant='text'
+                    size='small'
+                  >
                     <Plus size={20} />
                   </Button>
-                  <Button variant="text" size="small">
+                  <Button
+                    variant='text'
+                    size='small'
+                  >
                     <FileText size={20} />
                   </Button>
                   <TextField
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && !e.shiftKey && handleSend()
-                    }
-                    placeholder="输入你的问题..."
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                    placeholder='输入你的问题...'
                     sx={{
                       flex: 1,
-                      "& .MuiInputBase-input": {
-                        background: "transparent",
-                        border: "none",
+                      '& .MuiInputBase-input': {
+                        background: 'transparent',
+                        border: 'none',
                       },
                     }}
-                    size="small"
+                    size='small'
                   />
                   <Button
                     onClick={handleSend}
@@ -1297,30 +1321,33 @@ const AIPage: React.FC = () => {
                     {loading ? (
                       <Box
                         sx={{
-                          display: "inline-flex",
+                          display: 'inline-flex',
                           mr: 1,
-                          animation: "spin 1s linear infinite",
-                          "@keyframes spin": {
-                            "0%": { transform: "rotate(0deg)" },
-                            "100%": { transform: "rotate(360deg)" },
+                          animation: 'spin 1s linear infinite',
+                          '@keyframes spin': {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' },
                           },
                         }}
                       >
                         <Loader2 size={20} />
                       </Box>
                     ) : (
-                      <Send size={20} style={{ marginRight: 8 }} />
+                      <Send
+                        size={20}
+                        style={{ marginRight: 8 }}
+                      />
                     )}
                     发送
                   </Button>
                 </Box>
                 <Typography
-                  variant="caption"
+                  variant='caption'
                   sx={{
-                    color: "grey.500",
-                    textAlign: "center",
+                    color: 'grey.500',
+                    textAlign: 'center',
                     mt: 1,
-                    display: "block",
+                    display: 'block',
                   }}
                 >
                   AI 基于知识库回答,建议仅作参考
@@ -1330,42 +1357,54 @@ const AIPage: React.FC = () => {
           </>
         )}
 
-        {activeTab === "documents" && (
+        {activeTab === 'documents' && (
           <Box sx={{ flex: 1, p: 3 }}>
-            <Card sx={{ height: "100%" }}>
+            <Card sx={{ height: '100%' }}>
               <CardHeader>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box sx={{ p: 1, bgcolor: "purple.100", borderRadius: 2 }}>
-                      <Wand2 size={24} color="#9333ea" />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ p: 1, bgcolor: 'purple.100', borderRadius: 2 }}>
+                      <Wand2
+                        size={24}
+                        color='#9333ea'
+                      />
                     </Box>
                     <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
                         AI 文档生成
                       </Typography>
-                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
                         选择模板,填写信息,AI 帮你生成专业文档
                       </Typography>
                     </Box>
                   </Box>
                   <Button onClick={() => setShowDocumentGenerator(true)}>
-                    <Plus size={16} style={{ marginRight: 8 }} />
+                    <Plus
+                      size={16}
+                      style={{ marginRight: 8 }}
+                    />
                     开始创建
                   </Button>
                 </Box>
               </CardHeader>
               <CardContent>
-                <Box sx={{ textAlign: "center", py: 6, color: "grey.500" }}>
+                <Box sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}>
                   <Wand2
                     size={64}
-                    color="#9ca3af"
-                    style={{ margin: "0 auto 16px", opacity: 0.5 }}
+                    color='#9ca3af'
+                    style={{ margin: '0 auto 16px', opacity: 0.5 }}
                   />
                   <Typography>点击"开始创建"选择模板并生成文档</Typography>
                 </Box>
@@ -1374,19 +1413,28 @@ const AIPage: React.FC = () => {
           </Box>
         )}
 
-        {activeTab === "analysis" && (
+        {activeTab === 'analysis' && (
           <Box sx={{ flex: 1, p: 3 }}>
-            <Card sx={{ height: "100%" }}>
+            <Card sx={{ height: '100%' }}>
               <CardHeader>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ p: 1, bgcolor: "blue.100", borderRadius: 2 }}>
-                    <BarChart2 size={24} color="#2563eb" />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ p: 1, bgcolor: 'blue.100', borderRadius: 2 }}>
+                    <BarChart2
+                      size={24}
+                      color='#2563eb'
+                    />
                   </Box>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 600 }}
+                    >
                       AI 文本分析
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "grey.500" }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
                       对文本进行情感分析、分类、实体提取和关键词提取
                     </Typography>
                   </Box>
@@ -1398,9 +1446,9 @@ const AIPage: React.FC = () => {
                   onClose={() => setShowAnalyzer(false)}
                   onAnalysisComplete={(results) => {
                     addNotification({
-                      title: "分析完成",
-                      message: "文本分析已完成",
-                      type: "success",
+                      title: '分析完成',
+                      message: '文本分析已完成',
+                      type: 'success',
                     });
                   }}
                 />
@@ -1409,8 +1457,8 @@ const AIPage: React.FC = () => {
           </Box>
         )}
 
-        {activeTab === "manage" && (
-          <Box sx={{ flex: 1, p: 3, overflow: "auto" }}>
+        {activeTab === 'manage' && (
+          <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
             <DocumentManager />
           </Box>
         )}
@@ -1430,9 +1478,9 @@ const AIPage: React.FC = () => {
         onClose={() => setShowAnalyzer(false)}
         onAnalysisComplete={(results) => {
           addNotification({
-            title: "分析完成",
-            message: "文本分析已完成",
-            type: "success",
+            title: '分析完成',
+            message: '文本分析已完成',
+            type: 'success',
           });
         }}
       />

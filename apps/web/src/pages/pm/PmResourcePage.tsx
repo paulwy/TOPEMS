@@ -1,6 +1,34 @@
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Card, CardContent, CardHeader, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, InputAdornment, IconButton, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, LinearProgress, Stack, Tooltip,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  LinearProgress,
+  Stack,
+  Tooltip,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   Search,
   Plus,
@@ -14,9 +42,9 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { PageHeader } from "@/components/templates";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '@/components/templates';
 
 interface Resource {
   id: string;
@@ -24,55 +52,55 @@ interface Resource {
   type: string;
   project: string;
   assignedTo: string;
-  status: "available" | "in_use" | "maintenance" | "retired";
+  status: 'available' | 'in_use' | 'maintenance' | 'retired';
   createdAt: string;
 }
 
 const mockResources: Resource[] = [
   {
-    id: "1",
-    name: "开发服务器 A",
-    type: "服务器",
-    project: "电商平台",
-    assignedTo: "张三",
-    status: "in_use",
-    createdAt: "2024-01-15",
+    id: '1',
+    name: '开发服务器 A',
+    type: '服务器',
+    project: '电商平台',
+    assignedTo: '张三',
+    status: 'in_use',
+    createdAt: '2024-01-15',
   },
   {
-    id: "2",
-    name: "测试服务器 B",
-    type: "服务器",
-    project: "移动端 App",
-    assignedTo: "李四",
-    status: "available",
-    createdAt: "2024-02-20",
+    id: '2',
+    name: '测试服务器 B',
+    type: '服务器',
+    project: '移动端 App',
+    assignedTo: '李四',
+    status: 'available',
+    createdAt: '2024-02-20',
   },
   {
-    id: "3",
-    name: "数据库集群",
-    type: "数据库",
-    project: "数据中台",
-    assignedTo: "王五",
-    status: "in_use",
-    createdAt: "2024-03-10",
+    id: '3',
+    name: '数据库集群',
+    type: '数据库',
+    project: '数据中台',
+    assignedTo: '王五',
+    status: 'in_use',
+    createdAt: '2024-03-10',
   },
   {
-    id: "4",
-    name: "设计工作站",
-    type: "工作站",
-    project: "UI/UX",
-    assignedTo: "赵六",
-    status: "maintenance",
-    createdAt: "2024-04-05",
+    id: '4',
+    name: '设计工作站',
+    type: '工作站',
+    project: 'UI/UX',
+    assignedTo: '赵六',
+    status: 'maintenance',
+    createdAt: '2024-04-05',
   },
   {
-    id: "5",
-    name: "GPU 计算卡",
-    type: "硬件",
-    project: "AI 实验室",
-    assignedTo: "孙七",
-    status: "in_use",
-    createdAt: "2024-05-12",
+    id: '5',
+    name: 'GPU 计算卡',
+    type: '硬件',
+    project: 'AI 实验室',
+    assignedTo: '孙七',
+    status: 'in_use',
+    createdAt: '2024-05-12',
   },
 ];
 
@@ -80,28 +108,26 @@ const PmResourcePage: React.FC = () => {
   const navigate = useNavigate();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterProject, setFilterProject] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterProject, setFilterProject] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(
-    null,
-  );
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     type: string;
     project: string;
     assignedTo: string;
-    status: "available" | "in_use" | "maintenance" | "retired";
+    status: 'available' | 'in_use' | 'maintenance' | 'retired';
   }>({
-    name: "",
-    type: "",
-    project: "",
-    assignedTo: "",
-    status: "available",
+    name: '',
+    type: '',
+    project: '',
+    assignedTo: '',
+    status: 'available',
   });
 
   useEffect(() => {
@@ -120,7 +146,7 @@ const PmResourcePage: React.FC = () => {
     const newResource: Resource = {
       id: Date.now().toString(),
       ...formData,
-      createdAt: new Date().toISOString().split("T")[0],
+      createdAt: new Date().toISOString().split('T')[0],
     };
     setResources([...resources, newResource]);
     setShowCreateDialog(false);
@@ -131,8 +157,8 @@ const PmResourcePage: React.FC = () => {
     if (!selectedResource) return;
     const updated = resources.map((r) =>
       r.id === selectedResource.id
-        ? { ...r, assignedTo: formData.assignedTo, status: "in_use" as const }
-        : r,
+        ? { ...r, assignedTo: formData.assignedTo, status: 'in_use' as const }
+        : r
     );
     setResources(updated);
     setShowAssignDialog(false);
@@ -142,25 +168,23 @@ const PmResourcePage: React.FC = () => {
 
   const handleRelease = (resource: Resource) => {
     const updated = resources.map((r) =>
-      r.id === resource.id
-        ? { ...r, assignedTo: "", status: "available" as const }
-        : r,
+      r.id === resource.id ? { ...r, assignedTo: '', status: 'available' as const } : r
     );
     setResources(updated);
   };
 
   const handleDelete = (id: string) => {
-    if (!window.confirm("确定要删除此资源吗？")) return;
+    if (!window.confirm('确定要删除此资源吗？')) return;
     setResources(resources.filter((r) => r.id !== id));
   };
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      type: "",
-      project: "",
-      assignedTo: "",
-      status: "available",
+      name: '',
+      type: '',
+      project: '',
+      assignedTo: '',
+      status: 'available',
     });
   };
 
@@ -187,50 +211,46 @@ const PmResourcePage: React.FC = () => {
   const getStatusChip = (status: string) => {
     const config: Record<
       string,
-      { color: "success" | "warning" | "error" | "default"; label: string }
+      { color: 'success' | 'warning' | 'error' | 'default'; label: string }
     > = {
-      available: { color: "success", label: "可用" },
-      in_use: { color: "warning", label: "使用中" },
-      maintenance: { color: "error", label: "维护中" },
-      retired: { color: "default", label: "已退役" },
+      available: { color: 'success', label: '可用' },
+      in_use: { color: 'warning', label: '使用中' },
+      maintenance: { color: 'error', label: '维护中' },
+      retired: { color: 'default', label: '已退役' },
     };
     const c = config[status] || config.available;
-    return <Chip size="small" color={c.color} label={c.label} />;
+    return (
+      <Chip
+        size='small'
+        color={c.color}
+        label={c.label}
+      />
+    );
   };
 
-  const resourceTypes = [
-    "服务器",
-    "数据库",
-    "工作站",
-    "硬件",
-    "软件",
-    "网络设备",
-  ];
-  const projects = ["电商平台", "移动端 App", "数据中台", "UI/UX", "AI 实验室"];
+  const resourceTypes = ['服务器', '数据库', '工作站', '硬件', '软件', '网络设备'];
+  const projects = ['电商平台', '移动端 App', '数据中台', 'UI/UX', 'AI 实验室'];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <PageHeader
-          title="资源管理"
-          subtitle="管理项目资源的分配与使用情况"
-          breadcrumbs={[
-            { label: "项目管理", href: "/pm" },
-            { label: "资源管理" },
-          ]}
-          backButton={{ onClick: () => navigate("/pm") }}
+          title='资源管理'
+          subtitle='管理项目资源的分配与使用情况'
+          breadcrumbs={[{ label: '项目管理', href: '/pm' }, { label: '资源管理' }]}
+          backButton={{ onClick: () => navigate('/pm') }}
           actions={[
             {
-              label: "新增资源",
+              label: '新增资源',
               icon: <Plus sx={{ width: 18, height: 18 }} />,
               onClick: () => setShowCreateDialog(true),
-              variant: "contained",
+              variant: 'contained',
             },
           ]}
         />
@@ -238,71 +258,87 @@ const PmResourcePage: React.FC = () => {
 
       <Card>
         <CardContent>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+          >
             <TextField
-              size="small"
-              placeholder="搜索资源名称或类型..."
+              size='small'
+              placeholder='搜索资源名称或类型...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               slotProps={{
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "grey.400" }}
-                      />
+                    <InputAdornment position='start'>
+                      <Search sx={{ width: 16, height: 16, color: 'grey.400' }} />
                     </InputAdornment>
                   ),
                 },
               }}
               sx={{ flex: 1 }}
             />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 120 }}
+            >
               <InputLabel>资源类型</InputLabel>
               <Select
                 value={filterType}
-                label="资源类型"
+                label='资源类型'
                 onChange={(e) => setFilterType(e.target.value)}
               >
-                <MenuItem value="">全部</MenuItem>
+                <MenuItem value=''>全部</MenuItem>
                 {resourceTypes.map((t) => (
-                  <MenuItem key={t} value={t}>
+                  <MenuItem
+                    key={t}
+                    value={t}
+                  >
                     {t}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 120 }}
+            >
               <InputLabel>使用状态</InputLabel>
               <Select
                 value={filterStatus}
-                label="使用状态"
+                label='使用状态'
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="available">可用</MenuItem>
-                <MenuItem value="in_use">使用中</MenuItem>
-                <MenuItem value="maintenance">维护中</MenuItem>
-                <MenuItem value="retired">已退役</MenuItem>
+                <MenuItem value=''>全部</MenuItem>
+                <MenuItem value='available'>可用</MenuItem>
+                <MenuItem value='in_use'>使用中</MenuItem>
+                <MenuItem value='maintenance'>维护中</MenuItem>
+                <MenuItem value='retired'>已退役</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 120 }}
+            >
               <InputLabel>项目</InputLabel>
               <Select
                 value={filterProject}
-                label="项目"
+                label='项目'
                 onChange={(e) => setFilterProject(e.target.value)}
               >
-                <MenuItem value="">全部</MenuItem>
+                <MenuItem value=''>全部</MenuItem>
                 {projects.map((p) => (
-                  <MenuItem key={p} value={p}>
+                  <MenuItem
+                    key={p}
+                    value={p}
+                  >
                     {p}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={loadResources}
               startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
             >
@@ -317,23 +353,26 @@ const PmResourcePage: React.FC = () => {
           title={
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
-              <Typography variant="h6">资源列表</Typography>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Chip label={`总计: ${resources.length}`} size="small" />
+              <Typography variant='h6'>资源列表</Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Chip
-                  label={`可用: ${resources.filter((r) => r.status === "available").length}`}
-                  size="small"
-                  color="success"
+                  label={`总计: ${resources.length}`}
+                  size='small'
                 />
                 <Chip
-                  label={`使用中: ${resources.filter((r) => r.status === "in_use").length}`}
-                  size="small"
-                  color="warning"
+                  label={`可用: ${resources.filter((r) => r.status === 'available').length}`}
+                  size='small'
+                  color='success'
+                />
+                <Chip
+                  label={`使用中: ${resources.filter((r) => r.status === 'in_use').length}`}
+                  size='small'
+                  color='warning'
                 />
               </Box>
             </Box>
@@ -341,15 +380,21 @@ const PmResourcePage: React.FC = () => {
         />
         <CardContent sx={{ p: 0 }}>
           {loading ? (
-            <Box sx={{ p: 4, textAlign: "center" }}>
+            <Box sx={{ p: 4, textAlign: 'center' }}>
               <LinearProgress />
-              <Typography sx={{ mt: 2 }} color="text.secondary">
+              <Typography
+                sx={{ mt: 2 }}
+                color='text.secondary'
+              >
                 加载中...
               </Typography>
             </Box>
           ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
+            <TableContainer
+              component={Paper}
+              variant='outlined'
+            >
+              <Table size='small'>
                 <TableHead>
                   <TableRow>
                     <TableCell>资源名称</TableCell>
@@ -358,7 +403,7 @@ const PmResourcePage: React.FC = () => {
                     <TableCell>分配给</TableCell>
                     <TableCell>使用状态</TableCell>
                     <TableCell>创建时间</TableCell>
-                    <TableCell align="right">操作</TableCell>
+                    <TableCell align='right'>操作</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -366,13 +411,13 @@ const PmResourcePage: React.FC = () => {
                     filteredResources.map((resource) => (
                       <TableRow key={resource.id}>
                         <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Package
                               sx={{
                                 width: 16,
                                 height: 16,
                                 mr: 2,
-                                color: "grey.400",
+                                color: 'grey.400',
                               }}
                             />
                             {resource.name}
@@ -382,69 +427,67 @@ const PmResourcePage: React.FC = () => {
                         <TableCell>{resource.project}</TableCell>
                         <TableCell>
                           {resource.assignedTo ? (
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                               <Users
                                 sx={{
                                   width: 14,
                                   height: 14,
                                   mr: 1,
-                                  color: "grey.400",
+                                  color: 'grey.400',
                                 }}
                               />
                               {resource.assignedTo}
                             </Box>
                           ) : (
-                            <Typography color="text.disabled">
-                              未分配
-                            </Typography>
+                            <Typography color='text.disabled'>未分配</Typography>
                           )}
                         </TableCell>
                         <TableCell>{getStatusChip(resource.status)}</TableCell>
                         <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Clock
                               sx={{
                                 width: 14,
                                 height: 14,
                                 mr: 1,
-                                color: "grey.400",
+                                color: 'grey.400',
                               }}
                             />
                             {resource.createdAt}
                           </Box>
                         </TableCell>
-                        <TableCell align="right">
-                          <Tooltip title="查看详情">
+                        <TableCell align='right'>
+                          <Tooltip title='查看详情'>
                             <IconButton
-                              size="small"
+                              size='small'
                               onClick={() => openDetailDialog(resource)}
                             >
                               <Eye sx={{ width: 16, height: 16 }} />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="分配">
+                          <Tooltip title='分配'>
                             <IconButton
-                              size="small"
+                              size='small'
                               onClick={() => openAssignDialog(resource)}
-                              disabled={resource.status !== "available"}
+                              disabled={resource.status !== 'available'}
                             >
                               <Users sx={{ width: 16, height: 16 }} />
                             </IconButton>
                           </Tooltip>
-                          {resource.status === "in_use" && (
-                            <Tooltip title="释放">
+                          {resource.status === 'in_use' && (
+                            <Tooltip title='释放'>
                               <IconButton
-                                size="small"
+                                size='small'
                                 onClick={() => handleRelease(resource)}
                               >
                                 <CheckCircle2 sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
                           )}
-                          <Tooltip title="删除">
+                          <Tooltip title='删除'>
                             <IconButton
-                              size="small"
-                              color="error"
+                              size='small'
+                              color='error'
                               onClick={() => handleDelete(resource.id)}
                             >
                               <Trash2 sx={{ width: 16, height: 16 }} />
@@ -455,19 +498,21 @@ const PmResourcePage: React.FC = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                      <TableCell
+                        colSpan={7}
+                        align='center'
+                        sx={{ py: 4 }}
+                      >
                         <AlertCircle
                           sx={{
                             width: 48,
                             height: 48,
-                            mx: "auto",
-                            color: "grey.300",
+                            mx: 'auto',
+                            color: 'grey.300',
                             mb: 1,
                           }}
                         />
-                        <Typography color="text.secondary">
-                          暂无资源数据
-                        </Typography>
+                        <Typography color='text.secondary'>暂无资源数据</Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -482,73 +527,78 @@ const PmResourcePage: React.FC = () => {
       <Dialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>资源登记</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
-              size="small"
-              label="资源名称"
+              size='small'
+              label='资源名称'
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               fullWidth
               required
             />
-            <FormControl size="small" fullWidth>
+            <FormControl
+              size='small'
+              fullWidth
+            >
               <InputLabel>资源类型</InputLabel>
               <Select
                 value={formData.type}
-                label="资源类型"
-                onChange={(e) =>
-                  setFormData({ ...formData, type: e.target.value })
-                }
+                label='资源类型'
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
                 {resourceTypes.map((t) => (
-                  <MenuItem key={t} value={t}>
+                  <MenuItem
+                    key={t}
+                    value={t}
+                  >
                     {t}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" fullWidth>
+            <FormControl
+              size='small'
+              fullWidth
+            >
               <InputLabel>所属项目</InputLabel>
               <Select
                 value={formData.project}
-                label="所属项目"
-                onChange={(e) =>
-                  setFormData({ ...formData, project: e.target.value })
-                }
+                label='所属项目'
+                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
               >
                 {projects.map((p) => (
-                  <MenuItem key={p} value={p}>
+                  <MenuItem
+                    key={p}
+                    value={p}
+                  >
                     {p}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" fullWidth>
+            <FormControl
+              size='small'
+              fullWidth
+            >
               <InputLabel>初始状态</InputLabel>
               <Select
                 value={formData.status}
-                label="初始状态"
+                label='初始状态'
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    status: e.target.value as
-                      | "available"
-                      | "in_use"
-                      | "maintenance"
-                      | "retired",
+                    status: e.target.value as 'available' | 'in_use' | 'maintenance' | 'retired',
                   })
                 }
               >
-                <MenuItem value="available">可用</MenuItem>
-                <MenuItem value="in_use">使用中</MenuItem>
-                <MenuItem value="maintenance">维护中</MenuItem>
+                <MenuItem value='available'>可用</MenuItem>
+                <MenuItem value='in_use'>使用中</MenuItem>
+                <MenuItem value='maintenance'>维护中</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -562,7 +612,10 @@ const PmResourcePage: React.FC = () => {
           >
             取消
           </Button>
-          <Button variant="contained" onClick={handleCreate}>
+          <Button
+            variant='contained'
+            onClick={handleCreate}
+          >
             创建
           </Button>
         </DialogActions>
@@ -572,22 +625,23 @@ const PmResourcePage: React.FC = () => {
       <Dialog
         open={showAssignDialog}
         onClose={() => setShowAssignDialog(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>分配资源</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               正在分配资源: <strong>{selectedResource?.name}</strong>
             </Typography>
             <TextField
-              size="small"
-              label="分配给"
+              size='small'
+              label='分配给'
               value={formData.assignedTo}
-              onChange={(e) =>
-                setFormData({ ...formData, assignedTo: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
               fullWidth
               required
             />
@@ -602,7 +656,10 @@ const PmResourcePage: React.FC = () => {
           >
             取消
           </Button>
-          <Button variant="contained" onClick={handleAssign}>
+          <Button
+            variant='contained'
+            onClick={handleAssign}
+          >
             确认分配
           </Button>
         </DialogActions>
@@ -612,81 +669,93 @@ const PmResourcePage: React.FC = () => {
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
-          <Package
-            sx={{ width: 20, height: 20, mr: 1, color: "primary.main" }}
-          />
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+          <Package sx={{ width: 20, height: 20, mr: 1, color: 'primary.main' }} />
           资源详情
         </DialogTitle>
         <DialogContent>
           {selectedResource && (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-            >
-              <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   资源名称
                 </Typography>
-                <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+                <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
                   {selectedResource.name}
                 </Typography>
               </Box>
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     资源类型
                   </Typography>
-                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
                     {selectedResource.type}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     所属项目
                   </Typography>
-                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
                     {selectedResource.project}
                   </Typography>
                 </Box>
               </Box>
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     分配给
                   </Typography>
-                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
-                    {selectedResource.assignedTo || "未分配"}
+                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+                    {selectedResource.assignedTo || '未分配'}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     使用状态
                   </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    {getStatusChip(selectedResource.status)}
-                  </Box>
+                  <Box sx={{ mt: 0.5 }}>{getStatusChip(selectedResource.status)}</Box>
                 </Box>
               </Box>
-              <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary">
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   创建时间
                 </Typography>
-                <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+                <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
                   {selectedResource.createdAt}
                 </Typography>
               </Box>

@@ -1,5 +1,5 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
 // 生产订单相关类型
 export interface ProductionOrder {
@@ -251,31 +251,26 @@ export const productionOrderApi = {
     }>
   > {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/orders${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.mes.get(`/api/mes/orders${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionOrder>> {
     return apiClient.mes.get(`/api/mes/orders/${id}`);
   },
 
-  async create(
-    data: CreateProductionOrderRequest,
-  ): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.post("/api/mes/orders", data);
+  async create(data: CreateProductionOrderRequest): Promise<ApiResponse<ProductionOrder>> {
+    return apiClient.mes.post('/api/mes/orders', data);
   },
 
   async update(
     id: string,
-    data: UpdateProductionOrderRequest,
+    data: UpdateProductionOrderRequest
   ): Promise<ApiResponse<ProductionOrder>> {
     return apiClient.mes.put(`/api/mes/orders/${id}`, data);
   },
@@ -296,31 +291,26 @@ export const productionProcessApi = {
     }>
   > {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/processes${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.mes.get(`/api/mes/processes${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionProcess>> {
     return apiClient.mes.get(`/api/mes/processes/${id}`);
   },
 
-  async create(
-    data: CreateProductionProcessRequest,
-  ): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.post("/api/mes/processes", data);
+  async create(data: CreateProductionProcessRequest): Promise<ApiResponse<ProductionProcess>> {
+    return apiClient.mes.post('/api/mes/processes', data);
   },
 
   async update(
     id: string,
-    data: UpdateProductionProcessRequest,
+    data: UpdateProductionProcessRequest
   ): Promise<ApiResponse<ProductionProcess>> {
     return apiClient.mes.put(`/api/mes/processes/${id}`, data);
   },
@@ -337,32 +327,24 @@ export const workStationApi = {
     }>
   > {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/workstations${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.mes.get(`/api/mes/workstations${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<WorkStation>> {
     return apiClient.mes.get(`/api/mes/workstations/${id}`);
   },
 
-  async create(
-    data: CreateWorkStationRequest,
-  ): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.post("/api/mes/workstations", data);
+  async create(data: CreateWorkStationRequest): Promise<ApiResponse<WorkStation>> {
+    return apiClient.mes.post('/api/mes/workstations', data);
   },
 
-  async update(
-    id: string,
-    data: UpdateWorkStationRequest,
-  ): Promise<ApiResponse<WorkStation>> {
+  async update(id: string, data: UpdateWorkStationRequest): Promise<ApiResponse<WorkStation>> {
     return apiClient.mes.put(`/api/mes/workstations/${id}`, data);
   },
 };
@@ -378,30 +360,25 @@ export const productionRecordApi = {
     }>
   > {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/records${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.mes.get(`/api/mes/records${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionRecord>> {
     return apiClient.mes.get(`/api/mes/records/${id}`);
   },
 
-  async create(
-    data: CreateProductionRecordRequest,
-  ): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.post("/api/mes/records", data);
+  async create(data: CreateProductionRecordRequest): Promise<ApiResponse<ProductionRecord>> {
+    return apiClient.mes.post('/api/mes/records', data);
   },
 
   async update(
     id: string,
-    data: UpdateProductionRecordRequest,
+    data: UpdateProductionRecordRequest
   ): Promise<ApiResponse<ProductionRecord>> {
     return apiClient.mes.put(`/api/mes/records/${id}`, data);
   },
@@ -410,56 +387,44 @@ export const productionRecordApi = {
 // 设备点检和维护 API
 export const mesEquipmentApi = {
   async getStatistics(): Promise<ApiResponse<EquipmentStatistics>> {
-    return apiClient.mes.get("/api/mes/equipment/statistics");
+    return apiClient.mes.get('/api/mes/equipment/statistics');
   },
 
   async listInspections(
-    params?: PaginationParams & { equipment_id?: string },
+    params?: PaginationParams & { equipment_id?: string }
   ): Promise<ApiResponse<PaginatedResult<InspectionRecord>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.equipment_id)
-      searchParams.set("equipment_id", params.equipment_id);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/inspections${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.mes.get(`/api/mes/inspections${queryString ? '?' + queryString : ''}`);
   },
 
-  async createInspection(
-    data: CreateInspectionRecord,
-  ): Promise<ApiResponse<InspectionRecord>> {
-    return apiClient.mes.post("/api/mes/inspections", data);
+  async createInspection(data: CreateInspectionRecord): Promise<ApiResponse<InspectionRecord>> {
+    return apiClient.mes.post('/api/mes/inspections', data);
   },
 
   async listMaintenances(
-    params?: PaginationParams & { equipment_id?: string },
+    params?: PaginationParams & { equipment_id?: string }
   ): Promise<ApiResponse<PaginatedResult<MaintenanceRecord>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.equipment_id)
-      searchParams.set("equipment_id", params.equipment_id);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/maintenances${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.mes.get(`/api/mes/maintenances${queryString ? '?' + queryString : ''}`);
   },
 
-  async createMaintenance(
-    data: CreateMaintenanceRecord,
-  ): Promise<ApiResponse<MaintenanceRecord>> {
-    return apiClient.mes.post("/api/mes/maintenances", data);
+  async createMaintenance(data: CreateMaintenanceRecord): Promise<ApiResponse<MaintenanceRecord>> {
+    return apiClient.mes.post('/api/mes/maintenances', data);
   },
 
   async updateMaintenanceStatus(
     id: string,
-    data: UpdateMaintenanceStatus,
+    data: UpdateMaintenanceStatus
   ): Promise<ApiResponse<MaintenanceRecord>> {
     return apiClient.mes.put(`/api/mes/maintenances/${id}/status`, data);
   },
@@ -474,7 +439,7 @@ export const mesApi = {
   equipment: mesEquipmentApi,
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.mes.get("/health");
+    return apiClient.mes.get('/health');
   },
 };
 

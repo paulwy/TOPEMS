@@ -1,10 +1,10 @@
-import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
-import axios from "axios";
-import config, { isProduction, isDevelopment } from "../config/runtime";
-import { createLogger, apiLogger } from "../utils/logger";
-import { API_TIMEOUT } from "@/constants/timeouts";
+import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import config, { isProduction, isDevelopment } from '../config/runtime';
+import { createLogger, apiLogger } from '../utils/logger';
+import { API_TIMEOUT } from '@/constants/timeouts';
 
-const logger = createLogger("ApiClient");
+const logger = createLogger('ApiClient');
 
 export interface ApiResponse<T = any> {
   code: number;
@@ -28,40 +28,37 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-type TypedAxiosInstance = Omit<
-  AxiosInstance,
-  "get" | "post" | "put" | "patch" | "delete"
-> & {
+type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' | 'delete'> & {
   get<T = any, R = ApiResponse<T>, D = any>(
     url: string,
-    config?: AxiosRequestConfig<D>,
+    config?: AxiosRequestConfig<D>
   ): Promise<R>;
   post<T = any, R = ApiResponse<T>, D = any>(
     url: string,
     data?: D,
-    config?: AxiosRequestConfig<D>,
+    config?: AxiosRequestConfig<D>
   ): Promise<R>;
   put<T = any, R = ApiResponse<T>, D = any>(
     url: string,
     data?: D,
-    config?: AxiosRequestConfig<D>,
+    config?: AxiosRequestConfig<D>
   ): Promise<R>;
   patch<T = any, R = ApiResponse<T>, D = any>(
     url: string,
     data?: D,
-    config?: AxiosRequestConfig<D>,
+    config?: AxiosRequestConfig<D>
   ): Promise<R>;
   delete<T = any, R = ApiResponse<T>, D = any>(
     url: string,
-    config?: AxiosRequestConfig<D>,
+    config?: AxiosRequestConfig<D>
   ): Promise<R>;
 };
 
 const isTimeoutError = (error: any): boolean => {
   return (
-    error.code === "ECONNABORTED" ||
-    (error.response?.statusText || "").toLowerCase() === "timeout" ||
-    error.message?.includes("timeout")
+    error.code === 'ECONNABORTED' ||
+    (error.response?.statusText || '').toLowerCase() === 'timeout' ||
+    error.message?.includes('timeout')
   );
 };
 
@@ -74,20 +71,20 @@ const handleNetworkError = (url: string): void => {
 };
 
 const handleAuthError = (): void => {
-  if (localStorage.getItem("token")) {
-    logger.warn("Unauthorized, clearing invalid token");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("roles");
-    localStorage.removeItem("permissions");
+  if (localStorage.getItem('token')) {
+    logger.warn('Unauthorized, clearing invalid token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('roles');
+    localStorage.removeItem('permissions');
     apiClient.clearAuthToken();
-    window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+    window.dispatchEvent(new CustomEvent('auth:unauthorized'));
   }
 };
 
 // 判断是否是不需要认证的路径
 const isPublicPath = (url: string): boolean => {
-  return url === "/health" || url.startsWith("/api/iam/auth/");
+  return url === '/health' || url.startsWith('/api/iam/auth/');
 };
 
 export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
@@ -98,20 +95,16 @@ export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
 
   client.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       // 只对非公开路径添加认证头
-      if (
-        token &&
-        !config.headers["Authorization"] &&
-        !isPublicPath(config.url || "")
-      ) {
-        config.headers["Authorization"] = `Bearer ${token}`;
+      if (token && !config.headers['Authorization'] && !isPublicPath(config.url || '')) {
+        config.headers['Authorization'] = `Bearer ${token}`;
       }
       return config;
     },
     (error) => {
       return Promise.reject(error);
-    },
+    }
   );
 
   return client;
@@ -124,16 +117,15 @@ export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
 export const downloadBlob = async (
   baseURL: string,
   url: string,
-  options?: { params?: Record<string, any> },
+  options?: { params?: Record<string, any> }
 ): Promise<Blob> => {
   // 在开发环境中，使用相对路径以便 Vite 代理能正确处理
   // 检查是否是 localhost 地址，如果是则使用相对路径
   const isLocalhost =
-    baseURL.startsWith("http://localhost") ||
-    baseURL.startsWith("http://127.0.0.1");
+    baseURL.startsWith('http://localhost') || baseURL.startsWith('http://127.0.0.1');
   const useProxy = isLocalhost && isDevelopment();
 
-  const clientBaseURL = useProxy ? "" : baseURL;
+  const clientBaseURL = useProxy ? '' : baseURL;
   const requestUrl = useProxy ? url : url;
 
   const client = axios.create({
@@ -145,33 +137,30 @@ export const downloadBlob = async (
 
   // 添加认证拦截器 - 始终添加 Authorization 头（下载接口都需要认证）
   client.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
-    apiLogger.debug("downloadBlob - token found:", !!token);
-    apiLogger.debug(
-      "downloadBlob - request URL:",
-      clientBaseURL + (config.url || ""),
-    );
+    const token = localStorage.getItem('token');
+    apiLogger.debug('downloadBlob - token found:', !!token);
+    apiLogger.debug('downloadBlob - request URL:', clientBaseURL + (config.url || ''));
     if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-      apiLogger.debug("downloadBlob - Authorization header added");
+      config.headers['Authorization'] = `Bearer ${token}`;
+      apiLogger.debug('downloadBlob - Authorization header added');
     }
     return config;
   });
 
   const response = await client.get(requestUrl, {
-    responseType: "blob",
+    responseType: 'blob',
     params: options?.params,
   });
 
-  apiLogger.debug("downloadBlob - response status:", response.status);
+  apiLogger.debug('downloadBlob - response status:', response.status);
 
   // 检查是否是错误响应
   if (response.status !== 200) {
     // 尝试解析错误信息
     let errorMessage = `请求失败: ${response.status}`;
-    if (response.data && typeof response.data.text === "function") {
+    if (response.data && typeof response.data.text === 'function') {
       const text = await response.data.text();
-      apiLogger.debug("downloadBlob - error response text:", text);
+      apiLogger.debug('downloadBlob - error response text:', text);
       try {
         const json = JSON.parse(text);
         errorMessage = json.message || errorMessage;
@@ -194,23 +183,23 @@ class ApiClient {
   constructor() {
     Object.entries(config.services).forEach(([name, baseURL]) => {
       // 使用统一的超时配置常量
-      const timeout = name === "ai" ? API_TIMEOUT.AI : config.api.timeout;
+      const timeout = name === 'ai' ? API_TIMEOUT.AI : config.api.timeout;
       const client = axios.create({
         baseURL,
         timeout,
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         paramsSerializer: {
           serialize: (params) => {
             const searchParams = new URLSearchParams();
             Object.entries(params).forEach(([key, value]) => {
               if (value !== undefined && value !== null) {
-                if (typeof value === "number") {
+                if (typeof value === 'number') {
                   searchParams.set(key, value.toString());
-                } else if (typeof value === "boolean") {
-                  searchParams.set(key, value ? "true" : "false");
+                } else if (typeof value === 'boolean') {
+                  searchParams.set(key, value ? 'true' : 'false');
                 } else {
                   searchParams.set(key, String(value));
                 }
@@ -223,21 +212,17 @@ class ApiClient {
 
       client.interceptors.request.use(
         (config) => {
-          const token = localStorage.getItem("token");
-          const url = config.url || "";
-          const baseURL = config.baseURL || "";
+          const token = localStorage.getItem('token');
+          const url = config.url || '';
+          const baseURL = config.baseURL || '';
 
           // Debug log for hrm requests
-          if (
-            baseURL.includes("/hrm") ||
-            url.includes("/hrm") ||
-            url.includes("positions")
-          ) {
+          if (baseURL.includes('/hrm') || url.includes('/hrm') || url.includes('positions')) {
             apiLogger.debug(`[HRM API Request]`, {
               url: `${baseURL}${url}`,
               method: config.method,
               tokenExists: !!token,
-              hasAuthHeader: !!config.headers["Authorization"],
+              hasAuthHeader: !!config.headers['Authorization'],
               isPublicPath: isPublicPath(url),
               params: config.params,
               data: config.data,
@@ -245,43 +230,36 @@ class ApiClient {
           }
 
           // Debug log for notification requests
-          if (
-            baseURL.includes("notification") ||
-            url.includes("/api/notifications")
-          ) {
+          if (baseURL.includes('notification') || url.includes('/api/notifications')) {
             apiLogger.debug(`[Notification API Request]`, {
               url: `${baseURL}${url}`,
               tokenExists: !!token,
-              hasAuthHeader: !!config.headers["Authorization"],
+              hasAuthHeader: !!config.headers['Authorization'],
               isPublicPath: isPublicPath(url),
             });
           }
 
           // 只对非公开路径添加认证头
-          if (token && !config.headers["Authorization"] && !isPublicPath(url)) {
-            config.headers["Authorization"] = `Bearer ${token}`;
+          if (token && !config.headers['Authorization'] && !isPublicPath(url)) {
+            config.headers['Authorization'] = `Bearer ${token}`;
           }
           return config;
         },
         (error) => {
           // 不输出健康检查的请求错误
-          const isHealthCheck = error.config?.url?.includes("/health");
+          const isHealthCheck = error.config?.url?.includes('/health');
           if (!isHealthCheck) {
-            logger.error("Request error:", error);
+            logger.error('Request error:', error);
           }
           return Promise.reject(error);
-        },
+        }
       );
 
       client.interceptors.response.use(
         (response: AxiosResponse) => {
-          const url = response.config?.url || "";
-          const baseURL = response.config?.baseURL || "";
-          if (
-            baseURL.includes("/hrm") ||
-            url.includes("/hrm") ||
-            url.includes("positions")
-          ) {
+          const url = response.config?.url || '';
+          const baseURL = response.config?.baseURL || '';
+          if (baseURL.includes('/hrm') || url.includes('/hrm') || url.includes('positions')) {
             apiLogger.debug(`[HRM API Response]`, {
               url: `${baseURL}${url}`,
               status: response.status,
@@ -292,14 +270,10 @@ class ApiClient {
           return response.data;
         },
         (error) => {
-          const url = error.config?.url || "";
-          const baseURL = error.config?.baseURL || "";
+          const url = error.config?.url || '';
+          const baseURL = error.config?.baseURL || '';
 
-          if (
-            baseURL.includes("/hrm") ||
-            url.includes("/hrm") ||
-            url.includes("positions")
-          ) {
+          if (baseURL.includes('/hrm') || url.includes('/hrm') || url.includes('positions')) {
             apiLogger.error(`[HRM API Error]`, {
               url: `${baseURL}${url}`,
               method: error.config?.method,
@@ -312,8 +286,8 @@ class ApiClient {
             });
           }
 
-          if (error.code === "ERR_CANCELED" || error.name === "AbortError") {
-            logger.debug("Request was canceled or aborted:", url);
+          if (error.code === 'ERR_CANCELED' || error.name === 'AbortError') {
+            logger.debug('Request was canceled or aborted:', url);
             return Promise.reject(error);
           }
 
@@ -322,7 +296,7 @@ class ApiClient {
             return Promise.reject(error);
           }
 
-          if (!error.response || error.code === "ERR_NETWORK") {
+          if (!error.response || error.code === 'ERR_NETWORK') {
             handleNetworkError(url);
             return Promise.reject(error);
           }
@@ -330,32 +304,26 @@ class ApiClient {
           if (error.response?.status === 401) {
             const currentPath = window.location.pathname;
             const isNotificationService =
-              error.config?.baseURL?.includes("8002") ||
-              error.config?.baseURL?.startsWith("notification");
+              error.config?.baseURL?.includes('8002') ||
+              error.config?.baseURL?.startsWith('notification');
 
             if (isNotificationService) {
-              logger.debug(
-                "Notification service returned 401, skipping auth cleanup",
-              );
+              logger.debug('Notification service returned 401, skipping auth cleanup');
               return Promise.resolve({
                 code: 0,
                 success: true,
                 data: 0,
-                message: "Unauthorized",
+                message: 'Unauthorized',
                 timestamp: new Date().toISOString(),
               });
             }
 
-            if (
-              currentPath !== "/login" &&
-              currentPath !== "/register" &&
-              !isNotificationService
-            ) {
+            if (currentPath !== '/login' && currentPath !== '/register' && !isNotificationService) {
               handleAuthError();
             }
           }
 
-          const isHealthCheck = url.includes("/health");
+          const isHealthCheck = url.includes('/health');
           const isNotFound = error.response?.status === 404;
           const isServiceUnavailable = error.response?.status === 503;
           const isServerError = error.response?.status === 500;
@@ -367,15 +335,14 @@ class ApiClient {
               isNotFound ||
               isServiceUnavailable ||
               isServerError ||
-              (error.config?.baseURL?.includes("notification") &&
-                error.response?.status === 401)
+              (error.config?.baseURL?.includes('notification') && error.response?.status === 401)
             )
           ) {
-            logger.error("Response error:", error);
+            logger.error('Response error:', error);
           }
 
           return Promise.reject(error);
-        },
+        }
       );
 
       this.clients[name] = client as unknown as TypedAxiosInstance;
@@ -503,27 +470,15 @@ class ApiClient {
     return this.clients.master.get<T>(url, config);
   }
 
-  async post<T = any>(
-    url: string,
-    data?: any,
-    config?: any,
-  ): Promise<ApiResponse<T>> {
+  async post<T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> {
     return this.clients.master.post<T>(url, data, config);
   }
 
-  async put<T = any>(
-    url: string,
-    data?: any,
-    config?: any,
-  ): Promise<ApiResponse<T>> {
+  async put<T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> {
     return this.clients.master.put<T>(url, data, config);
   }
 
-  async patch<T = any>(
-    url: string,
-    data?: any,
-    config?: any,
-  ): Promise<ApiResponse<T>> {
+  async patch<T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> {
     return this.clients.master.patch<T>(url, data, config);
   }
 
@@ -533,13 +488,13 @@ class ApiClient {
 
   setAuthToken(token: string) {
     Object.values(this.clients).forEach((client) => {
-      client.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     });
   }
 
   clearAuthToken() {
     Object.values(this.clients).forEach((client) => {
-      delete client.defaults.headers.common["Authorization"];
+      delete client.defaults.headers.common['Authorization'];
     });
   }
 

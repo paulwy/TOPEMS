@@ -3,9 +3,22 @@
  * 整合了MetricCard、ChartCard等统计展示类组件
  * 提供基类组件和多种特化组件，支持丰富的交互和动画效果
  */
-import React, { useEffect, useState, useRef } from "react";
-import { Box, Typography, Card, CardHeader, CardContent, Menu, MenuItem, Skeleton, Chip, IconButton, Tooltip, LinearProgress,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardHeader,
+  CardContent,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Chip,
+  IconButton,
+  Tooltip,
+  LinearProgress,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   TrendingUp,
   TrendingDown,
@@ -25,40 +38,40 @@ import {
   Target,
   Award,
   type LucideIcon,
-} from "lucide-react";
+} from 'lucide-react';
 
 // ============ 类型定义 ============
 
 /**
  * 趋势类型
  */
-export type TrendType = "up" | "down" | "stable" | "neutral";
+export type TrendType = 'up' | 'down' | 'stable' | 'neutral';
 
 /**
  * 颜色类型
  */
 export type CardColor =
-  | "green"
-  | "purple"
-  | "blue"
-  | "orange"
-  | "red"
-  | "cyan"
-  | "primary"
-  | "success"
-  | "warning"
-  | "error"
-  | "info";
+  | 'green'
+  | 'purple'
+  | 'blue'
+  | 'orange'
+  | 'red'
+  | 'cyan'
+  | 'primary'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info';
 
 /**
  * 图表类型
  */
-export type ChartType = "bar" | "line" | "area" | "pie";
+export type ChartType = 'bar' | 'line' | 'area' | 'pie';
 
 /**
  * 卡片尺寸
  */
-export type CardSize = "sm" | "md" | "lg";
+export type CardSize = 'sm' | 'md' | 'lg';
 
 /**
  * Sparkline属性
@@ -189,75 +202,72 @@ export interface ChartCardProps {
 /**
  * 颜色配置映射
  */
-const COLOR_MAP: Record<
-  string,
-  { bg: string; gradient: string; light: string; main: string }
-> = {
+const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; main: string }> = {
   green: {
-    bg: "#10B981",
-    gradient: "linear-gradient(135deg, #10B981, #059669)",
-    light: "#DCFCE7",
-    main: "#10B981",
+    bg: '#10B981',
+    gradient: 'linear-gradient(135deg, #10B981, #059669)',
+    light: '#DCFCE7',
+    main: '#10B981',
   },
   purple: {
-    bg: "#8B5CF6",
-    gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
-    light: "#EDE9FE",
-    main: "#8B5CF6",
+    bg: '#8B5CF6',
+    gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+    light: '#EDE9FE',
+    main: '#8B5CF6',
   },
   blue: {
-    bg: "#3B82F6",
-    gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
-    light: "#DBEAFE",
-    main: "#3B82F6",
+    bg: '#3B82F6',
+    gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+    light: '#DBEAFE',
+    main: '#3B82F6',
   },
   orange: {
-    bg: "#F59E0B",
-    gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
-    light: "#FEF3C7",
-    main: "#F59E0B",
+    bg: '#F59E0B',
+    gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+    light: '#FEF3C7',
+    main: '#F59E0B',
   },
   red: {
-    bg: "#EF4444",
-    gradient: "linear-gradient(135deg, #EF4444, #DC2626)",
-    light: "#FEE2E2",
-    main: "#EF4444",
+    bg: '#EF4444',
+    gradient: 'linear-gradient(135deg, #EF4444, #DC2626)',
+    light: '#FEE2E2',
+    main: '#EF4444',
   },
   cyan: {
-    bg: "#06B6D4",
-    gradient: "linear-gradient(135deg, #06B6D4, #0891B2)",
-    light: "#CFFAFE",
-    main: "#06B6D4",
+    bg: '#06B6D4',
+    gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
+    light: '#CFFAFE',
+    main: '#06B6D4',
   },
   primary: {
-    bg: "#1976d2",
-    gradient: "linear-gradient(135deg, #1976d2, #1565c0)",
-    light: "#E3F2FD",
-    main: "#1976d2",
+    bg: '#1976d2',
+    gradient: 'linear-gradient(135deg, #1976d2, #1565c0)',
+    light: '#E3F2FD',
+    main: '#1976d2',
   },
   success: {
-    bg: "#388e3c",
-    gradient: "linear-gradient(135deg, #388e3c, #2e7d32)",
-    light: "#E8F5E9",
-    main: "#388e3c",
+    bg: '#388e3c',
+    gradient: 'linear-gradient(135deg, #388e3c, #2e7d32)',
+    light: '#E8F5E9',
+    main: '#388e3c',
   },
   warning: {
-    bg: "#f57c00",
-    gradient: "linear-gradient(135deg, #f57c00, #ef6c00)",
-    light: "#FFF3E0",
-    main: "#f57c00",
+    bg: '#f57c00',
+    gradient: 'linear-gradient(135deg, #f57c00, #ef6c00)',
+    light: '#FFF3E0',
+    main: '#f57c00',
   },
   error: {
-    bg: "#d32f2f",
-    gradient: "linear-gradient(135deg, #d32f2f, #c62828)",
-    light: "#FFEBEE",
-    main: "#d32f2f",
+    bg: '#d32f2f',
+    gradient: 'linear-gradient(135deg, #d32f2f, #c62828)',
+    light: '#FFEBEE',
+    main: '#d32f2f',
   },
   info: {
-    bg: "#0288d1",
-    gradient: "linear-gradient(135deg, #0288d1, #0277bd)",
-    light: "#E1F5FE",
-    main: "#0288d1",
+    bg: '#0288d1',
+    gradient: 'linear-gradient(135deg, #0288d1, #0277bd)',
+    light: '#E1F5FE',
+    main: '#0288d1',
   },
 };
 
@@ -265,11 +275,11 @@ const COLOR_MAP: Record<
  * 默认时间范围配置
  */
 const DEFAULT_TIME_RANGES: TimeRange[] = [
-  { label: "今日", value: "today" },
-  { label: "本周", value: "week" },
-  { label: "本月", value: "month" },
-  { label: "本季度", value: "quarter" },
-  { label: "本年", value: "year" },
+  { label: '今日', value: 'today' },
+  { label: '本周', value: 'week' },
+  { label: '本月', value: 'month' },
+  { label: '本季度', value: 'quarter' },
+  { label: '本年', value: 'year' },
 ];
 
 // ============ Sparkline组件 ============
@@ -279,7 +289,7 @@ const DEFAULT_TIME_RANGES: TimeRange[] = [
  */
 export const Sparkline: React.FC<SparklineProps> = ({
   data,
-  color = "#3B82F6",
+  color = '#3B82F6',
   width = 80,
   height = 32,
   strokeWidth = 2,
@@ -293,42 +303,54 @@ export const Sparkline: React.FC<SparklineProps> = ({
 
   const points = data.map((value, index) => {
     const x = (index / (data.length - 1)) * width;
-    const y =
-      height -
-      ((value - min) / range) * (height - strokeWidth * 2) -
-      strokeWidth;
+    const y = height - ((value - min) / range) * (height - strokeWidth * 2) - strokeWidth;
     return `${x},${y}`;
   });
 
-  const pathD = `M ${points.join(" L ")}`;
+  const pathD = `M ${points.join(' L ')}`;
   const areaD = `${pathD} L ${width},${height} L 0,${height} Z`;
 
   return (
-    <svg width={width} height={height} style={{ overflow: "visible" }}>
+    <svg
+      width={width}
+      height={height}
+      style={{ overflow: 'visible' }}
+    >
       <defs>
         <linearGradient
-          id={`gradient-${color.replace("#", "")}`}
-          x1="0%"
-          y1="0%"
-          x2="0%"
-          y2="100%"
+          id={`gradient-${color.replace('#', '')}`}
+          x1='0%'
+          y1='0%'
+          x2='0%'
+          y2='100%'
         >
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <stop
+            offset='0%'
+            stopColor={color}
+            stopOpacity='0.3'
+          />
+          <stop
+            offset='100%'
+            stopColor={color}
+            stopOpacity='0'
+          />
         </linearGradient>
       </defs>
-      <path d={areaD} fill={`url(#gradient-${color.replace("#", "")})`} />
+      <path
+        d={areaD}
+        fill={`url(#gradient-${color.replace('#', '')})`}
+      />
       <path
         d={pathD}
-        fill="none"
+        fill='none'
         stroke={color}
         strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeLinecap='round'
+        strokeLinejoin='round'
       />
       <circle
         cx={width}
-        cy={parseFloat(points[points.length - 1].split(",")[1])}
+        cy={parseFloat(points[points.length - 1].split(',')[1])}
         r={3}
         fill={color}
       />
@@ -350,7 +372,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   change,
   trend,
   icon,
-  color = "blue",
+  color = 'blue',
   gradient,
   animate = true,
   onClick,
@@ -358,7 +380,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   children,
 }) => {
   const [displayValue, setDisplayValue] = useState(
-    animate && typeof value === "number" ? 0 : value,
+    animate && typeof value === 'number' ? 0 : value
   );
   const [isHovered, setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -372,7 +394,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
           observer.disconnect();
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
     if (cardRef.current) {
@@ -383,7 +405,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!animate || typeof value !== "number" || !isVisible) {
+    if (!animate || typeof value !== 'number' || !isVisible) {
       setDisplayValue(value);
       return;
     }
@@ -403,53 +425,34 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
       } else {
         const progress = currentStep / steps;
         const eased = 1 - Math.pow(1 - progress, 4);
-        setDisplayValue(
-          Math.round(startValue + (endValue - startValue) * eased),
-        );
+        setDisplayValue(Math.round(startValue + (endValue - startValue) * eased));
       }
     }, stepDuration);
 
     return () => clearInterval(timer);
   }, [value, animate, isVisible]);
 
-  const computedTrend =
-    trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
+  const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? 'up' : 'down') : null);
 
   const getTrendIcon = () => {
-    if (
-      !computedTrend ||
-      computedTrend === "neutral" ||
-      computedTrend === "stable"
-    ) {
+    if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
       return <Minus size={16} />;
     }
-    return computedTrend === "up" ? (
-      <TrendingUp size={16} />
-    ) : (
-      <TrendingDown size={16} />
-    );
+    return computedTrend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
   };
 
   const getTrendColor = () => {
-    if (
-      !computedTrend ||
-      computedTrend === "neutral" ||
-      computedTrend === "stable"
-    ) {
-      return "#64748B";
+    if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
+      return '#64748B';
     }
-    return computedTrend === "up" ? "#10B981" : "#EF4444";
+    return computedTrend === 'up' ? '#10B981' : '#EF4444';
   };
 
   const getTrendBgColor = () => {
-    if (
-      !computedTrend ||
-      computedTrend === "neutral" ||
-      computedTrend === "stable"
-    ) {
-      return "#F1F5F9";
+    if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
+      return '#F1F5F9';
     }
-    return computedTrend === "up" ? "#DCFCE7" : "#FEE2E2";
+    return computedTrend === 'up' ? '#DCFCE7' : '#FEE2E2';
   };
 
   const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
@@ -462,19 +465,19 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
       ref={cardRef}
       onClick={onClick}
       sx={{
-        position: "relative",
-        backgroundColor: "background.paper",
+        position: 'relative',
+        backgroundColor: 'background.paper',
         borderRadius: 2,
         p: 3,
-        border: "1px solid",
-        borderColor: "divider",
-        overflow: "hidden",
-        transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-        cursor: onClick ? "pointer" : "default",
-        "&:hover": onClick
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden',
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        cursor: onClick ? 'pointer' : 'default',
+        '&:hover': onClick
           ? {
               boxShadow: 4,
-              transform: "translateY(-2px)",
+              transform: 'translateY(-2px)',
             }
           : {},
         ...sx,
@@ -483,22 +486,22 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
       {/* 背景装饰 */}
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: -64,
           right: -64,
           width: 128,
           height: 128,
           opacity: isHovered ? 0.15 : 0.05,
-          transition: "opacity 0.3s",
+          transition: 'opacity 0.3s',
         }}
       >
         <Box
           sx={{
-            width: "100%",
-            height: "100%",
+            width: '100%',
+            height: '100%',
             background: iconGradient,
-            borderRadius: "50%",
-            filter: "blur(40px)",
+            borderRadius: '50%',
+            filter: 'blur(40px)',
           }}
         />
       </Box>
@@ -506,63 +509,61 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
       {/* 顶部进度条 */}
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           height: 3,
           background: iconGradient,
-          transform: isHovered ? "scaleX(1)" : "scaleX(0)",
-          transformOrigin: "left",
-          transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          transform: isHovered ? 'scaleX(1)' : 'scaleX(0)',
+          transformOrigin: 'left',
+          transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
       />
 
-      <Box sx={{ position: "relative", zIndex: 10 }}>
+      <Box sx={{ position: 'relative', zIndex: 10 }}>
         {/* 标题和图标行 */}
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
             mb: 2,
           }}
         >
           <Box sx={{ flex: 1 }}>
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
-                color: "text.secondary",
+                color: 'text.secondary',
                 fontWeight: 500,
-                fontSize: "0.75rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
                 mb: 0.5,
               }}
             >
               {title}
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
               <Typography
-                variant="h3"
+                variant='h3'
                 sx={{
                   fontWeight: 800,
-                  color: "text.primary",
-                  fontSize: "2rem",
+                  color: 'text.primary',
+                  fontSize: '2rem',
                   lineHeight: 1.2,
                 }}
               >
-                {typeof displayValue === "number"
-                  ? displayValue.toLocaleString()
-                  : displayValue}
+                {typeof displayValue === 'number' ? displayValue.toLocaleString() : displayValue}
               </Typography>
               {unit && (
                 <Typography
-                  variant="body1"
+                  variant='body1'
                   sx={{
-                    color: "text.secondary",
+                    color: 'text.secondary',
                     fontWeight: 600,
-                    fontSize: "1rem",
+                    fontSize: '1rem',
                   }}
                 >
                   {unit}
@@ -570,8 +571,8 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
               )}
               {suffix && (
                 <Typography
-                  variant="body2"
-                  sx={{ color: "text.disabled", fontSize: "0.875rem" }}
+                  variant='body2'
+                  sx={{ color: 'text.disabled', fontSize: '0.875rem' }}
                 >
                   {suffix}
                 </Typography>
@@ -579,8 +580,8 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
             </Box>
             {subtitle && (
               <Typography
-                variant="caption"
-                sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+                variant='caption'
+                sx={{ color: 'text.disabled', mt: 0.5, display: 'block' }}
               >
                 {subtitle}
               </Typography>
@@ -593,16 +594,16 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
                 width: 52,
                 height: 52,
                 borderRadius: 1.5,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 background: iconGradient,
                 boxShadow: isHovered
-                  ? "0 8px 25px rgba(0, 0, 0, 0.15)"
-                  : "0 4px 15px rgba(0, 0, 0, 0.1)",
-                transition: "all 0.3s",
-                transform: isHovered ? "scale(1.05)" : "scale(1)",
-                color: "white",
+                  ? '0 8px 25px rgba(0, 0, 0, 0.15)'
+                  : '0 4px 15px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s',
+                transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                color: 'white',
               }}
             >
               {icon}
@@ -612,15 +613,15 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
 
         {/* 趋势信息 */}
         {change !== undefined && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 28,
                 height: 28,
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 backgroundColor: getTrendBgColor(),
                 color: getTrendColor(),
               }}
@@ -629,19 +630,19 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
             </Box>
             <Box>
               <Typography
-                variant="body2"
+                variant='body2'
                 sx={{
                   fontWeight: 700,
                   color: getTrendColor(),
-                  fontSize: "0.875rem",
+                  fontSize: '0.875rem',
                 }}
               >
-                {change > 0 ? "+" : ""}
+                {change > 0 ? '+' : ''}
                 {change}%
               </Typography>
               <Typography
-                variant="caption"
-                sx={{ color: "text.disabled", fontSize: "0.7rem" }}
+                variant='caption'
+                sx={{ color: 'text.disabled', fontSize: '0.7rem' }}
               >
                 vs 上期
               </Typography>
@@ -667,7 +668,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   change,
   trend,
   icon,
-  color = "blue",
+  color = 'blue',
   gradient,
   animate = true,
   onClick,
@@ -678,18 +679,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   showTargetProgress = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const computedTrend =
-    trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
+  const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? 'up' : 'down') : null);
 
   const getSparklineColor = () => {
-    if (
-      !computedTrend ||
-      computedTrend === "neutral" ||
-      computedTrend === "stable"
-    ) {
-      return "#64748B";
+    if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
+      return '#64748B';
     }
-    return computedTrend === "up" ? "#10B981" : "#EF4444";
+    return computedTrend === 'up' ? '#10B981' : '#EF4444';
   };
 
   const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
@@ -719,7 +715,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       {(sparklineData || showTargetProgress) && (
         <Box sx={{ mt: 2 }}>
           {sparklineData && sparklineData.length > 0 && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Sparkline
                 data={sparklineData}
                 color={getSparklineColor()}
@@ -732,26 +728,32 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             <Box sx={{ mt: 2 }}>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   mb: 0.5,
                 }}
               >
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   目标进度
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {targetProgress}%
                 </Typography>
               </Box>
               <LinearProgress
-                variant="determinate"
+                variant='determinate'
                 value={targetProgress}
                 sx={{
                   height: 6,
                   borderRadius: 3,
                   bgcolor: colorInfo.light,
-                  "& .MuiLinearProgress-bar": {
+                  '& .MuiLinearProgress-bar': {
                     background: iconGradient,
                     borderRadius: 3,
                   },
@@ -780,10 +782,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   onRefresh,
   onExport,
   onFullscreen,
-  chartTypes = ["bar", "line", "area", "pie"],
-  activeChartType = "bar",
+  chartTypes = ['bar', 'line', 'area', 'pie'],
+  activeChartType = 'bar',
   onChartTypeChange,
-  timeRange = "month",
+  timeRange = 'month',
   onTimeRangeChange,
   showTimeRange = false,
   showChartType = false,
@@ -794,12 +796,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   trendValue,
   sx,
 }) => {
-  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(
-    null,
-  );
-  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
-    null,
-  );
+  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(null);
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
 
   const chartTypeIcons: Record<ChartType, React.ReactNode> = {
     bar: <BarChart3 style={{ width: 16, height: 16 }} />,
@@ -809,32 +807,32 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   };
 
   const getTrendIcon = () => {
-    if (!trend || trend === "stable") return null;
-    return trend === "up" ? (
-      <TrendingUp style={{ width: 16, height: 16, color: "#10B981" }} />
+    if (!trend || trend === 'stable') return null;
+    return trend === 'up' ? (
+      <TrendingUp style={{ width: 16, height: 16, color: '#10B981' }} />
     ) : (
       <TrendingUp
         style={{
           width: 16,
           height: 16,
-          color: "#EF4444",
-          transform: "rotate(180deg)",
+          color: '#EF4444',
+          transform: 'rotate(180deg)',
         }}
       />
     );
   };
 
   const getTrendColor = () => {
-    if (!trend || trend === "stable") return "text.secondary";
-    return trend === "up" ? "#10B981" : "#EF4444";
+    if (!trend || trend === 'stable') return 'text.secondary';
+    return trend === 'up' ? '#10B981' : '#EF4444';
   };
 
   return (
     <Card
       sx={{
-        overflow: "hidden",
-        transition: "all 0.3s",
-        "&:hover": { boxShadow: 3 },
+        overflow: 'hidden',
+        transition: 'all 0.3s',
+        '&:hover': { boxShadow: 3 },
         ...sx,
       }}
     >
@@ -843,24 +841,30 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           px: 3,
           py: 2,
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
         title={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
               {title}
             </Typography>
             {trend && trendValue && (
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 0.5,
                   color: getTrendColor(),
                 }}
               >
                 {getTrendIcon()}
-                <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='caption'
+                  sx={{ fontWeight: 500 }}
+                >
                   {trendValue}
                 </Typography>
               </Box>
@@ -869,19 +873,23 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         }
         subheader={
           subtitle ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 0.5 }}
+            >
               {subtitle}
             </Typography>
           ) : undefined
         }
         action={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {showChartType && chartTypes.length > 1 && (
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  bgcolor: "grey.100",
+                  display: 'flex',
+                  alignItems: 'center',
+                  bgcolor: 'grey.100',
                   borderRadius: 1,
                   p: 0.5,
                 }}
@@ -889,18 +897,12 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 {chartTypes.map((type) => (
                   <IconButton
                     key={type}
-                    size="small"
+                    size='small'
                     onClick={() => onChartTypeChange?.(type)}
                     sx={{
                       borderRadius: 0.5,
-                      bgcolor:
-                        activeChartType === type
-                          ? "background.paper"
-                          : "transparent",
-                      color:
-                        activeChartType === type
-                          ? "primary.main"
-                          : "text.secondary",
+                      bgcolor: activeChartType === type ? 'background.paper' : 'transparent',
+                      color: activeChartType === type ? 'primary.main' : 'text.secondary',
                       boxShadow: activeChartType === type ? 1 : 0,
                     }}
                   >
@@ -912,19 +914,18 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
             {showTimeRange && (
               <Button
-                variant="text"
-                size="small"
+                variant='text'
+                size='small'
                 onClick={(e) => setTimeMenuAnchor(e.currentTarget)}
-                sx={{ textTransform: "none" }}
+                sx={{ textTransform: 'none' }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 0.5 }} />
-                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)
-                  ?.label || "本月"}
+                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)?.label || '本月'}
               </Button>
             )}
 
             <IconButton
-              size="small"
+              size='small'
               onClick={(e) => setActionMenuAnchor(e.currentTarget)}
             >
               <MoreVertical style={{ width: 16, height: 16 }} />
@@ -935,44 +936,46 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
       <CardContent sx={{ p: 3 }}>
         {loading ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Skeleton sx={{ width: "33%", height: 16 }} />
-            <Skeleton sx={{ width: "100%", height, borderRadius: 2 }} />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Skeleton sx={{ width: '33%', height: 16 }} />
+            <Skeleton sx={{ width: '100%', height, borderRadius: 2 }} />
           </Box>
         ) : error ? (
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               py: 4,
-              textAlign: "center",
+              textAlign: 'center',
             }}
           >
             <Box
               sx={{
                 width: 48,
                 height: 48,
-                borderRadius: "50%",
-                bgcolor: "error.light",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                borderRadius: '50%',
+                bgcolor: 'error.light',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 mb: 2,
               }}
             >
-              <AlertCircle
-                style={{ width: 24, height: 24, color: "#EF4444" }}
-              />
+              <AlertCircle style={{ width: 24, height: 24, color: '#EF4444' }} />
             </Box>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{ mb: 2 }}
+            >
               {error}
             </Typography>
             {onRefresh && (
               <Button
-                variant="outlined"
-                size="small"
+                variant='outlined'
+                size='small'
                 onClick={onRefresh}
                 startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               >

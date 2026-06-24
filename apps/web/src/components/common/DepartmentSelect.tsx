@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -9,15 +9,8 @@ import {
   Chip,
   CircularProgress,
   Collapse,
-} from "@mui/material";
-import {
-  Search,
-  Building2,
-  ChevronRight,
-  ChevronDown,
-  Check,
-  X,
-} from "lucide-react";
+} from '@mui/material';
+import { Search, Building2, ChevronRight, ChevronDown, Check, X } from 'lucide-react';
 
 export interface Department {
   id: string;
@@ -53,29 +46,29 @@ const TreeNode: React.FC<{
       <MenuItem
         onClick={onClick}
         selected={selected}
-        sx={{ pl: depth * 2 + 1, minHeight: "auto", py: 1 }}
+        sx={{ pl: depth * 2 + 1, minHeight: 'auto', py: 1 }}
       >
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
           {hasChildren && (
             <Box
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleExpand();
               }}
-              sx={{ cursor: "pointer" }}
+              sx={{ cursor: 'pointer' }}
             >
-              {expanded ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </Box>
           )}
           {!hasChildren && <Box sx={{ width: 16 }} />}
-          <Building2 size={16} sx={{ color: "text.secondary" }} />
-          <ListItemText primary={node.name} sx={{ flex: 1 }} />
+          <Building2
+            size={16}
+            sx={{ color: 'text.secondary' }}
+          />
+          <ListItemText
+            primary={node.name}
+            sx={{ flex: 1 }}
+          />
           {selected && <Check size={16} />}
         </Box>
       </MenuItem>
@@ -104,7 +97,7 @@ const DepartmentTree: React.FC<{
   onSelect: (dept: Department) => void;
 }> = ({ departments, selectedIds, onSelect }) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    new Set(departments.filter((d) => d.children?.length).map((d) => d.id)),
+    new Set(departments.filter((d) => d.children?.length).map((d) => d.id))
   );
 
   const renderTree = (nodes: Department[], depth = 0) => {
@@ -118,14 +111,14 @@ const DepartmentTree: React.FC<{
           <MenuItem
             onClick={() => onSelect(node)}
             selected={isSelected}
-            sx={{ pl: depth * 2 + 1, minHeight: "auto", py: 1 }}
+            sx={{ pl: depth * 2 + 1, minHeight: 'auto', py: 1 }}
           >
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1,
-                width: "100%",
+                width: '100%',
               }}
             >
               {hasChildren && (
@@ -142,25 +135,25 @@ const DepartmentTree: React.FC<{
                       return next;
                     });
                   }}
-                  sx={{ cursor: "pointer" }}
+                  sx={{ cursor: 'pointer' }}
                 >
-                  {isExpanded ? (
-                    <ChevronDown size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
+                  {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </Box>
               )}
               {!hasChildren && <Box sx={{ width: 16 }} />}
-              <Building2 size={16} sx={{ color: "text.secondary" }} />
-              <ListItemText primary={node.name} sx={{ flex: 1 }} />
+              <Building2
+                size={16}
+                sx={{ color: 'text.secondary' }}
+              />
+              <ListItemText
+                primary={node.name}
+                sx={{ flex: 1 }}
+              />
               {isSelected && <Check size={16} />}
             </Box>
           </MenuItem>
           {hasChildren && isExpanded && (
-            <Collapse in={isExpanded}>
-              {renderTree(node.children!, depth + 1)}
-            </Collapse>
+            <Collapse in={isExpanded}>{renderTree(node.children!, depth + 1)}</Collapse>
           )}
         </React.Fragment>
       );
@@ -174,7 +167,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   value,
   onChange,
   multiple = false,
-  placeholder = "选择部门",
+  placeholder = '选择部门',
   disabled = false,
   loading = false,
   departments = [],
@@ -182,7 +175,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   allowClear = true,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   useEffect(() => {
     onSearch?.(searchKeyword);
@@ -192,15 +185,15 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
     (event: React.MouseEvent<HTMLElement>) => {
       if (!disabled) {
         setAnchorEl(event.currentTarget);
-        setSearchKeyword("");
+        setSearchKeyword('');
       }
     },
-    [disabled],
+    [disabled]
   );
 
   const handleClose = useCallback(() => {
     setAnchorEl(null);
-    setSearchKeyword("");
+    setSearchKeyword('');
   }, []);
 
   const handleSelect = useCallback(
@@ -218,7 +211,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
         handleClose();
       }
     },
-    [value, multiple, onChange, handleClose],
+    [value, multiple, onChange, handleClose]
   );
 
   const handleClear = useCallback(() => {
@@ -230,15 +223,15 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
     : [(value as Department)?.id].filter(Boolean);
 
   const displayValue = multiple
-    ? (value as Department[])?.map((d) => d.name).join(", ")
+    ? (value as Department[])?.map((d) => d.name).join(', ')
     : (value as Department)?.name;
 
   return (
     <Box>
       <TextField
         fullWidth
-        size="small"
-        value={displayValue || ""}
+        size='small'
+        value={displayValue || ''}
         placeholder={placeholder}
         onClick={handleClick}
         disabled={disabled}
@@ -246,11 +239,11 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
           input: {
             readOnly: true,
             endAdornment: (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {allowClear && value && (
                   <Chip
-                    size="small"
-                    label="清除"
+                    size='small'
+                    label='清除'
                     onDelete={handleClear}
                     sx={{ minWidth: 0, height: 24 }}
                   />
@@ -265,12 +258,12 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        slotProps={{ paper: { sx: { maxHeight: 400, width: "400px" } } }}
+        slotProps={{ paper: { sx: { maxHeight: 400, width: '400px' } } }}
       >
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <TextField
-            size="small"
-            placeholder="搜索部门..."
+            size='small'
+            placeholder='搜索部门...'
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             slotProps={{
@@ -287,12 +280,12 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
         </Box>
 
         {loading ? (
-          <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
+          <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
             <CircularProgress size={24} />
           </Box>
         ) : departments.length === 0 ? (
           <MenuItem disabled>
-            <ListItemText primary="暂无部门" />
+            <ListItemText primary='暂无部门' />
           </MenuItem>
         ) : (
           <DepartmentTree

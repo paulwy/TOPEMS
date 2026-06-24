@@ -2,10 +2,10 @@
  * 财务模块React Query Hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Account } from "@/types/erp-finance";
-import { accountApi } from "@/api/finance";
-import { useNotification } from "./useNotification";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Account } from '@/types/finance';
+import { accountApi } from '@/api/finance';
+import { useNotification } from './useNotification';
 
 // ============================================
 // 一、科目管理Hook
@@ -23,7 +23,7 @@ export const useAccounts = (params?: {
   is_detail?: boolean;
 }) => {
   return useQuery({
-    queryKey: ["accounts", params],
+    queryKey: ['accounts', params],
     queryFn: () => accountApi.list(params),
   });
 };
@@ -37,7 +37,7 @@ export const useAccountTree = (params?: {
   include_disabled?: boolean;
 }) => {
   return useQuery({
-    queryKey: ["accounts-tree", params],
+    queryKey: ['accounts-tree', params],
     queryFn: () => accountApi.getTree(params),
     staleTime: 10 * 60 * 1000,
   });
@@ -48,7 +48,7 @@ export const useAccountTree = (params?: {
  */
 export const useAccount = (id: string) => {
   return useQuery({
-    queryKey: ["account", id],
+    queryKey: ['account', id],
     queryFn: () => accountApi.get(id),
     enabled: !!id,
   });
@@ -65,7 +65,7 @@ export const useAccountBalances = (params: {
   project_id?: string;
 }) => {
   return useQuery({
-    queryKey: ["account-balances", params],
+    queryKey: ['account-balances', params],
     queryFn: () => accountApi.getBalances(params),
     enabled: !!params.period,
   });
@@ -80,7 +80,7 @@ export const useOpeningBalances = (params: {
   company_id?: string;
 }) => {
   return useQuery({
-    queryKey: ["opening-balances", params],
+    queryKey: ['opening-balances', params],
     queryFn: () => accountApi.getOpeningBalances(params),
     enabled: !!params.period,
   });
@@ -96,12 +96,12 @@ export const useCreateAccount = () => {
   return useMutation({
     mutationFn: (data: Partial<Account>) => accountApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts-tree"] });
-      success("科目创建成功");
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
+      success('科目创建成功');
     },
     onError: (error: any) => {
-      notifyError(error.message || "科目创建失败");
+      notifyError(error.message || '科目创建失败');
     },
   });
 };
@@ -117,12 +117,12 @@ export const useUpdateAccount = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<Account> }) =>
       accountApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts-tree"] });
-      success("科目更新成功");
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
+      success('科目更新成功');
     },
     onError: (error: any) => {
-      notifyError(error.message || "科目更新失败");
+      notifyError(error.message || '科目更新失败');
     },
   });
 };
@@ -137,12 +137,12 @@ export const useDeleteAccount = () => {
   return useMutation({
     mutationFn: (id: string) => accountApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts-tree"] });
-      success("科目删除成功");
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
+      success('科目删除成功');
     },
     onError: (error: any) => {
-      notifyError(error.message || "科目删除失败");
+      notifyError(error.message || '科目删除失败');
     },
   });
 };
@@ -168,12 +168,12 @@ export const useSetOpeningBalance = () => {
       }>;
     }) => accountApi.setOpeningBalance(accountId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["opening-balances"] });
-      queryClient.invalidateQueries({ queryKey: ["account-balances"] });
-      success("期初余额设置成功");
+      queryClient.invalidateQueries({ queryKey: ['opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['account-balances'] });
+      success('期初余额设置成功');
     },
     onError: (error: any) => {
-      notifyError(error.message || "期初余额设置失败");
+      notifyError(error.message || '期初余额设置失败');
     },
   });
 };
@@ -186,18 +186,15 @@ export const useCarryForwardOpeningBalance = () => {
   const { success, error: notifyError } = useNotification();
 
   return useMutation({
-    mutationFn: (params: {
-      from_period: string;
-      to_period: string;
-      company_id?: string;
-    }) => accountApi.carryForwardOpeningBalance(params),
+    mutationFn: (params: { from_period: string; to_period: string; company_id?: string }) =>
+      accountApi.carryForwardOpeningBalance(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["opening-balances"] });
-      queryClient.invalidateQueries({ queryKey: ["account-balances"] });
-      success("期初余额结转成功");
+      queryClient.invalidateQueries({ queryKey: ['opening-balances'] });
+      queryClient.invalidateQueries({ queryKey: ['account-balances'] });
+      success('期初余额结转成功');
     },
     onError: (error: any) => {
-      notifyError(error.message || "期初余额结转失败");
+      notifyError(error.message || '期初余额结转失败');
     },
   });
 };

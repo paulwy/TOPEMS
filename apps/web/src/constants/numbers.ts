@@ -39,11 +39,11 @@ export const PAGINATION = {
 export const FILE_UPLOAD = {
   MAX_FILE_SIZE_MB: 10,
   MAX_FILE_SIZE_BYTES: 10 * 1024 * 1024, // 10MB
-  ALLOWED_IMAGE_TYPES: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+  ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   ALLOWED_DOCUMENT_TYPES: [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ],
 } as const;
 
@@ -101,12 +101,12 @@ export const TRACK = {
 
 // ========== 日期格式 ==========
 export const DATE_FORMAT = {
-  FULL: "YYYY-MM-DD HH:mm:ss",
-  DATE: "YYYY-MM-DD",
-  TIME: "HH:mm:ss",
-  SHORT_DATE: "MM/DD",
-  MONTH: "YYYY-MM",
-  ISO: "YYYY-MM-DDTHH:mm:ss.sssZ",
+  FULL: 'YYYY-MM-DD HH:mm:ss',
+  DATE: 'YYYY-MM-DD',
+  TIME: 'HH:mm:ss',
+  SHORT_DATE: 'MM/DD',
+  MONTH: 'YYYY-MM',
+  ISO: 'YYYY-MM-DDTHH:mm:ss.sssZ',
 } as const;
 
 // ========== 辅助函数 ==========

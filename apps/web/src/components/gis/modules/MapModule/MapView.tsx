@@ -1,5 +1,5 @@
 // modules/MapModule/MapView.tsx
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -8,34 +8,29 @@ import {
   Popup,
   Tooltip,
   Rectangle,
-} from "react-leaflet";
-import { MapPin, Info, Navigation, X } from "lucide-react";
-import type {
-  DevicePoint,
-  Pipeline,
-  StorageLocation,
-  GeoJSONFeature,
-} from "../../../../api/gis";
-import type { DrawFeature } from "../shared/types";
-import { EARTH } from "@/constants/numbers";
-import MapEvents from "./MapEvents";
-import MapControls from "./MapControls";
-import LayerManager from "./LayerManager";
-import ToolPanel from "./ToolPanel";
-import HeatmapLayer, { HeatmapLegend } from "../HeatmapModule/HeatmapLayer";
-import Map3DView from "../../Map3DView";
-import AmapLayer from "../../AmapLayer";
-import DeviceTrackPanel from "../../DeviceTrackPanel";
-import "leaflet/dist/leaflet.css";
-import "leaflet-draw/dist/leaflet.draw.css";
+} from 'react-leaflet';
+import { MapPin, Info, Navigation, X } from 'lucide-react';
+import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../../api/gis';
+import type { DrawFeature } from '../shared/types';
+import { EARTH } from '@/constants/numbers';
+import MapEvents from './MapEvents';
+import MapControls from './MapControls';
+import LayerManager from './LayerManager';
+import ToolPanel from './ToolPanel';
+import HeatmapLayer, { HeatmapLegend } from '../HeatmapModule/HeatmapLayer';
+import Map3DView from '../../Map3DView';
+import AmapLayer from '../../AmapLayer';
+import DeviceTrackPanel from '../../DeviceTrackPanel';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
 
 type ToolMode =
-  | "select"
-  | "measure-distance"
-  | "measure-area"
-  | "draw-point"
-  | "draw-line"
-  | "draw-polygon";
+  | 'select'
+  | 'measure-distance'
+  | 'measure-area'
+  | 'draw-point'
+  | 'draw-line'
+  | 'draw-polygon';
 
 interface MapViewProps {
   devicePoints?: DevicePoint[];
@@ -45,12 +40,7 @@ interface MapViewProps {
 }
 
 // Utility functions
-const calculateDistance = (
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number,
-): number => {
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -67,12 +57,7 @@ const calculateDistance = (
 const calculateTotalDistance = (points: [number, number][]): number => {
   let total = 0;
   for (let i = 0; i < points.length - 1; i++) {
-    total += calculateDistance(
-      points[i][0],
-      points[i][1],
-      points[i + 1][0],
-      points[i + 1][1],
-    );
+    total += calculateDistance(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
   }
   return total;
 };
@@ -108,12 +93,12 @@ const formatArea = (squareMeters: number): string => {
 };
 
 const getStatusColor = (status: string) => {
-  if (!status) return "#6b7280";
+  if (!status) return '#6b7280';
   const s = status.toLowerCase();
-  if (s.includes("active") || s.includes("启用")) return "#00C897";
-  if (s.includes("pending") || s.includes("待处理")) return "#F59E0B";
-  if (s.includes("inactive") || s.includes("禁用")) return "#EF4444";
-  return "#6b7280";
+  if (s.includes('active') || s.includes('启用')) return '#00C897';
+  if (s.includes('pending') || s.includes('待处理')) return '#F59E0B';
+  if (s.includes('inactive') || s.includes('禁用')) return '#EF4444';
+  return '#6b7280';
 };
 
 // Icons
@@ -140,19 +125,18 @@ const MeasureTooltip: React.FC<{
 }> = ({ position, content }) => (
   <div
     style={{
-      position: "absolute",
-      backgroundColor: "#1f2937",
-      color: "white",
-      fontSize: "0.75rem",
-      padding: "0.25rem 0.5rem",
-      borderRadius: "0.25rem",
-      boxShadow:
-        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-      pointerEvents: "none",
+      position: 'absolute',
+      backgroundColor: '#1f2937',
+      color: 'white',
+      fontSize: '0.75rem',
+      padding: '0.25rem 0.5rem',
+      borderRadius: '0.25rem',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      pointerEvents: 'none',
       zIndex: 50,
       left: position[1] + 10,
       top: position[0] - 20,
-      transform: "translateX(-50%)",
+      transform: 'translateX(-50%)',
     }}
   >
     {content}
@@ -170,128 +154,125 @@ const DetailsPanel: React.FC<{
 
   const getStatusStyles = (status: string) => {
     const s = status.toLowerCase();
-    if (s.includes("active") || s.includes("启用")) {
+    if (s.includes('active') || s.includes('启用')) {
       return {
-        backgroundColor: "#dcfce7",
-        color: "#166534",
+        backgroundColor: '#dcfce7',
+        color: '#166534',
       };
     }
-    if (s.includes("pending") || s.includes("待处理")) {
+    if (s.includes('pending') || s.includes('待处理')) {
       return {
-        backgroundColor: "#fef3c7",
-        color: "#92400e",
+        backgroundColor: '#fef3c7',
+        color: '#92400e',
       };
     }
     return {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
+      backgroundColor: '#fee2e2',
+      color: '#991b1b',
     };
   };
 
   return (
     <div
       style={{
-        position: "absolute",
-        bottom: "1rem",
-        left: "1rem",
-        width: "20rem",
-        backgroundColor: "white",
-        borderRadius: "0.75rem",
-        boxShadow:
-          "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-        overflow: "hidden",
-        border: "1px solid #e5e7eb",
+        position: 'absolute',
+        bottom: '1rem',
+        left: '1rem',
+        width: '20rem',
+        backgroundColor: 'white',
+        borderRadius: '0.75rem',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        overflow: 'hidden',
+        border: '1px solid #e5e7eb',
       }}
     >
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0.75rem 1rem",
-          background: "linear-gradient(to right, #06b6d4, #3b82f6)",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.75rem 1rem',
+          background: 'linear-gradient(to right, #06b6d4, #3b82f6)',
         }}
       >
-        <h3 style={{ fontWeight: 600, color: "white", margin: 0 }}>详情信息</h3>
+        <h3 style={{ fontWeight: 600, color: 'white', margin: 0 }}>详情信息</h3>
         <button
           onClick={onClose}
           style={{
-            padding: "0.25rem",
-            borderRadius: "0.25rem",
-            transition: "background-color 0.2s",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
+            padding: '0.25rem',
+            borderRadius: '0.25rem',
+            transition: 'background-color 0.2s',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
-          <X style={{ width: "1.25rem", height: "1.25rem", color: "white" }} />
+          <X style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
         </button>
       </div>
-      <div style={{ padding: "1rem" }}>
-        <div style={{ marginBottom: "1rem" }}>
+      <div style={{ padding: '1rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
           <div
             style={{
-              fontSize: "0.875rem",
-              color: "#6b7280",
-              marginBottom: "0.25rem",
+              fontSize: '0.875rem',
+              color: '#6b7280',
+              marginBottom: '0.25rem',
             }}
           >
             名称
           </div>
-          <div style={{ fontWeight: 500, color: "#111827" }}>
-            {selectedItem.name}
-          </div>
+          <div style={{ fontWeight: 500, color: '#111827' }}>{selectedItem.name}</div>
         </div>
-        {"device_type" in selectedItem && (
-          <div style={{ marginBottom: "1rem" }}>
+        {'device_type' in selectedItem && (
+          <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: "0.875rem",
-                color: "#6b7280",
-                marginBottom: "0.25rem",
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem',
               }}
             >
               设备类型
             </div>
-            <div style={{ color: "#374151" }}>{selectedItem.device_type}</div>
+            <div style={{ color: '#374151' }}>{selectedItem.device_type}</div>
           </div>
         )}
-        {"location_type" in selectedItem && (
-          <div style={{ marginBottom: "1rem" }}>
+        {'location_type' in selectedItem && (
+          <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: "0.875rem",
-                color: "#6b7280",
-                marginBottom: "0.25rem",
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem',
               }}
             >
               位置类型
             </div>
-            <div style={{ color: "#374151" }}>{selectedItem.location_type}</div>
+            <div style={{ color: '#374151' }}>{selectedItem.location_type}</div>
           </div>
         )}
-        {"status" in selectedItem && (
-          <div style={{ marginBottom: "1rem" }}>
+        {'status' in selectedItem && (
+          <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: "0.875rem",
-                color: "#6b7280",
-                marginBottom: "0.25rem",
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem',
               }}
             >
               状态
             </div>
             <span
               style={{
-                padding: "0.25rem 0.5rem",
-                borderRadius: "9999px",
-                fontSize: "0.75rem",
+                padding: '0.25rem 0.5rem',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
                 fontWeight: 500,
                 ...getStatusStyles(selectedItem.status),
               }}
@@ -300,77 +281,71 @@ const DetailsPanel: React.FC<{
             </span>
           </div>
         )}
-        {"capacity" in selectedItem && selectedItem.capacity !== undefined && (
-          <div style={{ marginBottom: "1rem" }}>
+        {'capacity' in selectedItem && selectedItem.capacity !== undefined && (
+          <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: "0.875rem",
-                color: "#6b7280",
-                marginBottom: "0.25rem",
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem',
               }}
             >
               容量
             </div>
-            <div style={{ color: "#374151" }}>{selectedItem.capacity}</div>
+            <div style={{ color: '#374151' }}>{selectedItem.capacity}</div>
           </div>
         )}
-        {"current_usage" in selectedItem &&
-          selectedItem.current_usage !== undefined && (
-            <div style={{ marginBottom: "1rem" }}>
-              <div
-                style={{
-                  fontSize: "0.875rem",
-                  color: "#6b7280",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                当前用量
-              </div>
-              <div style={{ color: "#374151" }}>
-                {selectedItem.current_usage}
-              </div>
-            </div>
-          )}
-        {"description" in selectedItem && selectedItem.description && (
-          <div style={{ marginBottom: "1rem" }}>
+        {'current_usage' in selectedItem && selectedItem.current_usage !== undefined && (
+          <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
-                fontSize: "0.875rem",
-                color: "#6b7280",
-                marginBottom: "0.25rem",
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem',
+              }}
+            >
+              当前用量
+            </div>
+            <div style={{ color: '#374151' }}>{selectedItem.current_usage}</div>
+          </div>
+        )}
+        {'description' in selectedItem && selectedItem.description && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div
+              style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                marginBottom: '0.25rem',
               }}
             >
               描述
             </div>
-            <div style={{ color: "#4b5563", fontSize: "0.875rem" }}>
-              {selectedItem.description}
-            </div>
+            <div style={{ color: '#4b5563', fontSize: '0.875rem' }}>{selectedItem.description}</div>
           </div>
         )}
         <div
           style={{
-            paddingTop: "0.5rem",
-            borderTop: "1px solid #e5e7eb",
+            paddingTop: '0.5rem',
+            borderTop: '1px solid #e5e7eb',
           }}
         >
           <div
             style={{
-              fontSize: "0.875rem",
-              color: "#6b7280",
-              marginBottom: "0.25rem",
+              fontSize: '0.875rem',
+              color: '#6b7280',
+              marginBottom: '0.25rem',
             }}
           >
             坐标
           </div>
           <div
             style={{
-              color: "#374151",
-              fontSize: "0.875rem",
-              fontFamily: "monospace",
+              color: '#374151',
+              fontSize: '0.875rem',
+              fontFamily: 'monospace',
             }}
           >
-            {formatCoordinate(selectedItem.latitude)},{" "}
-            {formatCoordinate(selectedItem.longitude)}
+            {formatCoordinate(selectedItem.latitude)}, {formatCoordinate(selectedItem.longitude)}
           </div>
         </div>
       </div>
@@ -388,9 +363,7 @@ const MapView: React.FC<MapViewProps> = ({
   // State
   const [mapCenter] = useState<[number, number]>([39.9, 116.4]); // 北京
   const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
-  const [selectedItem, setSelectedItem] = useState<
-    DevicePoint | StorageLocation | null
-  >(null);
+  const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(true);
   const [visibleLayers, setVisibleLayers] = useState({
@@ -398,23 +371,17 @@ const MapView: React.FC<MapViewProps> = ({
     pipelines: true,
     storage: true,
   });
-  const [toolMode, setToolMode] = useState<ToolMode>("select");
+  const [toolMode, setToolMode] = useState<ToolMode>('select');
   const [measurePoints, setMeasurePoints] = useState<[number, number][]>([]);
-  const [measureResult, setMeasureResult] = useState<string>("");
+  const [measureResult, setMeasureResult] = useState<string>('');
   const [drawFeatures, setDrawFeatures] = useState<DrawFeature[]>([]);
-  const [currentDrawing, setCurrentDrawing] = useState<DrawFeature | null>(
-    null,
-  );
+  const [currentDrawing, setCurrentDrawing] = useState<DrawFeature | null>(null);
   const [showMeasureTooltip, setShowMeasureTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<[number, number]>([
-    0, 0,
-  ]);
+  const [tooltipPosition, setTooltipPosition] = useState<[number, number]>([0, 0]);
   const [showTrackPanel, setShowTrackPanel] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
-  const [heatmapMode, setHeatmapMode] = useState<"density" | "status">(
-    "density",
-  );
-  const [mapType, setMapType] = useState<"osm" | "amap">("osm");
+  const [heatmapMode, setHeatmapMode] = useState<'density' | 'status'>('density');
+  const [mapType, setMapType] = useState<'osm' | 'amap'>('osm');
   const [show3DView, setShow3DView] = useState(false);
   const [offlineMode, setOfflineMode] = useState(true); // 默认使用离线瓦片
 
@@ -425,9 +392,9 @@ const MapView: React.FC<MapViewProps> = ({
   // Tool handlers
   const setTool = useCallback((tool: ToolMode) => {
     setToolMode(tool);
-    if (tool === "select") {
+    if (tool === 'select') {
       setMeasurePoints([]);
-      setMeasureResult("");
+      setMeasureResult('');
       setShowMeasureTooltip(false);
       setCurrentDrawing(null);
     }
@@ -435,7 +402,7 @@ const MapView: React.FC<MapViewProps> = ({
 
   const clearMeasure = useCallback(() => {
     setMeasurePoints([]);
-    setMeasureResult("");
+    setMeasureResult('');
     setShowMeasureTooltip(false);
   }, []);
 
@@ -447,28 +414,25 @@ const MapView: React.FC<MapViewProps> = ({
   const finishDrawing = useCallback(() => {
     if (
       currentDrawing &&
-      currentDrawing.points.length >= (currentDrawing.type === "point" ? 1 : 2)
+      currentDrawing.points.length >= (currentDrawing.type === 'point' ? 1 : 2)
     ) {
       setDrawFeatures([...drawFeatures, currentDrawing]);
     }
     setCurrentDrawing(null);
   }, [currentDrawing, drawFeatures]);
 
-  const toggleLayer = useCallback(
-    (layer: "devices" | "pipelines" | "storage") => {
-      setVisibleLayers((prev) => ({ ...prev, [layer]: !prev[layer] }));
-    },
-    [],
-  );
+  const toggleLayer = useCallback((layer: 'devices' | 'pipelines' | 'storage') => {
+    setVisibleLayers((prev) => ({ ...prev, [layer]: !prev[layer] }));
+  }, []);
 
   const handleMarkerClick = useCallback(
     (item: DevicePoint | StorageLocation) => {
-      if (toolMode !== "select") return;
+      if (toolMode !== 'select') return;
       setSelectedItem(item);
       setShowDetailsPanel(true);
       onMarkerClick?.(item);
     },
-    [toolMode, onMarkerClick],
+    [toolMode, onMarkerClick]
   );
 
   const closeDetailsPanel = useCallback(() => {
@@ -483,9 +447,7 @@ const MapView: React.FC<MapViewProps> = ({
       devicePoints.forEach((p) => allPoints.push([p.latitude, p.longitude]));
     }
     if (visibleLayers.storage) {
-      storageLocations.forEach((s) =>
-        allPoints.push([s.latitude, s.longitude]),
-      );
+      storageLocations.forEach((s) => allPoints.push([s.latitude, s.longitude]));
     }
     if (allPoints.length > 0) {
       const lats = allPoints.map((p) => p[0]);
@@ -509,15 +471,15 @@ const MapView: React.FC<MapViewProps> = ({
         if (visibleLayers.devices) {
           devicePoints.forEach((point) => {
             features.push({
-              type: "Feature",
+              type: 'Feature',
               geometry: {
-                type: "Point",
+                type: 'Point',
                 coordinates: [point.longitude, point.latitude],
               },
               properties: {
                 id: point.id,
                 name: point.name,
-                type: "device",
+                type: 'device',
                 device_type: point.device_type,
                 status: point.status,
                 description: point.description,
@@ -531,15 +493,15 @@ const MapView: React.FC<MapViewProps> = ({
         if (visibleLayers.storage) {
           storageLocations.forEach((location) => {
             features.push({
-              type: "Feature",
+              type: 'Feature',
               geometry: {
-                type: "Point",
+                type: 'Point',
                 coordinates: [location.longitude, location.latitude],
               },
               properties: {
                 id: location.id,
                 name: location.name,
-                type: "storage",
+                type: 'storage',
                 location_type: location.location_type,
                 capacity: location.capacity,
                 current_usage: location.current_usage,
@@ -554,9 +516,9 @@ const MapView: React.FC<MapViewProps> = ({
           pipelines.forEach((pipeline) => {
             if (pipeline.start_point && pipeline.end_point) {
               features.push({
-                type: "Feature",
+                type: 'Feature',
                 geometry: {
-                  type: "LineString",
+                  type: 'LineString',
                   coordinates: [
                     [pipeline.start_point[1], pipeline.start_point[0]],
                     [pipeline.end_point[1], pipeline.end_point[0]],
@@ -565,7 +527,7 @@ const MapView: React.FC<MapViewProps> = ({
                 properties: {
                   id: pipeline.id,
                   name: pipeline.name,
-                  type: "pipeline",
+                  type: 'pipeline',
                   pipeline_type: pipeline.pipeline_type,
                   status: pipeline.status,
                   code: pipeline.code,
@@ -584,27 +546,27 @@ const MapView: React.FC<MapViewProps> = ({
       }
 
       allDrawFeatures.forEach((feature) => {
-        let geometryType: "Point" | "LineString" | "Polygon" = "Point";
+        let geometryType: 'Point' | 'LineString' | 'Polygon' = 'Point';
         let coordinates: any[] = [];
 
-        if (feature.type === "point") {
-          geometryType = "Point";
+        if (feature.type === 'point') {
+          geometryType = 'Point';
           coordinates = [feature.points[0].lng, feature.points[0].lat];
-        } else if (feature.type === "line") {
-          geometryType = "LineString";
+        } else if (feature.type === 'line') {
+          geometryType = 'LineString';
           coordinates = feature.points.map((p) => [p.lng, p.lat]);
-        } else if (feature.type === "polygon") {
-          geometryType = "Polygon";
+        } else if (feature.type === 'polygon') {
+          geometryType = 'Polygon';
           coordinates = [feature.points.map((p) => [p.lng, p.lat])];
           coordinates[0].push([feature.points[0].lng, feature.points[0].lat]);
         }
 
         features.push({
-          type: "Feature",
+          type: 'Feature',
           geometry: { type: geometryType, coordinates },
           properties: {
             id: feature.id,
-            name: feature.label || "Drawing",
+            name: feature.label || 'Drawing',
             type: `drawing_${feature.type}`,
             color: feature.color,
             timestamp: Date.now(),
@@ -613,54 +575,47 @@ const MapView: React.FC<MapViewProps> = ({
       });
 
       const geojson = {
-        type: "FeatureCollection",
+        type: 'FeatureCollection',
         features,
         generated_at: new Date().toISOString(),
-        source: "TOPEMS GIS Module",
+        source: 'TOPEMS GIS Module',
       };
 
       const blob = new Blob([JSON.stringify(geojson, null, 2)], {
-        type: "application/json",
+        type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `gis-export-${drawOnly ? "drawings" : "data"}-${Date.now()}.geojson`;
+      a.download = `gis-export-${drawOnly ? 'drawings' : 'data'}-${Date.now()}.geojson`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     },
-    [
-      visibleLayers,
-      devicePoints,
-      storageLocations,
-      pipelines,
-      drawFeatures,
-      currentDrawing,
-    ],
+    [visibleLayers, devicePoints, storageLocations, pipelines, drawFeatures, currentDrawing]
   );
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setToolMode("select");
+      if (e.key === 'Escape') {
+        setToolMode('select');
         clearMeasure();
         setCurrentDrawing(null);
       }
-      if (e.key === "Enter" && currentDrawing) {
+      if (e.key === 'Enter' && currentDrawing) {
         finishDrawing();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentDrawing, clearMeasure, finishDrawing]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Map Type Switch */}
-      {mapType === "amap" ? (
+      {mapType === 'amap' ? (
         <AmapLayer
           devicePoints={devicePoints}
           storageLocations={storageLocations}
@@ -671,7 +626,7 @@ const MapView: React.FC<MapViewProps> = ({
         <MapContainer
           center={mapCenter}
           zoom={zoom}
-          style={{ height: "100%", width: "100%" }}
+          style={{ height: '100%', width: '100%' }}
         >
           <MapEvents
             toolMode={toolMode}
@@ -695,8 +650,8 @@ const MapView: React.FC<MapViewProps> = ({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url={
               offlineMode
-                ? "/offline_tiles/amap/{z}/{x}/{y}.png"
-                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                ? '/offline_tiles/amap/{z}/{x}/{y}.png'
+                : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             }
           />
 
@@ -724,25 +679,26 @@ const MapView: React.FC<MapViewProps> = ({
                 <Polyline
                   key={pipeline.id}
                   positions={pathCoords}
-                  color="#6366F1"
+                  color='#6366F1'
                   weight={4}
                   opacity={0.8}
                 >
-                  <Tooltip direction="top" offset={[0, -10]}>
+                  <Tooltip
+                    direction='top'
+                    offset={[0, -10]}
+                  >
                     <div
                       style={{
-                        backgroundColor: "white",
-                        padding: "0.5rem 0.75rem",
-                        borderRadius: "0.5rem",
+                        backgroundColor: 'white',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '0.5rem',
                         boxShadow:
-                          "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                        minWidth: "120px",
+                          '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        minWidth: '120px',
                       }}
                     >
-                      <div style={{ fontWeight: 500, color: "#111827" }}>
-                        {pipeline.name}
-                      </div>
-                      <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+                      <div style={{ fontWeight: 500, color: '#111827' }}>{pipeline.name}</div>
+                      <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                         {pipeline.pipeline_type}
                       </div>
                     </div>
@@ -763,63 +719,54 @@ const MapView: React.FC<MapViewProps> = ({
                 <Popup>
                   <div
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.5rem",
-                      maxWidth: "320px",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                      maxWidth: '320px',
                     }}
                   >
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
                       }}
                     >
                       <MapPin
                         style={{
-                          width: "1.25rem",
-                          height: "1.25rem",
-                          color: "#22c55e",
+                          width: '1.25rem',
+                          height: '1.25rem',
+                          color: '#22c55e',
                         }}
                       />
-                      <h4
-                        style={{ fontWeight: 600, color: "#111827", margin: 0 }}
-                      >
-                        {point.name}
-                      </h4>
+                      <h4 style={{ fontWeight: 600, color: '#111827', margin: 0 }}>{point.name}</h4>
                     </div>
-                    <div style={{ fontSize: "0.875rem", color: "#4b5563" }}>
+                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
                       <div>类型: {point.device_type}</div>
                       <div>
-                        状态:{" "}
-                        <span style={{ color: getStatusColor(point.status) }}>
-                          {point.status}
-                        </span>
+                        状态:{' '}
+                        <span style={{ color: getStatusColor(point.status) }}>{point.status}</span>
                       </div>
                       <div
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.25rem",
-                          marginTop: "0.25rem",
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          marginTop: '0.25rem',
                         }}
                       >
-                        <Navigation
-                          style={{ width: "0.75rem", height: "0.75rem" }}
-                        />
-                        {point.latitude.toFixed(4)},{" "}
-                        {point.longitude.toFixed(4)}
+                        <Navigation style={{ width: '0.75rem', height: '0.75rem' }} />
+                        {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
                       </div>
                     </div>
                     {point.description && (
                       <div
                         style={{
-                          fontSize: "0.875rem",
-                          color: "#6b7280",
-                          borderTop: "1px solid #e5e7eb",
-                          paddingTop: "0.5rem",
-                          marginTop: "0.5rem",
+                          fontSize: '0.875rem',
+                          color: '#6b7280',
+                          borderTop: '1px solid #e5e7eb',
+                          paddingTop: '0.5rem',
+                          marginTop: '0.5rem',
                         }}
                       >
                         {point.description}
@@ -828,22 +775,22 @@ const MapView: React.FC<MapViewProps> = ({
                     <button
                       onClick={() => handleMarkerClick(point)}
                       style={{
-                        width: "100%",
-                        marginTop: "0.5rem",
-                        padding: "0.25rem 0.5rem",
-                        fontSize: "0.875rem",
-                        color: "#0891b2",
-                        backgroundColor: "#ecfeff",
-                        borderRadius: "0.25rem",
-                        border: "none",
-                        cursor: "pointer",
-                        transition: "background-color 0.2s",
+                        width: '100%',
+                        marginTop: '0.5rem',
+                        padding: '0.25rem 0.5rem',
+                        fontSize: '0.875rem',
+                        color: '#0891b2',
+                        backgroundColor: '#ecfeff',
+                        borderRadius: '0.25rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#cffafe";
+                        e.currentTarget.style.backgroundColor = '#cffafe';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#ecfeff";
+                        e.currentTarget.style.backgroundColor = '#ecfeff';
                       }}
                     >
                       查看详情
@@ -865,74 +812,67 @@ const MapView: React.FC<MapViewProps> = ({
                 <Popup>
                   <div
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.5rem",
-                      maxWidth: "320px",
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                      maxWidth: '320px',
                     }}
                   >
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
                       }}
                     >
                       <Info
                         style={{
-                          width: "1.25rem",
-                          height: "1.25rem",
-                          color: "#f59e0b",
+                          width: '1.25rem',
+                          height: '1.25rem',
+                          color: '#f59e0b',
                         }}
                       />
-                      <h4
-                        style={{ fontWeight: 600, color: "#111827", margin: 0 }}
-                      >
+                      <h4 style={{ fontWeight: 600, color: '#111827', margin: 0 }}>
                         {location.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: "0.875rem", color: "#4b5563" }}>
+                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
                       <div>类型: {location.location_type}</div>
-                      {location.capacity !== undefined && (
-                        <div>容量: {location.capacity}</div>
-                      )}
+                      {location.capacity !== undefined && <div>容量: {location.capacity}</div>}
                       {location.current_usage !== undefined && (
                         <div>当前: {location.current_usage}</div>
                       )}
                       <div
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.25rem",
-                          marginTop: "0.25rem",
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          marginTop: '0.25rem',
                         }}
                       >
-                        <Navigation
-                          style={{ width: "0.75rem", height: "0.75rem" }}
-                        />
-                        {location.latitude.toFixed(4)},{" "}
-                        {location.longitude.toFixed(4)}
+                        <Navigation style={{ width: '0.75rem', height: '0.75rem' }} />
+                        {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
                       </div>
                     </div>
                     <button
                       onClick={() => handleMarkerClick(location)}
                       style={{
-                        width: "100%",
-                        marginTop: "0.5rem",
-                        padding: "0.25rem 0.5rem",
-                        fontSize: "0.875rem",
-                        color: "#0891b2",
-                        backgroundColor: "#ecfeff",
-                        borderRadius: "0.25rem",
-                        border: "none",
-                        cursor: "pointer",
-                        transition: "background-color 0.2s",
+                        width: '100%',
+                        marginTop: '0.5rem',
+                        padding: '0.25rem 0.5rem',
+                        fontSize: '0.875rem',
+                        color: '#0891b2',
+                        backgroundColor: '#ecfeff',
+                        borderRadius: '0.25rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#cffafe";
+                        e.currentTarget.style.backgroundColor = '#cffafe';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "#ecfeff";
+                        e.currentTarget.style.backgroundColor = '#ecfeff';
                       }}
                     >
                       查看详情
@@ -943,17 +883,17 @@ const MapView: React.FC<MapViewProps> = ({
             ))}
 
           {/* Measure Polylines */}
-          {toolMode === "measure-distance" && measurePoints.length > 0 && (
+          {toolMode === 'measure-distance' && measurePoints.length > 0 && (
             <Polyline
               positions={measurePoints}
-              color="#EF4444"
+              color='#EF4444'
               weight={2}
-              dashArray="5,5"
+              dashArray='5,5'
             />
           )}
 
           {/* Measure Area */}
-          {toolMode === "measure-area" && measurePoints.length > 2 && (
+          {toolMode === 'measure-area' && measurePoints.length > 2 && (
             <Rectangle
               bounds={[
                 [
@@ -965,24 +905,24 @@ const MapView: React.FC<MapViewProps> = ({
                   Math.max(...measurePoints.map((p) => p[1])),
                 ],
               ]}
-              color="#F59E0B"
+              color='#F59E0B'
               weight={2}
               fillOpacity={0.1}
             />
           )}
 
-          {toolMode === "measure-area" && measurePoints.length > 1 && (
+          {toolMode === 'measure-area' && measurePoints.length > 1 && (
             <Polyline
               positions={[...measurePoints, measurePoints[0]]}
-              color="#F59E0B"
+              color='#F59E0B'
               weight={2}
-              dashArray="5,5"
+              dashArray='5,5'
             />
           )}
 
           {/* Draw Features */}
           {drawFeatures.map((feature) => {
-            if (feature.type === "point") {
+            if (feature.type === 'point') {
               return (
                 <Marker
                   key={feature.id}
@@ -997,10 +937,8 @@ const MapView: React.FC<MapViewProps> = ({
                 />
               );
             }
-            const coords = feature.points.map(
-              (p) => [p.lat, p.lng] as [number, number],
-            );
-            if (feature.type === "line") {
+            const coords = feature.points.map((p) => [p.lat, p.lng] as [number, number]);
+            if (feature.type === 'line') {
               return (
                 <Polyline
                   key={feature.id}
@@ -1010,7 +948,7 @@ const MapView: React.FC<MapViewProps> = ({
                 />
               );
             }
-            if (feature.type === "polygon") {
+            if (feature.type === 'polygon') {
               return (
                 <Polyline
                   key={feature.id}
@@ -1028,35 +966,30 @@ const MapView: React.FC<MapViewProps> = ({
           {/* Current Drawing */}
           {currentDrawing && (
             <>
-              {currentDrawing.type === "line" && (
+              {currentDrawing.type === 'line' && (
                 <Polyline
-                  positions={currentDrawing.points.map(
-                    (p) => [p.lat, p.lng] as [number, number],
-                  )}
+                  positions={currentDrawing.points.map((p) => [p.lat, p.lng] as [number, number])}
                   color={currentDrawing.color}
                   weight={3}
-                  dashArray="5,5"
+                  dashArray='5,5'
                 />
               )}
-              {currentDrawing.type === "polygon" &&
-                currentDrawing.points.length > 1 && (
-                  <Polyline
-                    positions={[
-                      ...currentDrawing.points.map(
-                        (p) => [p.lat, p.lng] as [number, number],
-                      ),
-                      [
-                        currentDrawing.points[0].lat,
-                        currentDrawing.points[0].lng,
-                      ] as [number, number],
-                    ]}
-                    color={currentDrawing.color}
-                    weight={3}
-                    dashArray="5,5"
-                    fill={true}
-                    fillOpacity={0.1}
-                  />
-                )}
+              {currentDrawing.type === 'polygon' && currentDrawing.points.length > 1 && (
+                <Polyline
+                  positions={[
+                    ...currentDrawing.points.map((p) => [p.lat, p.lng] as [number, number]),
+                    [currentDrawing.points[0].lat, currentDrawing.points[0].lng] as [
+                      number,
+                      number,
+                    ],
+                  ]}
+                  color={currentDrawing.color}
+                  weight={3}
+                  dashArray='5,5'
+                  fill={true}
+                  fillOpacity={0.1}
+                />
+              )}
             </>
           )}
 
@@ -1084,7 +1017,7 @@ const MapView: React.FC<MapViewProps> = ({
         onToggleTrackPanel={() => setShowTrackPanel(true)}
         onToggleHeatmap={() => setShowHeatmap(!showHeatmap)}
         onToggle3DView={() => setShow3DView(true)}
-        onToggleMapType={() => setMapType(mapType === "osm" ? "amap" : "osm")}
+        onToggleMapType={() => setMapType(mapType === 'osm' ? 'amap' : 'osm')}
         onToggleOfflineMode={() => setOfflineMode(!offlineMode)}
         showTrackPanel={showTrackPanel}
         showHeatmap={showHeatmap}
@@ -1098,41 +1031,38 @@ const MapView: React.FC<MapViewProps> = ({
       />
 
       {/* Measure Result Display */}
-      {(toolMode === "measure-distance" || toolMode === "measure-area") && (
+      {(toolMode === 'measure-distance' || toolMode === 'measure-area') && (
         <div
           style={{
-            position: "absolute",
-            top: "1rem",
-            left: "8rem",
-            backgroundColor: "white",
-            borderRadius: "0.5rem",
-            boxShadow:
-              "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-            padding: "0.5rem 1rem",
+            position: 'absolute',
+            top: '1rem',
+            left: '8rem',
+            backgroundColor: 'white',
+            borderRadius: '0.5rem',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            padding: '0.5rem 1rem',
           }}
         >
-          <span
-            style={{ fontSize: "0.875rem", fontWeight: 500, color: "#374151" }}
-          >
+          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
             {measureResult}
           </span>
         </div>
       )}
 
       {/* Tool Mode Hint */}
-      {toolMode !== "select" && (
+      {toolMode !== 'select' && (
         <div
           style={{
-            position: "absolute",
-            bottom: "1rem",
-            left: "1rem",
-            backgroundColor: "#fefce8",
-            border: "1px solid #fde047",
-            borderRadius: "0.5rem",
-            padding: "0.5rem 1rem",
+            position: 'absolute',
+            bottom: '1rem',
+            left: '1rem',
+            backgroundColor: '#fefce8',
+            border: '1px solid #fde047',
+            borderRadius: '0.5rem',
+            padding: '0.5rem 1rem',
           }}
         >
-          <span style={{ fontSize: "0.75rem", color: "#a16207" }}>
+          <span style={{ fontSize: '0.75rem', color: '#a16207' }}>
             按 ESC 退出工具模式 | 按 Enter 完成绘制
           </span>
         </div>
@@ -1161,36 +1091,42 @@ const MapView: React.FC<MapViewProps> = ({
       />
 
       {/* Details Panel */}
-      <DetailsPanel selectedItem={selectedItem} onClose={closeDetailsPanel} />
+      <DetailsPanel
+        selectedItem={selectedItem}
+        onClose={closeDetailsPanel}
+      />
 
       {/* Measure Tooltip */}
       {showMeasureTooltip && (
-        <MeasureTooltip position={tooltipPosition} content={measureResult} />
+        <MeasureTooltip
+          position={tooltipPosition}
+          content={measureResult}
+        />
       )}
 
       {/* Track Panel Modal */}
       {showTrackPanel && (
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 50,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <div
             style={{
-              backgroundColor: "white",
-              borderRadius: "0.75rem",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              width: "90%",
-              maxWidth: "1024px",
-              height: "80%",
-              maxHeight: "600px",
-              overflow: "hidden",
+              backgroundColor: 'white',
+              borderRadius: '0.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              width: '90%',
+              maxWidth: '1024px',
+              height: '80%',
+              maxHeight: '600px',
+              overflow: 'hidden',
             }}
           >
             <DeviceTrackPanel
@@ -1203,7 +1139,7 @@ const MapView: React.FC<MapViewProps> = ({
 
       {/* Heatmap Legend */}
       {showHeatmap && (
-        <div style={{ position: "absolute", bottom: "1rem", right: "6rem" }}>
+        <div style={{ position: 'absolute', bottom: '1rem', right: '6rem' }}>
           <HeatmapLegend mode={heatmapMode} />
         </div>
       )}
@@ -1212,25 +1148,25 @@ const MapView: React.FC<MapViewProps> = ({
       {show3DView && (
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             zIndex: 50,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <div
             style={{
-              backgroundColor: "white",
-              borderRadius: "0.75rem",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              width: "95%",
-              maxWidth: "1152px",
-              height: "90%",
-              maxHeight: "700px",
-              overflow: "hidden",
+              backgroundColor: 'white',
+              borderRadius: '0.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              width: '95%',
+              maxWidth: '1152px',
+              height: '90%',
+              maxHeight: '700px',
+              overflow: 'hidden',
             }}
           >
             <Map3DView

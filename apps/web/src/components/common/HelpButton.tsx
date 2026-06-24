@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -8,8 +8,8 @@ import {
   IconButton as MuiIconButton,
   Box,
   Typography,
-} from "@mui/material";
-import { HelpCircle, X } from "lucide-react";
+} from '@mui/material';
+import { HelpCircle, X } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -19,11 +19,11 @@ export interface HelpButtonProps {
   /** 帮助内容 */
   content: React.ReactNode;
   /** 按钮大小 */
-  size?: "small" | "medium" | "large";
+  size?: 'small' | 'medium' | 'large';
   /** 按钮提示文字 */
   tooltip?: string;
   /** 对话框最大宽度 */
-  maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** 是否禁用 */
   disabled?: boolean;
   /** 自定义图标 */
@@ -33,11 +33,11 @@ export interface HelpButtonProps {
 // ============ HelpButton 组件 ============
 
 export const HelpButton: React.FC<HelpButtonProps> = ({
-  title = "帮助",
+  title = '帮助',
   content,
-  size = "medium",
-  tooltip = "查看帮助",
-  maxWidth = "sm",
+  size = 'medium',
+  tooltip = '查看帮助',
+  maxWidth = 'sm',
   disabled = false,
   icon,
 }) => {
@@ -62,9 +62,9 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
             onClick={handleOpen}
             disabled={disabled}
             sx={{
-              color: "text.secondary",
-              "&:hover": {
-                color: "primary.main",
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'primary.main',
               },
             }}
           >
@@ -88,22 +88,26 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
       >
         <DialogTitle
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             pr: 1,
           }}
         >
-          <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h6'
+            component='span'
+            sx={{ fontWeight: 600 }}
+          >
             {title}
           </Typography>
           <MuiIconButton
-            size="small"
+            size='small'
             onClick={handleClose}
             sx={{
-              color: "text.secondary",
-              "&:hover": {
-                color: "text.primary",
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'text.primary',
               },
             }}
           >
@@ -112,8 +116,11 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ py: 1 }}>
-            {typeof content === "string" ? (
-              <Typography variant="body2" color="text.secondary">
+            {typeof content === 'string' ? (
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {content}
               </Typography>
             ) : (

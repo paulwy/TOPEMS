@@ -3,7 +3,7 @@
  * 提供类型安全的localStorage和sessionStorage操作
  */
 
-const PREFIX = "topems_";
+const PREFIX = 'topems_';
 
 /**
  * 存储接口
@@ -83,7 +83,7 @@ class LocalStorage {
       };
       localStorage.setItem(createKey(key, this.prefix), this.serialize(item));
     } catch (error) {
-      console.error("LocalStorage set error:", error);
+      console.error('LocalStorage set error:', error);
     }
   }
 
@@ -103,7 +103,7 @@ class LocalStorage {
 
       return item.value;
     } catch (error) {
-      console.error("LocalStorage get error:", error);
+      console.error('LocalStorage get error:', error);
       return defaultValue;
     }
   }
@@ -115,7 +115,7 @@ class LocalStorage {
     try {
       localStorage.removeItem(createKey(key, this.prefix));
     } catch (error) {
-      console.error("LocalStorage remove error:", error);
+      console.error('LocalStorage remove error:', error);
     }
   }
 
@@ -131,7 +131,7 @@ class LocalStorage {
         }
       });
     } catch (error) {
-      console.error("LocalStorage clear error:", error);
+      console.error('LocalStorage clear error:', error);
     }
   }
 
@@ -150,9 +150,9 @@ class LocalStorage {
       const keys = Object.keys(localStorage);
       return keys
         .filter((key) => key.startsWith(this.prefix))
-        .map((key) => key.replace(this.prefix, ""));
+        .map((key) => key.replace(this.prefix, ''));
     } catch (error) {
-      console.error("LocalStorage keys error:", error);
+      console.error('LocalStorage keys error:', error);
       return [];
     }
   }
@@ -183,7 +183,7 @@ class SessionStorage {
       };
       sessionStorage.setItem(createKey(key, this.prefix), this.serialize(item));
     } catch (error) {
-      console.error("SessionStorage set error:", error);
+      console.error('SessionStorage set error:', error);
     }
   }
 
@@ -198,7 +198,7 @@ class SessionStorage {
       const item = this.deserialize<StorageItem<T>>(raw);
       return item.value;
     } catch (error) {
-      console.error("SessionStorage get error:", error);
+      console.error('SessionStorage get error:', error);
       return defaultValue;
     }
   }
@@ -210,7 +210,7 @@ class SessionStorage {
     try {
       sessionStorage.removeItem(createKey(key, this.prefix));
     } catch (error) {
-      console.error("SessionStorage remove error:", error);
+      console.error('SessionStorage remove error:', error);
     }
   }
 
@@ -226,7 +226,7 @@ class SessionStorage {
         }
       });
     } catch (error) {
-      console.error("SessionStorage clear error:", error);
+      console.error('SessionStorage clear error:', error);
     }
   }
 }
@@ -240,13 +240,13 @@ export { LocalStorage, SessionStorage };
 
 // 常用键名常量
 export const STORAGE_KEYS = {
-  USER_INFO: "user_info",
-  USER_PERMISSIONS: "user_permissions",
-  THEME: "theme",
-  LANGUAGE: "language",
-  SIDEBAR_COLLAPSED: "sidebar_collapsed",
-  TABLE_COLUMNS: "table_columns",
-  FORM_DRAFT: "form_draft",
-  LAST_LOGIN: "last_login",
-  REMEMBER_ME: "remember_me",
+  USER_INFO: 'user_info',
+  USER_PERMISSIONS: 'user_permissions',
+  THEME: 'theme',
+  LANGUAGE: 'language',
+  SIDEBAR_COLLAPSED: 'sidebar_collapsed',
+  TABLE_COLUMNS: 'table_columns',
+  FORM_DRAFT: 'form_draft',
+  LAST_LOGIN: 'last_login',
+  REMEMBER_ME: 'remember_me',
 } as const;

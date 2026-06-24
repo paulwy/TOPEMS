@@ -1,7 +1,7 @@
 // modules/MapModule/MapControls.tsx
-import React from "react";
-import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
-import { Box, IconButton, Paper } from "@mui/material";
+import React from 'react';
+import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { Box, IconButton, Paper } from '@mui/material';
 
 interface MapControlsProps {
   zoom: number;
@@ -21,11 +21,11 @@ const MapControls: React.FC<MapControlsProps> = ({
   return (
     <Box
       sx={{
-        position: "absolute",
+        position: 'absolute',
         bottom: 16,
         right: 16,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         gap: 2,
       }}
     >
@@ -33,41 +33,50 @@ const MapControls: React.FC<MapControlsProps> = ({
         onClick={onZoomIn}
         sx={{
           p: 2,
-          bgcolor: "white",
+          bgcolor: 'white',
           borderRadius: 2,
           boxShadow: 2,
-          "&:hover": { bgcolor: "#f9fafb" },
+          '&:hover': { bgcolor: '#f9fafb' },
         }}
-        title="放大"
+        title='放大'
       >
-        <ZoomIn size={20} style={{ color: "#374151" }} />
+        <ZoomIn
+          size={20}
+          style={{ color: '#374151' }}
+        />
       </IconButton>
       <IconButton
         onClick={onZoomOut}
         sx={{
           p: 2,
-          bgcolor: "white",
+          bgcolor: 'white',
           borderRadius: 2,
           boxShadow: 2,
-          "&:hover": { bgcolor: "#f9fafb" },
+          '&:hover': { bgcolor: '#f9fafb' },
         }}
-        title="缩小"
+        title='缩小'
       >
-        <ZoomOut size={20} style={{ color: "#374151" }} />
+        <ZoomOut
+          size={20}
+          style={{ color: '#374151' }}
+        />
       </IconButton>
       {bounds && bounds.length >= 2 && (
         <IconButton
           onClick={onFitBounds}
           sx={{
             p: 2,
-            bgcolor: "white",
+            bgcolor: 'white',
             borderRadius: 2,
             boxShadow: 2,
-            "&:hover": { bgcolor: "#f9fafb" },
+            '&:hover': { bgcolor: '#f9fafb' },
           }}
-          title="缩放到所有标记"
+          title='缩放到所有标记'
         >
-          <Maximize2 size={20} style={{ color: "#374151" }} />
+          <Maximize2
+            size={20}
+            style={{ color: '#374151' }}
+          />
         </IconButton>
       )}
     </Box>

@@ -1,4 +1,8 @@
-import React, { useState } from "react";
+/**
+ * @deprecated 此组件已弃用，请使用 @/components/bi/ChartCard 中的 ChartCard 组件
+ * 该组件将保留作为向后兼容，预计在未来的版本中移除
+ */
+import React, { useState } from 'react';
 import {
   BarChart3,
   LineChart,
@@ -11,11 +15,20 @@ import {
   Calendar,
   TrendingUp,
   AlertCircle,
-} from "lucide-react";
-import { Card, CardHeader, CardContent, Menu, MenuItem, Skeleton, Typography, Chip,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+} from 'lucide-react';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Typography,
+  Chip,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
-type ChartType = "bar" | "line" | "area" | "pie";
+type ChartType = 'bar' | 'line' | 'area' | 'pie';
 
 interface TimeRange {
   label: string;
@@ -23,11 +36,11 @@ interface TimeRange {
 }
 
 const timeRanges: TimeRange[] = [
-  { label: "今日", value: "today" },
-  { label: "本周", value: "week" },
-  { label: "本月", value: "month" },
-  { label: "本季度", value: "quarter" },
-  { label: "本年", value: "year" },
+  { label: '今日', value: 'today' },
+  { label: '本周', value: 'week' },
+  { label: '本月', value: 'month' },
+  { label: '本季度', value: 'quarter' },
+  { label: '本年', value: 'year' },
 ];
 
 interface ChartCardProps {
@@ -51,7 +64,7 @@ interface ChartCardProps {
   showFullscreen?: boolean;
   showRefresh?: boolean;
   className?: string;
-  trend?: "up" | "down" | "stable";
+  trend?: 'up' | 'down' | 'stable';
   trendValue?: string;
 }
 
@@ -72,70 +85,66 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   onRefresh,
   onExport,
   onFullscreen,
-  chartTypes = ["bar", "line", "area", "pie"],
-  activeChartType = "bar",
+  chartTypes = ['bar', 'line', 'area', 'pie'],
+  activeChartType = 'bar',
   onChartTypeChange,
-  timeRange = "month",
+  timeRange = 'month',
   onTimeRangeChange,
   showTimeRange = false,
   showChartType = false,
   showExport = true,
   showFullscreen = true,
   showRefresh = true,
-  className = "",
+  className = '',
   trend,
   trendValue,
 }) => {
-  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(
-    null,
-  );
-  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
-    null,
-  );
+  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(null);
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
 
   const getTrendIcon = () => {
-    if (!trend || trend === "stable") return null;
-    return trend === "up" ? (
-      <TrendingUp style={{ width: 16, height: 16, color: "#10B981" }} />
+    if (!trend || trend === 'stable') return null;
+    return trend === 'up' ? (
+      <TrendingUp style={{ width: 16, height: 16, color: '#10B981' }} />
     ) : (
       <TrendingUp
         style={{
           width: 16,
           height: 16,
-          color: "#EF4444",
-          transform: "rotate(180deg)",
+          color: '#EF4444',
+          transform: 'rotate(180deg)',
         }}
       />
     );
   };
 
   const getTrendColor = () => {
-    if (!trend || trend === "stable") return "text.secondary";
-    return trend === "up" ? "#10B981" : "#EF4444";
+    if (!trend || trend === 'stable') return 'text.secondary';
+    return trend === 'up' ? '#10B981' : '#EF4444';
   };
 
   return (
     <Card
       sx={{
-        overflow: "hidden",
-        transition: "all 0.3s",
-        "&:hover": { boxShadow: 2 },
+        overflow: 'hidden',
+        transition: 'all 0.3s',
+        '&:hover': { boxShadow: 2 },
       }}
       className={className}
     >
       <CardHeader
         sx={{
-          padding: "16px 24px",
-          borderBottom: "1px solid rgba(0,0,0,0.05)",
+          padding: '16px 24px',
+          borderBottom: '1px solid rgba(0,0,0,0.05)',
         }}
         action={
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {showChartType && chartTypes.length > 1 && (
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  backgroundColor: "#F1F5F9",
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: '#F1F5F9',
                   borderRadius: 8,
                   padding: 2,
                 }}
@@ -147,16 +156,11 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                     style={{
                       padding: 6,
                       borderRadius: 6,
-                      border: "none",
-                      backgroundColor:
-                        activeChartType === type ? "white" : "transparent",
-                      color:
-                        activeChartType === type ? "#1D4ED8" : "text.secondary",
-                      cursor: "pointer",
-                      boxShadow:
-                        activeChartType === type
-                          ? "0 1px 2px rgba(0,0,0,0.1)"
-                          : "none",
+                      border: 'none',
+                      backgroundColor: activeChartType === type ? 'white' : 'transparent',
+                      color: activeChartType === type ? '#1D4ED8' : 'text.secondary',
+                      cursor: 'pointer',
+                      boxShadow: activeChartType === type ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
                     }}
                     title={type}
                   >
@@ -168,22 +172,19 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
             {showTimeRange && (
               <Button
-                variant="text"
-                size="small"
+                variant='text'
+                size='small'
                 onClick={(e) => setTimeMenuAnchor(e.currentTarget)}
-                sx={{ textTransform: "none", padding: "6px 12px" }}
+                sx={{ textTransform: 'none', padding: '6px 12px' }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 4 }} />
-                <span>
-                  {timeRanges.find((r) => r.value === timeRange)?.label ||
-                    "本月"}
-                </span>
+                <span>{timeRanges.find((r) => r.value === timeRange)?.label || '本月'}</span>
               </Button>
             )}
 
             <Button
-              variant="text"
-              size="small"
+              variant='text'
+              size='small'
               onClick={(e) => setActionMenuAnchor(e.currentTarget)}
             >
               <MoreVertical style={{ width: 16, height: 16 }} />
@@ -191,30 +192,31 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           </div>
         }
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 'semibold' }}
+          >
             {title}
           </Typography>
           {trend && trendValue && (
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 4,
                 color: getTrendColor(),
               }}
             >
               {getTrendIcon()}
-              <span style={{ fontSize: 12, fontWeight: 500 }}>
-                {trendValue}
-              </span>
+              <span style={{ fontSize: 12, fontWeight: 500 }}>{trendValue}</span>
             </div>
           )}
         </div>
         {subtitle && (
           <Typography
-            variant="body2"
-            color="text.secondary"
+            variant='body2'
+            color='text.secondary'
             sx={{ marginTop: 2 }}
           >
             {subtitle}
@@ -224,46 +226,48 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
       <CardContent sx={{ padding: 24 }}>
         {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <Skeleton sx={{ width: "33%", height: 16 }} />
-            <Skeleton sx={{ width: "100%", height: 200, borderRadius: 8 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Skeleton sx={{ width: '33%', height: 16 }} />
+            <Skeleton sx={{ width: '100%', height: 200, borderRadius: 8 }} />
           </div>
         ) : error ? (
           <div
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
               padding: 32,
-              textAlign: "center",
+              textAlign: 'center',
             }}
           >
             <div
               style={{
                 width: 48,
                 height: 48,
-                backgroundColor: "#FEF2F2",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                backgroundColor: '#FEF2F2',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 marginBottom: 12,
               }}
             >
-              <AlertCircle
-                style={{ width: 24, height: 24, color: "#EF4444" }}
-              />
+              <AlertCircle style={{ width: 24, height: 24, color: '#EF4444' }} />
             </div>
             <Typography
-              variant="body1"
-              color="text.secondary"
+              variant='body1'
+              color='text.secondary'
               sx={{ marginBottom: 8 }}
             >
               {error}
             </Typography>
             {onRefresh && (
-              <Button variant="outlined" size="small" onClick={onRefresh}>
+              <Button
+                variant='outlined'
+                size='small'
+                onClick={onRefresh}
+              >
                 <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
                 重试
               </Button>

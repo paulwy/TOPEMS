@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState, useMemo } from 'react';
 import {
   assetApi,
   expenseApi,
@@ -27,8 +27,8 @@ import {
   type Vehicle,
   type VehicleRequest,
   type Announcement,
-} from "@/api/erp";
-import { useAppStore } from "../store";
+} from '@/api/erp';
+import { useAppStore } from '../store';
 
 export interface UseErpResult<T> {
   data: T[];
@@ -52,18 +52,13 @@ export interface UseErpResult<T> {
 
 function useErpBase<T extends { id?: string }>(
   api: {
-    list: (
-      params?: any,
-    ) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
+    list: (params?: any) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
     get: (id: string) => Promise<{ success: boolean; data?: T }>;
     create: (data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
-    update: (
-      id: string,
-      data: Partial<T>,
-    ) => Promise<{ success: boolean; data?: T }>;
+    update: (id: string, data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
     delete: (id: string) => Promise<{ success: boolean }>;
   },
-  initialData: T[] = [],
+  initialData: T[] = []
 ): UseErpResult<T> {
   const [data, setData] = useState<T[]>(initialData);
   const [loading, setLoading] = useState(false);
@@ -75,20 +70,19 @@ function useErpBase<T extends { id?: string }>(
 
   const handleError = useCallback(
     (err: any, defaultMessage: string) => {
-      const message =
-        err?.response?.data?.message || err?.message || defaultMessage;
+      const message = err?.response?.data?.message || err?.message || defaultMessage;
       setError(message);
-      addNotification({ title: "错误", message, type: "error" });
+      addNotification({ title: '错误', message, type: 'error' });
       return Promise.reject(err);
     },
-    [addNotification],
+    [addNotification]
   );
 
   const handleSuccess = useCallback(
     (message: string) => {
-      addNotification({ title: "成功", message, type: "success" });
+      addNotification({ title: '成功', message, type: 'success' });
     },
-    [addNotification],
+    [addNotification]
   );
 
   const fetch = useCallback(
@@ -103,12 +97,12 @@ function useErpBase<T extends { id?: string }>(
         setError(null);
         return response.data?.items || [];
       } catch (err) {
-        return handleError(err, "加载数据失败");
+        return handleError(err, '加载数据失败');
       } finally {
         setLoading(false);
       }
     },
-    [api, page, pageSize, handleError],
+    [api, page, pageSize, handleError]
   );
 
   const get = useCallback(
@@ -122,13 +116,13 @@ function useErpBase<T extends { id?: string }>(
         }
         return null;
       } catch (err) {
-        handleError(err, "获取数据失败");
+        handleError(err, '获取数据失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [api, handleError],
+    [api, handleError]
   );
 
   const create = useCallback(
@@ -139,18 +133,18 @@ function useErpBase<T extends { id?: string }>(
         if (response.success && response.data) {
           setData((prev) => [...prev, response.data!]);
           setError(null);
-          handleSuccess("创建成功");
+          handleSuccess('创建成功');
           return response.data;
         }
         return null;
       } catch (err) {
-        handleError(err, "创建失败");
+        handleError(err, '创建失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [api, handleError, handleSuccess],
+    [api, handleError, handleSuccess]
   );
 
   const update = useCallback(
@@ -159,22 +153,20 @@ function useErpBase<T extends { id?: string }>(
       try {
         const response = await api.update(id, item);
         if (response.success && response.data) {
-          setData((prev) =>
-            prev.map((d) => (d.id === id ? response.data! : d)),
-          );
+          setData((prev) => prev.map((d) => (d.id === id ? response.data! : d)));
           setError(null);
-          handleSuccess("更新成功");
+          handleSuccess('更新成功');
           return response.data;
         }
         return null;
       } catch (err) {
-        handleError(err, "更新失败");
+        handleError(err, '更新失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [api, handleError, handleSuccess],
+    [api, handleError, handleSuccess]
   );
 
   const deleteItem = useCallback(
@@ -186,15 +178,15 @@ function useErpBase<T extends { id?: string }>(
           setData((prev) => prev.filter((d) => d.id !== id));
           setTotal((prev) => Math.max(0, prev - 1));
           setError(null);
-          handleSuccess("删除成功");
+          handleSuccess('删除成功');
         }
       } catch (err) {
-        handleError(err, "删除失败");
+        handleError(err, '删除失败');
       } finally {
         setLoading(false);
       }
     },
-    [api, handleError, handleSuccess],
+    [api, handleError, handleSuccess]
   );
 
   const bulkDelete = useCallback(
@@ -207,12 +199,12 @@ function useErpBase<T extends { id?: string }>(
         setError(null);
         handleSuccess(`已删除 ${ids.length} 条记录`);
       } catch (err) {
-        handleError(err, "批量删除失败");
+        handleError(err, '批量删除失败');
       } finally {
         setLoading(false);
       }
     },
-    [api, handleError, handleSuccess],
+    [api, handleError, handleSuccess]
   );
 
   const setPage = useCallback((newPage: number) => {
@@ -236,7 +228,7 @@ function useErpBase<T extends { id?: string }>(
       setPage,
       setPageSize,
     }),
-    [page, pageSize, total, setPage, setPageSize],
+    [page, pageSize, total, setPage, setPageSize]
   );
 
   return {
@@ -313,13 +305,12 @@ export function useFinanceReports() {
 
   const handleError = useCallback(
     (err: any, defaultMessage: string) => {
-      const message =
-        err?.response?.data?.message || err?.message || defaultMessage;
+      const message = err?.response?.data?.message || err?.message || defaultMessage;
       setError(message);
-      addNotification({ title: "错误", message, type: "error" });
+      addNotification({ title: '错误', message, type: 'error' });
       return Promise.reject(err);
     },
-    [addNotification],
+    [addNotification]
   );
 
   const getBalanceSheet = useCallback(
@@ -330,13 +321,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取资产负债表失败");
+        handleError(err, '获取资产负债表失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getIncomeStatement = useCallback(
@@ -347,13 +338,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取利润表失败");
+        handleError(err, '获取利润表失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getCashFlowStatement = useCallback(
@@ -364,13 +355,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取现金流量表失败");
+        handleError(err, '获取现金流量表失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getBusinessOverview = useCallback(
@@ -381,13 +372,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取经营概览失败");
+        handleError(err, '获取经营概览失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getProjectSummary = useCallback(
@@ -398,13 +389,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取项目财务汇总失败");
+        handleError(err, '获取项目财务汇总失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getMonthlyTrend = useCallback(async () => {
@@ -414,7 +405,7 @@ export function useFinanceReports() {
       setError(null);
       return response.data;
     } catch (err) {
-      handleError(err, "获取月度趋势失败");
+      handleError(err, '获取月度趋势失败');
       return null;
     } finally {
       setLoading(false);
@@ -429,13 +420,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取部门财务汇总失败");
+        handleError(err, '获取部门财务汇总失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getAgingAnalysis = useCallback(async () => {
@@ -445,7 +436,7 @@ export function useFinanceReports() {
       setError(null);
       return response.data;
     } catch (err) {
-      handleError(err, "获取账龄分析失败");
+      handleError(err, '获取账龄分析失败');
       return null;
     } finally {
       setLoading(false);
@@ -460,13 +451,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取现金流分析失败");
+        handleError(err, '获取现金流分析失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getExpenseAnalysis = useCallback(
@@ -477,13 +468,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取费用分析失败");
+        handleError(err, '获取费用分析失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getProfitAnalysis = useCallback(
@@ -494,13 +485,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取利润分析失败");
+        handleError(err, '获取利润分析失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   const getFinancialOverview = useCallback(
@@ -511,13 +502,13 @@ export function useFinanceReports() {
         setError(null);
         return response.data;
       } catch (err) {
-        handleError(err, "获取财务概览失败");
+        handleError(err, '获取财务概览失败');
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [handleError],
+    [handleError]
   );
 
   return {

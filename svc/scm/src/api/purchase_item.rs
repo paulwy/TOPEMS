@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{delete, get},
     Json, Router,
 };
 use chrono::Utc;
@@ -11,7 +11,8 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::api::audit::log_audit_event;
 use crate::models::{CreatePurchaseItemRequest, PurchaseItem, UpdatePurchaseItemRequest};
-use topems_shared::{api_error, ApiResponse};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::{api_error, auth::Claims, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct PurchaseItemQueryParams {
@@ -25,15 +26,20 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/scm/purchase-items", get(list_items).post(create_item))
         .route(
-            "/api/v1/purchase-items/{id}",
-            get(get_item).put(update_item),
+            "/api/scm/purchase-items/{id}",
+            get(get_item).put(update_item).delete(delete_item),
         )
 }
 
 async fn list_items(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseItemQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -92,9 +98,14 @@ async fn list_items(
 
 async fn create_item(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -163,8 +174,13 @@ async fn create_item(
 
 async fn get_item(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PurchaseItem>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, PurchaseItem>(
         r#"
         SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
@@ -187,10 +203,15 @@ async fn get_item(
 
 async fn update_item(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdatePurchaseItemRequest>,
 ) -> Json<ApiResponse<PurchaseItem>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseItem>(
@@ -266,6 +287,67 @@ async fn update_item(
         None,
         None,
         request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn delete_item(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let result = sqlx::query("DELETE FROM scm.purchase_items WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "采购明细删除成功")),
+            "success",
+            None,
+        ),
+        Ok(_) => (
+            Json(api_error(404, "采购明细不存在")),
+            "error",
+            Some("采购明细不存在".to_string()),
+        ),
+        Err(e) => {
+            tracing::error!("删除采购明细失败: {}", e);
+            (
+                Json(api_error(500, "采购明细删除失败")),
+                "error",
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let response_data = if let Ok(r) = &result {
+        Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "purchase_item".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
         response_data,
         status_str.to_string(),
         error_msg,

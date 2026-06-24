@@ -10,39 +10,32 @@
 /**
  * 外部ERP系统类型
  */
-export type ExternalErpType = "kingdee" | "yonyou" | "sap";
+export type ExternalErpType = 'kingdee' | 'yonyou' | 'sap';
 
 /**
  * ERP连接状态
  */
-export type ErpConnectionStatus =
-  | "connected"
-  | "disconnected"
-  | "error"
-  | "syncing";
+export type ErpConnectionStatus = 'connected' | 'disconnected' | 'error' | 'syncing';
 
 /**
  * ERP同步方向
  */
-export type SyncDirection = "import" | "export" | "bidirectional";
+export type SyncDirection = 'import' | 'export' | 'bidirectional';
 
 /**
  * ERP同步模式
  */
-export type SyncMode = "realtime" | "scheduled" | "manual";
+export type SyncMode = 'realtime' | 'scheduled' | 'manual';
 
 /**
  * ERP数据同步状态
  */
-export type ErpSyncStatus = "pending" | "syncing" | "completed" | "failed";
+export type ErpSyncStatus = 'pending' | 'syncing' | 'completed' | 'failed';
 
 /**
  * ERP科目映射方向
  */
-export type AccountMappingDirection =
-  | "to_external"
-  | "from_external"
-  | "bidirectional";
+export type AccountMappingDirection = 'to_external' | 'from_external' | 'bidirectional';
 
 // ============================================
 // 二、连接配置
@@ -88,7 +81,7 @@ export interface ErpConnectionConfig {
  * 金蝶连接配置
  */
 export interface KingdeeConnectionConfig extends ErpConnectionConfig {
-  type: "kingdee";
+  type: 'kingdee';
   datacenter_id?: string; // 数据中心ID
   language?: string; // 语言: zh_CN, en_US
   format?: string; // 数据格式: JSON, XML
@@ -98,17 +91,17 @@ export interface KingdeeConnectionConfig extends ErpConnectionConfig {
  * 用友连接配置
  */
 export interface YonyouConnectionConfig extends ErpConnectionConfig {
-  type: "yonyou";
+  type: 'yonyou';
   tenant_id?: string; // 租户ID
   region?: string; // 区域: cn, us
-  environment?: "sandbox" | "production";
+  environment?: 'sandbox' | 'production';
 }
 
 /**
  * SAP连接配置
  */
 export interface SapConnectionConfig extends ErpConnectionConfig {
-  type: "sap";
+  type: 'sap';
   client: string; // SAP Client
   system_number?: string; // 系统编号
   router?: string; // 路由器字符串
@@ -234,25 +227,20 @@ export interface EmployeeMappingRule extends BaseMappingRule {
  * 同步日志类型
  */
 export type SyncLogType =
-  | "account"
-  | "customer"
-  | "supplier"
-  | "employee"
-  | "voucher"
-  | "invoice"
-  | "project"
-  | "department"
-  | "full";
+  | 'account'
+  | 'customer'
+  | 'supplier'
+  | 'employee'
+  | 'voucher'
+  | 'invoice'
+  | 'project'
+  | 'department'
+  | 'full';
 
 /**
  * 同步日志状态
  */
-export type SyncLogStatus =
-  | "pending"
-  | "syncing"
-  | "completed"
-  | "failed"
-  | "partial_failed";
+export type SyncLogStatus = 'pending' | 'syncing' | 'completed' | 'failed' | 'partial_failed';
 
 /**
  * 同步日志详情
@@ -345,7 +333,7 @@ export interface VoucherSyncRequest extends BaseSyncRequest {
  */
 export interface InvoiceSyncRequest extends BaseSyncRequest {
   invoice_ids?: string[];
-  invoice_type?: "sales" | "purchase";
+  invoice_type?: 'sales' | 'purchase';
   period_from?: string;
   period_to?: string;
   status?: string[];
@@ -370,7 +358,7 @@ export interface AccountSyncResult extends BaseSyncResult {
   records: {
     local_id: string;
     external_id: string;
-    action: "created" | "updated" | "skipped";
+    action: 'created' | 'updated' | 'skipped';
   }[];
 }
 
@@ -383,7 +371,7 @@ export interface VoucherSyncResult extends BaseSyncResult {
   records: {
     local_voucher_id: string;
     external_voucher_id?: string;
-    action: "synced" | "failed";
+    action: 'synced' | 'failed';
     error?: string;
   }[];
 }
@@ -436,7 +424,7 @@ export interface KingdeeVoucherEntry {
   account_name: string;
   debit_amount: number;
   credit_amount: number;
-  direction: "debit" | "credit";
+  direction: 'debit' | 'credit';
   summary?: string;
   // 辅助核算
   department_id?: string;
@@ -459,7 +447,7 @@ export interface YonyouVoucherEntry {
   account_name: string;
   debit_amount: number;
   credit_amount: number;
-  direction: "debit" | "credit";
+  direction: 'debit' | 'credit';
   digest?: string;
   // 辅助核算
   department_id?: string;
@@ -481,7 +469,7 @@ export interface SapVoucherEntry {
   anln1?: string; // 资产编号
   aufnr?: string; // 订单编号
   racct: string; // 科目
-  drcrk: "S" | "H"; // 借方/贷方 (S=借方, H=贷方)
+  drcrk: 'S' | 'H'; // 借方/贷方 (S=借方, H=贷方)
   wrbtr: number; // 金额
   mwskz?: string; // 税码
   dmbtr: number; // 本位币金额

@@ -1,6 +1,6 @@
 /**
  * 部署配置
- * 
+ *
  * 提供系统部署模式的配置管理，支持 SaaS 和 On-Premise 两种部署模式。
  */
 
@@ -38,9 +38,7 @@ export interface DeploymentConfig {
 export const deploymentConfig: DeploymentConfig = {
   mode: (import.meta.env.VITE_DEPLOYMENT_MODE as DeploymentMode) || 'on-premise',
   multiTenantEnabled: import.meta.env.VITE_MULTI_TENANT_ENABLED === 'true',
-  defaultTenantId:
-    import.meta.env.VITE_DEFAULT_TENANT_ID ||
-    '00000000-0000-0000-0000-000000000001',
+  defaultTenantId: import.meta.env.VITE_DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001',
   features: {
     quotaEnabled: import.meta.env.VITE_QUOTA_ENABLED === 'true',
     billingEnabled: import.meta.env.VITE_BILLING_ENABLED === 'true',
@@ -68,13 +66,10 @@ export const isMultiTenant = (): boolean => deploymentConfig.multiTenantEnabled;
 
 /**
  * 检查租户访问权限
- * 
+ *
  * On-Premise 模式下跳过租户检查
  */
-export const checkTenantAccess = (
-  userTenantId: string,
-  resourceTenantId: string
-): boolean => {
+export const checkTenantAccess = (userTenantId: string, resourceTenantId: string): boolean => {
   if (!deploymentConfig.multiTenantEnabled) {
     return true;
   }
@@ -83,7 +78,7 @@ export const checkTenantAccess = (
 
 /**
  * 是否应该检查配额
- * 
+ *
  * On-Premise 模式下跳过配额检查
  */
 export const shouldCheckQuota = (): boolean =>

@@ -1,11 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
+use std::time::Duration;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -15,7 +16,27 @@ use crate::models::{
     CreateReceivableRequest, Expense, Payable, Receivable, UpdateBudgetRequest,
     UpdateExpenseRequest, UpdatePayableRequest, UpdateReceivableRequest,
 };
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+
+const FINANCE_CACHE_TTL: Duration = Duration::from_secs(300);
+
+fn expense_cache_key(id: &Uuid) -> String {
+    format!("expense:{}", id)
+}
+
+fn budget_cache_key(id: &Uuid) -> String {
+    format!("budget:{}", id)
+}
+
+fn receivable_cache_key(id: &Uuid) -> String {
+    format!("receivable:{}", id)
+}
+
+fn payable_cache_key(id: &Uuid) -> String {
+    format!("payable:{}", id)
+}
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -56,8 +77,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_expenses(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Expense>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -112,9 +138,22 @@ async fn list_expenses(
 
 async fn create_expense(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateExpenseRequest>,
 ) -> Json<ApiResponse<Expense>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    if req.expense_number.is_empty() {
+        return Json(api_error(400, "报销编号不能为空"));
+    }
+
+    if req.amount <= 0.0 {
+        return Json(api_error(400, "报销金额必须大于0"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -169,8 +208,8 @@ async fn create_expense(
             entity_type: "expense".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -185,8 +224,20 @@ async fn create_expense(
 
 async fn get_expense(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Expense>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let cache_key = expense_cache_key(&id);
+    if let Some(cached) = state.expense_cache.get(&cache_key) {
+        if let Ok(expense) = serde_json::from_value(cached.clone()) {
+            return Json(ApiResponse::success(expense, "从缓存获取费用报销成功"));
+        }
+    }
+
     let result = sqlx::query_as::<_, Expense>(
         r#"
         SELECT id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at
@@ -198,7 +249,14 @@ async fn get_expense(
     .await;
 
     match result {
-        Ok(Some(expense)) => Json(ApiResponse::success(expense, "获取费用报销成功")),
+        Ok(Some(expense)) => {
+            state.expense_cache.set_with_ttl(
+                cache_key,
+                serde_json::to_value(&expense).unwrap_or_default(),
+                FINANCE_CACHE_TTL,
+            );
+            Json(ApiResponse::success(expense, "获取费用报销成功"))
+        }
         Ok(None) => Json(api_error(404, "费用报销不存在")),
         Err(e) => {
             tracing::error!("获取费用报销失败: {}", e);
@@ -209,10 +267,15 @@ async fn get_expense(
 
 async fn update_expense(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateExpenseRequest>,
 ) -> Json<ApiResponse<Expense>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, Expense>(
         "SELECT id, expense_number, applicant_name, department_id, expense_type, amount, description, expense_date, receipt_count, status, approver_id, approved_at, reimbursed_at, created_at, updated_at FROM expenses WHERE id = $1",
     )
@@ -266,11 +329,14 @@ async fn update_expense(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(expense) => (
-            Json(ApiResponse::success(expense.clone(), "费用报销更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(expense) => {
+            state.expense_cache.remove(&expense_cache_key(&id));
+            (
+                Json(ApiResponse::success(expense.clone(), "费用报销更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新费用报销失败: {}", e);
             (
@@ -294,8 +360,8 @@ async fn update_expense(
             entity_type: "expense".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -310,20 +376,28 @@ async fn update_expense(
 
 async fn delete_expense(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let result = sqlx::query("DELETE FROM expenses WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "费用报销删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.expense_cache.remove(&expense_cache_key(&id));
+            (
+                Json(ApiResponse::success("".to_string(), "费用报销删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "费用报销不存在")),
             "error".to_string(),
@@ -352,8 +426,8 @@ async fn delete_expense(
             entity_type: "expense".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -368,8 +442,13 @@ async fn delete_expense(
 
 async fn list_budgets(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Budget>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -424,9 +503,18 @@ async fn list_budgets(
 
 async fn create_budget(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    if req.total_budget <= 0.0 {
+        return Json(api_error(400, "预算金额必须大于0"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let used_amount = 0.0;
@@ -483,8 +571,8 @@ async fn create_budget(
             entity_type: "budget".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -499,8 +587,20 @@ async fn create_budget(
 
 async fn get_budget(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Budget>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let cache_key = budget_cache_key(&id);
+    if let Some(cached) = state.budget_cache.get(&cache_key) {
+        if let Ok(budget) = serde_json::from_value(cached.clone()) {
+            return Json(ApiResponse::success(budget, "从缓存获取预算成功"));
+        }
+    }
+
     let result = sqlx::query_as::<_, Budget>(
         r#"
         SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at
@@ -512,7 +612,14 @@ async fn get_budget(
     .await;
 
     match result {
-        Ok(Some(budget)) => Json(ApiResponse::success(budget, "获取预算成功")),
+        Ok(Some(budget)) => {
+            state.budget_cache.set_with_ttl(
+                cache_key,
+                serde_json::to_value(&budget).unwrap_or_default(),
+                FINANCE_CACHE_TTL,
+            );
+            Json(ApiResponse::success(budget, "获取预算成功"))
+        }
         Ok(None) => Json(api_error(404, "预算不存在")),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
@@ -523,10 +630,15 @@ async fn get_budget(
 
 async fn update_budget(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, Budget>(
         "SELECT id, department_id, budget_type, fiscal_year, total_budget, used_amount, remaining_amount, usage_rate, status, created_at, updated_at FROM budgets WHERE id = $1",
     )
@@ -578,11 +690,14 @@ async fn update_budget(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(budget) => (
-            Json(ApiResponse::success(budget.clone(), "预算更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(budget) => {
+            state.budget_cache.remove(&budget_cache_key(&id));
+            (
+                Json(ApiResponse::success(budget.clone(), "预算更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新预算失败: {}", e);
             (
@@ -606,8 +721,8 @@ async fn update_budget(
             entity_type: "budget".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -622,20 +737,28 @@ async fn update_budget(
 
 async fn delete_budget(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let result = sqlx::query("DELETE FROM budgets WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "预算删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.budget_cache.remove(&budget_cache_key(&id));
+            (
+                Json(ApiResponse::success("".to_string(), "预算删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "预算不存在")),
             "error".to_string(),
@@ -664,8 +787,8 @@ async fn delete_budget(
             entity_type: "budget".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -680,8 +803,13 @@ async fn delete_budget(
 
 async fn list_receivables(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Receivable>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -736,9 +864,22 @@ async fn list_receivables(
 
 async fn create_receivable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateReceivableRequest>,
 ) -> Json<ApiResponse<Receivable>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    if req.invoice_number.is_empty() {
+        return Json(api_error(400, "发票编号不能为空"));
+    }
+
+    if req.amount <= 0.0 {
+        return Json(api_error(400, "金额必须大于0"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -791,8 +932,8 @@ async fn create_receivable(
             entity_type: "receivable".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -807,8 +948,20 @@ async fn create_receivable(
 
 async fn get_receivable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Receivable>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let cache_key = receivable_cache_key(&id);
+    if let Some(cached) = state.receivable_cache.get(&cache_key) {
+        if let Ok(receivable) = serde_json::from_value(cached.clone()) {
+            return Json(ApiResponse::success(receivable, "从缓存获取应收账款成功"));
+        }
+    }
+
     let result = sqlx::query_as::<_, Receivable>(
         r#"
         SELECT id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at
@@ -820,7 +973,14 @@ async fn get_receivable(
     .await;
 
     match result {
-        Ok(Some(receivable)) => Json(ApiResponse::success(receivable, "获取应收账款成功")),
+        Ok(Some(receivable)) => {
+            state.receivable_cache.set_with_ttl(
+                cache_key,
+                serde_json::to_value(&receivable).unwrap_or_default(),
+                FINANCE_CACHE_TTL,
+            );
+            Json(ApiResponse::success(receivable, "获取应收账款成功"))
+        }
         Ok(None) => Json(api_error(404, "应收账款不存在")),
         Err(e) => {
             tracing::error!("获取应收账款失败: {}", e);
@@ -831,10 +991,15 @@ async fn get_receivable(
 
 async fn update_receivable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateReceivableRequest>,
 ) -> Json<ApiResponse<Receivable>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, Receivable>(
         "SELECT id, invoice_number, customer_name, project_name, amount, invoice_date, due_date, status, received_amount, created_at, updated_at FROM receivables WHERE id = $1",
     )
@@ -880,11 +1045,14 @@ async fn update_receivable(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(receivable) => (
-            Json(ApiResponse::success(receivable.clone(), "应收账款更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(receivable) => {
+            state.receivable_cache.remove(&receivable_cache_key(&id));
+            (
+                Json(ApiResponse::success(receivable.clone(), "应收账款更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新应收账款失败: {}", e);
             (
@@ -908,8 +1076,8 @@ async fn update_receivable(
             entity_type: "receivable".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -924,20 +1092,28 @@ async fn update_receivable(
 
 async fn delete_receivable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let result = sqlx::query("DELETE FROM receivables WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "应收账款删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.receivable_cache.remove(&receivable_cache_key(&id));
+            (
+                Json(ApiResponse::success("".to_string(), "应收账款删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "应收账款不存在")),
             "error".to_string(),
@@ -966,8 +1142,8 @@ async fn delete_receivable(
             entity_type: "receivable".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -982,8 +1158,13 @@ async fn delete_receivable(
 
 async fn list_payables(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Payable>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1038,9 +1219,22 @@ async fn list_payables(
 
 async fn create_payable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreatePayableRequest>,
 ) -> Json<ApiResponse<Payable>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    if req.invoice_number.is_empty() {
+        return Json(api_error(400, "发票编号不能为空"));
+    }
+
+    if req.amount <= 0.0 {
+        return Json(api_error(400, "金额必须大于0"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -1093,8 +1287,8 @@ async fn create_payable(
             entity_type: "payable".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -1109,8 +1303,20 @@ async fn create_payable(
 
 async fn get_payable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Payable>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let cache_key = payable_cache_key(&id);
+    if let Some(cached) = state.payable_cache.get(&cache_key) {
+        if let Ok(payable) = serde_json::from_value(cached.clone()) {
+            return Json(ApiResponse::success(payable, "从缓存获取应付账款成功"));
+        }
+    }
+
     let result = sqlx::query_as::<_, Payable>(
         r#"
         SELECT id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at
@@ -1122,7 +1328,14 @@ async fn get_payable(
     .await;
 
     match result {
-        Ok(Some(payable)) => Json(ApiResponse::success(payable, "获取应付账款成功")),
+        Ok(Some(payable)) => {
+            state.payable_cache.set_with_ttl(
+                cache_key,
+                serde_json::to_value(&payable).unwrap_or_default(),
+                FINANCE_CACHE_TTL,
+            );
+            Json(ApiResponse::success(payable, "获取应付账款成功"))
+        }
         Ok(None) => Json(api_error(404, "应付账款不存在")),
         Err(e) => {
             tracing::error!("获取应付账款失败: {}", e);
@@ -1133,10 +1346,15 @@ async fn get_payable(
 
 async fn update_payable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdatePayableRequest>,
 ) -> Json<ApiResponse<Payable>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, Payable>(
         "SELECT id, invoice_number, supplier_name, category, amount, invoice_date, due_date, status, paid_amount, created_at, updated_at FROM payables WHERE id = $1",
     )
@@ -1182,11 +1400,14 @@ async fn update_payable(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(payable) => (
-            Json(ApiResponse::success(payable.clone(), "应付账款更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(payable) => {
+            state.payable_cache.remove(&payable_cache_key(&id));
+            (
+                Json(ApiResponse::success(payable.clone(), "应付账款更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新应付账款失败: {}", e);
             (
@@ -1210,8 +1431,8 @@ async fn update_payable(
             entity_type: "payable".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -1226,20 +1447,28 @@ async fn update_payable(
 
 async fn delete_payable(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
     let result = sqlx::query("DELETE FROM payables WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "应付账款删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            state.payable_cache.remove(&payable_cache_key(&id));
+            (
+                Json(ApiResponse::success("".to_string(), "应付账款删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(api_error(404, "应付账款不存在")),
             "error".to_string(),
@@ -1268,8 +1497,8 @@ async fn delete_payable(
             entity_type: "payable".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,

@@ -3,13 +3,9 @@
  * 提供凭证模板的CRUD操作和自动生成凭证功能
  */
 
-import { apiClient, downloadBlob } from "./client";
-import type {
-  VoucherTemplate,
-  VoucherTemplateType,
-  VoucherTemplateEntry,
-} from "../types/erp-finance";
-import config from "../config/runtime";
+import { apiClient, downloadBlob } from './client';
+import type { VoucherTemplate, VoucherTemplateType, VoucherTemplateEntry } from '../types/finance';
+import config from '../config/runtime';
 
 // ============================================
 // 一、凭证模板管理
@@ -25,13 +21,12 @@ export const voucherTemplateApi = {
     is_active?: boolean;
     page?: number;
     page_size?: number;
-  }) => apiClient.erp.get("/api/voucher/templates", { params }),
+  }) => apiClient.erp.get('/api/voucher/templates', { params }),
 
   /**
    * 获取模板详情
    */
-  getTemplate: (templateId: string) =>
-    apiClient.erp.get(`/api/voucher/templates/${templateId}`),
+  getTemplate: (templateId: string) => apiClient.erp.get(`/api/voucher/templates/${templateId}`),
 
   /**
    * 创建凭证模板
@@ -45,7 +40,7 @@ export const voucherTemplateApi = {
     applicable_companies?: string[];
     condition?: string;
     entries: Partial<VoucherTemplateEntry>[];
-  }) => apiClient.erp.post("/api/voucher/templates", data),
+  }) => apiClient.erp.post('/api/voucher/templates', data),
 
   /**
    * 更新凭证模板
@@ -91,10 +86,7 @@ export const voucherTemplateApi = {
   /**
    * 添加模板分录
    */
-  addTemplateEntry: (
-    templateId: string,
-    entry: Partial<VoucherTemplateEntry>,
-  ) =>
+  addTemplateEntry: (templateId: string, entry: Partial<VoucherTemplateEntry>) =>
     apiClient.erp.post(`/api/voucher/templates/${templateId}/entries`, entry),
 
   /**
@@ -103,20 +95,14 @@ export const voucherTemplateApi = {
   updateTemplateEntry: (
     templateId: string,
     entryId: string,
-    entry: Partial<VoucherTemplateEntry>,
-  ) =>
-    apiClient.erp.put(
-      `/api/voucher/templates/${templateId}/entries/${entryId}`,
-      entry,
-    ),
+    entry: Partial<VoucherTemplateEntry>
+  ) => apiClient.erp.put(`/api/voucher/templates/${templateId}/entries/${entryId}`, entry),
 
   /**
    * 删除模板分录
    */
   deleteTemplateEntry: (templateId: string, entryId: string) =>
-    apiClient.erp.delete(
-      `/api/voucher/templates/${templateId}/entries/${entryId}`,
-    ),
+    apiClient.erp.delete(`/api/voucher/templates/${templateId}/entries/${entryId}`),
 
   /**
    * 重新排序模板分录
@@ -139,7 +125,7 @@ export const voucherTemplateApi = {
     source_id: string;
     company_id?: string;
     voucher_date?: string;
-  }) => apiClient.erp.post("/api/voucher/generate/preview", data),
+  }) => apiClient.erp.post('/api/voucher/generate/preview', data),
 
   /**
    * 从源单据生成凭证
@@ -147,23 +133,23 @@ export const voucherTemplateApi = {
    */
   generateVoucherFromSource: (data: {
     template_id?: string; // 指定模板，不指定则使用默认模板
-    source_module: "pm" | "crm" | "srm" | "hrm" | "finance";
+    source_module: 'pm' | 'crm' | 'srm' | 'hrm' | 'finance';
     source_id: string;
     company_id?: string;
     voucher_date?: string;
     force_regenerate?: boolean; // 是否强制重新生成
-  }) => apiClient.erp.post("/api/voucher/generate/from-source", data),
+  }) => apiClient.erp.post('/api/voucher/generate/from-source', data),
 
   /**
    * 批量从源单据生成凭证
    */
   batchGenerateVouchers: (data: {
     template_id?: string;
-    source_module: "pm" | "crm" | "srm" | "hrm" | "finance";
+    source_module: 'pm' | 'crm' | 'srm' | 'hrm' | 'finance';
     source_ids: string[];
     company_id?: string;
     voucher_date?: string;
-  }) => apiClient.erp.post("/api/voucher/generate/batch", data),
+  }) => apiClient.erp.post('/api/voucher/generate/batch', data),
 
   /**
    * 根据规则自动生成凭证
@@ -173,23 +159,17 @@ export const voucherTemplateApi = {
     template_id?: string;
     company_id?: string;
     period: string; // 会计期间 YYYY-MM
-    modules?: ("pm" | "crm" | "srm" | "hrm" | "finance")[];
+    modules?: ('pm' | 'crm' | 'srm' | 'hrm' | 'finance')[];
     dry_run?: boolean; // 试算不实际生成
-  }) => apiClient.erp.post("/api/voucher/generate/auto", data),
+  }) => apiClient.erp.post('/api/voucher/generate/auto', data),
 
   /**
    * 重新生成已冲销的凭证
    */
-  regenerateReversedVoucher: (
-    originalVoucherId: string,
-    voucherDate?: string,
-  ) =>
-    apiClient.erp.post(
-      `/api/voucher/generate/regenerate/${originalVoucherId}`,
-      {
-        voucher_date: voucherDate,
-      },
-    ),
+  regenerateReversedVoucher: (originalVoucherId: string, voucherDate?: string) =>
+    apiClient.erp.post(`/api/voucher/generate/regenerate/${originalVoucherId}`, {
+      voucher_date: voucherDate,
+    }),
 
   // ============================================
   // 四、凭证模板匹配
@@ -204,7 +184,7 @@ export const voucherTemplateApi = {
     company_id?: string;
     amount?: number;
     extra_data?: Record<string, any>;
-  }) => apiClient.erp.post("/api/voucher/templates/match", data),
+  }) => apiClient.erp.post('/api/voucher/templates/match', data),
 
   /**
    * 获取模板使用统计
@@ -214,7 +194,7 @@ export const voucherTemplateApi = {
     params?: {
       start_date?: string;
       end_date?: string;
-    },
+    }
   ) =>
     apiClient.erp.get(`/api/voucher/templates/${templateId}/usage-stats`, {
       params,
@@ -232,7 +212,7 @@ export const voucherTemplateApi = {
     is_active?: boolean;
     page?: number;
     page_size?: number;
-  }) => apiClient.erp.get("/api/voucher/rules", { params }),
+  }) => apiClient.erp.get('/api/voucher/rules', { params }),
 
   /**
    * 创建凭证生成规则
@@ -245,7 +225,7 @@ export const voucherTemplateApi = {
     condition?: string;
     priority?: number;
     is_active?: boolean;
-  }) => apiClient.erp.post("/api/voucher/rules", data),
+  }) => apiClient.erp.post('/api/voucher/rules', data),
 
   /**
    * 更新凭证生成规则
@@ -256,8 +236,7 @@ export const voucherTemplateApi = {
   /**
    * 删除凭证生成规则
    */
-  deleteGenerationRule: (ruleId: string) =>
-    apiClient.erp.delete(`/api/voucher/rules/${ruleId}`),
+  deleteGenerationRule: (ruleId: string) => apiClient.erp.delete(`/api/voucher/rules/${ruleId}`),
 
   /**
    * 启用/禁用生成规则
@@ -274,27 +253,19 @@ export const voucherTemplateApi = {
   /**
    * 导出模板
    */
-  exportTemplate: async (
-    templateId: string,
-    format: "json" | "yaml",
-  ): Promise<Blob> => {
-    const baseURL =
-      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(
-      baseURL,
-      `/api/voucher/templates/${templateId}/export`,
-      {
-        params: { format },
-      },
-    );
+  exportTemplate: async (templateId: string, format: 'json' | 'yaml'): Promise<Blob> => {
+    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(baseURL, `/api/voucher/templates/${templateId}/export`, {
+      params: { format },
+    });
   },
 
   /**
    * 导入模板
    */
   importTemplate: (data: FormData) =>
-    apiClient.erp.post("/api/voucher/templates/import", data, {
-      headers: { "Content-Type": "multipart/form-data" },
+    apiClient.erp.post('/api/voucher/templates/import', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     }),
 };
 

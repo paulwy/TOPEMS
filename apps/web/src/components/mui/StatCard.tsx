@@ -1,14 +1,6 @@
-import React from "react";
-import {
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  Skeleton,
-  Tooltip,
-  useTheme,
-} from "@mui/material";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import React from 'react';
+import { Card, CardContent, Box, Typography, Skeleton, Tooltip, useTheme } from '@mui/material';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -21,11 +13,11 @@ export interface StatCardProps {
   // 变化趋势
   change?: number;
   changeLabel?: string;
-  changeDirection?: "up" | "down" | "neutral";
+  changeDirection?: 'up' | 'down' | 'neutral';
 
   // 样式
   icon?: React.ReactNode;
-  color?: "primary" | "secondary" | "success" | "warning" | "error" | "info";
+  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
   gradient?: boolean;
 
   // 交互
@@ -50,7 +42,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   changeLabel,
   changeDirection,
   icon,
-  color = "primary",
+  color = 'primary',
   gradient = false,
   onClick,
   tooltip,
@@ -60,34 +52,29 @@ export const StatCard: React.FC<StatCardProps> = ({
   const theme = useTheme();
 
   // 颜色映射
-  const colorMap: Record<
-    string,
-    { main: string; light: string; dark: string }
-  > = {
-    primary: { main: "#3b82f6", light: "#60a5fa", dark: "#2563eb" },
-    secondary: { main: "#8b5cf6", light: "#a78bfa", dark: "#7c3aed" },
-    success: { main: "#22c55e", light: "#4ade80", dark: "#16a34a" },
-    warning: { main: "#f59e0b", light: "#fbbf24", dark: "#d97706" },
-    error: { main: "#ef4444", light: "#f87171", dark: "#dc2626" },
-    info: { main: "#06b6d4", light: "#22d3ee", dark: "#0891b2" },
+  const colorMap: Record<string, { main: string; light: string; dark: string }> = {
+    primary: { main: '#3b82f6', light: '#60a5fa', dark: '#2563eb' },
+    secondary: { main: '#8b5cf6', light: '#a78bfa', dark: '#7c3aed' },
+    success: { main: '#22c55e', light: '#4ade80', dark: '#16a34a' },
+    warning: { main: '#f59e0b', light: '#fbbf24', dark: '#d97706' },
+    error: { main: '#ef4444', light: '#f87171', dark: '#dc2626' },
+    info: { main: '#06b6d4', light: '#22d3ee', dark: '#0891b2' },
   };
 
   const colors = colorMap[color];
 
   // 趋势方向
   const trend =
-    changeDirection ||
-    (change && change > 0 ? "up" : change && change < 0 ? "down" : "neutral");
+    changeDirection || (change && change > 0 ? 'up' : change && change < 0 ? 'down' : 'neutral');
 
   // 趋势图标
-  const TrendIcon =
-    trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
+  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
 
   // 趋势颜色
   const trendColor =
-    trend === "up"
+    trend === 'up'
       ? theme.palette.success.main
-      : trend === "down"
+      : trend === 'down'
         ? theme.palette.error.main
         : theme.palette.text.secondary;
 
@@ -95,19 +82,19 @@ export const StatCard: React.FC<StatCardProps> = ({
     <Card
       sx={{
         borderRadius: 2,
-        cursor: onClick ? "pointer" : "default",
-        transition: "all 0.2s ease-in-out",
-        overflow: "hidden",
-        position: "relative",
-        "&:hover": onClick
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.2s ease-in-out',
+        overflow: 'hidden',
+        position: 'relative',
+        '&:hover': onClick
           ? {
-              transform: "translateY(-2px)",
+              transform: 'translateY(-2px)',
               boxShadow: 4,
             }
           : {},
         ...(gradient && {
           background: `linear-gradient(135deg, ${colors.main} 0%, ${colors.dark} 100%)`,
-          color: "white",
+          color: 'white',
         }),
       }}
       onClick={onClick}
@@ -115,12 +102,12 @@ export const StatCard: React.FC<StatCardProps> = ({
       {gradient && (
         <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: -50,
             right: -50,
             width: 150,
             height: 150,
-            borderRadius: "50%",
+            borderRadius: '50%',
             background: `rgba(255, 255, 255, 0.1)`,
           }}
         />
@@ -129,17 +116,17 @@ export const StatCard: React.FC<StatCardProps> = ({
       <CardContent sx={{ p: 3 }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
           }}
         >
           <Box sx={{ flex: 1 }}>
             {/* 标题 */}
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
-                color: gradient ? "rgba(255,255,255,0.8)" : "text.secondary",
+                color: gradient ? 'rgba(255,255,255,0.8)' : 'text.secondary',
                 mb: 1,
                 fontWeight: 500,
               }}
@@ -150,29 +137,34 @@ export const StatCard: React.FC<StatCardProps> = ({
             {/* 数值 */}
             {loading ? (
               <>
-                <Skeleton width={100} height={40} />
-                <Skeleton width={60} height={20} sx={{ mt: 0.5 }} />
+                <Skeleton
+                  width={100}
+                  height={40}
+                />
+                <Skeleton
+                  width={60}
+                  height={20}
+                  sx={{ mt: 0.5 }}
+                />
               </>
             ) : (
               <>
-                <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
                   <Typography
-                    variant="h4"
+                    variant='h4'
                     sx={{
                       fontWeight: 700,
-                      color: gradient ? "white" : "text.primary",
+                      color: gradient ? 'white' : 'text.primary',
                       lineHeight: 1.2,
                     }}
                   >
-                    {typeof value === "number" ? value.toLocaleString() : value}
+                    {typeof value === 'number' ? value.toLocaleString() : value}
                   </Typography>
                   {unit && (
                     <Typography
-                      variant="body2"
+                      variant='body2'
                       sx={{
-                        color: gradient
-                          ? "rgba(255,255,255,0.7)"
-                          : "text.secondary",
+                        color: gradient ? 'rgba(255,255,255,0.7)' : 'text.secondary',
                       }}
                     >
                       {unit}
@@ -184,23 +176,21 @@ export const StatCard: React.FC<StatCardProps> = ({
                 {change !== undefined && (
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 0.5,
                       mt: 1,
                     }}
                   >
-                    <TrendIcon
-                      style={{ width: 14, height: 14, color: trendColor }}
-                    />
+                    <TrendIcon style={{ width: 14, height: 14, color: trendColor }} />
                     <Typography
-                      variant="caption"
+                      variant='caption'
                       sx={{
-                        color: gradient ? "rgba(255,255,255,0.9)" : trendColor,
+                        color: gradient ? 'rgba(255,255,255,0.9)' : trendColor,
                         fontWeight: 500,
                       }}
                     >
-                      {change > 0 ? "+" : ""}
+                      {change > 0 ? '+' : ''}
                       {change}%{changeLabel && ` ${changeLabel}`}
                     </Typography>
                   </Box>
@@ -216,13 +206,11 @@ export const StatCard: React.FC<StatCardProps> = ({
                 width: 48,
                 height: 48,
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: gradient
-                  ? "rgba(255,255,255,0.2)"
-                  : `${colors.main}15`,
-                color: gradient ? "white" : colors.main,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: gradient ? 'rgba(255,255,255,0.2)' : `${colors.main}15`,
+                color: gradient ? 'white' : colors.main,
               }}
             >
               {icon}
@@ -239,7 +227,10 @@ export const StatCard: React.FC<StatCardProps> = ({
   // 包装 Tooltip
   if (tooltip) {
     return (
-      <Tooltip title={tooltip} placement="top">
+      <Tooltip
+        title={tooltip}
+        placement='top'
+      >
         {content}
       </Tooltip>
     );
@@ -251,30 +242,30 @@ export const StatCard: React.FC<StatCardProps> = ({
 // ============ 快捷统计卡片组 ============
 
 export interface StatCardGroupProps {
-  stats: Omit<StatCardProps, "">[];
+  stats: Omit<StatCardProps, ''>[];
   loading?: boolean;
   columns?: number;
 }
 
-export const StatCardGroup: React.FC<StatCardGroupProps> = ({
-  stats,
-  loading,
-  columns = 4,
-}) => {
+export const StatCardGroup: React.FC<StatCardGroupProps> = ({ stats, loading, columns = 4 }) => {
   return (
     <Box
       sx={{
-        display: "grid",
+        display: 'grid',
         gridTemplateColumns: {
-          xs: "repeat(1, 1fr)",
-          sm: "repeat(2, 1fr)",
+          xs: 'repeat(1, 1fr)',
+          sm: 'repeat(2, 1fr)',
           md: `repeat(${Math.min(columns, 4)}, 1fr)`,
         },
         gap: 2,
       }}
     >
       {stats.map((stat, index) => (
-        <StatCard key={stat.title + index} {...stat} loading={loading} />
+        <StatCard
+          key={stat.title + index}
+          {...stat}
+          loading={loading}
+        />
       ))}
     </Box>
   );

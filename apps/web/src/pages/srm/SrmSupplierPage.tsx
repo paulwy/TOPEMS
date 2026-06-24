@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -11,45 +11,34 @@ import {
   CardContent,
   Typography,
   CircularProgress,
-} from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Plus, Eye, Users, TrendingUp, Award } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from "@/components/templates";
-import { srmApi } from "@/api/srm";
-import type {
-  Supplier,
-  PerformanceSummary,
-  ScoreLevelDistribution,
-} from "@/api/srm";
-import { toast } from "react-toastify";
-import { apiLogger } from "@/utils/logger";
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Plus, Eye, Users, TrendingUp, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { srmApi } from '@/api/srm';
+import type { Supplier, PerformanceSummary, ScoreLevelDistribution } from '@/api/srm';
+import { toast } from 'react-toastify';
+import { apiLogger } from '@/utils/logger';
 
 const SrmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [performanceSummary, setPerformanceSummary] =
-    useState<PerformanceSummary | null>(null);
-  const [scoreDistribution, setScoreDistribution] = useState<
-    ScoreLevelDistribution[]
-  >([]);
+  const [performanceSummary, setPerformanceSummary] = useState<PerformanceSummary | null>(null);
+  const [scoreDistribution, setScoreDistribution] = useState<ScoreLevelDistribution[]>([]);
   const [formData, setFormData] = useState({
-    supplier_no: "",
-    name: "",
-    contact_person: "",
-    phone: "",
-    email: "",
-    address: "",
-    category: "",
-    risk_level: "medium",
-    status: "active",
+    supplier_no: '',
+    name: '',
+    contact_person: '',
+    phone: '',
+    email: '',
+    address: '',
+    category: '',
+    risk_level: 'medium',
+    status: 'active',
   });
 
   useEffect(() => {
@@ -67,22 +56,17 @@ const SrmSupplierPage: React.FC = () => {
         const items = Array.isArray(data) ? data : data.suppliers || [];
         const adapted = items.map((item: any) => ({
           ...item,
-          supplier_no: item.supplier_no || item.supplierNo || "",
-          contact_phone:
-            item.phone || item.contactPhone || item.contact_phone || "",
+          supplier_no: item.supplier_no || item.supplierNo || '',
+          contact_phone: item.phone || item.contactPhone || item.contact_phone || '',
           status:
-            item.status === "active"
-              ? "启用"
-              : item.status === "inactive"
-                ? "禁用"
-                : item.status,
+            item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
         }));
         setSuppliers(adapted);
       } else {
         setSuppliers([]);
       }
     } catch (err) {
-      apiLogger.error("加载供应商数据失败:", err);
+      apiLogger.error('加载供应商数据失败:', err);
       setSuppliers([]);
     } finally {
       setLoading(false);
@@ -96,7 +80,7 @@ const SrmSupplierPage: React.FC = () => {
         setPerformanceSummary(response.data);
       }
     } catch (err) {
-      apiLogger.error("加载绩效汇总失败:", err);
+      apiLogger.error('加载绩效汇总失败:', err);
     }
   };
 
@@ -107,28 +91,26 @@ const SrmSupplierPage: React.FC = () => {
         setScoreDistribution(response.data.distribution);
       }
     } catch (err) {
-      apiLogger.error("加载评分分布失败:", err);
+      apiLogger.error('加载评分分布失败:', err);
     }
   };
 
   const getRiskStyle = (level: string) => {
-    if (level === "low")
-      return { bgcolor: "#dcfce7", color: "#15803d", label: "低" };
-    if (level === "medium")
-      return { bgcolor: "#fef3c7", color: "#b45309", label: "中" };
-    return { bgcolor: "#fee2e2", color: "#b91c1c", label: "高" };
+    if (level === 'low') return { bgcolor: '#dcfce7', color: '#15803d', label: '低' };
+    if (level === 'medium') return { bgcolor: '#fef3c7', color: '#b45309', label: '中' };
+    return { bgcolor: '#fee2e2', color: '#b91c1c', label: '高' };
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: "#dcfce7", color: "#15803d" },
-      禁用: { bg: "#fee2e2", color: "#b91c1c" },
+      启用: { bg: '#dcfce7', color: '#15803d' },
+      禁用: { bg: '#fee2e2', color: '#b91c1c' },
     };
-    const colors = statusMap[status] || { bg: "#f1f5f9", color: "#475569" };
+    const colors = statusMap[status] || { bg: '#f1f5f9', color: '#475569' };
     return (
       <Chip
         label={status}
-        size="small"
+        size='small'
         sx={{ bgcolor: colors.bg, color: colors.color, fontWeight: 500 }}
       />
     );
@@ -139,7 +121,7 @@ const SrmSupplierPage: React.FC = () => {
     return (
       <Chip
         label={style.label}
-        size="small"
+        size='small'
         sx={{ bgcolor: style.bgcolor, color: style.color, fontWeight: 500 }}
       />
     );
@@ -147,43 +129,41 @@ const SrmSupplierPage: React.FC = () => {
 
   const columns: ColumnDef<Supplier>[] = useMemo(
     () => [
-      { id: "supplier_no", label: "编号" },
-      { id: "name", label: "名称" },
-      { id: "contact_person", label: "联系人" },
-      { id: "contact_phone", label: "电话" },
-      { id: "category", label: "类别" },
+      { id: 'supplier_no', label: '编号' },
+      { id: 'name', label: '名称' },
+      { id: 'contact_person', label: '联系人' },
+      { id: 'contact_phone', label: '电话' },
+      { id: 'category', label: '类别' },
       {
-        id: "risk_level",
-        label: "风险等级",
-        render: (row) => <RiskChip level={row.risk_level || "medium"} />,
+        id: 'risk_level',
+        label: '风险等级',
+        render: (row) => <RiskChip level={row.risk_level || 'medium'} />,
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [suppliers],
+    [suppliers]
   );
 
   const rowActions: RowAction<Supplier>[] = useMemo(
     () => [
       {
-        label: "详情",
+        label: '详情',
         icon: <Eye style={{ width: 16, height: 16 }} />,
         onClick: (row) => navigate(`/srm/suppliers/${row.id}`),
       },
       {
-        label: "评估",
+        label: '评估',
         icon: <Award style={{ width: 16, height: 16 }} />,
         onClick: (row) =>
-          navigate(
-            `/srm/evaluation?supplier_id=${row.id}&supplier_name=${row.name}`,
-          ),
+          navigate(`/srm/evaluation?supplier_id=${row.id}&supplier_name=${row.name}`),
       },
     ],
-    [navigate],
+    [navigate]
   );
 
   const filteredSuppliers = useMemo(() => {
@@ -191,23 +171,22 @@ const SrmSupplierPage: React.FC = () => {
       return (
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.supplier_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.contact_person &&
-          s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()))
+        (s.contact_person && s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     });
   }, [suppliers, searchTerm]);
 
   const handleCreate = () => {
     setFormData({
-      supplier_no: "",
-      name: "",
-      contact_person: "",
-      phone: "",
-      email: "",
-      address: "",
-      category: "",
-      risk_level: "medium",
-      status: "active",
+      supplier_no: '',
+      name: '',
+      contact_person: '',
+      phone: '',
+      email: '',
+      address: '',
+      category: '',
+      risk_level: 'medium',
+      status: 'active',
     });
     setShowCreateModal(true);
   };
@@ -226,34 +205,34 @@ const SrmSupplierPage: React.FC = () => {
         status: formData.status,
         legal_name: formData.name,
       });
-      toast.success("供应商创建成功");
+      toast.success('供应商创建成功');
       setShowCreateModal(false);
       loadSuppliers();
       loadPerformanceSummary();
     } catch (err) {
-      toast.error("创建失败");
-      apiLogger.error("创建供应商失败:", err);
+      toast.error('创建失败');
+      apiLogger.error('创建供应商失败:', err);
     }
   };
 
   const stats = useMemo(() => {
     return {
       total: suppliers.length,
-      active: suppliers.filter((s) => s.status === "启用").length,
-      lowRisk: suppliers.filter((s) => s.risk_level === "low").length,
-      highRisk: suppliers.filter((s) => s.risk_level === "high").length,
+      active: suppliers.filter((s) => s.status === '启用').length,
+      lowRisk: suppliers.filter((s) => s.risk_level === 'low').length,
+      highRisk: suppliers.filter((s) => s.risk_level === 'high').length,
     };
   }, [suppliers]);
 
   const getLevelColor = (level: string) => {
     const colorMap: Record<string, { bg: string; color: string }> = {
-      A: { bg: "#dcfce7", color: "#15803d" },
-      B: { bg: "#dbeafe", color: "#1d4ed8" },
-      C: { bg: "#fef3c7", color: "#b45309" },
-      D: { bg: "#fde68a", color: "#92400e" },
-      E: { bg: "#fee2e2", color: "#b91c1c" },
+      A: { bg: '#dcfce7', color: '#15803d' },
+      B: { bg: '#dbeafe', color: '#1d4ed8' },
+      C: { bg: '#fef3c7', color: '#b45309' },
+      D: { bg: '#fde68a', color: '#92400e' },
+      E: { bg: '#fee2e2', color: '#b91c1c' },
     };
-    return colorMap[level] || { bg: "#f1f5f9", color: "#475569" };
+    return colorMap[level] || { bg: '#f1f5f9', color: '#475569' };
   };
 
   const headerContent = useMemo(
@@ -261,38 +240,38 @@ const SrmSupplierPage: React.FC = () => {
       <Box>
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
             gap: 2,
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: "#faf5ff" }}>
+          <Card sx={{ bgcolor: '#faf5ff' }}>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#ede9fe",
+                    bgcolor: '#ede9fe',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: "#a855f7" }} />
+                  <Users sx={{ width: 20, height: 20, color: '#a855f7' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     供应商总数
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.total}
                   </Typography>
@@ -302,30 +281,30 @@ const SrmSupplierPage: React.FC = () => {
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#dcfce7",
+                    bgcolor: '#dcfce7',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <Users sx={{ width: 20, height: 20, color: '#16a34a' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     已启用
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.active}
                   </Typography>
@@ -335,30 +314,30 @@ const SrmSupplierPage: React.FC = () => {
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#dcfce7",
+                    bgcolor: '#dcfce7',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <Users sx={{ width: 20, height: 20, color: '#16a34a' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     低风险
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.lowRisk}
                   </Typography>
@@ -368,30 +347,30 @@ const SrmSupplierPage: React.FC = () => {
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#fee2e2",
+                    bgcolor: '#fee2e2',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                  <Users sx={{ width: 20, height: 20, color: '#dc2626' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     高风险
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.highRisk}
                   </Typography>
@@ -404,41 +383,41 @@ const SrmSupplierPage: React.FC = () => {
         {performanceSummary && (
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "repeat(1, 1fr)",
-                md: "repeat(3, 1fr)",
+                xs: 'repeat(1, 1fr)',
+                md: 'repeat(3, 1fr)',
               },
               gap: 2,
               mb: 4,
             }}
           >
-            <Card sx={{ bgcolor: "#fef3c7" }}>
+            <Card sx={{ bgcolor: '#fef3c7' }}>
               <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Box
                     sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: "#fde68a",
+                      bgcolor: '#fde68a',
                       borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <Award sx={{ width: 20, height: 20, color: "#d97706" }} />
+                    <Award sx={{ width: 20, height: 20, color: '#d97706' }} />
                   </Box>
                   <Box>
                     <Typography
-                      variant="body2"
-                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                      variant='body2'
+                      sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                     >
                       综合评分
                     </Typography>
                     <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "slate.900" }}
+                      variant='h5'
+                      sx={{ fontWeight: 700, color: 'slate.900' }}
                     >
                       {performanceSummary.avg_overall_score.toFixed(1)}
                     </Typography>
@@ -448,32 +427,30 @@ const SrmSupplierPage: React.FC = () => {
             </Card>
             <Card>
               <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Box
                     sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: "#dbeafe",
+                      bgcolor: '#dbeafe',
                       borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <TrendingUp
-                      sx={{ width: 20, height: 20, color: "#3b82f6" }}
-                    />
+                    <TrendingUp sx={{ width: 20, height: 20, color: '#3b82f6' }} />
                   </Box>
                   <Box>
                     <Typography
-                      variant="body2"
-                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                      variant='body2'
+                      sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                     >
                       评估覆盖率
                     </Typography>
                     <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "slate.900" }}
+                      variant='h5'
+                      sx={{ fontWeight: 700, color: 'slate.900' }}
                     >
                       {performanceSummary.evaluation_rate}%
                     </Typography>
@@ -483,30 +460,30 @@ const SrmSupplierPage: React.FC = () => {
             </Card>
             <Card>
               <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Box
                     sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: "#dcfce7",
+                      bgcolor: '#dcfce7',
                       borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <Award sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                    <Award sx={{ width: 20, height: 20, color: '#16a34a' }} />
                   </Box>
                   <Box>
                     <Typography
-                      variant="body2"
-                      sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                      variant='body2'
+                      sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                     >
                       已评估供应商
                     </Typography>
                     <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "slate.900" }}
+                      variant='h5'
+                      sx={{ fontWeight: 700, color: 'slate.900' }}
                     >
                       {performanceSummary.evaluated_suppliers}
                     </Typography>
@@ -520,23 +497,29 @@ const SrmSupplierPage: React.FC = () => {
         {scoreDistribution.length > 0 && (
           <Card sx={{ mb: 4 }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              <Typography
+                variant='h6'
+                sx={{ mb: 2, fontWeight: 600 }}
+              >
                 评分等级分布
               </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {scoreDistribution.map((item) => {
                   const colors = getLevelColor(item.level);
                   return (
                     <Box
                       key={item.level}
-                      sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                     >
                       <Chip
                         label={`${item.level}级`}
-                        size="small"
+                        size='small'
                         sx={{ bgcolor: colors.bg, color: colors.color }}
                       />
-                      <Typography variant="body2" sx={{ color: "slate.600" }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'slate.600' }}
+                      >
                         {item.count}家
                       </Typography>
                     </Box>
@@ -548,164 +531,147 @@ const SrmSupplierPage: React.FC = () => {
         )}
       </Box>
     ),
-    [stats, performanceSummary, scoreDistribution],
+    [stats, performanceSummary, scoreDistribution]
   );
 
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)',
       }}
     >
       <ListPageTemplate
-        title="供应商管理"
-        subtitle="Supplier Management"
+        title='供应商管理'
+        subtitle='Supplier Management'
         columns={columns}
         data={filteredSuppliers}
         loading={loading}
         searchable
-        searchPlaceholder="搜索供应商名称或编号..."
+        searchPlaceholder='搜索供应商名称或编号...'
         searchValue={searchTerm}
         onSearch={setSearchTerm}
         rowActions={rowActions}
         actions={[
           {
-            label: "新增供应商",
+            label: '新增供应商',
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: handleCreate,
-            variant: "contained",
+            variant: 'contained',
           },
           {
-            label: "绩效报表",
+            label: '绩效报表',
             icon: <TrendingUp style={{ width: 18, height: 18 }} />,
-            onClick: () => navigate("/srm/performance"),
-            variant: "outlined",
+            onClick: () => navigate('/srm/performance'),
+            variant: 'outlined',
           },
         ]}
         headerContent={headerContent}
         getRowId={(row) => row.id}
-        emptyMessage="暂无供应商数据"
+        emptyMessage='暂无供应商数据'
       />
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>新增供应商</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box
-              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
-            >
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label="编号 *"
+                label='编号 *'
                 value={formData.supplier_no}
-                onChange={(e) =>
-                  setFormData({ ...formData, supplier_no: e.target.value })
-                }
-                placeholder="请输入供应商编号"
+                onChange={(e) => setFormData({ ...formData, supplier_no: e.target.value })}
+                placeholder='请输入供应商编号'
               />
               <TextField
                 fullWidth
-                label="名称 *"
+                label='名称 *'
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="请输入供应商名称"
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder='请输入供应商名称'
               />
               <TextField
                 fullWidth
-                label="联系人"
+                label='联系人'
                 value={formData.contact_person}
-                onChange={(e) =>
-                  setFormData({ ...formData, contact_person: e.target.value })
-                }
-                placeholder="请输入联系人"
+                onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+                placeholder='请输入联系人'
               />
               <TextField
                 fullWidth
-                label="电话"
+                label='电话'
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                placeholder="请输入联系电话"
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder='请输入联系电话'
               />
               <TextField
                 fullWidth
-                label="邮箱"
-                type="email"
+                label='邮箱'
+                type='email'
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                placeholder="请输入邮箱"
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder='请输入邮箱'
               />
               <TextField
                 fullWidth
-                label="类别"
+                label='类别'
                 value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                placeholder="请输入类别"
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                placeholder='请输入类别'
               />
               <TextField
                 fullWidth
                 select
-                label="风险等级"
+                label='风险等级'
                 value={formData.risk_level}
-                onChange={(e) =>
-                  setFormData({ ...formData, risk_level: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, risk_level: e.target.value })}
               >
-                <option value="low">低风险</option>
-                <option value="medium">中风险</option>
-                <option value="high">高风险</option>
+                <option value='low'>低风险</option>
+                <option value='medium'>中风险</option>
+                <option value='high'>高风险</option>
               </TextField>
               <TextField
                 fullWidth
                 select
-                label="状态"
+                label='状态'
                 value={formData.status}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
-                <option value="active">启用</option>
-                <option value="inactive">禁用</option>
+                <option value='active'>启用</option>
+                <option value='inactive'>禁用</option>
               </TextField>
             </Box>
             <TextField
               fullWidth
-              label="地址"
+              label='地址'
               value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              placeholder="请输入地址"
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder='请输入地址'
               multiline
               rows={2}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateModal(false)}
+          >
             取消
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: "#a855f7" }}
+            sx={{ bgcolor: '#a855f7' }}
           >
             保存
           </Button>
         </DialogActions>
-      </Dialog>{" "}
+      </Dialog>{' '}
     </Box>
   );
 };

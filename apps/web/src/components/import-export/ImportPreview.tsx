@@ -1,7 +1,7 @@
-import { Box } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React from "react";
-import { AlertCircle } from "lucide-react";
+import { Box } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React from 'react';
+import { AlertCircle } from 'lucide-react';
 
 export interface ImportPreviewProps {
   data: any[];
@@ -23,16 +23,16 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
 }) => {
   if (data.length === 0) {
     return (
-      <Box sx={{ textAlign: "center", pt: 4, pb: 4 }}>
+      <Box sx={{ textAlign: 'center', pt: 4, pb: 4 }}>
         <AlertCircle
           style={{
             width: 48,
             height: 48,
-            color: "#eab308",
-            margin: "0 auto 8px",
+            color: '#eab308',
+            margin: '0 auto 8px',
           }}
         />
-        <p style={{ color: "#475569", margin: 0 }}>没有可预览的数据</p>
+        <p style={{ color: '#475569', margin: 0 }}>没有可预览的数据</p>
       </Box>
     );
   }
@@ -40,16 +40,16 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
   const columns = Object.keys(data[0] || {});
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box
         sx={{
-          backgroundColor: "#eff6ff",
-          border: "1px solid #bfdbfe",
+          backgroundColor: '#eff6ff',
+          border: '1px solid #bfdbfe',
           borderRadius: 2,
           p: 2,
         }}
       >
-        <p style={{ fontSize: 14, color: "#1e40af", margin: 0 }}>
+        <p style={{ fontSize: 14, color: '#1e40af', margin: 0 }}>
           共 {data.length} 条数据，将导入 {data.length - errors.length} 条
           {errors.length > 0 && `，${errors.length} 条有错误`}
         </p>
@@ -57,23 +57,23 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
 
       <Box
         sx={{
-          border: "1px solid #e2e8f0",
+          border: '1px solid #e2e8f0',
           borderRadius: 2,
-          overflow: "hidden",
+          overflow: 'hidden',
         }}
       >
-        <Box sx={{ overflowX: "auto" }}>
-          <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ backgroundColor: "#f8fafc" }}>
+        <Box sx={{ overflowX: 'auto' }}>
+          <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ backgroundColor: '#f8fafc' }}>
               <tr>
                 <th
                   style={{
-                    padding: "8px 16px",
-                    textAlign: "left",
+                    padding: '8px 16px',
+                    textAlign: 'left',
                     fontSize: 12,
                     fontWeight: 500,
-                    color: "#64748b",
-                    textTransform: "uppercase",
+                    color: '#64748b',
+                    textTransform: 'uppercase',
                   }}
                 >
                   行号
@@ -82,12 +82,12 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                   <th
                     key={col}
                     style={{
-                      padding: "8px 16px",
-                      textAlign: "left",
+                      padding: '8px 16px',
+                      textAlign: 'left',
                       fontSize: 12,
                       fontWeight: 500,
-                      color: "#64748b",
-                      textTransform: "uppercase",
+                      color: '#64748b',
+                      textTransform: 'uppercase',
                     }}
                   >
                     {col}
@@ -95,21 +95,19 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                 ))}
               </tr>
             </thead>
-            <tbody style={{ backgroundColor: "white" }}>
+            <tbody style={{ backgroundColor: 'white' }}>
               {data.slice(0, 20).map((row, idx) => {
                 const rowErrors = errors.filter((e) => e.row === idx + 1);
                 return (
                   <tr
                     key={idx}
-                    style={
-                      rowErrors.length > 0 ? { backgroundColor: "#fef2f2" } : {}
-                    }
+                    style={rowErrors.length > 0 ? { backgroundColor: '#fef2f2' } : {}}
                   >
                     <td
                       style={{
-                        padding: "8px 16px",
+                        padding: '8px 16px',
                         fontSize: 14,
-                        color: "#475569",
+                        color: '#475569',
                       }}
                     >
                       {idx + 1}
@@ -118,12 +116,12 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                       <td
                         key={col}
                         style={{
-                          padding: "8px 16px",
+                          padding: '8px 16px',
                           fontSize: 14,
-                          color: "#0f172a",
+                          color: '#0f172a',
                         }}
                       >
-                        {String(row[col] || "")}
+                        {String(row[col] || '')}
                       </td>
                     ))}
                   </tr>
@@ -136,10 +134,10 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           <Box
             sx={{
               p: 2,
-              backgroundColor: "#f8fafc",
+              backgroundColor: '#f8fafc',
               fontSize: 14,
-              color: "#475569",
-              textAlign: "center",
+              color: '#475569',
+              textAlign: 'center',
             }}
           >
             ... 还有 {data.length - 20} 行数据
@@ -152,10 +150,10 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           <h4
             style={{
               fontWeight: 500,
-              color: "#334155",
+              color: '#334155',
               marginBottom: 8,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
             <AlertCircle
@@ -163,19 +161,19 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                 width: 16,
                 height: 16,
                 marginRight: 4,
-                color: "#ef4444",
+                color: '#ef4444',
               }}
             />
             验证错误:
           </h4>
           <Box
             sx={{
-              backgroundColor: "#fef2f2",
-              border: "1px solid #fecaca",
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
               borderRadius: 2,
               p: 2,
               maxHeight: 240,
-              overflowY: "auto",
+              overflowY: 'auto',
             }}
           >
             {errors.slice(0, 20).map((error, idx) => (
@@ -183,19 +181,19 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                 key={idx}
                 sx={{
                   fontSize: 14,
-                  color: "#b91c1c",
+                  color: '#b91c1c',
                   mb: 1,
-                  "&:last-child": { mb: 0 },
+                  '&:last-child': { mb: 0 },
                 }}
               >
                 <span style={{ fontWeight: 500 }}>
                   第{error.row}行 {error.field}:
-                </span>{" "}
+                </span>{' '}
                 {error.message}
               </Box>
             ))}
             {errors.length > 20 && (
-              <p style={{ fontSize: 14, color: "#dc2626", marginTop: 8 }}>
+              <p style={{ fontSize: 14, color: '#dc2626', marginTop: 8 }}>
                 ... 还有 {errors.length - 20} 个错误
               </p>
             )}
@@ -205,22 +203,22 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
 
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "flex-end",
+          display: 'flex',
+          justifyContent: 'flex-end',
           gap: 1.5,
           pt: 2,
-          borderTop: "1px solid #e2e8f0",
+          borderTop: '1px solid #e2e8f0',
         }}
       >
         <Button
           onClick={onCancel}
           sx={{
-            padding: "8px 16px",
-            color: "#334155",
-            backgroundColor: "#f1f5f9",
+            padding: '8px 16px',
+            color: '#334155',
+            backgroundColor: '#f1f5f9',
             borderRadius: 2,
-            "&:hover": { backgroundColor: "#e2e8f0" },
-            transition: "colors 0.2s",
+            '&:hover': { backgroundColor: '#e2e8f0' },
+            transition: 'colors 0.2s',
           }}
         >
           取消
@@ -229,13 +227,13 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           onClick={onConfirm}
           disabled={errors.length > 0}
           sx={{
-            padding: "8px 16px",
-            backgroundColor: "#2563eb",
-            color: "white",
+            padding: '8px 16px',
+            backgroundColor: '#2563eb',
+            color: 'white',
             borderRadius: 2,
-            "&:hover": { backgroundColor: "#1d4ed8" },
-            "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
-            transition: "colors 0.2s",
+            '&:hover': { backgroundColor: '#1d4ed8' },
+            '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
+            transition: 'colors 0.2s',
           }}
         >
           确认导入

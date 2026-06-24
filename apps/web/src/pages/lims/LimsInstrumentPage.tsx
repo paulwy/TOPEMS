@@ -1,5 +1,5 @@
-import { Grid } from "@/components/Grid";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { Grid } from '@/components/Grid';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -11,21 +11,46 @@ import {
   CheckCircle2,
   AlertCircle,
   Beaker,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Box, Container, Paper, Typography, IconButton, TextField, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardContent, Snackbar, Alert, MenuItem, Select, FormControl, InputLabel, Divider, Tooltip, LinearProgress, Avatar, Stack,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Container,
+  Paper,
+  Typography,
+  IconButton,
+  TextField,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Card,
+  CardContent,
+  Snackbar,
+  Alert,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Divider,
+  Tooltip,
+  LinearProgress,
+  Avatar,
+  Stack,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import type {
   Instrument,
   CreateInstrumentRequest,
   MaintenanceRecord,
   CreateMaintenanceRecordRequest,
   LimsStatistics,
-} from "@/api/lims";
-import { limsApi } from "@/api/lims";
-import { PageHeader } from "@/components/templates/PageHeader";
-import { CardListTemplate } from "@/components/templates/CardListTemplate";
-import { apiLogger } from "@/utils/logger";
+} from '@/api/lims';
+import { limsApi } from '@/api/lims';
+import { PageHeader } from '@/components/templates/PageHeader';
+import { CardListTemplate } from '@/components/templates/CardListTemplate';
+import { apiLogger } from '@/utils/logger';
 
 const LimsInstrumentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,14 +79,10 @@ const LimsInstrumentPage: React.FC = () => {
     lims: false,
   });
 
-  const isServiceUp = (serviceName: string): boolean => {
-    return serviceStatuses[serviceName] || false;
-  };
-
   const checkServiceStatus = async (
     serviceName: string,
     port: number,
-    setStatus: (up: boolean) => void,
+    setStatus: (up: boolean) => void
   ) => {
     try {
       const controller = new AbortController();
@@ -69,7 +90,7 @@ const LimsInstrumentPage: React.FC = () => {
 
       const response = await fetch(`http://localhost:${port}/health`, {
         signal: controller.signal,
-        method: "GET",
+        method: 'GET',
       });
       clearTimeout(timeoutId);
       setStatus(response.ok);
@@ -80,8 +101,8 @@ const LimsInstrumentPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus("lims", 8022, (up) =>
-        setServiceStatuses((prev) => ({ ...prev, lims: up })),
+      checkServiceStatus('lims', 8022, (up) =>
+        setServiceStatuses((prev) => ({ ...prev, lims: up }))
       );
     };
 
@@ -92,82 +113,61 @@ const LimsInstrumentPage: React.FC = () => {
   }, []);
 
   const [showInstrumentModal, setShowInstrumentModal] = useState(false);
-  const [showInstrumentDetailModal, setShowInstrumentDetailModal] =
-    useState(false);
+  const [showInstrumentDetailModal, setShowInstrumentDetailModal] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
-  const [selectedInstrument, setSelectedInstrument] =
-    useState<Instrument | null>(null);
-  const [instrumentMaintenanceRecords, setInstrumentMaintenanceRecords] =
-    useState<MaintenanceRecord[]>([]);
-  const [instrumentFormData, setInstrumentFormData] =
-    useState<CreateInstrumentRequest>({
-      name: "",
-      code: "",
-      type: "",
-      manufacturer: "",
-      model: "",
-      serial_number: "",
-      location: "",
-      status: "正常",
-      purchase_date: "",
-      calibration_date: "",
-      next_calibration_date: "",
-      responsible_person: "",
-      description: "",
-    });
-  const [maintenanceFormData, setMaintenanceFormData] =
-    useState<CreateMaintenanceRecordRequest>({
-      instrument_id: "",
-      maintenance_type: "",
-      description: "",
-      performed_by: "",
-      performed_at: new Date().toISOString().split("T")[0],
-      next_maintenance_date: "",
-      cost: 0,
-      notes: "",
-    });
+  const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
+  const [instrumentMaintenanceRecords, setInstrumentMaintenanceRecords] = useState<
+    MaintenanceRecord[]
+  >([]);
+  const [instrumentFormData, setInstrumentFormData] = useState<CreateInstrumentRequest>({
+    name: '',
+    code: '',
+    type: '',
+    manufacturer: '',
+    model: '',
+    serial_number: '',
+    location: '',
+    status: '正常',
+    purchase_date: '',
+    calibration_date: '',
+    next_calibration_date: '',
+    responsible_person: '',
+    description: '',
+  });
+  const [maintenanceFormData, setMaintenanceFormData] = useState<CreateMaintenanceRecordRequest>({
+    instrument_id: '',
+    maintenance_type: '',
+    description: '',
+    performed_by: '',
+    performed_at: new Date().toISOString().split('T')[0],
+    next_maintenance_date: '',
+    cost: 0,
+    notes: '',
+  });
   const [isEditingInstrument, setIsEditingInstrument] = useState(false);
   const [creating, setCreating] = useState(false);
   const [notification, setNotification] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     message: string;
   } | null>(null);
 
   // 搜索和筛选状态
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState('');
 
-  useEffect(() => {
-    if (isServiceUp("lims")) {
-      loadAllData();
-    } else {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serviceStatuses.lims]);
-
-  const loadStatistics = async () => {
+  const loadStatistics = useCallback(async () => {
     try {
       const response = await limsApi.getStatistics();
       if (response.success && response.data) {
         setStats(response.data);
       }
     } catch (err) {
-      apiLogger.error("加载统计数据失败:", err);
+      apiLogger.error('加载统计数据失败:', err);
     }
-  };
+  }, []);
 
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([loadInstruments(), loadStatistics()]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadInstruments = async () => {
+  const loadInstruments = useCallback(async () => {
     try {
       const response = await limsApi.listInstruments();
       if (response.success && response.data) {
@@ -176,10 +176,7 @@ const LimsInstrumentPage: React.FC = () => {
 
         if (Array.isArray(instrumentData)) {
           rawInstruments = instrumentData;
-        } else if (
-          instrumentData.items &&
-          Array.isArray(instrumentData.items)
-        ) {
+        } else if (instrumentData.items && Array.isArray(instrumentData.items)) {
           rawInstruments = instrumentData.items;
         }
 
@@ -188,10 +185,27 @@ const LimsInstrumentPage: React.FC = () => {
         setInstruments([]);
       }
     } catch (err) {
-      apiLogger.error("加载仪器失败:", err);
+      apiLogger.error('加载仪器失败:', err);
       setInstruments([]);
     }
-  };
+  }, []);
+
+  const loadAllData = useCallback(async () => {
+    try {
+      setLoading(true);
+      await Promise.all([loadInstruments(), loadStatistics()]);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadInstruments, loadStatistics]);
+
+  useEffect(() => {
+    if (serviceStatuses.lims) {
+      loadAllData();
+    } else {
+      setLoading(false);
+    }
+  }, [serviceStatuses.lims, loadAllData]);
 
   const getInstrumentTypeIcon = (type: string) => {
     const iconMap: Record<string, any> = {
@@ -200,45 +214,49 @@ const LimsInstrumentPage: React.FC = () => {
       实验设备: Wrench,
       default: Settings,
     };
-    return iconMap[type] || iconMap["default"];
+    return iconMap[type] || iconMap['default'];
   };
 
   const getInstrumentStatusColor = (
-    status: string,
+    status: string
   ): {
     bgcolor: string;
     color: string;
   } => {
     const colorMap: Record<string, { bgcolor: string; color: string }> = {
-      正常: { bgcolor: "#dcfce7", color: "#15803d" },
-      校准中: { bgcolor: "#fef3c7", color: "#b45309" },
-      维修中: { bgcolor: "#fee2e2", color: "#b91c1c" },
-      停用: { bgcolor: "#f1f5f9", color: "#475569" },
-      报废: { bgcolor: "#f1f5f9", color: "#475569" },
-      normal: { bgcolor: "#dcfce7", color: "#15803d" },
-      calibration: { bgcolor: "#fef3c7", color: "#b45309" },
-      maintenance: { bgcolor: "#fee2e2", color: "#b91c1c" },
-      disabled: { bgcolor: "#f1f5f9", color: "#475569" },
+      正常: { bgcolor: '#dcfce7', color: '#15803d' },
+      校准中: { bgcolor: '#fef3c7', color: '#b45309' },
+      维修中: { bgcolor: '#fee2e2', color: '#b91c1c' },
+      停用: { bgcolor: '#f1f5f9', color: '#475569' },
+      报废: { bgcolor: '#f1f5f9', color: '#475569' },
+      normal: { bgcolor: '#dcfce7', color: '#15803d' },
+      calibration: { bgcolor: '#fef3c7', color: '#b45309' },
+      maintenance: { bgcolor: '#fee2e2', color: '#b91c1c' },
+      disabled: { bgcolor: '#f1f5f9', color: '#475569' },
     };
-    return colorMap[status] || colorMap["normal"];
+    return colorMap[status] || colorMap['normal'];
   };
 
-  const loadMaintenanceRecords = async (instrumentId: string) => {
+  const loadMaintenanceRecords = useCallback(async (instrumentId: string) => {
     try {
       const response = await limsApi.listMaintenanceByInstrument(instrumentId);
       if (response.success && response.data) {
         const data = response.data as any;
-        setInstrumentMaintenanceRecords(
-          Array.isArray(data) ? data : data.items || [],
-        );
+        setInstrumentMaintenanceRecords(Array.isArray(data) ? data : data.items || []);
       }
     } catch (err) {
-      apiLogger.error("加载维护记录失败:", err);
+      apiLogger.error('加载维护记录失败:', err);
       setInstrumentMaintenanceRecords([]);
     }
-  };
+  }, []);
 
-  const showNotification = (type: "success" | "error", message: string) => {
+  useEffect(() => {
+    if (showInstrumentDetailModal && selectedInstrument) {
+      loadMaintenanceRecords(selectedInstrument.id);
+    }
+  }, [showInstrumentDetailModal, selectedInstrument, loadMaintenanceRecords]);
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
   };
 
@@ -246,80 +264,79 @@ const LimsInstrumentPage: React.FC = () => {
     setNotification(null);
   };
 
-  const openInstrumentModal = (instrument?: Instrument) => {
+  const openInstrumentModal = useCallback((instrument?: Instrument) => {
     if (instrument) {
       setIsEditingInstrument(true);
       setSelectedInstrument(instrument);
       setInstrumentFormData({
-        name: instrument.name || "",
-        code: instrument.code || "",
-        type: instrument.type || "",
-        manufacturer: instrument.manufacturer || "",
-        model: instrument.model || "",
-        serial_number: instrument.serial_number || "",
-        location: instrument.location || "",
-        status: instrument.status || "正常",
-        purchase_date: instrument.purchase_date || "",
-        calibration_date: instrument.calibration_date || "",
-        next_calibration_date: instrument.next_calibration_date || "",
-        responsible_person: instrument.responsible_person || "",
-        description: instrument.description || "",
+        name: instrument.name || '',
+        code: instrument.code || '',
+        type: instrument.type || '',
+        manufacturer: instrument.manufacturer || '',
+        model: instrument.model || '',
+        serial_number: instrument.serial_number || '',
+        location: instrument.location || '',
+        status: instrument.status || '正常',
+        purchase_date: instrument.purchase_date || '',
+        calibration_date: instrument.calibration_date || '',
+        next_calibration_date: instrument.next_calibration_date || '',
+        responsible_person: instrument.responsible_person || '',
+        description: instrument.description || '',
       });
     } else {
       setIsEditingInstrument(false);
       setInstrumentFormData({
-        name: "",
-        code: "",
-        type: "",
-        manufacturer: "",
-        model: "",
-        serial_number: "",
-        location: "",
-        status: "正常",
-        purchase_date: "",
-        calibration_date: "",
-        next_calibration_date: "",
-        responsible_person: "",
-        description: "",
+        name: '',
+        code: '',
+        type: '',
+        manufacturer: '',
+        model: '',
+        serial_number: '',
+        location: '',
+        status: '正常',
+        purchase_date: '',
+        calibration_date: '',
+        next_calibration_date: '',
+        responsible_person: '',
+        description: '',
       });
     }
     setShowInstrumentModal(true);
-  };
+  }, []);
 
-  const openInstrumentDetailModal = (instrument: Instrument) => {
+  const openInstrumentDetailModal = useCallback((instrument: Instrument) => {
     setSelectedInstrument(instrument);
-    loadMaintenanceRecords(instrument.id);
     setShowInstrumentDetailModal(true);
-  };
+  }, []);
 
-  const openMaintenanceModal = (instrument: Instrument) => {
+  const openMaintenanceModal = useCallback((instrument: Instrument) => {
     setSelectedInstrument(instrument);
     setMaintenanceFormData({
       instrument_id: instrument.id,
-      maintenance_type: "",
-      description: "",
-      performed_by: "",
-      performed_at: new Date().toISOString().split("T")[0],
-      next_maintenance_date: "",
+      maintenance_type: '',
+      description: '',
+      performed_by: '',
+      performed_at: new Date().toISOString().split('T')[0],
+      next_maintenance_date: '',
       cost: 0,
-      notes: "",
+      notes: '',
     });
     setShowMaintenanceModal(true);
-  };
+  }, []);
 
   const handleCreateInstrument = async () => {
     try {
       setCreating(true);
       const response = await limsApi.createInstrument(instrumentFormData);
       if (response.success) {
-        showNotification("success", "仪器创建成功");
+        showNotification('success', '仪器创建成功');
         setShowInstrumentModal(false);
         loadInstruments();
       } else {
-        showNotification("error", response.message || "创建失败");
+        showNotification('error', response.message || '创建失败');
       }
     } catch (err) {
-      showNotification("error", "创建仪器失败");
+      showNotification('error', '创建仪器失败');
     } finally {
       setCreating(false);
     }
@@ -329,64 +346,63 @@ const LimsInstrumentPage: React.FC = () => {
     if (!selectedInstrument) return;
     try {
       setCreating(true);
-      const response = await limsApi.updateInstrument(
-        selectedInstrument.id,
-        instrumentFormData,
-      );
+      const response = await limsApi.updateInstrument(selectedInstrument.id, instrumentFormData);
       if (response.success) {
-        showNotification("success", "仪器更新成功");
+        showNotification('success', '仪器更新成功');
         setShowInstrumentModal(false);
         loadInstruments();
       } else {
-        showNotification("error", response.message || "更新失败");
+        showNotification('error', response.message || '更新失败');
       }
     } catch (err) {
-      showNotification("error", "更新仪器失败");
+      showNotification('error', '更新仪器失败');
     } finally {
       setCreating(false);
     }
   };
 
-  const handleDeleteInstrument = async (id: string) => {
-    if (!confirm("确定要删除这个仪器吗？")) return;
-    try {
-      const response = await limsApi.deleteInstrument(id);
-      if (response.success) {
-        showNotification("success", "仪器删除成功");
-        loadInstruments();
-      } else {
-        showNotification("error", response.message || "删除失败");
+  const handleDeleteInstrument = useCallback(
+    async (id: string) => {
+      if (!confirm('确定要删除这个仪器吗？')) return;
+      try {
+        const response = await limsApi.deleteInstrument(id);
+        if (response.success) {
+          showNotification('success', '仪器删除成功');
+          loadInstruments();
+        } else {
+          showNotification('error', response.message || '删除失败');
+        }
+      } catch (err) {
+        showNotification('error', '删除仪器失败');
       }
-    } catch (err) {
-      showNotification("error", "删除仪器失败");
-    }
-  };
+    },
+    [loadInstruments]
+  );
 
   const handleCreateMaintenance = async () => {
     try {
       setCreating(true);
       const response = await limsApi.createMaintenance(maintenanceFormData);
       if (response.success) {
-        showNotification("success", "维护记录创建成功");
+        showNotification('success', '维护记录创建成功');
         setShowMaintenanceModal(false);
         if (selectedInstrument) {
           loadMaintenanceRecords(selectedInstrument.id);
         }
       } else {
-        showNotification("error", response.message || "创建失败");
+        showNotification('error', response.message || '创建失败');
       }
     } catch (err) {
-      showNotification("error", "创建维护记录失败");
+      showNotification('error', '创建维护记录失败');
     } finally {
       setCreating(false);
     }
   };
 
-  const safeInstruments = Array.isArray(instruments) ? instruments : [];
-
   // 过滤后的仪器数据
   const filteredInstruments = useMemo(() => {
-    return safeInstruments.filter((instrument) => {
+    const list = Array.isArray(instruments) ? instruments : [];
+    return list.filter((instrument) => {
       // 搜索过滤
       if (searchValue) {
         const searchLower = searchValue.toLowerCase();
@@ -403,144 +419,144 @@ const LimsInstrumentPage: React.FC = () => {
       }
       return true;
     });
-  }, [safeInstruments, searchValue, statusFilter]);
+  }, [instruments, searchValue, statusFilter]);
 
   // metricStats 配置
   const metricStats = useMemo(
     () => [
       {
-        id: "total-samples",
-        title: "样品总数",
+        id: 'total-samples',
+        title: '样品总数',
         value: stats.total_samples,
         icon: <ClipboardList size={24} />,
-        gradient: ["#8B5CF6", "#7C3AED"] as [string, string],
+        gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
         subtitle: `待测试: ${stats.pending_samples}`,
       },
       {
-        id: "total-tasks",
-        title: "检验任务",
+        id: 'total-tasks',
+        title: '检验任务',
         value: stats.total_tasks,
         icon: <ClipboardList size={24} />,
-        gradient: ["#6366F1", "#4F46E5"] as [string, string],
+        gradient: ['#6366F1', '#4F46E5'] as [string, string],
         subtitle: `进行中: ${stats.in_progress_tasks}`,
       },
       {
-        id: "total-processes",
-        title: "检验流程",
+        id: 'total-processes',
+        title: '检验流程',
         value: stats.total_processes,
         icon: <ClipboardList size={24} />,
-        gradient: ["#F59E0B", "#D97706"] as [string, string],
+        gradient: ['#F59E0B', '#D97706'] as [string, string],
       },
       {
-        id: "total-instruments",
-        title: "仪器设备",
+        id: 'total-instruments',
+        title: '仪器设备',
         value: stats.total_instruments,
         icon: <Settings size={24} />,
-        gradient: ["#14B8A6", "#0D9488"] as [string, string],
+        gradient: ['#14B8A6', '#0D9488'] as [string, string],
         subtitle: `正常: ${stats.normal_instruments}`,
       },
       {
-        id: "completed-samples",
-        title: "已完成样品",
+        id: 'completed-samples',
+        title: '已完成样品',
         value: stats.completed_samples,
         icon: <CheckCircle2 size={24} />,
-        gradient: ["#00C897", "#00A878"] as [string, string],
+        gradient: ['#00C897', '#00A878'] as [string, string],
       },
       {
-        id: "testing-samples",
-        title: "测试中样品",
+        id: 'testing-samples',
+        title: '测试中样品',
         value: stats.testing_samples,
         icon: <ClipboardList size={24} />,
-        gradient: ["#EC4899", "#DB2777"] as [string, string],
+        gradient: ['#EC4899', '#DB2777'] as [string, string],
       },
     ],
-    [stats],
+    [stats]
   );
 
   // cardConfig 配置
   const cardConfig = useMemo(
     () => ({
-      title: "name" as const,
+      title: 'name' as const,
       description: (item: Instrument) => {
         if (item.manufacturer && item.model) {
           return `${item.manufacturer} - ${item.model}`;
         }
-        return item.manufacturer || item.model || "暂无型号信息";
+        return item.manufacturer || item.model || '暂无型号信息';
       },
       status: {
-        field: "status",
+        field: 'status',
         options: {
-          正常: { label: "正常", color: "#15803d" },
-          校准中: { label: "校准中", color: "#b45309" },
-          维修中: { label: "维修中", color: "#b91c1c" },
-          停用: { label: "停用", color: "#475569" },
-          报废: { label: "报废", color: "#475569" },
+          正常: { label: '正常', color: '#15803d' },
+          校准中: { label: '校准中', color: '#b45309' },
+          维修中: { label: '维修中', color: '#b91c1c' },
+          停用: { label: '停用', color: '#475569' },
+          报废: { label: '报废', color: '#475569' },
         },
       },
       icon: (item: Instrument) => {
         const TypeIcon = getInstrumentTypeIcon(item.type);
         return <TypeIcon size={24} />;
       },
-      iconBgColor: "#ccfbf1",
+      iconBgColor: '#ccfbf1',
       meta: [
-        { field: "code" as const, label: "编号" },
-        { field: "location" as const, label: "位置" },
-        { field: "responsible_person" as const, label: "负责人" },
+        { field: 'code' as const, label: '编号' },
+        { field: 'location' as const, label: '位置' },
+        { field: 'responsible_person' as const, label: '负责人' },
       ],
-      tags: [{ field: "type" as const }],
+      tags: [{ field: 'type' as const }],
     }),
-    [],
+    []
   );
 
   // cardActions 配置
   const cardActions = useMemo(
     () => [
       {
-        label: "查看详情",
+        label: '查看详情',
         onClick: openInstrumentDetailModal,
-        color: "primary" as const,
+        color: 'primary' as const,
       },
       {
-        label: "维护记录",
+        label: '维护记录',
         icon: <Wrench size={16} />,
         onClick: openMaintenanceModal,
-        color: "info" as const,
+        color: 'info' as const,
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: openInstrumentModal,
-        color: "primary" as const,
-        variant: "outlined" as const,
+        color: 'primary' as const,
+        variant: 'outlined' as const,
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
         onClick: (item: Instrument) => handleDeleteInstrument(item.id),
-        color: "error" as const,
+        color: 'error' as const,
       },
     ],
-    [],
+    [openInstrumentDetailModal, openMaintenanceModal, openInstrumentModal, handleDeleteInstrument]
   );
 
   // 筛选配置
   const filters = useMemo(
     () => [
       {
-        id: "status",
-        label: "仪器状态",
-        type: "select" as const,
+        id: 'status',
+        label: '仪器状态',
+        type: 'select' as const,
         options: [
-          { label: "全部状态", value: "" },
-          { label: "正常", value: "正常" },
-          { label: "校准中", value: "校准中" },
-          { label: "维修中", value: "维修中" },
-          { label: "停用", value: "停用" },
-          { label: "报废", value: "报废" },
+          { label: '全部状态', value: '' },
+          { label: '正常', value: '正常' },
+          { label: '校准中', value: '校准中' },
+          { label: '维修中', value: '维修中' },
+          { label: '停用', value: '停用' },
+          { label: '报废', value: '报废' },
         ],
       },
     ],
-    [],
+    []
   );
 
   // 搜索和筛选处理
@@ -557,41 +573,41 @@ const LimsInstrumentPage: React.FC = () => {
 
   const handleFilterReset = useCallback(() => {
     setFilterValues({});
-    setStatusFilter("");
-    setSearchValue("");
+    setStatusFilter('');
+    setSearchValue('');
   }, []);
 
   if (loading) {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
+        <Box sx={{ textAlign: 'center' }}>
           <LinearProgress
             sx={{ width: 240, mb: 3, borderRadius: 1 }}
-            color="secondary"
+            color='secondary'
           />
-          <Typography color="text.secondary">加载中...</Typography>
+          <Typography color='text.secondary'>加载中...</Typography>
         </Box>
       </Box>
     );
   }
 
-  if (!isServiceUp("lims")) {
+  if (!serviceStatuses.lims) {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
           p: 2,
         }}
       >
@@ -600,8 +616,8 @@ const LimsInstrumentPage: React.FC = () => {
           sx={{
             p: 6,
             maxWidth: 480,
-            width: "100%",
-            textAlign: "center",
+            width: '100%',
+            textAlign: 'center',
             borderRadius: 3,
           }}
         >
@@ -609,23 +625,32 @@ const LimsInstrumentPage: React.FC = () => {
             sx={{
               width: 64,
               height: 64,
-              mx: "auto",
+              mx: 'auto',
               mb: 3,
-              bgcolor: "info.light",
+              bgcolor: 'info.light',
             }}
           >
-            <ClipboardList size={32} color="#0891b2" />
+            <ClipboardList
+              size={32}
+              color='#0891b2'
+            />
           </Avatar>
-          <Typography variant="h5" sx={{ ...{ mb: 2 }, fontWeight: "bold" }}>
+          <Typography
+            variant='h5'
+            sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}
+          >
             实验室管理服务未启动
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            color='text.secondary'
+            sx={{ mb: 3 }}
+          >
             LIMS 服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
           </Typography>
           <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate("/dashboard")}
+            variant='contained'
+            color='primary'
+            onClick={() => navigate('/dashboard')}
           >
             返回首页
           </Button>
@@ -637,58 +662,61 @@ const LimsInstrumentPage: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
       }}
     >
       <Snackbar
         open={Boolean(notification)}
         autoHideDuration={3000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert
           onClose={handleCloseNotification}
-          severity={notification?.type || "success"}
-          variant="filled"
+          severity={notification?.type || 'success'}
+          variant='filled'
           sx={{ borderRadius: 2 }}
         >
           {notification?.message}
         </Alert>
       </Snackbar>
 
-      <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
+      <Container
+        maxWidth='xl'
+        sx={{ px: { xs: 2, sm: 3 }, py: 3 }}
+      >
         <PageHeader
-          title="仪器管理"
-          subtitle="Instrument Management"
+          title='仪器管理'
+          subtitle='Instrument Management'
           pageIcon={<Settings style={{ width: 20, height: 20 }} />}
-          pageColor="linear-gradient(135deg, #14B8A6, #0D9488)"
+          pageColor='linear-gradient(135deg, #14B8A6, #0D9488)'
           breadcrumbs={[
-            { label: "首页", href: "/dashboard" },
-            { label: "LIMS" },
-            { label: "仪器管理" },
+            { label: '首页', href: '/dashboard' },
+            { label: 'LIMS' },
+            { label: '仪器管理' },
           ]}
-          backButton={{ onClick: () => navigate("/dashboard") }}
+          backButton={{ onClick: () => navigate('/dashboard') }}
           actions={[]}
           loading={loading}
         />
 
         <CardListTemplate
-          title=""
+          title=''
           data={filteredInstruments}
           cardConfig={cardConfig}
           metricStats={metricStats}
           metricColumns={6}
           loading={loading}
           emptyState={{
-            emoji: "🔬",
-            title: "暂无仪器设备",
-            description: "点击上方按钮添加仪器设备",
+            emoji: '🔬',
+            title: '暂无仪器设备',
+            description: '点击上方按钮添加仪器设备',
           }}
           search={{
             value: searchValue,
             onChange: setSearchValue,
-            placeholder: "搜索仪器名称、编号、制造商...",
+            placeholder: '搜索仪器名称、编号、制造商...',
           }}
           filters={filters}
           filterValues={filterValues}
@@ -696,7 +724,7 @@ const LimsInstrumentPage: React.FC = () => {
           onFilterReset={handleFilterReset}
           onSearch={handleSearch}
           addButton={{
-            text: "添加仪器",
+            text: '添加仪器',
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: () => openInstrumentModal(),
           }}
@@ -714,22 +742,25 @@ const LimsInstrumentPage: React.FC = () => {
           setShowInstrumentModal(false);
           setIsEditingInstrument(false);
         }}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 2 } } }}
       >
         <DialogTitle
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
-            {isEditingInstrument ? "编辑仪器" : "添加仪器"}
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 'semibold' }}
+          >
+            {isEditingInstrument ? '编辑仪器' : '添加仪器'}
           </Typography>
           <IconButton
-            size="small"
+            size='small'
             onClick={() => {
               setShowInstrumentModal(false);
               setIsEditingInstrument(false);
@@ -738,12 +769,18 @@ const LimsInstrumentPage: React.FC = () => {
             <X size={20} />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ maxHeight: "70vh" }}>
+        <DialogContent
+          dividers
+          sx={{ maxHeight: '70vh' }}
+        >
           <Stack spacing={3}>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="仪器名称"
+                  label='仪器名称'
                   required
                   fullWidth
                   value={instrumentFormData.name}
@@ -753,12 +790,12 @@ const LimsInstrumentPage: React.FC = () => {
                       name: e.target.value,
                     })
                   }
-                  placeholder="请输入仪器名称"
+                  placeholder='请输入仪器名称'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="仪器编号"
+                  label='仪器编号'
                   required
                   fullWidth
                   value={instrumentFormData.code}
@@ -768,17 +805,23 @@ const LimsInstrumentPage: React.FC = () => {
                       code: e.target.value,
                     })
                   }
-                  placeholder="请输入仪器编号"
+                  placeholder='请输入仪器编号'
                 />
               </Grid>
             </Grid>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl fullWidth required>
+                <FormControl
+                  fullWidth
+                  required
+                >
                   <InputLabel>仪器类型</InputLabel>
                   <Select
                     value={instrumentFormData.type}
-                    label="仪器类型"
+                    label='仪器类型'
                     onChange={(e) =>
                       setInstrumentFormData({
                         ...instrumentFormData,
@@ -786,11 +829,11 @@ const LimsInstrumentPage: React.FC = () => {
                       })
                     }
                   >
-                    <MenuItem value="">请选择类型</MenuItem>
-                    <MenuItem value="分析仪器">分析仪器</MenuItem>
-                    <MenuItem value="测量仪器">测量仪器</MenuItem>
-                    <MenuItem value="实验设备">实验设备</MenuItem>
-                    <MenuItem value="其他">其他</MenuItem>
+                    <MenuItem value=''>请选择类型</MenuItem>
+                    <MenuItem value='分析仪器'>分析仪器</MenuItem>
+                    <MenuItem value='测量仪器'>测量仪器</MenuItem>
+                    <MenuItem value='实验设备'>实验设备</MenuItem>
+                    <MenuItem value='其他'>其他</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -799,7 +842,7 @@ const LimsInstrumentPage: React.FC = () => {
                   <InputLabel>仪器状态</InputLabel>
                   <Select
                     value={instrumentFormData.status}
-                    label="仪器状态"
+                    label='仪器状态'
                     onChange={(e) =>
                       setInstrumentFormData({
                         ...instrumentFormData,
@@ -807,18 +850,21 @@ const LimsInstrumentPage: React.FC = () => {
                       })
                     }
                   >
-                    <MenuItem value="正常">正常</MenuItem>
-                    <MenuItem value="维修中">维修中</MenuItem>
-                    <MenuItem value="校准中">校准中</MenuItem>
-                    <MenuItem value="报废">报废</MenuItem>
+                    <MenuItem value='正常'>正常</MenuItem>
+                    <MenuItem value='维修中'>维修中</MenuItem>
+                    <MenuItem value='校准中'>校准中</MenuItem>
+                    <MenuItem value='报废'>报废</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
             </Grid>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="制造商"
+                  label='制造商'
                   fullWidth
                   value={instrumentFormData.manufacturer}
                   onChange={(e) =>
@@ -827,12 +873,12 @@ const LimsInstrumentPage: React.FC = () => {
                       manufacturer: e.target.value,
                     })
                   }
-                  placeholder="请输入制造商"
+                  placeholder='请输入制造商'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="型号"
+                  label='型号'
                   fullWidth
                   value={instrumentFormData.model}
                   onChange={(e) =>
@@ -841,14 +887,17 @@ const LimsInstrumentPage: React.FC = () => {
                       model: e.target.value,
                     })
                   }
-                  placeholder="请输入型号"
+                  placeholder='请输入型号'
                 />
               </Grid>
             </Grid>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="序列号"
+                  label='序列号'
                   fullWidth
                   value={instrumentFormData.serial_number}
                   onChange={(e) =>
@@ -857,12 +906,12 @@ const LimsInstrumentPage: React.FC = () => {
                       serial_number: e.target.value,
                     })
                   }
-                  placeholder="请输入序列号"
+                  placeholder='请输入序列号'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="存放位置"
+                  label='存放位置'
                   fullWidth
                   value={instrumentFormData.location}
                   onChange={(e) =>
@@ -871,15 +920,18 @@ const LimsInstrumentPage: React.FC = () => {
                       location: e.target.value,
                     })
                   }
-                  placeholder="请输入存放位置"
+                  placeholder='请输入存放位置'
                 />
               </Grid>
             </Grid>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="购买日期"
-                  type="date"
+                  label='购买日期'
+                  type='date'
                   fullWidth
                   slotProps={{ inputLabel: { shrink: true } }}
                   value={instrumentFormData.purchase_date}
@@ -893,8 +945,8 @@ const LimsInstrumentPage: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="上次校准日期"
-                  type="date"
+                  label='上次校准日期'
+                  type='date'
                   fullWidth
                   slotProps={{ inputLabel: { shrink: true } }}
                   value={instrumentFormData.calibration_date}
@@ -907,11 +959,14 @@ const LimsInstrumentPage: React.FC = () => {
                 />
               </Grid>
             </Grid>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="下次校准日期"
-                  type="date"
+                  label='下次校准日期'
+                  type='date'
                   fullWidth
                   slotProps={{ inputLabel: { shrink: true } }}
                   value={instrumentFormData.next_calibration_date}
@@ -925,7 +980,7 @@ const LimsInstrumentPage: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="负责人"
+                  label='负责人'
                   fullWidth
                   value={instrumentFormData.responsible_person}
                   onChange={(e) =>
@@ -934,12 +989,12 @@ const LimsInstrumentPage: React.FC = () => {
                       responsible_person: e.target.value,
                     })
                   }
-                  placeholder="请输入负责人"
+                  placeholder='请输入负责人'
                 />
               </Grid>
             </Grid>
             <TextField
-              label="备注说明"
+              label='备注说明'
               fullWidth
               multiline
               rows={3}
@@ -950,7 +1005,7 @@ const LimsInstrumentPage: React.FC = () => {
                   description: e.target.value,
                 })
               }
-              placeholder="请输入备注说明"
+              placeholder='请输入备注说明'
             />
           </Stack>
         </DialogContent>
@@ -960,31 +1015,27 @@ const LimsInstrumentPage: React.FC = () => {
               setShowInstrumentModal(false);
               setIsEditingInstrument(false);
             }}
-            variant="outlined"
-            color="inherit"
+            variant='outlined'
+            color='inherit'
           >
             取消
           </Button>
           <Button
-            onClick={
-              isEditingInstrument
-                ? handleUpdateInstrument
-                : handleCreateInstrument
-            }
+            onClick={isEditingInstrument ? handleUpdateInstrument : handleCreateInstrument}
             disabled={creating}
-            variant="contained"
+            variant='contained'
             sx={{
-              backgroundColor: "#0d9488",
-              "&:hover": { backgroundColor: "#0f766e" },
+              backgroundColor: '#0d9488',
+              '&:hover': { backgroundColor: '#0f766e' },
             }}
           >
             {creating
               ? isEditingInstrument
-                ? "更新中..."
-                : "创建中..."
+                ? '更新中...'
+                : '创建中...'
               : isEditingInstrument
-                ? "更新"
-                : "创建"}
+                ? '更新'
+                : '创建'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -992,7 +1043,7 @@ const LimsInstrumentPage: React.FC = () => {
       <Dialog
         open={showInstrumentDetailModal}
         onClose={() => setShowInstrumentDetailModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 2 } } }}
       >
@@ -1001,13 +1052,16 @@ const LimsInstrumentPage: React.FC = () => {
             <Box>
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   mb: 3,
                 }}
               >
-                <Typography variant="h5" sx={{ fontWeight: "semibold" }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 'semibold' }}
+                >
                   仪器详情
                 </Typography>
                 <IconButton onClick={() => setShowInstrumentDetailModal(false)}>
@@ -1019,157 +1073,156 @@ const LimsInstrumentPage: React.FC = () => {
                 <Box>
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       mb: 2,
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 'semibold' }}
+                    >
                       {selectedInstrument.name}
                     </Typography>
                     <Chip
-                      size="small"
+                      size='small'
                       label={selectedInstrument.status}
                       sx={{
-                        bgcolor: getInstrumentStatusColor(
-                          selectedInstrument.status,
-                        ).bgcolor,
-                        color: getInstrumentStatusColor(
-                          selectedInstrument.status,
-                        ).color,
+                        bgcolor: getInstrumentStatusColor(selectedInstrument.status).bgcolor,
+                        color: getInstrumentStatusColor(selectedInstrument.status).color,
                         fontWeight: 500,
                         px: 1.5,
                       }}
                     />
                   </Box>
-                  <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                  <Stack
+                    direction='row'
+                    spacing={1}
+                    sx={{ mb: 1.5 }}
+                  >
                     <Chip
-                      size="small"
+                      size='small'
                       label={selectedInstrument.type}
-                      sx={{ bgcolor: "#ccfbf1", color: "#0f766e" }}
+                      sx={{ bgcolor: '#ccfbf1', color: '#0f766e' }}
                     />
                     <Chip
-                      size="small"
+                      size='small'
                       label={selectedInstrument.code}
                       sx={{
-                        bgcolor: "grey.100",
-                        color: "text.secondary",
-                        fontFamily: "monospace",
+                        bgcolor: 'grey.100',
+                        color: 'text.secondary',
+                        fontFamily: 'monospace',
                       }}
                     />
                   </Stack>
-                  <Typography color="text.secondary">
-                    {selectedInstrument.description || "暂无备注"}
+                  <Typography color='text.secondary'>
+                    {selectedInstrument.description || '暂无备注'}
                   </Typography>
                 </Box>
 
                 <Grid
                   container
                   spacing={2}
-                  sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}
+                  sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1.5 }}
                 >
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       制造商
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {selectedInstrument.manufacturer || "-"}
+                    <Typography sx={{ fontWeight: 'medium' }}>
+                      {selectedInstrument.manufacturer || '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       型号
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {selectedInstrument.model || "-"}
+                    <Typography sx={{ fontWeight: 'medium' }}>
+                      {selectedInstrument.model || '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       序列号
                     </Typography>
                     <Typography
                       sx={{
-                        ...{ fontFamily: "monospace" },
-                        fontWeight: "medium",
+                        ...{ fontFamily: 'monospace' },
+                        fontWeight: 'medium',
                       }}
                     >
-                      {selectedInstrument.serial_number || "-"}
+                      {selectedInstrument.serial_number || '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       存放位置
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {selectedInstrument.location || "-"}
+                    <Typography sx={{ fontWeight: 'medium' }}>
+                      {selectedInstrument.location || '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       负责人
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {selectedInstrument.responsible_person || "-"}
+                    <Typography sx={{ fontWeight: 'medium' }}>
+                      {selectedInstrument.responsible_person || '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       购买日期
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
+                    <Typography sx={{ fontWeight: 'medium' }}>
                       {selectedInstrument.purchase_date
-                        ? new Date(
-                            selectedInstrument.purchase_date,
-                          ).toLocaleDateString("zh-CN")
-                        : "-"}
+                        ? new Date(selectedInstrument.purchase_date).toLocaleDateString('zh-CN')
+                        : '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       上次校准
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
+                    <Typography sx={{ fontWeight: 'medium' }}>
                       {selectedInstrument.calibration_date
-                        ? new Date(
-                            selectedInstrument.calibration_date,
-                          ).toLocaleDateString("zh-CN")
-                        : "-"}
+                        ? new Date(selectedInstrument.calibration_date).toLocaleDateString('zh-CN')
+                        : '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       下次校准
@@ -1178,57 +1231,51 @@ const LimsInstrumentPage: React.FC = () => {
                       sx={{
                         ...{
                           color: selectedInstrument.next_calibration_date
-                            ? "#ea580c"
-                            : "text.primary",
+                            ? '#ea580c'
+                            : 'text.primary',
                         },
-                        fontWeight: "medium",
+                        fontWeight: 'medium',
                       }}
                     >
                       {selectedInstrument.next_calibration_date
-                        ? new Date(
-                            selectedInstrument.next_calibration_date,
-                          ).toLocaleDateString("zh-CN")
-                        : "-"}
+                        ? new Date(selectedInstrument.next_calibration_date).toLocaleDateString(
+                            'zh-CN'
+                          )
+                        : '-'}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       创建时间
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {new Date(selectedInstrument.created_at).toLocaleString(
-                        "zh-CN",
-                      )}
+                    <Typography sx={{ fontWeight: 'medium' }}>
+                      {new Date(selectedInstrument.created_at).toLocaleString('zh-CN')}
                     </Typography>
                   </Grid>
                   <Grid size={6}>
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ mb: 0.5 }}
                     >
                       更新时间
                     </Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>
-                      {new Date(selectedInstrument.updated_at).toLocaleString(
-                        "zh-CN",
-                      )}
+                    <Typography sx={{ fontWeight: 'medium' }}>
+                      {new Date(selectedInstrument.updated_at).toLocaleString('zh-CN')}
                     </Typography>
                   </Grid>
                 </Grid>
 
                 <Box>
-                  <Typography sx={{ ...{ mb: 1.5 }, fontWeight: "semibold" }}>
-                    维护记录
-                  </Typography>
+                  <Typography sx={{ ...{ mb: 1.5 }, fontWeight: 'semibold' }}>维护记录</Typography>
                   {instrumentMaintenanceRecords.length === 0 ? (
                     <Typography
-                      color="text.secondary"
-                      sx={{ textAlign: "center", py: 2 }}
+                      color='text.secondary'
+                      sx={{ textAlign: 'center', py: 2 }}
                     >
                       暂无维护记录
                     </Typography>
@@ -1237,42 +1284,41 @@ const LimsInstrumentPage: React.FC = () => {
                       {instrumentMaintenanceRecords.map((record) => (
                         <Paper
                           key={record.id}
-                          variant="outlined"
+                          variant='outlined'
                           sx={{ p: 2, borderRadius: 1.5 }}
                         >
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
                               mb: 1,
                             }}
                           >
                             <Typography
                               sx={{
-                                ...{ color: "#0f766e" },
-                                fontWeight: "medium",
+                                ...{ color: '#0f766e' },
+                                fontWeight: 'medium',
                               }}
                             >
                               {record.maintenance_type}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {new Date(record.performed_at).toLocaleDateString(
-                                "zh-CN",
-                              )}
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              {new Date(record.performed_at).toLocaleDateString('zh-CN')}
                             </Typography>
                           </Box>
-                          <Typography sx={{ mb: 1 }}>
-                            {record.description}
-                          </Typography>
+                          <Typography sx={{ mb: 1 }}>{record.description}</Typography>
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
                               fontSize: 14,
                             }}
-                            color="text.secondary"
+                            color='text.secondary'
                           >
                             <span>执行人: {record.performed_by}</span>
                             {record.cost && <span>费用: ¥{record.cost}</span>}
@@ -1284,16 +1330,14 @@ const LimsInstrumentPage: React.FC = () => {
                 </Box>
 
                 <Divider />
-                <Box
-                  sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5 }}
-                >
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5 }}>
                   <Button
                     onClick={() => {
                       setShowInstrumentDetailModal(false);
                       openMaintenanceModal(selectedInstrument);
                     }}
-                    variant="outlined"
-                    sx={{ color: "#0d9488", borderColor: "#0d9488" }}
+                    variant='outlined'
+                    sx={{ color: '#0d9488', borderColor: '#0d9488' }}
                   >
                     添加维护记录
                   </Button>
@@ -1302,18 +1346,18 @@ const LimsInstrumentPage: React.FC = () => {
                       setShowInstrumentDetailModal(false);
                       openInstrumentModal(selectedInstrument);
                     }}
-                    variant="outlined"
-                    color="primary"
+                    variant='outlined'
+                    color='primary'
                   >
                     编辑
                   </Button>
                   <Button
                     onClick={() => setShowInstrumentDetailModal(false)}
-                    variant="contained"
-                    color="inherit"
+                    variant='contained'
+                    color='inherit'
                     sx={{
-                      bgcolor: "grey.100",
-                      "&:hover": { bgcolor: "grey.200" },
+                      bgcolor: 'grey.100',
+                      '&:hover': { bgcolor: 'grey.200' },
                     }}
                   >
                     关闭
@@ -1328,22 +1372,25 @@ const LimsInstrumentPage: React.FC = () => {
       <Dialog
         open={showMaintenanceModal}
         onClose={() => setShowMaintenanceModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 2 } } }}
       >
         <DialogTitle
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 'semibold' }}
+          >
             添加维护记录
           </Typography>
           <IconButton
-            size="small"
+            size='small'
             onClick={() => setShowMaintenanceModal(false)}
           >
             <X size={20} />
@@ -1354,23 +1401,24 @@ const LimsInstrumentPage: React.FC = () => {
             <Stack spacing={3}>
               <Box>
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
+                  variant='body2'
+                  color='text.secondary'
                   sx={{ mb: 1 }}
                 >
                   仪器名称
                 </Typography>
-                <Typography
-                  sx={{ ...{ color: "#0f766e" }, fontWeight: "medium" }}
-                >
+                <Typography sx={{ ...{ color: '#0f766e' }, fontWeight: 'medium' }}>
                   {selectedInstrument.name}
                 </Typography>
               </Box>
-              <FormControl fullWidth required>
+              <FormControl
+                fullWidth
+                required
+              >
                 <InputLabel>维护类型</InputLabel>
                 <Select
                   value={maintenanceFormData.maintenance_type}
-                  label="维护类型"
+                  label='维护类型'
                   onChange={(e) =>
                     setMaintenanceFormData({
                       ...maintenanceFormData,
@@ -1378,16 +1426,16 @@ const LimsInstrumentPage: React.FC = () => {
                     })
                   }
                 >
-                  <MenuItem value="">请选择维护类型</MenuItem>
-                  <MenuItem value="日常维护">日常维护</MenuItem>
-                  <MenuItem value="定期校准">定期校准</MenuItem>
-                  <MenuItem value="故障维修">故障维修</MenuItem>
-                  <MenuItem value="部件更换">部件更换</MenuItem>
-                  <MenuItem value="性能验证">性能验证</MenuItem>
+                  <MenuItem value=''>请选择维护类型</MenuItem>
+                  <MenuItem value='日常维护'>日常维护</MenuItem>
+                  <MenuItem value='定期校准'>定期校准</MenuItem>
+                  <MenuItem value='故障维修'>故障维修</MenuItem>
+                  <MenuItem value='部件更换'>部件更换</MenuItem>
+                  <MenuItem value='性能验证'>性能验证</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label="维护描述"
+                label='维护描述'
                 required
                 fullWidth
                 multiline
@@ -1399,12 +1447,15 @@ const LimsInstrumentPage: React.FC = () => {
                     description: e.target.value,
                   })
                 }
-                placeholder="请输入维护描述"
+                placeholder='请输入维护描述'
               />
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
-                    label="执行人"
+                    label='执行人'
                     required
                     fullWidth
                     value={maintenanceFormData.performed_by}
@@ -1414,13 +1465,13 @@ const LimsInstrumentPage: React.FC = () => {
                         performed_by: e.target.value,
                       })
                     }
-                    placeholder="请输入执行人"
+                    placeholder='请输入执行人'
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
-                    label="执行日期"
-                    type="date"
+                    label='执行日期'
+                    type='date'
                     required
                     fullWidth
                     slotProps={{ inputLabel: { shrink: true } }}
@@ -1434,11 +1485,14 @@ const LimsInstrumentPage: React.FC = () => {
                   />
                 </Grid>
               </Grid>
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
-                    label="下次维护日期"
-                    type="date"
+                    label='下次维护日期'
+                    type='date'
                     fullWidth
                     slotProps={{ inputLabel: { shrink: true } }}
                     value={maintenanceFormData.next_maintenance_date}
@@ -1452,8 +1506,8 @@ const LimsInstrumentPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
-                    label="费用（元）"
-                    type="number"
+                    label='费用（元）'
+                    type='number'
                     fullWidth
                     value={maintenanceFormData.cost}
                     onChange={(e) =>
@@ -1462,12 +1516,12 @@ const LimsInstrumentPage: React.FC = () => {
                         cost: Number(e.target.value),
                       })
                     }
-                    placeholder="0"
+                    placeholder='0'
                   />
                 </Grid>
               </Grid>
               <TextField
-                label="备注"
+                label='备注'
                 fullWidth
                 multiline
                 rows={2}
@@ -1478,7 +1532,7 @@ const LimsInstrumentPage: React.FC = () => {
                     notes: e.target.value,
                   })
                 }
-                placeholder="请输入备注"
+                placeholder='请输入备注'
               />
             </Stack>
           )}
@@ -1486,21 +1540,21 @@ const LimsInstrumentPage: React.FC = () => {
         <DialogActions>
           <Button
             onClick={() => setShowMaintenanceModal(false)}
-            variant="outlined"
-            color="inherit"
+            variant='outlined'
+            color='inherit'
           >
             取消
           </Button>
           <Button
             onClick={handleCreateMaintenance}
             disabled={creating}
-            variant="contained"
+            variant='contained'
             sx={{
-              backgroundColor: "#0d9488",
-              "&:hover": { backgroundColor: "#0f766e" },
+              backgroundColor: '#0d9488',
+              '&:hover': { backgroundColor: '#0f766e' },
             }}
           >
-            {creating ? "创建中..." : "创建"}
+            {creating ? '创建中...' : '创建'}
           </Button>
         </DialogActions>
       </Dialog>

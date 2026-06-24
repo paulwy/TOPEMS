@@ -1,5 +1,5 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
 // Integration 相关类型
 export interface IntegrationEvent {
@@ -104,9 +104,9 @@ export interface SyncStats {
 }
 
 // 转换规则相关类型
-export type RuleStatus = "active" | "inactive" | "draft";
+export type RuleStatus = 'active' | 'inactive' | 'draft';
 
-export type TriggerType = "event" | "scheduled" | "manual";
+export type TriggerType = 'event' | 'scheduled' | 'manual';
 
 export interface FieldMapping {
   source_field: string;
@@ -206,33 +206,31 @@ export interface ExecuteConversionResponse {
 export const integrationApi = {
   // 同步统计
   getSyncStats: async (): Promise<ApiResponse<SyncStats>> => {
-    return apiClient.integration.get("/api/integration/stats");
+    return apiClient.integration.get('/api/integration/stats');
   },
 
   // 集成事件
   listEvents: async (): Promise<ApiResponse<IntegrationEvent[]>> => {
-    return apiClient.integration.get("/api/integration/events");
+    return apiClient.integration.get('/api/integration/events');
   },
 
   createEvent: async (
-    data: CreateIntegrationEventRequest,
+    data: CreateIntegrationEventRequest
   ): Promise<ApiResponse<IntegrationEvent>> => {
-    return apiClient.integration.post("/api/integration/events", data);
+    return apiClient.integration.post('/api/integration/events', data);
   },
 
   // LIMS-QMS 同步
   listLimsQmsSyncs: async (): Promise<ApiResponse<LimsQmsSync[]>> => {
-    return apiClient.integration.get("/api/integration/lims-qms");
+    return apiClient.integration.get('/api/integration/lims-qms');
   },
 
   getLimsQmsSync: async (id: string): Promise<ApiResponse<LimsQmsSync>> => {
     return apiClient.integration.get(`/api/integration/lims-qms/${id}`);
   },
 
-  createLimsQmsSync: async (
-    data: CreateLimsQmsSyncRequest,
-  ): Promise<ApiResponse<LimsQmsSync>> => {
-    return apiClient.integration.post("/api/integration/lims-qms", data);
+  createLimsQmsSync: async (data: CreateLimsQmsSyncRequest): Promise<ApiResponse<LimsQmsSync>> => {
+    return apiClient.integration.post('/api/integration/lims-qms', data);
   },
 
   syncLimsQms: async (id: string): Promise<ApiResponse<LimsQmsSync>> => {
@@ -241,17 +239,15 @@ export const integrationApi = {
 
   // MES-ERP 同步
   listMesErpSyncs: async (): Promise<ApiResponse<MesErpSync[]>> => {
-    return apiClient.integration.get("/api/integration/mes-erp");
+    return apiClient.integration.get('/api/integration/mes-erp');
   },
 
   getMesErpSync: async (id: string): Promise<ApiResponse<MesErpSync>> => {
     return apiClient.integration.get(`/api/integration/mes-erp/${id}`);
   },
 
-  createMesErpSync: async (
-    data: CreateMesErpSyncRequest,
-  ): Promise<ApiResponse<MesErpSync>> => {
-    return apiClient.integration.post("/api/integration/mes-erp", data);
+  createMesErpSync: async (data: CreateMesErpSyncRequest): Promise<ApiResponse<MesErpSync>> => {
+    return apiClient.integration.post('/api/integration/mes-erp', data);
   },
 
   syncMesErp: async (id: string): Promise<ApiResponse<MesErpSync>> => {
@@ -260,17 +256,15 @@ export const integrationApi = {
 
   // WMS-SCM 同步
   listWmsScmSyncs: async (): Promise<ApiResponse<WmsScmSync[]>> => {
-    return apiClient.integration.get("/api/integration/wms-scm");
+    return apiClient.integration.get('/api/integration/wms-scm');
   },
 
   getWmsScmSync: async (id: string): Promise<ApiResponse<WmsScmSync>> => {
     return apiClient.integration.get(`/api/integration/wms-scm/${id}`);
   },
 
-  createWmsScmSync: async (
-    data: CreateWmsScmSyncRequest,
-  ): Promise<ApiResponse<WmsScmSync>> => {
-    return apiClient.integration.post("/api/integration/wms-scm", data);
+  createWmsScmSync: async (data: CreateWmsScmSyncRequest): Promise<ApiResponse<WmsScmSync>> => {
+    return apiClient.integration.post('/api/integration/wms-scm', data);
   },
 
   syncWmsScm: async (id: string): Promise<ApiResponse<WmsScmSync>> => {
@@ -279,7 +273,7 @@ export const integrationApi = {
 
   // 转换规则 API
   listConversionRules: async (): Promise<ApiResponse<ConversionRule[]>> => {
-    return apiClient.integration.get("/api/integration/rules");
+    return apiClient.integration.get('/api/integration/rules');
   },
 
   getConversionRule: async (id: string): Promise<ApiResponse<ConversionRule>> => {
@@ -287,14 +281,14 @@ export const integrationApi = {
   },
 
   createConversionRule: async (
-    data: CreateConversionRuleRequest,
+    data: CreateConversionRuleRequest
   ): Promise<ApiResponse<ConversionRule>> => {
-    return apiClient.integration.post("/api/integration/rules", data);
+    return apiClient.integration.post('/api/integration/rules', data);
   },
 
   updateConversionRule: async (
     id: string,
-    data: UpdateConversionRuleRequest,
+    data: UpdateConversionRuleRequest
   ): Promise<ApiResponse<ConversionRule>> => {
     return apiClient.integration.put(`/api/integration/rules/${id}`, data);
   },
@@ -309,7 +303,7 @@ export const integrationApi = {
 
   executeConversionRule: async (
     id: string,
-    data: ExecuteConversionRequest,
+    data: ExecuteConversionRequest
   ): Promise<ApiResponse<ExecuteConversionResponse>> => {
     return apiClient.integration.post(`/api/integration/rules/${id}/execute`, data);
   },
@@ -323,7 +317,7 @@ export const integrationApi = {
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.integration.get("/health");
+    return apiClient.integration.get('/health');
   },
 };
 

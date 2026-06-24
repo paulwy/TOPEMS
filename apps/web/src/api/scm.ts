@@ -3,12 +3,8 @@
  * 供应链管理 API 客户端
  */
 
-import type {
-  ApiResponse,
-  PaginationParams,
-  PaginatedResponse,
-} from "./client";
-import { apiClient } from "./client";
+import type { ApiResponse, PaginationParams, PaginatedResponse } from './client';
+import { apiClient } from './client';
 
 // ==================== Types ====================
 
@@ -178,19 +174,15 @@ const supplierApi = {
   /**
    * 获取供应商列表
    */
-  list: async (
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
-    return apiClient.scm.get("/api/scm/suppliers", { params });
+  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
+    return apiClient.scm.get('/api/scm/suppliers', { params });
   },
 
   /**
    * 创建供应商
    */
-  create: async (
-    data: CreateSupplierRequest,
-  ): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.post("/api/scm/suppliers", data);
+  create: async (data: CreateSupplierRequest): Promise<ApiResponse<Supplier>> => {
+    return apiClient.scm.post('/api/scm/suppliers', data);
   },
 
   /**
@@ -203,10 +195,7 @@ const supplierApi = {
   /**
    * 更新供应商
    */
-  update: async (
-    id: string,
-    data: UpdateSupplierRequest,
-  ): Promise<ApiResponse<Supplier>> => {
+  update: async (id: string, data: UpdateSupplierRequest): Promise<ApiResponse<Supplier>> => {
     return apiClient.scm.put(`/api/scm/suppliers/${id}`, data);
   },
 
@@ -225,18 +214,16 @@ const purchaseOrderApi = {
    * 获取采购订单列表
    */
   list: async (
-    params?: PaginationParams,
+    params?: PaginationParams
   ): Promise<ApiResponse<PaginatedResponse<PurchaseOrder>>> => {
-    return apiClient.scm.get("/api/scm/purchase-orders", { params });
+    return apiClient.scm.get('/api/scm/purchase-orders', { params });
   },
 
   /**
    * 创建采购订单
    */
-  create: async (
-    data: CreatePurchaseOrderRequest,
-  ): Promise<ApiResponse<PurchaseOrder>> => {
-    return apiClient.scm.post("/api/scm/purchase-orders", data);
+  create: async (data: CreatePurchaseOrderRequest): Promise<ApiResponse<PurchaseOrder>> => {
+    return apiClient.scm.post('/api/scm/purchase-orders', data);
   },
 
   /**
@@ -251,7 +238,7 @@ const purchaseOrderApi = {
    */
   update: async (
     id: string,
-    data: UpdatePurchaseOrderRequest,
+    data: UpdatePurchaseOrderRequest
   ): Promise<ApiResponse<PurchaseOrder>> => {
     return apiClient.scm.put(`/api/scm/purchase-orders/${id}`, data);
   },
@@ -264,18 +251,16 @@ const purchaseItemApi = {
    * 获取采购明细列表
    */
   list: async (
-    params?: PurchaseItemQueryParams,
+    params?: PurchaseItemQueryParams
   ): Promise<ApiResponse<PaginatedResponse<PurchaseItem>>> => {
-    return apiClient.scm.get("/api/scm/purchase-items", { params });
+    return apiClient.scm.get('/api/scm/purchase-items', { params });
   },
 
   /**
    * 创建采购明细
    */
-  create: async (
-    data: CreatePurchaseItemRequest,
-  ): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.post("/api/scm/purchase-items", data);
+  create: async (data: CreatePurchaseItemRequest): Promise<ApiResponse<PurchaseItem>> => {
+    return apiClient.scm.post('/api/scm/purchase-items', data);
   },
 
   /**
@@ -290,7 +275,7 @@ const purchaseItemApi = {
    */
   update: async (
     id: string,
-    data: UpdatePurchaseItemRequest,
+    data: UpdatePurchaseItemRequest
   ): Promise<ApiResponse<PurchaseItem>> => {
     return apiClient.scm.put(`/api/scm/purchase-items/${id}`, data);
   },
@@ -303,18 +288,18 @@ const supplierEvaluationApi = {
    * 获取供应商评估列表
    */
   list: async (
-    params?: SupplierEvaluationQueryParams,
+    params?: SupplierEvaluationQueryParams
   ): Promise<ApiResponse<PaginatedResponse<SupplierEvaluation>>> => {
-    return apiClient.scm.get("/api/scm/evaluations", { params });
+    return apiClient.scm.get('/api/scm/evaluations', { params });
   },
 
   /**
    * 创建供应商评估
    */
   create: async (
-    data: CreateSupplierEvaluationRequest,
+    data: CreateSupplierEvaluationRequest
   ): Promise<ApiResponse<SupplierEvaluation>> => {
-    return apiClient.scm.post("/api/scm/evaluations", data);
+    return apiClient.scm.post('/api/scm/evaluations', data);
   },
 
   /**
@@ -329,7 +314,7 @@ const supplierEvaluationApi = {
    */
   update: async (
     id: string,
-    data: UpdateSupplierEvaluationRequest,
+    data: UpdateSupplierEvaluationRequest
   ): Promise<ApiResponse<SupplierEvaluation>> => {
     return apiClient.scm.put(`/api/scm/evaluations/${id}`, data);
   },
@@ -350,6 +335,6 @@ export const scmApi = {
    * 健康检查
    */
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.scm.get("/health");
+    return apiClient.scm.get('/health');
   },
 };

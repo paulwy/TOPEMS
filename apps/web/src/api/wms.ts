@@ -1,5 +1,5 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
 export interface InventoryItem {
   id: string;
@@ -128,6 +128,7 @@ export interface OutboundOrder {
   status: string;
   total_amount?: number;
   total_quantity?: number;
+  remarks?: string;
   created_at: string;
   updated_at: string;
 }
@@ -163,6 +164,31 @@ export interface CreateOutboundOrderRequest {
   total_amount?: number;
   remarks?: string;
   items: CreateOutboundOrderItemRequest[];
+}
+
+export interface UpdateInboundOrderRequest {
+  order_number?: string;
+  order_type?: string;
+  warehouse_id?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  expected_date?: string;
+  items?: CreateInboundOrderItemRequest[];
+}
+
+export interface UpdateOutboundOrderRequest {
+  order_number?: string;
+  order_type?: string;
+  warehouse_id?: string;
+  customer_id?: string;
+  customer_name?: string;
+  shipping_address?: string;
+  expected_date?: string;
+  order_date?: string;
+  expected_delivery?: string;
+  total_amount?: number;
+  remarks?: string;
+  items?: CreateOutboundOrderItemRequest[];
 }
 
 export interface CreateOutboundOrderItemRequest {
@@ -278,40 +304,36 @@ export interface PaginatedResponse<T> {
 }
 
 export async function listInventory(
-  params?: PaginationParams,
+  params?: PaginationParams
 ): Promise<ApiResponse<PaginatedResponse<InventoryItem>>> {
-  return apiClient.wms.get("/inventory", { params });
+  return apiClient.wms.get('/inventory', { params });
 }
 
-export async function getInventory(
-  id: string,
-): Promise<ApiResponse<InventoryItem>> {
+export async function getInventory(id: string): Promise<ApiResponse<InventoryItem>> {
   return apiClient.wms.get(`/inventory/${id}`);
 }
 
 export async function createInventory(
-  data: CreateInventoryItemRequest,
+  data: CreateInventoryItemRequest
 ): Promise<ApiResponse<InventoryItem>> {
-  return apiClient.wms.post("/inventory", data);
+  return apiClient.wms.post('/inventory', data);
 }
 
 export async function updateInventory(
   id: string,
-  data: UpdateInventoryItemRequest,
+  data: UpdateInventoryItemRequest
 ): Promise<ApiResponse<InventoryItem>> {
   return apiClient.wms.put(`/inventory/${id}`, data);
 }
 
-export async function deleteInventory(
-  id: string,
-): Promise<ApiResponse<string>> {
+export async function deleteInventory(id: string): Promise<ApiResponse<string>> {
   return apiClient.wms.delete(`/inventory/${id}`);
 }
 
 export async function listLowStockInventory(): Promise<
   ApiResponse<{ items: InventoryItem[]; total: number }>
 > {
-  return apiClient.wms.get("/inventory/low-stock");
+  return apiClient.wms.get('/inventory/low-stock');
 }
 
 export async function listInventoryByWarehouse(warehouse_id: string): Promise<
@@ -326,45 +348,41 @@ export async function listInventoryByWarehouse(warehouse_id: string): Promise<
 }
 
 export async function listInboundOrders(
-  params?: PaginationParams,
+  params?: PaginationParams
 ): Promise<ApiResponse<PaginatedResponse<InboundOrder>>> {
-  return apiClient.wms.get("/inbound-orders", { params });
+  return apiClient.wms.get('/inbound-orders', { params });
 }
 
-export async function getInboundOrder(
-  id: string,
-): Promise<ApiResponse<InboundOrder>> {
+export async function getInboundOrder(id: string): Promise<ApiResponse<InboundOrder>> {
   return apiClient.wms.get(`/inbound-orders/${id}`);
 }
 
 export async function createInboundOrder(
-  data: CreateInboundOrderRequest,
+  data: CreateInboundOrderRequest
 ): Promise<ApiResponse<InboundOrder>> {
-  return apiClient.wms.post("/inbound-orders", data);
+  return apiClient.wms.post('/inbound-orders', data);
 }
 
 export async function updateInboundOrder(
   id: string,
-  data: Partial<InboundOrder>,
+  data: Partial<InboundOrder>
 ): Promise<ApiResponse<InboundOrder>> {
   return apiClient.wms.put(`/inbound-orders/${id}`, data);
 }
 
-export async function deleteInboundOrder(
-  id: string,
-): Promise<ApiResponse<string>> {
+export async function deleteInboundOrder(id: string): Promise<ApiResponse<string>> {
   return apiClient.wms.delete(`/inbound-orders/${id}`);
 }
 
 export async function listInboundOrderItems(
-  order_id: string,
+  order_id: string
 ): Promise<ApiResponse<{ items: InboundOrderItem[]; total: number }>> {
   return apiClient.wms.get(`/inbound-orders/${order_id}/items`);
 }
 
 export async function createInboundOrderItem(
   order_id: string,
-  data: CreateInboundOrderItemRequest,
+  data: CreateInboundOrderItemRequest
 ): Promise<ApiResponse<InboundOrderItem>> {
   return apiClient.wms.post(`/inbound-orders/${order_id}/items`, data);
 }
@@ -372,77 +390,69 @@ export async function createInboundOrderItem(
 export async function updateInboundOrderItem(
   order_id: string,
   item_id: string,
-  data: Partial<InboundOrderItem>,
+  data: Partial<InboundOrderItem>
 ): Promise<ApiResponse<InboundOrderItem>> {
   return apiClient.wms.put(`/inbound-orders/${order_id}/items/${item_id}`, data);
 }
 
 export async function deleteInboundOrderItem(
   order_id: string,
-  item_id: string,
+  item_id: string
 ): Promise<ApiResponse<string>> {
   return apiClient.wms.delete(`/inbound-orders/${order_id}/items/${item_id}`);
 }
 
-export async function confirmInboundOrder(
-  id: string,
-): Promise<ApiResponse<InboundOrder>> {
+export async function confirmInboundOrder(id: string): Promise<ApiResponse<InboundOrder>> {
   return apiClient.wms.post(`/inbound-orders/${id}/confirm`);
 }
 
 export async function receiveInboundOrder(
   id: string,
-  items: ReceiveItemRequest[],
+  items: ReceiveItemRequest[]
 ): Promise<ApiResponse<InboundOrder>> {
   return apiClient.wms.post(`/inbound-orders/${id}/receive`, items);
 }
 
-export async function completeInboundOrder(
-  id: string,
-): Promise<ApiResponse<InboundOrder>> {
+export async function completeInboundOrder(id: string): Promise<ApiResponse<InboundOrder>> {
   return apiClient.wms.post(`/inbound-orders/${id}/complete`);
 }
 
 export async function listOutboundOrders(
-  params?: PaginationParams,
+  params?: PaginationParams
 ): Promise<ApiResponse<PaginatedResponse<OutboundOrder>>> {
-  return apiClient.wms.get("/outbound-orders", { params });
+  return apiClient.wms.get('/outbound-orders', { params });
 }
 
-export async function getOutboundOrder(
-  id: string,
-): Promise<ApiResponse<OutboundOrder>> {
+export async function getOutboundOrder(id: string): Promise<ApiResponse<OutboundOrder>> {
   return apiClient.wms.get(`/outbound-orders/${id}`);
 }
 
 export async function createOutboundOrder(
-  data: CreateOutboundOrderRequest,
+  data: CreateOutboundOrderRequest
 ): Promise<ApiResponse<OutboundOrder>> {
-  return apiClient.wms.post("/outbound-orders", data);
+  return apiClient.wms.post('/outbound-orders', data);
 }
 
 export async function updateOutboundOrder(
   id: string,
-  data: Partial<OutboundOrder>,
+  data: Partial<OutboundOrder>
 ): Promise<ApiResponse<OutboundOrder>> {
   return apiClient.wms.put(`/outbound-orders/${id}`, data);
 }
 
-export async function deleteOutboundOrder(
-  id: string,
-): Promise<ApiResponse<string>> {
+export async function deleteOutboundOrder(id: string): Promise<ApiResponse<string>> {
   return apiClient.wms.delete(`/outbound-orders/${id}`);
 }
 
 export async function listOutboundOrderItems(
-  order_id: string,
+  order_id: string
 ): Promise<ApiResponse<{ items: OutboundOrderItem[]; total: number }>> {
   return apiClient.wms.get(`/outbound-orders/${order_id}/items`);
 }
 
 export async function createOutboundOrderItem(
   order_id: string,
-  data: CreateOutboundOrderItemRequest,
+  data: CreateOutboundOrderItemRequest
 ): Promise<ApiResponse<OutboundOrderItem>> {
   return apiClient.wms.post(`/outbound-orders/${order_id}/items`, data);
 }
@@ -450,77 +460,65 @@ export async function createOutboundOrderItem(
 export async function updateOutboundOrderItem(
   order_id: string,
   item_id: string,
-  data: Partial<OutboundOrderItem>,
+  data: Partial<OutboundOrderItem>
 ): Promise<ApiResponse<OutboundOrderItem>> {
   return apiClient.wms.put(`/outbound-orders/${order_id}/items/${item_id}`, data);
 }
 
 export async function deleteOutboundOrderItem(
   order_id: string,
-  item_id: string,
+  item_id: string
 ): Promise<ApiResponse<string>> {
   return apiClient.wms.delete(`/outbound-orders/${order_id}/items/${item_id}`);
 }
 
-export async function confirmOutboundOrder(
-  id: string,
-): Promise<ApiResponse<OutboundOrder>> {
+export async function confirmOutboundOrder(id: string): Promise<ApiResponse<OutboundOrder>> {
   return apiClient.wms.post(`/outbound-orders/${id}/confirm`);
 }
 
-export async function pickOutboundOrder(
-  id: string,
-): Promise<ApiResponse<OutboundOrder>> {
+export async function pickOutboundOrder(id: string): Promise<ApiResponse<OutboundOrder>> {
   return apiClient.wms.post(`/outbound-orders/${id}/pick`);
 }
 
-export async function packOutboundOrder(
-  id: string,
-): Promise<ApiResponse<OutboundOrder>> {
+export async function packOutboundOrder(id: string): Promise<ApiResponse<OutboundOrder>> {
   return apiClient.wms.post(`/outbound-orders/${id}/pack`);
 }
 
 export async function shipOutboundOrder(
   id: string,
-  items: ShipItemRequest[],
+  items: ShipItemRequest[]
 ): Promise<ApiResponse<OutboundOrder>> {
   return apiClient.wms.post(`/outbound-orders/${id}/ship`, items);
 }
 
-export async function completeOutboundOrder(
-  id: string,
-): Promise<ApiResponse<OutboundOrder>> {
+export async function completeOutboundOrder(id: string): Promise<ApiResponse<OutboundOrder>> {
   return apiClient.wms.post(`/outbound-orders/${id}/complete`);
 }
 
 export async function listStockTakes(
-  params?: PaginationParams,
+  params?: PaginationParams
 ): Promise<ApiResponse<PaginatedResponse<StockTake>>> {
-  return apiClient.wms.get("/stock-takes", { params });
+  return apiClient.wms.get('/stock-takes', { params });
 }
 
-export async function getStockTake(
-  id: string,
-): Promise<ApiResponse<StockTake>> {
+export async function getStockTake(id: string): Promise<ApiResponse<StockTake>> {
   return apiClient.wms.get(`/stock-takes/${id}`);
 }
 
 export async function createStockTake(
-  data: CreateStockTakeRequest,
+  data: CreateStockTakeRequest
 ): Promise<ApiResponse<StockTake>> {
-  return apiClient.wms.post("/stock-takes", data);
+  return apiClient.wms.post('/stock-takes', data);
 }
 
 export async function updateStockTake(
   id: string,
-  data: Partial<StockTake>,
+  data: Partial<StockTake>
 ): Promise<ApiResponse<StockTake>> {
   return apiClient.wms.put(`/stock-takes/${id}`, data);
 }
 
-export async function deleteStockTake(
-  id: string,
-): Promise<ApiResponse<string>> {
+export async function deleteStockTake(id: string): Promise<ApiResponse<string>> {
   return apiClient.wms.delete(`/stock-takes/${id}`);
 }
 
@@ -537,14 +535,14 @@ export async function listStockTakeItems(id: string): Promise<
 
 export async function getStockTakeItem(
   id: string,
-  item_id: string,
+  item_id: string
 ): Promise<ApiResponse<StockTakeItem>> {
   return apiClient.wms.get(`/stock-takes/${id}/items/${item_id}`);
 }
 
 export async function createStockTakeItem(
   id: string,
-  data: CreateStockTakeItemRequest,
+  data: CreateStockTakeItemRequest
 ): Promise<ApiResponse<StockTakeItem>> {
   return apiClient.wms.post(`/stock-takes/${id}/items`, data);
 }
@@ -552,40 +550,34 @@ export async function createStockTakeItem(
 export async function updateStockTakeItem(
   id: string,
   item_id: string,
-  data: Partial<StockTakeItem>,
+  data: Partial<StockTakeItem>
 ): Promise<ApiResponse<StockTakeItem>> {
   return apiClient.wms.put(`/stock-takes/${id}/items/${item_id}`, data);
 }
 
 export async function deleteStockTakeItem(
   id: string,
-  item_id: string,
+  item_id: string
 ): Promise<ApiResponse<string>> {
   return apiClient.wms.delete(`/stock-takes/${id}/items/${item_id}`);
 }
 
-export async function startStockTake(
-  id: string,
-): Promise<ApiResponse<StockTake>> {
+export async function startStockTake(id: string): Promise<ApiResponse<StockTake>> {
   return apiClient.wms.post(`/stock-takes/${id}/start`);
 }
 
 export async function countStockTake(
   id: string,
-  items: CountItemRequest[],
+  items: CountItemRequest[]
 ): Promise<ApiResponse<{ message: string }>> {
   return apiClient.wms.post(`/stock-takes/${id}/count`, items);
 }
 
-export async function completeStockTake(
-  id: string,
-): Promise<ApiResponse<StockTake>> {
+export async function completeStockTake(id: string): Promise<ApiResponse<StockTake>> {
   return apiClient.wms.post(`/stock-takes/${id}/complete`);
 }
 
-export async function adjustStockTake(
-  id: string,
-): Promise<ApiResponse<{ message: string }>> {
+export async function adjustStockTake(id: string): Promise<ApiResponse<{ message: string }>> {
   return apiClient.wms.post(`/stock-takes/${id}/adjust`);
 }
 
@@ -621,9 +613,9 @@ export interface UpdateWarehouseRequest {
 }
 
 export async function listWarehouses(
-  params?: PaginationParams,
+  params?: PaginationParams
 ): Promise<ApiResponse<PaginatedResponse<Warehouse>>> {
-  return apiClient.wms.get("/warehouses", { params });
+  return apiClient.wms.get('/warehouses', { params });
 }
 
 export async function getWarehouse(id: string): Promise<ApiResponse<Warehouse>> {
@@ -631,14 +623,14 @@ export async function getWarehouse(id: string): Promise<ApiResponse<Warehouse>> 
 }
 
 export async function createWarehouse(
-  data: CreateWarehouseRequest,
+  data: CreateWarehouseRequest
 ): Promise<ApiResponse<Warehouse>> {
-  return apiClient.wms.post("/warehouses", data);
+  return apiClient.wms.post('/warehouses', data);
 }
 
 export async function updateWarehouse(
   id: string,
-  data: UpdateWarehouseRequest,
+  data: UpdateWarehouseRequest
 ): Promise<ApiResponse<Warehouse>> {
   return apiClient.wms.put(`/warehouses/${id}`, data);
 }

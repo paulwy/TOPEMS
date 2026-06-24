@@ -1,110 +1,444 @@
-# TOPEMS Alert Rules
+# TOPEMS Prometheus Alert Rules
 
 groups:
   - name: topems_service_health
     rules:
       # Service down alert
       - alert: ServiceDown
-        expr: up == 0
-        for: 1m
+        expr: up{job=~"topems-.*"} == 0
+        for: 30s
         labels:
           severity: critical
+          team: devops
         annotations:
-          summary: "Service {{ $labels.job }} is down"
-          description: "Service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute."
+          summary: "服务 {{ $labels.job }} 不可用"
+          description: "服务 {{ $labels.job }} 在 {{ $labels.instance }} 上已停止运行超过30秒"
 
       # High error rate
       - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
-        for: 5m
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job) > 0.05
+        for: 1m
         labels:
           severity: warning
+          team: devops
         annotations:
-          summary: "High error rate on {{ $labels.job }}"
-          description: "Error rate is {{ $value }} requests per second on {{ $labels.job }}."
+          summary: "服务 {{ $labels.job }} 错误率过高"
+          description: "服务 {{ $labels.job }} 错误率超过5%"
+
+      # Critical error rate
+      - alert: CriticalErrorRate
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job) > 0.01
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 发生严重错误"
+          description: "服务 {{ $labels.job }} 错误率超过1%"
 
       # Slow response time
       - alert: SlowResponseTime
-        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
-        for: 5m
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 2
+        for: 1m
         labels:
           severity: warning
+          team: devops
         annotations:
-          summary: "Slow response time on {{ $labels.job }}"
-          description: "95th percentile response time is {{ $value }} seconds."
+          summary: "服务 {{ $labels.job }} 响应时间过长"
+          description: "服务 {{ $labels.job }} P95响应时间超过2秒"
+
+      # Critical response time
+      - alert: CriticalResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 5
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 响应时间严重超时"
+          description: "服务 {{ $labels.job }} P95响应时间超过5秒"
 
   - name: topems_database
     rules:
       # Database connection pool exhaustion
       - alert: DatabasePoolExhaustion
-        expr: database_pool_connections_active / database_pool_connections_max > 0.9
-        for: 5m
+        expr: sum(pg_stat_activity_count{datname="topems"}) / pg_settings_max_connections > 0.8
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "PostgreSQL连接池使用率过高"
+          description: "连接池使用率: {{ $value | humanizePercentage }}"
+
+      # Database connection pool critical
+      - alert: DatabasePoolCritical
+        expr: sum(pg_stat_activity_count{datname="topems"}) / pg_settings_max_connections > 0.9
+        for: 30s
         labels:
           severity: critical
+          team: devops
         annotations:
-          summary: "Database connection pool nearly exhausted"
-          description: "Connection pool usage is {{ $value | humanizePercentage }}."
+          summary: "PostgreSQL连接池即将耗尽"
+          description: "连接池使用率: {{ $value | humanizePercentage }}"
 
       # Slow database queries
       - alert: SlowDatabaseQueries
-        expr: rate(database_query_duration_seconds_sum[5m]) / rate(database_query_duration_seconds_count[5m]) > 1
-        for: 10m
+        expr: rate(pg_stat_statements_total_time[5m]) > 60
+        for: 1m
         labels:
           severity: warning
+          team: devops
         annotations:
-          summary: "Slow database queries detected"
-          description: "Average query duration is {{ $value }} seconds."
+          summary: "慢查询告警"
+          description: "查询执行时间超过60秒"
+
+      # Database lock wait
+      - alert: DatabaseLockWait
+        expr: sum(rate(pg_stat_activity_waiting[5m])) > 5
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "数据库锁等待过多"
+          description: "锁等待数量: {{ $value }}"
+
+  - name: topems_redis
+    rules:
+      # Redis high memory usage
+      - alert: RedisHighMemoryUsage
+        expr: redis_used_memory / redis_maxmemory > 0.8
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
+
+      # Redis critical memory usage
+      - alert: RedisCriticalMemoryUsage
+        expr: redis_used_memory / redis_maxmemory > 0.9
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Redis内存即将耗尽"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
+
+      # Redis high connection count
+      - alert: RedisHighConnectionCount
+        expr: redis_connected_clients > 100
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Redis连接数过多"
+          description: "连接数: {{ $value }}"
+
+      # Redis slow commands
+      - alert: RedisSlowCommands
+        expr: rate(redis_slowlog_length[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Redis慢命令过多"
+          description: "慢命令数量: {{ $value }}"
+
+  - name: topems_rabbitmq
+    rules:
+      # RabbitMQ high queue depth
+      - alert: RabbitMQHighQueueDepth
+        expr: rabbitmq_queue_messages > 1000
+        for: 2m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "RabbitMQ队列消息积压"
+          description: "队列消息数: {{ $value }}"
+
+      # RabbitMQ no consumers
+      - alert: RabbitMQNoConsumers
+        expr: rabbitmq_queue_consumers == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "RabbitMQ队列没有消费者"
+          description: "队列 {{ $labels.queue }} 没有活跃消费者"
 
   - name: topems_system
     rules:
       # High memory usage
       - alert: HighMemoryUsage
-        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.85
-        for: 5m
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 1m
         labels:
           severity: warning
+          team: devops
         annotations:
-          summary: "High memory usage"
-          description: "Memory usage is {{ $value | humanizePercentage }}."
+          summary: "内存使用率过高"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
+
+      # Critical memory usage
+      - alert: CriticalMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 95
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "内存使用率严重过高"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
 
       # High CPU usage
       - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 10m
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 85
+        for: 1m
         labels:
           severity: warning
+          team: devops
         annotations:
-          summary: "High CPU usage"
-          description: "CPU usage is {{ $value }}%."
+          summary: "CPU使用率过高"
+          description: "CPU使用率: {{ $value | humanizePercentage }}"
+
+      # Critical CPU usage
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 95
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "CPU使用率严重过高"
+          description: "CPU使用率: {{ $value | humanizePercentage }}"
 
       # Disk space low
       - alert: DiskSpaceLow
-        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
-        for: 5m
+        expr: 100 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) > 90
+        for: 1m
         labels:
           severity: critical
+          team: devops
         annotations:
-          summary: "Disk space critically low"
-          description: "Available disk space is {{ $value | humanizePercentage }}."
+          summary: "磁盘使用率过高"
+          description: "磁盘使用率: {{ $value | humanizePercentage }}"
 
-  - name: topems_business
+  - name: topems_business_services
     rules:
-      # Tenant limit approaching
-      - alert: TenantLimitApproaching
-        expr: topems_tenants_active / topems_tenants_max > 0.8
+      # ERP service alerts
+      - alert: ErpHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"topems-erp.*"}[5m])) by (le)) > 1
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "ERP服务响应时间过长"
+          description: "ERP服务P95延迟超过1秒"
+
+      # MES service alerts
+      - alert: MesHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"topems-mes.*"}[5m])) by (le)) > 2
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "MES服务响应时间过长"
+          description: "MES服务P95延迟超过2秒"
+
+      # HRM service alerts
+      - alert: HrmHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"topems-hrm.*"}[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "HRM服务响应时间过长"
+          description: "HRM服务P95延迟超过500ms"
+
+  - name: topems_qps
+    rules:
+      # Service low QPS
+      - alert: ServiceLowQPS
+        expr: sum(rate(http_requests_total[5m])) by (job) < 1
+        for: 5m
+        labels:
+          severity: info
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 请求量过低"
+          description: "服务 {{ $labels.job }} QPS低于1，可能存在异常"
+
+      # Service high QPS
+      - alert: ServiceHighQPS
+        expr: sum(rate(http_requests_total[5m])) by (job) > 1000
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 请求量过高"
+          description: "服务 {{ $labels.job }} QPS超过1000"
+
+  - name: topems_jvm
+    rules:
+      # JVM heap usage high
+      - alert: JvmHeapUsageHigh
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "JVM堆内存使用率过高 [{{ $labels.job }}]"
+          description: "JVM堆内存使用率: {{ $value | humanizePercentage }}"
+
+      # JVM heap usage critical
+      - alert: JvmHeapUsageCritical
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.95
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "JVM堆内存即将耗尽 [{{ $labels.job }}]"
+          description: "JVM堆内存使用率: {{ $value | humanizePercentage }}"
+
+      # JVM GC pressure
+      - alert: JvmGCPressure
+        expr: rate(jvm_gc_pause_seconds_count[5m]) > 30
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "JVM GC压力过大 [{{ $labels.job }}]"
+          description: "GC暂停频率: {{ $value }}/s"
+
+      # JVM thread count high
+      - alert: JvmThreadCountHigh
+        expr: jvm_threads_current > 500
+        for: 2m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "JVM线程数过多 [{{ $labels.job }}]"
+          description: "当前线程数: {{ $value }}"
+
+  - name: topems_network
+    rules:
+      # Network packet loss
+      - alert: NetworkPacketLoss
+        expr: rate(node_network_receive_packets_total{device!~"lo|docker.*"}[5m]) == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "网络接收异常 [{{ $labels.instance }}]"
+          description: "设备 {{ $labels.device }} 接收数据包率为0"
+
+      # Network interface errors
+      - alert: NetworkInterfaceErrors
+        expr: rate(node_network_receive_errors[5m]) + rate(node_network_transmit_errors[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "网络接口错误 [{{ $labels.instance }}]"
+          description: "网络错误率: {{ $value }}/s"
+
+  - name: topems_container
+    rules:
+      # Container down
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name=~"topems-.*"})
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "容器不可用 [{{ $labels.name }}]"
+          description: "容器 {{ $labels.name }} 已停止运行"
+
+      # Container high memory usage
+      - alert: ContainerHighMemory
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.85
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "容器内存使用率过高 [{{ $labels.name }}]"
+          description: "容器内存使用率: {{ $value | humanizePercentage }}"
+
+      # Container high CPU usage
+      - alert: ContainerHighCPU
+        expr: rate(container_cpu_usage_seconds_total[5m]) / container_spec_cpu_quota container_spec_cpu_period > 0.85
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "容器CPU使用率过高 [{{ $labels.name }}]"
+          description: "容器CPU使用率: {{ $value | humanizePercentage }}"
+
+  - name: topems_backup
+    rules:
+      # Backup failed
+      - alert: BackupFailed
+        expr: backup_last_run_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "备份任务失败 [{{ $labels.job }}]"
+          description: "备份任务 {{ $labels.job }} 执行失败"
+
+      # Backup not running
+      - alert: BackupNotRunning
+        expr: time() - backup_last_run_timestamp > 86400 * 2
         for: 1h
         labels:
           severity: warning
+          team: devops
         annotations:
-          summary: "Tenant limit approaching"
-          description: "Active tenants {{ $value | humanizePercentage }} of maximum."
+          summary: "备份任务未执行 [{{ $labels.job }}]"
+          description: "备份任务已超过48小时未执行"
 
-      # Plugin installation failures
-      - alert: PluginInstallationFailures
-        expr: rate(topems_plugin_install_failures_total[1h]) > 0.1
-        for: 30m
+  - name: topems_certificate
+    rules:
+      # TLS Certificate expiring soon
+      - alert: TlsCertificateExpiringSoon
+        expr: probe_ssl_cert_not_after - time() < 86400 * 7
+        for: 1h
         labels:
           severity: warning
+          team: devops
         annotations:
-          summary: "Plugin installation failures detected"
-          description: "Plugin installation failure rate is {{ $value }} per second."
+          summary: "TLS证书即将过期 [{{ $labels.instance }}]"
+          description: "证书将在 {{ $value | humanizeDuration }} 后过期"
+
+      # TLS Certificate expired
+      - alert: TlsCertificateExpired
+        expr: probe_ssl_cert_not_after - time() < 0
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "TLS证书已过期 [{{ $labels.instance }}]"
+          description: "证书已过期，请立即更新"

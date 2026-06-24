@@ -26,6 +26,9 @@ pub mod vehicles;
 pub mod voucher;
 pub mod plugin;
 
+// 财务数据缓存 TTL (秒)
+const FINANCE_CACHE_TTL: u64 = 300;
+
 #[derive(Clone)]
 pub struct ApiState {
     pub db: PgPool,
@@ -35,6 +38,11 @@ pub struct ApiState {
     pub dict_cache: Arc<InMemoryCache<Vec<models::dict::DictType>>>,
     pub notification_client: Arc<NotificationServiceClient>,
     pub hrm_client: Arc<HrmServiceClient>,
+    // 财务数据缓存
+    pub expense_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub budget_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub receivable_cache: Arc<InMemoryCache<serde_json::Value>>,
+    pub payable_cache: Arc<InMemoryCache<serde_json::Value>>,
 }
 
 impl FromRef<ApiState> for AuthState {

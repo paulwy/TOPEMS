@@ -30,8 +30,9 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_logging, simple_health_check,
-    ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
+    auth_middleware, create_cors_layer, create_database_pool, get_api_info_handler,
+    init_logging, simple_health_check, ApiResponse, AuthState, DatabaseConfig, ServiceHealth,
+    SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -61,14 +62,23 @@ async fn main() {
 
     tracing::info!("🚀 TOPEMS LIMS Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let db_config = DatabaseConfig {
+        url: std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+        max_connections: 20,
+        min_connections: Some(5),
+        connect_timeout: Some(30),
+        idle_timeout: Some(300),
+        max_lifetime: Some(1800),
+        test_interval: Some(60),
+        enable_connection_reuse: Some(true),
+        acquire_max_retries: Some(3),
+        acquire_retry_interval_ms: Some(100),
+        acquire_timeout: None,
+        enable_exponential_backoff: Some(true),
+    };
 
-    let pool = match sqlx::postgres::PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await
-    {
+    let pool = match create_database_pool(&db_config).await {
         Ok(p) => {
             tracing::info!("Database connection successful");
             p

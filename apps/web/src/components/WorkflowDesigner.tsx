@@ -1,10 +1,10 @@
-import React, { useState, useRef, type ChangeEvent } from "react";
-import { Box, Typography, TextField, FormLabel, Divider, Paper,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from "lucide-react";
+import React, { useState, useRef, type ChangeEvent } from 'react';
+import { Box, Typography, TextField, FormLabel, Divider, Paper } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from 'lucide-react';
 
 // --- Types ---
-type NodeType = "start" | "task" | "approval" | "condition" | "end";
+type NodeType = 'start' | 'task' | 'approval' | 'condition' | 'end';
 
 interface NodeData {
   id: string;
@@ -24,11 +24,11 @@ interface EdgeData {
 
 // --- Constants ---
 const NODE_ICONS: Record<NodeType, string> = {
-  start: "▶",
-  task: "📝",
-  approval: "✓",
-  condition: "🔀",
-  end: "⏹",
+  start: '▶',
+  task: '📝',
+  approval: '✓',
+  condition: '🔀',
+  end: '⏹',
 };
 
 // --- Component ---
@@ -40,13 +40,13 @@ interface WorkflowDesignerProps {
 
 export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
   initialNodes = [
-    { id: "node-1", type: "start", x: 100, y: 200, label: "开始" },
-    { id: "node-2", type: "task", x: 300, y: 200, label: "任务" },
-    { id: "node-3", type: "end", x: 500, y: 200, label: "结束" },
+    { id: 'node-1', type: 'start', x: 100, y: 200, label: '开始' },
+    { id: 'node-2', type: 'task', x: 300, y: 200, label: '任务' },
+    { id: 'node-3', type: 'end', x: 500, y: 200, label: '结束' },
   ],
   initialEdges = [
-    { id: "edge-1", source: "node-1", target: "node-2" },
-    { id: "edge-2", source: "node-2", target: "node-3" },
+    { id: 'edge-1', source: 'node-1', target: 'node-2' },
+    { id: 'edge-2', source: 'node-2', target: 'node-3' },
   ],
   onSave,
 }) => {
@@ -77,8 +77,8 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
 
   // --- Handlers ---
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest(".node")) return;
-    if ((e.target as HTMLElement).closest(".edge")) return;
+    if ((e.target as HTMLElement).closest('.node')) return;
+    if ((e.target as HTMLElement).closest('.edge')) return;
 
     setIsDragging(true);
     setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -97,11 +97,11 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
 
   const addNode = (type: NodeType) => {
     const newNode: NodeData = {
-      id: generateId("node"),
+      id: generateId('node'),
       type,
       x: pan.x + 200,
       y: pan.y + 200,
-      label: type === "start" ? "开始" : type === "end" ? "结束" : "新节点",
+      label: type === 'start' ? '开始' : type === 'end' ? '结束' : '新节点',
     };
     setNodes([...nodes, newNode]);
     setSelectedNode(newNode);
@@ -134,12 +134,12 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
     };
 
     const handleUp = () => {
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleUp);
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
     };
 
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
   };
 
   const handlePortMouseDown = (e: React.MouseEvent, nodeId: string) => {
@@ -154,11 +154,11 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
       const exists = edges.some(
         (e) =>
           (e.source === connectingFrom && e.target === targetId) ||
-          (e.source === targetId && e.target === connectingFrom),
+          (e.source === targetId && e.target === connectingFrom)
       );
       if (!exists) {
         const newEdge: EdgeData = {
-          id: generateId("edge"),
+          id: generateId('edge'),
           source: connectingFrom,
           target: targetId,
         };
@@ -176,22 +176,22 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        width: "100%",
-        backgroundColor: "#f9fafb",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        width: '100%',
+        backgroundColor: '#f9fafb',
       }}
     >
       {/* Toolbar */}
       <Paper
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 2,
           p: 4,
-          backgroundColor: "white",
-          borderBottom: "1px solid #e5e7eb",
+          backgroundColor: 'white',
+          borderBottom: '1px solid #e5e7eb',
           boxShadow: 1,
           zIndex: 10,
         }}
@@ -199,78 +199,88 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         <Typography
           sx={{
             fontWeight: 700,
-            fontSize: "1.125rem",
+            fontSize: '1.125rem',
             mr: 4,
-            color: "#1f2937",
+            color: '#1f2937',
           }}
         >
           流程设计器
         </Typography>
 
-        <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
+        <Divider
+          orientation='vertical'
+          sx={{ height: 24, mx: 2 }}
+        />
 
-        <Box sx={{ display: "flex", gap: 1 }}>
-          {(
-            ["start", "task", "approval", "condition", "end"] as NodeType[]
-          ).map((type) => (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {(['start', 'task', 'approval', 'condition', 'end'] as NodeType[]).map((type) => (
             <Button
               key={type}
               onClick={() => addNode(type)}
-              variant="outlined"
-              size="small"
+              variant='outlined'
+              size='small'
               startIcon={<Plus style={{ width: 16, height: 16 }} />}
             >
-              {type === "start"
-                ? "开始"
-                : type === "task"
-                  ? "任务"
-                  : type === "approval"
-                    ? "审批"
-                    : type === "condition"
-                      ? "条件"
-                      : "结束"}
+              {type === 'start'
+                ? '开始'
+                : type === 'task'
+                  ? '任务'
+                  : type === 'approval'
+                    ? '审批'
+                    : type === 'condition'
+                      ? '条件'
+                      : '结束'}
             </Button>
           ))}
         </Box>
 
-        <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
+        <Divider
+          orientation='vertical'
+          sx={{ height: 24, mx: 2 }}
+        />
 
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <Button
             onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
-            variant="text"
-            size="small"
+            variant='text'
+            size='small'
           >
             <ZoomOut style={{ width: 16, height: 16 }} />
           </Button>
-          <Typography sx={{ fontSize: 12, width: 48, textAlign: "center" }}>
+          <Typography sx={{ fontSize: 12, width: 48, textAlign: 'center' }}>
             {Math.round(zoom * 100)}%
           </Typography>
           <Button
             onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
-            variant="text"
-            size="small"
+            variant='text'
+            size='small'
           >
             <ZoomIn style={{ width: 16, height: 16 }} />
           </Button>
         </Box>
 
-        <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
+        <Divider
+          orientation='vertical'
+          sx={{ height: 24, mx: 2 }}
+        />
 
-        <Button onClick={() => onSave?.(nodes, edges)} sx={{ ml: "auto" }}>
+        <Button
+          onClick={() => onSave?.(nodes, edges)}
+          sx={{ ml: 'auto' }}
+        >
           <Save style={{ width: 16, height: 16, marginRight: 8 }} /> 保存
         </Button>
       </Paper>
 
       {/* Main Area */}
-      <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Canvas */}
         <Box
           sx={{
             flex: 1,
-            backgroundColor: "#f3f4f6",
-            position: "relative",
-            cursor: "move",
+            backgroundColor: '#f3f4f6',
+            position: 'relative',
+            cursor: 'move',
           }}
           onMouseMove={handleMouseMove}
           onMouseUp={() => {
@@ -284,26 +294,30 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         >
           <svg
             ref={svgRef}
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: '100%', height: '100%' }}
             onMouseDown={handleMouseDown}
           >
             {/* Grid Background */}
             <defs>
               <pattern
-                id="grid"
-                width="20"
-                height="20"
-                patternUnits="userSpaceOnUse"
+                id='grid'
+                width='20'
+                height='20'
+                patternUnits='userSpaceOnUse'
               >
                 <path
-                  d="M 20 0 L 0 0 0 20"
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
+                  d='M 20 0 L 0 0 0 20'
+                  fill='none'
+                  stroke='#e5e7eb'
+                  strokeWidth='1'
                 />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
+            <rect
+              width='100%'
+              height='100%'
+              fill='url(#grid)'
+            />
 
             {/* Edges and Nodes Container */}
             <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
@@ -320,17 +334,20 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 const controlXOffset = dx * 0.5;
 
                 return (
-                  <g key={`edge-${edge.id}`} style={{ cursor: "pointer" }}>
+                  <g
+                    key={`edge-${edge.id}`}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <path
                       d={`M ${s.x} ${s.y} C ${s.x + controlXOffset} ${s.y}, ${t.x - controlXOffset} ${t.y}, ${t.x} ${t.y}`}
-                      fill="none"
-                      stroke="#64748b"
-                      strokeWidth="2"
+                      fill='none'
+                      stroke='#64748b'
+                      strokeWidth='2'
                     />
                     {/* Arrow Head */}
                     <polygon
-                      points="0,-4 8,0 0,4"
-                      fill="#64748b"
+                      points='0,-4 8,0 0,4'
+                      fill='#64748b'
                       transform={`translate(${t.x - 8}, ${t.y}) rotate(0)`}
                     />
                   </g>
@@ -340,17 +357,13 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
               {/* Temporary Connection Line */}
               {connectingFrom && (
                 <line
-                  x1={
-                    getNodeCenter(nodes.find((n) => n.id === connectingFrom)!).x
-                  }
-                  y1={
-                    getNodeCenter(nodes.find((n) => n.id === connectingFrom)!).y
-                  }
+                  x1={getNodeCenter(nodes.find((n) => n.id === connectingFrom)!).x}
+                  y1={getNodeCenter(nodes.find((n) => n.id === connectingFrom)!).y}
                   x2={dragStart.x}
                   y2={dragStart.y}
-                  stroke="#3b82f6"
-                  strokeWidth="2"
-                  strokeDasharray="5,5"
+                  stroke='#3b82f6'
+                  strokeWidth='2'
+                  strokeDasharray='5,5'
                 />
               )}
 
@@ -360,49 +373,47 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   key={`node-${node.id}`}
                   transform={`translate(${node.x}, ${node.y})`}
                   onMouseDown={(e) => handleNodeMouseDown(e, node)}
-                  className="node"
+                  className='node'
                 >
                   <rect
-                    width="140"
-                    height="60"
-                    rx="8"
-                    fill="white"
-                    stroke={
-                      selectedNode?.id === node.id ? "#3b82f6" : "#d1d5db"
-                    }
-                    strokeWidth="2"
+                    width='140'
+                    height='60'
+                    rx='8'
+                    fill='white'
+                    stroke={selectedNode?.id === node.id ? '#3b82f6' : '#d1d5db'}
+                    strokeWidth='2'
                     style={{
-                      transition: "all",
+                      transition: 'all',
                       filter:
                         selectedNode?.id === node.id
-                          ? "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"
-                          : "none",
+                          ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+                          : 'none',
                     }}
                   />
                   <rect
-                    x="0"
-                    y="0"
-                    width="140"
-                    height="60"
-                    rx="8"
-                    fill={selectedNode?.id === node.id ? "#3b82f6" : "#000"}
+                    x='0'
+                    y='0'
+                    width='140'
+                    height='60'
+                    rx='8'
+                    fill={selectedNode?.id === node.id ? '#3b82f6' : '#000'}
                     opacity={0.1}
                   />
 
                   {/* Label */}
                   <text
-                    x="70"
-                    y="25"
-                    textAnchor="middle"
-                    style={{ fontSize: 12, fontWeight: 700, fill: "#374151" }}
+                    x='70'
+                    y='25'
+                    textAnchor='middle'
+                    style={{ fontSize: 12, fontWeight: 700, fill: '#374151' }}
                   >
                     {NODE_ICONS[node.type]} {node.label}
                   </text>
                   <text
-                    x="70"
-                    y="42"
-                    textAnchor="middle"
-                    style={{ fontSize: 10, fill: "#6b7280" }}
+                    x='70'
+                    y='42'
+                    textAnchor='middle'
+                    style={{ fontSize: 10, fill: '#6b7280' }}
                   >
                     {node.type}
                   </text>
@@ -410,24 +421,24 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   {/* Ports */}
                   {/* Left Port (Target) */}
                   <circle
-                    cx="0"
-                    cy="30"
-                    r="6"
-                    fill="white"
-                    stroke="#9ca3af"
-                    strokeWidth="2"
-                    style={{ cursor: "pointer" }}
+                    cx='0'
+                    cy='30'
+                    r='6'
+                    fill='white'
+                    stroke='#9ca3af'
+                    strokeWidth='2'
+                    style={{ cursor: 'pointer' }}
                     onMouseUp={(e) => handlePortMouseUp(e, node.id)}
                   />
                   {/* Right Port (Source) */}
                   <circle
-                    cx="140"
-                    cy="30"
-                    r="6"
-                    fill="white"
-                    stroke="#9ca3af"
-                    strokeWidth="2"
-                    style={{ cursor: "pointer" }}
+                    cx='140'
+                    cy='30'
+                    r='6'
+                    fill='white'
+                    stroke='#9ca3af'
+                    strokeWidth='2'
+                    style={{ cursor: 'pointer' }}
                     onMouseDown={(e) => handlePortMouseDown(e, node.id)}
                   />
                 </g>
@@ -440,48 +451,46 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         <Paper
           sx={{
             width: 320,
-            backgroundColor: "white",
-            borderLeft: "1px solid #e5e7eb",
-            display: "flex",
-            flexDirection: "column",
+            backgroundColor: 'white',
+            borderLeft: '1px solid #e5e7eb',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          <Box sx={{ p: 4, borderBottom: "1px solid #e5e7eb" }}>
-            <Typography sx={{ fontWeight: 600, color: "#1f2937" }}>
-              属性
-            </Typography>
+          <Box sx={{ p: 4, borderBottom: '1px solid #e5e7eb' }}>
+            <Typography sx={{ fontWeight: 600, color: '#1f2937' }}>属性</Typography>
           </Box>
-          <Box sx={{ p: 4, flex: 1, overflowY: "auto" }}>
+          <Box sx={{ p: 4, flex: 1, overflowY: 'auto' }}>
             {selectedNode ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <Box>
-                  <FormLabel sx={{ color: "#6b7280" }}>节点 ID</FormLabel>
+                  <FormLabel sx={{ color: '#6b7280' }}>节点 ID</FormLabel>
                   <TextField
                     value={selectedNode.id}
                     disabled
                     sx={{
                       mt: 1,
-                      backgroundColor: "#f3f4f6",
+                      backgroundColor: '#f3f4f6',
                     }}
                     fullWidth
                   />
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: "#6b7280" }}>类型</FormLabel>
+                  <FormLabel sx={{ color: '#6b7280' }}>类型</FormLabel>
                   <Box
                     sx={{
                       mt: 2,
                       fontSize: 14,
-                      p: "4px 8px",
+                      p: '4px 8px',
                       borderRadius: 1,
-                      backgroundColor: "#f3f4f6",
+                      backgroundColor: '#f3f4f6',
                     }}
                   >
                     {selectedNode.type}
                   </Box>
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: "#6b7280" }}>标签</FormLabel>
+                  <FormLabel sx={{ color: '#6b7280' }}>标签</FormLabel>
                   <TextField
                     value={selectedNode.label}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -492,9 +501,9 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   />
                 </Box>
                 <Box>
-                  <FormLabel sx={{ color: "#6b7280" }}>描述</FormLabel>
+                  <FormLabel sx={{ color: '#6b7280' }}>描述</FormLabel>
                   <TextField
-                    value={selectedNode.description || ""}
+                    value={selectedNode.description || ''}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       updateNode(selectedNode.id, {
                         description: e.target.value,
@@ -506,22 +515,21 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 </Box>
                 <Divider />
                 <Button
-                  variant="contained"
-                  color="error"
+                  variant='contained'
+                  color='error'
                   fullWidth
                   onClick={() => deleteNode(selectedNode.id)}
                 >
-                  <Trash2 style={{ width: 16, height: 16, marginRight: 8 }} />{" "}
-                  删除节点
+                  <Trash2 style={{ width: 16, height: 16, marginRight: 8 }} /> 删除节点
                 </Button>
               </Box>
             ) : (
-              <Box sx={{ textAlign: "center", color: "#6b7280", mt: 10 }}>
+              <Box sx={{ textAlign: 'center', color: '#6b7280', mt: 10 }}>
                 <Move
                   style={{
                     width: 40,
                     height: 40,
-                    margin: "0 auto 8px",
+                    margin: '0 auto 8px',
                     opacity: 0.5,
                   }}
                 />

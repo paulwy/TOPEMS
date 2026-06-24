@@ -1,15 +1,20 @@
-import { TextField, Dialog, DialogContent, DialogTitle, DialogActions, Tabs, Tab, Box,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState } from "react";
-import { X, Users, User, Save, MessageSquare } from "lucide-react";
-
 import {
-  imApi,
-  type CreateChatRoomRequest,
-  type CreateProjectGroupRequest,
-} from "../../api/im";
-import { useAppStore } from "../../store";
-import { logger } from "@/utils/logger";
+  TextField,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Tabs,
+  Tab,
+  Box,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState } from 'react';
+import { X, Users, User, Save, MessageSquare } from 'lucide-react';
+
+import { imApi, type CreateChatRoomRequest, type CreateProjectGroupRequest } from '../../api/im';
+import { useAppStore } from '../../store';
+import { logger } from '@/utils/logger';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -22,33 +27,31 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   isOpen,
   onClose,
   onCreated,
-  currentUserId = "current-user",
+  currentUserId = 'current-user',
 }) => {
   const addNotification = useAppStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "group">("chat");
+  const [activeTab, setActiveTab] = useState<'chat' | 'group'>('chat');
 
-  const [chatRoomName, setChatRoomName] = useState("");
-  const [chatRoomType, setChatRoomType] = useState<"direct" | "group">(
-    "direct",
-  );
+  const [chatRoomName, setChatRoomName] = useState('');
+  const [chatRoomType, setChatRoomType] = useState<'direct' | 'group'>('direct');
   const [chatRoomMembers, setChatRoomMembers] = useState<string[]>([]);
-  const [newMemberInput, setNewMemberInput] = useState("");
+  const [newMemberInput, setNewMemberInput] = useState('');
 
-  const [groupName, setGroupName] = useState("");
-  const [groupDescription, setGroupDescription] = useState("");
+  const [groupName, setGroupName] = useState('');
+  const [groupDescription, setGroupDescription] = useState('');
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
-  const [newGroupMemberInput, setNewGroupMemberInput] = useState("");
+  const [newGroupMemberInput, setNewGroupMemberInput] = useState('');
 
   const resetForm = () => {
-    setChatRoomName("");
-    setChatRoomType("direct");
+    setChatRoomName('');
+    setChatRoomType('direct');
     setChatRoomMembers([]);
-    setNewMemberInput("");
-    setGroupName("");
-    setGroupDescription("");
+    setNewMemberInput('');
+    setGroupName('');
+    setGroupDescription('');
     setGroupMembers([]);
-    setNewGroupMemberInput("");
+    setNewGroupMemberInput('');
   };
 
   const handleClose = () => {
@@ -60,28 +63,28 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     memberList: string[],
     setMemberList: React.Dispatch<React.SetStateAction<string[]>>,
     input: string,
-    setInput: React.Dispatch<React.SetStateAction<string>>,
+    setInput: React.Dispatch<React.SetStateAction<string>>
   ) => {
     if (input.trim() && !memberList.includes(input.trim())) {
       setMemberList([...memberList, input.trim()]);
-      setInput("");
+      setInput('');
     }
   };
 
   const removeMember = (
     memberList: string[],
     setMemberList: React.Dispatch<React.SetStateAction<string[]>>,
-    member: string,
+    member: string
   ) => {
     setMemberList(memberList.filter((m) => m !== member));
   };
 
   const handleCreateChatRoom = async () => {
-    if (!chatRoomMembers.length && chatRoomType === "direct") {
+    if (!chatRoomMembers.length && chatRoomType === 'direct') {
       addNotification({
-        title: "Error",
-        message: "请至少添加一位成员",
-        type: "error",
+        title: 'Error',
+        message: '请至少添加一位成员',
+        type: 'error',
       });
       return;
     }
@@ -89,7 +92,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     setLoading(true);
     try {
       const members =
-        chatRoomType === "direct"
+        chatRoomType === 'direct'
           ? [currentUserId, ...chatRoomMembers]
           : [currentUserId, ...chatRoomMembers];
 
@@ -103,25 +106,25 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       const response = await imApi.createChatRoom(request);
       if (response.success) {
         addNotification({
-          title: "Success",
-          message: "聊天室创建成功",
-          type: "success",
+          title: 'Success',
+          message: '聊天室创建成功',
+          type: 'success',
         });
         onCreated();
         handleClose();
       } else {
         addNotification({
-          title: "Error",
-          message: response.message || "创建聊天室失败",
-          type: "error",
+          title: 'Error',
+          message: response.message || '创建聊天室失败',
+          type: 'error',
         });
       }
     } catch (error) {
-      logger.error("Failed to create chat room:", error);
+      logger.error('Failed to create chat room:', error);
       addNotification({
-        title: "Error",
-        message: "创建聊天室失败",
-        type: "error",
+        title: 'Error',
+        message: '创建聊天室失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -131,9 +134,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const handleCreateProjectGroup = async () => {
     if (!groupName.trim()) {
       addNotification({
-        title: "Error",
-        message: "请输入群组名称",
-        type: "error",
+        title: 'Error',
+        message: '请输入群组名称',
+        type: 'error',
       });
       return;
     }
@@ -150,25 +153,25 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       const response = await imApi.createProjectGroup(request);
       if (response.success) {
         addNotification({
-          title: "Success",
-          message: "项目群组创建成功",
-          type: "success",
+          title: 'Success',
+          message: '项目群组创建成功',
+          type: 'success',
         });
         onCreated();
         handleClose();
       } else {
         addNotification({
-          title: "Error",
-          message: response.message || "创建群组失败",
-          type: "error",
+          title: 'Error',
+          message: response.message || '创建群组失败',
+          type: 'error',
         });
       }
     } catch (error) {
-      logger.error("Failed to create project group:", error);
+      logger.error('Failed to create project group:', error);
       addNotification({
-        title: "Error",
-        message: "创建群组失败",
-        type: "error",
+        title: 'Error',
+        message: '创建群组失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -176,62 +179,67 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={isOpen}
+      onClose={handleClose}
+      maxWidth='sm'
+      fullWidth
+    >
       <DialogContent sx={{ maxWidth: 500 }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             mb: 2,
           }}
         >
           <DialogTitle sx={{ m: 0, p: 0 }}>创建新会话</DialogTitle>
-          <Button variant="text" size="small" onClick={handleClose}>
+          <Button
+            variant='text'
+            size='small'
+            onClick={handleClose}
+          >
             <X sx={{ width: 16, height: 16 }} />
           </Button>
         </Box>
 
         <Tabs
           value={activeTab}
-          onChange={(_, v) => setActiveTab(v as "chat" | "group")}
-          variant="fullWidth"
+          onChange={(_, v) => setActiveTab(v as 'chat' | 'group')}
+          variant='fullWidth'
         >
           <Tab
-            value="chat"
+            value='chat'
             icon={<MessageSquare sx={{ width: 16, height: 16 }} />}
-            iconPosition="start"
-            label="聊天室"
+            iconPosition='start'
+            label='聊天室'
           />
           <Tab
-            value="group"
+            value='group'
             icon={<Users sx={{ width: 16, height: 16 }} />}
-            iconPosition="start"
-            label="项目群组"
+            iconPosition='start'
+            label='项目群组'
           />
         </Tabs>
 
-        {activeTab === "chat" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label
-                style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}
-              >
-                聊天室类型
-              </label>
-              <Box sx={{ display: "flex", gap: 1 }}>
+        {activeTab === 'chat' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>聊天室类型</label>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
-                  variant={chatRoomType === "direct" ? "contained" : "outlined"}
-                  onClick={() => setChatRoomType("direct")}
-                  size="small"
+                  variant={chatRoomType === 'direct' ? 'contained' : 'outlined'}
+                  onClick={() => setChatRoomType('direct')}
+                  size='small'
                   startIcon={<User sx={{ width: 16, height: 16 }} />}
                 >
                   私聊
                 </Button>
                 <Button
-                  variant={chatRoomType === "group" ? "contained" : "outlined"}
-                  onClick={() => setChatRoomType("group")}
-                  size="small"
+                  variant={chatRoomType === 'group' ? 'contained' : 'outlined'}
+                  onClick={() => setChatRoomType('group')}
+                  size='small'
                   startIcon={<Users sx={{ width: 16, height: 16 }} />}
                 >
                   群聊
@@ -240,37 +248,29 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             </Box>
 
             <TextField
-              size="small"
-              placeholder={
-                chatRoomType === "direct"
-                  ? "输入聊天室名称（可选）"
-                  : "输入群组名称"
-              }
+              size='small'
+              placeholder={chatRoomType === 'direct' ? '输入聊天室名称（可选）' : '输入群组名称'}
               value={chatRoomName}
               onChange={(e) => setChatRoomName(e.target.value)}
-              label="名称"
-              helperText={chatRoomType === "direct" ? "(可选)" : ""}
+              label='名称'
+              helperText={chatRoomType === 'direct' ? '(可选)' : ''}
             />
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label
-                style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}
-              >
-                添加成员
-              </label>
-              <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>添加成员</label>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
-                  size="small"
-                  placeholder="输入用户ID"
+                  size='small'
+                  placeholder='输入用户ID'
                   value={newMemberInput}
                   onChange={(e) => setNewMemberInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === 'Enter') {
                       addMember(
                         chatRoomMembers,
                         setChatRoomMembers,
                         newMemberInput,
-                        setNewMemberInput,
+                        setNewMemberInput
                       );
                     }
                   }}
@@ -282,44 +282,38 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       chatRoomMembers,
                       setChatRoomMembers,
                       newMemberInput,
-                      setNewMemberInput,
+                      setNewMemberInput
                     )
                   }
-                  variant="contained"
-                  size="small"
+                  variant='contained'
+                  size='small'
                 >
                   添加
                 </Button>
               </Box>
               {chatRoomMembers.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                   {chatRoomMembers.map((member, idx) => (
                     <Box
                       key={idx}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 0.5,
                         px: 1.5,
                         py: 0.5,
-                        bgcolor: "grey.100",
-                        borderRadius: "full",
+                        bgcolor: 'grey.100',
+                        borderRadius: 'full',
                       }}
                     >
                       <span style={{ fontSize: 14 }}>{member}</span>
                       <button
-                        onClick={() =>
-                          removeMember(
-                            chatRoomMembers,
-                            setChatRoomMembers,
-                            member,
-                          )
-                        }
+                        onClick={() => removeMember(chatRoomMembers, setChatRoomMembers, member)}
                         style={{
-                          color: "#6b7280",
-                          backgroundColor: "transparent",
-                          border: "none",
-                          cursor: "pointer",
+                          color: '#6b7280',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
                         }}
                       >
                         <X sx={{ width: 12, height: 12 }} />
@@ -334,54 +328,50 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               <Button
                 onClick={handleCreateChatRoom}
                 disabled={loading}
-                variant="contained"
+                variant='contained'
                 startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
-                {loading ? "创建中..." : "创建聊天室"}
+                {loading ? '创建中...' : '创建聊天室'}
               </Button>
             </DialogActions>
           </Box>
         )}
 
-        {activeTab === "group" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+        {activeTab === 'group' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <TextField
-              size="small"
-              placeholder="输入群组名称"
+              size='small'
+              placeholder='输入群组名称'
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              label="群组名称"
+              label='群组名称'
             />
 
             <TextField
-              size="small"
-              placeholder="输入群组描述（可选）"
+              size='small'
+              placeholder='输入群组描述（可选）'
               value={groupDescription}
               onChange={(e) => setGroupDescription(e.target.value)}
-              label="群组描述"
+              label='群组描述'
               multiline
               rows={3}
             />
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label
-                style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}
-              >
-                添加成员
-              </label>
-              <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <label style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>添加成员</label>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
-                  size="small"
-                  placeholder="输入用户ID"
+                  size='small'
+                  placeholder='输入用户ID'
                   value={newGroupMemberInput}
                   onChange={(e) => setNewGroupMemberInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === 'Enter') {
                       addMember(
                         groupMembers,
                         setGroupMembers,
                         newGroupMemberInput,
-                        setNewGroupMemberInput,
+                        setNewGroupMemberInput
                       );
                     }
                   }}
@@ -393,40 +383,38 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       groupMembers,
                       setGroupMembers,
                       newGroupMemberInput,
-                      setNewGroupMemberInput,
+                      setNewGroupMemberInput
                     )
                   }
-                  variant="contained"
-                  size="small"
+                  variant='contained'
+                  size='small'
                 >
                   添加
                 </Button>
               </Box>
               {groupMembers.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                   {groupMembers.map((member, idx) => (
                     <Box
                       key={idx}
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 0.5,
                         px: 1.5,
                         py: 0.5,
-                        bgcolor: "grey.100",
-                        borderRadius: "full",
+                        bgcolor: 'grey.100',
+                        borderRadius: 'full',
                       }}
                     >
                       <span style={{ fontSize: 14 }}>{member}</span>
                       <button
-                        onClick={() =>
-                          removeMember(groupMembers, setGroupMembers, member)
-                        }
+                        onClick={() => removeMember(groupMembers, setGroupMembers, member)}
                         style={{
-                          color: "#6b7280",
-                          backgroundColor: "transparent",
-                          border: "none",
-                          cursor: "pointer",
+                          color: '#6b7280',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
                         }}
                       >
                         <X sx={{ width: 12, height: 12 }} />
@@ -441,10 +429,10 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               <Button
                 onClick={handleCreateProjectGroup}
                 disabled={loading}
-                variant="contained"
+                variant='contained'
                 startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
-                {loading ? "创建中..." : "创建群组"}
+                {loading ? '创建中...' : '创建群组'}
               </Button>
             </DialogActions>
           </Box>

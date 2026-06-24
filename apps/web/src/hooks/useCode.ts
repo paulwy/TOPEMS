@@ -2,7 +2,7 @@
  * 统一编码生成服务 - 集中管理全系统ID编码
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // ============================================
 // 一、编码规则类型定义
@@ -12,42 +12,42 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
  * 模块类型
  */
 export type ModuleType =
-  | "hrm" // 人力资源
-  | "crm" // 客户关系
-  | "srm" // 供应商管理
-  | "pm" // 项目管理
-  | "erp" // 财务
-  | "qms" // 质量管理
-  | "lims" // 实验室
-  | "ehs" // 环境健康安全
-  | "wms" // 仓库管理
-  | "inv"; // 库存
+  | 'hrm' // 人力资源
+  | 'crm' // 客户关系
+  | 'srm' // 供应商管理
+  | 'pm' // 项目管理
+  | 'erp' // 财务
+  | 'qms' // 质量管理
+  | 'lims' // 实验室
+  | 'ehs' // 环境健康安全
+  | 'wms' // 仓库管理
+  | 'inv'; // 库存
 
 /**
  * 实体类型
  */
 export type EntityType =
   // 组织架构
-  | "company" // 公司
-  | "department" // 部门
-  | "position" // 岗位
+  | 'company' // 公司
+  | 'department' // 部门
+  | 'position' // 岗位
   // 人员
-  | "employee" // 员工
-  | "candidate" // 候选人
+  | 'employee' // 员工
+  | 'candidate' // 候选人
   // 往来单位
-  | "customer" // 客户
-  | "supplier" // 供应商
-  | "contact" // 联系人
+  | 'customer' // 客户
+  | 'supplier' // 供应商
+  | 'contact' // 联系人
   // 项目合同
-  | "project" // 项目
-  | "contract" // 合同
-  | "milestone" // 里程碑
+  | 'project' // 项目
+  | 'contract' // 合同
+  | 'milestone' // 里程碑
   // 财务
-  | "account" // 会计科目
-  | "voucher" // 凭证
-  | "invoice" // 发票
-  | "asset" // 固定资产
-  | "bank_account"; // 银行账户
+  | 'account' // 会计科目
+  | 'voucher' // 凭证
+  | 'invoice' // 发票
+  | 'asset' // 固定资产
+  | 'bank_account'; // 银行账户
 
 /**
  * 编码规则配置
@@ -59,7 +59,7 @@ export interface CodeRule {
   module: ModuleType; // 所属模块
   prefix: string; // 前缀
   include_date: boolean; // 是否包含日期
-  date_format: "YYYY" | "YYYYMM" | "YYYYMMDD";
+  date_format: 'YYYY' | 'YYYYMM' | 'YYYYMMDD';
   sequence_length: number; // 流水号长度
   sequence_start: number; // 起始值
   separator: string; // 分隔符
@@ -98,11 +98,8 @@ const codeApi = {
     module?: ModuleType;
     prefix_variables?: Record<string, string>;
   }): Promise<GenerateCodeResponse> => {
-    const { default: client } = await import("../api/client");
-    const response = await client.master.post(
-      "/api/master/codes/generate",
-      params,
-    );
+    const { default: client } = await import('../api/client');
+    const response = await client.master.post('/api/master/codes/generate', params);
     return response.data;
   },
 
@@ -114,15 +111,12 @@ const codeApi = {
       entity_type: EntityType;
       quantity: number;
       module?: ModuleType;
-    }[],
+    }[]
   ): Promise<BatchGenerateCodeResponse> => {
-    const { default: client } = await import("../api/client");
-    const response = await client.master.post(
-      "/api/master/codes/batch-generate",
-      {
-        requests,
-      },
-    );
+    const { default: client } = await import('../api/client');
+    const response = await client.master.post('/api/master/codes/batch-generate', {
+      requests,
+    });
     return response.data;
   },
 
@@ -133,11 +127,8 @@ const codeApi = {
     entity_type: EntityType;
     code: string;
   }): Promise<{ valid: boolean; message?: string }> => {
-    const { default: client } = await import("../api/client");
-    const response = await client.master.post(
-      "/api/master/codes/validate",
-      params,
-    );
+    const { default: client } = await import('../api/client');
+    const response = await client.master.post('/api/master/codes/validate', params);
     return response.data;
   },
 
@@ -149,11 +140,8 @@ const codeApi = {
     quantity: number;
     reserve_days?: number;
   }): Promise<{ reservation_id: string; codes: string[] }> => {
-    const { default: client } = await import("../api/client");
-    const response = await client.master.post(
-      "/api/master/codes/reserve",
-      params,
-    );
+    const { default: client } = await import('../api/client');
+    const response = await client.master.post('/api/master/codes/reserve', params);
     return response.data;
   },
 
@@ -161,7 +149,7 @@ const codeApi = {
    * 释放预留编码
    */
   releaseCodes: async (reservationId: string): Promise<void> => {
-    const { default: client } = await import("../api/client");
+    const { default: client } = await import('../api/client');
     await client.master.delete(`/api/master/codes/reserve/${reservationId}`);
   },
 
@@ -172,8 +160,8 @@ const codeApi = {
     module?: ModuleType;
     entity_type?: EntityType;
   }): Promise<CodeRule[]> => {
-    const { default: client } = await import("../api/client");
-    const response = await client.master.get("/api/master/code-rules", {
+    const { default: client } = await import('../api/client');
+    const response = await client.master.get('/api/master/code-rules', {
       params,
     });
     return response.data.items || [];
@@ -183,7 +171,7 @@ const codeApi = {
    * 获取编码规则详情
    */
   getRule: async (id: string): Promise<CodeRule> => {
-    const { default: client } = await import("../api/client");
+    const { default: client } = await import('../api/client');
     const response = await client.master.get(`/api/master/code-rules/${id}`);
     return response.data;
   },
@@ -191,15 +179,11 @@ const codeApi = {
   /**
    * 预览编码格式
    */
-  previewCode: async (
-    ruleId: string,
-    variables?: Record<string, string>,
-  ): Promise<string> => {
-    const { default: client } = await import("../api/client");
-    const response = await client.master.post(
-      `/api/master/code-rules/${ruleId}/preview`,
-      { variables },
-    );
+  previewCode: async (ruleId: string, variables?: Record<string, string>): Promise<string> => {
+    const { default: client } = await import('../api/client');
+    const response = await client.master.post(`/api/master/code-rules/${ruleId}/preview`, {
+      variables,
+    });
     return response.data.code;
   },
 };
@@ -213,7 +197,7 @@ const codeApi = {
  */
 export function useNextCode(entityType: EntityType, module?: ModuleType) {
   return useQuery({
-    queryKey: ["next-code", entityType, module],
+    queryKey: ['next-code', entityType, module],
     queryFn: () => codeApi.getNextCode({ entity_type: entityType, module }),
     staleTime: 0, // 每次都获取新的编码
     enabled: !!entityType,
@@ -230,7 +214,7 @@ export function useBatchNextCodes() {
         entity_type: EntityType;
         quantity: number;
         module?: ModuleType;
-      }[],
+      }[]
     ) => codeApi.batchGetNextCodes(requests),
   });
 }
@@ -240,8 +224,7 @@ export function useBatchNextCodes() {
  */
 export function useValidateCode() {
   return useMutation({
-    mutationFn: (params: { entity_type: EntityType; code: string }) =>
-      codeApi.validateCode(params),
+    mutationFn: (params: { entity_type: EntityType; code: string }) => codeApi.validateCode(params),
   });
 }
 
@@ -252,13 +235,10 @@ export function useReserveCodes() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (params: {
-      entity_type: EntityType;
-      quantity: number;
-      reserve_days?: number;
-    }) => codeApi.reserveCodes(params),
+    mutationFn: (params: { entity_type: EntityType; quantity: number; reserve_days?: number }) =>
+      codeApi.reserveCodes(params),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["code-reservations"] });
+      queryClient.invalidateQueries({ queryKey: ['code-reservations'] });
     },
   });
 }
@@ -272,7 +252,7 @@ export function useReleaseCodes() {
   return useMutation({
     mutationFn: (reservationId: string) => codeApi.releaseCodes(reservationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["code-reservations"] });
+      queryClient.invalidateQueries({ queryKey: ['code-reservations'] });
     },
   });
 }
@@ -280,12 +260,9 @@ export function useReleaseCodes() {
 /**
  * 获取编码规则列表
  */
-export function useCodeRules(params?: {
-  module?: ModuleType;
-  entity_type?: EntityType;
-}) {
+export function useCodeRules(params?: { module?: ModuleType; entity_type?: EntityType }) {
   return useQuery({
-    queryKey: ["code-rules", params],
+    queryKey: ['code-rules', params],
     queryFn: () => codeApi.getRules(params),
     staleTime: 30 * 60 * 1000, // 30分钟
   });
@@ -296,7 +273,7 @@ export function useCodeRules(params?: {
  */
 export function useCodeRule(id: string) {
   return useQuery({
-    queryKey: ["code-rule", id],
+    queryKey: ['code-rule', id],
     queryFn: () => codeApi.getRule(id),
     enabled: !!id,
   });
@@ -307,13 +284,8 @@ export function useCodeRule(id: string) {
  */
 export function usePreviewCode() {
   return useMutation({
-    mutationFn: ({
-      ruleId,
-      variables,
-    }: {
-      ruleId: string;
-      variables?: Record<string, string>;
-    }) => codeApi.previewCode(ruleId, variables),
+    mutationFn: ({ ruleId, variables }: { ruleId: string; variables?: Record<string, string> }) =>
+      codeApi.previewCode(ruleId, variables),
   });
 }
 
@@ -328,17 +300,17 @@ export function usePreviewCode() {
 export class CodeGenerator {
   private prefix: string;
   private includeDate: boolean;
-  private dateFormat: "YYYY" | "YYYYMM" | "YYYYMMDD";
+  private dateFormat: 'YYYY' | 'YYYYMM' | 'YYYYMMDD';
   private sequenceLength: number;
   private separator: string;
   private currentSequence: number;
 
   constructor(rule: Partial<CodeRule> = {}) {
-    this.prefix = rule.prefix || "";
+    this.prefix = rule.prefix || '';
     this.includeDate = rule.include_date ?? true;
-    this.dateFormat = rule.date_format || "YYYYMMDD";
+    this.dateFormat = rule.date_format || 'YYYYMMDD';
     this.sequenceLength = rule.sequence_length || 4;
-    this.separator = rule.separator || "";
+    this.separator = rule.separator || '';
     this.currentSequence = rule.sequence_start || 1;
   }
 
@@ -356,18 +328,18 @@ export class CodeGenerator {
     // 添加日期
     if (this.includeDate) {
       const now = new Date();
-      let dateStr = "";
+      let dateStr = '';
 
       switch (this.dateFormat) {
-        case "YYYY":
+        case 'YYYY':
           dateStr = now.getFullYear().toString();
           break;
-        case "YYYYMM":
-          dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
+        case 'YYYYMM':
+          dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
           break;
-        case "YYYYMMDD":
+        case 'YYYYMMDD':
         default:
-          dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+          dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
           break;
       }
 
@@ -375,10 +347,7 @@ export class CodeGenerator {
     }
 
     // 添加流水号
-    const sequence = String(this.currentSequence).padStart(
-      this.sequenceLength,
-      "0",
-    );
+    const sequence = String(this.currentSequence).padStart(this.sequenceLength, '0');
     parts.push(sequence);
 
     // 更新序列号
@@ -412,16 +381,16 @@ export class CodeGenerator {
     if (rule.include_date) {
       // 检查日期部分
       const dateRegex =
-        rule.date_format === "YYYY"
+        rule.date_format === 'YYYY'
           ? /^\d{4}$/
-          : rule.date_format === "YYYYMM"
+          : rule.date_format === 'YYYYMM'
             ? /^\d{6}$/
             : /^\d{8}$/;
 
-      const remaining = code.substring(parts.join(rule.separator || "").length);
+      const remaining = code.substring(parts.join(rule.separator || '').length);
       const datePart = remaining.substring(
         0,
-        rule.date_format === "YYYY" ? 4 : rule.date_format === "YYYYMM" ? 6 : 8,
+        rule.date_format === 'YYYY' ? 4 : rule.date_format === 'YYYYMM' ? 6 : 8
       );
 
       if (!dateRegex.test(datePart)) {
@@ -434,7 +403,7 @@ export class CodeGenerator {
     // 检查流水号
     const seqLength = rule.sequence_length || 4;
     const seqRegex = new RegExp(`^\\d{${seqLength}}$`);
-    const afterDate = code.substring(parts.join(rule.separator || "").length);
+    const afterDate = code.substring(parts.join(rule.separator || '').length);
 
     return seqRegex.test(afterDate);
   }
@@ -445,118 +414,116 @@ export class CodeGenerator {
  */
 export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
   company: {
-    prefix: "C",
+    prefix: 'C',
     include_date: true,
-    date_format: "YYYYMMDD",
+    date_format: 'YYYYMMDD',
     sequence_length: 3,
-    separator: "",
+    separator: '',
   },
   department: {
-    prefix: "D",
+    prefix: 'D',
     include_date: false,
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   position: {
-    prefix: "P",
+    prefix: 'P',
     include_date: false,
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   employee: {
-    prefix: "E",
+    prefix: 'E',
     include_date: false,
     sequence_length: 6,
-    separator: "",
+    separator: '',
   },
   candidate: {
-    prefix: "CA",
+    prefix: 'CA',
     include_date: true,
-    date_format: "YYYYMMDD",
+    date_format: 'YYYYMMDD',
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   customer: {
-    prefix: "CU",
+    prefix: 'CU',
     include_date: true,
-    date_format: "YYYYMMDD",
+    date_format: 'YYYYMMDD',
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   supplier: {
-    prefix: "SU",
+    prefix: 'SU',
     include_date: true,
-    date_format: "YYYYMMDD",
+    date_format: 'YYYYMMDD',
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   contact: {
-    prefix: "CO",
+    prefix: 'CO',
     include_date: false,
     sequence_length: 6,
-    separator: "",
+    separator: '',
   },
   project: {
-    prefix: "PRJ",
+    prefix: 'PRJ',
     include_date: true,
-    date_format: "YYYYMM",
+    date_format: 'YYYYMM',
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   contract: {
-    prefix: "CT",
+    prefix: 'CT',
     include_date: true,
-    date_format: "YYYYMMDD",
+    date_format: 'YYYYMMDD',
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   milestone: {
-    prefix: "MS",
+    prefix: 'MS',
     include_date: false,
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   account: {
-    prefix: "",
+    prefix: '',
     include_date: false,
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   voucher: {
-    prefix: "V",
+    prefix: 'V',
     include_date: false,
     sequence_length: 8,
-    separator: "",
+    separator: '',
   },
   invoice: {
-    prefix: "INV",
+    prefix: 'INV',
     include_date: true,
-    date_format: "YYYYMMDD",
+    date_format: 'YYYYMMDD',
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   asset: {
-    prefix: "FA",
+    prefix: 'FA',
     include_date: true,
-    date_format: "YYYYMMDD",
+    date_format: 'YYYYMMDD',
     sequence_length: 4,
-    separator: "",
+    separator: '',
   },
   bank_account: {
-    prefix: "BA",
+    prefix: 'BA',
     include_date: false,
     sequence_length: 6,
-    separator: "",
+    separator: '',
   },
 };
 
 /**
  * 获取实体的编码规则
  */
-export function getCodeRuleForEntity(
-  entityType: EntityType,
-): Partial<CodeRule> {
-  return CODE_RULES[entityType] || { prefix: "", sequence_length: 6 };
+export function getCodeRuleForEntity(entityType: EntityType): Partial<CodeRule> {
+  return CODE_RULES[entityType] || { prefix: '', sequence_length: 6 };
 }
 
 /**
@@ -571,10 +538,7 @@ export function generateCodeForEntity(entityType: EntityType): string {
 /**
  * 批量生成实体编码
  */
-export function batchGenerateCodesForEntity(
-  entityType: EntityType,
-  count: number,
-): string[] {
+export function batchGenerateCodesForEntity(entityType: EntityType, count: number): string[] {
   const rule = getCodeRuleForEntity(entityType);
   const generator = new CodeGenerator(rule);
   return generator.generateBatch(count);

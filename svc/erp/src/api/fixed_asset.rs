@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::*,
     Json, Router,
@@ -10,6 +10,8 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::api::audit::{log_audit_event, AuditEventParams};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -92,8 +94,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn list_fixed_assets(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<FixedAssetParams>,
 ) -> Json<ApiResponse<PaginatedResponse<FixedAsset>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetRead).await {
+        return e;
+    }
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -168,9 +175,26 @@ async fn list_fixed_assets(
 
 async fn create_fixed_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetWrite).await {
+        return e;
+    }
+
+    if req.asset_code.is_empty() {
+        return Json(api_error(400, "资产编码不能为空"));
+    }
+
+    if req.asset_name.is_empty() {
+        return Json(api_error(400, "资产名称不能为空"));
+    }
+
+    if req.original_value <= 0.0 {
+        return Json(api_error(400, "原值必须大于0"));
+    }
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let accumulated_depreciation = 0.0;
@@ -242,8 +266,8 @@ async fn create_fixed_asset(
             entity_type: "fixed_asset".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -258,8 +282,13 @@ async fn create_fixed_asset(
 
 async fn get_fixed_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FixedAsset>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetRead).await {
+        return e;
+    }
+
     let result = sqlx::query_as::<_, FixedAsset>(
         r#"
         SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
@@ -285,10 +314,15 @@ async fn get_fixed_asset(
 
 async fn update_fixed_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetWrite).await {
+        return e;
+    }
+
     let existing = sqlx::query_as::<_, FixedAsset>(
         "SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                 original_value, accumulated_depreciation, net_value, depreciation_method, 
@@ -390,8 +424,8 @@ async fn update_fixed_asset(
             entity_type: "fixed_asset".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -406,9 +440,14 @@ async fn update_fixed_asset(
 
 async fn delete_fixed_asset(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetWrite).await {
+        return e;
+    }
+
     let result = sqlx::query("DELETE FROM fixed_assets WHERE id = $1")
         .bind(id)
         .execute(&state.db)
@@ -448,8 +487,8 @@ async fn delete_fixed_asset(
             entity_type: "fixed_asset".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -470,9 +509,14 @@ pub struct DepreciateRequest {
 
 async fn depreciate_assets(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<DepreciateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FixedAssetDepreciate).await {
+        return e;
+    }
+
     let mut depreciated_count = 0;
     let mut errors = Vec::new();
     let now = Utc::now();
@@ -565,8 +609,8 @@ async fn depreciate_assets(
             entity_type: "fixed_asset".to_string(),
             entity_id: None,
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: if errors.is_empty() {

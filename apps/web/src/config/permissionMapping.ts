@@ -11,22 +11,22 @@ interface PermissionMapping {
 const generatePermissionId = (module: ModuleCode, action: PermissionAction): string => {
   const moduleIndex = Object.values(MODULES).indexOf(module);
   const actionIndex = ACTIONS.findIndex((a) => a.action === action);
-  
+
   const modulePart = String(moduleIndex + 1).padStart(8, '0');
   const actionPart = String(actionIndex + 1).padStart(12, '0');
-  
+
   return `${modulePart}-0000-0000-0000-${actionPart}`;
 };
 
 export const PERMISSION_MAPPING: Record<string, PermissionMapping> = (() => {
   const mapping: Record<string, PermissionMapping> = {};
-  
+
   Object.values(MODULES).forEach((module) => {
     ACTIONS.forEach((actionItem) => {
       const action = actionItem.action;
       const id = generatePermissionId(module, action);
       const name = `${module}:${action}`;
-      
+
       mapping[id] = {
         id,
         name,
@@ -36,7 +36,7 @@ export const PERMISSION_MAPPING: Record<string, PermissionMapping> = (() => {
       };
     });
   });
-  
+
   return mapping;
 })();
 
@@ -82,13 +82,21 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     ...getPermissionByModule(MODULES.RS).map((p) => p.id),
   ],
   USER: [
-    ...getPermissionByModule(MODULES.HRM).filter((p) => p.action === 'read').map((p) => p.id),
-    ...getPermissionByModule(MODULES.PM).filter((p) => p.action === 'read').map((p) => p.id),
+    ...getPermissionByModule(MODULES.HRM)
+      .filter((p) => p.action === 'read')
+      .map((p) => p.id),
+    ...getPermissionByModule(MODULES.PM)
+      .filter((p) => p.action === 'read')
+      .map((p) => p.id),
     ...getPermissionByModule(MODULES.DOC).map((p) => p.id),
     ...getPermissionByModule(MODULES.FILE).map((p) => p.id),
-    ...getPermissionByModule(MODULES.WORKFLOW).filter((p) => p.action === 'read' || p.action === 'approve').map((p) => p.id),
+    ...getPermissionByModule(MODULES.WORKFLOW)
+      .filter((p) => p.action === 'read' || p.action === 'approve')
+      .map((p) => p.id),
   ],
   GUEST: [
-    ...getPermissionByModule(MODULES.DOC).filter((p) => p.action === 'read').map((p) => p.id),
+    ...getPermissionByModule(MODULES.DOC)
+      .filter((p) => p.action === 'read')
+      .map((p) => p.id),
   ],
 };

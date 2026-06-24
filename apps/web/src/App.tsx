@@ -1,25 +1,24 @@
-import React, { Suspense, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
-import { AuthProvider, useAuth } from "./hooks/useAuth";
-import { ProtectedRoute, GuestRoute } from "./components/ProtectedRoute";
-import { ModuleGate } from "./components/PermissionGate";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ToastProvider } from "./components/ToastProvider";
-import { LoadingProvider } from "./components/LoadingProvider";
-import { ThemeProvider } from "./components/ThemeProvider";
-import { Toaster } from "./components/Toaster";
-import { LoadingSpinner } from "./components/LoadingSpinner";
-import { TemplateDemoPage } from "./components/templates/index";
-import { GlobalLayout } from "./components/layout";
-import { DynamicRouter } from "./modules/loader/DynamicRouter";
-import { eventBus, ModuleEvents } from "./modules/loader/EventBus";
-import { logger } from "@/utils/logger";
-import { PluginProvider } from "./context/PluginContext";
+import React, { Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
+import { ModuleGate } from './components/PermissionGate';
+import ErrorBoundary from './components/ErrorBoundary';
+import { ToastProvider } from './components/ToastProvider';
+import { LoadingProvider } from './components/LoadingProvider';
+import { ThemeProvider } from './components/ThemeProvider';
+import { Toaster } from './components/Toaster';
+import { LoadingSpinner } from './components/LoadingSpinner';
+import { TemplateDemoPage } from './components/templates/index';
+import { GlobalLayout } from './components/layout';
+import { DynamicRouter } from './modules/loader/DynamicRouter';
+import { eventBus, ModuleEvents } from './modules/loader/EventBus';
+import { logger } from '@/utils/logger';
+import { PluginProvider } from './context/PluginContext';
 
 // Check if we're in static mode (Module Federation disabled)
-const IS_STATIC_MODE =
-  import.meta.env.VITE_DEPLOYMENT_MODE !== "module-federation";
+const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';
 
 import {
   authRoutes,
@@ -45,43 +44,43 @@ import {
   mobileRoutes,
   pdmRoutes,
   type RouteConfig,
-} from "./routes";
+} from './routes';
 
 const PageLoader: React.FC = () => (
   <Box
     sx={{
-      minHeight: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      bgcolor: "var(--color-background)",
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      bgcolor: 'var(--color-background)',
     }}
   >
-    <Box sx={{ textAlign: "center" }}>
-      <LoadingSpinner size="lg" />
-      <Typography sx={{ mt: 2, color: "var(--color-text-secondary)" }}>
-        加载中...
-      </Typography>
+    <Box sx={{ textAlign: 'center' }}>
+      <LoadingSpinner size='lg' />
+      <Typography sx={{ mt: 2, color: 'var(--color-text-secondary)' }}>加载中...</Typography>
     </Box>
   </Box>
 );
 
 // 需要跳过 GlobalLayout 的模块（这些模块有自己的布局）
-const modulesWithOwnLayout = ["hrm", "crm", "system"];
+const modulesWithOwnLayout = ['hrm', 'crm', 'system'];
 
 const ProtectedRouteWrapper: React.FC<{
   route: RouteConfig;
   children: React.ReactNode;
 }> = ({ route, children }) => {
-  const hasOwnLayout =
-    route.module && modulesWithOwnLayout.includes(route.module);
+  const hasOwnLayout = route.module && modulesWithOwnLayout.includes(route.module);
 
   if (hasOwnLayout) {
     // 使用简化包装，不添加 GlobalLayout
     return (
       <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
         {route.module && route.action ? (
-          <ModuleGate module={route.module} action={route.action}>
+          <ModuleGate
+            module={route.module}
+            action={route.action}
+          >
             {children}
           </ModuleGate>
         ) : (
@@ -95,7 +94,10 @@ const ProtectedRouteWrapper: React.FC<{
     return (
       <ProtectedRoute requiredPermissions={route.requiredPermissions}>
         {route.module && route.action ? (
-          <ModuleGate module={route.module} action={route.action}>
+          <ModuleGate
+            module={route.module}
+            action={route.action}
+          >
             <GlobalLayout>{children}</GlobalLayout>
           </ModuleGate>
         ) : (
@@ -120,10 +122,7 @@ const AppContent: React.FC = () => {
     };
 
     const handleModuleError = (data: { moduleId: string; error: Error }) => {
-      logger.error(
-        `[Dynamic Router] Module load error: ${data.moduleId}`,
-        data.error,
-      );
+      logger.error(`[Dynamic Router] Module load error: ${data.moduleId}`, data.error);
     };
 
     eventBus.on(ModuleEvents.MODULE_LOADED, handleModuleLoaded);
@@ -157,9 +156,7 @@ const AppContent: React.FC = () => {
           path={route.path}
           element={
             <ProtectedRouteWrapper route={route}>
-              <Suspense fallback={<PageLoader />}>
-                {renderElement(route)}
-              </Suspense>
+              <Suspense fallback={<PageLoader />}>{renderElement(route)}</Suspense>
             </ProtectedRouteWrapper>
           }
         />
@@ -230,7 +227,7 @@ const AppContent: React.FC = () => {
         {/* Core module routes - only load via Module Federation when not in static mode */}
         {!IS_STATIC_MODE && (
           <Route
-            path="/core/*"
+            path='/core/*'
             element={
               <ProtectedRoute>
                 <GlobalLayout>
@@ -242,27 +239,26 @@ const AppContent: React.FC = () => {
         )}
         {IS_STATIC_MODE && (
           <Route
-            path="/core/*"
+            path='/core/*'
             element={
               <ProtectedRoute>
                 <GlobalLayout>
-                  <div style={{ padding: "20px" }}>
+                  <div style={{ padding: '20px' }}>
                     <h2>核心模块</h2>
                     <p>
-                      核心模块在静态模式下不可用。请设置
-                      VITE_DEPLOYMENT_MODE=module-federation 启用 Module
-                      Federation。
+                      核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用
+                      Module Federation。
                     </p>
                     <p>或者访问其他模块：</p>
                     <ul>
                       <li>
-                        <a href="/hrm">人力资源管理</a>
+                        <a href='/hrm'>人力资源管理</a>
                       </li>
                       <li>
-                        <a href="/crm">客户关系管理</a>
+                        <a href='/crm'>客户关系管理</a>
                       </li>
                       <li>
-                        <a href="/dashboard">仪表盘</a>
+                        <a href='/dashboard'>仪表盘</a>
                       </li>
                     </ul>
                   </div>
@@ -273,28 +269,72 @@ const AppContent: React.FC = () => {
         )}
 
         <Route
-          path="/departments"
-          element={<Navigate to="/hrm/departments" replace />}
+          path='/departments'
+          element={
+            <Navigate
+              to='/hrm/departments'
+              replace
+            />
+          }
         />
         <Route
-          path="/employees"
-          element={<Navigate to="/hrm/employees" replace />}
+          path='/employees'
+          element={
+            <Navigate
+              to='/hrm/employees'
+              replace
+            />
+          }
         />
         <Route
-          path="/contracts"
-          element={<Navigate to="/hrm/contracts" replace />}
+          path='/contracts'
+          element={
+            <Navigate
+              to='/hrm/contracts'
+              replace
+            />
+          }
         />
         <Route
-          path="/reports"
-          element={<Navigate to="/hrm/reports" replace />}
+          path='/reports'
+          element={
+            <Navigate
+              to='/hrm/reports'
+              replace
+            />
+          }
         />
         <Route
-          path="/config-debug"
-          element={<Navigate to="/debug" replace />}
+          path='/config-debug'
+          element={
+            <Navigate
+              to='/debug'
+              replace
+            />
+          }
         />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/template-demo" element={<TemplateDemoPage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path='/'
+          element={
+            <Navigate
+              to='/dashboard'
+              replace
+            />
+          }
+        />
+        <Route
+          path='/template-demo'
+          element={<TemplateDemoPage />}
+        />
+        <Route
+          path='*'
+          element={
+            <Navigate
+              to='/dashboard'
+              replace
+            />
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

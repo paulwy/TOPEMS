@@ -1,19 +1,50 @@
-import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-import { federation } from '@module-federation/vite'
-import viteCompression from 'vite-plugin-compression'
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { federation } from '@module-federation/vite';
+import viteCompression from 'vite-plugin-compression';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
 const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
 
-const getRemoteEntryUrl = () => {
-  const env = loadEnv('', process.cwd(), '');
+const env = loadEnv('', process.cwd(), '');
+
+const REMOTE_MODULES = [
+  { name: 'topems_core', port: 3001, description: 'Core Module' },
+  { name: 'topems_hrm', port: 3002, description: 'HRM Module' },
+  { name: 'topems_crm', port: 3003, description: 'CRM Module' },
+  { name: 'topems_pm', port: 3004, description: 'Project Management' },
+  { name: 'topems_fin', port: 3005, description: 'Finance Module' },
+  { name: 'topems_sc', port: 3006, description: 'Supply Chain' },
+  { name: 'topems_qms', port: 3007, description: 'Quality Management' },
+  { name: 'topems_bi', port: 3008, description: 'Business Intelligence' },
+  { name: 'topems_mes', port: 3009, description: 'Manufacturing Execution' },
+  { name: 'topems_wms', port: 3010, description: 'Warehouse Management' },
+];
+
+const getRemoteEntryUrl = (moduleName: string): string | undefined => {
   if (DEPLOYMENT_MODE === 'static') {
     return undefined;
   }
-  return env.VITE_CORE_REMOTE_ENTRY || 'http://localhost:3001/remoteEntry.js';
+  const envKey = `VITE_${moduleName.toUpperCase()}_REMOTE_ENTRY`;
+  const defaultUrls: Record<string, string> = REMOTE_MODULES.reduce((acc, module) => {
+    acc[module.name] = `http://localhost:${module.port}/remoteEntry.js`;
+    return acc;
+  }, {} as Record<string, string>);
+  return env[envKey] || defaultUrls[moduleName] || undefined;
+};
+
+const buildRemotesConfig = () => {
+  const remotes: Record<string, string | undefined> = {};
+  REMOTE_MODULES.forEach((module) => {
+    const url = getRemoteEntryUrl(module.name);
+    if (url) {
+      remotes[module.name] = url;
+    }
+  });
+  return remotes;
 };
 
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
@@ -40,76 +71,117 @@ const createServiceProxyConfig = (serviceName: string, target: string, skipRewri
 
 const enableMF = DEPLOYMENT_MODE !== 'static';
 
+const sharedDependencies = {
+  'react': {
+    singleton: true,
+    requiredVersion: '^19.0.0',
+    strictVersion: true,
+  },
+  'react-dom': {
+    singleton: true,
+    requiredVersion: '^19.0.0',
+    strictVersion: true,
+  },
+  'react-router-dom': {
+    singleton: true,
+    requiredVersion: '^7.0.0',
+    strictVersion: true,
+  },
+  '@mui/material': {
+    singleton: true,
+    requiredVersion: '^6.0.0',
+    strictVersion: true,
+  },
+  '@mui/icons-material': {
+    singleton: true,
+    requiredVersion: '^6.0.0',
+    strictVersion: true,
+  },
+  '@emotion/react': {
+    singleton: true,
+    requiredVersion: '^11.0.0',
+    strictVersion: true,
+  },
+  '@emotion/styled': {
+    singleton: true,
+    requiredVersion: '^11.0.0',
+    strictVersion: true,
+  },
+  'zustand': {
+    singleton: true,
+    strictVersion: true,
+  },
+  'i18next': {
+    singleton: true,
+    strictVersion: true,
+  },
+  'react-i18next': {
+    singleton: true,
+    strictVersion: true,
+  },
+  'axios': {
+    singleton: true,
+    requiredVersion: '^1.0.0',
+    strictVersion: true,
+  },
+  'dayjs': {
+    singleton: true,
+    requiredVersion: '^1.11.0',
+    strictVersion: true,
+  },
+  'clsx': {
+    singleton: true,
+    requiredVersion: '^2.0.0',
+    strictVersion: true,
+  },
+  'lucide-react': {
+    singleton: true,
+    requiredVersion: '^1.0.0',
+    strictVersion: true,
+  },
+  'zod': {
+    singleton: true,
+    requiredVersion: '^4.0.0',
+    strictVersion: true,
+  },
+};
+
 const plugins = [react(), viteCompression({
   algorithm: 'gzip',
   threshold: 10240,
   verbose: true,
+}), viteCompression({
+  algorithm: 'brotliCompress',
+  threshold: 10240,
+  verbose: false,
 })];
 
 if (enableMF) {
   plugins.push(
     federation({
       name: 'topems_portal',
-      remotes: {
-        topems_core: getRemoteEntryUrl(),
+      filename: 'remoteEntry.js',
+      exposes: {
+        './PluginLoader': './src/lib/plugin-loader.ts',
+        './PluginRuntime': './src/lib/plugin-runtime.ts',
+        './hooks/usePluginStore': './src/store/pluginStore.ts',
+        './api/plugin': './src/api/plugin.ts',
+        './routes/plugin': './src/routes/plugin.ts',
+        './config/plugins': './src/config/plugins.config.ts',
       },
-      shared: {
-        'react': {
-          singleton: true,
-          requiredVersion: '^19.0.0',
-          strictVersion: true,
-        },
-        'react-dom': {
-          singleton: true,
-          requiredVersion: '^19.0.0',
-          strictVersion: true,
-        },
-        'react-router-dom': {
-          singleton: true,
-          requiredVersion: '^7.0.0',
-          strictVersion: true,
-        },
-        '@mui/material': {
-          singleton: true,
-          requiredVersion: '^6.0.0',
-          strictVersion: true,
-        },
-        '@emotion/react': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-          strictVersion: true,
-        },
-        '@emotion/styled': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-          strictVersion: true,
-        },
-        'zustand': {
-          singleton: true,
-          strictVersion: true,
-        },
-        'i18next': {
-          singleton: true,
-          strictVersion: true,
-        },
-        'react-i18next': {
-          singleton: true,
-          strictVersion: true,
-        },
-        'axios': {
-          singleton: true,
-          requiredVersion: '^1.0.0',
-          strictVersion: true,
-        },
-        'dayjs': {
-          singleton: true,
-          requiredVersion: '^1.11.0',
-          strictVersion: true,
+      remotes: buildRemotesConfig(),
+      shared: sharedDependencies,
+      extraOptions: {
+        automaticAsyncBoundary: true,
+        experimental: {
+          optimizeDeps: true,
         },
       },
     })
   );
 }
+
+const remoteModuleNames = REMOTE_MODULES.map((m) => m.name);
 
 export default defineConfig({
   plugins,
@@ -119,6 +191,8 @@ export default defineConfig({
       '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
       '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
+      'react-transition-group': path.resolve(__dirname, '../../node_modules/react-transition-group'),
+      'react-transition-group/cjs': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs'),
       'react-transition-group/TransitionGroupContext': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs/TransitionGroupContext.js'),
     },
     dedupe: ['react', 'react-dom', 'scheduler'],
@@ -128,21 +202,77 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      plugins: [
+        visualizer({
+          filename: './dist/stats.json',
+          format: 'json',
+          gzipSize: true,
+          brotliSize: true,
+        }),
+      ],
       output: {
         external: DEPLOYMENT_MODE === 'static' ? [
-          'topems_core',
-          /^topems_core\/.*/,
+          ...remoteModuleNames,
+          ...remoteModuleNames.map((name) => new RegExp(`^${name}\\/.*`)),
         ] : [],
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          mui: ['@mui/material', '@mui/lab', '@mui/x-date-pickers', '@mui/x-tree-view'],
-          charts: ['recharts'],
-          utils: ['axios', 'dayjs', 'date-fns', 'zod', 'zustand'],
-          i18n: ['i18next', 'react-i18next'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-dom') || id.includes('react/')) {
+              return 'react-vendor';
+            }
+            if (id.includes('react-router-dom') || id.includes('react-router')) {
+              return 'router-vendor';
+            }
+            if (id.includes('@mui/material') || id.includes('@mui/system')) {
+              return 'mui-material';
+            }
+            if (id.includes('@mui/lab')) {
+              return 'mui-lab';
+            }
+            if (id.includes('@mui/x-date-pickers') || id.includes('@mui/x-tree-view')) {
+              return 'mui-x-extended';
+            }
+            if (id.includes('recharts')) {
+              return 'charts-vendor';
+            }
+            if (id.includes('axios')) {
+              return 'network-vendor';
+            }
+            if (id.includes('dayjs') || id.includes('date-fns')) {
+              return 'date-vendor';
+            }
+            if (id.includes('zod') || id.includes('es-toolkit')) {
+              return 'validation-vendor';
+            }
+            if (id.includes('zustand')) {
+              return 'state-vendor';
+            }
+            if (id.includes('i18next') || id.includes('react-i18next')) {
+              return 'i18n-vendor';
+            }
+            if (id.includes('leaflet') || id.includes('@react-leaflet')) {
+              return 'map-vendor';
+            }
+            if (id.includes('three') || id.includes('@react-three')) {
+              return 'three-vendor';
+            }
+            if (id.includes('framer-motion')) {
+              return 'animation-vendor';
+            }
+            if (id.includes('@hookform') || id.includes('react-hook-form')) {
+              return 'form-vendor';
+            }
+            if (id.includes('@tanstack/react-query') || id.includes('@tanstack/react-table')) {
+              return 'data-vendor';
+            }
+            if (id.includes('clsx') || id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 500,
     sourcemap: false,
     minify: 'terser',
     terserOptions: {

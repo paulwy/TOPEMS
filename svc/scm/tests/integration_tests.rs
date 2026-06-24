@@ -325,7 +325,7 @@ struct PurchaseOrderRow {
     order_date: chrono::DateTime<chrono::Utc>,
     expected_date: Option<chrono::DateTime<chrono::Utc>>,
     actual_date: Option<chrono::DateTime<chrono::Utc>>,
-    total_amount: Option<rust_decimal::Decimal>,
+    total_amount: Option<f64>,
     currency: String,
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,

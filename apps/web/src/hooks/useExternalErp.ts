@@ -3,9 +3,9 @@
  * 封装外部ERP系统集成的React Query hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNotification } from "./useNotification";
-import { externalErpApi } from "../api/external-erp";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotification } from './useNotification';
+import { externalErpApi } from '../api/external-erp';
 import type {
   // 连接配置
   ErpConnectionConfig,
@@ -18,7 +18,7 @@ import type {
 
   // 连接测试
   ConnectionTestRequest,
-} from "../types/external-erp";
+} from '../types/external-erp';
 
 // ============================================
 // 一、连接配置管理
@@ -34,7 +34,7 @@ export function useErpConnections(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["external-erp-connections", params],
+    queryKey: ['external-erp-connections', params],
     queryFn: () => externalErpApi.getConnections(params),
     staleTime: 5 * 60 * 1000,
   });
@@ -45,7 +45,7 @@ export function useErpConnections(params?: {
  */
 export function useErpConnection(connectionId: string) {
   return useQuery({
-    queryKey: ["external-erp-connection", connectionId],
+    queryKey: ['external-erp-connection', connectionId],
     queryFn: () => externalErpApi.getConnection(connectionId),
     enabled: !!connectionId,
     staleTime: 5 * 60 * 1000,
@@ -61,21 +61,21 @@ export function useCreateErpConnection() {
 
   return useMutation({
     mutationFn: (data: {
-      type: "kingdee" | "yonyou" | "sap";
+      type: 'kingdee' | 'yonyou' | 'sap';
       name: string;
       api_url: string;
       app_key?: string;
       app_secret?: string;
-      sync_direction?: "import" | "export" | "bidirectional";
-      sync_mode?: "realtime" | "scheduled" | "manual";
+      sync_direction?: 'import' | 'export' | 'bidirectional';
+      sync_mode?: 'realtime' | 'scheduled' | 'manual';
       company_mappings?: CompanyMapping[];
     }) => externalErpApi.createConnection(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-connections"] });
-      success("ERP连接创建成功");
+      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      success('ERP连接创建成功');
     },
     onError: (err: any) => {
-      error(err.message || "ERP连接创建失败");
+      error(err.message || 'ERP连接创建失败');
     },
   });
 }
@@ -96,11 +96,11 @@ export function useUpdateErpConnection() {
       data: Partial<ErpConnectionConfig>;
     }) => externalErpApi.updateConnection(connectionId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-connections"] });
-      success("ERP连接更新成功");
+      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      success('ERP连接更新成功');
     },
     onError: (err: any) => {
-      error(err.message || "ERP连接更新失败");
+      error(err.message || 'ERP连接更新失败');
     },
   });
 }
@@ -113,14 +113,13 @@ export function useDeleteErpConnection() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (connectionId: string) =>
-      externalErpApi.deleteConnection(connectionId),
+    mutationFn: (connectionId: string) => externalErpApi.deleteConnection(connectionId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-connections"] });
-      success("ERP连接删除成功");
+      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      success('ERP连接删除成功');
     },
     onError: (err: any) => {
-      error(err.message || "ERP连接删除失败");
+      error(err.message || 'ERP连接删除失败');
     },
   });
 }
@@ -132,17 +131,16 @@ export function useTestErpConnection() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (data: ConnectionTestRequest) =>
-      externalErpApi.testConnection(data),
+    mutationFn: (data: ConnectionTestRequest) => externalErpApi.testConnection(data),
     onSuccess: (result) => {
       if (result.success) {
-        success("连接测试成功");
+        success('连接测试成功');
       } else {
-        error(result.data?.error_message || "连接测试失败");
+        error(result.data?.error_message || '连接测试失败');
       }
     },
     onError: (err: any) => {
-      error(err.message || "连接测试失败");
+      error(err.message || '连接测试失败');
     },
   });
 }
@@ -155,19 +153,14 @@ export function useToggleErpConnection() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: ({
-      connectionId,
-      enabled,
-    }: {
-      connectionId: string;
-      enabled: boolean;
-    }) => externalErpApi.toggleConnection(connectionId, enabled),
+    mutationFn: ({ connectionId, enabled }: { connectionId: string; enabled: boolean }) =>
+      externalErpApi.toggleConnection(connectionId, enabled),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-connections"] });
-      success("连接状态更新成功");
+      queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
+      success('连接状态更新成功');
     },
     onError: (err: any) => {
-      error(err.message || "连接状态更新失败");
+      error(err.message || '连接状态更新失败');
     },
   });
 }
@@ -192,13 +185,11 @@ export function useSyncAccounts() {
       force_sync?: boolean;
     }) => externalErpApi.syncAccounts(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-sync-logs"] });
-      success(
-        `成功同步 ${result.data.created_count + result.data.updated_count} 个科目`,
-      );
+      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个科目`);
     },
     onError: (err: any) => {
-      error(err.message || "科目同步失败");
+      error(err.message || '科目同步失败');
     },
   });
 }
@@ -219,13 +210,11 @@ export function useSyncCustomers() {
       force_sync?: boolean;
     }) => externalErpApi.syncCustomers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-sync-logs"] });
-      success(
-        `成功同步 ${result.data.created_count + result.data.updated_count} 个客户`,
-      );
+      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个客户`);
     },
     onError: (err: any) => {
-      error(err.message || "客户同步失败");
+      error(err.message || '客户同步失败');
     },
   });
 }
@@ -246,13 +235,11 @@ export function useSyncSuppliers() {
       force_sync?: boolean;
     }) => externalErpApi.syncSuppliers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-sync-logs"] });
-      success(
-        `成功同步 ${result.data.created_count + result.data.updated_count} 个供应商`,
-      );
+      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      success(`成功同步 ${result.data.created_count + result.data.updated_count} 个供应商`);
     },
     onError: (err: any) => {
-      error(err.message || "供应商同步失败");
+      error(err.message || '供应商同步失败');
     },
   });
 }
@@ -275,17 +262,15 @@ export function useSyncVouchers() {
       force_sync?: boolean;
     }) => externalErpApi.syncVouchers(data),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-sync-logs"] });
+      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
       if (result.data.failed_count > 0) {
-        error(
-          `成功同步 ${result.data.synced_count} 个，失败 ${result.data.failed_count} 个`,
-        );
+        error(`成功同步 ${result.data.synced_count} 个，失败 ${result.data.failed_count} 个`);
       } else {
         success(`成功同步 ${result.data.synced_count} 个凭证`);
       }
     },
     onError: (err: any) => {
-      error(err.message || "凭证同步失败");
+      error(err.message || '凭证同步失败');
     },
   });
 }
@@ -298,17 +283,14 @@ export function useFullSync() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (data: {
-      config_id: string;
-      company_id?: string;
-      sync_modules?: string[];
-    }) => externalErpApi.fullSync(data),
+    mutationFn: (data: { config_id: string; company_id?: string; sync_modules?: string[] }) =>
+      externalErpApi.fullSync(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["external-erp-sync-logs"] });
-      success("全量同步任务已启动");
+      queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
+      success('全量同步任务已启动');
     },
     onError: (err: any) => {
-      error(err.message || "全量同步失败");
+      error(err.message || '全量同步失败');
     },
   });
 }
@@ -330,7 +312,7 @@ export function useSyncLogs(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["external-erp-sync-logs", params],
+    queryKey: ['external-erp-sync-logs', params],
     queryFn: () => externalErpApi.getSyncLogs(params),
     staleTime: 1 * 60 * 1000,
   });
@@ -341,7 +323,7 @@ export function useSyncLogs(params?: {
  */
 export function useSyncLogDetail(logId: string) {
   return useQuery({
-    queryKey: ["external-erp-sync-log", logId],
+    queryKey: ['external-erp-sync-log', logId],
     queryFn: () => externalErpApi.getSyncLog(logId),
     enabled: !!logId,
     staleTime: 1 * 60 * 1000,
@@ -356,10 +338,10 @@ export function useSyncStatistics(
   params?: {
     start_date?: string;
     end_date?: string;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["external-erp-sync-statistics", connectionId, params],
+    queryKey: ['external-erp-sync-statistics', connectionId, params],
     queryFn: () => externalErpApi.getSyncStatistics(connectionId, params),
     enabled: !!connectionId,
     staleTime: 5 * 60 * 1000,
@@ -378,10 +360,10 @@ export function useAccountMappings(
   params?: {
     page?: number;
     page_size?: number;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["external-erp-account-mappings", connectionId, params],
+    queryKey: ['external-erp-account-mappings', connectionId, params],
     queryFn: () => externalErpApi.getAccountMappings(connectionId, params),
     enabled: !!connectionId,
     staleTime: 10 * 60 * 1000,
@@ -405,12 +387,12 @@ export function useImportAccountMappings() {
     }) => externalErpApi.importAccountMappings(connectionId, mappings),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["external-erp-account-mappings"],
+        queryKey: ['external-erp-account-mappings'],
       });
-      success("科目映射导入成功");
+      success('科目映射导入成功');
     },
     onError: (err: any) => {
-      error(err.message || "科目映射导入失败");
+      error(err.message || '科目映射导入失败');
     },
   });
 }
@@ -423,16 +405,15 @@ export function useAutoMatchAccountMappings() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (connectionId: string) =>
-      externalErpApi.autoMatchAccountMappings(connectionId),
+    mutationFn: (connectionId: string) => externalErpApi.autoMatchAccountMappings(connectionId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["external-erp-account-mappings"],
+        queryKey: ['external-erp-account-mappings'],
       });
-      success("科目映射自动匹配完成");
+      success('科目映射自动匹配完成');
     },
     onError: (err: any) => {
-      error(err.message || "科目映射自动匹配失败");
+      error(err.message || '科目映射自动匹配失败');
     },
   });
 }
@@ -449,10 +430,10 @@ export function useCustomerMappings(
   params?: {
     page?: number;
     page_size?: number;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["external-erp-customer-mappings", connectionId, params],
+    queryKey: ['external-erp-customer-mappings', connectionId, params],
     queryFn: () => externalErpApi.getCustomerMappings(connectionId, params),
     enabled: !!connectionId,
     staleTime: 10 * 60 * 1000,
@@ -476,12 +457,12 @@ export function useImportCustomerMappings() {
     }) => externalErpApi.importCustomerMappings(connectionId, mappings),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["external-erp-customer-mappings"],
+        queryKey: ['external-erp-customer-mappings'],
       });
-      success("客户映射导入成功");
+      success('客户映射导入成功');
     },
     onError: (err: any) => {
-      error(err.message || "客户映射导入失败");
+      error(err.message || '客户映射导入失败');
     },
   });
 }
@@ -498,10 +479,10 @@ export function useSupplierMappings(
   params?: {
     page?: number;
     page_size?: number;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["external-erp-supplier-mappings", connectionId, params],
+    queryKey: ['external-erp-supplier-mappings', connectionId, params],
     queryFn: () => externalErpApi.getSupplierMappings(connectionId, params),
     enabled: !!connectionId,
     staleTime: 10 * 60 * 1000,
@@ -525,12 +506,12 @@ export function useImportSupplierMappings() {
     }) => externalErpApi.importSupplierMappings(connectionId, mappings),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["external-erp-supplier-mappings"],
+        queryKey: ['external-erp-supplier-mappings'],
       });
-      success("供应商映射导入成功");
+      success('供应商映射导入成功');
     },
     onError: (err: any) => {
-      error(err.message || "供应商映射导入失败");
+      error(err.message || '供应商映射导入失败');
     },
   });
 }
@@ -548,10 +529,10 @@ export function usePreviewExternalAccounts(
     keyword?: string;
     page?: number;
     page_size?: number;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["external-erp-preview-accounts", connectionId, params],
+    queryKey: ['external-erp-preview-accounts', connectionId, params],
     queryFn: () => externalErpApi.previewExternalAccounts(connectionId, params),
     enabled: !!connectionId,
     staleTime: 1 * 60 * 1000,
@@ -567,12 +548,11 @@ export function usePreviewExternalCustomers(
     keyword?: string;
     page?: number;
     page_size?: number;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["external-erp-preview-customers", connectionId, params],
-    queryFn: () =>
-      externalErpApi.previewExternalCustomers(connectionId, params),
+    queryKey: ['external-erp-preview-customers', connectionId, params],
+    queryFn: () => externalErpApi.previewExternalCustomers(connectionId, params),
     enabled: !!connectionId,
     staleTime: 1 * 60 * 1000,
   });
@@ -587,12 +567,11 @@ export function usePreviewExternalSuppliers(
     keyword?: string;
     page?: number;
     page_size?: number;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["external-erp-preview-suppliers", connectionId, params],
-    queryFn: () =>
-      externalErpApi.previewExternalSuppliers(connectionId, params),
+    queryKey: ['external-erp-preview-suppliers', connectionId, params],
+    queryFn: () => externalErpApi.previewExternalSuppliers(connectionId, params),
     enabled: !!connectionId,
     staleTime: 1 * 60 * 1000,
   });
@@ -615,11 +594,11 @@ export function useExportSyncLogs() {
       status?: string;
       start_date?: string;
       end_date?: string;
-      format: "csv" | "xlsx";
+      format: 'csv' | 'xlsx';
     }) => {
       const blob = await externalErpApi.exportSyncLogs(params);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `sync-logs.${params.format}`;
       document.body.appendChild(link);
@@ -629,10 +608,10 @@ export function useExportSyncLogs() {
       return blob;
     },
     onSuccess: () => {
-      success("同步日志导出成功");
+      success('同步日志导出成功');
     },
     onError: (err: any) => {
-      error(err.message || "导出失败");
+      error(err.message || '导出失败');
     },
   });
 }
@@ -646,18 +625,12 @@ export function useExportMappingRules() {
   return useMutation({
     mutationFn: async (params: {
       config_id: string;
-      mapping_type:
-        | "account"
-        | "customer"
-        | "supplier"
-        | "project"
-        | "department"
-        | "employee";
-      format: "csv" | "xlsx";
+      mapping_type: 'account' | 'customer' | 'supplier' | 'project' | 'department' | 'employee';
+      format: 'csv' | 'xlsx';
     }) => {
       const blob = await externalErpApi.exportMappingRules(params);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `mappings-${params.mapping_type}.${params.format}`;
       document.body.appendChild(link);
@@ -667,10 +640,10 @@ export function useExportMappingRules() {
       return blob;
     },
     onSuccess: () => {
-      success("映射规则导出成功");
+      success('映射规则导出成功');
     },
     onError: (err: any) => {
-      error(err.message || "导出失败");
+      error(err.message || '导出失败');
     },
   });
 }

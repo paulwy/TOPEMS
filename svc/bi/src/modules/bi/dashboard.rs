@@ -1001,9 +1001,9 @@ pub async fn list_share_links(
 
 pub async fn delete_share_link(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(share_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    info!("Deleting share link: {}", id);
+    info!("Deleting share link: {}", share_id);
 
     let result = sqlx::query!(
         r#"
@@ -1011,7 +1011,7 @@ pub async fn delete_share_link(
         WHERE id = $1
         RETURNING id
         "#,
-        id,
+        share_id,
     )
     .fetch_optional(&state.pool)
     .await;

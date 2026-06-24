@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useEffect, useState, useCallback } from "react";
-import { CircularProgress, Box, Typography, Alert, AlertTitle } from "@mui/material";
+import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
+import { CircularProgress, Box, Typography, Alert, AlertTitle } from '@mui/material';
 
 export interface PluginManifest {
   pluginCode: string;
@@ -12,7 +12,7 @@ export interface PluginManifest {
   permissions: string[];
   dependencies: string[];
   frontend: {
-    type: "systemjs" | "module-federation" | "umd";
+    type: 'systemjs' | 'module-federation' | 'umd';
     entry: string;
     fallback?: string;
     shared?: string[];
@@ -38,7 +38,7 @@ export interface PluginInfo {
   code: string;
   name: string;
   version: string;
-  status: "installed" | "running" | "error" | "disabled";
+  status: 'installed' | 'running' | 'error' | 'disabled';
   manifest?: PluginManifest;
   error?: string;
 }
@@ -56,17 +56,20 @@ const DEFAULT_MAX_RETRIES = 3;
 export const ModuleLoadingFallback: React.FC = () => (
   <Box
     sx={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100%",
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
       minHeight: 200,
       gap: 2,
     }}
   >
     <CircularProgress size={40} />
-    <Typography variant="body2" color="text.secondary">
+    <Typography
+      variant='body2'
+      color='text.secondary'
+    >
       加载模块中...
     </Typography>
   </Box>
@@ -75,21 +78,27 @@ export const ModuleLoadingFallback: React.FC = () => (
 export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
   <Box
     sx={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100%",
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
       minHeight: 200,
       gap: 2,
       p: 3,
     }}
   >
-    <Typography variant="h6" color="error">
+    <Typography
+      variant='h6'
+      color='error'
+    >
       模块加载失败
     </Typography>
     {error && (
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         {error.message}
       </Typography>
     )}
@@ -121,7 +130,7 @@ export class PluginLoader {
   }
 
   async initSystemJS(): Promise<void> {
-    if (typeof window !== "undefined" && (window as any).System) {
+    if (typeof window !== 'undefined' && (window as any).System) {
       this.systemJS = (window as any).System;
     } else {
       await this.loadSystemJS();
@@ -130,8 +139,8 @@ export class PluginLoader {
 
   private async loadSystemJS(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/systemjs@6.14.0/dist/system.min.js";
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/systemjs@6.14.0/dist/system.min.js';
       script.onload = () => {
         this.systemJS = (window as any).System;
         resolve();
@@ -143,7 +152,7 @@ export class PluginLoader {
 
   async loadPlugin(pluginCode: string, manifest: PluginManifest): Promise<PluginInfo> {
     const existing = this.loadedPlugins.get(pluginCode);
-    if (existing && existing.status === "running") {
+    if (existing && existing.status === 'running') {
       return existing;
     }
 
@@ -155,7 +164,7 @@ export class PluginLoader {
         code: pluginCode,
         name: manifest.name,
         version: manifest.version,
-        status: "installed",
+        status: 'installed',
         manifest,
       };
 
@@ -163,7 +172,7 @@ export class PluginLoader {
         await this.loadFrontendBundle(pluginCode, manifest.frontend);
       }
 
-      pluginInfo.status = "running";
+      pluginInfo.status = 'running';
       this.loadedPlugins.set(pluginCode, pluginInfo);
 
       return pluginInfo;
@@ -172,9 +181,9 @@ export class PluginLoader {
         code: pluginCode,
         name: manifest.name,
         version: manifest.version,
-        status: "error",
+        status: 'error',
         manifest,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
       this.loadedPlugins.set(pluginCode, errorInfo);
       throw error;
@@ -183,23 +192,26 @@ export class PluginLoader {
 
   private async validateManifest(manifest: PluginManifest): Promise<void> {
     if (!manifest.pluginCode || !manifest.version) {
-      throw new Error("Invalid plugin manifest: missing pluginCode or version");
+      throw new Error('Invalid plugin manifest: missing pluginCode or version');
     }
   }
 
   private async checkDependencies(manifest: PluginManifest): Promise<void> {
     const missingDeps: string[] = [];
     for (const dep of manifest.dependencies) {
-      if (!this.loadedPlugins.has(dep) || this.loadedPlugins.get(dep)?.status !== "running") {
+      if (!this.loadedPlugins.has(dep) || this.loadedPlugins.get(dep)?.status !== 'running') {
         missingDeps.push(dep);
       }
     }
     if (missingDeps.length > 0) {
-      throw new Error(`Missing dependencies: ${missingDeps.join(", ")}`);
+      throw new Error(`Missing dependencies: ${missingDeps.join(', ')}`);
     }
   }
 
-  private async loadFrontendBundle(pluginCode: string, frontend: PluginManifest["frontend"]): Promise<void> {
+  private async loadFrontendBundle(
+    pluginCode: string,
+    frontend: PluginManifest['frontend']
+  ): Promise<void> {
     const cacheKey = `${pluginCode}-${frontend.entry}`;
 
     if (this.cache.has(cacheKey)) {
@@ -215,25 +227,23 @@ export class PluginLoader {
     } catch (error) {
       if (retries < (this.options.maxRetries || DEFAULT_MAX_RETRIES)) {
         this.retryCount.set(cacheKey, retries + 1);
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.pow(2, retries) * 1000),
-        );
+        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
         return this.loadFrontendBundle(pluginCode, frontend);
       }
       throw error;
     }
   }
 
-  public async loadBundle(frontend: PluginManifest["frontend"]): Promise<any> {
+  public async loadBundle(frontend: PluginManifest['frontend']): Promise<any> {
     switch (frontend.type) {
-      case "systemjs":
+      case 'systemjs':
         if (!this.systemJS) {
           await this.initSystemJS();
         }
         return this.systemJS!.import(frontend.entry);
-      case "module-federation":
+      case 'module-federation':
         return import(/* @vite-ignore */ frontend.entry);
-      case "umd":
+      case 'umd':
         return this.loadUMDBundle(frontend.entry);
       default:
         throw new Error(`Unsupported frontend type: ${frontend.type}`);
@@ -242,15 +252,15 @@ export class PluginLoader {
 
   private async loadUMDBundle(url: string): Promise<any> {
     return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
+      const script = document.createElement('script');
       script.src = url;
-      script.type = "text/javascript";
+      script.type = 'text/javascript';
       script.onload = () => {
-        const globalVar = url.split("/").pop()?.replace(".js", "");
+        const globalVar = url.split('/').pop()?.replace('.js', '');
         if (globalVar && (window as any)[globalVar]) {
           resolve((window as any)[globalVar]);
         } else {
-          reject(new Error("UMD module not found in global scope"));
+          reject(new Error('UMD module not found in global scope'));
         }
       };
       script.onerror = () => reject(new Error(`Failed to load UMD bundle: ${url}`));
@@ -258,10 +268,7 @@ export class PluginLoader {
     });
   }
 
-  async loadModule(
-    component: () => Promise<any>,
-    moduleId?: string,
-  ): Promise<any> {
+  async loadModule(component: () => Promise<any>, moduleId?: string): Promise<any> {
     const cacheKey = moduleId || component.toString();
 
     if (this.cache.has(cacheKey)) {
@@ -279,9 +286,7 @@ export class PluginLoader {
     } catch (error) {
       if (retries < this.maxRetries) {
         this.retryCount.set(retryKey, retries + 1);
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.pow(2, retries) * 1000),
-        );
+        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
         return this.loadModule(component, moduleId);
       }
       throw error;
@@ -416,13 +421,16 @@ export interface PluginLoaderProviderProps {
   plugins?: PluginManifest[];
 }
 
-export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({ children, plugins = [] }) => {
+export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({
+  children,
+  plugins = [],
+}) => {
   const [loadingPlugins, setLoadingPlugins] = useState<string[]>([]);
   const [loadedPlugins, setLoadedPlugins] = useState<PluginInfo[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const loadPlugins = useCallback(async () => {
-    setLoadingPlugins(plugins.map(p => p.pluginCode));
+    setLoadingPlugins(plugins.map((p) => p.pluginCode));
     setErrors({});
 
     const results: PluginInfo[] = [];
@@ -432,9 +440,9 @@ export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({ chil
         const pluginInfo = await pluginLoader.loadPlugin(manifest.pluginCode, manifest);
         results.push(pluginInfo);
       } catch (error) {
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          [manifest.pluginCode]: error instanceof Error ? error.message : "Unknown error",
+          [manifest.pluginCode]: error instanceof Error ? error.message : 'Unknown error',
         }));
       }
     }
@@ -453,18 +461,16 @@ export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({ chil
     return (
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
           gap: 2,
         }}
       >
         <CircularProgress size={48} />
-        <Typography variant="h6">
-          正在加载插件: {loadingPlugins.join(", ")}
-        </Typography>
+        <Typography variant='h6'>正在加载插件: {loadingPlugins.join(', ')}</Typography>
       </Box>
     );
   }
@@ -472,10 +478,12 @@ export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({ chil
   if (Object.keys(errors).length > 0) {
     return (
       <Box sx={{ padding: 3 }}>
-        <Alert severity="error">
+        <Alert severity='error'>
           <AlertTitle>插件加载错误</AlertTitle>
           {Object.entries(errors).map(([code, message]) => (
-            <div key={code}>{code}: {message}</div>
+            <div key={code}>
+              {code}: {message}
+            </div>
           ))}
         </Alert>
         {children}

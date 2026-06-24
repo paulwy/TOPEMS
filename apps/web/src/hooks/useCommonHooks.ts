@@ -3,14 +3,14 @@
  * 提供常用的React Hooks封装
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * useLocalStorage - 带localStorage持久化的state hook
  */
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T,
+  initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -28,12 +28,12 @@ export function useLocalStorage<T>(
         try {
           localStorage.setItem(key, JSON.stringify(valueToStore));
         } catch (error) {
-          console.error("useLocalStorage setItem error:", error);
+          console.error('useLocalStorage setItem error:', error);
         }
         return valueToStore;
       });
     },
-    [key],
+    [key]
   );
 
   return [storedValue, setValue];
@@ -44,7 +44,7 @@ export function useLocalStorage<T>(
  */
 export function useSessionStorage<T>(
   key: string,
-  initialValue: T,
+  initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -62,12 +62,12 @@ export function useSessionStorage<T>(
         try {
           sessionStorage.setItem(key, JSON.stringify(valueToStore));
         } catch (error) {
-          console.error("useSessionStorage setItem error:", error);
+          console.error('useSessionStorage setItem error:', error);
         }
         return valueToStore;
       });
     },
-    [key],
+    [key]
   );
 
   return [storedValue, setValue];
@@ -109,7 +109,7 @@ export function usePrevious<T>(value: T): T | undefined {
  * useToggle - 切换boolean状态
  */
 export function useToggle(
-  initialValue: boolean = false,
+  initialValue: boolean = false
 ): [boolean, () => void, (value: boolean) => void] {
   const [value, setValue] = useState<boolean>(initialValue);
 
@@ -163,7 +163,7 @@ export function useArray<T>(initialArray: T[] = []) {
 export function useCounter(
   initialValue: number = 0,
   min: number = Number.MIN_SAFE_INTEGER,
-  max: number = Number.MAX_SAFE_INTEGER,
+  max: number = Number.MAX_SAFE_INTEGER
 ) {
   const [count, setCount] = useState<number>(initialValue);
 
@@ -222,10 +222,7 @@ export function useFetch<T>(url: string, options?: RequestInit) {
 /**
  * useClickOutside - 点击外部hook
  */
-export function useClickOutside(
-  ref: React.RefObject<HTMLElement>,
-  handler: () => void,
-) {
+export function useClickOutside(ref: React.RefObject<HTMLElement>, handler: () => void) {
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
       if (!ref.current || ref.current.contains(event.target as Node)) {
@@ -234,12 +231,12 @@ export function useClickOutside(
       handler();
     };
 
-    document.addEventListener("mousedown", listener);
-    document.addEventListener("touchstart", listener);
+    document.addEventListener('mousedown', listener);
+    document.addEventListener('touchstart', listener);
 
     return () => {
-      document.removeEventListener("mousedown", listener);
-      document.removeEventListener("touchstart", listener);
+      document.removeEventListener('mousedown', listener);
+      document.removeEventListener('touchstart', listener);
     };
   }, [ref, handler]);
 }
@@ -250,7 +247,7 @@ export function useClickOutside(
 export function useKeyPress(
   targetKey: string,
   handler: () => void,
-  options?: { event?: "keydown" | "keyup" },
+  options?: { event?: 'keydown' | 'keyup' }
 ) {
   useEffect(() => {
     const callback = (event: KeyboardEvent) => {
@@ -259,7 +256,7 @@ export function useKeyPress(
       }
     };
 
-    const eventType = options?.event || "keydown";
+    const eventType = options?.event || 'keydown';
     window.addEventListener(eventType, callback);
 
     return () => {
@@ -273,7 +270,7 @@ export function useKeyPress(
  */
 export function useIntersectionObserver(
   elementRef: React.RefObject<HTMLElement>,
-  options?: IntersectionObserverInit,
+  options?: IntersectionObserverInit
 ) {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
@@ -312,8 +309,8 @@ export function useWindowSize() {
       });
     };
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return size;

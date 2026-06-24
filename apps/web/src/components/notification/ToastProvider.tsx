@@ -1,17 +1,17 @@
-import type { ReactNode } from "react";
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { Box, IconButton, Typography } from "@mui/material";
-import { CheckCircle, XCircle, AlertCircle, Info } from "lucide-react";
+import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { Box, IconButton, Typography } from '@mui/material';
+import { CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
 
 interface Toast {
   id: string;
-  type: "success" | "error" | "info" | "warning";
+  type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
 
 interface ToastContextType {
   toasts: Toast[];
-  showToast: (type: Toast["type"], message: string) => void;
+  showToast: (type: Toast['type'], message: string) => void;
   removeToast: (_id: string) => void;
 }
 
@@ -20,7 +20,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
+    throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
 };
@@ -32,7 +32,7 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((type: Toast["type"], message: string) => {
+  const showToast = useCallback((type: Toast['type'], message: string) => {
     const id = `${Date.now()}-${Math.random()}`;
     setToasts((prev) => [...prev, { id, type, message }]);
 
@@ -48,7 +48,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   return (
     <ToastContext.Provider value={{ toasts, showToast, removeToast }}>
       {children}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ToastContainer
+        toasts={toasts}
+        onRemove={removeToast}
+      />
     </ToastContext.Provider>
   );
 };
@@ -58,26 +61,20 @@ interface ToastContainerProps {
   onRemove: (id: string) => void;
 }
 
-const ToastContainer: React.FC<ToastContainerProps> = ({
-  toasts,
-  onRemove,
-}) => {
+const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
   if (toasts.length === 0) return null;
 
-  const getToastStyles = (type: Toast["type"]) => {
-    const styles: Record<
-      Toast["type"],
-      { backgroundColor: string; color: string }
-    > = {
-      success: { backgroundColor: "#22c55e", color: "white" },
-      error: { backgroundColor: "#ef4444", color: "white" },
-      warning: { backgroundColor: "#eab308", color: "white" },
-      info: { backgroundColor: "#3b82f6", color: "white" },
+  const getToastStyles = (type: Toast['type']) => {
+    const styles: Record<Toast['type'], { backgroundColor: string; color: string }> = {
+      success: { backgroundColor: '#22c55e', color: 'white' },
+      error: { backgroundColor: '#ef4444', color: 'white' },
+      warning: { backgroundColor: '#eab308', color: 'white' },
+      info: { backgroundColor: '#3b82f6', color: 'white' },
     };
     return styles[type];
   };
 
-  const getIcon = (type: Toast["type"]) => {
+  const getIcon = (type: Toast['type']) => {
     const icons = {
       success: <CheckCircle sx={{ width: 20, height: 20 }} />,
       error: <XCircle sx={{ width: 20, height: 20 }} />,
@@ -90,12 +87,12 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
   return (
     <Box
       sx={{
-        position: "fixed",
+        position: 'fixed',
         top: 16,
         right: 16,
         zIndex: 50,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         gap: 2,
       }}
     >
@@ -105,14 +102,14 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
           sx={{
             paddingX: 3,
             paddingY: 2,
-            borderRadius: "0.5rem",
-            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-            display: "flex",
-            alignItems: "center",
+            borderRadius: '0.5rem',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
             backgroundColor: getToastStyles(toast.type).backgroundColor,
             color: getToastStyles(toast.type).color,
-            animation: "slideIn 0.3s ease-out",
+            animation: 'slideIn 0.3s ease-out',
           }}
           onClick={() => onRemove(toast.id)}
         >
@@ -123,7 +120,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
               e.stopPropagation();
               onRemove(toast.id);
             }}
-            sx={{ color: "inherit", padding: 0 }}
+            sx={{ color: 'inherit', padding: 0 }}
           >
             ×
           </IconButton>

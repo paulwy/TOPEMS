@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   Box,
   Paper,
@@ -21,7 +21,7 @@ import {
   Skeleton,
   useTheme,
   useMediaQuery,
-} from "@mui/material";
+} from '@mui/material';
 import {
   MoreHorizontal,
   ArrowUp,
@@ -31,7 +31,7 @@ import {
   Trash2,
   Copy,
   Download,
-} from "lucide-react";
+} from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -40,16 +40,16 @@ export interface DataGridColumn<T = any> {
   label: string;
   width?: number | string;
   minWidth?: number;
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   sortable?: boolean;
   render?: (row: T, index: number) => React.ReactNode;
   renderHeader?: (
     column: DataGridColumn<T>,
     props: {
-      sortDirection?: "asc" | "desc";
+      sortDirection?: 'asc' | 'desc';
       sorted: boolean;
       onSort: () => void;
-    },
+    }
   ) => React.ReactNode;
 }
 
@@ -57,14 +57,7 @@ export interface DataGridAction<T = any> {
   label: string;
   icon?: React.ReactNode;
   onClick: (row: T) => void;
-  color?:
-    | "primary"
-    | "secondary"
-    | "error"
-    | "warning"
-    | "success"
-    | "info"
-    | "default";
+  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info' | 'default';
   disabled?: (row: T) => boolean;
   divider?: boolean;
   show?: (row: T) => boolean;
@@ -74,7 +67,7 @@ export interface DataGridBulkAction<T = any> {
   label: string;
   icon?: React.ReactNode;
   onClick: (rows: T[]) => void;
-  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
+  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
 }
 
 export interface DataGridProps<T = any> {
@@ -102,8 +95,8 @@ export interface DataGridProps<T = any> {
   // 排序
   sortable?: boolean;
   defaultSortBy?: string;
-  defaultSortDirection?: "asc" | "desc";
-  onSort?: (sortBy: string, sortDirection: "asc" | "desc") => void;
+  defaultSortDirection?: 'asc' | 'desc';
+  onSort?: (sortBy: string, sortDirection: 'asc' | 'desc') => void;
 
   // 空状态
   emptyMessage?: string;
@@ -113,7 +106,7 @@ export interface DataGridProps<T = any> {
   bulkActions?: DataGridBulkAction<T>[];
 
   // 样式
-  density?: "compact" | "standard" | "comfortable";
+  density?: 'compact' | 'standard' | 'comfortable';
   stickyHeader?: boolean;
   maxHeight?: number | string;
 
@@ -127,7 +120,7 @@ export interface DataGridProps<T = any> {
 export function DataGrid<T extends Record<string, any>>({
   columns,
   data,
-  rowKey = "id",
+  rowKey = 'id',
   loading,
   skeletonRows = 5,
   selectable,
@@ -136,24 +129,22 @@ export function DataGrid<T extends Record<string, any>>({
   pagination,
   sortable,
   defaultSortBy,
-  defaultSortDirection = "asc",
+  defaultSortDirection = 'asc',
   onSort,
-  emptyMessage = "暂无数据",
+  emptyMessage = '暂无数据',
   emptyIcon,
   bulkActions,
-  density = "standard",
+  density = 'standard',
   stickyHeader,
   maxHeight,
   selected = [],
   onSelectionChange,
 }: DataGridProps<T>) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const [sortBy, setSortBy] = useState(defaultSortBy || "");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(
-    defaultSortDirection,
-  );
+  const [sortBy, setSortBy] = useState(defaultSortBy || '');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection);
   const [actionMenu, setActionMenu] = useState<{
     anchor: HTMLElement;
     row: T;
@@ -162,24 +153,23 @@ export function DataGrid<T extends Record<string, any>>({
   // 获取行ID
   const getRowId = useCallback(
     (row: T): string | number => {
-      if (typeof rowKey === "function") {
+      if (typeof rowKey === 'function') {
         return rowKey(row);
       }
       return row[rowKey] as string | number;
     },
-    [rowKey],
+    [rowKey]
   );
 
   // 排序处理
   const handleSort = useCallback(
     (columnId: string) => {
-      const newDirection =
-        sortBy === columnId && sortDirection === "asc" ? "desc" : "asc";
+      const newDirection = sortBy === columnId && sortDirection === 'asc' ? 'desc' : 'asc';
       setSortBy(columnId);
       setSortDirection(newDirection);
       onSort?.(columnId, newDirection);
     },
-    [sortBy, sortDirection, onSort],
+    [sortBy, sortDirection, onSort]
   );
 
   // 全选处理
@@ -192,29 +182,24 @@ export function DataGrid<T extends Record<string, any>>({
         onSelectionChange?.([]);
       }
     },
-    [data, getRowId, onSelectionChange],
+    [data, getRowId, onSelectionChange]
   );
 
   // 行选择处理
   const handleSelectRow = useCallback(
     (row: T, checked: boolean) => {
       const rowId = getRowId(row);
-      const newSelected = checked
-        ? [...selected, rowId]
-        : selected.filter((id) => id !== rowId);
+      const newSelected = checked ? [...selected, rowId] : selected.filter((id) => id !== rowId);
       onSelectionChange?.(newSelected);
     },
-    [selected, getRowId, onSelectionChange],
+    [selected, getRowId, onSelectionChange]
   );
 
   // 动作菜单
-  const handleActionClick = useCallback(
-    (event: React.MouseEvent<HTMLElement>, row: T) => {
-      event.stopPropagation();
-      setActionMenu({ anchor: event.currentTarget, row });
-    },
-    [],
-  );
+  const handleActionClick = useCallback((event: React.MouseEvent<HTMLElement>, row: T) => {
+    event.stopPropagation();
+    setActionMenu({ anchor: event.currentTarget, row });
+  }, []);
 
   const handleActionMenuClose = useCallback(() => {
     setActionMenu(null);
@@ -225,18 +210,18 @@ export function DataGrid<T extends Record<string, any>>({
       action.onClick(row);
       handleActionMenuClose();
     },
-    [handleActionMenuClose],
+    [handleActionMenuClose]
   );
 
   // 计算密度
   const densityConfig = useMemo(() => {
     switch (density) {
-      case "compact":
-        return { rowHeight: 40, cellPadding: "8px" };
-      case "comfortable":
-        return { rowHeight: 64, cellPadding: "16px" };
+      case 'compact':
+        return { rowHeight: 40, cellPadding: '8px' };
+      case 'comfortable':
+        return { rowHeight: 64, cellPadding: '16px' };
       default:
-        return { rowHeight: 52, cellPadding: "12px" };
+        return { rowHeight: 52, cellPadding: '12px' };
     }
   }, [density]);
 
@@ -245,12 +230,13 @@ export function DataGrid<T extends Record<string, any>>({
     <TableHead>
       <TableRow>
         {selectable && (
-          <TableCell padding="checkbox" sx={{ width: 48, ...densityConfig }}>
+          <TableCell
+            padding='checkbox'
+            sx={{ width: 48, ...densityConfig }}
+          >
             <Checkbox
-              size="small"
-              indeterminate={
-                selected.length > 0 && selected.length < data.length
-              }
+              size='small'
+              indeterminate={selected.length > 0 && selected.length < data.length}
               checked={data.length > 0 && selected.length === data.length}
               onChange={(e) => handleSelectAll(e.target.checked)}
             />
@@ -259,11 +245,11 @@ export function DataGrid<T extends Record<string, any>>({
         {columns.map((column) => (
           <TableCell
             key={column.id}
-            align={column.align || "left"}
+            align={column.align || 'left'}
             sx={{
               width: column.width,
               minWidth: column.minWidth || 100,
-              whiteSpace: "nowrap",
+              whiteSpace: 'nowrap',
               fontWeight: 600,
               ...densityConfig,
             }}
@@ -277,7 +263,7 @@ export function DataGrid<T extends Record<string, any>>({
             ) : sortable && column.sortable !== false ? (
               <TableSortLabel
                 active={sortBy === column.id}
-                direction={sortBy === column.id ? sortDirection : "asc"}
+                direction={sortBy === column.id ? sortDirection : 'asc'}
                 onClick={() => handleSort(column.id)}
               >
                 {column.label}
@@ -288,7 +274,10 @@ export function DataGrid<T extends Record<string, any>>({
           </TableCell>
         ))}
         {actions && actions.length > 0 && (
-          <TableCell align="right" sx={{ width: 80, ...densityConfig }}>
+          <TableCell
+            align='right'
+            sx={{ width: 80, ...densityConfig }}
+          >
             操作
           </TableCell>
         )}
@@ -301,18 +290,28 @@ export function DataGrid<T extends Record<string, any>>({
     Array.from({ length: skeletonRows }).map((_, index) => (
       <TableRow key={index}>
         {selectable && (
-          <TableCell padding="checkbox">
-            <Skeleton variant="rectangular" width={20} height={20} />
+          <TableCell padding='checkbox'>
+            <Skeleton
+              variant='rectangular'
+              width={20}
+              height={20}
+            />
           </TableCell>
         )}
         {columns.map((column) => (
           <TableCell key={column.id}>
-            <Skeleton variant="text" width="80%" />
+            <Skeleton
+              variant='text'
+              width='80%'
+            />
           </TableCell>
         ))}
         {actions && actions.length > 0 && (
           <TableCell>
-            <Skeleton variant="text" width={40} />
+            <Skeleton
+              variant='text'
+              width={40}
+            />
           </TableCell>
         )}
       </TableRow>
@@ -323,23 +322,26 @@ export function DataGrid<T extends Record<string, any>>({
     <TableRow>
       <TableCell
         colSpan={columns.length + (selectable ? 1 : 0) + (actions ? 1 : 0)}
-        align="center"
+        align='center'
         sx={{ py: 8 }}
       >
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             gap: 1,
           }}
         >
           {emptyIcon || (
-            <Typography variant="h5" sx={{ opacity: 0.3 }}>
+            <Typography
+              variant='h5'
+              sx={{ opacity: 0.3 }}
+            >
               📋
             </Typography>
           )}
-          <Typography color="text.secondary">{emptyMessage}</Typography>
+          <Typography color='text.secondary'>{emptyMessage}</Typography>
         </Box>
       </TableCell>
     </TableRow>
@@ -350,8 +352,7 @@ export function DataGrid<T extends Record<string, any>>({
     data.map((row, index) => {
       const rowId = getRowId(row);
       const isSelected = selected.includes(rowId);
-      const visibleActions =
-        actions?.filter((a) => !a.show || a.show(row)) || [];
+      const visibleActions = actions?.filter((a) => !a.show || a.show(row)) || [];
 
       return (
         <TableRow
@@ -360,14 +361,17 @@ export function DataGrid<T extends Record<string, any>>({
           selected={isSelected}
           onClick={() => onRowClick?.(row)}
           sx={{
-            cursor: onRowClick ? "pointer" : "default",
+            cursor: onRowClick ? 'pointer' : 'default',
             height: densityConfig.rowHeight,
           }}
         >
           {selectable && (
-            <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+            <TableCell
+              padding='checkbox'
+              onClick={(e) => e.stopPropagation()}
+            >
               <Checkbox
-                size="small"
+                size='small'
                 checked={isSelected}
                 onChange={(e) => handleSelectRow(row, e.target.checked)}
               />
@@ -376,49 +380,49 @@ export function DataGrid<T extends Record<string, any>>({
           {columns.map((column) => (
             <TableCell
               key={column.id}
-              align={column.align || "left"}
+              align={column.align || 'left'}
               sx={{ padding: densityConfig.cellPadding }}
             >
-              {column.render
-                ? column.render(row, index)
-                : (row[column.id] as React.ReactNode)}
+              {column.render ? column.render(row, index) : (row[column.id] as React.ReactNode)}
             </TableCell>
           ))}
           {actions && actions.length > 0 && (
-            <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+            <TableCell
+              align='right'
+              onClick={(e) => e.stopPropagation()}
+            >
               {isMobile ? (
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={(e) => handleActionClick(e, row)}
                 >
                   <MoreHorizontal style={{ width: 18, height: 18 }} />
                 </IconButton>
               ) : (
-                <Box
-                  sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}
-                >
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
                   {visibleActions.slice(0, 3).map((action, idx) => (
-                    <Tooltip key={idx} title={action.label}>
+                    <Tooltip
+                      key={idx}
+                      title={action.label}
+                    >
                       <IconButton
-                        size="small"
+                        size='small'
                         onClick={() => action.onClick(row)}
                         disabled={action.disabled?.(row)}
                         sx={{
                           color:
-                            action.color && action.color !== "default"
+                            action.color && action.color !== 'default'
                               ? `${action.color}.main`
-                              : "text.secondary",
+                              : 'text.secondary',
                         }}
                       >
-                        {action.icon || (
-                          <MoreHorizontal style={{ width: 16, height: 16 }} />
-                        )}
+                        {action.icon || <MoreHorizontal style={{ width: 16, height: 16 }} />}
                       </IconButton>
                     </Tooltip>
                   ))}
                   {visibleActions.length > 3 && (
                     <IconButton
-                      size="small"
+                      size='small'
                       onClick={(e) => handleActionClick(e, row)}
                     >
                       <MoreHorizontal style={{ width: 16, height: 16 }} />
@@ -440,41 +444,40 @@ export function DataGrid<T extends Record<string, any>>({
       <Box
         sx={{
           p: 1.5,
-          bgcolor: "primary.light",
-          color: "primary.contrastText",
-          display: "flex",
-          alignItems: "center",
+          bgcolor: 'primary.light',
+          color: 'primary.contrastText',
+          display: 'flex',
+          alignItems: 'center',
           gap: 2,
-          borderRadius: "8px 8px 0 0",
+          borderRadius: '8px 8px 0 0',
         }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 500 }}
+        >
           已选择 {selected.length} 项
         </Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
           {bulkActions.map((action, idx) => (
             <IconButton
               key={idx}
-              size="small"
+              size='small'
               onClick={() => {
-                const selectedRows = data.filter((row) =>
-                  selected.includes(getRowId(row)),
-                );
+                const selectedRows = data.filter((row) => selected.includes(getRowId(row)));
                 action.onClick(selectedRows);
               }}
-              sx={{ color: "inherit" }}
+              sx={{ color: 'inherit' }}
             >
-              {action.icon || (
-                <MoreHorizontal style={{ width: 18, height: 18 }} />
-              )}
+              {action.icon || <MoreHorizontal style={{ width: 18, height: 18 }} />}
             </IconButton>
           ))}
         </Box>
         <Box sx={{ flex: 1 }} />
         <IconButton
-          size="small"
+          size='small'
           onClick={() => onSelectionChange?.([])}
-          sx={{ color: "inherit" }}
+          sx={{ color: 'inherit' }}
         >
           ✕
         </IconButton>
@@ -494,34 +497,26 @@ export function DataGrid<T extends Record<string, any>>({
         {renderBulkActions()}
         <Table
           stickyHeader={stickyHeader}
-          size={density === "compact" ? "small" : "medium"}
+          size={density === 'compact' ? 'small' : 'medium'}
         >
           {renderHeader()}
           <TableBody>
-            {loading
-              ? renderSkeleton()
-              : data.length === 0
-                ? renderEmpty()
-                : renderRows()}
+            {loading ? renderSkeleton() : data.length === 0 ? renderEmpty() : renderRows()}
           </TableBody>
         </Table>
       </TableContainer>
 
       {pagination && (
         <TablePagination
-          component="div"
+          component='div'
           count={pagination.total}
           page={pagination.page}
           onPageChange={(_, page) => pagination.onPageChange(page)}
           rowsPerPage={pagination.pageSize}
-          onRowsPerPageChange={(e) =>
-            pagination.onPageSizeChange(Number(e.target.value))
-          }
+          onRowsPerPageChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
           rowsPerPageOptions={[10, 20, 50, 100]}
-          labelRowsPerPage="每页"
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} 共 ${count}`
-          }
+          labelRowsPerPage='每页'
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} 共 ${count}`}
         />
       )}
 
@@ -537,21 +532,17 @@ export function DataGrid<T extends Record<string, any>>({
             <React.Fragment key={idx}>
               {action.divider && <MenuItem divider />}
               <MenuItem
-                onClick={() =>
-                  actionMenu && handleActionExecute(action, actionMenu.row)
-                }
+                onClick={() => actionMenu && handleActionExecute(action, actionMenu.row)}
                 disabled={action.disabled?.(actionMenu?.row as T)}
                 sx={{
                   color:
-                    action.color && action.color !== "default"
+                    action.color && action.color !== 'default'
                       ? `${action.color}.main`
-                      : "text.primary",
+                      : 'text.primary',
                 }}
               >
                 {action.icon && (
-                  <ListItemIcon sx={{ color: "inherit", minWidth: 32 }}>
-                    {action.icon}
-                  </ListItemIcon>
+                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>{action.icon}</ListItemIcon>
                 )}
                 <ListItemText>{action.label}</ListItemText>
               </MenuItem>

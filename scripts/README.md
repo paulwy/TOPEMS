@@ -146,12 +146,12 @@ manufacturing   svc/manufacturing     topems-manufacturing   8023
 | scm | 供应链管理 | 8040 |
 | srm | 供应商管理 | 8041 |
 | wms | 仓库管理 | 8042 |
-| ai | AI 服务 | 8062 |
+| ai | AI 服务 | 8064 |
 | analytics | 数据分析 | 8060 |
 | gis | 地理信息 | 8053 |
 | mobile | 移动端 | 8070 |
-| monitor | 系统监控 | 8064 |
-| portal | 企业门户 | 8066 |
+| monitor | 系统监控 | 8062 |
+| portal | 企业门户 | 8063 |
 | web | 前端应用 | 3000 |
 
 ## 文档

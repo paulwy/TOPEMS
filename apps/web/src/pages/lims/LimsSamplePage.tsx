@@ -1,22 +1,25 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Plus,
-  Edit,
-  Eye,
-  Download,
-  Upload,
-  FlaskConical,
-  Filter,
-} from "lucide-react";
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Plus, Edit, Eye, Download, Upload, FlaskConical, Filter } from 'lucide-react';
 import {
   ListPageTemplate,
   type ColumnDef,
   type FilterConfig,
   type RowAction,
-} from "@/components/templates";
+} from '@/components/templates';
 
 interface Sample {
   id: string;
@@ -30,49 +33,49 @@ interface Sample {
 
 const mockSamples: Sample[] = [
   {
-    id: "1",
-    sample_no: "S202401001",
-    name: "水质样品A",
-    test_items: "pH值、溶解氧",
-    status: "已完成",
-    received_date: "2024-01-15",
-    test_result: "合格",
+    id: '1',
+    sample_no: 'S202401001',
+    name: '水质样品A',
+    test_items: 'pH值、溶解氧',
+    status: '已完成',
+    received_date: '2024-01-15',
+    test_result: '合格',
   },
   {
-    id: "2",
-    sample_no: "S202401002",
-    name: "土壤样品B",
-    test_items: "重金属含量",
-    status: "检测中",
-    received_date: "2024-01-16",
-    test_result: "-",
+    id: '2',
+    sample_no: 'S202401002',
+    name: '土壤样品B',
+    test_items: '重金属含量',
+    status: '检测中',
+    received_date: '2024-01-16',
+    test_result: '-',
   },
   {
-    id: "3",
-    sample_no: "S202401003",
-    name: "空气样品C",
-    test_items: "PM2.5、PM10",
-    status: "待检测",
-    received_date: "2024-01-17",
-    test_result: "-",
+    id: '3',
+    sample_no: 'S202401003',
+    name: '空气样品C',
+    test_items: 'PM2.5、PM10',
+    status: '待检测',
+    received_date: '2024-01-17',
+    test_result: '-',
   },
   {
-    id: "4",
-    sample_no: "S202401004",
-    name: "食品样品D",
-    test_items: "添加剂、农药残留",
-    status: "已完成",
-    received_date: "2024-01-18",
-    test_result: "合格",
+    id: '4',
+    sample_no: 'S202401004',
+    name: '食品样品D',
+    test_items: '添加剂、农药残留',
+    status: '已完成',
+    received_date: '2024-01-18',
+    test_result: '合格',
   },
   {
-    id: "5",
-    sample_no: "S202401005",
-    name: "药品样品E",
-    test_items: "有效成分含量",
-    status: "待接收",
-    received_date: "2024-01-19",
-    test_result: "-",
+    id: '5',
+    sample_no: 'S202401005',
+    name: '药品样品E',
+    test_items: '有效成分含量',
+    status: '待接收',
+    received_date: '2024-01-19',
+    test_result: '-',
   },
 ];
 
@@ -80,15 +83,15 @@ const LimsSamplePage: React.FC = () => {
   const navigate = useNavigate();
   const [samples, setSamples] = useState<Sample[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    test_items: "",
-    status: "待接收",
+    name: '',
+    test_items: '',
+    status: '待接收',
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -107,16 +110,16 @@ const LimsSamplePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待接收: { bg: "#f3f4f6", color: "#4b5563" },
-      待检测: { bg: "#fef9c3", color: "#ca8a04" },
-      检测中: { bg: "#dbeafe", color: "#2563eb" },
-      已完成: { bg: "#dcfce7", color: "#16a34a" },
+      待接收: { bg: '#f3f4f6', color: '#4b5563' },
+      待检测: { bg: '#fef9c3', color: '#ca8a04' },
+      检测中: { bg: '#dbeafe', color: '#2563eb' },
+      已完成: { bg: '#dcfce7', color: '#16a34a' },
     };
-    const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
+    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
     return (
       <Chip
         label={status}
-        size="small"
+        size='small'
         sx={{
           backgroundColor: colors.bg,
           color: colors.color,
@@ -127,26 +130,26 @@ const LimsSamplePage: React.FC = () => {
   };
 
   const columns: ColumnDef<Sample>[] = [
-    { id: "sample_no", label: "样品编号" },
-    { id: "name", label: "样品名称" },
-    { id: "test_items", label: "检测项目" },
+    { id: 'sample_no', label: '样品编号' },
+    { id: 'name', label: '样品名称' },
+    { id: 'test_items', label: '检测项目' },
     {
-      id: "status",
-      label: "状态",
+      id: 'status',
+      label: '状态',
       render: (row) => getStatusBadge(row.status),
     },
-    { id: "received_date", label: "接收日期" },
-    { id: "test_result", label: "检测结果" },
+    { id: 'received_date', label: '接收日期' },
+    { id: 'test_result', label: '检测结果' },
   ];
 
   const rowActions: RowAction<Sample>[] = [
     {
-      label: "查看",
+      label: '查看',
       icon: <Eye style={{ width: 16, height: 16 }} />,
       onClick: (row) => handleView(row),
     },
     {
-      label: "编辑",
+      label: '编辑',
       icon: <Edit style={{ width: 16, height: 16 }} />,
       onClick: (row) => handleEdit(row),
     },
@@ -154,15 +157,15 @@ const LimsSamplePage: React.FC = () => {
 
   const filters: FilterConfig[] = [
     {
-      id: "status",
-      label: "状态",
-      type: "select",
+      id: 'status',
+      label: '状态',
+      type: 'select',
       options: [
-        { label: "全部", value: "all" },
-        { label: "待接收", value: "待接收" },
-        { label: "待检测", value: "待检测" },
-        { label: "检测中", value: "检测中" },
-        { label: "已完成", value: "已完成" },
+        { label: '全部', value: 'all' },
+        { label: '待接收', value: '待接收' },
+        { label: '待检测', value: '待检测' },
+        { label: '检测中', value: '检测中' },
+        { label: '已完成', value: '已完成' },
       ],
       value: statusFilter,
       onChange: (value) => setStatusFilter(value),
@@ -173,15 +176,11 @@ const LimsSamplePage: React.FC = () => {
     const matchesSearch =
       sample.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.sample_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || sample.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || sample.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const paginatedData = filteredSamples.slice(
-    page * pageSize,
-    page * pageSize + pageSize,
-  );
+  const paginatedData = filteredSamples.slice(page * pageSize, page * pageSize + pageSize);
 
   const handleView = (sample: Sample) => {
     setSelectedSample(sample);
@@ -200,7 +199,7 @@ const LimsSamplePage: React.FC = () => {
 
   const handleCreate = () => {
     setSelectedSample(null);
-    setFormData({ name: "", test_items: "", status: "待接收" });
+    setFormData({ name: '', test_items: '', status: '待接收' });
     setShowCreateModal(true);
   };
 
@@ -215,8 +214,8 @@ const LimsSamplePage: React.FC = () => {
                 test_items: formData.test_items,
                 status: formData.status,
               }
-            : s,
-        ),
+            : s
+        )
       );
     } else {
       const newSample: Sample = {
@@ -225,8 +224,8 @@ const LimsSamplePage: React.FC = () => {
         name: formData.name,
         test_items: formData.test_items,
         status: formData.status,
-        received_date: new Date().toISOString().split("T")[0],
-        test_result: "-",
+        received_date: new Date().toISOString().split('T')[0],
+        test_result: '-',
       };
       setSamples((prev) => [newSample, ...prev]);
     }
@@ -235,48 +234,46 @@ const LimsSamplePage: React.FC = () => {
 
   const stats = {
     total: samples.length,
-    pending: samples.filter(
-      (s) => s.status === "待接收" || s.status === "待检测",
-    ).length,
-    inProgress: samples.filter((s) => s.status === "检测中").length,
-    completed: samples.filter((s) => s.status === "已完成").length,
+    pending: samples.filter((s) => s.status === '待接收' || s.status === '待检测').length,
+    inProgress: samples.filter((s) => s.status === '检测中').length,
+    completed: samples.filter((s) => s.status === '已完成').length,
   };
 
   const statsCards = (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
         gap: 2,
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: "#f0fdfa" }}>
+      <Card sx={{ bgcolor: '#f0fdfa' }}>
         <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: "#d1fae5",
+                bgcolor: '#d1fae5',
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <FlaskConical sx={{ width: 20, height: 20, color: "#06b6d4" }} />
+              <FlaskConical sx={{ width: 20, height: 20, color: '#06b6d4' }} />
             </Box>
             <Box>
               <Typography
-                variant="body2"
-                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                variant='body2'
+                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
                 样品总数
               </Typography>
               <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "slate.900" }}
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'slate.900' }}
               >
                 {stats.total}
               </Typography>
@@ -286,30 +283,30 @@ const LimsSamplePage: React.FC = () => {
       </Card>
       <Card>
         <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: "#fef3c7",
+                bgcolor: '#fef3c7',
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+              <Filter sx={{ width: 20, height: 20, color: '#ca8a04' }} />
             </Box>
             <Box>
               <Typography
-                variant="body2"
-                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                variant='body2'
+                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
                 待处理
               </Typography>
               <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "slate.900" }}
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'slate.900' }}
               >
                 {stats.pending}
               </Typography>
@@ -319,30 +316,30 @@ const LimsSamplePage: React.FC = () => {
       </Card>
       <Card>
         <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: "#dbeafe",
+                bgcolor: '#dbeafe',
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <FlaskConical sx={{ width: 20, height: 20, color: "#2563eb" }} />
+              <FlaskConical sx={{ width: 20, height: 20, color: '#2563eb' }} />
             </Box>
             <Box>
               <Typography
-                variant="body2"
-                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                variant='body2'
+                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
                 检测中
               </Typography>
               <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "slate.900" }}
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'slate.900' }}
               >
                 {stats.inProgress}
               </Typography>
@@ -352,30 +349,30 @@ const LimsSamplePage: React.FC = () => {
       </Card>
       <Card>
         <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: "#dcfce7",
+                bgcolor: '#dcfce7',
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <FlaskConical sx={{ width: 20, height: 20, color: "#16a34a" }} />
+              <FlaskConical sx={{ width: 20, height: 20, color: '#16a34a' }} />
             </Box>
             <Box>
               <Typography
-                variant="body2"
-                sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                variant='body2'
+                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
                 已完成
               </Typography>
               <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "slate.900" }}
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'slate.900' }}
               >
                 {stats.completed}
               </Typography>
@@ -390,28 +387,28 @@ const LimsSamplePage: React.FC = () => {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
+        <Box sx={{ textAlign: 'center' }}>
           <Box
             sx={{
               width: 48,
               height: 48,
               border: 4,
-              borderColor: "#06b6d4",
-              borderTopColor: "#0891b2",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
+              borderColor: '#06b6d4',
+              borderTopColor: '#0891b2',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              mx: 'auto',
               mb: 2,
             }}
           />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
+          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
         </Box>
       </Box>
     );
@@ -420,26 +417,26 @@ const LimsSamplePage: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
       }}
     >
       <ListPageTemplate
-        title="样品管理"
-        subtitle="Sample Management"
+        title='样品管理'
+        subtitle='Sample Management'
         breadcrumbs={[
-          { label: "首页", href: "/dashboard" },
-          { label: "LIMS" },
-          { label: "样品管理" },
+          { label: '首页', href: '/dashboard' },
+          { label: 'LIMS' },
+          { label: '样品管理' },
         ]}
-        backButton={{ onClick: () => navigate("/dashboard") }}
+        backButton={{ onClick: () => navigate('/dashboard') }}
         columns={columns}
         data={paginatedData}
         loading={loading}
         getRowId={(row) => row.id}
         filters={filters}
         searchable
-        searchPlaceholder="搜索样品编号或名称..."
+        searchPlaceholder='搜索样品编号或名称...'
         searchValue={searchTerm}
         onSearch={setSearchTerm}
         pagination={{
@@ -451,20 +448,20 @@ const LimsSamplePage: React.FC = () => {
         }}
         actions={[
           {
-            label: "导入",
+            label: '导入',
             icon: <Upload style={{ width: 18, height: 18 }} />,
-            variant: "outlined",
+            variant: 'outlined',
           },
           {
-            label: "导出",
+            label: '导出',
             icon: <Download style={{ width: 18, height: 18 }} />,
-            variant: "outlined",
+            variant: 'outlined',
           },
           {
-            label: "样品登记",
+            label: '样品登记',
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: handleCreate,
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
         rowActions={rowActions}
@@ -474,54 +471,51 @@ const LimsSamplePage: React.FC = () => {
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{selectedSample ? "编辑样品" : "样品登记"}</DialogTitle>
+        <DialogTitle>{selectedSample ? '编辑样品' : '样品登记'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label="样品名称 *"
+              label='样品名称 *'
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="请输入样品名称"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder='请输入样品名称'
             />
             <TextField
               fullWidth
-              label="检测项目"
+              label='检测项目'
               value={formData.test_items}
-              onChange={(e) =>
-                setFormData({ ...formData, test_items: e.target.value })
-              }
-              placeholder="请输入检测项目，多个用逗号分隔"
+              onChange={(e) => setFormData({ ...formData, test_items: e.target.value })}
+              placeholder='请输入检测项目，多个用逗号分隔'
             />
             <TextField
               fullWidth
               select
-              label="状态"
+              label='状态'
               value={formData.status}
-              onChange={(e) =>
-                setFormData({ ...formData, status: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
             >
-              <option value="待接收">待接收</option>
-              <option value="待检测">待检测</option>
-              <option value="检测中">检测中</option>
-              <option value="已完成">已完成</option>
+              <option value='待接收'>待接收</option>
+              <option value='待检测'>待检测</option>
+              <option value='检测中'>检测中</option>
+              <option value='已完成'>已完成</option>
             </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateModal(false)}
+          >
             取消
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: "#06b6d4" }}
+            sx={{ bgcolor: '#06b6d4' }}
           >
             保存
           </Button>
@@ -531,7 +525,7 @@ const LimsSamplePage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>样品详情</DialogTitle>
@@ -540,15 +534,15 @@ const LimsSamplePage: React.FC = () => {
             <Box
               sx={{
                 pt: 2,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
                 gap: 2,
               }}
             >
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   样品编号
                 </Box>
@@ -556,8 +550,8 @@ const LimsSamplePage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   样品名称
                 </Box>
@@ -565,8 +559,8 @@ const LimsSamplePage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   检测项目
                 </Box>
@@ -574,19 +568,17 @@ const LimsSamplePage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(selectedSample.status)}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedSample.status)}</Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   接收日期
                 </Box>
@@ -594,8 +586,8 @@ const LimsSamplePage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   检测结果
                 </Box>
@@ -607,12 +599,12 @@ const LimsSamplePage: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={() => {
               setShowDetailModal(false);
               handleEdit(selectedSample!);
             }}
-            sx={{ bgcolor: "#06b6d4" }}
+            sx={{ bgcolor: '#06b6d4' }}
           >
             编辑
           </Button>

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import type { BoxProps } from "@mui/material";
+import React, { useState } from 'react';
+import type { BoxProps } from '@mui/material';
 import {
   Box,
   Paper,
@@ -19,8 +19,8 @@ import {
   ListItemText,
   Chip,
   Stack,
-} from "@mui/material";
-import { Grid } from "@mui/material";
+} from '@mui/material';
+import { Grid } from '@mui/material';
 import {
   TrendingUp,
   TrendingDown,
@@ -32,22 +32,15 @@ import {
   LayoutGrid,
   List,
   LayoutDashboard,
-} from "lucide-react";
-import type { BreadcrumbItem } from "./PageHeader";
-import { PageHeader } from "./PageHeader";
-import { logger } from "@/utils/logger";
+} from 'lucide-react';
+import type { BreadcrumbItem } from './PageHeader';
+import { PageHeader } from './PageHeader';
+import { logger } from '@/utils/logger';
 
 // ============ 类型定义 ============
 
 // 图表类型
-export type ChartType =
-  | "line"
-  | "bar"
-  | "pie"
-  | "area"
-  | "scatter"
-  | "radar"
-  | "gauge";
+export type ChartType = 'line' | 'bar' | 'pie' | 'area' | 'scatter' | 'radar' | 'gauge';
 
 // 图表数据点
 export interface ChartDataPoint {
@@ -81,7 +74,7 @@ export interface ChartConfig {
   xAxis?: {
     label?: string;
     show?: boolean;
-    type?: "category" | "value" | "time";
+    type?: 'category' | 'value' | 'time';
   };
   // Y轴配置
   yAxis?: {
@@ -102,7 +95,7 @@ export interface StatCard {
   change?: number;
   changeLabel?: string;
   icon?: React.ReactNode;
-  color?: "primary" | "secondary" | "success" | "warning" | "error" | "info";
+  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
   onClick?: () => void;
   // 新增：趋势数据
   trend?: number[];
@@ -114,9 +107,9 @@ export interface StatCard {
   // 新增：标签
   tags?: Array<{ label: string; color?: string }>;
   // 新增：卡片样式
-  variant?: "elevation" | "outlined";
+  variant?: 'elevation' | 'outlined';
   // 新增：尺寸
-  size?: "small" | "medium" | "large";
+  size?: 'small' | 'medium' | 'large';
 }
 
 export interface ChartCard {
@@ -143,7 +136,7 @@ export interface ChartCard {
   // 新增：错误状态
   error?: string;
   // 新增：卡片样式
-  variant?: "elevation" | "outlined";
+  variant?: 'elevation' | 'outlined';
   // 新增：是否可展开
   expandable?: boolean;
   defaultExpanded?: boolean;
@@ -157,7 +150,7 @@ export interface RecentItem {
   avatar?: React.ReactNode;
   onClick?: () => void;
   // 新增：状态
-  status?: "success" | "warning" | "error" | "info" | "default";
+  status?: 'success' | 'warning' | 'error' | 'info' | 'default';
   // 新增：标签
   tags?: Array<{ label: string; color?: string }>;
   // 新增：图标
@@ -178,7 +171,7 @@ export interface QuickAction {
   // 新增：徽章
   badge?: number | string;
   // 新增：样式变体
-  variant?: "card" | "button" | "icon";
+  variant?: 'card' | 'button' | 'icon';
 }
 
 // 卡片分组配置
@@ -187,7 +180,7 @@ export interface CardGroup {
   title: string;
   cards: StatCard[];
   // 新增：布局配置
-  layout?: "grid" | "carousel" | "tabs";
+  layout?: 'grid' | 'carousel' | 'tabs';
   // 新增：是否可折叠
   collapsible?: boolean;
   defaultExpanded?: boolean;
@@ -209,11 +202,11 @@ export interface LayoutBreakpoints {
 // 布局配置
 export interface LayoutConfig {
   // 统计卡片布局
-  statsLayout?: "grid" | "carousel" | "tabs";
+  statsLayout?: 'grid' | 'carousel' | 'tabs';
   // 统计卡片断点配置
   statsBreakpoints?: LayoutBreakpoints;
   // 图表布局
-  chartsLayout?: "grid" | "stack" | "tabs";
+  chartsLayout?: 'grid' | 'stack' | 'tabs';
   // 图表断点配置
   chartsBreakpoints?: LayoutBreakpoints;
   // 是否启用拖拽排序
@@ -284,7 +277,7 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
   change,
   changeLabel,
   icon,
-  color = "primary",
+  color = 'primary',
   onClick,
   loading,
   trend,
@@ -292,16 +285,16 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
   progressLabel,
   subtitle,
   tags,
-  variant = "elevation",
-  size = "medium",
+  variant = 'elevation',
+  size = 'medium',
 }) => {
   const colorMap: Record<string, string> = {
-    primary: "#3b82f6",
-    secondary: "#8b5cf6",
-    success: "#22c55e",
-    warning: "#f59e0b",
-    error: "#ef4444",
-    info: "#06b6d4",
+    primary: '#3b82f6',
+    secondary: '#8b5cf6',
+    success: '#22c55e',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    info: '#06b6d4',
   };
 
   const bgColor = colorMap[color] || colorMap.primary;
@@ -310,20 +303,20 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
     small: {
       padding: 1.5,
       iconSize: 36,
-      titleSize: "body2" as const,
-      valueSize: "h5" as const,
+      titleSize: 'body2' as const,
+      valueSize: 'h5' as const,
     },
     medium: {
       padding: 2,
       iconSize: 48,
-      titleSize: "body2" as const,
-      valueSize: "h4" as const,
+      titleSize: 'body2' as const,
+      valueSize: 'h4' as const,
     },
     large: {
       padding: 3,
       iconSize: 56,
-      titleSize: "body1" as const,
-      valueSize: "h3" as const,
+      titleSize: 'body1' as const,
+      valueSize: 'h3' as const,
     },
   };
 
@@ -334,11 +327,11 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
       variant={variant}
       sx={{
         borderRadius: 2,
-        cursor: onClick ? "pointer" : "default",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        "&:hover": onClick
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': onClick
           ? {
-              transform: "translateY(-2px)",
+              transform: 'translateY(-2px)',
               boxShadow: 4,
             }
           : {},
@@ -348,31 +341,32 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
       <CardContent sx={{ padding: currentSize.padding }}>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
           }}
         >
           <Box sx={{ flex: 1 }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
               <Typography
                 variant={currentSize.titleSize}
-                color="text.secondary"
+                color='text.secondary'
               >
                 {title}
               </Typography>
               {tags && tags.length > 0 && (
-                <Stack direction="row" spacing={0.5}>
+                <Stack
+                  direction='row'
+                  spacing={0.5}
+                >
                   {tags.map((tag, index) => (
                     <Chip
                       key={index}
                       label={tag.label}
-                      size="small"
+                      size='small'
                       sx={{
                         height: 20,
-                        fontSize: "0.65rem",
+                        fontSize: '0.65rem',
                         bgcolor: tag.color || `${bgColor}20`,
                         color: tag.color || bgColor,
                       }}
@@ -383,17 +377,23 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
             </Box>
             {subtitle && (
               <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mb: 0.5 }}
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block', mb: 0.5 }}
               >
                 {subtitle}
               </Typography>
             )}
             {loading ? (
               <>
-                <Skeleton width={80} height={32} />
-                <Skeleton width={60} height={20} />
+                <Skeleton
+                  width={80}
+                  height={32}
+                />
+                <Skeleton
+                  width={60}
+                  height={20}
+                />
               </>
             ) : (
               <>
@@ -404,9 +404,9 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                   {value}
                   {unit && (
                     <Typography
-                      component="span"
-                      variant="body2"
-                      color="text.secondary"
+                      component='span'
+                      variant='body2'
+                      color='text.secondary'
                       sx={{ ml: 0.5 }}
                     >
                       {unit}
@@ -416,37 +416,31 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                 {change !== undefined && (
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 0.5,
                       mt: 0.5,
                     }}
                   >
                     {change > 0 ? (
-                      <TrendingUp
-                        style={{ width: 14, height: 14, color: "#22c55e" }}
-                      />
+                      <TrendingUp style={{ width: 14, height: 14, color: '#22c55e' }} />
                     ) : change < 0 ? (
-                      <TrendingDown
-                        style={{ width: 14, height: 14, color: "#ef4444" }}
-                      />
+                      <TrendingDown style={{ width: 14, height: 14, color: '#ef4444' }} />
                     ) : (
-                      <Minus
-                        style={{ width: 14, height: 14, color: "#9ca3af" }}
-                      />
+                      <Minus style={{ width: 14, height: 14, color: '#9ca3af' }} />
                     )}
                     <Typography
-                      variant="caption"
+                      variant='caption'
                       sx={{
                         color:
                           change > 0
-                            ? "success.main"
+                            ? 'success.main'
                             : change < 0
-                              ? "error.main"
-                              : "text.secondary",
+                              ? 'error.main'
+                              : 'text.secondary',
                       }}
                     >
-                      {change > 0 ? "+" : ""}
+                      {change > 0 ? '+' : ''}
                       {change}
                       {changeLabel && ` ${changeLabel}`}
                     </Typography>
@@ -456,33 +450,39 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                   <Box sx={{ mt: 1 }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        justifyContent: 'space-between',
                         mb: 0.5,
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary">
-                        {progressLabel || "进度"}
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        {progressLabel || '进度'}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         {progress}%
                       </Typography>
                     </Box>
                     <Box
                       sx={{
-                        width: "100%",
+                        width: '100%',
                         height: 6,
-                        bgcolor: "grey.200",
+                        bgcolor: 'grey.200',
                         borderRadius: 3,
-                        overflow: "hidden",
+                        overflow: 'hidden',
                       }}
                     >
                       <Box
                         sx={{
                           width: `${progress}%`,
-                          height: "100%",
+                          height: '100%',
                           bgcolor: bgColor,
-                          transition: "width 0.3s ease",
+                          transition: 'width 0.3s ease',
                         }}
                       />
                     </Box>
@@ -497,9 +497,9 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                 width: currentSize.iconSize,
                 height: currentSize.iconSize,
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 bgcolor: `${bgColor}15`,
                 color: bgColor,
               }}
@@ -510,7 +510,10 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
         </Box>
         {trend && trend.length > 0 && !loading && (
           <Box sx={{ mt: 2, height: 40 }}>
-            <MiniTrendChart data={trend} color={bgColor} />
+            <MiniTrendChart
+              data={trend}
+              color={bgColor}
+            />
           </Box>
         )}
       </CardContent>
@@ -519,10 +522,7 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
 };
 
 // 迷你趋势图组件
-const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({
-  data,
-  color,
-}) => {
+const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -533,17 +533,21 @@ const MiniTrendChart: React.FC<{ data: number[]; color: string }> = ({
       const y = 100 - ((value - min) / range) * 100;
       return `${x},${y}`;
     })
-    .join(" ");
+    .join(' ');
 
   return (
-    <svg width="100%" height="100%" preserveAspectRatio="none">
+    <svg
+      width='100%'
+      height='100%'
+      preserveAspectRatio='none'
+    >
       <polyline
         points={points}
-        fill="none"
+        fill='none'
         stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
       />
     </svg>
   );
@@ -563,7 +567,7 @@ const ChartCardComponent: React.FC<ChartCard> = ({
   onFullscreen,
   loading,
   error,
-  variant = "elevation",
+  variant = 'elevation',
   expandable,
   defaultExpanded = true,
 }) => {
@@ -598,58 +602,67 @@ const ChartCardComponent: React.FC<ChartCard> = ({
       variant={variant}
       sx={{
         borderRadius: 2,
-        height: expandable && !expanded ? "auto" : height,
-        display: "flex",
-        flexDirection: "column",
-        transition: "height 0.3s ease",
+        height: expandable && !expanded ? 'auto' : height,
+        display: 'flex',
+        flexDirection: 'column',
+        transition: 'height 0.3s ease',
       }}
     >
       <Box
         sx={{
           p: 2,
           borderBottom: 1,
-          borderColor: "divider",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
         <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
               {title}
             </Typography>
             {type && (
               <Chip
                 label={type}
-                size="small"
-                sx={{ height: 20, fontSize: "0.65rem" }}
+                size='small'
+                sx={{ height: 20, fontSize: '0.65rem' }}
               />
             )}
           </Box>
           {subtitle && (
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {subtitle}
             </Typography>
           )}
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {actions}
           {(onRefresh || onDownload || onFullscreen || expandable) && (
             <>
               {expandable && (
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={() => setExpanded(!expanded)}
                   sx={{
-                    transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-                    transition: "transform 0.3s",
+                    transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s',
                   }}
                 >
                   <TrendingUp style={{ width: 18, height: 18 }} />
                 </IconButton>
               )}
-              <IconButton size="small" onClick={handleMenuOpen}>
+              <IconButton
+                size='small'
+                onClick={handleMenuOpen}
+              >
                 <MoreVertical style={{ width: 18, height: 18 }} />
               </IconButton>
               <Menu
@@ -687,17 +700,21 @@ const ChartCardComponent: React.FC<ChartCard> = ({
         </Box>
       </Box>
       {(!expandable || expanded) && (
-        <Box sx={{ p: 2, flex: 1, overflow: "hidden" }}>
+        <Box sx={{ p: 2, flex: 1, overflow: 'hidden' }}>
           {loading ? (
-            <Skeleton variant="rectangular" width="100%" height="100%" />
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height='100%'
+            />
           ) : error ? (
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                color: "error.main",
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: 'error.main',
               }}
             >
               <Typography>{error}</Typography>
@@ -716,7 +733,7 @@ const ChartCardComponent: React.FC<ChartCard> = ({
 const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
   title,
   cards,
-  layout = "grid",
+  layout = 'grid',
   collapsible,
   defaultExpanded = true,
   icon,
@@ -732,25 +749,31 @@ const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
         sx={{
           p: 2,
           borderBottom: expanded ? 1 : 0,
-          borderColor: "divider",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {icon}
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
             {title}
           </Typography>
           {collapsible && (
-            <IconButton size="small" onClick={() => setExpanded(!expanded)}>
+            <IconButton
+              size='small'
+              onClick={() => setExpanded(!expanded)}
+            >
               <TrendingUp
                 style={{
                   width: 18,
                   height: 18,
-                  transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-                  transition: "transform 0.3s",
+                  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s',
                 }}
               />
             </IconButton>
@@ -760,28 +783,43 @@ const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
       </Box>
       {expanded && (
         <Box sx={{ p: 2 }}>
-          {layout === "tabs" && (
+          {layout === 'tabs' && (
             <Tabs
               value={activeTab}
               onChange={(_, newValue) => setActiveTab(newValue)}
               sx={{ mb: 2 }}
             >
               {cards.map((card) => (
-                <Tab key={card.id} label={card.title} />
+                <Tab
+                  key={card.id}
+                  label={card.title}
+                />
               ))}
             </Tabs>
           )}
-          {layout === "tabs" ? (
+          {layout === 'tabs' ? (
             <Box>
               {cards[activeTab] && (
-                <StatCardComponent {...cards[activeTab]} loading={loading} />
+                <StatCardComponent
+                  {...cards[activeTab]}
+                  loading={loading}
+                />
               )}
             </Box>
           ) : (
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               {cards.map((card) => (
-                <Grid key={card.id} size={{ xs: 12, sm: 6, md: 3 }}>
-                  <StatCardComponent {...card} loading={loading} />
+                <Grid
+                  key={card.id}
+                  size={{ xs: 12, sm: 6, md: 3 }}
+                >
+                  <StatCardComponent
+                    {...card}
+                    loading={loading}
+                  />
                 </Grid>
               ))}
             </Grid>
@@ -802,9 +840,9 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   cardGroups,
   charts,
   recentItems,
-  recentTitle = "最近事项",
+  recentTitle = '最近事项',
   quickActions,
-  quickActionsTitle = "快捷操作",
+  quickActionsTitle = '快捷操作',
   loading,
   headerContent,
   children,
@@ -816,19 +854,19 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   onRefresh,
   customRenderers,
   persistConfig,
-  configKey = "dashboard-config",
+  configKey = 'dashboard-config',
   ...props
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   // 状态管理
-  const [statsLayout, setStatsLayout] = useState<"grid" | "carousel" | "tabs">(
-    layout?.statsLayout || "grid",
+  const [statsLayout, setStatsLayout] = useState<'grid' | 'carousel' | 'tabs'>(
+    layout?.statsLayout || 'grid'
   );
-  const [chartsLayout, setChartsLayout] = useState<"grid" | "stack" | "tabs">(
-    (layout?.chartsLayout || "grid") as "grid" | "stack" | "tabs",
+  const [chartsLayout, setChartsLayout] = useState<'grid' | 'stack' | 'tabs'>(
+    (layout?.chartsLayout || 'grid') as 'grid' | 'stack' | 'tabs'
   );
   const [activeChartTab, setActiveChartTab] = useState(0);
   const [statsTab, setStatsTab] = useState(0);
@@ -840,13 +878,13 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       if (savedConfig) {
         try {
           const config = JSON.parse(savedConfig) as {
-            statsLayout?: "grid" | "carousel" | "tabs";
-            chartsLayout?: "grid" | "stack" | "tabs";
+            statsLayout?: 'grid' | 'carousel' | 'tabs';
+            chartsLayout?: 'grid' | 'stack' | 'tabs';
           };
           if (config.statsLayout) setStatsLayout(config.statsLayout);
           if (config.chartsLayout) setChartsLayout(config.chartsLayout);
         } catch (e) {
-          logger.error("Failed to load dashboard config:", e);
+          logger.error('Failed to load dashboard config:', e);
         }
       }
     }
@@ -890,9 +928,15 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     if (customRenderers?.statCard) {
       return (
         <Box sx={{ mb: 3 }}>
-          <Grid container spacing={spacing}>
+          <Grid
+            container
+            spacing={spacing}
+          >
             {stats.map((stat) => (
-              <Grid key={stat.id} size={12}>
+              <Grid
+                key={stat.id}
+                size={12}
+              >
                 {customRenderers.statCard?.(stat)}
               </Grid>
             ))}
@@ -901,7 +945,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       );
     }
 
-    if (statsLayout === "tabs") {
+    if (statsLayout === 'tabs') {
       return (
         <Paper sx={{ borderRadius: 2, mb: 3 }}>
           <Tabs
@@ -909,12 +953,18 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             onChange={(_, newValue) => setStatsTab(newValue)}
           >
             {stats.map((stat) => (
-              <Tab key={stat.id} label={stat.title} />
+              <Tab
+                key={stat.id}
+                label={stat.title}
+              />
             ))}
           </Tabs>
           <Box sx={{ p: 2 }}>
             {stats[statsTab] && (
-              <StatCardComponent {...stats[statsTab]} loading={loading} />
+              <StatCardComponent
+                {...stats[statsTab]}
+                loading={loading}
+              />
             )}
           </Box>
         </Paper>
@@ -923,23 +973,26 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
     return (
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           {layout?.statsLayout === undefined && (
-            <Stack direction="row" spacing={1}>
-              <Tooltip title="网格视图">
+            <Stack
+              direction='row'
+              spacing={1}
+            >
+              <Tooltip title='网格视图'>
                 <IconButton
-                  size="small"
-                  color={statsLayout === "grid" ? "primary" : "default"}
-                  onClick={() => setStatsLayout("grid")}
+                  size='small'
+                  color={statsLayout === 'grid' ? 'primary' : 'default'}
+                  onClick={() => setStatsLayout('grid')}
                 >
                   <LayoutGrid style={{ width: 18, height: 18 }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="列表视图">
+              <Tooltip title='列表视图'>
                 <IconButton
-                  size="small"
-                  color={statsLayout === "carousel" ? "primary" : "default"}
-                  onClick={() => setStatsLayout("carousel")}
+                  size='small'
+                  color={statsLayout === 'carousel' ? 'primary' : 'default'}
+                  onClick={() => setStatsLayout('carousel')}
                 >
                   <List style={{ width: 18, height: 18 }} />
                 </IconButton>
@@ -947,10 +1000,19 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             </Stack>
           )}
         </Box>
-        <Grid container spacing={spacing}>
+        <Grid
+          container
+          spacing={spacing}
+        >
           {stats.map((stat) => (
-            <Grid key={stat.id} size={statsBreakpoints}>
-              <StatCardComponent {...stat} loading={loading} />
+            <Grid
+              key={stat.id}
+              size={statsBreakpoints}
+            >
+              <StatCardComponent
+                {...stat}
+                loading={loading}
+              />
             </Grid>
           ))}
         </Grid>
@@ -965,7 +1027,11 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     return (
       <Box sx={{ mb: 3 }}>
         {cardGroups.map((group) => (
-          <CardGroupComponent key={group.id} {...group} loading={loading} />
+          <CardGroupComponent
+            key={group.id}
+            {...group}
+            loading={loading}
+          />
         ))}
       </Box>
     );
@@ -981,9 +1047,15 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     if (customRenderers?.chartCard) {
       return (
         <Box sx={{ mb: 3 }}>
-          <Grid container spacing={spacing}>
+          <Grid
+            container
+            spacing={spacing}
+          >
             {charts.map((chart) => (
-              <Grid key={chart.id} size={12}>
+              <Grid
+                key={chart.id}
+                size={12}
+              >
                 {customRenderers.chartCard?.(chart)}
               </Grid>
             ))}
@@ -992,7 +1064,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       );
     }
 
-    if (chartsLayout === "tabs") {
+    if (chartsLayout === 'tabs') {
       return (
         <Paper sx={{ borderRadius: 2, mb: 3 }}>
           <Tabs
@@ -1000,7 +1072,10 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             onChange={(_, newValue) => setActiveChartTab(newValue)}
           >
             {charts.map((chart) => (
-              <Tab key={chart.id} label={chart.title} />
+              <Tab
+                key={chart.id}
+                label={chart.title}
+              />
             ))}
           </Tabs>
           <Box sx={{ p: 2 }}>
@@ -1015,50 +1090,55 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       );
     }
 
-    if (chartsLayout === "stack") {
+    if (chartsLayout === 'stack') {
       return (
         <Box sx={{ mb: 3 }}>
           <Stack spacing={spacing}>
             {charts.map((chart) => (
-              <ChartCardComponent key={chart.id} {...chart} loading={loading} />
+              <ChartCardComponent
+                key={chart.id}
+                {...chart}
+                loading={loading}
+              />
             ))}
           </Stack>
         </Box>
       );
     }
 
-    const currentChartsLayout = chartsLayout as "grid" | "stack" | "tabs";
+    const currentChartsLayout = chartsLayout as 'grid' | 'stack' | 'tabs';
 
     return (
       <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
           {layout?.chartsLayout === undefined && (
-            <Stack direction="row" spacing={1}>
-              <Tooltip title="网格视图">
+            <Stack
+              direction='row'
+              spacing={1}
+            >
+              <Tooltip title='网格视图'>
                 <IconButton
-                  size="small"
-                  color={currentChartsLayout === "grid" ? "primary" : "default"}
-                  onClick={() => setChartsLayout("grid")}
+                  size='small'
+                  color={currentChartsLayout === 'grid' ? 'primary' : 'default'}
+                  onClick={() => setChartsLayout('grid')}
                 >
                   <LayoutGrid style={{ width: 18, height: 18 }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="堆叠视图">
+              <Tooltip title='堆叠视图'>
                 <IconButton
-                  size="small"
-                  color={
-                    currentChartsLayout === "stack" ? "primary" : "default"
-                  }
-                  onClick={() => setChartsLayout("stack")}
+                  size='small'
+                  color={currentChartsLayout === 'stack' ? 'primary' : 'default'}
+                  onClick={() => setChartsLayout('stack')}
                 >
                   <LayoutDashboard style={{ width: 18, height: 18 }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="标签视图">
+              <Tooltip title='标签视图'>
                 <IconButton
-                  size="small"
-                  color={currentChartsLayout === "tabs" ? "primary" : "default"}
-                  onClick={() => setChartsLayout("tabs")}
+                  size='small'
+                  color={currentChartsLayout === 'tabs' ? 'primary' : 'default'}
+                  onClick={() => setChartsLayout('tabs')}
                 >
                   <List style={{ width: 18, height: 18 }} />
                 </IconButton>
@@ -1066,10 +1146,19 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             </Stack>
           )}
         </Box>
-        <Grid container spacing={spacing}>
+        <Grid
+          container
+          spacing={spacing}
+        >
           {charts.map((chart) => (
-            <Grid key={chart.id} size={charts.length === 1 ? 12 : 6}>
-              <ChartCardComponent {...chart} loading={loading} />
+            <Grid
+              key={chart.id}
+              size={charts.length === 1 ? 12 : 6}
+            >
+              <ChartCardComponent
+                {...chart}
+                loading={loading}
+              />
             </Grid>
           ))}
         </Grid>
@@ -1087,8 +1176,11 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     if (customRenderers?.recentItem) {
       return (
         <Paper sx={{ borderRadius: 2 }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
               {recentTitle}
             </Typography>
           </Box>
@@ -1102,8 +1194,11 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
     return (
       <Paper sx={{ borderRadius: 2 }}>
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
             {recentTitle}
           </Typography>
         </Box>
@@ -1115,11 +1210,17 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                   sx={{
                     p: 2,
                     borderBottom: index < 4 ? 1 : 0,
-                    borderColor: "divider",
+                    borderColor: 'divider',
                   }}
                 >
-                  <Skeleton variant="text" width="60%" />
-                  <Skeleton variant="text" width="40%" />
+                  <Skeleton
+                    variant='text'
+                    width='60%'
+                  />
+                  <Skeleton
+                    variant='text'
+                    width='40%'
+                  />
                 </Box>
               ))
             : recentItems.map((item, index) => (
@@ -1128,14 +1229,14 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                   sx={{
                     p: 2,
                     borderBottom: index < recentItems.length - 1 ? 1 : 0,
-                    borderColor: "divider",
-                    display: "flex",
-                    alignItems: "center",
+                    borderColor: 'divider',
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
-                    cursor: item.onClick ? "pointer" : "default",
-                    "&:hover": item.onClick
+                    cursor: item.onClick ? 'pointer' : 'default',
+                    '&:hover': item.onClick
                       ? {
-                          bgcolor: "action.hover",
+                          bgcolor: 'action.hover',
                         }
                       : {},
                   }}
@@ -1146,68 +1247,70 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                       sx={{
                         width: 40,
                         height: 40,
-                        borderRadius: "50%",
-                        overflow: "hidden",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: item.status
-                          ? `${item.status}.light`
-                          : "grey.100",
-                        color: item.status ? `${item.status}.main` : "grey.600",
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: item.status ? `${item.status}.light` : 'grey.100',
+                        color: item.status ? `${item.status}.main` : 'grey.600',
                       }}
                     >
                       {item.avatar || item.icon}
                     </Box>
                   )}
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography
-                        variant="body2"
+                        variant='body2'
                         sx={{
                           fontWeight: 500,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {item.title}
                       </Typography>
-                      {item.status && item.status !== "default" && (
+                      {item.status && item.status !== 'default' && (
                         <Chip
                           label={item.status}
-                          size="small"
+                          size='small'
                           color={item.status}
-                          sx={{ height: 20, fontSize: "0.65rem" }}
+                          sx={{ height: 20, fontSize: '0.65rem' }}
                         />
                       )}
                     </Box>
                     {item.description && (
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
+                        variant='caption'
+                        color='text.secondary'
                         sx={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          display: "block",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: 'block',
                         }}
                       >
                         {item.description}
                       </Typography>
                     )}
                     {item.tags && item.tags.length > 0 && (
-                      <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+                      <Stack
+                        direction='row'
+                        spacing={0.5}
+                        sx={{ mt: 0.5 }}
+                      >
                         {item.tags.map((tag, tagIndex) => (
                           <Chip
                             key={tagIndex}
                             label={tag.label}
-                            size="small"
+                            size='small'
                             sx={{
                               height: 18,
-                              fontSize: "0.6rem",
-                              bgcolor: tag.color || "grey.100",
-                              color: tag.color || "grey.700",
+                              fontSize: '0.6rem',
+                              bgcolor: tag.color || 'grey.100',
+                              color: tag.color || 'grey.700',
                             }}
                           />
                         ))}
@@ -1215,7 +1318,10 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                     )}
                   </Box>
                   {item.time && (
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {item.time}
                     </Typography>
                   )}
@@ -1236,16 +1342,17 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     if (customRenderers?.quickAction) {
       return (
         <Paper sx={{ borderRadius: 2 }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
               {quickActionsTitle}
             </Typography>
           </Box>
           <Box sx={{ p: 2 }}>
             {customRenderers?.quickAction &&
-              quickActions.map((action) =>
-                customRenderers.quickAction?.(action),
-              )}
+              quickActions.map((action) => customRenderers.quickAction?.(action))}
           </Box>
         </Paper>
       );
@@ -1253,15 +1360,18 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
     return (
       <Paper sx={{ borderRadius: 2 }}>
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
             {quickActionsTitle}
           </Typography>
         </Box>
         <Box
           sx={{
             p: 2,
-            display: "grid",
+            display: 'grid',
             gridTemplateColumns: `repeat(${isMobile ? 2 : isTablet ? 3 : 4}, 1fr)`,
             gap: 2,
           }}
@@ -1270,31 +1380,34 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
             ? Array.from({ length: 4 }).map((_, index) => (
                 <Skeleton
                   key={index}
-                  variant="rectangular"
+                  variant='rectangular'
                   height={80}
                   sx={{ borderRadius: 1 }}
                 />
               ))
             : quickActions.map((action) => (
-                <Tooltip key={action.id} title={action.description || ""}>
+                <Tooltip
+                  key={action.id}
+                  title={action.description || ''}
+                >
                   <Box
                     sx={{
                       p: 2,
                       borderRadius: 1,
                       border: 1,
-                      borderColor: "divider",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
+                      borderColor: 'divider',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
                       gap: 1,
-                      cursor: action.disabled ? "not-allowed" : "pointer",
+                      cursor: action.disabled ? 'not-allowed' : 'pointer',
                       opacity: action.disabled ? 0.5 : 1,
-                      transition: "all 0.2s",
-                      "&:hover": action.disabled
+                      transition: 'all 0.2s',
+                      '&:hover': action.disabled
                         ? {}
                         : {
-                            borderColor: "primary.main",
-                            bgcolor: "primary.light",
+                            borderColor: 'primary.main',
+                            bgcolor: 'primary.light',
                           },
                     }}
                     onClick={action.disabled ? undefined : action.onClick}
@@ -1304,30 +1417,30 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                         width: 40,
                         height: 40,
                         borderRadius: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: "primary.light",
-                        color: "primary.main",
-                        position: "relative",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                        position: 'relative',
                       }}
                     >
                       {action.icon}
                       {action.badge && (
                         <Box
                           sx={{
-                            position: "absolute",
+                            position: 'absolute',
                             top: -4,
                             right: -4,
                             minWidth: 18,
                             height: 18,
                             borderRadius: 9,
-                            bgcolor: "error.main",
-                            color: "error.contrastText",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "0.65rem",
+                            bgcolor: 'error.main',
+                            color: 'error.contrastText',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.65rem',
                             fontWeight: 600,
                           }}
                         >
@@ -1335,7 +1448,10 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                         </Box>
                       )}
                     </Box>
-                    <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant='caption'
+                      sx={{ fontWeight: 500 }}
+                    >
                       {action.label}
                     </Typography>
                   </Box>
@@ -1347,7 +1463,10 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   };
 
   return (
-    <Box sx={{ padding: padding }} {...props}>
+    <Box
+      sx={{ padding: padding }}
+      {...props}
+    >
       {/* 页面头部 */}
       <PageHeader
         title={title}
@@ -1357,8 +1476,12 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       >
         {headerContent}
         {onRefresh && (
-          <Tooltip title="刷新">
-            <IconButton size="small" onClick={onRefresh} sx={{ ml: 1 }}>
+          <Tooltip title='刷新'>
+            <IconButton
+              size='small'
+              onClick={onRefresh}
+              sx={{ ml: 1 }}
+            >
               <RefreshCw style={{ width: 18, height: 18 }} />
             </IconButton>
           </Tooltip>
@@ -1376,16 +1499,15 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
       {/* 最近事项和快捷操作 */}
       {(recentItems || quickActions) && (
-        <Grid container spacing={spacing}>
+        <Grid
+          container
+          spacing={spacing}
+        >
           {recentItems && (
-            <Grid size={{ xs: 12, md: quickActions ? 8 : 12 }}>
-              {renderRecentItems()}
-            </Grid>
+            <Grid size={{ xs: 12, md: quickActions ? 8 : 12 }}>{renderRecentItems()}</Grid>
           )}
           {quickActions && (
-            <Grid size={{ xs: 12, md: recentItems ? 4 : 12 }}>
-              {renderQuickActions()}
-            </Grid>
+            <Grid size={{ xs: 12, md: recentItems ? 4 : 12 }}>{renderQuickActions()}</Grid>
           )}
         </Grid>
       )}

@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { X, FileText, AlertCircle, Loader2 } from "lucide-react";
-import { renderAsync } from "docx-preview";
-import { docApi } from "../api/doc";
-import { logger } from "@/utils/logger";
+import React, { useEffect, useRef, useState } from 'react';
+import { X, FileText, AlertCircle, Loader2 } from 'lucide-react';
+import { docApi } from '../api/doc';
+import { logger } from '@/utils/logger';
 
 interface DocumentPreviewModalProps {
   isOpen: boolean;
@@ -28,10 +27,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     if (!isOpen) return;
 
     const loadAndPreview = async () => {
-      logger.info("开始预览:", { fileName, contentType, fileId });
+      logger.info('开始预览:', { fileName, contentType, fileId });
 
       if (!containerRef.current) {
-        logger.error("容器引用为 null");
+        logger.error('容器引用为 null');
         return;
       }
 
@@ -40,99 +39,96 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
       try {
         const container = containerRef.current;
-        container.innerHTML = "";
-        logger.info("容器已清空");
+        container.innerHTML = '';
+        logger.info('容器已清空');
 
-        if (contentType.includes("image/")) {
-          logger.info("预览图片");
+        if (contentType.includes('image/')) {
+          logger.info('预览图片');
           const imgUrl = await docApi.preview(fileId);
-          const img = document.createElement("img");
+          const img = document.createElement('img');
           img.src = imgUrl;
-          img.style.maxWidth = "100%";
-          img.style.maxHeight = "80vh";
-          img.style.margin = "auto";
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '80vh';
+          img.style.margin = 'auto';
           img.alt = fileName;
           container.appendChild(img);
-        } else if (contentType.includes("application/pdf")) {
-          logger.info("预览 PDF");
+        } else if (contentType.includes('application/pdf')) {
+          logger.info('预览 PDF');
           const blob = await docApi.download(fileId);
-          logger.info("获取到 PDF Blob，大小:", blob.size);
+          logger.info('获取到 PDF Blob，大小:', blob.size);
           const blobUrl = URL.createObjectURL(blob);
           blobUrlRef.current = blobUrl;
-          const iframe = document.createElement("iframe");
+          const iframe = document.createElement('iframe');
           iframe.src = blobUrl;
-          iframe.style.width = "100%";
-          iframe.style.height = "80vh";
-          iframe.style.border = "0";
+          iframe.style.width = '100%';
+          iframe.style.height = '80vh';
+          iframe.style.border = '0';
           iframe.onload = () => {
-            logger.info("PDF iframe loaded");
+            logger.info('PDF iframe loaded');
           };
           iframe.onerror = (e) => {
-            logger.error("PDF iframe error:", e);
+            logger.error('PDF iframe error:', e);
             if (blobUrlRef.current) {
               URL.revokeObjectURL(blobUrlRef.current);
               blobUrlRef.current = null;
             }
           };
           container.appendChild(iframe);
-        } else if (fileName.endsWith(".docx")) {
-          logger.info("预览 DOCX");
+        } else if (fileName.endsWith('.docx')) {
+          logger.info('预览 DOCX');
           const blob = await docApi.download(fileId);
-          logger.info("获取到 Blob，大小:", blob.size, "类型:", blob.type);
+          logger.info('获取到 Blob，大小:', blob.size, '类型:', blob.type);
 
           // 检查 blob 内容
           const text = await blob.text();
-          logger.info("Blob 内容前 100 字符:", text.substring(0, 100));
+          logger.info('Blob 内容前 100 字符:', text.substring(0, 100));
 
           // 如果内容不是以 PK (ZIP 头) 开头，说明返回了错误
           const bytes = await blob.arrayBuffer();
           const view = new DataView(bytes);
           const header =
-            String.fromCharCode(view.getUint8(0)) +
-            String.fromCharCode(view.getUint8(1));
-          logger.info("文件头:", header, "(应该是 'PK')");
+            String.fromCharCode(view.getUint8(0)) + String.fromCharCode(view.getUint8(1));
+          logger.info('文件头:', header, "(应该是 'PK')");
 
-          if (header !== "PK") {
-            throw new Error(
-              `文件格式错误：期望 DOCX (ZIP)，实际得到 ${blob.type || "unknown"}`,
-            );
+          if (header !== 'PK') {
+            throw new Error(`文件格式错误：期望 DOCX (ZIP)，实际得到 ${blob.type || 'unknown'}`);
           }
 
-          // 再次检查容器是否还存在
+          // 动态导入 docx-preview (这是一个较大的库，仅在需要预览 docx 时加载)
           if (containerRef.current) {
-            logger.info("开始调用 docx-preview renderAsync");
+            logger.info('开始动态导入 docx-preview');
+            const { renderAsync } = await import('docx-preview');
+            logger.info('开始调用 docx-preview renderAsync');
             await renderAsync(blob, containerRef.current);
-            logger.info("DOCX 渲染完成");
+            logger.info('DOCX 渲染完成');
           }
         } else if (
-          contentType.includes("text/") ||
-          fileName.endsWith(".md") ||
-          fileName.endsWith(".txt")
+          contentType.includes('text/') ||
+          fileName.endsWith('.md') ||
+          fileName.endsWith('.txt')
         ) {
-          logger.info("预览文本/Markdown");
+          logger.info('预览文本/Markdown');
           const blob = await docApi.download(fileId);
           const text = await blob.text();
-          logger.info("获取到文本内容，长度:", text.length);
-          const pre = document.createElement("pre");
+          logger.info('获取到文本内容，长度:', text.length);
+          const pre = document.createElement('pre');
           pre.textContent = text;
-          pre.style.whiteSpace = "pre-wrap";
-          pre.style.padding = "16px";
-          pre.style.backgroundColor = "#f9fafb";
-          pre.style.borderRadius = "8px";
-          pre.style.overflow = "auto";
-          pre.style.maxHeight = "80vh";
-          pre.style.fontFamily = "monospace";
-          pre.style.fontSize = "14px";
+          pre.style.whiteSpace = 'pre-wrap';
+          pre.style.padding = '16px';
+          pre.style.backgroundColor = '#f9fafb';
+          pre.style.borderRadius = '8px';
+          pre.style.overflow = 'auto';
+          pre.style.maxHeight = '80vh';
+          pre.style.fontFamily = 'monospace';
+          pre.style.fontSize = '14px';
           container.appendChild(pre);
         } else {
-          logger.info("不支持的文件类型");
+          logger.info('不支持的文件类型');
           setError(`不支持直接预览 ${fileName}，请下载后查看`);
         }
       } catch (err) {
-        logger.error("Preview error:", err);
-        setError(
-          `预览失败: ${err instanceof Error ? err.message : "未知错误"}`,
-        );
+        logger.error('Preview error:', err);
+        setError(`预览失败: ${err instanceof Error ? err.message : '未知错误'}`);
       } finally {
         setLoading(false);
       }
@@ -166,48 +162,48 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         zIndex: 50,
-        padding: "16px",
+        padding: '16px',
       }}
     >
       <div
         style={{
-          backgroundColor: "#ffffff",
-          borderRadius: "12px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          width: "100%",
-          maxWidth: "1024px",
-          maxHeight: "90vh",
-          display: "flex",
-          flexDirection: "column",
+          backgroundColor: '#ffffff',
+          borderRadius: '12px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          width: '100%',
+          maxWidth: '1024px',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* 头部 */}
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px",
-            borderBottom: "1px solid #e5e7eb",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            borderBottom: '1px solid #e5e7eb',
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <FileText sx={{ width: 24, height: 24, color: "#2563eb" }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <FileText sx={{ width: 24, height: 24, color: '#2563eb' }} />
             <h2
               style={{
-                fontSize: "18px",
+                fontSize: '18px',
                 fontWeight: 600,
-                color: "#111827",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                color: '#111827',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {fileName}
@@ -216,15 +212,15 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           <button
             onClick={onClose}
             style={{
-              padding: "8px",
-              borderRadius: "8px",
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              transition: "background-color 0.2s",
+              padding: '8px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
             }}
           >
-            <X sx={{ width: 20, height: 20, color: "#6b7280" }} />
+            <X sx={{ width: 20, height: 20, color: '#6b7280' }} />
           </button>
         </div>
 
@@ -232,22 +228,22 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         <div
           style={{
             flex: 1,
-            overflow: "auto",
-            backgroundColor: "#f9fafb",
-            position: "relative",
+            overflow: 'auto',
+            backgroundColor: '#f9fafb',
+            position: 'relative',
           }}
         >
           {/* 加载和错误状态使用绝对定位 */}
           {loading && (
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 inset: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 zIndex: 10,
               }}
             >
@@ -255,25 +251,25 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 sx={{
                   width: 40,
                   height: 40,
-                  color: "#2563eb",
-                  animation: "spin 1s linear infinite",
-                  marginBottom: "12px",
+                  color: '#2563eb',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '12px',
                 }}
               />
-              <p style={{ color: "#6b7280" }}>正在加载文档...</p>
+              <p style={{ color: '#6b7280' }}>正在加载文档...</p>
             </div>
           )}
 
           {error && (
             <div
               style={{
-                position: "absolute",
+                position: 'absolute',
                 inset: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 zIndex: 10,
               }}
             >
@@ -281,21 +277,21 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 sx={{
                   width: 40,
                   height: 40,
-                  color: "#ef4444",
-                  marginBottom: "12px",
+                  color: '#ef4444',
+                  marginBottom: '12px',
                 }}
               />
-              <p style={{ color: "#dc2626", marginBottom: "16px" }}>{error}</p>
+              <p style={{ color: '#dc2626', marginBottom: '16px' }}>{error}</p>
               <button
                 onClick={onClose}
                 style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#e5e7eb",
-                  color: "#374151",
-                  borderRadius: "8px",
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
+                  padding: '8px 16px',
+                  backgroundColor: '#e5e7eb',
+                  color: '#374151',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
                 }}
               >
                 关闭
@@ -306,29 +302,29 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           {/* 容器始终渲染和显示 */}
           <div
             ref={containerRef}
-            style={{ padding: "16px", minHeight: "80vh" }}
+            style={{ padding: '16px', minHeight: '80vh' }}
           />
         </div>
 
         {/* 底部操作栏 */}
         <div
           style={{
-            padding: "16px",
-            borderTop: "1px solid #e5e7eb",
-            backgroundColor: "#f9fafb",
+            padding: '16px',
+            borderTop: '1px solid #e5e7eb',
+            backgroundColor: '#f9fafb',
           }}
         >
           <button
             onClick={onClose}
             style={{
-              width: "100%",
-              padding: "8px 16px",
-              backgroundColor: "#e5e7eb",
-              color: "#374151",
-              borderRadius: "8px",
-              border: "none",
-              cursor: "pointer",
-              transition: "background-color 0.2s",
+              width: '100%',
+              padding: '8px 16px',
+              backgroundColor: '#e5e7eb',
+              color: '#374151',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
             }}
           >
             关闭

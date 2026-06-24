@@ -10,7 +10,7 @@ export interface DrawPoint {
 
 export interface DrawFeature {
   id: string;
-  type: "point" | "line" | "polygon";
+  type: 'point' | 'line' | 'polygon';
   points: DrawPoint[];
   color: string;
   label?: string;
@@ -18,9 +18,9 @@ export interface DrawFeature {
 
 // GeoJSON Types - used for export
 export interface GeoJSONFeature {
-  type: "Feature";
+  type: 'Feature';
   geometry: {
-    type: "Point" | "LineString" | "Polygon";
+    type: 'Point' | 'LineString' | 'Polygon';
     coordinates: number[] | number[][] | number[][][];
   };
   properties: Record<string, unknown>;
@@ -28,19 +28,19 @@ export interface GeoJSONFeature {
 
 // Tool Mode - shared across map interactions
 export type ToolMode =
-  | "select"
-  | "measure-distance"
-  | "measure-area"
-  | "draw-point"
-  | "draw-line"
-  | "draw-polygon";
+  | 'select'
+  | 'measure-distance'
+  | 'measure-area'
+  | 'draw-point'
+  | 'draw-line'
+  | 'draw-polygon';
 
 // Offline Module Types
 export interface OfflineConfig {
   tileBounds: [[number, number], [number, number]];
   minZoom: number;
   maxZoom: number;
-  tileSources: ("osm" | "amap")[];
+  tileSources: ('osm' | 'amap')[];
 }
 
 export interface SyncStatus {

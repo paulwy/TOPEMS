@@ -1,7 +1,7 @@
-import { useCallback } from "react";
-import { authApi } from "@/api/iam";
-import { useAuth } from "./useAuth";
-import { logger } from "@/utils/logger";
+import { useCallback } from 'react';
+import { authApi } from '@/api/iam';
+import { useAuth } from './useAuth';
+import { logger } from '@/utils/logger';
 
 export const usePermissionCheck = () => {
   const { hasPermission } = useAuth();
@@ -11,7 +11,7 @@ export const usePermissionCheck = () => {
       const response = await authApi.checkPermission(permission);
       return response.success && response.data?.allowed;
     } catch (error) {
-      logger.error("Permission check error:", error);
+      logger.error('Permission check error:', error);
       return false;
     }
   }, []);
@@ -20,7 +20,7 @@ export const usePermissionCheck = () => {
     async (permissions: string[]) => {
       try {
         const results = await Promise.all(
-          permissions.map((perm) => checkPermissionFromServer(perm)),
+          permissions.map((perm) => checkPermissionFromServer(perm))
         );
         return {
           allowed: results.every((r) => r),
@@ -29,11 +29,11 @@ export const usePermissionCheck = () => {
               acc[perm] = !!results[idx];
               return acc;
             },
-            {} as Record<string, boolean>,
+            {} as Record<string, boolean>
           ),
         };
       } catch (error) {
-        logger.error("Batch permission check error:", error);
+        logger.error('Batch permission check error:', error);
         return {
           allowed: false,
           results: permissions.reduce(
@@ -41,23 +41,18 @@ export const usePermissionCheck = () => {
               acc[perm] = false;
               return acc;
             },
-            {} as Record<string, boolean>,
+            {} as Record<string, boolean>
           ),
         };
       }
     },
-    [checkPermissionFromServer],
+    [checkPermissionFromServer]
   );
 
   const logAccess = useCallback(
-    async (
-      action: string,
-      resource: string,
-      success: boolean,
-      errorMessage?: string,
-    ) => {
+    async (action: string, resource: string, success: boolean, errorMessage?: string) => {
       try {
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
         await authApi.createAccessLog({
           user_id: user.id,
           username: user.username,
@@ -70,10 +65,10 @@ export const usePermissionCheck = () => {
           resource_id: undefined,
         });
       } catch (error) {
-        logger.error("Failed to log access:", error);
+        logger.error('Failed to log access:', error);
       }
     },
-    [],
+    []
   );
 
   return {

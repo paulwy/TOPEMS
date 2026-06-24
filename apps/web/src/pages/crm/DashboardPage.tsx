@@ -1,13 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  CardHeader,
-  Grid,
-} from "@mui/material";
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Card, CardContent, CardHeader, Grid } from '@mui/material';
 import {
   TrendingUp,
   Users,
@@ -17,24 +10,21 @@ import {
   CheckCircle,
   TrendingDown,
   Activity,
-} from "lucide-react";
-import BarChartComponent from "../../components/charts/BarChart";
-import LineChartComponent from "../../components/charts/LineChart";
-import PieChartComponent from "../../components/charts/PieChart";
+} from 'lucide-react';
+import BarChartComponent from '../../components/charts/BarChart';
+import LineChartComponent from '../../components/charts/LineChart';
+import PieChartComponent from '../../components/charts/PieChart';
 import {
   DashboardTemplate,
   type StatCard,
   type ChartCard,
   type QuickAction,
-} from "@/components/templates";
-import { crmApi } from "@/api/modules/crm/crm";
-import { logger } from "@/utils/logger";
-import type { FunnelStage, OpportunityStats } from "@/api/modules/crm/crm";
+} from '@/components/templates';
+import { crmApi } from '@/api/modules/crm/crm';
+import { logger } from '@/utils/logger';
+import type { FunnelStage, OpportunityStats } from '@/api/modules/crm/crm';
 
-const iconMap: Record<
-  string,
-  React.ComponentType<{ size?: number; className?: string }>
-> = {
+const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   TrendingUp,
   Users,
   FileText,
@@ -68,7 +58,7 @@ export const DashboardPage: React.FC = () => {
         setFunnelData(funnelResponse.data);
       }
     } catch (error) {
-      logger.error("加载仪表盘数据失败:", error);
+      logger.error('加载仪表盘数据失败:', error);
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
@@ -76,9 +66,9 @@ export const DashboardPage: React.FC = () => {
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
-    if (hour < 12) return "上午好";
-    if (hour < 18) return "下午好";
-    return "晚上好";
+    if (hour < 12) return '上午好';
+    if (hour < 18) return '下午好';
+    return '晚上好';
   };
 
   const funnelBarData = funnelData.map((item) => ({
@@ -92,69 +82,75 @@ export const DashboardPage: React.FC = () => {
   }));
 
   const wonRate =
-    stats && stats.total_count > 0
-      ? Math.round((stats.won_count / stats.total_count) * 100)
-      : 0;
+    stats && stats.total_count > 0 ? Math.round((stats.won_count / stats.total_count) * 100) : 0;
 
   const statsCards: StatCard[] = [
     {
-      id: "customer-total",
-      title: "商机总数",
+      id: 'customer-total',
+      title: '商机总数',
       value: (stats?.total_count || 89).toString(),
       change: 12,
-      changeLabel: "vs 上周期",
+      changeLabel: 'vs 上周期',
       icon: <Target size={24} />,
-      color: "primary",
+      color: 'primary',
     },
     {
-      id: "opportunity-count",
-      title: "总金额",
+      id: 'opportunity-count',
+      title: '总金额',
       value: `¥${(stats?.total_value || 5680000).toLocaleString()}`,
       change: 15,
-      changeLabel: "vs 上周期",
+      changeLabel: 'vs 上周期',
       icon: <TrendingUp size={24} />,
-      color: "info",
+      color: 'info',
     },
     {
-      id: "monthly-deals",
-      title: "赢单数量",
+      id: 'monthly-deals',
+      title: '赢单数量',
       value: (stats?.won_count || 15).toString(),
       change: 3,
-      changeLabel: "vs 上周期",
+      changeLabel: 'vs 上周期',
       icon: <CheckCircle size={24} />,
-      color: "success",
+      color: 'success',
     },
     {
-      id: "sales-amount",
-      title: "赢单率",
+      id: 'sales-amount',
+      title: '赢单率',
       value: `${wonRate}%`,
       change: wonRate > 50 ? 5 : -3,
-      changeLabel: "vs 上周期",
+      changeLabel: 'vs 上周期',
       icon: <Activity size={24} />,
-      color: wonRate > 50 ? "success" : "warning",
+      color: wonRate > 50 ? 'success' : 'warning',
     },
   ];
 
   const charts: ChartCard[] = [
     {
-      id: "funnel-count",
-      title: "销售漏斗 - 商机数量",
+      id: 'funnel-count',
+      title: '销售漏斗 - 商机数量',
       height: 300,
       chart: (
-        <BarChartComponent data={funnelBarData} xKey="name" yKey="value" />
+        <BarChartComponent
+          data={funnelBarData}
+          xKey='name'
+          yKey='value'
+        />
       ),
     },
     {
-      id: "funnel-value",
-      title: "销售漏斗 - 金额分布",
+      id: 'funnel-value',
+      title: '销售漏斗 - 金额分布',
       height: 300,
       chart: (
-        <BarChartComponent data={funnelValueData} xKey="name" yKey="value" />
+        <BarChartComponent
+          data={funnelValueData}
+          xKey='name'
+          yKey='value'
+        />
       ),
     },
     {
-      id: "conversion-rate",
-      title: "商机阶段占比",
+      id: 'conversion-rate',
+      title: '商机阶段占比',
       height: 300,
       chart: (
         <PieChartComponent
@@ -169,32 +165,32 @@ export const DashboardPage: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
-      id: "add-customer",
-      label: "新增客户",
+      id: 'add-customer',
+      label: '新增客户',
       icon: <ArrowRight size={20} />,
-      href: "/crm/customers/create",
-      color: "#3b82f6",
+      href: '/crm/customers/create',
+      color: '#3b82f6',
     },
     {
-      id: "create-opportunity",
-      label: "创建商机",
+      id: 'create-opportunity',
+      label: '创建商机',
       icon: <ArrowRight size={20} />,
-      href: "/crm/opportunities",
-      color: "#10b981",
+      href: '/crm/opportunities',
+      color: '#10b981',
     },
     {
-      id: "customer-scoring",
-      label: "客户评分",
+      id: 'customer-scoring',
+      label: '客户评分',
       icon: <ArrowRight size={20} />,
-      href: "/crm/customer-scoring",
-      color: "#8b5cf6",
+      href: '/crm/customer-scoring',
+      color: '#8b5cf6',
     },
     {
-      id: "sales-report",
-      label: "销售预测",
+      id: 'sales-report',
+      label: '销售预测',
       icon: <ArrowRight size={20} />,
-      href: "/crm/sales-forecast",
-      color: "#f59e0b",
+      href: '/crm/sales-forecast',
+      color: '#f59e0b',
     },
   ];
 
@@ -202,15 +198,13 @@ export const DashboardPage: React.FC = () => {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: "1.125rem", color: "grey.600" }}>
-          加载中...
-        </Typography>
+        <Typography sx={{ fontSize: '1.125rem', color: 'grey.600' }}>加载中...</Typography>
       </Box>
     );
   }
@@ -220,47 +214,57 @@ export const DashboardPage: React.FC = () => {
       <Card sx={{ mb: 3 }}>
         <CardHeader>
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{
               fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
             }}
           >
             <TrendingUp style={{ width: 20, height: 20 }} />
             销售漏斗概览
           </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500" }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'grey.500' }}
+          >
             各阶段商机转化情况
           </Typography>
         </CardHeader>
         <CardContent>
-          <Grid container spacing={2}>
+          <Grid
+            container
+            spacing={2}
+          >
             {funnelData.map((item, index) => {
               const widthPercent = 100 - index * 10;
               const stageColors: Record<string, string> = {
-                prospecting: "#9CA3AF",
-                qualified: "#3B82F6",
-                proposal: "#8B5CF6",
-                negotiation: "#F59E0B",
-                closed_won: "#10B981",
-                closed_lost: "#EF4444",
+                prospecting: '#9CA3AF',
+                qualified: '#3B82F6',
+                proposal: '#8B5CF6',
+                negotiation: '#F59E0B',
+                closed_won: '#10B981',
+                closed_lost: '#EF4444',
               };
               return (
-                <Grid item xs={12} key={item.stage}>
+                <Grid
+                  item
+                  xs={12}
+                  key={item.stage}
+                >
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 2,
                     }}
                   >
                     <Box
                       sx={{
                         width: 60,
-                        textAlign: "right",
-                        fontSize: "0.875rem",
+                        textAlign: 'right',
+                        fontSize: '0.875rem',
                       }}
                     >
                       {item.stage_label}
@@ -269,40 +273,36 @@ export const DashboardPage: React.FC = () => {
                       <div
                         style={{
                           height: 24,
-                          backgroundColor: "#f3f4f6",
+                          backgroundColor: '#f3f4f6',
                           borderRadius: 4,
-                          overflow: "hidden",
+                          overflow: 'hidden',
                         }}
                       >
                         <div
                           style={{
-                            height: "100%",
-                            backgroundColor:
-                              stageColors[item.stage] || "#6B7280",
+                            height: '100%',
+                            backgroundColor: stageColors[item.stage] || '#6B7280',
                             width: `${widthPercent}%`,
-                            display: "flex",
-                            alignItems: "center",
+                            display: 'flex',
+                            alignItems: 'center',
                             paddingLeft: 8,
-                            color: "white",
-                            fontSize: "0.75rem",
+                            color: 'white',
+                            fontSize: '0.75rem',
                             fontWeight: 500,
                           }}
                         >
-                          {item.count} (
-                          {(item.total_value || 0).toLocaleString()})
+                          {item.count} ({(item.total_value || 0).toLocaleString()})
                         </div>
                       </div>
                     </Box>
                     <Box
                       sx={{
                         width: 80,
-                        textAlign: "right",
-                        fontSize: "0.875rem",
+                        textAlign: 'right',
+                        fontSize: '0.875rem',
                       }}
                     >
-                      {item.avg_probability
-                        ? `${item.avg_probability.toFixed(0)}%`
-                        : "-"}
+                      {item.avg_probability ? `${item.avg_probability.toFixed(0)}%` : '-'}
                     </Box>
                   </Box>
                 </Grid>
@@ -313,16 +313,13 @@ export const DashboardPage: React.FC = () => {
       </Card>
 
       <DashboardTemplate
-        title="客户关系管理"
+        title='客户关系管理'
         subtitle={`${getGreeting()}，客户管理与销售分析`}
-        breadcrumbs={[
-          { label: "首页", href: "/dashboard" },
-          { label: "客户关系" },
-        ]}
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '客户关系' }]}
         stats={statsCards}
         charts={charts}
         quickActions={quickActions}
-        quickActionsTitle="快捷操作"
+        quickActionsTitle='快捷操作'
       />
     </>
   );

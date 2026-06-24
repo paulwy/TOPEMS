@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Drawer,
@@ -13,7 +13,7 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Home,
   Users,
@@ -36,9 +36,9 @@ import {
   Shield,
   Lightbulb,
   HelpCircle,
-} from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
-import type { NavigationItem } from "../../config/navigation-v2";
+} from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import type { NavigationItem } from '../../config/navigation-v2';
 
 // 模块图标映射
 const moduleIconMap: Record<string, React.ReactNode> = {
@@ -61,12 +61,7 @@ interface MobileNavProps {
   onOpen: () => void;
 }
 
-export const MobileNav: React.FC<MobileNavProps> = ({
-  navItems,
-  open,
-  onClose,
-  onOpen,
-}) => {
+export const MobileNav: React.FC<MobileNavProps> = ({ navItems, open, onClose, onOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -100,7 +95,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         onClose();
       }
     },
-    [navigate, onClose, toggleExpand],
+    [navigate, onClose, toggleExpand]
   );
 
   // 渲染菜单项
@@ -108,23 +103,24 @@ export const MobileNav: React.FC<MobileNavProps> = ({
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.label);
     const isActive = item.path === location.pathname;
-    const icon = moduleIconMap[item.label] || (
-      <FolderOpen style={{ width: 20, height: 20 }} />
-    );
+    const icon = moduleIconMap[item.label] || <FolderOpen style={{ width: 20, height: 20 }} />;
 
     return (
       <React.Fragment key={item.label + depth}>
-        <ListItem disablePadding sx={{ display: "block" }}>
+        <ListItem
+          disablePadding
+          sx={{ display: 'block' }}
+        >
           <ListItemButton
             onClick={() => handleItemClick(item)}
             sx={{
               pl: 2 + depth * 2,
               py: 1.5,
-              backgroundColor: isActive ? "primary.light" : "transparent",
-              borderLeft: isActive ? "3px solid" : "3px solid transparent",
-              borderColor: isActive ? "primary.main" : "transparent",
-              "&:hover": {
-                backgroundColor: isActive ? "primary.light" : "action.hover",
+              backgroundColor: isActive ? 'primary.light' : 'transparent',
+              borderLeft: isActive ? '3px solid' : '3px solid transparent',
+              borderColor: isActive ? 'primary.main' : 'transparent',
+              '&:hover': {
+                backgroundColor: isActive ? 'primary.light' : 'action.hover',
               },
             }}
           >
@@ -132,7 +128,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             <Typography
               sx={{
                 fontWeight: isActive ? 600 : 400,
-                color: isActive ? "primary.main" : "text.primary",
+                color: isActive ? 'primary.main' : 'text.primary',
               }}
             >
               {item.label}
@@ -140,10 +136,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             {hasChildren && (
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                  transition: "transform 0.2s",
+                  display: 'flex',
+                  alignItems: 'center',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s',
                 }}
               >
                 <ChevronRight style={{ width: 18, height: 18 }} />
@@ -154,11 +150,16 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 
         {/* 子菜单 */}
         {hasChildren && (
-          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {(item.children as NavigationItem[]).map((child) =>
-                renderMenuItem(child, depth + 1),
-              )}
+          <Collapse
+            in={isExpanded}
+            timeout='auto'
+            unmountOnExit
+          >
+            <List
+              component='div'
+              disablePadding
+            >
+              {(item.children as NavigationItem[]).map((child) => renderMenuItem(child, depth + 1))}
             </List>
           </Collapse>
         )}
@@ -171,8 +172,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
     if (!item.children || !item.isGroup) return null;
 
     const groups = item.children as NavigationItem[];
-    const isExpanded =
-      expandedItems.has(item.label) || activeGroup === item.label;
+    const isExpanded = expandedItems.has(item.label) || activeGroup === item.label;
 
     return (
       <React.Fragment key={item.label}>
@@ -181,21 +181,19 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             onClick={() => toggleExpand(item.label)}
             sx={{
               py: 1.5,
-              backgroundColor: isExpanded ? "primary.light" : "transparent",
+              backgroundColor: isExpanded ? 'primary.light' : 'transparent',
             }}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>
-              {moduleIconMap[item.label] || (
-                <FolderOpen style={{ width: 20, height: 20 }} />
-              )}
+              {moduleIconMap[item.label] || <FolderOpen style={{ width: 20, height: 20 }} />}
             </ListItemIcon>
             <Typography sx={{ fontWeight: 500 }}>{item.label}</Typography>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s",
+                display: 'flex',
+                alignItems: 'center',
+                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s',
               }}
             >
               <ChevronDown style={{ width: 18, height: 18 }} />
@@ -203,28 +201,41 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           </ListItemButton>
         </ListItem>
 
-        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+        <Collapse
+          in={isExpanded}
+          timeout='auto'
+          unmountOnExit
+        >
           <Box sx={{ py: 1 }}>
             {groups.map((group) => (
-              <Box key={group.label} sx={{ mb: 1.5 }}>
+              <Box
+                key={group.label}
+                sx={{ mb: 1.5 }}
+              >
                 <Typography
-                  variant="caption"
+                  variant='caption'
                   sx={{
-                    display: "block",
+                    display: 'block',
                     px: 3,
                     py: 0.5,
-                    color: "text.secondary",
+                    color: 'text.secondary',
                     fontWeight: 600,
-                    textTransform: "uppercase",
-                    fontSize: "0.7rem",
+                    textTransform: 'uppercase',
+                    fontSize: '0.7rem',
                   }}
                 >
                   {group.label}
                 </Typography>
-                <List component="div" disablePadding>
+                <List
+                  component='div'
+                  disablePadding
+                >
                   {group.children &&
                     (group.children as NavigationItem[]).map((child) => (
-                      <ListItem key={child.label} disablePadding>
+                      <ListItem
+                        key={child.label}
+                        disablePadding
+                      >
                         <ListItemButton
                           onClick={() => {
                             if (child.path) {
@@ -236,16 +247,13 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                             pl: 4,
                             py: 1,
                             backgroundColor:
-                              child.path === location.pathname
-                                ? "primary.light"
-                                : "transparent",
+                              child.path === location.pathname ? 'primary.light' : 'transparent',
                           }}
                         >
                           <Typography
                             sx={{
-                              fontWeight:
-                                child.path === location.pathname ? 600 : 400,
-                              fontSize: "0.9rem",
+                              fontWeight: child.path === location.pathname ? 600 : 400,
+                              fontSize: '0.9rem',
                             }}
                           >
                             {child.label}
@@ -268,7 +276,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
       <IconButton
         onClick={onOpen}
         sx={{
-          display: { xs: "flex", lg: "none" },
+          display: { xs: 'flex', lg: 'none' },
           ml: 1,
         }}
       >
@@ -277,13 +285,13 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 
       {/* 抽屉导航 */}
       <Drawer
-        anchor="left"
+        anchor='left'
         open={open}
         onClose={onClose}
         sx={{
-          "& .MuiDrawer-paper": {
+          '& .MuiDrawer-paper': {
             width: 300,
-            maxWidth: "85vw",
+            maxWidth: '85vw',
           },
         }}
       >
@@ -291,34 +299,40 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         <Box
           sx={{
             p: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             borderBottom: 1,
-            borderColor: "divider",
-            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-            color: "white",
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+            color: 'white',
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 32,
                 height: 32,
                 borderRadius: 1,
-                backgroundColor: "rgba(255,255,255,0.2)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <Typography sx={{ fontWeight: 700, fontSize: 14 }}>T</Typography>
             </Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
               TOPEMS
             </Typography>
           </Box>
-          <IconButton onClick={onClose} sx={{ color: "white" }}>
+          <IconButton
+            onClick={onClose}
+            sx={{ color: 'white' }}
+          >
             <X style={{ width: 20, height: 20 }} />
           </IconButton>
         </Box>
@@ -327,13 +341,11 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         <Box
           sx={{
             flex: 1,
-            overflowY: "auto",
-            overflowX: "hidden",
+            overflowY: 'auto',
+            overflowX: 'hidden',
           }}
         >
-          <List component="nav">
-            {navItems.map((item) => renderGroupContent(item))}
-          </List>
+          <List component='nav'>{navItems.map((item) => renderGroupContent(item))}</List>
         </Box>
 
         {/* 底部快捷入口 */}
@@ -341,33 +353,33 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           sx={{
             p: 2,
             borderTop: 1,
-            borderColor: "divider",
+            borderColor: 'divider',
           }}
         >
           <Divider sx={{ mb: 1.5 }} />
-          <Box sx={{ display: "flex", justifyContent: "space-around" }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
             <IconButton
-              size="small"
+              size='small'
               onClick={() => {
-                navigate("/notifications");
+                navigate('/notifications');
                 onClose();
               }}
             >
               <Bell style={{ width: 20, height: 20 }} />
             </IconButton>
             <IconButton
-              size="small"
+              size='small'
               onClick={() => {
-                navigate("/ai");
+                navigate('/ai');
                 onClose();
               }}
             >
               <Lightbulb style={{ width: 20, height: 20 }} />
             </IconButton>
             <IconButton
-              size="small"
+              size='small'
               onClick={() => {
-                navigate("/help");
+                navigate('/help');
                 onClose();
               }}
             >

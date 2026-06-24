@@ -18,7 +18,6 @@ use prometheus::{
     register_int_counter, register_int_gauge, Encoder, IntCounter, IntGauge, TextEncoder,
 };
 use serde::Serialize;
-use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -26,9 +25,10 @@ use utoipa::OpenApi;
 
 use api::ApiState;
 use topems_shared::{
-    check_http_health, create_api_info_router, create_cors_layer,
-    create_hrm_client, init_logging, ApiResponse, AuthState, Claims, DependencyHealth, HealthStatus,
-    NotificationServiceClient, ServiceHealth, SystemMetrics, verify_jwt_token,
+    check_http_health, create_api_info_router, create_cors_layer, create_database_pool,
+    create_hrm_client, init_logging, ApiResponse, AuthState, Claims, DatabaseConfig,
+    DependencyHealth, HealthStatus, NotificationServiceClient, ServiceHealth, SystemMetrics,
+    verify_jwt_token,
 };
 
 lazy_static::lazy_static! {
@@ -70,13 +70,19 @@ async fn main() -> Result<()> {
 
     init_logging("topems-erp");
 
-    let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let db_config = DatabaseConfig {
+        url: env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+        max_connections: 20,
+        min_connections: Some(5),
+        connect_timeout: Some(30),
+        idle_timeout: Some(300),
+        max_lifetime: Some(1800),
+        test_interval: Some(60),
+        enable_connection_reuse: Some(true),
+    };
 
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .connect(&database_url)
-        .await?;
+    let pool = create_database_pool(&db_config).await?;
 
     tracing::info!("🔗 数据库连接成功");
 
@@ -123,6 +129,11 @@ async fn main() -> Result<()> {
         dict_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(600))),
         notification_client,
         hrm_client,
+        // 初始化财务数据缓存 (5分钟 TTL)
+        expense_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
+        budget_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
+        receivable_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
+        payable_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
     };
 
     let cors = create_cors_layer();

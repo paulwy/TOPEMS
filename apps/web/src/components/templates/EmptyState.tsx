@@ -1,7 +1,7 @@
-import React from "react";
-import type { BoxProps } from "@mui/material";
-import { Box, Typography, Stack } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React from 'react';
+import type { BoxProps } from '@mui/material';
+import { Box, Typography, Stack } from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   FileX,
   Inbox,
@@ -11,7 +11,7 @@ import {
   Database,
   AlertCircle,
   Plus,
-} from "lucide-react";
+} from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -19,15 +19,15 @@ import {
  * 空状态类型
  */
 export type EmptyStateType =
-  | "default"
-  | "no-data"
-  | "no-results"
-  | "search-empty"
-  | "filter-empty"
-  | "folder-empty"
-  | "database-empty"
-  | "error"
-  | "custom";
+  | 'default'
+  | 'no-data'
+  | 'no-results'
+  | 'search-empty'
+  | 'filter-empty'
+  | 'folder-empty'
+  | 'database-empty'
+  | 'error'
+  | 'custom';
 
 /**
  * 空状态操作按钮接口
@@ -38,9 +38,9 @@ export interface EmptyStateAction {
   /** 点击回调 */
   onClick?: () => void;
   /** 按钮变体 */
-  variant?: "contained" | "outlined" | "text";
+  variant?: 'contained' | 'outlined' | 'text';
   /** 按钮颜色 */
-  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
+  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
   /** 图标 */
   icon?: React.ReactNode;
   /** 是否禁用 */
@@ -50,7 +50,7 @@ export interface EmptyStateAction {
 /**
  * 空状态组件属性
  */
-export interface EmptyStateProps extends Omit<BoxProps, "children"> {
+export interface EmptyStateProps extends Omit<BoxProps, 'children'> {
   /** 空状态类型 */
   type?: EmptyStateType;
   /** 主标题 */
@@ -81,48 +81,48 @@ const getDefaultConfig = (type: EmptyStateType, title?: string) => {
   > = {
     default: {
       icon: <Inbox size={64} />,
-      defaultTitle: title || "暂无数据",
-      defaultDescription: "当前没有内容，请稍后再试",
+      defaultTitle: title || '暂无数据',
+      defaultDescription: '当前没有内容，请稍后再试',
     },
-    "no-data": {
+    'no-data': {
       icon: <FileX size={64} />,
-      defaultTitle: title || "暂无数据",
-      defaultDescription: "还没有添加任何数据",
+      defaultTitle: title || '暂无数据',
+      defaultDescription: '还没有添加任何数据',
     },
-    "no-results": {
+    'no-results': {
       icon: <Search size={64} />,
-      defaultTitle: title || "没有找到结果",
-      defaultDescription: "请尝试修改搜索条件",
+      defaultTitle: title || '没有找到结果',
+      defaultDescription: '请尝试修改搜索条件',
     },
-    "search-empty": {
+    'search-empty': {
       icon: <Search size={64} />,
-      defaultTitle: title || "搜索结果为空",
-      defaultDescription: "没有找到匹配的搜索结果",
+      defaultTitle: title || '搜索结果为空',
+      defaultDescription: '没有找到匹配的搜索结果',
     },
-    "filter-empty": {
+    'filter-empty': {
       icon: <Filter size={64} />,
-      defaultTitle: title || "筛选结果为空",
-      defaultDescription: "没有符合筛选条件的数据",
+      defaultTitle: title || '筛选结果为空',
+      defaultDescription: '没有符合筛选条件的数据',
     },
-    "folder-empty": {
+    'folder-empty': {
       icon: <FolderOpen size={64} />,
-      defaultTitle: title || "文件夹为空",
-      defaultDescription: "此文件夹中没有任何文件",
+      defaultTitle: title || '文件夹为空',
+      defaultDescription: '此文件夹中没有任何文件',
     },
-    "database-empty": {
+    'database-empty': {
       icon: <Database size={64} />,
-      defaultTitle: title || "数据库为空",
-      defaultDescription: "还没有任何记录",
+      defaultTitle: title || '数据库为空',
+      defaultDescription: '还没有任何记录',
     },
     error: {
       icon: <AlertCircle size={64} />,
-      defaultTitle: title || "出错了",
-      defaultDescription: "发生了错误，请稍后重试",
+      defaultTitle: title || '出错了',
+      defaultDescription: '发生了错误，请稍后重试',
     },
     custom: {
       icon: <Inbox size={64} />,
-      defaultTitle: title || "",
-      defaultDescription: "",
+      defaultTitle: title || '',
+      defaultDescription: '',
     },
   };
 
@@ -159,7 +159,7 @@ const getDefaultConfig = (type: EmptyStateType, title?: string) => {
  * ```
  */
 export const EmptyState: React.FC<EmptyStateProps> = ({
-  type = "default",
+  type = 'default',
   title,
   description,
   icon,
@@ -175,11 +175,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <Box
       sx={{
-        display: centered ? "flex" : "block",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: centered ? "center" : "left",
+        display: centered ? 'flex' : 'block',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: centered ? 'center' : 'left',
         py: centered ? 8 : 0,
         px: 3,
         ...sx,
@@ -189,7 +189,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {/* 图标 */}
       <Box
         sx={{
-          color: "text.disabled",
+          color: 'text.disabled',
           mb: 3,
           opacity: 0.6,
         }}
@@ -204,8 +204,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <>
           {/* 标题 */}
           <Typography
-            variant="h6"
-            color="text.primary"
+            variant='h6'
+            color='text.primary'
             sx={{ mb: 1, fontWeight: 600 }}
           >
             {title || config.defaultTitle}
@@ -214,8 +214,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {/* 描述 */}
           {description || config.defaultDescription ? (
             <Typography
-              variant="body2"
-              color="text.secondary"
+              variant='body2'
+              color='text.secondary'
               sx={{ mb: actions?.length ? 3 : 0, maxWidth: 400 }}
             >
               {description || config.defaultDescription}
@@ -225,23 +225,21 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {/* 操作按钮 */}
           {actions && actions.length > 0 && (
             <Stack
-              direction="row"
+              direction='row'
               spacing={1}
-              sx={{ justifyContent: centered ? "center" : "flex-start" }}
+              sx={{ justifyContent: centered ? 'center' : 'flex-start' }}
             >
               {actions.map((action, index) => (
                 <Button
                   key={index}
-                  variant={action.variant || "contained"}
-                  color={action.color || "primary"}
+                  variant={action.variant || 'contained'}
+                  color={action.color || 'primary'}
                   onClick={action.onClick}
                   disabled={action.disabled}
                   startIcon={
                     action.icon ? (
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        {action.icon}
-                      </Box>
-                    ) : index === 0 && type === "no-data" ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>{action.icon}</Box>
+                    ) : index === 0 && type === 'no-data' ? (
                       <Plus size={16} />
                     ) : undefined
                   }
@@ -262,36 +260,51 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 /**
  * 无数据空状态
  */
-export const NoDataEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
-  props,
-) => <EmptyState type="no-data" {...props} />;
+export const NoDataEmptyState: React.FC<Omit<EmptyStateProps, 'type'>> = (props) => (
+  <EmptyState
+    type='no-data'
+    {...props}
+  />
+);
 
 /**
  * 搜索结果为空
  */
-export const SearchEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
-  props,
-) => <EmptyState type="search-empty" {...props} />;
+export const SearchEmptyState: React.FC<Omit<EmptyStateProps, 'type'>> = (props) => (
+  <EmptyState
+    type='search-empty'
+    {...props}
+  />
+);
 
 /**
  * 筛选结果为空
  */
-export const FilterEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
-  props,
-) => <EmptyState type="filter-empty" {...props} />;
+export const FilterEmptyState: React.FC<Omit<EmptyStateProps, 'type'>> = (props) => (
+  <EmptyState
+    type='filter-empty'
+    {...props}
+  />
+);
 
 /**
  * 文件夹为空
  */
-export const FolderEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
-  props,
-) => <EmptyState type="folder-empty" {...props} />;
+export const FolderEmptyState: React.FC<Omit<EmptyStateProps, 'type'>> = (props) => (
+  <EmptyState
+    type='folder-empty'
+    {...props}
+  />
+);
 
 /**
  * 错误状态
  */
-export const ErrorEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
-  props,
-) => <EmptyState type="error" {...props} />;
+export const ErrorEmptyState: React.FC<Omit<EmptyStateProps, 'type'>> = (props) => (
+  <EmptyState
+    type='error'
+    {...props}
+  />
+);
 
 export default EmptyState;

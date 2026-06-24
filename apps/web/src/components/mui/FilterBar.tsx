@@ -1,7 +1,22 @@
-import React, { useCallback } from "react";
-import { Box, Paper, TextField, Select, MenuItem, FormControl, InputLabel, IconButton, Tooltip, Typography, Chip, Collapse, useTheme, useMediaQuery,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Filter, X, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
+import React, { useCallback } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  IconButton,
+  Tooltip,
+  Typography,
+  Chip,
+  Collapse,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Filter, X, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -13,14 +28,7 @@ export interface FilterOption {
 export interface FilterConfig {
   id: string;
   label: string;
-  type?:
-    | "select"
-    | "multiselect"
-    | "date"
-    | "dateRange"
-    | "text"
-    | "number"
-    | "search";
+  type?: 'select' | 'multiselect' | 'date' | 'dateRange' | 'text' | 'number' | 'search';
   placeholder?: string;
   options?: FilterOption[];
   value?: any;
@@ -39,7 +47,7 @@ export interface FilterBarProps {
   collapsible?: boolean;
   defaultExpanded?: boolean;
   dense?: boolean;
-  variant?: "standard" | "outlined" | "filled";
+  variant?: 'standard' | 'outlined' | 'filled';
 }
 
 // ============ 单个筛选控件 ============
@@ -48,18 +56,18 @@ const FilterControl: React.FC<{
   filter: FilterConfig;
   onChange: (value: any, filter: FilterConfig) => void;
   dense?: boolean;
-  variant?: "standard" | "outlined" | "filled";
+  variant?: 'standard' | 'outlined' | 'filled';
 }> = ({ filter, onChange, dense, variant }) => {
   const handleChange = useCallback(
     (e: any) => {
       const value = e.target?.value ?? e;
       onChange(value, filter);
     },
-    [filter, onChange],
+    [filter, onChange]
   );
 
   const textFieldProps = {
-    size: "small" as const,
+    size: 'small' as const,
     variant: variant as any,
     fullWidth: true,
   };
@@ -69,10 +77,10 @@ const FilterControl: React.FC<{
     fullWidth: true,
   };
 
-  const filterType = filter.type || "text";
+  const filterType = filter.type || 'text';
 
   switch (filterType) {
-    case "select":
+    case 'select':
       return (
         <FormControl
           {...formControlProps}
@@ -80,14 +88,17 @@ const FilterControl: React.FC<{
         >
           <InputLabel>{filter.label}</InputLabel>
           <Select
-            size="small"
-            value={filter.value ?? filter.defaultValue ?? ""}
+            size='small'
+            value={filter.value ?? filter.defaultValue ?? ''}
             label={filter.label}
             onChange={handleChange}
           >
-            <MenuItem value="">全部</MenuItem>
+            <MenuItem value=''>全部</MenuItem>
             {filter.options?.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+              <MenuItem
+                key={option.value}
+                value={option.value}
+              >
                 {option.label}
               </MenuItem>
             ))}
@@ -95,7 +106,7 @@ const FilterControl: React.FC<{
         </FormControl>
       );
 
-    case "multiselect":
+    case 'multiselect':
       return (
         <FormControl
           {...formControlProps}
@@ -103,7 +114,7 @@ const FilterControl: React.FC<{
         >
           <InputLabel>{filter.label}</InputLabel>
           <Select
-            size="small"
+            size='small'
             multiple
             value={filter.value ?? filter.defaultValue ?? []}
             label={filter.label}
@@ -112,11 +123,14 @@ const FilterControl: React.FC<{
               (selected as any[])
                 .map((v) => filter.options?.find((o) => o.value === v)?.label)
                 .filter(Boolean)
-                .join(", ") || "全部"
+                .join(', ') || '全部'
             }
           >
             {filter.options?.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
+              <MenuItem
+                key={option.value}
+                value={option.value}
+              >
                 {option.label}
               </MenuItem>
             ))}
@@ -124,53 +138,49 @@ const FilterControl: React.FC<{
         </FormControl>
       );
 
-    case "date":
+    case 'date':
       return (
         <TextField
           {...textFieldProps}
-          type="date"
+          type='date'
           label={filter.label}
-          value={filter.value ?? filter.defaultValue ?? ""}
+          value={filter.value ?? filter.defaultValue ?? ''}
           onChange={handleChange}
           sx={{ width: filter.width || 180 }}
         />
       );
 
-    case "dateRange":
+    case 'dateRange':
       return (
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <TextField
             {...textFieldProps}
-            type="date"
-            label="开始日期"
-            value={filter.value?.start ?? ""}
-            onChange={(e) =>
-              handleChange({ ...filter.value, start: e.target.value })
-            }
+            type='date'
+            label='开始日期'
+            value={filter.value?.start ?? ''}
+            onChange={(e) => handleChange({ ...filter.value, start: e.target.value })}
             sx={{ width: filter.width || 140 }}
           />
-          <Typography color="text.secondary">至</Typography>
+          <Typography color='text.secondary'>至</Typography>
           <TextField
             {...textFieldProps}
-            type="date"
-            label="结束日期"
-            value={filter.value?.end ?? ""}
-            onChange={(e) =>
-              handleChange({ ...filter.value, end: e.target.value })
-            }
+            type='date'
+            label='结束日期'
+            value={filter.value?.end ?? ''}
+            onChange={(e) => handleChange({ ...filter.value, end: e.target.value })}
             sx={{ width: filter.width || 140 }}
           />
         </Box>
       );
 
-    case "number":
+    case 'number':
       return (
         <TextField
           {...textFieldProps}
-          type="number"
+          type='number'
           label={filter.label}
           placeholder={filter.placeholder}
-          value={filter.value ?? filter.defaultValue ?? ""}
+          value={filter.value ?? filter.defaultValue ?? ''}
           onChange={handleChange}
           sx={{ width: filter.width || 120 }}
         />
@@ -182,7 +192,7 @@ const FilterControl: React.FC<{
           {...textFieldProps}
           label={filter.label}
           placeholder={filter.placeholder}
-          value={filter.value ?? filter.defaultValue ?? ""}
+          value={filter.value ?? filter.defaultValue ?? ''}
           onChange={handleChange}
           sx={{ width: filter.width || 200 }}
         />
@@ -200,21 +210,19 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   collapsible = true,
   defaultExpanded = true,
   dense = false,
-  variant = "outlined",
+  variant = 'outlined',
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [expanded, setExpanded] = React.useState(defaultExpanded);
-  const [localFilters, setLocalFilters] = React.useState<Record<string, any>>(
-    () => {
-      const initial: Record<string, any> = {};
-      filters.forEach((f) => {
-        initial[f.id] = f.value ?? f.defaultValue;
-      });
-      return initial;
-    },
-  );
+  const [localFilters, setLocalFilters] = React.useState<Record<string, any>>(() => {
+    const initial: Record<string, any> = {};
+    filters.forEach((f) => {
+      initial[f.id] = f.value ?? f.defaultValue;
+    });
+    return initial;
+  });
 
   // 同步外部 filters 变化
   React.useEffect(() => {
@@ -233,7 +241,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       filter.onChange?.(value, filter);
       onFilterChange?.(newFilters);
     },
-    [localFilters, onFilterChange],
+    [localFilters, onFilterChange]
   );
 
   // 重置
@@ -248,20 +256,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   // 是否有筛选条件
   const hasActiveFilters = Object.values(localFilters).some(
-    (v) =>
-      v !== undefined &&
-      v !== "" &&
-      v !== null &&
-      !(Array.isArray(v) && v.length === 0),
+    (v) => v !== undefined && v !== '' && v !== null && !(Array.isArray(v) && v.length === 0)
   );
 
   // 已选中的筛选器数量
   const activeCount = Object.entries(localFilters).filter(
-    ([, v]) =>
-      v !== undefined &&
-      v !== "" &&
-      v !== null &&
-      !(Array.isArray(v) && v.length === 0),
+    ([, v]) => v !== undefined && v !== '' && v !== null && !(Array.isArray(v) && v.length === 0)
   ).length;
 
   return (
@@ -275,33 +275,36 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       {/* 头部 */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 2,
           mb: expanded ? (dense ? 1.5 : 2) : 0,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Filter style={{ width: 18, height: 18 }} />
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ fontWeight: 600 }}
+          >
             筛选条件
           </Typography>
           {activeCount > 0 && (
             <Chip
               label={activeCount}
-              size="small"
-              color="primary"
-              sx={{ height: 20, fontSize: "0.75rem" }}
+              size='small'
+              color='primary'
+              sx={{ height: 20, fontSize: '0.75rem' }}
             />
           )}
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {onSearch && (
             <Button
-              size="small"
-              variant="contained"
+              size='small'
+              variant='contained'
               onClick={onSearch}
               disabled={!hasActiveFilters}
             >
@@ -309,14 +312,20 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             </Button>
           )}
           {onReset && (
-            <Tooltip title="重置筛选">
-              <IconButton size="small" onClick={handleReset}>
+            <Tooltip title='重置筛选'>
+              <IconButton
+                size='small'
+                onClick={handleReset}
+              >
                 <RotateCcw style={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
           )}
           {collapsible && (
-            <IconButton size="small" onClick={() => setExpanded(!expanded)}>
+            <IconButton
+              size='small'
+              onClick={() => setExpanded(!expanded)}
+            >
               {expanded ? (
                 <ChevronUp style={{ width: 18, height: 18 }} />
               ) : (
@@ -331,10 +340,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       <Collapse in={expanded}>
         <Box
           sx={{
-            display: "flex",
-            flexWrap: "wrap",
+            display: 'flex',
+            flexWrap: 'wrap',
             gap: 2,
-            alignItems: "flex-start",
+            alignItems: 'flex-start',
           }}
         >
           {filters.map((filter) => (
@@ -352,7 +361,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       {/* 移动端折叠时显示已选条件 */}
       {!expanded && hasActiveFilters && isMobile && (
         <Box sx={{ mt: 1 }}>
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             已应用 {activeCount} 个筛选条件
           </Typography>
         </Box>

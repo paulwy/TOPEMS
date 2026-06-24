@@ -68,7 +68,7 @@ pub struct SyncErrorDetail {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/scm/sync/purchase-to-inbound", post(purchase_to_inbound))
-        .route("/api/scm/sync/purchase-order/:id/to-inbound", post(create_inbound_from_purchase))
+        .route("/api/scm/sync/purchase-order/{id}/to-inbound", post(create_inbound_from_purchase))
         .route("/api/scm/sync/supplier-from-srm", post(sync_supplier_from_srm))
         .route("/api/scm/sync/suppliers-from-srm", post(sync_all_suppliers_from_srm))
         .route("/api/scm/sync/retry-failed", post(retry_failed_syncs))

@@ -1,45 +1,37 @@
-import { TextField } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  MessageSquare,
-  Users,
-  Bell,
-  Search,
-  Plus,
-  ChevronLeft,
-  User,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import type { ChatRoom, ChatMessage, Friend } from "../../api/im";
-import { imApi } from "../../api/im";
-import type { WsMessage } from "../../hooks/useWebSocket";
-import { useWebSocket } from "../../hooks/useWebSocket";
-import { ChatRoomItem } from "./ChatRoomItem";
-import { MessageBubble } from "./MessageBubble";
-import { ChatInput } from "./ChatInput";
-import { CreateRoomModal } from "./CreateRoomModal";
-import { NotificationList } from "./NotificationList";
-import { ContactList } from "./ContactList";
-import { ChatSettingsModal } from "./ChatSettingsModal";
+import { TextField } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import type { ChatRoom, ChatMessage, Friend } from '../../api/im';
+import { imApi } from '../../api/im';
+import type { WsMessage } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../hooks/useWebSocket';
+import { ChatRoomItem } from './ChatRoomItem';
+import { MessageBubble } from './MessageBubble';
+import { ChatInput } from './ChatInput';
+import { CreateRoomModal } from './CreateRoomModal';
+import { NotificationList } from './NotificationList';
+import { ContactList } from './ContactList';
+import { ChatSettingsModal } from './ChatSettingsModal';
 
-import { useAppStore } from "../../store";
-import { logger } from "@/utils/logger";
+import { useAppStore } from '../../store';
+import { logger } from '@/utils/logger';
 
-type TabType = "all" | "direct" | "group" | "notifications" | "contacts";
+type TabType = 'all' | 'direct' | 'group' | 'notifications' | 'contacts';
 
 export const ChatInterface: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [activeTab, setActiveTab] = useState<TabType>("all");
+  const [activeTab, setActiveTab] = useState<TabType>('all');
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [filteredMessages, setFilteredMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [messageSearchQuery, setMessageSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [messageSearchQuery, setMessageSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -52,7 +44,7 @@ export const ChatInterface: React.FC = () => {
           chat_id: message.chat_id!,
           sender_id: message.sender_id,
           sender_name: message.sender_name,
-          message_type: "text",
+          message_type: 'text',
           content: message.content,
           created_at: message.timestamp,
           is_read: false,
@@ -60,22 +52,22 @@ export const ChatInterface: React.FC = () => {
         setMessages((prev) => [...prev, newMessage]);
       }
     },
-    [selectedRoom],
+    [selectedRoom]
   );
 
   const handleWsOpen = useCallback(() => {
     addNotification({
-      title: "连接成功",
-      message: "WebSocket 连接已建立",
-      type: "success",
+      title: '连接成功',
+      message: 'WebSocket 连接已建立',
+      type: 'success',
     });
   }, [addNotification]);
 
   const handleWsClose = useCallback(() => {
     addNotification({
-      title: "连接断开",
-      message: "WebSocket 连接已断开",
-      type: "warning",
+      title: '连接断开',
+      message: 'WebSocket 连接已断开',
+      type: 'warning',
     });
   }, [addNotification]);
 
@@ -117,11 +109,11 @@ export const ChatInterface: React.FC = () => {
         setChatRooms(rooms);
       }
     } catch (error) {
-      logger.error("Failed to load chat rooms:", error);
+      logger.error('Failed to load chat rooms:', error);
       addNotification({
-        title: "加载失败",
-        message: "无法加载聊天室列表",
-        type: "error",
+        title: '加载失败',
+        message: '无法加载聊天室列表',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -131,9 +123,7 @@ export const ChatInterface: React.FC = () => {
   const handleSelectContact = async (friend: Friend) => {
     try {
       const existingRoom = chatRooms.find(
-        (room) =>
-          room.room_type === "direct" &&
-          room.members.includes(friend.friend_id),
+        (room) => room.room_type === 'direct' && room.members.includes(friend.friend_id)
       );
 
       if (existingRoom) {
@@ -142,9 +132,9 @@ export const ChatInterface: React.FC = () => {
       } else {
         const response = await imApi.createChatRoom({
           name: friend.friend_name,
-          room_type: "direct",
-          members: ["current-user", friend.friend_id],
-          created_by: "current-user",
+          room_type: 'direct',
+          members: ['current-user', friend.friend_id],
+          created_by: 'current-user',
         });
 
         if (response.success && response.data) {
@@ -154,13 +144,13 @@ export const ChatInterface: React.FC = () => {
           setMessages([]);
         }
       }
-      setActiveTab("direct");
+      setActiveTab('direct');
     } catch (error) {
-      logger.error("Failed to create chat room:", error);
+      logger.error('Failed to create chat room:', error);
       addNotification({
-        title: "创建失败",
-        message: "无法创建聊天会话",
-        type: "error",
+        title: '创建失败',
+        message: '无法创建聊天会话',
+        type: 'error',
       });
     }
   };
@@ -174,21 +164,19 @@ export const ChatInterface: React.FC = () => {
         setMessages(msgs);
       }
     } catch (error) {
-      logger.error("Failed to load messages:", error);
+      logger.error('Failed to load messages:', error);
     }
   };
 
   const markAllMessagesRead = async (_chatRoomId: string) => {
     try {
-      const unreadMessages = messages.filter(
-        (m) => !m.is_read && m.sender_id !== "current-user",
-      );
+      const unreadMessages = messages.filter((m) => !m.is_read && m.sender_id !== 'current-user');
       for (const message of unreadMessages) {
         await imApi.markMessageRead(message.id);
       }
       setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
     } catch (error) {
-      logger.error("Failed to mark messages as read:", error);
+      logger.error('Failed to mark messages as read:', error);
     }
   };
 
@@ -200,67 +188,62 @@ export const ChatInterface: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/im/api/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`,
+        `/im/api/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`
       );
       const data = await response.json();
       if (data.success && data.data) {
         setFilteredMessages(data.data.messages || []);
       }
     } catch (error) {
-      logger.error("Failed to search messages:", error);
+      logger.error('Failed to search messages:', error);
     }
   };
 
   const handleEditMessage = async (updatedMessage: ChatMessage) => {
     try {
-      const response = await imApi.updateChatMessage(
-        updatedMessage.id,
-        updatedMessage.content,
-      );
+      const response = await imApi.updateChatMessage(updatedMessage.id, updatedMessage.content);
       if (response.success) {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === updatedMessage.id
-              ? { ...m, content: updatedMessage.content }
-              : m,
-          ),
+            m.id === updatedMessage.id ? { ...m, content: updatedMessage.content } : m
+          )
         );
       }
     } catch (error) {
-      logger.error("Failed to edit message:", error);
+      logger.error('Failed to edit message:', error);
       addNotification({
-        title: "编辑失败",
-        message: "无法编辑消息",
-        type: "error",
+        title: '编辑失败',
+        message: '无法编辑消息',
+        type: 'error',
       });
     }
   };
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm("确定要删除这条消息吗？")) return;
+    if (!confirm('确定要删除这条消息吗？')) return;
 
     try {
       const response = await imApi.deleteChatMessage(messageId);
       if (response.success) {
         setMessages((prev) => prev.filter((m) => m.id !== messageId));
         addNotification({
-          title: "删除成功",
-          message: "消息已删除",
-          type: "success",
+          title: '删除成功',
+          message: '消息已删除',
+          type: 'success',
         });
       }
     } catch (error) {
-      logger.error("Failed to delete message:", error);
+      logger.error('Failed to delete message:', error);
       addNotification({
-        title: "删除失败",
-        message: "无法删除消息",
-        type: "error",
+        title: '删除失败',
+        message: '无法删除消息',
+        type: 'error',
       });
     }
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleMuteRoom = async () => {
@@ -269,19 +252,17 @@ export const ChatInterface: React.FC = () => {
       const response = await imApi.muteChatRoom(selectedRoom.id);
       if (response.success) {
         setChatRooms((prev) =>
-          prev.map((r) =>
-            r.id === selectedRoom.id ? { ...r, is_muted: true } : r,
-          ),
+          prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_muted: true } : r))
         );
         setSelectedRoom((prev) => (prev ? { ...prev, is_muted: true } : null));
         addNotification({
-          title: "成功",
-          message: "已开启免打扰",
-          type: "success",
+          title: '成功',
+          message: '已开启免打扰',
+          type: 'success',
         });
       }
     } catch (error) {
-      logger.error("Failed to mute room:", error);
+      logger.error('Failed to mute room:', error);
     }
   };
 
@@ -291,19 +272,17 @@ export const ChatInterface: React.FC = () => {
       const response = await imApi.unmuteChatRoom(selectedRoom.id);
       if (response.success) {
         setChatRooms((prev) =>
-          prev.map((r) =>
-            r.id === selectedRoom.id ? { ...r, is_muted: false } : r,
-          ),
+          prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_muted: false } : r))
         );
         setSelectedRoom((prev) => (prev ? { ...prev, is_muted: false } : null));
         addNotification({
-          title: "成功",
-          message: "已关闭免打扰",
-          type: "success",
+          title: '成功',
+          message: '已关闭免打扰',
+          type: 'success',
         });
       }
     } catch (error) {
-      logger.error("Failed to unmute room:", error);
+      logger.error('Failed to unmute room:', error);
     }
   };
 
@@ -313,19 +292,17 @@ export const ChatInterface: React.FC = () => {
       const response = await imApi.pinChatRoom(selectedRoom.id);
       if (response.success) {
         setChatRooms((prev) =>
-          prev.map((r) =>
-            r.id === selectedRoom.id ? { ...r, is_pinned: true } : r,
-          ),
+          prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_pinned: true } : r))
         );
         setSelectedRoom((prev) => (prev ? { ...prev, is_pinned: true } : null));
         addNotification({
-          title: "成功",
-          message: "已置顶会话",
-          type: "success",
+          title: '成功',
+          message: '已置顶会话',
+          type: 'success',
         });
       }
     } catch (error) {
-      logger.error("Failed to pin room:", error);
+      logger.error('Failed to pin room:', error);
     }
   };
 
@@ -335,26 +312,22 @@ export const ChatInterface: React.FC = () => {
       const response = await imApi.unpinChatRoom(selectedRoom.id);
       if (response.success) {
         setChatRooms((prev) =>
-          prev.map((r) =>
-            r.id === selectedRoom.id ? { ...r, is_pinned: false } : r,
-          ),
+          prev.map((r) => (r.id === selectedRoom.id ? { ...r, is_pinned: false } : r))
         );
-        setSelectedRoom((prev) =>
-          prev ? { ...prev, is_pinned: false } : null,
-        );
+        setSelectedRoom((prev) => (prev ? { ...prev, is_pinned: false } : null));
         addNotification({
-          title: "成功",
-          message: "已取消置顶",
-          type: "success",
+          title: '成功',
+          message: '已取消置顶',
+          type: 'success',
         });
       }
     } catch (error) {
-      logger.error("Failed to unpin room:", error);
+      logger.error('Failed to unpin room:', error);
     }
   };
 
   const handleDeleteRoom = async () => {
-    if (!selectedRoom || !confirm("确定要删除这个会话吗？")) return;
+    if (!selectedRoom || !confirm('确定要删除这个会话吗？')) return;
     try {
       const response = await imApi.deleteChatRoom(selectedRoom.id);
       if (response.success) {
@@ -363,36 +336,36 @@ export const ChatInterface: React.FC = () => {
         setMessages([]);
         setIsSettingsModalOpen(false);
         addNotification({
-          title: "成功",
-          message: "会话已删除",
-          type: "success",
+          title: '成功',
+          message: '会话已删除',
+          type: 'success',
         });
       }
     } catch (error) {
-      logger.error("Failed to delete room:", error);
+      logger.error('Failed to delete room:', error);
       addNotification({
-        title: "失败",
-        message: "删除会话失败",
-        type: "error",
+        title: '失败',
+        message: '删除会话失败',
+        type: 'error',
       });
     }
   };
 
   const handleSendMessage = async (
     content: string,
-    type: "text" | "image" | "file",
+    type: 'text' | 'image' | 'file',
     fileUrl?: string,
-    fileName?: string,
+    fileName?: string
   ) => {
     if (!selectedRoom) return;
 
     try {
-      if (type === "text" && isConnected) {
+      if (type === 'text' && isConnected) {
         const wsMessage: WsMessage = {
-          msg_type: "chat",
+          msg_type: 'chat',
           chat_id: selectedRoom.id,
-          sender_id: "current-user",
-          sender_name: "当前用户",
+          sender_id: 'current-user',
+          sender_name: '当前用户',
           content,
           timestamp: new Date().toISOString(),
         };
@@ -400,8 +373,8 @@ export const ChatInterface: React.FC = () => {
       } else {
         const response = await imApi.createChatMessage({
           chat_id: selectedRoom.id,
-          sender_id: "current-user",
-          sender_name: "当前用户",
+          sender_id: 'current-user',
+          sender_name: '当前用户',
           message_type: type,
           content,
           file_url: fileUrl,
@@ -413,21 +386,19 @@ export const ChatInterface: React.FC = () => {
         }
       }
     } catch (error) {
-      logger.error("Failed to send message:", error);
+      logger.error('Failed to send message:', error);
       addNotification({
-        title: "发送失败",
-        message: "消息发送失败",
-        type: "error",
+        title: '发送失败',
+        message: '消息发送失败',
+        type: 'error',
       });
     }
   };
 
-  const handleUploadFile = async (
-    file: File,
-  ): Promise<{ url: string; name: string } | null> => {
+  const handleUploadFile = async (file: File): Promise<{ url: string; name: string } | null> => {
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
 
       const response = await imApi.uploadFile(formData);
       if (response.success && response.data) {
@@ -438,77 +409,70 @@ export const ChatInterface: React.FC = () => {
       }
       return null;
     } catch (error) {
-      logger.error("Failed to upload file:", error);
+      logger.error('Failed to upload file:', error);
       return null;
     }
   };
 
   const filteredRooms = chatRooms.filter((room) => {
-    const matchesSearch =
-      room.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? true;
+    const matchesSearch = room.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? true;
     const matchesTab =
-      activeTab === "all" ||
-      (activeTab === "direct" && room.room_type === "direct") ||
-      (activeTab === "group" && room.room_type === "group");
+      activeTab === 'all' ||
+      (activeTab === 'direct' && room.room_type === 'direct') ||
+      (activeTab === 'group' && room.room_type === 'group');
     return matchesSearch && matchesTab;
   });
 
   const tabs = [
-    { id: "all" as TabType, label: "全部", icon: MessageSquare },
-    { id: "direct" as TabType, label: "私聊", icon: MessageSquare },
-    { id: "group" as TabType, label: "群聊", icon: Users },
-    { id: "contacts" as TabType, label: "通讯录", icon: User },
-    { id: "notifications" as TabType, label: "通知", icon: Bell },
+    { id: 'all' as TabType, label: '全部', icon: MessageSquare },
+    { id: 'direct' as TabType, label: '私聊', icon: MessageSquare },
+    { id: 'group' as TabType, label: '群聊', icon: Users },
+    { id: 'contacts' as TabType, label: '通讯录', icon: User },
+    { id: 'notifications' as TabType, label: '通知', icon: Bell },
   ];
 
   return (
-    <div
-      style={{ display: "flex", height: "100vh", backgroundColor: "#f9fafb" }}
-    >
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f9fafb' }}>
       <div
         style={{
           width: 320,
-          backgroundColor: "#ffffff",
-          borderRight: "1px solid #e5e7eb",
-          display: "flex",
-          flexDirection: "column",
+          backgroundColor: '#ffffff',
+          borderRight: '1px solid #e5e7eb',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <div style={{ padding: 16, borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               marginBottom: 16,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Button
-                variant="text"
-                size="small"
-                onClick={() => navigate("/dashboard")}
+                variant='text'
+                size='small'
+                onClick={() => navigate('/dashboard')}
               >
                 <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>
-              <h1
-                style={{ fontSize: 20, fontWeight: "bold", color: "#111827" }}
-              >
-                消息
-              </h1>
+              <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#111827' }}>消息</h1>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
                 style={{
                   width: 8,
                   height: 8,
-                  borderRadius: "9999px",
-                  backgroundColor: isConnected ? "#22c55e" : "#ef4444",
+                  borderRadius: '9999px',
+                  backgroundColor: isConnected ? '#22c55e' : '#ef4444',
                 }}
               />
               <Button
-                variant="text"
-                size="small"
+                variant='text'
+                size='small'
                 onClick={() => setIsCreateModalOpen(true)}
               >
                 <Plus style={{ width: 20, height: 20 }} />
@@ -516,29 +480,29 @@ export const ChatInterface: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ position: "relative" }}>
+          <div style={{ position: 'relative' }}>
             <Search
               style={{
-                position: "absolute",
+                position: 'absolute',
                 left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
+                top: '50%',
+                transform: 'translateY(-50%)',
                 width: 16,
                 height: 16,
-                color: "#9ca3af",
+                color: '#9ca3af',
               }}
             />
             <TextField
-              size="small"
-              placeholder="搜索聊天..."
+              size='small'
+              placeholder='搜索聊天...'
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ pl: 5, width: "100%" }}
+              sx={{ pl: 5, width: '100%' }}
             />
           </div>
         </div>
 
-        <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -549,45 +513,41 @@ export const ChatInterface: React.FC = () => {
                   flex: 1,
                   paddingTop: 12,
                   paddingBottom: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 4,
-                  borderBottom: `2px solid ${activeTab === tab.id ? "#4f46e5" : "transparent"}`,
-                  transition: "all 0.15s",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: activeTab === tab.id ? "#4f46e5" : "#6b7280",
+                  borderBottom: `2px solid ${activeTab === tab.id ? '#4f46e5' : 'transparent'}`,
+                  transition: 'all 0.15s',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: activeTab === tab.id ? '#4f46e5' : '#6b7280',
                 }}
               >
                 <Icon style={{ width: 16, height: 16 }} />
-                <span style={{ fontSize: 12, fontWeight: 500 }}>
-                  {tab.label}
-                </span>
+                <span style={{ fontSize: 12, fontWeight: 500 }}>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {activeTab === "notifications" ? (
-          <div style={{ flex: 1, overflowY: "auto" }}>
+        {activeTab === 'notifications' ? (
+          <div style={{ flex: 1, overflowY: 'auto' }}>
             <NotificationList />
           </div>
-        ) : activeTab === "contacts" ? (
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            <ContactList
-              onSelectContact={(friend) => handleSelectContact(friend)}
-            />
+        ) : activeTab === 'contacts' ? (
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            <ContactList onSelectContact={(friend) => handleSelectContact(friend)} />
           </div>
         ) : (
-          <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
             {loading ? (
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
                   padding: 32,
                 }}
               >
@@ -595,25 +555,25 @@ export const ChatInterface: React.FC = () => {
                   style={{
                     width: 32,
                     height: 32,
-                    borderRadius: "9999px",
-                    border: "4px solid #4f46e5",
-                    borderTopColor: "transparent",
-                    animation: "spin 1s linear infinite",
+                    borderRadius: '9999px',
+                    border: '4px solid #4f46e5',
+                    borderTopColor: 'transparent',
+                    animation: 'spin 1s linear infinite',
                   }}
                 />
               </div>
             ) : filteredRooms.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 32 }}>
+              <div style={{ textAlign: 'center', padding: 32 }}>
                 <MessageSquare
                   style={{
                     width: 48,
                     height: 48,
-                    color: "#d1d5db",
-                    margin: "0 auto",
+                    color: '#d1d5db',
+                    margin: '0 auto',
                     marginBottom: 12,
                   }}
                 />
-                <p style={{ color: "#6b7280" }}>暂无聊天记录</p>
+                <p style={{ color: '#6b7280' }}>暂无聊天记录</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -634,57 +594,55 @@ export const ChatInterface: React.FC = () => {
         )}
       </div>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {selectedRoom &&
-        activeTab !== "notifications" &&
-        activeTab !== "contacts" ? (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {selectedRoom && activeTab !== 'notifications' && activeTab !== 'contacts' ? (
           <>
             <div
               style={{
-                backgroundColor: "#ffffff",
-                borderBottom: "1px solid #e5e7eb",
+                backgroundColor: '#ffffff',
+                borderBottom: '1px solid #e5e7eb',
                 padding: 16,
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   marginBottom: 12,
                 }}
               >
                 <div>
-                  <h2 style={{ fontWeight: 600, color: "#111827" }}>
-                    {selectedRoom.name || "未命名会话"}
+                  <h2 style={{ fontWeight: 600, color: '#111827' }}>
+                    {selectedRoom.name || '未命名会话'}
                   </h2>
-                  <p style={{ fontSize: 14, color: "#6b7280" }}>
-                    {selectedRoom.room_type === "direct" ? "私聊" : "群聊"}
-                    {!isConnected && " · 连接断开"}
+                  <p style={{ fontSize: 14, color: '#6b7280' }}>
+                    {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
+                    {!isConnected && ' · 连接断开'}
                   </p>
                 </div>
               </div>
-              <div style={{ position: "relative" }}>
+              <div style={{ position: 'relative' }}>
                 <Search
                   style={{
-                    position: "absolute",
+                    position: 'absolute',
                     left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
+                    top: '50%',
+                    transform: 'translateY(-50%)',
                     width: 16,
                     height: 16,
-                    color: "#9ca3af",
+                    color: '#9ca3af',
                   }}
                 />
                 <TextField
-                  size="small"
-                  placeholder="搜索消息..."
+                  size='small'
+                  placeholder='搜索消息...'
                   value={messageSearchQuery}
                   onChange={(e) => {
                     setMessageSearchQuery(e.target.value);
                     searchMessages(e.target.value);
                   }}
-                  sx={{ pl: 5, width: "100%" }}
+                  sx={{ pl: 5, width: '100%' }}
                 />
               </div>
             </div>
@@ -692,53 +650,53 @@ export const ChatInterface: React.FC = () => {
             <div
               style={{
                 flex: 1,
-                overflowY: "auto",
+                overflowY: 'auto',
                 padding: 16,
-                backgroundColor: "#f9fafb",
+                backgroundColor: '#f9fafb',
               }}
             >
               {messages.length === 0 ? (
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
                   }}
                 >
-                  <div style={{ textAlign: "center" }}>
+                  <div style={{ textAlign: 'center' }}>
                     <MessageSquare
                       style={{
                         width: 48,
                         height: 48,
-                        color: "#d1d5db",
-                        margin: "0 auto",
+                        color: '#d1d5db',
+                        margin: '0 auto',
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: "#6b7280" }}>暂无消息，开始聊天吧</p>
+                    <p style={{ color: '#6b7280' }}>暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
                   }}
                 >
-                  <div style={{ textAlign: "center" }}>
+                  <div style={{ textAlign: 'center' }}>
                     <Search
                       style={{
                         width: 48,
                         height: 48,
-                        color: "#d1d5db",
-                        margin: "0 auto",
+                        color: '#d1d5db',
+                        margin: '0 auto',
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: "#6b7280" }}>未找到匹配的消息</p>
+                    <p style={{ color: '#6b7280' }}>未找到匹配的消息</p>
                   </div>
                 </div>
               ) : (
@@ -748,12 +706,12 @@ export const ChatInterface: React.FC = () => {
                       style={{
                         marginBottom: 16,
                         padding: 8,
-                        backgroundColor: "#fef9c3",
-                        border: "1px solid #fde047",
+                        backgroundColor: '#fef9c3',
+                        border: '1px solid #fde047',
                         borderRadius: 8,
                       }}
                     >
-                      <span style={{ fontSize: 14, color: "#854d0e" }}>
+                      <span style={{ fontSize: 14, color: '#854d0e' }}>
                         找到 {filteredMessages.length} 条匹配消息
                       </span>
                     </div>
@@ -765,7 +723,7 @@ export const ChatInterface: React.FC = () => {
                     <MessageBubble
                       key={message.id}
                       message={message}
-                      isSent={message.sender_id === "current-user"}
+                      isSent={message.sender_id === 'current-user'}
                       onEdit={handleEditMessage}
                       onDelete={handleDeleteMessage}
                     />
@@ -785,19 +743,19 @@ export const ChatInterface: React.FC = () => {
           <div
             style={{
               flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#f9fafb",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f9fafb',
             }}
           >
-            <div style={{ textAlign: "center" }}>
+            <div style={{ textAlign: 'center' }}>
               <MessageSquare
                 style={{
                   width: 64,
                   height: 64,
-                  color: "#d1d5db",
-                  margin: "0 auto",
+                  color: '#d1d5db',
+                  margin: '0 auto',
                   marginBottom: 16,
                 }}
               />
@@ -805,21 +763,19 @@ export const ChatInterface: React.FC = () => {
                 style={{
                   fontSize: 20,
                   fontWeight: 600,
-                  color: "#111827",
+                  color: '#111827',
                   marginBottom: 8,
                 }}
               >
                 欢迎使用 TOPEMS IM
               </h2>
-              <p style={{ color: "#6b7280", marginBottom: 16 }}>
-                {activeTab === "notifications"
-                  ? "查看通知中心"
-                  : "选择一个聊天室开始聊天"}
+              <p style={{ color: '#6b7280', marginBottom: 16 }}>
+                {activeTab === 'notifications' ? '查看通知中心' : '选择一个聊天室开始聊天'}
               </p>
-              {activeTab !== "notifications" && (
+              {activeTab !== 'notifications' && (
                 <Button
                   onClick={() => setIsCreateModalOpen(true)}
-                  variant="contained"
+                  variant='contained'
                 >
                   创建聊天室
                 </Button>

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{FromRef, Path, Query, State},
+    extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
@@ -12,6 +12,8 @@ use uuid::Uuid;
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
 use crate::models::{CreateOutboundOrderRequest, OutboundOrder, UpdateOutboundOrderRequest};
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -65,8 +67,13 @@ where
 
 async fn list_outbound_orders(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -130,9 +137,14 @@ async fn list_outbound_orders(
 
 async fn create_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -205,8 +217,13 @@ async fn create_outbound_order(
 
 async fn get_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, OutboundOrder>(
         r#"
         SELECT id, order_number, warehouse_id, customer_id, order_date, 
@@ -231,10 +248,15 @@ async fn get_outbound_order(
 
 async fn update_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, OutboundOrder>(
@@ -330,9 +352,14 @@ async fn update_outbound_order(
 
 async fn delete_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query(r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
         .bind(id)
         .execute(&state.db)
@@ -386,8 +413,13 @@ async fn delete_outbound_order(
 
 async fn list_outbound_order_items(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query(
         r#"
         SELECT id, line_number, material_code, material_name, specification, batch_number,
@@ -444,10 +476,15 @@ async fn list_outbound_order_items(
 
 async fn create_outbound_order_item(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<OutboundOrderItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let item_id = Uuid::new_v4();
     let now = Utc::now();
@@ -539,10 +576,15 @@ async fn create_outbound_order_item(
 
 async fn update_outbound_order_item(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
     Json(req): Json<ShipItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
@@ -615,9 +657,14 @@ async fn update_outbound_order_item(
 
 async fn delete_outbound_order_item(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let result = sqlx::query(r#"UPDATE wms.outbound_order_items SET deleted_at = NOW() WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL"#)
         .bind(id)
         .bind(item_id)
@@ -672,9 +719,14 @@ async fn delete_outbound_order_item(
 
 async fn confirm_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(
@@ -735,9 +787,14 @@ async fn confirm_outbound_order(
 
 async fn pick_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(
@@ -798,9 +855,14 @@ async fn pick_outbound_order(
 
 async fn pack_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(
@@ -862,10 +924,15 @@ async fn pack_outbound_order(
 
 async fn ship_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(items): Json<Vec<ShipItemRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let request_data = serde_json::to_value(&items).ok();
     let now = Utc::now();
 
@@ -987,9 +1054,14 @@ async fn ship_outbound_order(
 
 async fn complete_outbound_order(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
+        Ok(_) => {},
+        Err(e) => return e,
+    }
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(

@@ -15,9 +15,27 @@ use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::{api_error, auth::Claims, redis::{CacheService, RedisCacheService}, ApiResponse, PaginationParams};
 
+/// 供应商缓存 TTL: 5分钟
 const CACHE_TTL_SECONDS: u64 = 300;
+
+/// 供应商缓存 key 前缀 - 使用统一命名规范: {service}:{entity}
 const CACHE_PREFIX_SUPPLIER: &str = "scm:supplier";
+/// 供应商列表缓存 key 前缀
 const CACHE_PREFIX_SUPPLIERS_LIST: &str = "scm:suppliers:list";
+
+/// 构建供应商缓存 key
+fn supplier_cache_key(id: &Uuid) -> String {
+    format!("{}:{}", CACHE_PREFIX_SUPPLIER, id)
+}
+
+/// 构建供应商列表缓存 key
+fn suppliers_list_cache_key(page: i64, page_size: i64, search: &Option<String>, status: &Option<String>) -> String {
+    let search_pattern = search.clone().map(|s| format!("%{}%", s));
+    format!(
+        "{}:page:{}:size:{}:search:{:?}:status:{:?}",
+        CACHE_PREFIX_SUPPLIERS_LIST, page, page_size, search_pattern, status
+    )
+}
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -49,10 +67,7 @@ async fn list_suppliers(
     let search_pattern = params.search.clone().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let cache_key = format!(
-        "{}:page:{}:size:{}:search:{:?}:status:{:?}",
-        CACHE_PREFIX_SUPPLIERS_LIST, page, page_size, search_pattern, status_filter
-    );
+    let cache_key = suppliers_list_cache_key(page, page_size, &params.search, &params.status);
 
     if let Some(cache) = &state.cache {
         if let Ok(Some(cached)) = cache.get(&cache_key).await {
@@ -208,7 +223,7 @@ async fn get_supplier(
         Err(e) => return e,
     }
 
-    let cache_key = format!("{}:{}", CACHE_PREFIX_SUPPLIER, id);
+    let cache_key = supplier_cache_key(&id);
 
     if let Some(cache) = &state.cache {
         if let Ok(Some(cached)) = cache.get(&cache_key).await {

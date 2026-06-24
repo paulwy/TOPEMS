@@ -1,100 +1,92 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Badge,
+  Chip,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Box,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Tooltip,
-  useToast,
-} from "@/components/ui";
+  MenuItem,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  AlertTriangle,
-  Package,
-  BarChart3,
-} from "lucide-react";
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
+import type {
+  InventoryItem,
+  CreateInventoryItemRequest,
+  UpdateInventoryItemRequest,
+} from '@/api/shared/wms';
 import {
   listInventory,
   createInventory,
   updateInventory,
   deleteInventory,
   listLowStockInventory,
-  listInventoryByWarehouse,
-  InventoryItem,
-  CreateInventoryItemRequest,
-  UpdateInventoryItemRequest,
-} from "@/api/wms";
-import { listWarehouses, Warehouse } from "@/api/wms";
+} from '@/api/shared/wms';
+import type { Warehouse } from '@/api/shared/wms';
+import { listWarehouses } from '@/api/shared/wms';
+import { useAppStore } from '@/store';
+import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
+import { apiLogger } from '@/utils/logger';
 
-const statusConfig = {
-  qualified: { label: "合格", className: "bg-green-100 text-green-800" },
-  unqualified: { label: "不合格", className: "bg-red-100 text-red-800" },
-  pending: { label: "待检验", className: "bg-yellow-100 text-yellow-800" },
+const statusConfig: Record<
+  string,
+  { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+> = {
+  qualified: { label: '合格', color: 'success' },
+  unqualified: { label: '不合格', color: 'error' },
+  pending: { label: '待检验', color: 'warning' },
 };
 
-export default function InventoryPage() {
-  const toast = useToast();
+const InventoryPage: React.FC = () => {
+  const { addNotification } = useAppStore();
+
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [warehouseFilter, setWarehouseFilter] = useState<string>('');
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [warehouseFilter, setWarehouseFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  // Form states
   const [newItem, setNewItem] = useState<CreateInventoryItemRequest>({
-    warehouse_id: "",
-    location_id: "00000000-0000-0000-0000-000000000001",
-    sku: "",
-    name: "",
-    specification: "",
+    warehouse_id: '',
+    location_id: '00000000-0000-0000-0000-000000000001',
+    sku: '',
+    name: '',
+    specification: '',
     quantity: 0,
-    unit: "",
+    unit: '',
     min_quantity: 0,
     max_quantity: 0,
   });
+
   const [editItem, setEditItem] = useState<UpdateInventoryItemRequest>({});
-  const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
 
-  useEffect(() => {
-    fetchInventory();
-    fetchWarehouses();
-    fetchLowStock();
-  }, [searchTerm, statusFilter, warehouseFilter]);
-
-  async function fetchInventory() {
-    setLoading(true);
+  const fetchInventory = useCallback(async () => {
     try {
+      setLoading(true);
       const params: any = {
-        page: 1,
-        page_size: 100,
+        page: currentPage,
+        page_size: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
@@ -103,67 +95,121 @@ export default function InventoryPage() {
       const response = await listInventory(params);
       if (response.code === 200 && response.data) {
         setInventory(response.data.items || []);
+        setTotal(response.data.total || 0);
       }
     } catch (error) {
-      toast({ title: "获取库存列表失败", variant: "destructive" });
+      apiLogger.error('获取库存列表失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载库存列表',
+      });
     } finally {
       setLoading(false);
     }
-  }
+  }, [currentPage, pageSize, searchTerm, statusFilter, warehouseFilter, addNotification]);
 
-  async function fetchWarehouses() {
+  const fetchWarehouses = async () => {
     try {
       const response = await listWarehouses({ page: 1, page_size: 100 });
       if (response.code === 200 && response.data) {
         setWarehouses(response.data.items || []);
       }
     } catch (error) {
-      toast({ title: "获取仓库列表失败", variant: "destructive" });
+      apiLogger.error('获取仓库列表失败:', error);
     }
-  }
+  };
 
-  async function fetchLowStock() {
-    try {
-      const response = await listLowStockInventory();
-      if (response.code === 200 && response.data) {
-        setLowStockItems(response.data.items || []);
-      }
-    } catch (error) {
-      toast({ title: "获取低库存列表失败", variant: "destructive" });
-    }
-  }
+  useEffect(() => {
+    fetchInventory();
+    fetchWarehouses();
+  }, [fetchInventory]);
 
-  async function handleCreateInventory() {
+  const handleCreate = async () => {
     if (!newItem.sku || !newItem.name || !newItem.warehouse_id) {
-      toast({ title: "请填写必要信息", variant: "destructive" });
+      addNotification({
+        type: 'warning',
+        title: '验证错误',
+        message: '请填写必要信息（物料编码、名称、仓库）',
+      });
       return;
     }
 
     try {
       const response = await createInventory(newItem);
       if (response.code === 200) {
-        toast({ title: "库存创建成功", variant: "default" });
-        setShowCreateDialog(false);
-        setNewItem({
-          warehouse_id: "",
-          location_id: "00000000-0000-0000-0000-000000000001",
-          sku: "",
-          name: "",
-          specification: "",
-          quantity: 0,
-          unit: "",
-          min_quantity: 0,
-          max_quantity: 0,
+        addNotification({
+          type: 'success',
+          title: '创建成功',
+          message: '库存记录已创建',
         });
+        setShowCreateDialog(false);
+        resetNewItem();
         fetchInventory();
-        fetchLowStock();
       }
     } catch (error) {
-      toast({ title: "创建库存失败", variant: "destructive" });
+      apiLogger.error('创建库存失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '创建库存记录失败',
+      });
     }
-  }
+  };
 
-  async function handleOpenEdit(item: InventoryItem) {
+  const handleUpdate = async () => {
+    if (!selectedItem) return;
+
+    try {
+      const response = await updateInventory(selectedItem.id, editItem);
+      if (response.code === 200) {
+        addNotification({
+          type: 'success',
+          title: '更新成功',
+          message: '库存记录已更新',
+        });
+        setShowEditDialog(false);
+        fetchInventory();
+      }
+    } catch (error) {
+      apiLogger.error('更新库存失败:', error);
+      addNotification({
+        type: 'error',
+        title: '更新失败',
+        message: '更新库存记录失败',
+      });
+    }
+  };
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!window.confirm('确定要删除这条库存记录吗？此操作不可撤销。')) {
+        return;
+      }
+
+      try {
+        const response = await deleteInventory(id);
+        if (response.code === 200) {
+          addNotification({
+            type: 'success',
+            title: '删除成功',
+            message: '库存记录已删除',
+          });
+          fetchInventory();
+        }
+      } catch (error) {
+        apiLogger.error('删除库存失败:', error);
+        addNotification({
+          type: 'error',
+          title: '删除失败',
+          message: '删除库存记录失败',
+        });
+      }
+    },
+    [addNotification, fetchInventory]
+  );
+
+  const handleEdit = (item: InventoryItem) => {
     setSelectedItem(item);
     setEditItem({
       sku: item.sku,
@@ -176,559 +222,553 @@ export default function InventoryPage() {
       status: item.status,
     });
     setShowEditDialog(true);
-  }
+  };
 
-  async function handleUpdateInventory() {
-    if (!selectedItem) return;
+  const handleViewDetail = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setShowDetailDialog(true);
+  };
 
-    try {
-      const response = await updateInventory(selectedItem.id, editItem);
-      if (response.code === 200) {
-        toast({ title: "库存更新成功", variant: "default" });
-        setShowEditDialog(false);
-        fetchInventory();
-        fetchLowStock();
-      }
-    } catch (error) {
-      toast({ title: "更新库存失败", variant: "destructive" });
-    }
-  }
+  const resetNewItem = () => {
+    setNewItem({
+      warehouse_id: '',
+      location_id: '00000000-0000-0000-0000-000000000001',
+      sku: '',
+      name: '',
+      specification: '',
+      quantity: 0,
+      unit: '',
+      min_quantity: 0,
+      max_quantity: 0,
+    });
+  };
 
-  async function handleDeleteInventory(id: string) {
-    if (!confirm("确定要删除此库存吗？")) return;
+  const getStatusBadge = (status: string) => {
+    const config = statusConfig[status] || { label: status, color: 'default' as const };
+    return (
+      <Chip
+        size='small'
+        color={config.color}
+        label={config.label}
+        variant='outlined'
+      />
+    );
+  };
 
-    try {
-      const response = await deleteInventory(id);
-      if (response.code === 200) {
-        toast({ title: "库存删除成功", variant: "default" });
-        fetchInventory();
-        fetchLowStock();
-      }
-    } catch (error) {
-      toast({ title: "删除库存失败", variant: "destructive" });
-    }
-  }
+  const getWarehouseName = useMemo(() => {
+    return (warehouseId: string) => {
+      return warehouses.find((w) => w.id === warehouseId)?.name || warehouseId;
+    };
+  }, [warehouses]);
 
-  const totalQuantity = inventory.reduce((sum, item) => sum + item.quantity, 0);
-  const totalValue = inventory.reduce(
-    (sum, item) => sum + (item.total_value || 0),
-    0,
+  const columns: ColumnDef<InventoryItem>[] = useMemo(
+    () => [
+      { id: 'sku', label: '物料编码', sortable: true },
+      { id: 'name', label: '物料名称', sortable: true },
+      { id: 'specification', label: '规格' },
+      { id: 'unit', label: '单位' },
+      { id: 'quantity', label: '数量', sortable: true },
+      { id: 'available_quantity', label: '可用数量' },
+      {
+        id: 'warehouse_id',
+        label: '仓库',
+        render: (row) => getWarehouseName(row.warehouse_id),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => getStatusBadge(row.status),
+      },
+      { id: 'batch_number', label: '批次' },
+    ],
+    [getWarehouseName]
   );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '全部状态', value: '' },
+          { label: '合格', value: 'qualified' },
+          { label: '不合格', value: 'unqualified' },
+          { label: '待检验', value: 'pending' },
+        ],
+        value: statusFilter,
+        onChange: (value) => {
+          setStatusFilter(value);
+          setCurrentPage(1);
+        },
+      },
+      {
+        id: 'warehouse_id',
+        label: '仓库',
+        type: 'select',
+        options: [
+          { label: '全部仓库', value: '' },
+          ...warehouses.map((w) => ({ label: w.name, value: w.id })),
+        ],
+        value: warehouseFilter,
+        onChange: (value) => {
+          setWarehouseFilter(value);
+          setCurrentPage(1);
+        },
+      },
+    ],
+    [statusFilter, warehouseFilter, warehouses]
+  );
+
+  const rowActions: RowAction<InventoryItem>[] = useMemo(
+    () => [
+      {
+        label: '查看详情',
+        icon: <Eye size={16} />,
+        onClick: handleViewDetail,
+      },
+      {
+        label: '编辑',
+        icon: <Edit size={16} />,
+        onClick: handleEdit,
+      },
+      {
+        label: '删除',
+        icon: <Trash2 size={16} />,
+        color: 'error',
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: '确定要删除这条库存记录吗？',
+      },
+    ],
+    [handleDelete]
+  );
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleOpenCreate = () => {
+    resetNewItem();
+    setShowCreateDialog(true);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">库存管理</h1>
-          <p className="text-gray-500 mt-1">
-            管理仓库库存，查看库存状态和低库存预警
-          </p>
-        </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          新增库存
-        </Button>
-      </div>
+    <>
+      <ListPageTemplate
+        title='库存管理'
+        subtitle='管理仓库库存，查看库存状态和低库存预警'
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '仓储', href: '/wms' },
+          { label: '库存管理' },
+        ]}
+        columns={columns}
+        data={inventory}
+        loading={loading}
+        filters={filters}
+        searchable
+        searchPlaceholder='搜索物料名称或编码...'
+        onSearch={handleSearch}
+        searchValue={searchTerm}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total,
+          onPageChange: setCurrentPage,
+        }}
+        actions={[
+          {
+            label: '新增库存',
+            icon: <Plus size={16} />,
+            onClick: handleOpenCreate,
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage='暂无库存记录'
+        getRowId={(row) => row.id}
+      />
 
-      <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">总库存数量</p>
-                <p className="text-2xl font-bold">{totalQuantity}</p>
-              </div>
-              <Package className="h-10 w-10 text-gray-400" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">库存总价值</p>
-                <p className="text-2xl font-bold">
-                  ¥{totalValue.toLocaleString()}
-                </p>
-              </div>
-              <BarChart3 className="h-10 w-10 text-gray-400" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">物料种类</p>
-                <p className="text-2xl font-bold">{inventory.length}</p>
-              </div>
-              <Package className="h-10 w-10 text-gray-400" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">低库存预警</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {lowStockItems.length}
-                </p>
-              </div>
-              <AlertTriangle className="h-10 w-10 text-red-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="list">
-        <TabsList>
-          <TabsTrigger value="list">库存列表</TabsTrigger>
-          <TabsTrigger value="low-stock">低库存预警</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list">
-          <Card>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="搜索物料名称或编码..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-36">
-                    <SelectValue placeholder="状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">全部</SelectItem>
-                    <SelectItem value="qualified">合格</SelectItem>
-                    <SelectItem value="unqualified">不合格</SelectItem>
-                    <SelectItem value="pending">待检验</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={warehouseFilter}
-                  onValueChange={setWarehouseFilter}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="选择仓库" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">全部仓库</SelectItem>
-                    {warehouses.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>
-                        {w.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>物料编码</TableHead>
-                    <TableHead>物料名称</TableHead>
-                    <TableHead>规格</TableHead>
-                    <TableHead>单位</TableHead>
-                    <TableHead>数量</TableHead>
-                    <TableHead>可用数量</TableHead>
-                    <TableHead>仓库</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>批次</TableHead>
-                    <TableHead>有效期</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={11} className="text-center">
-                        加载中...
-                      </TableCell>
-                    </TableRow>
-                  ) : inventory.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={11} className="text-center">
-                        暂无库存记录
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    inventory.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.sku}
-                        </TableCell>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.specification || "-"}</TableCell>
-                        <TableCell>{item.unit || "-"}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>{item.available_quantity}</TableCell>
-                        <TableCell>
-                          {warehouses.find((w) => w.id === item.warehouse_id)
-                            ?.name || item.warehouse_id}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={
-                              statusConfig[
-                                item.status as keyof typeof statusConfig
-                              ]?.className
-                            }
-                          >
-                            {
-                              statusConfig[
-                                item.status as keyof typeof statusConfig
-                              ]?.label
-                            }
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{item.batch_number || "-"}</TableCell>
-                        <TableCell>
-                          {item.expiry_date
-                            ? new Date(item.expiry_date).toLocaleDateString()
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Tooltip content="编辑">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleOpenEdit(item)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip content="删除">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteInventory(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="low-stock">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                低库存预警
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>物料编码</TableHead>
-                    <TableHead>物料名称</TableHead>
-                    <TableHead>规格</TableHead>
-                    <TableHead>当前数量</TableHead>
-                    <TableHead>最低库存</TableHead>
-                    <TableHead>再订货点</TableHead>
-                    <TableHead>仓库</TableHead>
-                    <TableHead>批次</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {lowStockItems.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center">
-                        暂无低库存预警
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    lowStockItems.map((item) => (
-                      <TableRow key={item.id} className="bg-red-50">
-                        <TableCell className="font-medium">
-                          {item.sku}
-                        </TableCell>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.specification || "-"}</TableCell>
-                        <TableCell className="text-red-600 font-medium">
-                          {item.quantity}
-                        </TableCell>
-                        <TableCell>{item.min_quantity || "-"}</TableCell>
-                        <TableCell>{item.reorder_point || "-"}</TableCell>
-                        <TableCell>
-                          {warehouses.find((w) => w.id === item.warehouse_id)
-                            ?.name || item.warehouse_id}
-                        </TableCell>
-                        <TableCell>{item.batch_number || "-"}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      {/* 新增对话框 */}
+      <Dialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>新增库存</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>新增库存</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">物料编码 *</label>
-                <Input
-                  value={newItem.sku}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, sku: e.target.value })
-                  }
-                  placeholder="输入物料编码"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">物料名称 *</label>
-                <Input
-                  value={newItem.name}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, name: e.target.value })
-                  }
-                  placeholder="输入物料名称"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">规格</label>
-                <Input
-                  value={newItem.specification}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, specification: e.target.value })
-                  }
-                  placeholder="输入规格"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">单位 *</label>
-                <Input
-                  value={newItem.unit}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, unit: e.target.value })
-                  }
-                  placeholder="输入单位"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">数量 *</label>
-                <Input
-                  type="number"
-                  value={newItem.quantity}
-                  onChange={(e) =>
-                    setNewItem({
-                      ...newItem,
-                      quantity: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="输入数量"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">仓库 *</label>
-                <Select
-                  value={newItem.warehouse_id}
-                  onValueChange={(v) =>
-                    setNewItem({ ...newItem, warehouse_id: v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择仓库" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {warehouses.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>
-                        {w.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">最低库存</label>
-                <Input
-                  type="number"
-                  value={newItem.min_quantity}
-                  onChange={(e) =>
-                    setNewItem({
-                      ...newItem,
-                      min_quantity: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="输入最低库存"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">最高库存</label>
-                <Input
-                  type="number"
-                  value={newItem.max_quantity}
-                  onChange={(e) =>
-                    setNewItem({
-                      ...newItem,
-                      max_quantity: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="输入最高库存"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateDialog(false)}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+              gap: 2,
+              py: 2,
+            }}
+          >
+            <TextField
+              label='物料编码 *'
+              value={newItem.sku}
+              onChange={(e) => setNewItem({ ...newItem, sku: e.target.value })}
+              fullWidth
+              required
+              size='small'
+            />
+            <TextField
+              label='物料名称 *'
+              value={newItem.name}
+              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              fullWidth
+              required
+              size='small'
+            />
+            <TextField
+              label='规格'
+              value={newItem.specification}
+              onChange={(e) => setNewItem({ ...newItem, specification: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='单位 *'
+              value={newItem.unit}
+              onChange={(e) => setNewItem({ ...newItem, unit: e.target.value })}
+              fullWidth
+              required
+              size='small'
+            />
+            <TextField
+              label='数量 *'
+              type='number'
+              value={newItem.quantity}
+              onChange={(e) =>
+                setNewItem({ ...newItem, quantity: parseFloat(e.target.value) || 0 })
+              }
+              fullWidth
+              required
+              size='small'
+            />
+            <FormControl
+              fullWidth
+              size='small'
             >
-              取消
-            </Button>
-            <Button onClick={handleCreateInventory}>创建</Button>
-          </DialogFooter>
+              <InputLabel>仓库 *</InputLabel>
+              <Select
+                value={newItem.warehouse_id}
+                label='仓库 *'
+                onChange={(e) => setNewItem({ ...newItem, warehouse_id: e.target.value })}
+              >
+                {warehouses.map((w) => (
+                  <MenuItem
+                    key={w.id}
+                    value={w.id}
+                  >
+                    {w.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label='最低库存'
+              type='number'
+              value={newItem.min_quantity}
+              onChange={(e) =>
+                setNewItem({ ...newItem, min_quantity: parseFloat(e.target.value) || 0 })
+              }
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='最高库存'
+              type='number'
+              value={newItem.max_quantity}
+              onChange={(e) =>
+                setNewItem({ ...newItem, max_quantity: parseFloat(e.target.value) || 0 })
+              }
+              fullWidth
+              size='small'
+            />
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateDialog(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleCreate}
+          >
+            创建
+          </Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      {/* 编辑对话框 */}
+      <Dialog
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>编辑库存</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>编辑库存</DialogTitle>
-          </DialogHeader>
           {selectedItem && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">物料编码</label>
-                  <Input
-                    value={editItem.sku || ""}
-                    onChange={(e) =>
-                      setEditItem({ ...editItem, sku: e.target.value })
-                    }
-                    placeholder="输入物料编码"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">物料名称</label>
-                  <Input
-                    value={editItem.name || ""}
-                    onChange={(e) =>
-                      setEditItem({ ...editItem, name: e.target.value })
-                    }
-                    placeholder="输入物料名称"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">规格</label>
-                  <Input
-                    value={editItem.specification || ""}
-                    onChange={(e) =>
-                      setEditItem({
-                        ...editItem,
-                        specification: e.target.value,
-                      })
-                    }
-                    placeholder="输入规格"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">单位</label>
-                  <Input
-                    value={editItem.unit || ""}
-                    onChange={(e) =>
-                      setEditItem({ ...editItem, unit: e.target.value })
-                    }
-                    placeholder="输入单位"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">数量</label>
-                  <Input
-                    type="number"
-                    value={editItem.quantity || ""}
-                    onChange={(e) =>
-                      setEditItem({
-                        ...editItem,
-                        quantity: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    placeholder="输入数量"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">状态</label>
-                  <Select
-                    value={editItem.status || ""}
-                    onValueChange={(v) =>
-                      setEditItem({ ...editItem, status: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="qualified">合格</SelectItem>
-                      <SelectItem value="unqualified">不合格</SelectItem>
-                      <SelectItem value="pending">待检验</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">最低库存</label>
-                  <Input
-                    type="number"
-                    value={editItem.min_quantity || ""}
-                    onChange={(e) =>
-                      setEditItem({
-                        ...editItem,
-                        min_quantity: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    placeholder="输入最低库存"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">最高库存</label>
-                  <Input
-                    type="number"
-                    value={editItem.max_quantity || ""}
-                    onChange={(e) =>
-                      setEditItem({
-                        ...editItem,
-                        max_quantity: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    placeholder="输入最高库存"
-                  />
-                </div>
-              </div>
-            </div>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+                gap: 2,
+                py: 2,
+              }}
+            >
+              <TextField
+                label='物料编码'
+                value={editItem.sku || ''}
+                onChange={(e) => setEditItem({ ...editItem, sku: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='物料名称'
+                value={editItem.name || ''}
+                onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='规格'
+                value={editItem.specification || ''}
+                onChange={(e) => setEditItem({ ...editItem, specification: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='单位'
+                value={editItem.unit || ''}
+                onChange={(e) => setEditItem({ ...editItem, unit: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='数量'
+                type='number'
+                value={editItem.quantity ?? ''}
+                onChange={(e) =>
+                  setEditItem({ ...editItem, quantity: parseFloat(e.target.value) || 0 })
+                }
+                fullWidth
+                size='small'
+              />
+              <FormControl
+                fullWidth
+                size='small'
+              >
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={editItem.status || ''}
+                  label='状态'
+                  onChange={(e) => setEditItem({ ...editItem, status: e.target.value })}
+                >
+                  <MenuItem value='qualified'>合格</MenuItem>
+                  <MenuItem value='unqualified'>不合格</MenuItem>
+                  <MenuItem value='pending'>待检验</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label='最低库存'
+                type='number'
+                value={editItem.min_quantity ?? ''}
+                onChange={(e) =>
+                  setEditItem({ ...editItem, min_quantity: parseFloat(e.target.value) || 0 })
+                }
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='最高库存'
+                type='number'
+                value={editItem.max_quantity ?? ''}
+                onChange={(e) =>
+                  setEditItem({ ...editItem, max_quantity: parseFloat(e.target.value) || 0 })
+                }
+                fullWidth
+                size='small'
+              />
+            </Box>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              取消
-            </Button>
-            <Button onClick={handleUpdateInventory}>保存</Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowEditDialog(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdate}
+          >
+            保存
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+
+      {/* 详情对话框 */}
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>库存详情</DialogTitle>
+        <DialogContent>
+          {selectedItem && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    物料编码
+                  </Typography>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {selectedItem.sku}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    物料名称
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.name}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    规格
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.specification || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    单位
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.unit || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    数量
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.quantity}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    可用数量
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.available_quantity}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    仓库
+                  </Typography>
+                  <Typography variant='body1'>
+                    {getWarehouseName(selectedItem.warehouse_id)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    状态
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedItem.status)}</Box>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    批次号
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.batch_number || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    有效期
+                  </Typography>
+                  <Typography variant='body1'>
+                    {selectedItem.expiry_date
+                      ? new Date(selectedItem.expiry_date).toLocaleDateString('zh-CN')
+                      : '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    最低库存
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.min_quantity || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    最高库存
+                  </Typography>
+                  <Typography variant='body1'>{selectedItem.max_quantity || '-'}</Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowDetailDialog(false)}
+          >
+            关闭
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
-}
+};
+
+export default InventoryPage;

@@ -1,6 +1,6 @@
-import React from "react";
-import type { BoxProps } from "@mui/material";
-import { Box } from "@mui/material";
+import React from 'react';
+import type { BoxProps } from '@mui/material';
+import { Box } from '@mui/material';
 
 interface GridSizeProps {
   xs?: number;
@@ -45,7 +45,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   let effectiveXl: number | undefined = xl;
 
   if (size !== undefined) {
-    if (typeof size === "number") {
+    if (typeof size === 'number') {
       // size 是数字时，应用到 xs
       effectiveXs = size;
     } else {
@@ -61,8 +61,8 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   if (container) {
     // Parse spacing value
     const getSpacing = (s: number | GridSizeProps | undefined): number => {
-      if (typeof s === "number") return s * 8;
-      if (s && typeof s === "object") return (s.xs || s.sm || s.md || 2) * 8;
+      if (typeof s === 'number') return s * 8;
+      if (s && typeof s === 'object') return (s.xs || s.sm || s.md || 2) * 8;
       return 16;
     };
 
@@ -74,12 +74,12 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
       <Box
         {...props}
         sx={{
-          display: "grid",
-          gridAutoColumns: "1fr",
+          display: 'grid',
+          gridAutoColumns: '1fr',
           gap: gapValue,
-          "@media (min-width:600px)": { gap: getSpacing(spacing) },
-          "@media (min-width:900px)": { gap: getSpacing(spacing) },
-          "@media (min-width:1200px)": { gap: getSpacing(spacing) },
+          '@media (min-width:600px)': { gap: getSpacing(spacing) },
+          '@media (min-width:900px)': { gap: getSpacing(spacing) },
+          '@media (min-width:1200px)': { gap: getSpacing(spacing) },
           ...sx,
         }}
       >
@@ -114,7 +114,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
       spans.push(`span ${Math.floor(effectiveXl * 8.33)}`);
     }
 
-    return spans.length > 0 ? spans.join(" / ") : undefined;
+    return spans.length > 0 ? spans.join(' / ') : undefined;
   };
 
   // For responsive grid items, calculate proper column spans
@@ -125,22 +125,22 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
       styles.gridColumn = `span ${effectiveXs}`;
     }
     if (effectiveSm !== undefined) {
-      styles["@media (min-width:600px)"] = {
+      styles['@media (min-width:600px)'] = {
         gridColumn: `span ${effectiveSm}`,
       };
     }
     if (effectiveMd !== undefined) {
-      styles["@media (min-width:900px)"] = {
+      styles['@media (min-width:900px)'] = {
         gridColumn: `span ${effectiveMd}`,
       };
     }
     if (effectiveLg !== undefined) {
-      styles["@media (min-width:1200px)"] = {
+      styles['@media (min-width:1200px)'] = {
         gridColumn: `span ${effectiveLg}`,
       };
     }
     if (effectiveXl !== undefined) {
-      styles["@media (min-width:1536px)"] = {
+      styles['@media (min-width:1536px)'] = {
         gridColumn: `span ${effectiveXl}`,
       };
     }
@@ -152,8 +152,8 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
     <Box
       {...props}
       sx={{
-        boxSizing: "border-box",
-        ...(getResponsiveColumnSpan() || { gridColumn: "span 12" }),
+        boxSizing: 'border-box',
+        ...(getResponsiveColumnSpan() || { gridColumn: 'span 12' }),
         ...sx,
       }}
     >

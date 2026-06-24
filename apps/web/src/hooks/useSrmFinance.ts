@@ -3,14 +3,10 @@
  * 封装SRM模块财务数据获取和操作的React Query hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNotification } from "./useNotification";
-import { srmFinanceApi } from "../api/srm-finance";
-import type {
-  SupplierFinanceInfo,
-  PurchaseInvoice,
-  PaymentRequest,
-} from "../api/srm-finance";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotification } from './useNotification';
+import { srmFinanceApi } from '../api/srm-finance';
+import type { SupplierFinanceInfo, PurchaseInvoice, PaymentRequest } from '../api/srm-finance';
 
 // ============================================
 // 一、供应商财务信息Hooks
@@ -21,7 +17,7 @@ import type {
  */
 export function useSupplierFinanceInfo(supplierId: string) {
   return useQuery({
-    queryKey: ["srm-supplier-finance", supplierId],
+    queryKey: ['srm-supplier-finance', supplierId],
     queryFn: () => srmFinanceApi.getSupplierFinanceInfo(supplierId),
     enabled: !!supplierId,
     staleTime: 5 * 60 * 1000,
@@ -44,11 +40,11 @@ export function useUpdateSupplierFinanceInfo() {
       data: Partial<SupplierFinanceInfo>;
     }) => srmFinanceApi.updateSupplierFinanceInfo(supplierId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-supplier-finance"] });
-      success("供应商财务信息更新成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
+      success('供应商财务信息更新成功');
     },
     onError: (err: any) => {
-      error(err.message || "供应商财务信息更新失败");
+      error(err.message || '供应商财务信息更新失败');
     },
   });
 }
@@ -70,7 +66,7 @@ export function usePurchaseInvoices(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["srm-purchase-invoices", params],
+    queryKey: ['srm-purchase-invoices', params],
     queryFn: () => srmFinanceApi.getPurchaseInvoices(params),
     staleTime: 2 * 60 * 1000,
   });
@@ -81,7 +77,7 @@ export function usePurchaseInvoices(params?: {
  */
 export function usePurchaseInvoice(invoiceId: string) {
   return useQuery({
-    queryKey: ["srm-purchase-invoice", invoiceId],
+    queryKey: ['srm-purchase-invoice', invoiceId],
     queryFn: () => srmFinanceApi.getPurchaseInvoice(invoiceId),
     enabled: !!invoiceId,
   });
@@ -95,15 +91,14 @@ export function useCreatePurchaseInvoice() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (data: Partial<PurchaseInvoice>) =>
-      srmFinanceApi.createPurchaseInvoice(data),
+    mutationFn: (data: Partial<PurchaseInvoice>) => srmFinanceApi.createPurchaseInvoice(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-purchase-invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["srm-supplier-finance"] });
-      success("采购发票创建成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-purchase-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
+      success('采购发票创建成功');
     },
     onError: (err: any) => {
-      error(err.message || "采购发票创建失败");
+      error(err.message || '采购发票创建失败');
     },
   });
 }
@@ -116,20 +111,15 @@ export function useUpdatePurchaseInvoice() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: ({
-      invoiceId,
-      data,
-    }: {
-      invoiceId: string;
-      data: Partial<PurchaseInvoice>;
-    }) => srmFinanceApi.updatePurchaseInvoice(invoiceId, data),
+    mutationFn: ({ invoiceId, data }: { invoiceId: string; data: Partial<PurchaseInvoice> }) =>
+      srmFinanceApi.updatePurchaseInvoice(invoiceId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-purchase-invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["srm-supplier-finance"] });
-      success("采购发票更新成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-purchase-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
+      success('采购发票更新成功');
     },
     onError: (err: any) => {
-      error(err.message || "采购发票更新失败");
+      error(err.message || '采购发票更新失败');
     },
   });
 }
@@ -142,15 +132,14 @@ export function useDeletePurchaseInvoice() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (invoiceId: string) =>
-      srmFinanceApi.deletePurchaseInvoice(invoiceId),
+    mutationFn: (invoiceId: string) => srmFinanceApi.deletePurchaseInvoice(invoiceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-purchase-invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["srm-supplier-finance"] });
-      success("采购发票删除成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-purchase-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
+      success('采购发票删除成功');
     },
     onError: (err: any) => {
-      error(err.message || "采购发票删除失败");
+      error(err.message || '采购发票删除失败');
     },
   });
 }
@@ -163,15 +152,14 @@ export function useConfirmPurchaseInvoice() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (invoiceId: string) =>
-      srmFinanceApi.confirmPurchaseInvoice(invoiceId),
+    mutationFn: (invoiceId: string) => srmFinanceApi.confirmPurchaseInvoice(invoiceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-purchase-invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["srm-supplier-finance"] });
-      success("发票已确认");
+      queryClient.invalidateQueries({ queryKey: ['srm-purchase-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
+      success('发票已确认');
     },
     onError: (err: any) => {
-      error(err.message || "发票确认失败");
+      error(err.message || '发票确认失败');
     },
   });
 }
@@ -184,14 +172,13 @@ export function useVerifyPurchaseInvoice() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (invoiceId: string) =>
-      srmFinanceApi.verifyPurchaseInvoice(invoiceId),
+    mutationFn: (invoiceId: string) => srmFinanceApi.verifyPurchaseInvoice(invoiceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-purchase-invoices"] });
-      success("发票验证通过");
+      queryClient.invalidateQueries({ queryKey: ['srm-purchase-invoices'] });
+      success('发票验证通过');
     },
     onError: (err: any) => {
-      error(err.message || "发票验证失败");
+      error(err.message || '发票验证失败');
     },
   });
 }
@@ -212,7 +199,7 @@ export function usePaymentRequests(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["srm-payment-requests", params],
+    queryKey: ['srm-payment-requests', params],
     queryFn: () => srmFinanceApi.getPaymentRequests(params),
     staleTime: 2 * 60 * 1000,
   });
@@ -223,7 +210,7 @@ export function usePaymentRequests(params?: {
  */
 export function usePaymentRequest(requestId: string) {
   return useQuery({
-    queryKey: ["srm-payment-request", requestId],
+    queryKey: ['srm-payment-request', requestId],
     queryFn: () => srmFinanceApi.getPaymentRequest(requestId),
     enabled: !!requestId,
   });
@@ -237,14 +224,13 @@ export function useCreatePaymentRequest() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (data: Partial<PaymentRequest>) =>
-      srmFinanceApi.createPaymentRequest(data),
+    mutationFn: (data: Partial<PaymentRequest>) => srmFinanceApi.createPaymentRequest(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-payment-requests"] });
-      success("付款申请创建成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
+      success('付款申请创建成功');
     },
     onError: (err: any) => {
-      error(err.message || "付款申请创建失败");
+      error(err.message || '付款申请创建失败');
     },
   });
 }
@@ -257,19 +243,14 @@ export function useUpdatePaymentRequest() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: ({
-      requestId,
-      data,
-    }: {
-      requestId: string;
-      data: Partial<PaymentRequest>;
-    }) => srmFinanceApi.updatePaymentRequest(requestId, data),
+    mutationFn: ({ requestId, data }: { requestId: string; data: Partial<PaymentRequest> }) =>
+      srmFinanceApi.updatePaymentRequest(requestId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-payment-requests"] });
-      success("付款申请更新成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
+      success('付款申请更新成功');
     },
     onError: (err: any) => {
-      error(err.message || "付款申请更新失败");
+      error(err.message || '付款申请更新失败');
     },
   });
 }
@@ -282,14 +263,13 @@ export function useDeletePaymentRequest() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (requestId: string) =>
-      srmFinanceApi.deletePaymentRequest(requestId),
+    mutationFn: (requestId: string) => srmFinanceApi.deletePaymentRequest(requestId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-payment-requests"] });
-      success("付款申请删除成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
+      success('付款申请删除成功');
     },
     onError: (err: any) => {
-      error(err.message || "付款申请删除失败");
+      error(err.message || '付款申请删除失败');
     },
   });
 }
@@ -302,14 +282,13 @@ export function useSubmitPaymentRequest() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (requestId: string) =>
-      srmFinanceApi.submitPaymentRequest(requestId),
+    mutationFn: (requestId: string) => srmFinanceApi.submitPaymentRequest(requestId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-payment-requests"] });
-      success("付款申请已提交");
+      queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
+      success('付款申请已提交');
     },
     onError: (err: any) => {
-      error(err.message || "付款申请提交失败");
+      error(err.message || '付款申请提交失败');
     },
   });
 }
@@ -332,11 +311,11 @@ export function useApprovePaymentRequest() {
       comment?: string;
     }) => srmFinanceApi.approvePaymentRequest(requestId, approved, comment),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-payment-requests"] });
-      success("付款申请审批完成");
+      queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
+      success('付款申请审批完成');
     },
     onError: (err: any) => {
-      error(err.message || "付款申请审批失败");
+      error(err.message || '付款申请审批失败');
     },
   });
 }
@@ -357,13 +336,13 @@ export function useConfirmPayment() {
       bank_transaction_id?: string;
     }) => srmFinanceApi.confirmPayment(requestId, bank_transaction_id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["srm-payment-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["srm-purchase-invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["srm-supplier-finance"] });
-      success("付款确认成功");
+      queryClient.invalidateQueries({ queryKey: ['srm-payment-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['srm-purchase-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['srm-supplier-finance'] });
+      success('付款确认成功');
     },
     onError: (err: any) => {
-      error(err.message || "付款确认失败");
+      error(err.message || '付款确认失败');
     },
   });
 }
@@ -381,7 +360,7 @@ export function usePayableAging(params: {
   as_of_date: string;
 }) {
   return useQuery({
-    queryKey: ["srm-payable-aging", params],
+    queryKey: ['srm-payable-aging', params],
     queryFn: () => srmFinanceApi.getPayableAging(params),
     enabled: !!params.as_of_date,
     staleTime: 5 * 60 * 1000,
@@ -393,11 +372,9 @@ export function usePayableAging(params: {
  */
 export function useSupplierPayableSummary(supplierId?: string) {
   return useQuery({
-    queryKey: ["srm-payable-summary", supplierId],
+    queryKey: ['srm-payable-summary', supplierId],
     queryFn: () =>
-      srmFinanceApi.getPayableSummary(
-        supplierId ? { supplier_ids: [supplierId] } : undefined,
-      ),
+      srmFinanceApi.getPayableSummary(supplierId ? { supplier_ids: [supplierId] } : undefined),
     enabled: true,
     staleTime: 5 * 60 * 1000,
   });
@@ -414,7 +391,7 @@ export function useDuePayables(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["srm-due-payables", params],
+    queryKey: ['srm-due-payables', params],
     queryFn: () => srmFinanceApi.getDuePayables(params),
     staleTime: 5 * 60 * 1000,
   });
@@ -437,11 +414,11 @@ export function useExportPurchaseInvoices() {
       status?: string;
       start_date?: string;
       end_date?: string;
-      format: "csv" | "xlsx";
+      format: 'csv' | 'xlsx';
     }) => {
       const blob = await srmFinanceApi.exportPurchaseInvoices(params);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `purchase-invoices.${params.format}`;
       document.body.appendChild(link);
@@ -451,10 +428,10 @@ export function useExportPurchaseInvoices() {
       return blob;
     },
     onSuccess: () => {
-      success("采购发票已导出");
+      success('采购发票已导出');
     },
     onError: (err: any) => {
-      error(err.message || "导出失败");
+      error(err.message || '导出失败');
     },
   });
 }
@@ -471,11 +448,11 @@ export function useExportPaymentRequests() {
       status?: string;
       start_date?: string;
       end_date?: string;
-      format: "csv" | "xlsx";
+      format: 'csv' | 'xlsx';
     }) => {
       const blob = await srmFinanceApi.exportPaymentRequests(params);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `payment-requests.${params.format}`;
       document.body.appendChild(link);
@@ -485,10 +462,10 @@ export function useExportPaymentRequests() {
       return blob;
     },
     onSuccess: () => {
-      success("付款申请已导出");
+      success('付款申请已导出');
     },
     onError: (err: any) => {
-      error(err.message || "导出失败");
+      error(err.message || '导出失败');
     },
   });
 }
@@ -504,11 +481,11 @@ export function useExportPayableAging() {
       company_id?: string;
       supplier_ids?: string[];
       as_of_date: string;
-      format: "csv" | "xlsx";
+      format: 'csv' | 'xlsx';
     }) => {
       const blob = await srmFinanceApi.exportPayableAging(params);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `payable-aging.${params.format}`;
       document.body.appendChild(link);
@@ -518,10 +495,10 @@ export function useExportPayableAging() {
       return blob;
     },
     onSuccess: () => {
-      success("应付账龄分析已导出");
+      success('应付账龄分析已导出');
     },
     onError: (err: any) => {
-      error(err.message || "导出失败");
+      error(err.message || '导出失败');
     },
   });
 }

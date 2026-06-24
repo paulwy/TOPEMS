@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from 'react';
 import type {
   ColumnDef,
   SortingState,
@@ -6,13 +6,13 @@ import type {
   PaginationState,
   VisibilityState,
   RowData,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 import {
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 
 export interface UseDataTableOptions<TData extends RowData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -66,7 +66,7 @@ export function useDataTable<TData extends RowData>({
         columnVisibility,
       },
     }),
-    [sorting, columnFilters, pagination, columnVisibility],
+    [sorting, columnFilters, pagination, columnVisibility]
   );
 
   return {
@@ -86,39 +86,34 @@ export interface ExportOptions {
   fileName?: string;
 }
 
-export function useExportData<TData extends RowData, TValue>(
-  columns: ColumnDef<TData, TValue>[],
-) {
+export function useExportData<TData extends RowData, TValue>(columns: ColumnDef<TData, TValue>[]) {
   const exportToCSV = useCallback(
-    (data: TData[], fileName: string = "export") => {
+    (data: TData[], fileName: string = 'export') => {
       try {
         const headers = columns.map((col) => (col.header as string) || col.id);
 
         const csvData = [
-          headers.join(","),
+          headers.join(','),
           ...data.map((row) =>
             columns
               .map((col) => {
                 const value = row[col.id as keyof TData];
-                if (typeof value === "string") {
+                if (typeof value === 'string') {
                   return `"${value.replace(/"/g, '""')}"`;
                 }
-                return String(value ?? "");
+                return String(value ?? '');
               })
-              .join(","),
+              .join(',')
           ),
-        ].join("\n");
+        ].join('\n');
 
-        const blob = new Blob(["\ufeff" + csvData], {
-          type: "text/csv;charset=utf-8;",
+        const blob = new Blob(['\ufeff' + csvData], {
+          type: 'text/csv;charset=utf-8;',
         });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.href = url;
-        link.setAttribute(
-          "download",
-          `${fileName}-${new Date().toISOString().split("T")[0]}.csv`,
-        );
+        link.setAttribute('download', `${fileName}-${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -129,36 +124,31 @@ export function useExportData<TData extends RowData, TValue>(
         return { success: false, error };
       }
     },
-    [columns],
+    [columns]
   );
 
   const exportToExcel = useCallback(
-    (data: TData[], fileName: string = "export") => {
+    (data: TData[], fileName: string = 'export') => {
       try {
         const headers = columns.map((col) => (col.header as string) || col.id);
 
         const rows = data.map((row) =>
           columns.map((col) => {
             const value = row[col.id as keyof TData];
-            return typeof value === "string" ? value : JSON.stringify(value);
-          }),
+            return typeof value === 'string' ? value : JSON.stringify(value);
+          })
         );
 
         const worksheetData = [headers, ...rows];
-        const csvContent = worksheetData
-          .map((row) => row.join("\t"))
-          .join("\n");
+        const csvContent = worksheetData.map((row) => row.join('\t')).join('\n');
 
-        const blob = new Blob(["\ufeff" + csvContent], {
-          type: "application/vnd.ms-excel;charset=utf-8;",
+        const blob = new Blob(['\ufeff' + csvContent], {
+          type: 'application/vnd.ms-excel;charset=utf-8;',
         });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.href = url;
-        link.setAttribute(
-          "download",
-          `${fileName}-${new Date().toISOString().split("T")[0]}.xls`,
-        );
+        link.setAttribute('download', `${fileName}-${new Date().toISOString().split('T')[0]}.xls`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -169,7 +159,7 @@ export function useExportData<TData extends RowData, TValue>(
         return { success: false, error };
       }
     },
-    [columns],
+    [columns]
   );
 
   return {

@@ -3,7 +3,7 @@
  * 支持多公司财务报表合并、内部交易抵消
  */
 
-import { apiClient, downloadBlob } from "./client";
+import { apiClient, downloadBlob } from './client';
 import type {
   ConsolidationScope,
   ConsolidationCompany,
@@ -20,9 +20,9 @@ import type {
   EliminationRuleQueryParams,
   InternalTransactionQueryParams,
   ConsolidationReportQueryParams,
-} from "@/types/consolidation";
-import type { ApiResponse, PaginatedResponse } from "./client";
-import config from "../config/runtime";
+} from '@/types/consolidation';
+import type { ApiResponse, PaginatedResponse } from './client';
+import config from '../config/runtime';
 
 // ============================================
 // 一、合并范围管理
@@ -32,16 +32,16 @@ import config from "../config/runtime";
  * 获取合并范围列表
  */
 export const getConsolidationScopes = async (
-  params?: ConsolidationScopeQueryParams,
+  params?: ConsolidationScopeQueryParams
 ): Promise<PaginatedResponse<ConsolidationScope>> => {
-  return apiClient.erp.get("/api/consolidation/scopes", { params });
+  return apiClient.erp.get('/api/consolidation/scopes', { params });
 };
 
 /**
  * 获取合并范围详情
  */
 export const getConsolidationScope = async (
-  scopeId: string,
+  scopeId: string
 ): Promise<ApiResponse<ConsolidationScope>> => {
   return apiClient.erp.get(`/api/consolidation/scopes/${scopeId}`);
 };
@@ -50,9 +50,9 @@ export const getConsolidationScope = async (
  * 创建合并范围
  */
 export const createConsolidationScope = async (
-  data: Partial<ConsolidationScope>,
+  data: Partial<ConsolidationScope>
 ): Promise<ApiResponse<ConsolidationScope>> => {
-  return apiClient.erp.post("/api/consolidation/scopes", data);
+  return apiClient.erp.post('/api/consolidation/scopes', data);
 };
 
 /**
@@ -60,7 +60,7 @@ export const createConsolidationScope = async (
  */
 export const updateConsolidationScope = async (
   scopeId: string,
-  data: Partial<ConsolidationScope>,
+  data: Partial<ConsolidationScope>
 ): Promise<ApiResponse<ConsolidationScope>> => {
   return apiClient.erp.put(`/api/consolidation/scopes/${scopeId}`, data);
 };
@@ -68,9 +68,7 @@ export const updateConsolidationScope = async (
 /**
  * 删除合并范围
  */
-export const deleteConsolidationScope = async (
-  scopeId: string,
-): Promise<ApiResponse<void>> => {
+export const deleteConsolidationScope = async (scopeId: string): Promise<ApiResponse<void>> => {
   return apiClient.erp.delete(`/api/consolidation/scopes/${scopeId}`);
 };
 
@@ -78,7 +76,7 @@ export const deleteConsolidationScope = async (
  * 获取合并范围内的公司列表
  */
 export const getScopeCompanies = async (
-  scopeId: string,
+  scopeId: string
 ): Promise<ApiResponse<ConsolidationCompany[]>> => {
   return apiClient.erp.get(`/api/consolidation/scopes/${scopeId}/companies`);
 };
@@ -87,9 +85,9 @@ export const getScopeCompanies = async (
  * 添加公司到合并范围
  */
 export const addCompanyToScope = async (
-  data: AddCompanyToScopeRequest,
+  data: AddCompanyToScopeRequest
 ): Promise<ApiResponse<ConsolidationCompany>> => {
-  return apiClient.erp.post("/api/consolidation/scopes/companies", data);
+  return apiClient.erp.post('/api/consolidation/scopes/companies', data);
 };
 
 /**
@@ -97,23 +95,16 @@ export const addCompanyToScope = async (
  */
 export const updateScopeCompany = async (
   companyId: string,
-  data: Partial<ConsolidationCompany>,
+  data: Partial<ConsolidationCompany>
 ): Promise<ApiResponse<ConsolidationCompany>> => {
-  return apiClient.erp.put(
-    `/api/consolidation/scopes/companies/${companyId}`,
-    data,
-  );
+  return apiClient.erp.put(`/api/consolidation/scopes/companies/${companyId}`, data);
 };
 
 /**
  * 从合并范围移除公司
  */
-export const removeCompanyFromScope = async (
-  companyId: string,
-): Promise<ApiResponse<void>> => {
-  return apiClient.erp.delete(
-    `/api/consolidation/scopes/companies/${companyId}`,
-  );
+export const removeCompanyFromScope = async (companyId: string): Promise<ApiResponse<void>> => {
+  return apiClient.erp.delete(`/api/consolidation/scopes/companies/${companyId}`);
 };
 
 // ============================================
@@ -124,9 +115,9 @@ export const removeCompanyFromScope = async (
  * 获取抵消规则列表
  */
 export const getEliminationRules = async (
-  params: EliminationRuleQueryParams,
+  params: EliminationRuleQueryParams
 ): Promise<PaginatedResponse<EliminationRule>> => {
-  return apiClient.erp.get("/api/consolidation/elimination-rules", {
+  return apiClient.erp.get('/api/consolidation/elimination-rules', {
     params,
   });
 };
@@ -134,9 +125,7 @@ export const getEliminationRules = async (
 /**
  * 获取抵消规则详情
  */
-export const getEliminationRule = async (
-  ruleId: string,
-): Promise<ApiResponse<EliminationRule>> => {
+export const getEliminationRule = async (ruleId: string): Promise<ApiResponse<EliminationRule>> => {
   return apiClient.erp.get(`/api/consolidation/elimination-rules/${ruleId}`);
 };
 
@@ -144,9 +133,9 @@ export const getEliminationRule = async (
  * 创建抵消规则
  */
 export const createEliminationRule = async (
-  data: Partial<EliminationRule>,
+  data: Partial<EliminationRule>
 ): Promise<ApiResponse<EliminationRule>> => {
-  return apiClient.erp.post("/api/consolidation/elimination-rules", data);
+  return apiClient.erp.post('/api/consolidation/elimination-rules', data);
 };
 
 /**
@@ -154,20 +143,15 @@ export const createEliminationRule = async (
  */
 export const updateEliminationRule = async (
   ruleId: string,
-  data: Partial<EliminationRule>,
+  data: Partial<EliminationRule>
 ): Promise<ApiResponse<EliminationRule>> => {
-  return apiClient.erp.put(
-    `/api/consolidation/elimination-rules/${ruleId}`,
-    data,
-  );
+  return apiClient.erp.put(`/api/consolidation/elimination-rules/${ruleId}`, data);
 };
 
 /**
  * 删除抵消规则
  */
-export const deleteEliminationRule = async (
-  ruleId: string,
-): Promise<ApiResponse<void>> => {
+export const deleteEliminationRule = async (ruleId: string): Promise<ApiResponse<void>> => {
   return apiClient.erp.delete(`/api/consolidation/elimination-rules/${ruleId}`);
 };
 
@@ -175,9 +159,9 @@ export const deleteEliminationRule = async (
  * 获取内部交易列表
  */
 export const getInternalTransactions = async (
-  params?: InternalTransactionQueryParams,
+  params?: InternalTransactionQueryParams
 ): Promise<PaginatedResponse<InternalTransaction>> => {
-  return apiClient.erp.get("/api/consolidation/internal-transactions", {
+  return apiClient.erp.get('/api/consolidation/internal-transactions', {
     params,
   });
 };
@@ -186,11 +170,9 @@ export const getInternalTransactions = async (
  * 获取内部交易详情
  */
 export const getInternalTransaction = async (
-  transactionId: string,
+  transactionId: string
 ): Promise<ApiResponse<InternalTransaction>> => {
-  return apiClient.erp.get(
-    `/api/consolidation/internal-transactions/${transactionId}`,
-  );
+  return apiClient.erp.get(`/api/consolidation/internal-transactions/${transactionId}`);
 };
 
 /**
@@ -206,7 +188,7 @@ export const executeElimination = async (params: {
     total_eliminated: number;
   }>
 > => {
-  return apiClient.erp.post("/api/consolidation/execute-elimination", params);
+  return apiClient.erp.post('/api/consolidation/execute-elimination', params);
 };
 
 // ============================================
@@ -217,16 +199,16 @@ export const executeElimination = async (params: {
  * 获取合并报表列表
  */
 export const getConsolidationReports = async (
-  params?: ConsolidationReportQueryParams,
+  params?: ConsolidationReportQueryParams
 ): Promise<PaginatedResponse<ConsolidationReport>> => {
-  return apiClient.erp.get("/api/consolidation/reports", { params });
+  return apiClient.erp.get('/api/consolidation/reports', { params });
 };
 
 /**
  * 获取合并报表详情
  */
 export const getConsolidationReport = async (
-  reportId: string,
+  reportId: string
 ): Promise<ApiResponse<ConsolidationReport>> => {
   return apiClient.erp.get(`/api/consolidation/reports/${reportId}`);
 };
@@ -235,16 +217,16 @@ export const getConsolidationReport = async (
  * 生成合并报表
  */
 export const generateConsolidationReport = async (
-  data: GenerateConsolidationReportRequest,
+  data: GenerateConsolidationReportRequest
 ): Promise<ApiResponse<ConsolidationReportGenerateResult>> => {
-  return apiClient.erp.post("/api/consolidation/reports/generate", data);
+  return apiClient.erp.post('/api/consolidation/reports/generate', data);
 };
 
 /**
  * 获取合并报表行项目
  */
 export const getConsolidationReportLines = async (
-  reportId: string,
+  reportId: string
 ): Promise<ApiResponse<ConsolidationReportLine[]>> => {
   return apiClient.erp.get(`/api/consolidation/reports/${reportId}/lines`);
 };
@@ -253,7 +235,7 @@ export const getConsolidationReportLines = async (
  * 审批合并报表
  */
 export const approveConsolidationReport = async (
-  reportId: string,
+  reportId: string
 ): Promise<ApiResponse<ConsolidationReport>> => {
   return apiClient.erp.post(`/api/consolidation/reports/${reportId}/approve`);
 };
@@ -262,7 +244,7 @@ export const approveConsolidationReport = async (
  * 发布合并报表
  */
 export const publishConsolidationReport = async (
-  reportId: string,
+  reportId: string
 ): Promise<ApiResponse<ConsolidationReport>> => {
   return apiClient.erp.post(`/api/consolidation/reports/${reportId}/publish`);
 };
@@ -270,9 +252,7 @@ export const publishConsolidationReport = async (
 /**
  * 删除合并报表
  */
-export const deleteConsolidationReport = async (
-  reportId: string,
-): Promise<ApiResponse<void>> => {
+export const deleteConsolidationReport = async (reportId: string): Promise<ApiResponse<void>> => {
   return apiClient.erp.delete(`/api/consolidation/reports/${reportId}`);
 };
 
@@ -288,7 +268,7 @@ export const getCompanyRelations = async (params?: {
   relation_type?: string;
   keyword?: string;
 }): Promise<ApiResponse<CompanyRelation[]>> => {
-  return apiClient.erp.get("/api/consolidation/company-relations", {
+  return apiClient.erp.get('/api/consolidation/company-relations', {
     params,
   });
 };
@@ -297,9 +277,9 @@ export const getCompanyRelations = async (params?: {
  * 创建公司关系
  */
 export const createCompanyRelation = async (
-  data: Partial<CompanyRelation>,
+  data: Partial<CompanyRelation>
 ): Promise<ApiResponse<CompanyRelation>> => {
-  return apiClient.erp.post("/api/consolidation/company-relations", data);
+  return apiClient.erp.post('/api/consolidation/company-relations', data);
 };
 
 /**
@@ -307,23 +287,16 @@ export const createCompanyRelation = async (
  */
 export const updateCompanyRelation = async (
   relationId: string,
-  data: Partial<CompanyRelation>,
+  data: Partial<CompanyRelation>
 ): Promise<ApiResponse<CompanyRelation>> => {
-  return apiClient.erp.put(
-    `/api/consolidation/company-relations/${relationId}`,
-    data,
-  );
+  return apiClient.erp.put(`/api/consolidation/company-relations/${relationId}`, data);
 };
 
 /**
  * 删除公司关系
  */
-export const deleteCompanyRelation = async (
-  relationId: string,
-): Promise<ApiResponse<void>> => {
-  return apiClient.erp.delete(
-    `/api/consolidation/company-relations/${relationId}`,
-  );
+export const deleteCompanyRelation = async (relationId: string): Promise<ApiResponse<void>> => {
+  return apiClient.erp.delete(`/api/consolidation/company-relations/${relationId}`);
 };
 
 /**
@@ -331,12 +304,11 @@ export const deleteCompanyRelation = async (
  */
 export const getCompanyFinancialData = async (
   companyId: string,
-  period: string,
+  period: string
 ): Promise<ApiResponse<CompanyFinancialData>> => {
-  return apiClient.erp.get(
-    `/api/consolidation/companies/${companyId}/financial-data`,
-    { params: { period } },
-  );
+  return apiClient.erp.get(`/api/consolidation/companies/${companyId}/financial-data`, {
+    params: { period },
+  });
 };
 
 /**
@@ -351,7 +323,7 @@ export const getCompanyTree = async (): Promise<
     children: any[];
   }>
 > => {
-  return apiClient.erp.get("/api/consolidation/company-tree");
+  return apiClient.erp.get('/api/consolidation/company-tree');
 };
 
 // ============================================
@@ -363,15 +335,12 @@ export const getCompanyTree = async (): Promise<
  */
 export const exportConsolidationReport = async (
   reportId: string,
-  format: "excel" | "pdf" = "excel",
+  format: 'excel' | 'pdf' = 'excel'
 ): Promise<Blob> => {
-  const baseURL =
-    (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-  return downloadBlob(
-    baseURL,
-    `/api/consolidation/reports/${reportId}/export`,
-    { params: { format } },
-  );
+  const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+  return downloadBlob(baseURL, `/api/consolidation/reports/${reportId}/export`, {
+    params: { format },
+  });
 };
 
 /**
@@ -379,13 +348,12 @@ export const exportConsolidationReport = async (
  */
 export const exportEliminationWorkSheet = async (
   scopeId: string,
-  period: string,
+  period: string
 ): Promise<Blob> => {
-  const baseURL =
-    (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+  const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
   return downloadBlob(
     baseURL,
     `/api/consolidation/scopes/${scopeId}/elimination-worksheet/export`,
-    { params: { period } },
+    { params: { period } }
   );
 };

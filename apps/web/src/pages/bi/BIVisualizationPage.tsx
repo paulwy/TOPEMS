@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -23,22 +23,32 @@ import {
   Box as BoxIcon,
   Save,
   Play,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, TextField, Box, Skeleton, Typography, IconButton, FormControl, InputLabel, Select, MenuItem, Tooltip, Divider,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/EmptyState";
+  RefreshCw,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  TextField,
+  Box,
+  Skeleton,
+  Typography,
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+  Divider,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/EmptyState';
+import { DashboardTemplate, type StatCard } from '@/components/templates';
+import { Grid } from '@/components/Grid';
 
 interface VisualizationComponent {
   id: string;
-  type:
-    | "bar"
-    | "line"
-    | "pie"
-    | "gauge"
-    | "table"
-    | "text"
-    | "image"
-    | "metric";
+  type: 'bar' | 'line' | 'pie' | 'gauge' | 'table' | 'text' | 'image' | 'metric';
   name: string;
   icon: React.ReactNode;
   description: string;
@@ -56,126 +66,135 @@ interface CanvasComponent {
 
 const componentList: VisualizationComponent[] = [
   {
-    id: "bar",
-    type: "bar",
-    name: "柱状图",
+    id: 'bar',
+    type: 'bar',
+    name: '柱状图',
     icon: <BarChart3 size={20} />,
-    description: "展示分类数据的对比",
+    description: '展示分类数据的对比',
   },
   {
-    id: "line",
-    type: "line",
-    name: "折线图",
+    id: 'line',
+    type: 'line',
+    name: '折线图',
     icon: <LineChart size={20} />,
-    description: "展示数据趋势变化",
+    description: '展示数据趋势变化',
   },
   {
-    id: "pie",
-    type: "pie",
-    name: "饼图",
+    id: 'pie',
+    type: 'pie',
+    name: '饼图',
     icon: <PieChart size={20} />,
-    description: "展示数据占比分布",
+    description: '展示数据占比分布',
   },
   {
-    id: "gauge",
-    type: "gauge",
-    name: "仪表盘",
+    id: 'gauge',
+    type: 'gauge',
+    name: '仪表盘',
     icon: <TrendingUp size={20} />,
-    description: "展示指标完成进度",
+    description: '展示指标完成进度',
   },
   {
-    id: "table",
-    type: "table",
-    name: "数据表格",
+    id: 'table',
+    type: 'table',
+    name: '数据表格',
     icon: <Table size={20} />,
-    description: "展示结构化数据",
+    description: '展示结构化数据',
   },
   {
-    id: "text",
-    type: "text",
-    name: "文本框",
+    id: 'text',
+    type: 'text',
+    name: '文本框',
     icon: <Type size={20} />,
-    description: "添加标题或说明文字",
+    description: '添加标题或说明文字',
   },
   {
-    id: "image",
-    type: "image",
-    name: "图片",
+    id: 'image',
+    type: 'image',
+    name: '图片',
     icon: <Image size={20} />,
-    description: "添加图片元素",
+    description: '添加图片元素',
   },
   {
-    id: "metric",
-    type: "metric",
-    name: "指标卡",
+    id: 'metric',
+    type: 'metric',
+    name: '指标卡',
     icon: <TrendingDown size={20} />,
-    description: "展示单个关键指标",
+    description: '展示单个关键指标',
   },
 ];
 
 const mockCanvasComponents: CanvasComponent[] = [
   {
-    id: "comp-1",
-    type: "bar",
+    id: 'comp-1',
+    type: 'bar',
     x: 20,
     y: 20,
     width: 300,
     height: 200,
-    config: { title: "月度销售额", dataKey: "sales" },
+    config: { title: '月度销售额', dataKey: 'sales' },
   },
   {
-    id: "comp-2",
-    type: "line",
+    id: 'comp-2',
+    type: 'line',
     x: 340,
     y: 20,
     width: 300,
     height: 200,
-    config: { title: "用户增长趋势", dataKey: "users" },
+    config: { title: '用户增长趋势', dataKey: 'users' },
   },
   {
-    id: "comp-3",
-    type: "metric",
+    id: 'comp-3',
+    type: 'metric',
     x: 660,
     y: 20,
     width: 150,
     height: 100,
-    config: { title: "今日订单", value: 1256, unit: "单" },
+    config: { title: '今日订单', value: 1256, unit: '单' },
   },
 ];
 
 const BIVisualizationPage = () => {
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>(
-    [],
-  );
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(
-    null,
-  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>([]);
+  const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setCanvasComponents(mockCanvasComponents);
-      setLoading(false);
-    }, 500);
+    loadData();
   }, []);
 
+  const loadData = async (showRefreshing = false) => {
+    if (showRefreshing) setIsRefreshing(true);
+    else setLoading(true);
+    try {
+      setTimeout(() => {
+        setCanvasComponents(mockCanvasComponents);
+        setLoading(false);
+        setIsRefreshing(false);
+      }, 500);
+    } catch (error) {
+      console.error('Failed to load visualization data:', error);
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    loadData(true);
+  };
+
   const filteredComponents = componentList.filter((comp) => {
-    const matchesSearch = comp.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "all" || comp.type === filterType;
+    const matchesSearch = comp.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || comp.type === filterType;
     return matchesSearch && matchesType;
   });
 
-  const handleDragStart = (
-    e: React.DragEvent,
-    component: VisualizationComponent,
-  ) => {
-    e.dataTransfer.setData("componentType", component.type);
+  const handleDragStart = (e: React.DragEvent, component: VisualizationComponent) => {
+    e.dataTransfer.setData('componentType', component.type);
     setIsDragging(true);
   };
 
@@ -185,7 +204,7 @@ const BIVisualizationPage = () => {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const componentType = e.dataTransfer.getData("componentType");
+    const componentType = e.dataTransfer.getData('componentType');
     if (componentType) {
       const newComponent: CanvasComponent = {
         id: `comp-${Date.now()}`,
@@ -194,7 +213,7 @@ const BIVisualizationPage = () => {
         y: 50,
         width: 200,
         height: 150,
-        config: { title: "新组件" },
+        config: { title: '新组件' },
       };
       setCanvasComponents([...canvasComponents, newComponent]);
     }
@@ -213,53 +232,105 @@ const BIVisualizationPage = () => {
     return comp?.icon || <BoxIcon size={20} />;
   };
 
+  // 构建统计数据卡片
+  const statsCards: StatCard[] = [
+    {
+      id: 'total-components',
+      title: '组件总数',
+      value: canvasComponents.length,
+      icon: <BoxIcon size={24} />,
+      color: 'primary',
+    },
+    {
+      id: 'component-types',
+      title: '组件类型',
+      value: new Set(canvasComponents.map((c) => c.type)).size,
+      icon: <Settings size={24} />,
+      color: 'info',
+    },
+  ];
+
   if (loading) {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          bgcolor: "grey.50",
-          p: 3,
-          display: "flex",
-          gap: 3,
-        }}
+      <DashboardTemplate
+        title='可视化编辑器'
+        subtitle='拖拽组件创建可视化报表'
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: 'BI' },
+          { label: '可视化编辑' },
+        ]}
+        loading={true}
       >
-        <Box sx={{ width: 280 }}>
-          <Skeleton variant="rounded" width="100%" height={400} />
+        <Box
+          sx={{
+            minHeight: '100vh',
+            bgcolor: 'grey.50',
+            p: 3,
+            display: 'flex',
+            gap: 3,
+          }}
+        >
+          <Box sx={{ width: 280 }}>
+            <Skeleton
+              variant='rounded'
+              width='100%'
+              height={400}
+            />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Skeleton
+              variant='rounded'
+              width='100%'
+              height={600}
+            />
+          </Box>
+          <Box sx={{ width: 300 }}>
+            <Skeleton
+              variant='rounded'
+              width='100%'
+              height={400}
+            />
+          </Box>
         </Box>
-        <Box sx={{ flex: 1 }}>
-          <Skeleton variant="rounded" width="100%" height={600} />
-        </Box>
-        <Box sx={{ width: 300 }}>
-          <Skeleton variant="rounded" width="100%" height={400} />
-        </Box>
-      </Box>
+      </DashboardTemplate>
     );
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", p: 3 }}>
-      <Box sx={{ display: "flex", gap: 3, height: "calc(100vh - 48px)" }}>
-        <Card sx={{ width: 280, display: "flex", flexDirection: "column" }}>
+    <DashboardTemplate
+      title='可视化编辑器'
+      subtitle='拖拽组件创建可视化报表'
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: 'BI' },
+        { label: '可视化编辑' },
+      ]}
+      stats={statsCards}
+      loading={loading}
+      onRefresh={handleRefresh}
+    >
+      <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>
+        <Card sx={{ width: 280, display: 'flex', flexDirection: 'column' }}>
           <CardHeader
-            title="组件列表"
+            title='组件列表'
             avatar={<Settings size={20} />}
             action={
-              <Box sx={{ display: "flex", gap: 0.5, pr: 1 }}>
-                <Tooltip title="网格视图">
+              <Box sx={{ display: 'flex', gap: 0.5, pr: 1 }}>
+                <Tooltip title='网格视图'>
                   <IconButton
-                    size="small"
-                    onClick={() => setViewMode("grid")}
-                    color={viewMode === "grid" ? "primary" : "default"}
+                    size='small'
+                    onClick={() => setViewMode('grid')}
+                    color={viewMode === 'grid' ? 'primary' : 'default'}
                   >
                     <Grid3X3 size={16} />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="列表视图">
+                <Tooltip title='列表视图'>
                   <IconButton
-                    size="small"
-                    onClick={() => setViewMode("list")}
-                    color={viewMode === "list" ? "primary" : "default"}
+                    size='small'
+                    onClick={() => setViewMode('list')}
+                    color={viewMode === 'list' ? 'primary' : 'default'}
                   >
                     <List size={16} />
                   </IconButton>
@@ -267,57 +338,64 @@ const BIVisualizationPage = () => {
               </Box>
             }
           />
-          <CardContent sx={{ flex: 1, overflow: "auto" }}>
+          <CardContent sx={{ flex: 1, overflow: 'auto' }}>
             <TextField
-              placeholder="搜索组件..."
+              placeholder='搜索组件...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              size="small"
+              size='small'
               fullWidth
               sx={{ mb: 2 }}
               slotProps={{
                 input: {
                   startAdornment: (
-                    <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />
+                    <Search
+                      size={16}
+                      color='#94a3b8'
+                      sx={{ mr: 1 }}
+                    />
                   ),
                 },
               }}
             />
-            <FormControl size="small" fullWidth sx={{ mb: 2 }}>
+            <FormControl
+              size='small'
+              fullWidth
+              sx={{ mb: 2 }}
+            >
               <InputLabel>组件类型</InputLabel>
               <Select
                 value={filterType}
-                label="组件类型"
+                label='组件类型'
                 onChange={(e) => setFilterType(e.target.value)}
               >
-                <MenuItem value="all">全部类型</MenuItem>
-                <MenuItem value="bar">柱状图</MenuItem>
-                <MenuItem value="line">折线图</MenuItem>
-                <MenuItem value="pie">饼图</MenuItem>
-                <MenuItem value="gauge">仪表盘</MenuItem>
-                <MenuItem value="table">表格</MenuItem>
-                <MenuItem value="text">文本</MenuItem>
-                <MenuItem value="metric">指标卡</MenuItem>
+                <MenuItem value='all'>全部类型</MenuItem>
+                <MenuItem value='bar'>柱状图</MenuItem>
+                <MenuItem value='line'>折线图</MenuItem>
+                <MenuItem value='pie'>饼图</MenuItem>
+                <MenuItem value='gauge'>仪表盘</MenuItem>
+                <MenuItem value='table'>表格</MenuItem>
+                <MenuItem value='text'>文本</MenuItem>
+                <MenuItem value='metric'>指标卡</MenuItem>
               </Select>
             </FormControl>
 
             <Divider sx={{ my: 2 }} />
 
             <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 1, display: "block" }}
+              variant='caption'
+              color='text.secondary'
+              sx={{ mb: 1, display: 'block' }}
             >
               拖拽组件到画布
             </Typography>
 
             <Box
               sx={{
-                display: viewMode === "grid" ? "grid" : "flex",
-                flexDirection: "column",
+                display: viewMode === 'grid' ? 'grid' : 'flex',
+                flexDirection: 'column',
                 gap: 1,
-                gridTemplateColumns:
-                  viewMode === "grid" ? "repeat(2, 1fr)" : undefined,
+                gridTemplateColumns: viewMode === 'grid' ? 'repeat(2, 1fr)' : undefined,
               }}
             >
               {filteredComponents.map((comp) => (
@@ -328,40 +406,42 @@ const BIVisualizationPage = () => {
                   onDragEnd={handleDragEnd}
                   sx={{
                     p: 1.5,
-                    border: "1px solid",
-                    borderColor: "divider",
+                    border: '1px solid',
+                    borderColor: 'divider',
                     borderRadius: 1,
-                    cursor: "grab",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      borderColor: "primary.main",
-                      bgcolor: "primary.50",
+                    cursor: 'grab',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      bgcolor: 'primary.50',
                     },
-                    "&:active": {
-                      cursor: "grabbing",
+                    '&:active': {
+                      cursor: 'grabbing',
                     },
                   }}
                 >
-                  {viewMode === "list" ? (
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                    >
-                      <Box sx={{ color: "primary.main" }}>{comp.icon}</Box>
+                  {viewMode === 'list' ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box sx={{ color: 'primary.main' }}>{comp.icon}</Box>
                       <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
                           {comp.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           {comp.description}
                         </Typography>
                       </Box>
                     </Box>
                   ) : (
-                    <Box sx={{ textAlign: "center" }}>
-                      <Box sx={{ color: "primary.main", mb: 0.5 }}>
-                        {comp.icon}
-                      </Box>
-                      <Typography variant="caption">{comp.name}</Typography>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Box sx={{ color: 'primary.main', mb: 0.5 }}>{comp.icon}</Box>
+                      <Typography variant='caption'>{comp.name}</Typography>
                     </Box>
                   )}
                 </Box>
@@ -370,22 +450,22 @@ const BIVisualizationPage = () => {
           </CardContent>
         </Card>
 
-        <Card sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <CardHeader
-            title="画布区域"
-            subheader="拖拽组件到此处进行可视化编辑"
+            title='画布区域'
+            subheader='拖拽组件到此处进行可视化编辑'
             action={
-              <Box sx={{ display: "flex", gap: 1, pr: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1, pr: 2 }}>
                 <Button
-                  variant="outlined"
-                  size="small"
+                  variant='outlined'
+                  size='small'
                   startIcon={<Play size={16} />}
                 >
                   预览
                 </Button>
                 <Button
-                  variant="contained"
-                  size="small"
+                  variant='contained'
+                  size='small'
                   startIcon={<Save size={16} />}
                 >
                   保存
@@ -396,11 +476,11 @@ const BIVisualizationPage = () => {
           <CardContent
             sx={{
               flex: 1,
-              bgcolor: "white",
+              bgcolor: 'white',
               borderRadius: 1,
               m: 1,
-              overflow: "auto",
-              position: "relative",
+              overflow: 'auto',
+              position: 'relative',
               minHeight: 400,
             }}
             onDragOver={(e) => e.preventDefault()}
@@ -409,72 +489,68 @@ const BIVisualizationPage = () => {
             {canvasComponents.length === 0 ? (
               <Box
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   inset: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "text.secondary",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'text.secondary',
                 }}
               >
-                <MousePointer size={48} sx={{ mb: 2, opacity: 0.5 }} />
-                <Typography variant="body1">将组件拖拽到此处</Typography>
-                <Typography variant="body2" color="text.secondary">
+                <MousePointer
+                  size={48}
+                  sx={{ mb: 2, opacity: 0.5 }}
+                />
+                <Typography variant='body1'>将组件拖拽到此处</Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   从左侧组件列表拖拽组件到画布上进行编辑
                 </Typography>
               </Box>
             ) : (
-              <Box sx={{ position: "relative", minHeight: "100%" }}>
+              <Box sx={{ position: 'relative', minHeight: '100%' }}>
                 {canvasComponents.map((comp) => (
                   <Box
                     key={comp.id}
                     onClick={() => setSelectedComponent(comp.id)}
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       left: comp.x,
                       top: comp.y,
                       width: comp.width,
                       height: comp.height,
-                      border: "2px solid",
-                      borderColor:
-                        selectedComponent === comp.id
-                          ? "primary.main"
-                          : "transparent",
+                      border: '2px solid',
+                      borderColor: selectedComponent === comp.id ? 'primary.main' : 'transparent',
                       borderRadius: 1,
-                      bgcolor: "grey.50",
-                      cursor: "move",
-                      transition: "border-color 0.2s",
-                      "&:hover": {
-                        borderColor:
-                          selectedComponent === comp.id
-                            ? "primary.main"
-                            : "grey.300",
+                      bgcolor: 'grey.50',
+                      cursor: 'move',
+                      transition: 'border-color 0.2s',
+                      '&:hover': {
+                        borderColor: selectedComponent === comp.id ? 'primary.main' : 'grey.300',
                       },
                     }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         p: 1,
-                        borderBottom: "1px solid",
-                        borderColor: "divider",
-                        bgcolor: "background.paper",
-                        borderRadius: "2px 2px 0 0",
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper',
+                        borderRadius: '2px 2px 0 0',
                       }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         {getComponentIcon(comp.type)}
-                        <Typography variant="caption">
-                          {comp.config.title || comp.type}
-                        </Typography>
+                        <Typography variant='caption'>{comp.config.title || comp.type}</Typography>
                       </Box>
                       <IconButton
-                        size="small"
+                        size='small'
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteComponent(comp.id);
@@ -486,22 +562,24 @@ const BIVisualizationPage = () => {
                     <Box
                       sx={{
                         p: 2,
-                        height: "calc(100% - 40px)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        height: 'calc(100% - 40px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Typography variant="caption" color="text.secondary">
-                        {comp.type === "bar" && "柱状图"}
-                        {comp.type === "line" && "折线图"}
-                        {comp.type === "pie" && "饼图"}
-                        {comp.type === "gauge" && "仪表盘"}
-                        {comp.type === "table" && "数据表格"}
-                        {comp.type === "text" && "文本内容"}
-                        {comp.type === "image" && "图片"}
-                        {comp.type === "metric" &&
-                          `数值: ${comp.config.value || 0}`}
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        {comp.type === 'bar' && '柱状图'}
+                        {comp.type === 'line' && '折线图'}
+                        {comp.type === 'pie' && '饼图'}
+                        {comp.type === 'gauge' && '仪表盘'}
+                        {comp.type === 'table' && '数据表格'}
+                        {comp.type === 'text' && '文本内容'}
+                        {comp.type === 'image' && '图片'}
+                        {comp.type === 'metric' && `数值: ${comp.config.value || 0}`}
                       </Typography>
                     </Box>
                   </Box>
@@ -511,32 +589,35 @@ const BIVisualizationPage = () => {
           </CardContent>
         </Card>
 
-        <Card sx={{ width: 300, display: "flex", flexDirection: "column" }}>
-          <CardHeader title="属性配置" />
-          <CardContent sx={{ flex: 1, overflow: "auto" }}>
+        <Card sx={{ width: 300, display: 'flex', flexDirection: 'column' }}>
+          <CardHeader title='属性配置' />
+          <CardContent sx={{ flex: 1, overflow: 'auto' }}>
             {selectedComponent ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {(() => {
-                  const comp = canvasComponents.find(
-                    (c) => c.id === selectedComponent,
-                  );
+                  const comp = canvasComponents.find((c) => c.id === selectedComponent);
                   if (!comp) return null;
                   return (
                     <>
                       <Box>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           组件类型
                         </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {componentList.find((c) => c.type === comp.type)
-                            ?.name || comp.type}
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {componentList.find((c) => c.type === comp.type)?.name || comp.type}
                         </Typography>
                       </Box>
                       <TextField
-                        label="标题"
-                        size="small"
+                        label='标题'
+                        size='small'
                         fullWidth
-                        value={comp.config.title || ""}
+                        value={comp.config.title || ''}
                         onChange={(e) => {
                           setCanvasComponents(
                             canvasComponents.map((c) =>
@@ -548,84 +629,84 @@ const BIVisualizationPage = () => {
                                       title: e.target.value,
                                     },
                                   }
-                                : c,
-                            ),
+                                : c
+                            )
                           );
                         }}
                       />
                       <Divider />
                       <Box>
                         <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ mb: 1, display: "block" }}
+                          variant='caption'
+                          color='text.secondary'
+                          sx={{ mb: 1, display: 'block' }}
                         >
                           位置与尺寸
                         </Typography>
                         <Box
                           sx={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
                             gap: 1,
                           }}
                         >
                           <TextField
-                            label="X"
-                            size="small"
-                            type="number"
+                            label='X'
+                            size='small'
+                            type='number'
                             value={comp.x}
                             onChange={(e) => {
                               setCanvasComponents(
                                 canvasComponents.map((c) =>
                                   c.id === selectedComponent
                                     ? { ...c, x: Number(e.target.value) }
-                                    : c,
-                                ),
+                                    : c
+                                )
                               );
                             }}
                           />
                           <TextField
-                            label="Y"
-                            size="small"
-                            type="number"
+                            label='Y'
+                            size='small'
+                            type='number'
                             value={comp.y}
                             onChange={(e) => {
                               setCanvasComponents(
                                 canvasComponents.map((c) =>
                                   c.id === selectedComponent
                                     ? { ...c, y: Number(e.target.value) }
-                                    : c,
-                                ),
+                                    : c
+                                )
                               );
                             }}
                           />
                           <TextField
-                            label="宽度"
-                            size="small"
-                            type="number"
+                            label='宽度'
+                            size='small'
+                            type='number'
                             value={comp.width}
                             onChange={(e) => {
                               setCanvasComponents(
                                 canvasComponents.map((c) =>
                                   c.id === selectedComponent
                                     ? { ...c, width: Number(e.target.value) }
-                                    : c,
-                                ),
+                                    : c
+                                )
                               );
                             }}
                           />
                           <TextField
-                            label="高度"
-                            size="small"
-                            type="number"
+                            label='高度'
+                            size='small'
+                            type='number'
                             value={comp.height}
                             onChange={(e) => {
                               setCanvasComponents(
                                 canvasComponents.map((c) =>
                                   c.id === selectedComponent
                                     ? { ...c, height: Number(e.target.value) }
-                                    : c,
-                                ),
+                                    : c
+                                )
                               );
                             }}
                           />
@@ -638,22 +719,25 @@ const BIVisualizationPage = () => {
             ) : (
               <Box
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                  color: "text.secondary",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: 'text.secondary',
                 }}
               >
-                <Settings size={32} sx={{ mb: 1, opacity: 0.5 }} />
-                <Typography variant="body2">选择组件以编辑属性</Typography>
+                <Settings
+                  size={32}
+                  sx={{ mb: 1, opacity: 0.5 }}
+                />
+                <Typography variant='body2'>选择组件以编辑属性</Typography>
               </Box>
             )}
           </CardContent>
         </Card>
       </Box>
-    </Box>
+    </DashboardTemplate>
   );
 };
 

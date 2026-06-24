@@ -1,12 +1,12 @@
 // EHS Risk Calculation Utilities
 
-export type SeverityValue = "high" | "medium" | "low";
-export type LikelihoodValue = "high" | "medium" | "low";
-export type ExposureValue = "high" | "medium" | "low";
+export type SeverityValue = 'high' | 'medium' | 'low';
+export type LikelihoodValue = 'high' | 'medium' | 'low';
+export type ExposureValue = 'high' | 'medium' | 'low';
 
 export interface RiskCalculationResult {
   score: number;
-  level: "高" | "中" | "低";
+  level: '高' | '中' | '低';
   color: string;
   bgColor: string;
   description: string;
@@ -37,7 +37,7 @@ const exposureScores: Record<ExposureValue, number> = {
  */
 export function calculateRiskLevel(
   severity: SeverityValue | string,
-  likelihood: LikelihoodValue | string,
+  likelihood: LikelihoodValue | string
 ): RiskCalculationResult {
   const s = severityScores[severity as SeverityValue] || 2;
   const l = likelihoodScores[likelihood as LikelihoodValue] || 2;
@@ -46,29 +46,29 @@ export function calculateRiskLevel(
   if (score >= 6) {
     return {
       score,
-      level: "高",
-      color: "text-red-600",
-      bgColor: "bg-red-100",
-      description: "高风险：需要立即采取控制措施",
+      level: '高',
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      description: '高风险：需要立即采取控制措施',
     };
   }
 
   if (score >= 3) {
     return {
       score,
-      level: "中",
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-      description: "中风险：需要制定控制计划",
+      level: '中',
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-100',
+      description: '中风险：需要制定控制计划',
     };
   }
 
   return {
     score,
-    level: "低",
-    color: "text-green-600",
-    bgColor: "bg-green-100",
-    description: "低风险：可以接受，定期监控",
+    level: '低',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    description: '低风险：可以接受，定期监控',
   };
 }
 
@@ -79,7 +79,7 @@ export function calculateRiskLevel(
 export function calculateComprehensiveRisk(
   severity: SeverityValue | string,
   likelihood: LikelihoodValue | string,
-  exposure: ExposureValue | string,
+  exposure: ExposureValue | string
 ): RiskCalculationResult & {
   exposureScore: number;
   severityScore: number;
@@ -96,10 +96,10 @@ export function calculateComprehensiveRisk(
   if (normalizedScore >= 12) {
     return {
       score: normalizedScore,
-      level: "高",
-      color: "text-red-600",
-      bgColor: "bg-red-100",
-      description: "高风险：需要立即采取控制措施并上报管理层",
+      level: '高',
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      description: '高风险：需要立即采取控制措施并上报管理层',
       exposureScore: e,
       severityScore: s,
       likelihoodScore: l,
@@ -109,10 +109,10 @@ export function calculateComprehensiveRisk(
   if (normalizedScore >= 6) {
     return {
       score: normalizedScore,
-      level: "中",
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-      description: "中风险：需要制定控制计划并定期评估",
+      level: '中',
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-100',
+      description: '中风险：需要制定控制计划并定期评估',
       exposureScore: e,
       severityScore: s,
       likelihoodScore: l,
@@ -121,10 +121,10 @@ export function calculateComprehensiveRisk(
 
   return {
     score: normalizedScore,
-    level: "低",
-    color: "text-green-600",
-    bgColor: "bg-green-100",
-    description: "低风险：可以接受，保持现有控制措施",
+    level: '低',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    description: '低风险：可以接受，保持现有控制措施',
     exposureScore: e,
     severityScore: s,
     likelihoodScore: l,
@@ -136,14 +136,14 @@ export function calculateComprehensiveRisk(
  */
 export function getRiskLevelColor(level: string): string {
   const colorMap: Record<string, string> = {
-    high: "bg-red-100 text-red-700",
-    高: "bg-red-100 text-red-700",
-    medium: "bg-yellow-100 text-yellow-700",
-    中: "bg-yellow-100 text-yellow-700",
-    low: "bg-green-100 text-green-700",
-    低: "bg-green-100 text-green-700",
+    high: 'bg-red-100 text-red-700',
+    高: 'bg-red-100 text-red-700',
+    medium: 'bg-yellow-100 text-yellow-700',
+    中: 'bg-yellow-100 text-yellow-700',
+    low: 'bg-green-100 text-green-700',
+    低: 'bg-green-100 text-green-700',
   };
-  return colorMap[level] || "bg-gray-100 text-gray-700";
+  return colorMap[level] || 'bg-gray-100 text-gray-700';
 }
 
 /**
@@ -151,9 +151,9 @@ export function getRiskLevelColor(level: string): string {
  */
 export function getSeverityLabel(severity: string): string {
   const labelMap: Record<string, string> = {
-    high: "高",
-    medium: "中",
-    low: "低",
+    high: '高',
+    medium: '中',
+    low: '低',
   };
   return labelMap[severity] || severity;
 }
@@ -163,9 +163,9 @@ export function getSeverityLabel(severity: string): string {
  */
 export function getLikelihoodLabel(likelihood: string): string {
   const labelMap: Record<string, string> = {
-    high: "高",
-    medium: "中",
-    low: "低",
+    high: '高',
+    medium: '中',
+    low: '低',
   };
   return labelMap[likelihood] || likelihood;
 }
@@ -175,9 +175,9 @@ export function getLikelihoodLabel(likelihood: string): string {
  */
 export function getExposureLabel(exposure: string): string {
   const labelMap: Record<string, string> = {
-    high: "高",
-    medium: "中",
-    low: "低",
+    high: '高',
+    medium: '中',
+    low: '低',
   };
   return labelMap[exposure] || exposure;
 }
@@ -188,82 +188,82 @@ export function getExposureLabel(exposure: string): string {
 export const riskMatrixData = [
   // High severity
   {
-    severity: "high",
-    likelihood: "high",
+    severity: 'high',
+    likelihood: 'high',
     score: 9,
-    level: "高",
-    color: "#ef4444",
+    level: '高',
+    color: '#ef4444',
   },
   {
-    severity: "high",
-    likelihood: "medium",
+    severity: 'high',
+    likelihood: 'medium',
     score: 6,
-    level: "高",
-    color: "#ef4444",
+    level: '高',
+    color: '#ef4444',
   },
   {
-    severity: "high",
-    likelihood: "low",
+    severity: 'high',
+    likelihood: 'low',
     score: 3,
-    level: "中",
-    color: "#f59e0b",
+    level: '中',
+    color: '#f59e0b',
   },
   // Medium severity
   {
-    severity: "medium",
-    likelihood: "high",
+    severity: 'medium',
+    likelihood: 'high',
     score: 6,
-    level: "高",
-    color: "#ef4444",
+    level: '高',
+    color: '#ef4444',
   },
   {
-    severity: "medium",
-    likelihood: "medium",
+    severity: 'medium',
+    likelihood: 'medium',
     score: 4,
-    level: "中",
-    color: "#f59e0b",
+    level: '中',
+    color: '#f59e0b',
   },
   {
-    severity: "medium",
-    likelihood: "low",
+    severity: 'medium',
+    likelihood: 'low',
     score: 2,
-    level: "低",
-    color: "#10b981",
+    level: '低',
+    color: '#10b981',
   },
   // Low severity
   {
-    severity: "low",
-    likelihood: "high",
+    severity: 'low',
+    likelihood: 'high',
     score: 3,
-    level: "中",
-    color: "#f59e0b",
+    level: '中',
+    color: '#f59e0b',
   },
   {
-    severity: "low",
-    likelihood: "medium",
+    severity: 'low',
+    likelihood: 'medium',
     score: 2,
-    level: "低",
-    color: "#10b981",
+    level: '低',
+    color: '#10b981',
   },
   {
-    severity: "low",
-    likelihood: "low",
+    severity: 'low',
+    likelihood: 'low',
     score: 1,
-    level: "低",
-    color: "#10b981",
+    level: '低',
+    color: '#10b981',
   },
 ];
 
 /**
  * Control measure effectiveness rating
  */
-export type EffectivenessLevel = "high" | "medium" | "low";
+export type EffectivenessLevel = 'high' | 'medium' | 'low';
 
 export function getEffectivenessLabel(effectiveness: string): string {
   const labelMap: Record<string, string> = {
-    high: "高效",
-    medium: "中等",
-    low: "低效",
+    high: '高效',
+    medium: '中等',
+    low: '低效',
   };
   return labelMap[effectiveness] || effectiveness;
 }
@@ -273,7 +273,7 @@ export function getEffectivenessLabel(effectiveness: string): string {
  */
 export function calculateResidualRisk(
   initialRisk: RiskCalculationResult,
-  controlEffectiveness: EffectivenessLevel | string,
+  controlEffectiveness: EffectivenessLevel | string
 ): RiskCalculationResult {
   const effectivenessFactors: Record<string, number> = {
     high: 0.3,
@@ -287,28 +287,28 @@ export function calculateResidualRisk(
   if (residualScore >= 6) {
     return {
       score: residualScore,
-      level: "高",
-      color: "text-red-600",
-      bgColor: "bg-red-100",
-      description: "控制措施效果不足，需要加强",
+      level: '高',
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      description: '控制措施效果不足，需要加强',
     };
   }
 
   if (residualScore >= 3) {
     return {
       score: residualScore,
-      level: "中",
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-      description: "控制措施有效，需要持续监控",
+      level: '中',
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-100',
+      description: '控制措施有效，需要持续监控',
     };
   }
 
   return {
     score: residualScore,
-    level: "低",
-    color: "text-green-600",
-    bgColor: "bg-green-100",
-    description: "控制措施效果良好，风险可控",
+    level: '低',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    description: '控制措施效果良好，风险可控',
   };
 }

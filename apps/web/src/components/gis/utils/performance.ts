@@ -7,7 +7,7 @@
  * - 地图渲染节流
  */
 
-import { useMemo, useCallback, useRef } from "react";
+import { useMemo, useCallback, useRef } from 'react';
 
 /**
  * 轨迹简化 - Douglas-Peucker 算法
@@ -15,7 +15,7 @@ import { useMemo, useCallback, useRef } from "react";
  */
 export function simplifyTrack(
   points: Array<{ lat: number; lng: number; timestamp?: number }>,
-  tolerance: number = 0.0001,
+  tolerance: number = 0.0001
 ): Array<{ lat: number; lng: number; timestamp?: number }> {
   if (points.length <= 2) return points;
 
@@ -45,28 +45,24 @@ export function simplifyTrack(
 function perpendicularDistance(
   point: { lat: number; lng: number },
   lineStart: { lat: number; lng: number },
-  lineEnd: { lat: number; lng: number },
+  lineEnd: { lat: number; lng: number }
 ): number {
   const dx = lineEnd.lng - lineStart.lng;
   const dy = lineEnd.lat - lineStart.lat;
 
   if (dx === 0 && dy === 0) {
     return Math.sqrt(
-      Math.pow(point.lng - lineStart.lng, 2) +
-        Math.pow(point.lat - lineStart.lat, 2),
+      Math.pow(point.lng - lineStart.lng, 2) + Math.pow(point.lat - lineStart.lat, 2)
     );
   }
 
   const t =
-    ((point.lng - lineStart.lng) * dx + (point.lat - lineStart.lat) * dy) /
-    (dx * dx + dy * dy);
+    ((point.lng - lineStart.lng) * dx + (point.lat - lineStart.lat) * dy) / (dx * dx + dy * dy);
 
   const closestLng = lineStart.lng + t * dx;
   const closestLat = lineStart.lat + t * dy;
 
-  return Math.sqrt(
-    Math.pow(point.lng - closestLng, 2) + Math.pow(point.lat - closestLat, 2),
-  );
+  return Math.sqrt(Math.pow(point.lng - closestLng, 2) + Math.pow(point.lat - closestLat, 2));
 }
 
 /**
@@ -74,17 +70,14 @@ function perpendicularDistance(
  */
 export function calculateDistance(
   p1: { lat: number; lng: number },
-  p2: { lat: number; lng: number },
+  p2: { lat: number; lng: number }
 ): number {
   const R = 6371000; // 地球半径（米）
   const dLat = toRad(p2.lat - p1.lat);
   const dLng = toRad(p2.lng - p1.lng);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(p1.lat)) *
-      Math.cos(toRad(p2.lat)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
+    Math.cos(toRad(p1.lat)) * Math.cos(toRad(p2.lat)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -96,9 +89,7 @@ function toRad(deg: number): number {
 /**
  * 计算轨迹总长度（米）
  */
-export function calculateTrackLength(
-  points: Array<{ lat: number; lng: number }>,
-): number {
+export function calculateTrackLength(points: Array<{ lat: number; lng: number }>): number {
   if (points.length < 2) return 0;
 
   let total = 0;
@@ -113,7 +104,7 @@ export function calculateTrackLength(
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
-  wait: number,
+  wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -129,7 +120,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 
 export function throttle(
   func: (...args: any[]) => void,
-  limit: number,
+  limit: number
 ): (...args: Parameters<typeof func>) => void {
   let inThrottle = false;
 
@@ -153,12 +144,12 @@ export function getVirtualRange(
   itemHeight: number,
   containerHeight: number,
   totalItems: number,
-  overscan: number = 3,
+  overscan: number = 3
 ): { startIndex: number; endIndex: number } {
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const endIndex = Math.min(
     totalItems - 1,
-    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan,
+    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
   );
 
   return { startIndex, endIndex };
@@ -172,7 +163,7 @@ export async function batchProcess<T, R>(
   items: T[],
   processor: (item: T) => R,
   batchSize: number = 100,
-  onProgress?: (processed: number, total: number) => void,
+  onProgress?: (processed: number, total: number) => void
 ): Promise<R[]> {
   const results: R[] = [];
   const total = items.length;
@@ -232,7 +223,7 @@ export class MemoCache<K, V> {
  */
 export function useMemoizedTrack<T extends { lat: number; lng: number }>(
   points: T[],
-  tolerance: number = 0.0001,
+  tolerance: number = 0.0001
 ) {
   return useMemo(() => simplifyTrack(points, tolerance), [points, tolerance]);
 }
@@ -243,7 +234,7 @@ export function useMemoizedTrack<T extends { lat: number; lng: number }>(
 
 export function useThrottledCallback<T extends (...args: any[]) => void>(
   callback: T,
-  limit: number,
+  limit: number
 ): (...args: Parameters<T>) => void {
   const callbackRef = useRef(callback);
   const throttledRef = useRef<((...args: Parameters<T>) => void) | null>(null);
@@ -253,7 +244,7 @@ export function useThrottledCallback<T extends (...args: any[]) => void>(
   if (!throttledRef.current) {
     throttledRef.current = throttle(
       (...args: Parameters<T>) => callbackRef.current(...args),
-      limit,
+      limit
     );
   }
 
@@ -266,7 +257,7 @@ export function useThrottledCallback<T extends (...args: any[]) => void>(
 export function preloadAdjacentTiles(
   centerTile: { z: number; x: number; y: number },
   getTileUrl: (z: number, x: number, y: number) => string,
-  preloadLevels: number[] = [1, 2],
+  preloadLevels: number[] = [1, 2]
 ): string[] {
   const urls: string[] = [];
 
@@ -296,7 +287,7 @@ export function preloadImages(urls: string[]): Promise<void> {
           img.onload = () => resolve();
           img.onerror = () => reject(new Error(`Failed to load: ${url}`));
           img.src = url;
-        }),
-    ),
+        })
+    )
   ).then(() => {});
 }

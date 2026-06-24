@@ -1,6 +1,6 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
-import { apiLogger } from "@/utils/logger";
+import apiClient from './client';
+import type { ApiResponse } from './client';
+import { apiLogger } from '@/utils/logger';
 
 // Backend returns data structures
 export interface QualityStandardBackend {
@@ -375,16 +375,14 @@ interface PaginatedResponse<T> {
 }
 
 // Adapter functions
-const adaptStandardToFrontend = (
-  backend: QualityStandardBackend,
-): QualityStandard => ({
+const adaptStandardToFrontend = (backend: QualityStandardBackend): QualityStandard => ({
   id: backend.id,
   name: backend.name,
   code: backend.code,
-  category: backend.category || "",
-  version: backend.version || "",
-  description: backend.description || "",
-  content: backend.description || "",
+  category: backend.category || '',
+  version: backend.version || '',
+  description: backend.description || '',
+  content: backend.description || '',
   status: backend.status,
   effective_date: backend.created_at,
   created_at: backend.created_at,
@@ -392,7 +390,7 @@ const adaptStandardToFrontend = (
 });
 
 const adaptStandardToBackend = (
-  frontend: CreateQualityStandardRequest,
+  frontend: CreateQualityStandardRequest
 ): CreateQualityStandardRequestBackend => ({
   code: frontend.code,
   name: frontend.name,
@@ -401,9 +399,7 @@ const adaptStandardToBackend = (
   version: frontend.version,
 });
 
-const adaptInspectionToFrontend = (
-  backend: QualityInspectionBackend,
-): QualityCheck => ({
+const adaptInspectionToFrontend = (backend: QualityInspectionBackend): QualityCheck => ({
   id: backend.id,
   inspection_no: backend.inspection_no,
   inspection_type: backend.inspection_type,
@@ -425,7 +421,7 @@ const adaptInspectionToFrontend = (
 });
 
 const adaptInspectionToBackend = (
-  frontend: CreateQualityCheckRequest,
+  frontend: CreateQualityCheckRequest
 ): CreateQualityInspectionRequestBackend => ({
   inspection_type: frontend.inspection_type,
   product_name: frontend.product_name,
@@ -436,21 +432,20 @@ const adaptInspectionToBackend = (
 
 const adaptIssueToFrontend = (backend: QualityIssueBackend): QualityIssue => ({
   id: backend.id,
-  issue_no:
-    backend.title.substring(0, 20) + (backend.title.length > 20 ? "..." : ""),
+  issue_no: backend.title.substring(0, 20) + (backend.title.length > 20 ? '...' : ''),
   title: backend.title,
   description: backend.description,
   severity: backend.severity,
-  category: backend.source || "",
+  category: backend.source || '',
   status: backend.status,
-  assignee: backend.assigned_to || "",
+  assignee: backend.assigned_to || '',
   due_date: backend.due_date,
   created_at: backend.created_at,
   updated_at: backend.updated_at,
 });
 
 const adaptIssueToBackend = (
-  frontend: CreateQualityIssueRequest,
+  frontend: CreateQualityIssueRequest
 ): CreateQualityIssueRequestBackend => ({
   title: frontend.title,
   description: frontend.description,
@@ -459,17 +454,14 @@ const adaptIssueToBackend = (
   assigned_to: frontend.assignee,
 });
 
-const adaptActionToFrontend = (
-  backend: CorrectiveActionBackend,
-): QualityImprovement => ({
+const adaptActionToFrontend = (backend: CorrectiveActionBackend): QualityImprovement => ({
   id: backend.id,
-  improvement_no:
-    backend.title.substring(0, 20) + (backend.title.length > 20 ? "..." : ""),
+  improvement_no: backend.title.substring(0, 20) + (backend.title.length > 20 ? '...' : ''),
   title: backend.title,
-  description: backend.description || "",
-  category: "",
+  description: backend.description || '',
+  category: '',
   status: backend.status,
-  proposer: backend.verified_by || "",
+  proposer: backend.verified_by || '',
   assignee: backend.assigned_to,
   improvement_effect: backend.verification_result,
   created_at: backend.created_at,
@@ -477,9 +469,9 @@ const adaptActionToFrontend = (
 });
 
 const adaptActionToBackend = (
-  frontend: CreateQualityImprovementRequest,
+  frontend: CreateQualityImprovementRequest
 ): CreateCorrectiveActionRequestBackend => ({
-  issue_id: "00000000-0000-0000-0000-000000000000",
+  issue_id: '00000000-0000-0000-0000-000000000000',
   title: frontend.title,
   description: frontend.description,
   assigned_to: frontend.assignee,
@@ -515,30 +507,24 @@ export const qmsApi = {
   // Quality Standards
   listStandards: async (): Promise<ApiResponse<QualityStandard[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<QualityStandardBackend>>(
-        "/api/qms/standards",
-      );
-    const adaptedData = (response.data?.standards || []).map(
-      adaptStandardToFrontend,
-    );
+      await apiClient.qms.get<PaginatedResponse<QualityStandardBackend>>('/api/qms/standards');
+    const adaptedData = (response.data?.standards || []).map(adaptStandardToFrontend);
     return { ...response, data: adaptedData };
   },
   getStandard: async (id: string): Promise<ApiResponse<QualityStandard>> => {
-    const response = await apiClient.qms.get<QualityStandardBackend>(
-      `/api/qms/standards/${id}`,
-    );
+    const response = await apiClient.qms.get<QualityStandardBackend>(`/api/qms/standards/${id}`);
     return {
       ...response,
       data: response.data ? adaptStandardToFrontend(response.data) : undefined,
     };
   },
   createStandard: async (
-    data: CreateQualityStandardRequest,
+    data: CreateQualityStandardRequest
   ): Promise<ApiResponse<QualityStandard>> => {
     const backendData = adaptStandardToBackend(data);
     const response = await apiClient.qms.post<QualityStandardBackend>(
-      "/api/qms/standards",
-      backendData,
+      '/api/qms/standards',
+      backendData
     );
     return {
       ...response,
@@ -547,7 +533,7 @@ export const qmsApi = {
   },
   updateStandard: async (
     id: string,
-    data: CreateQualityStandardRequest,
+    data: CreateQualityStandardRequest
   ): Promise<ApiResponse<QualityStandard>> => {
     const backendData: UpdateQualityStandardRequestBackend = {
       name: data.name,
@@ -558,7 +544,7 @@ export const qmsApi = {
     };
     const response = await apiClient.qms.put<QualityStandardBackend>(
       `/api/qms/standards/${id}`,
-      backendData,
+      backendData
     );
     return {
       ...response,
@@ -572,43 +558,31 @@ export const qmsApi = {
   // Quality Checks
   listChecks: async (): Promise<ApiResponse<QualityCheck[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<QualityInspectionBackend>>(
-        "/api/qms/checks",
-      );
-    const adaptedData = (response.data?.inspections || []).map(
-      adaptInspectionToFrontend,
-    );
+      await apiClient.qms.get<PaginatedResponse<QualityInspectionBackend>>('/api/qms/checks');
+    const adaptedData = (response.data?.inspections || []).map(adaptInspectionToFrontend);
     return { ...response, data: adaptedData };
   },
   getCheck: async (id: string): Promise<ApiResponse<QualityCheck>> => {
-    const response = await apiClient.qms.get<QualityInspectionBackend>(
-      `/api/qms/checks/${id}`,
-    );
+    const response = await apiClient.qms.get<QualityInspectionBackend>(`/api/qms/checks/${id}`);
     return {
       ...response,
-      data: response.data
-        ? adaptInspectionToFrontend(response.data)
-        : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
     };
   },
-  createCheck: async (
-    data: CreateQualityCheckRequest,
-  ): Promise<ApiResponse<QualityCheck>> => {
+  createCheck: async (data: CreateQualityCheckRequest): Promise<ApiResponse<QualityCheck>> => {
     const backendData = adaptInspectionToBackend(data);
     const response = await apiClient.qms.post<QualityInspectionBackend>(
-      "/api/qms/checks",
-      backendData,
+      '/api/qms/checks',
+      backendData
     );
     return {
       ...response,
-      data: response.data
-        ? adaptInspectionToFrontend(response.data)
-        : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
     };
   },
   updateCheck: async (
     id: string,
-    data: CreateQualityCheckRequest,
+    data: CreateQualityCheckRequest
   ): Promise<ApiResponse<QualityCheck>> => {
     const backendData: UpdateQualityInspectionRequestBackend = {
       inspection_type: data.inspection_type,
@@ -618,13 +592,11 @@ export const qmsApi = {
     };
     const response = await apiClient.qms.put<QualityInspectionBackend>(
       `/api/qms/checks/${id}`,
-      backendData,
+      backendData
     );
     return {
       ...response,
-      data: response.data
-        ? adaptInspectionToFrontend(response.data)
-        : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
     };
   },
   deleteCheck: async (id: string): Promise<ApiResponse<boolean>> => {
@@ -632,77 +604,65 @@ export const qmsApi = {
   },
   assignCheck: async (
     id: string,
-    data: AssignInspectionRequestBackend,
+    data: AssignInspectionRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/api/qms/checks/${id}/assign`,
-      data,
+      data
     );
     return {
       ...response,
-      data: response.data
-        ? adaptInspectionToFrontend(response.data)
-        : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
     };
   },
   submitCheckResult: async (
     id: string,
-    data: SubmitInspectionResultRequestBackend,
+    data: SubmitInspectionResultRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/api/qms/checks/${id}/submit`,
-      data,
+      data
     );
     return {
       ...response,
-      data: response.data
-        ? adaptInspectionToFrontend(response.data)
-        : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
     };
   },
   auditCheck: async (
     id: string,
-    data: AuditInspectionRequestBackend,
+    data: AuditInspectionRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/api/qms/checks/${id}/audit`,
-      data,
+      data
     );
     return {
       ...response,
-      data: response.data
-        ? adaptInspectionToFrontend(response.data)
-        : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
     };
   },
   reworkCheck: async (
     id: string,
-    data: AuditInspectionRequestBackend,
+    data: AuditInspectionRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/api/qms/checks/${id}/rework`,
-      data,
+      data
     );
     return {
       ...response,
-      data: response.data
-        ? adaptInspectionToFrontend(response.data)
-        : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
     };
   },
-  getCheckResults: async (
-    id: string,
-  ): Promise<ApiResponse<InspectionResult[]>> => {
+  getCheckResults: async (id: string): Promise<ApiResponse<InspectionResult[]>> => {
     const response = await apiClient.qms.get<{ results?: InspectionResult[] }>(
-      `/api/qms/checks/${id}/results`,
+      `/api/qms/checks/${id}/results`
     );
     return { ...response, data: response.data?.results || [] };
   },
-  getCheckAudits: async (
-    id: string,
-  ): Promise<ApiResponse<InspectionAudit[]>> => {
+  getCheckAudits: async (id: string): Promise<ApiResponse<InspectionAudit[]>> => {
     const response = await apiClient.qms.get<{ audits?: InspectionAudit[] }>(
-      `/api/qms/checks/${id}/audits`,
+      `/api/qms/checks/${id}/audits`
     );
     return { ...response, data: response.data?.audits || [] };
   },
@@ -710,29 +670,20 @@ export const qmsApi = {
   // Quality Issues
   listIssues: async (): Promise<ApiResponse<QualityIssue[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<QualityIssueBackend>>(
-        "/api/qms/issues",
-      );
+      await apiClient.qms.get<PaginatedResponse<QualityIssueBackend>>('/api/qms/issues');
     const adaptedData = (response.data?.issues || []).map(adaptIssueToFrontend);
     return { ...response, data: adaptedData };
   },
   getIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
-    const response = await apiClient.qms.get<QualityIssueBackend>(
-      `/api/qms/issues/${id}`,
-    );
+    const response = await apiClient.qms.get<QualityIssueBackend>(`/api/qms/issues/${id}`);
     return {
       ...response,
       data: response.data ? adaptIssueToFrontend(response.data) : undefined,
     };
   },
-  createIssue: async (
-    data: CreateQualityIssueRequest,
-  ): Promise<ApiResponse<QualityIssue>> => {
+  createIssue: async (data: CreateQualityIssueRequest): Promise<ApiResponse<QualityIssue>> => {
     const backendData = adaptIssueToBackend(data);
-    const response = await apiClient.qms.post<QualityIssueBackend>(
-      "/api/qms/issues",
-      backendData,
-    );
+    const response = await apiClient.qms.post<QualityIssueBackend>('/api/qms/issues', backendData);
     return {
       ...response,
       data: response.data ? adaptIssueToFrontend(response.data) : undefined,
@@ -740,7 +691,7 @@ export const qmsApi = {
   },
   updateIssue: async (
     id: string,
-    data: CreateQualityIssueRequest,
+    data: CreateQualityIssueRequest
   ): Promise<ApiResponse<QualityIssue>> => {
     const backendData: UpdateQualityIssueRequestBackend = {
       title: data.title,
@@ -751,7 +702,7 @@ export const qmsApi = {
     };
     const response = await apiClient.qms.put<QualityIssueBackend>(
       `/api/qms/issues/${id}`,
-      backendData,
+      backendData
     );
     return {
       ...response,
@@ -764,19 +715,14 @@ export const qmsApi = {
 
   // Quality Improvements
   listImprovements: async (): Promise<ApiResponse<QualityImprovement[]>> => {
-    const response = await apiClient.qms.get<
-      PaginatedResponse<CorrectiveActionBackend>
-    >("/api/qms/improvements");
-    const adaptedData = (response.data?.actions || []).map(
-      adaptActionToFrontend,
-    );
+    const response =
+      await apiClient.qms.get<PaginatedResponse<CorrectiveActionBackend>>('/api/qms/improvements');
+    const adaptedData = (response.data?.actions || []).map(adaptActionToFrontend);
     return { ...response, data: adaptedData };
   },
-  getImprovement: async (
-    id: string,
-  ): Promise<ApiResponse<QualityImprovement>> => {
+  getImprovement: async (id: string): Promise<ApiResponse<QualityImprovement>> => {
     const response = await apiClient.qms.get<CorrectiveActionBackend>(
-      `/api/qms/improvements/${id}`,
+      `/api/qms/improvements/${id}`
     );
     return {
       ...response,
@@ -784,12 +730,12 @@ export const qmsApi = {
     };
   },
   createImprovement: async (
-    data: CreateQualityImprovementRequest,
+    data: CreateQualityImprovementRequest
   ): Promise<ApiResponse<QualityImprovement>> => {
     const backendData = adaptActionToBackend(data);
     const response = await apiClient.qms.post<CorrectiveActionBackend>(
-      "/api/qms/improvements",
-      backendData,
+      '/api/qms/improvements',
+      backendData
     );
     return {
       ...response,
@@ -798,7 +744,7 @@ export const qmsApi = {
   },
   updateImprovement: async (
     id: string,
-    data: CreateQualityImprovementRequest,
+    data: CreateQualityImprovementRequest
   ): Promise<ApiResponse<QualityImprovement>> => {
     const backendData: UpdateCorrectiveActionRequestBackend = {
       title: data.title,
@@ -810,7 +756,7 @@ export const qmsApi = {
     };
     const response = await apiClient.qms.put<CorrectiveActionBackend>(
       `/api/qms/improvements/${id}`,
-      backendData,
+      backendData
     );
     return {
       ...response,
@@ -825,13 +771,12 @@ export const qmsApi = {
   getStatistics: async (): Promise<ApiResponse<QmsStatistics>> => {
     try {
       // Fetch all data to calculate statistics client-side
-      const [standardsRes, checksRes, issuesRes, improvementsRes] =
-        await Promise.all([
-          qmsApi.listStandards(),
-          qmsApi.listChecks(),
-          qmsApi.listIssues(),
-          qmsApi.listImprovements(),
-        ]);
+      const [standardsRes, checksRes, issuesRes, improvementsRes] = await Promise.all([
+        qmsApi.listStandards(),
+        qmsApi.listChecks(),
+        qmsApi.listIssues(),
+        qmsApi.listImprovements(),
+      ]);
 
       const standards = standardsRes.data || [];
       const checks = checksRes.data || [];
@@ -840,62 +785,51 @@ export const qmsApi = {
 
       const statistics: QmsStatistics = {
         total_standards: standards.length,
-        active_standards: standards.filter(
-          (s) => s.status === "active" || s.status === "启用",
-        ).length,
-        inactive_standards: standards.filter(
-          (s) => s.status === "inactive" || s.status === "禁用",
-        ).length,
+        active_standards: standards.filter((s) => s.status === 'active' || s.status === '启用')
+          .length,
+        inactive_standards: standards.filter((s) => s.status === 'inactive' || s.status === '禁用')
+          .length,
 
         total_inspections: checks.length,
-        pending_inspections: checks.filter(
-          (c) => c.status === "pending" || c.status === "待处理",
-        ).length,
+        pending_inspections: checks.filter((c) => c.status === 'pending' || c.status === '待处理')
+          .length,
         in_progress_inspections: checks.filter(
-          (c) => c.status === "in_progress" || c.status === "进行中",
+          (c) => c.status === 'in_progress' || c.status === '进行中'
         ).length,
         completed_inspections: checks.filter(
-          (c) => c.status === "completed" || c.status === "已完成",
+          (c) => c.status === 'completed' || c.status === '已完成'
         ).length,
 
         total_issues: issues.length,
         open_issues: issues.filter(
-          (i) =>
-            i.status === "open" ||
-            i.status === "待处理" ||
-            i.status === "处理中",
+          (i) => i.status === 'open' || i.status === '待处理' || i.status === '处理中'
         ).length,
         resolved_issues: issues.filter(
-          (i) =>
-            i.status === "closed" ||
-            i.status === "resolved" ||
-            i.status === "已关闭",
+          (i) => i.status === 'closed' || i.status === 'resolved' || i.status === '已关闭'
         ).length,
-        critical_issues: issues.filter(
-          (i) => i.severity === "critical" || i.severity === "严重",
-        ).length,
+        critical_issues: issues.filter((i) => i.severity === 'critical' || i.severity === '严重')
+          .length,
 
         total_actions: improvements.length,
-        pending_actions: improvements.filter(
-          (a) => a.status === "pending" || a.status === "提议",
-        ).length,
+        pending_actions: improvements.filter((a) => a.status === 'pending' || a.status === '提议')
+          .length,
         in_progress_actions: improvements.filter(
-          (a) => a.status === "in_progress" || a.status === "实施中",
+          (a) => a.status === 'in_progress' || a.status === '实施中'
         ).length,
         completed_actions: improvements.filter(
-          (a) => a.status === "completed" || a.status === "已完成",
+          (a) => a.status === 'completed' || a.status === '已完成'
         ).length,
       };
 
       return {
         success: true,
         data: statistics,
-        message: "Statistics calculated",
+        message: 'Statistics calculated',
         code: 200,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      apiLogger.error("Failed to calculate QMS statistics:", error);
+      apiLogger.error('Failed to calculate QMS statistics:', error);
       const fallbackStats: QmsStatistics = {
         total_standards: 0,
         active_standards: 0,
@@ -916,7 +850,7 @@ export const qmsApi = {
       return {
         success: true,
         data: fallbackStats,
-        message: "Using fallback statistics",
+        message: 'Using fallback statistics',
         code: 200,
         timestamp: new Date().toISOString(),
       };
@@ -924,67 +858,47 @@ export const qmsApi = {
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.qms.get<string>("/health");
+    return apiClient.qms.get<string>('/health');
   },
 
   // Audit Plans
   listAuditPlans: async (): Promise<ApiResponse<AuditPlan[]>> => {
-    const response = await apiClient.qms.get<{ plans?: AuditPlan[] }>(
-      "/api/qms/audit-plans",
-    );
+    const response = await apiClient.qms.get<{ plans?: AuditPlan[] }>('/api/qms/audit-plans');
     return { ...response, data: response.data?.plans || [] };
   },
 
   // Audit Tasks
-  listAuditTasks: async (
-    planId?: string,
-  ): Promise<ApiResponse<AuditTask[]>> => {
-    const url = planId
-      ? `/api/qms/audit-tasks?plan_id=${planId}`
-      : "/api/qms/audit-tasks";
+  listAuditTasks: async (planId?: string): Promise<ApiResponse<AuditTask[]>> => {
+    const url = planId ? `/api/qms/audit-tasks?plan_id=${planId}` : '/api/qms/audit-tasks';
     const response = await apiClient.qms.get<{ tasks?: AuditTask[] }>(url);
     return { ...response, data: response.data?.tasks || [] };
   },
 
   // Audit Findings
-  listAuditFindings: async (
-    taskId?: string,
-  ): Promise<ApiResponse<AuditFinding[]>> => {
-    const url = taskId
-      ? `/api/qms/audit-findings?task_id=${taskId}`
-      : "/api/qms/audit-findings";
-    const response = await apiClient.qms.get<{ findings?: AuditFinding[] }>(
-      url,
-    );
+  listAuditFindings: async (taskId?: string): Promise<ApiResponse<AuditFinding[]>> => {
+    const url = taskId ? `/api/qms/audit-findings?task_id=${taskId}` : '/api/qms/audit-findings';
+    const response = await apiClient.qms.get<{ findings?: AuditFinding[] }>(url);
     return { ...response, data: response.data?.findings || [] };
   },
 
   // Create Audit Plan
   createAuditPlan: async (
-    data: Omit<AuditPlan, "id" | "created_at" | "updated_at">,
+    data: Omit<AuditPlan, 'id' | 'created_at' | 'updated_at'>
   ): Promise<ApiResponse<AuditPlan>> => {
-    const response = await apiClient.qms.post<AuditPlan>(
-      "/api/qms/audit-plans",
-      data,
-    );
+    const response = await apiClient.qms.post<AuditPlan>('/api/qms/audit-plans', data);
     return response;
   },
 
   // Complete Audit Task
-  completeAuditTask: async (
-    taskId: string,
-  ): Promise<ApiResponse<AuditTask>> => {
-    const response = await apiClient.qms.put<AuditTask>(
-      `/api/qms/audit-tasks/${taskId}/complete`,
-      { status: "completed" },
-    );
+  completeAuditTask: async (taskId: string): Promise<ApiResponse<AuditTask>> => {
+    const response = await apiClient.qms.put<AuditTask>(`/api/qms/audit-tasks/${taskId}/complete`, {
+      status: 'completed',
+    });
     return response;
   },
 
   // Standard Revisions
-  listRevisions: async (
-    standardId: string,
-  ): Promise<ApiResponse<StandardRevision[]>> => {
+  listRevisions: async (standardId: string): Promise<ApiResponse<StandardRevision[]>> => {
     const response = await apiClient.qms.get<{
       revisions?: StandardRevision[];
     }>(`/api/qms/standards/${standardId}/revisions`);

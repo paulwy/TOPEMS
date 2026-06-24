@@ -1,6 +1,6 @@
-import React from "react";
-import { ContactCard } from "./ContactCard";
-import type { AddressbookEntry } from "../../types/addressbook";
+import React from 'react';
+import { ContactCard } from './ContactCard';
+import type { AddressbookEntry } from '../../types/addressbook';
 
 interface AddressbookListProps {
   contacts: AddressbookEntry[];
@@ -17,13 +17,13 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
     return (
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           height: 256,
         }}
       >
-        <div style={{ color: "#64748b" }}>加载中...</div>
+        <div style={{ color: '#64748b' }}>加载中...</div>
       </div>
     );
   }
@@ -32,14 +32,14 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
     return (
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           height: 256,
         }}
       >
-        <div style={{ textAlign: "center" }}>
-          <p style={{ color: "#64748b" }}>没有找到联系人</p>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#64748b' }}>没有找到联系人</p>
         </div>
       </div>
     );
@@ -48,8 +48,8 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
   return (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(1, 1fr)",
+        display: 'grid',
+        gridTemplateColumns: 'repeat(1, 1fr)',
         gap: 16,
         padding: 16,
       }}

@@ -1,5 +1,5 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
 export interface Asset {
   id: string;
@@ -560,28 +560,23 @@ export interface PaginatedResult<T> {
 
 function cleanEmptyUuids<T extends Record<string, any>>(data: T): T {
   const result = { ...data };
-  if (result.parent_id === "") delete (result as any).parent_id;
-  if (result.company_id === "") delete (result as any).company_id;
-  if (result.department_id === "") delete (result as any).department_id;
-  if (result.responsible_id === "") delete (result as any).responsible_id;
+  if (result.parent_id === '') delete (result as any).parent_id;
+  if (result.company_id === '') delete (result as any).company_id;
+  if (result.department_id === '') delete (result as any).department_id;
+  if (result.responsible_id === '') delete (result as any).responsible_id;
   return result;
 }
 
 export const assetApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<Asset>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Asset>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/assets${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/assets${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Asset>> {
@@ -589,7 +584,7 @@ export const assetApi = {
   },
 
   async create(data: Partial<Asset>): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.post("/api/erp/assets", cleanEmptyUuids(data));
+    return apiClient.erp.post('/api/erp/assets', cleanEmptyUuids(data));
   },
 
   async update(id: string, data: Partial<Asset>): Promise<ApiResponse<Asset>> {
@@ -603,25 +598,20 @@ export const assetApi = {
 
 export const erpApi = {
   async health(): Promise<ApiResponse<string>> {
-    return apiClient.erp.get<string>("/health");
+    return apiClient.erp.get<string>('/health');
   },
 };
 
 export const expenseApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<Expense>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Expense>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/expenses${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/expenses${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Expense>> {
@@ -629,13 +619,10 @@ export const expenseApi = {
   },
 
   async create(data: Partial<Expense>): Promise<ApiResponse<Expense>> {
-    return apiClient.erp.post("/api/erp/expenses", cleanEmptyUuids(data));
+    return apiClient.erp.post('/api/erp/expenses', cleanEmptyUuids(data));
   },
 
-  async update(
-    id: string,
-    data: Partial<Expense>,
-  ): Promise<ApiResponse<Expense>> {
+  async update(id: string, data: Partial<Expense>): Promise<ApiResponse<Expense>> {
     return apiClient.erp.put(`/api/erp/expenses/${id}`, cleanEmptyUuids(data));
   },
 
@@ -645,20 +632,15 @@ export const expenseApi = {
 };
 
 export const budgetApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<Budget>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Budget>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/budgets${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/budgets${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Budget>> {
@@ -666,13 +648,10 @@ export const budgetApi = {
   },
 
   async create(data: Partial<Budget>): Promise<ApiResponse<Budget>> {
-    return apiClient.erp.post("/api/erp/budgets", cleanEmptyUuids(data));
+    return apiClient.erp.post('/api/erp/budgets', cleanEmptyUuids(data));
   },
 
-  async update(
-    id: string,
-    data: Partial<Budget>,
-  ): Promise<ApiResponse<Budget>> {
+  async update(id: string, data: Partial<Budget>): Promise<ApiResponse<Budget>> {
     return apiClient.erp.put(`/api/erp/budgets/${id}`, cleanEmptyUuids(data));
   },
 
@@ -682,20 +661,15 @@ export const budgetApi = {
 };
 
 export const receivableApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<Receivable>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Receivable>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/receivables${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/receivables${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Receivable>> {
@@ -703,17 +677,11 @@ export const receivableApi = {
   },
 
   async create(data: Partial<Receivable>): Promise<ApiResponse<Receivable>> {
-    return apiClient.erp.post("/api/erp/receivables", cleanEmptyUuids(data));
+    return apiClient.erp.post('/api/erp/receivables', cleanEmptyUuids(data));
   },
 
-  async update(
-    id: string,
-    data: Partial<Receivable>,
-  ): Promise<ApiResponse<Receivable>> {
-    return apiClient.erp.put(
-      `/api/erp/receivables/${id}`,
-      cleanEmptyUuids(data),
-    );
+  async update(id: string, data: Partial<Receivable>): Promise<ApiResponse<Receivable>> {
+    return apiClient.erp.put(`/api/erp/receivables/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
@@ -722,20 +690,15 @@ export const receivableApi = {
 };
 
 export const payableApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<Payable>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Payable>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/payables${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/payables${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Payable>> {
@@ -743,13 +706,10 @@ export const payableApi = {
   },
 
   async create(data: Partial<Payable>): Promise<ApiResponse<Payable>> {
-    return apiClient.erp.post("/api/erp/payables", cleanEmptyUuids(data));
+    return apiClient.erp.post('/api/erp/payables', cleanEmptyUuids(data));
   },
 
-  async update(
-    id: string,
-    data: Partial<Payable>,
-  ): Promise<ApiResponse<Payable>> {
+  async update(id: string, data: Partial<Payable>): Promise<ApiResponse<Payable>> {
     return apiClient.erp.put(`/api/erp/payables/${id}`, cleanEmptyUuids(data));
   },
 
@@ -759,35 +719,28 @@ export const payableApi = {
 };
 
 export const accountingSubjectApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<AccountingSubject>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<AccountingSubject>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/accounting-subjects${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/accounting-subjects${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<AccountingSubject>> {
     return apiClient.erp.get(`/api/erp/accounting-subjects/${id}`);
   },
 
-  async create(
-    data: Partial<AccountingSubject>,
-  ): Promise<ApiResponse<AccountingSubject>> {
-    return apiClient.erp.post("/api/erp/accounting-subjects", data);
+  async create(data: Partial<AccountingSubject>): Promise<ApiResponse<AccountingSubject>> {
+    return apiClient.erp.post('/api/erp/accounting-subjects', data);
   },
 
   async update(
     id: string,
-    data: Partial<AccountingSubject>,
+    data: Partial<AccountingSubject>
   ): Promise<ApiResponse<AccountingSubject>> {
     return apiClient.erp.put(`/api/erp/accounting-subjects/${id}`, data);
   },
@@ -799,20 +752,17 @@ export const accountingSubjectApi = {
 
 export const voucherApi = {
   async list(
-    params?: PaginationParams & { period?: string },
+    params?: PaginationParams & { period?: string }
   ): Promise<ApiResponse<PaginatedResult<FinancialVoucher>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.period) searchParams.set('period', params.period);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/vouchers${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/vouchers${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<FinancialVoucher>> {
@@ -823,15 +773,13 @@ export const voucherApi = {
     return apiClient.erp.get(`/api/erp/vouchers/${id}/items`);
   },
 
-  async create(
-    data: CreateFinancialVoucherRequest,
-  ): Promise<ApiResponse<FinancialVoucher>> {
-    return apiClient.erp.post("/api/erp/vouchers", data);
+  async create(data: CreateFinancialVoucherRequest): Promise<ApiResponse<FinancialVoucher>> {
+    return apiClient.erp.post('/api/erp/vouchers', data);
   },
 
   async update(
     id: string,
-    data: Partial<FinancialVoucher>,
+    data: Partial<FinancialVoucher>
   ): Promise<ApiResponse<FinancialVoucher>> {
     return apiClient.erp.put(`/api/erp/vouchers/${id}`, data);
   },
@@ -845,52 +793,42 @@ export const voucherApi = {
     file_content: string;
     import_mode: string;
   }): Promise<ApiResponse<VoucherImportResult>> {
-    return apiClient.erp.post("/api/erp/vouchers/import/u8", data);
+    return apiClient.erp.post('/api/erp/vouchers/import/u8', data);
   },
 };
 
 export const financeReportApi = {
-  async balanceSheet(params?: {
-    period?: string;
-  }): Promise<ApiResponse<BalanceSheet>> {
+  async balanceSheet(params?: { period?: string }): Promise<ApiResponse<BalanceSheet>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/balance-sheet${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/balance-sheet${queryString ? '?' + queryString : ''}`
     );
   },
 
-  async incomeStatement(params?: {
-    period?: string;
-  }): Promise<ApiResponse<IncomeStatement>> {
+  async incomeStatement(params?: { period?: string }): Promise<ApiResponse<IncomeStatement>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/income-statement${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/income-statement${queryString ? '?' + queryString : ''}`
     );
   },
 
-  async cashFlowStatement(params?: {
-    period?: string;
-  }): Promise<ApiResponse<CashFlowStatement>> {
+  async cashFlowStatement(params?: { period?: string }): Promise<ApiResponse<CashFlowStatement>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/reports/cash-flow${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/reports/cash-flow${queryString ? '?' + queryString : ''}`);
   },
 
-  async businessOverview(params?: {
-    period?: string;
-  }): Promise<ApiResponse<BusinessOverview>> {
+  async businessOverview(params?: { period?: string }): Promise<ApiResponse<BusinessOverview>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/business-overview${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/business-overview${queryString ? '?' + queryString : ''}`
     );
   },
 
@@ -898,121 +836,102 @@ export const financeReportApi = {
     project_id?: string;
   }): Promise<ApiResponse<ProjectFinancialSummary[]>> {
     const searchParams = new URLSearchParams();
-    if (params?.project_id) searchParams.set("project_id", params.project_id);
+    if (params?.project_id) searchParams.set('project_id', params.project_id);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/project-summary${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/project-summary${queryString ? '?' + queryString : ''}`
     );
   },
 
   async monthlyTrend(): Promise<ApiResponse<MonthlyTrend[]>> {
-    return apiClient.erp.get("/api/erp/reports/monthly-trend");
+    return apiClient.erp.get('/api/erp/reports/monthly-trend');
   },
 
   async departmentSummary(params?: {
     department_id?: string;
   }): Promise<ApiResponse<DepartmentFinancialSummary[]>> {
     const searchParams = new URLSearchParams();
-    if (params?.department_id)
-      searchParams.set("department_id", params.department_id);
+    if (params?.department_id) searchParams.set('department_id', params.department_id);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/department-summary${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/department-summary${queryString ? '?' + queryString : ''}`
     );
   },
 
   async agingAnalysis(): Promise<ApiResponse<AgingAnalysis[]>> {
-    return apiClient.erp.get("/api/erp/reports/aging-analysis");
+    return apiClient.erp.get('/api/erp/reports/aging-analysis');
   },
 
-  async voucherStatistics(params?: {
-    period?: string;
-  }): Promise<ApiResponse<Record<string, any>>> {
+  async voucherStatistics(params?: { period?: string }): Promise<ApiResponse<Record<string, any>>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/voucher-statistics${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/voucher-statistics${queryString ? '?' + queryString : ''}`
     );
   },
 
-  async cashFlowAnalysis(params?: {
-    period?: string;
-  }): Promise<ApiResponse<CashFlowAnalysis>> {
+  async cashFlowAnalysis(params?: { period?: string }): Promise<ApiResponse<CashFlowAnalysis>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/cash-flow-analysis${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/cash-flow-analysis${queryString ? '?' + queryString : ''}`
     );
   },
 
-  async expenseAnalysis(params?: {
-    period?: string;
-  }): Promise<ApiResponse<ExpenseAnalysis>> {
+  async expenseAnalysis(params?: { period?: string }): Promise<ApiResponse<ExpenseAnalysis>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/expense-analysis${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/expense-analysis${queryString ? '?' + queryString : ''}`
     );
   },
 
-  async profitAnalysis(params?: {
-    period?: string;
-  }): Promise<ApiResponse<ProfitAnalysis>> {
+  async profitAnalysis(params?: { period?: string }): Promise<ApiResponse<ProfitAnalysis>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/profit-analysis${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/profit-analysis${queryString ? '?' + queryString : ''}`
     );
   },
 
-  async financialOverview(params?: {
-    period?: string;
-  }): Promise<ApiResponse<FinancialOverview>> {
+  async financialOverview(params?: { period?: string }): Promise<ApiResponse<FinancialOverview>> {
     const searchParams = new URLSearchParams();
-    if (params?.period) searchParams.set("period", params.period);
+    if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/financial-overview${queryString ? "?" + queryString : ""}`,
+      `/api/erp/reports/financial-overview${queryString ? '?' + queryString : ''}`
     );
   },
 };
 
 export const officeSupplyApi = {
   async list(
-    params?: PaginationParams & { category?: string },
+    params?: PaginationParams & { category?: string }
   ): Promise<ApiResponse<PaginatedResult<OfficeSupply>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
-    if (params?.category) searchParams.set("category", params.category);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/office-supplies${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/office-supplies${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<OfficeSupply>> {
     return apiClient.erp.get(`/api/erp/office-supplies/${id}`);
   },
 
-  async create(
-    data: Partial<OfficeSupply>,
-  ): Promise<ApiResponse<OfficeSupply>> {
-    return apiClient.erp.post("/api/erp/office-supplies", data);
+  async create(data: Partial<OfficeSupply>): Promise<ApiResponse<OfficeSupply>> {
+    return apiClient.erp.post('/api/erp/office-supplies', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<OfficeSupply>,
-  ): Promise<ApiResponse<OfficeSupply>> {
+  async update(id: string, data: Partial<OfficeSupply>): Promise<ApiResponse<OfficeSupply>> {
     return apiClient.erp.put(`/api/erp/office-supplies/${id}`, data);
   },
 
@@ -1022,20 +941,15 @@ export const officeSupplyApi = {
 };
 
 export const meetingRoomApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<MeetingRoom>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<MeetingRoom>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/meeting-rooms${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/meeting-rooms${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MeetingRoom>> {
@@ -1043,13 +957,10 @@ export const meetingRoomApi = {
   },
 
   async create(data: Partial<MeetingRoom>): Promise<ApiResponse<MeetingRoom>> {
-    return apiClient.erp.post("/api/erp/meeting-rooms", data);
+    return apiClient.erp.post('/api/erp/meeting-rooms', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<MeetingRoom>,
-  ): Promise<ApiResponse<MeetingRoom>> {
+  async update(id: string, data: Partial<MeetingRoom>): Promise<ApiResponse<MeetingRoom>> {
     return apiClient.erp.put(`/api/erp/meeting-rooms/${id}`, data);
   },
 
@@ -1063,36 +974,26 @@ export const meetingRoomApi = {
 };
 
 export const meetingBookingApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<MeetingBooking>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<MeetingBooking>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/meeting-bookings${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/meeting-bookings${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MeetingBooking>> {
     return apiClient.erp.get(`/api/erp/meeting-bookings/${id}`);
   },
 
-  async create(
-    data: Partial<MeetingBooking>,
-  ): Promise<ApiResponse<MeetingBooking>> {
-    return apiClient.erp.post("/api/erp/meeting-bookings", data);
+  async create(data: Partial<MeetingBooking>): Promise<ApiResponse<MeetingBooking>> {
+    return apiClient.erp.post('/api/erp/meeting-bookings', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<MeetingBooking>,
-  ): Promise<ApiResponse<MeetingBooking>> {
+  async update(id: string, data: Partial<MeetingBooking>): Promise<ApiResponse<MeetingBooking>> {
     return apiClient.erp.put(`/api/erp/meeting-bookings/${id}`, data);
   },
 
@@ -1103,21 +1004,17 @@ export const meetingBookingApi = {
 
 export const vehicleApi = {
   async list(
-    params?: PaginationParams & { vehicle_type?: string },
+    params?: PaginationParams & { vehicle_type?: string }
   ): Promise<ApiResponse<PaginatedResult<Vehicle>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
-    if (params?.vehicle_type)
-      searchParams.set("vehicle_type", params.vehicle_type);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.vehicle_type) searchParams.set('vehicle_type', params.vehicle_type);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/vehicles${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/vehicles${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Vehicle>> {
@@ -1125,13 +1022,10 @@ export const vehicleApi = {
   },
 
   async create(data: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
-    return apiClient.erp.post("/api/erp/vehicles", data);
+    return apiClient.erp.post('/api/erp/vehicles', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<Vehicle>,
-  ): Promise<ApiResponse<Vehicle>> {
+  async update(id: string, data: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
     return apiClient.erp.put(`/api/erp/vehicles/${id}`, data);
   },
 
@@ -1145,36 +1039,26 @@ export const vehicleApi = {
 };
 
 export const vehicleRequestApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<VehicleRequest>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<VehicleRequest>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/vehicle-requests${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/vehicle-requests${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<VehicleRequest>> {
     return apiClient.erp.get(`/api/erp/vehicle-requests/${id}`);
   },
 
-  async create(
-    data: Partial<VehicleRequest>,
-  ): Promise<ApiResponse<VehicleRequest>> {
-    return apiClient.erp.post("/api/erp/vehicle-requests", data);
+  async create(data: Partial<VehicleRequest>): Promise<ApiResponse<VehicleRequest>> {
+    return apiClient.erp.post('/api/erp/vehicle-requests', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<VehicleRequest>,
-  ): Promise<ApiResponse<VehicleRequest>> {
+  async update(id: string, data: Partial<VehicleRequest>): Promise<ApiResponse<VehicleRequest>> {
     return apiClient.erp.put(`/api/erp/vehicle-requests/${id}`, data);
   },
 
@@ -1185,36 +1069,28 @@ export const vehicleRequestApi = {
 
 export const announcementApi = {
   async list(
-    params?: PaginationParams & { priority?: string },
+    params?: PaginationParams & { priority?: string }
   ): Promise<ApiResponse<PaginatedResult<Announcement>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.status) searchParams.set("status", params.status);
-    if (params?.priority) searchParams.set("priority", params.priority);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.priority) searchParams.set('priority', params.priority);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/announcements${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/announcements${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Announcement>> {
     return apiClient.erp.get(`/api/erp/announcements/${id}`);
   },
 
-  async create(
-    data: Partial<Announcement>,
-  ): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post("/api/erp/announcements", data);
+  async create(data: Partial<Announcement>): Promise<ApiResponse<Announcement>> {
+    return apiClient.erp.post('/api/erp/announcements', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<Announcement>,
-  ): Promise<ApiResponse<Announcement>> {
+  async update(id: string, data: Partial<Announcement>): Promise<ApiResponse<Announcement>> {
     return apiClient.erp.put(`/api/erp/announcements/${id}`, data);
   },
 
@@ -1233,89 +1109,61 @@ export const announcementApi = {
 
 export const openingBalanceApi = {
   async list(
-    params?: PaginationParams & { period?: string; company_id?: string },
+    params?: PaginationParams & { period?: string; company_id?: string }
   ): Promise<ApiResponse<PaginatedResult<OpeningBalance>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.period) searchParams.set("period", params.period);
-    if (params?.company_id) searchParams.set("company_id", params.company_id);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.period) searchParams.set('period', params.period);
+    if (params?.company_id) searchParams.set('company_id', params.company_id);
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/finance/accounts/opening-balances${queryString ? "?" + queryString : ""}`,
+      `/api/erp/finance/accounts/opening-balances${queryString ? '?' + queryString : ''}`
     );
   },
 
   async get(id: string): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.get(
-      `/api/erp/finance/accounts/opening-balances/${id}`,
-    );
+    return apiClient.erp.get(`/api/erp/finance/accounts/opening-balances/${id}`);
   },
 
-  async create(
-    data: CreateOpeningBalanceRequest,
-  ): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.post(
-      "/api/erp/finance/accounts/opening-balances",
-      data,
-    );
+  async create(data: CreateOpeningBalanceRequest): Promise<ApiResponse<OpeningBalance>> {
+    return apiClient.erp.post('/api/erp/finance/accounts/opening-balances', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<OpeningBalance>,
-  ): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.put(
-      `/api/erp/finance/accounts/opening-balances/${id}`,
-      data,
-    );
+  async update(id: string, data: Partial<OpeningBalance>): Promise<ApiResponse<OpeningBalance>> {
+    return apiClient.erp.put(`/api/erp/finance/accounts/opening-balances/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(
-      `/api/erp/finance/accounts/opening-balances/${id}`,
-    );
+    return apiClient.erp.delete(`/api/erp/finance/accounts/opening-balances/${id}`);
   },
 
   async batchImport(
-    data: CreateOpeningBalanceRequest[],
+    data: CreateOpeningBalanceRequest[]
   ): Promise<ApiResponse<Record<string, any>>> {
-    return apiClient.erp.post(
-      "/api/erp/finance/accounts/opening-balances/batch",
-      data,
-    );
+    return apiClient.erp.post('/api/erp/finance/accounts/opening-balances/batch', data);
   },
 
-  async carryForward(
-    data: CarryForwardRequest,
-  ): Promise<ApiResponse<Record<string, any>>> {
-    return apiClient.erp.post(
-      "/api/erp/finance/accounts/opening-balances/carry-forward",
-      data,
-    );
+  async carryForward(data: CarryForwardRequest): Promise<ApiResponse<Record<string, any>>> {
+    return apiClient.erp.post('/api/erp/finance/accounts/opening-balances/carry-forward', data);
   },
 };
 
 export const fixedAssetApi = {
   async list(
-    params?: PaginationParams & { department_id?: string; status?: string },
+    params?: PaginationParams & { department_id?: string; status?: string }
   ): Promise<ApiResponse<PaginatedResult<FixedAsset>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.department_id)
-      searchParams.set("department_id", params.department_id);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.department_id) searchParams.set('department_id', params.department_id);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/fixed-assets${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/fixed-assets${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<FixedAsset>> {
@@ -1323,13 +1171,10 @@ export const fixedAssetApi = {
   },
 
   async create(data: Partial<FixedAsset>): Promise<ApiResponse<FixedAsset>> {
-    return apiClient.erp.post("/api/erp/fixed-assets", data);
+    return apiClient.erp.post('/api/erp/fixed-assets', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<FixedAsset>,
-  ): Promise<ApiResponse<FixedAsset>> {
+  async update(id: string, data: Partial<FixedAsset>): Promise<ApiResponse<FixedAsset>> {
     return apiClient.erp.put(`/api/erp/fixed-assets/${id}`, data);
   },
 
@@ -1337,29 +1182,24 @@ export const fixedAssetApi = {
     return apiClient.erp.delete(`/api/erp/fixed-assets/${id}`);
   },
 
-  async depreciate(
-    data: DepreciateRequest,
-  ): Promise<ApiResponse<DepreciationResult>> {
-    return apiClient.erp.post("/api/erp/fixed-assets/depreciate", data);
+  async depreciate(data: DepreciateRequest): Promise<ApiResponse<DepreciationResult>> {
+    return apiClient.erp.post('/api/erp/fixed-assets/depreciate', data);
   },
 };
 
 export const bankAccountApi = {
   async list(
-    params?: PaginationParams & { company_id?: string; status?: string },
+    params?: PaginationParams & { company_id?: string; status?: string }
   ): Promise<ApiResponse<PaginatedResult<BankAccount>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.company_id) searchParams.set("company_id", params.company_id);
-    if (params?.status) searchParams.set("status", params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.company_id) searchParams.set('company_id', params.company_id);
+    if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/bank-accounts${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/bank-accounts${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<BankAccount>> {
@@ -1367,13 +1207,10 @@ export const bankAccountApi = {
   },
 
   async create(data: Partial<BankAccount>): Promise<ApiResponse<BankAccount>> {
-    return apiClient.erp.post("/api/erp/bank-accounts", data);
+    return apiClient.erp.post('/api/erp/bank-accounts', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<BankAccount>,
-  ): Promise<ApiResponse<BankAccount>> {
+  async update(id: string, data: Partial<BankAccount>): Promise<ApiResponse<BankAccount>> {
     return apiClient.erp.put(`/api/erp/bank-accounts/${id}`, data);
   },
 
@@ -1387,31 +1224,25 @@ export const bankTransactionApi = {
     params?: PaginationParams & {
       account_id?: string;
       transaction_date?: string;
-    },
+    }
   ): Promise<ApiResponse<PaginatedResult<BankTransaction>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.account_id) searchParams.set("account_id", params.account_id);
-    if (params?.transaction_date)
-      searchParams.set("transaction_date", params.transaction_date);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.account_id) searchParams.set('account_id', params.account_id);
+    if (params?.transaction_date) searchParams.set('transaction_date', params.transaction_date);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/api/erp/bank-transactions${queryString ? "?" + queryString : ""}`,
-    );
+    return apiClient.erp.get(`/api/erp/bank-transactions${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<BankTransaction>> {
     return apiClient.erp.get(`/api/erp/bank-transactions/${id}`);
   },
 
-  async create(
-    data: CreateBankTransactionRequest,
-  ): Promise<ApiResponse<BankTransaction>> {
-    return apiClient.erp.post("/api/erp/bank-transactions", data);
+  async create(data: CreateBankTransactionRequest): Promise<ApiResponse<BankTransaction>> {
+    return apiClient.erp.post('/api/erp/bank-transactions', data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {

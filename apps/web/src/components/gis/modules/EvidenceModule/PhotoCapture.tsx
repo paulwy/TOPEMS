@@ -1,9 +1,9 @@
 // modules/EvidenceModule/PhotoCapture.tsx
-import React, { useRef, useState, useCallback, useEffect } from "react";
-import { Camera, SwitchCamera, Sun, X, Check } from "lucide-react";
-import { Box, IconButton, Typography } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { logger } from "@/utils/logger";
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { Camera, SwitchCamera, Sun, X, Check } from 'lucide-react';
+import { Box, IconButton, Typography } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { logger } from '@/utils/logger';
 
 interface PhotoCaptureProps {
   onCapture: (file: File, thumbnail?: string) => void;
@@ -21,9 +21,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [facingMode, setFacingMode] = useState<"environment" | "user">(
-    "environment",
-  );
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [flashOn, setFlashOn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -46,8 +44,8 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         }
         setError(null);
       } catch (err) {
-        setError("无法访问摄像头，请确保已授予摄像头权限");
-        logger.error("Camera error:", err);
+        setError('无法访问摄像头，请确保已授予摄像头权限');
+        logger.error('Camera error:', err);
       }
     };
 
@@ -66,14 +64,14 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
     }
-    setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
+    setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'));
   }, [stream]);
 
   // Toggle flash
   const toggleFlash = useCallback(() => {
     if (stream) {
       const track = stream.getVideoTracks()[0];
-      if (track && "getCapabilities" in track) {
+      if (track && 'getCapabilities' in track) {
         const capabilities = track.getCapabilities() as any;
         if (capabilities.torch) {
           track.applyConstraints({ advanced: [{ torch: !flashOn } as any] });
@@ -90,7 +88,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
     setIsCapturing(true);
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
 
     if (!ctx) return;
 
@@ -109,80 +107,73 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           }
 
           // Create thumbnail
-          const thumbnailCanvas = document.createElement("canvas");
-          const thumbCtx = thumbnailCanvas.getContext("2d");
+          const thumbnailCanvas = document.createElement('canvas');
+          const thumbCtx = thumbnailCanvas.getContext('2d');
           if (thumbCtx) {
             thumbnailCanvas.width = 200;
-            thumbnailCanvas.height =
-              200 * (video.videoHeight / video.videoWidth);
-            thumbCtx.drawImage(
-              video,
-              0,
-              0,
-              thumbnailCanvas.width,
-              thumbnailCanvas.height,
-            );
-            const thumbnail = thumbnailCanvas.toDataURL("image/jpeg", 0.5);
-            onCapture(
-              new File([blob], "photo.jpg", { type: "image/jpeg" }),
-              thumbnail,
-            );
+            thumbnailCanvas.height = 200 * (video.videoHeight / video.videoWidth);
+            thumbCtx.drawImage(video, 0, 0, thumbnailCanvas.width, thumbnailCanvas.height);
+            const thumbnail = thumbnailCanvas.toDataURL('image/jpeg', 0.5);
+            onCapture(new File([blob], 'photo.jpg', { type: 'image/jpeg' }), thumbnail);
           } else {
-            onCapture(new File([blob], "photo.jpg", { type: "image/jpeg" }));
+            onCapture(new File([blob], 'photo.jpg', { type: 'image/jpeg' }));
           }
         }
         setIsCapturing(false);
       },
-      "image/jpeg",
-      compressionQuality,
+      'image/jpeg',
+      compressionQuality
     );
   }, [maxFileSize, compressionQuality, onCapture]);
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        bgcolor: "black",
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        bgcolor: 'black',
       }}
     >
       {/* Video Preview */}
-      <Box sx={{ position: "relative", flex: 1 }}>
+      <Box sx={{ position: 'relative', flex: 1 }}>
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
 
         {/* Hidden canvas for capture */}
-        <canvas ref={canvasRef} style={{ display: "none" }} />
+        <canvas
+          ref={canvasRef}
+          style={{ display: 'none' }}
+        />
 
         {/* Error Message */}
         {error && (
           <Box
             sx={{
-              position: "absolute",
+              position: 'absolute',
               inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(0,0,0,0.8)",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(0,0,0,0.8)',
             }}
           >
-            <Box sx={{ textAlign: "center", color: "white", p: 16 }}>
-              <Typography sx={{ color: "#f87171", mb: 8 }}>{error}</Typography>
+            <Box sx={{ textAlign: 'center', color: 'white', p: 16 }}>
+              <Typography sx={{ color: '#f87171', mb: 8 }}>{error}</Typography>
               <Button
                 onClick={onCancel}
                 sx={{
                   px: 16,
                   py: 8,
-                  bgcolor: "#374151",
+                  bgcolor: '#374151',
                   borderRadius: 8,
-                  color: "white",
-                  "&:hover": { bgcolor: "#4b5563" },
+                  color: 'white',
+                  '&:hover': { bgcolor: '#4b5563' },
                 }}
               >
                 关闭
@@ -194,33 +185,33 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         {/* Camera Controls Overlay */}
         <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 16,
             left: 16,
             right: 16,
-            display: "flex",
-            justifyContent: "space-between",
+            display: 'flex',
+            justifyContent: 'space-between',
           }}
         >
           <IconButton
             onClick={onCancel}
             sx={{
-              borderRadius: "9999px",
-              bgcolor: "rgba(0,0,0,0.5)",
-              color: "white",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+              borderRadius: '9999px',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
             }}
           >
             <X size={24} />
           </IconButton>
-          <Box sx={{ display: "flex", gap: 8 }}>
+          <Box sx={{ display: 'flex', gap: 8 }}>
             <IconButton
               onClick={toggleFlash}
               sx={{
-                borderRadius: "9999px",
-                bgcolor: flashOn ? "#eab308" : "rgba(0,0,0,0.5)",
-                color: "white",
-                "&:hover": { bgcolor: flashOn ? "#eab308" : "rgba(0,0,0,0.7)" },
+                borderRadius: '9999px',
+                bgcolor: flashOn ? '#eab308' : 'rgba(0,0,0,0.5)',
+                color: 'white',
+                '&:hover': { bgcolor: flashOn ? '#eab308' : 'rgba(0,0,0,0.7)' },
               }}
             >
               <Sun size={24} />
@@ -228,10 +219,10 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             <IconButton
               onClick={switchCamera}
               sx={{
-                borderRadius: "9999px",
-                bgcolor: "rgba(0,0,0,0.5)",
-                color: "white",
-                "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                borderRadius: '9999px',
+                bgcolor: 'rgba(0,0,0,0.5)',
+                color: 'white',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
               }}
             >
               <SwitchCamera size={24} />
@@ -244,9 +235,9 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
       <Box
         sx={{
           p: 24,
-          bgcolor: "black",
-          display: "flex",
-          justifyContent: "center",
+          bgcolor: 'black',
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
         <IconButton
@@ -254,12 +245,12 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           disabled={isCapturing}
           sx={{
             p: 16,
-            borderRadius: "9999px",
-            bgcolor: isCapturing ? "#4b5563" : "white",
-            color: isCapturing ? "#9ca3af" : "#1f2937",
-            "&:hover": { bgcolor: isCapturing ? "#4b5563" : "#e5e7eb" },
-            "&:active": { transform: "scale(0.95)" },
-            "&.Mui-disabled": { bgcolor: "#4b5563", color: "#9ca3af" },
+            borderRadius: '9999px',
+            bgcolor: isCapturing ? '#4b5563' : 'white',
+            color: isCapturing ? '#9ca3af' : '#1f2937',
+            '&:hover': { bgcolor: isCapturing ? '#4b5563' : '#e5e7eb' },
+            '&:active': { transform: 'scale(0.95)' },
+            '&.Mui-disabled': { bgcolor: '#4b5563', color: '#9ca3af' },
           }}
         >
           <Camera size={32} />

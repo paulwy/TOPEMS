@@ -6,21 +6,21 @@
  * 去除字符串空格
  */
 export const trim = (str: string): string => {
-  return str.replace(/^\s+|\s+$/g, "");
+  return str.replace(/^\s+|\s+$/g, '');
 };
 
 /**
  * 去除所有空格
  */
 export const trimAll = (str: string): string => {
-  return str.replace(/\s+/g, "");
+  return str.replace(/\s+/g, '');
 };
 
 /**
  * 将字符串转换为驼峰命名
  */
 export const toCamelCase = (str: string): string => {
-  return str.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""));
+  return str.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));
 };
 
 /**
@@ -28,9 +28,9 @@ export const toCamelCase = (str: string): string => {
  */
 export const toSnakeCase = (str: string): string => {
   return str
-    .replace(/([A-Z])/g, "_$1")
+    .replace(/([A-Z])/g, '_$1')
     .toLowerCase()
-    .replace(/^_/, "");
+    .replace(/^_/, '');
 };
 
 /**
@@ -38,9 +38,9 @@ export const toSnakeCase = (str: string): string => {
  */
 export const toKebabCase = (str: string): string => {
   return str
-    .replace(/([A-Z])/g, "-$1")
+    .replace(/([A-Z])/g, '-$1')
     .toLowerCase()
-    .replace(/^-/, "");
+    .replace(/^-/, '');
 };
 
 /**
@@ -67,33 +67,21 @@ export const repeat = (str: string, times: number): string => {
 /**
  * 填充字符串到指定长度
  */
-export const padStart = (
-  str: string,
-  length: number,
-  char: string = " ",
-): string => {
+export const padStart = (str: string, length: number, char: string = ' '): string => {
   return str.padStart(length, char);
 };
 
 /**
  * 填充字符串到指定长度（尾部）
  */
-export const padEnd = (
-  str: string,
-  length: number,
-  char: string = " ",
-): string => {
+export const padEnd = (str: string, length: number, char: string = ' '): string => {
   return str.padEnd(length, char);
 };
 
 /**
  * 截断字符串
  */
-export const truncate = (
-  str: string,
-  maxLength: number,
-  suffix: string = "...",
-): string => {
+export const truncate = (str: string, maxLength: number, suffix: string = '...'): string => {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - suffix.length) + suffix;
 };
@@ -102,30 +90,29 @@ export const truncate = (
  * 隐藏手机号中间四位
  */
 export const maskPhone = (phone: string): string => {
-  return phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2");
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
 };
 
 /**
  * 隐藏邮箱
  */
 export const maskEmail = (email: string): string => {
-  return email.replace(/(.{2}).*(@.*)/, "$1***$2");
+  return email.replace(/(.{2}).*(@.*)/, '$1***$2');
 };
 
 /**
  * 隐藏身份证号中间部分
  */
 export const maskIdCard = (idCard: string): string => {
-  return idCard.replace(/(\d{4})\d+(\d{4})/, "$1**********$2");
+  return idCard.replace(/(\d{4})\d+(\d{4})/, '$1**********$2');
 };
 
 /**
  * 生成随机字符串
  */
 export const randomString = (length: number = 8): string => {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -136,8 +123,8 @@ export const randomString = (length: number = 8): string => {
  * 生成数字字符串
  */
 export const randomNumber = (length: number = 6): string => {
-  const chars = "0123456789";
-  let result = "";
+  const chars = '0123456789';
+  let result = '';
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -151,16 +138,16 @@ export const slugify = (str: string): string => {
   return str
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 };
 
 /**
  * 移除HTML标签
  */
 export const stripHtml = (html: string): string => {
-  return html.replace(/<[^>]*>/g, "");
+  return html.replace(/<[^>]*>/g, '');
 };
 
 /**
@@ -168,11 +155,11 @@ export const stripHtml = (html: string): string => {
  */
 export const escapeHtml = (str: string): string => {
   const escapeMap: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
   };
   return str.replace(/[&<>"']/g, (char) => escapeMap[char]);
 };
@@ -182,23 +169,20 @@ export const escapeHtml = (str: string): string => {
  */
 export const unescapeHtml = (str: string): string => {
   const unescapeMap: Record<string, string> = {
-    "&amp;": "&",
-    "&lt;": "<",
-    "&gt;": ">",
-    "&quot;": '"',
-    "&#39;": "'",
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
   };
-  return str.replace(
-    /&(amp|lt|gt|quot|#39);/g,
-    (_, name) => unescapeMap[`&${name};`],
-  );
+  return str.replace(/&(amp|lt|gt|quot|#39);/g, (_, name) => unescapeMap[`&${name};`]);
 };
 
 /**
  * 判断是否为空字符串
  */
 export const isEmpty = (str: string | null | undefined): boolean => {
-  return str === null || str === undefined || str.trim() === "";
+  return str === null || str === undefined || str.trim() === '';
 };
 
 /**
@@ -211,11 +195,7 @@ export const isNotEmpty = (str: string | null | undefined): boolean => {
 /**
  * 限制字符串长度
  */
-export const limitLength = (
-  str: string,
-  maxLength: number,
-  suffix: string = "...",
-): string => {
+export const limitLength = (str: string, maxLength: number, suffix: string = '...'): string => {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength) + suffix;
 };
@@ -224,11 +204,11 @@ export const limitLength = (
  * 格式化文件大小
  */
 export const formatSize = (bytes: number): string => {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 /**
@@ -236,9 +216,9 @@ export const formatSize = (bytes: number): string => {
  */
 export const snakeToTitle = (str: string): string => {
   return str
-    .split("_")
+    .split('_')
     .map((word) => capitalize(word.toLowerCase()))
-    .join(" ");
+    .join(' ');
 };
 
 /**
@@ -246,9 +226,9 @@ export const snakeToTitle = (str: string): string => {
  */
 export const camelToTitle = (str: string): string => {
   return str
-    .replace(/([A-Z])/g, " $1")
+    .replace(/([A-Z])/g, ' $1')
     .trim()
-    .split(" ")
+    .split(' ')
     .map((word) => capitalize(word.toLowerCase()))
-    .join(" ");
+    .join(' ');
 };

@@ -1,6 +1,6 @@
-import { useMediaQuery, useTheme } from "@mui/material";
+import { useMediaQuery, useTheme } from '@mui/material';
 
-export type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl";
+export type Breakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /**
  * 响应式 Hook
@@ -10,28 +10,28 @@ export const useResponsive = () => {
   const theme = useTheme();
 
   // 断点检测
-  const isXs = useMediaQuery(theme.breakpoints.only("xs"));
-  const isSm = useMediaQuery(theme.breakpoints.only("sm"));
-  const isMd = useMediaQuery(theme.breakpoints.only("md"));
-  const isLg = useMediaQuery(theme.breakpoints.only("lg"));
-  const isXl = useMediaQuery(theme.breakpoints.up("xl"));
+  const isXs = useMediaQuery(theme.breakpoints.only('xs'));
+  const isSm = useMediaQuery(theme.breakpoints.only('sm'));
+  const isMd = useMediaQuery(theme.breakpoints.only('md'));
+  const isLg = useMediaQuery(theme.breakpoints.only('lg'));
+  const isXl = useMediaQuery(theme.breakpoints.up('xl'));
 
   // 设备类型检测
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "lg"));
-  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
 
   // 方向检测
-  const isLandscape = useMediaQuery("(orientation: landscape)");
-  const isPortrait = useMediaQuery("(orientation: portrait)");
+  const isLandscape = useMediaQuery('(orientation: landscape)');
+  const isPortrait = useMediaQuery('(orientation: portrait)');
 
   // 获取当前断点
   const getCurrentBreakpoint = (): Breakpoint => {
-    if (isXl) return "xl";
-    if (isLg) return "lg";
-    if (isMd) return "md";
-    if (isSm) return "sm";
-    return "xs";
+    if (isXl) return 'xl';
+    if (isLg) return 'lg';
+    if (isMd) return 'md';
+    if (isSm) return 'sm';
+    return 'xs';
   };
 
   const breakpoint = getCurrentBreakpoint();

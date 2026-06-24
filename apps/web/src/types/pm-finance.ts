@@ -32,12 +32,12 @@ export interface ProjectFinance {
 /**
  * 付款状态
  */
-export type PaymentStatus = "pending" | "partial" | "completed";
+export type PaymentStatus = 'pending' | 'partial' | 'completed';
 
 /**
  * 发票状态
  */
-export type InvoiceStatus = "none" | "issued" | "partial" | "completed";
+export type InvoiceStatus = 'none' | 'issued' | 'partial' | 'completed';
 
 /**
  * 项目预算项

@@ -3,9 +3,9 @@
  * 封装财务报表生成和查询的React Query hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNotification } from "./useNotification";
-import { financialReportApi } from "../api/financial-report";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotification } from './useNotification';
+import { financialReportApi } from '../api/financial-report';
 
 // ============================================
 // 一、财务报表生成与查询
@@ -27,11 +27,11 @@ export function useGenerateBalanceSheet() {
       include_disabled_accounts?: boolean;
     }) => financialReportApi.generateBalanceSheet(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
-      success("资产负债表生成成功");
+      queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
+      success('资产负债表生成成功');
     },
     onError: (err: any) => {
-      error(err.message || "资产负债表生成失败");
+      error(err.message || '资产负债表生成失败');
     },
   });
 }
@@ -45,7 +45,7 @@ export function useBalanceSheet(params: {
   currency_code?: string;
 }) {
   return useQuery({
-    queryKey: ["balance-sheet", params],
+    queryKey: ['balance-sheet', params],
     queryFn: () => financialReportApi.getBalanceSheet(params),
     enabled: !!params.company_id && !!params.period,
     staleTime: 5 * 60 * 1000,
@@ -64,10 +64,9 @@ export function useBalanceSheetHistory(params: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["balance-sheet-history", params],
+    queryKey: ['balance-sheet-history', params],
     queryFn: () => financialReportApi.getBalanceSheetHistory(params),
-    enabled:
-      !!params.company_id && !!params.start_period && !!params.end_period,
+    enabled: !!params.company_id && !!params.start_period && !!params.end_period,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -88,11 +87,11 @@ export function useGenerateIncomeStatement() {
       include_detail?: boolean;
     }) => financialReportApi.generateIncomeStatement(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["income-statement"] });
-      success("利润表生成成功");
+      queryClient.invalidateQueries({ queryKey: ['income-statement'] });
+      success('利润表生成成功');
     },
     onError: (err: any) => {
-      error(err.message || "利润表生成失败");
+      error(err.message || '利润表生成失败');
     },
   });
 }
@@ -106,7 +105,7 @@ export function useIncomeStatement(params: {
   currency_code?: string;
 }) {
   return useQuery({
-    queryKey: ["income-statement", params],
+    queryKey: ['income-statement', params],
     queryFn: () => financialReportApi.getIncomeStatement(params),
     enabled: !!params.company_id && !!params.period,
     staleTime: 5 * 60 * 1000,
@@ -125,10 +124,9 @@ export function useIncomeStatementHistory(params: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["income-statement-history", params],
+    queryKey: ['income-statement-history', params],
     queryFn: () => financialReportApi.getIncomeStatementHistory(params),
-    enabled:
-      !!params.company_id && !!params.start_period && !!params.end_period,
+    enabled: !!params.company_id && !!params.start_period && !!params.end_period,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -146,14 +144,14 @@ export function useGenerateCashFlowStatement() {
       period: string;
       compare_period?: string;
       currency_code?: string;
-      method?: "direct" | "indirect";
+      method?: 'direct' | 'indirect';
     }) => financialReportApi.generateCashFlowStatement(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cash-flow-statement"] });
-      success("现金流量表生成成功");
+      queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
+      success('现金流量表生成成功');
     },
     onError: (err: any) => {
-      error(err.message || "现金流量表生成失败");
+      error(err.message || '现金流量表生成失败');
     },
   });
 }
@@ -167,7 +165,7 @@ export function useCashFlowStatement(params: {
   currency_code?: string;
 }) {
   return useQuery({
-    queryKey: ["cash-flow-statement", params],
+    queryKey: ['cash-flow-statement', params],
     queryFn: () => financialReportApi.getCashFlowStatement(params),
     enabled: !!params.company_id && !!params.period,
     staleTime: 5 * 60 * 1000,
@@ -186,10 +184,9 @@ export function useCashFlowStatementHistory(params: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["cash-flow-statement-history", params],
+    queryKey: ['cash-flow-statement-history', params],
     queryFn: () => financialReportApi.getCashFlowStatementHistory(params),
-    enabled:
-      !!params.company_id && !!params.start_period && !!params.end_period,
+    enabled: !!params.company_id && !!params.start_period && !!params.end_period,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -207,17 +204,17 @@ export function useSubmitReportForApproval() {
 
   return useMutation({
     mutationFn: (data: {
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       report_id: string;
     }) => financialReportApi.submitReportForApproval(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
-      queryClient.invalidateQueries({ queryKey: ["income-statement"] });
-      queryClient.invalidateQueries({ queryKey: ["cash-flow-statement"] });
-      success("报表已提交审批");
+      queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
+      queryClient.invalidateQueries({ queryKey: ['income-statement'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
+      success('报表已提交审批');
     },
     onError: (err: any) => {
-      error(err.message || "报表提交审批失败");
+      error(err.message || '报表提交审批失败');
     },
   });
 }
@@ -231,18 +228,18 @@ export function useApproveReport() {
 
   return useMutation({
     mutationFn: (data: {
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       report_id: string;
       comment?: string;
     }) => financialReportApi.approveReport(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
-      queryClient.invalidateQueries({ queryKey: ["income-statement"] });
-      queryClient.invalidateQueries({ queryKey: ["cash-flow-statement"] });
-      success("报表审批通过");
+      queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
+      queryClient.invalidateQueries({ queryKey: ['income-statement'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
+      success('报表审批通过');
     },
     onError: (err: any) => {
-      error(err.message || "报表审批失败");
+      error(err.message || '报表审批失败');
     },
   });
 }
@@ -256,18 +253,18 @@ export function useRejectReport() {
 
   return useMutation({
     mutationFn: (data: {
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       report_id: string;
       reason: string;
     }) => financialReportApi.rejectReport(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
-      queryClient.invalidateQueries({ queryKey: ["income-statement"] });
-      queryClient.invalidateQueries({ queryKey: ["cash-flow-statement"] });
-      success("报表已驳回");
+      queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
+      queryClient.invalidateQueries({ queryKey: ['income-statement'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
+      success('报表已驳回');
     },
     onError: (err: any) => {
-      error(err.message || "报表驳回失败");
+      error(err.message || '报表驳回失败');
     },
   });
 }
@@ -281,17 +278,17 @@ export function useLockReport() {
 
   return useMutation({
     mutationFn: (data: {
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       report_id: string;
     }) => financialReportApi.lockReport(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
-      queryClient.invalidateQueries({ queryKey: ["income-statement"] });
-      queryClient.invalidateQueries({ queryKey: ["cash-flow-statement"] });
-      success("报表已锁定");
+      queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
+      queryClient.invalidateQueries({ queryKey: ['income-statement'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
+      success('报表已锁定');
     },
     onError: (err: any) => {
-      error(err.message || "报表锁定失败");
+      error(err.message || '报表锁定失败');
     },
   });
 }
@@ -305,17 +302,17 @@ export function useUnlockReport() {
 
   return useMutation({
     mutationFn: (data: {
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       report_id: string;
     }) => financialReportApi.unlockReport(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["balance-sheet"] });
-      queryClient.invalidateQueries({ queryKey: ["income-statement"] });
-      queryClient.invalidateQueries({ queryKey: ["cash-flow-statement"] });
-      success("报表已解锁");
+      queryClient.invalidateQueries({ queryKey: ['balance-sheet'] });
+      queryClient.invalidateQueries({ queryKey: ['income-statement'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow-statement'] });
+      success('报表已解锁');
     },
     onError: (err: any) => {
-      error(err.message || "报表解锁失败");
+      error(err.message || '报表解锁失败');
     },
   });
 }
@@ -328,20 +325,17 @@ export function useUnlockReport() {
  * 获取报表对比分析
  */
 export function useReportComparison(params: {
-  report_type: "balance_sheet" | "income_statement" | "cash_flow";
+  report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
   company_id: string;
   period_from: string;
   period_to: string;
   currency_code?: string;
 }) {
   return useQuery({
-    queryKey: ["report-comparison", params],
+    queryKey: ['report-comparison', params],
     queryFn: () => financialReportApi.getReportComparison(params),
     enabled:
-      !!params.report_type &&
-      !!params.company_id &&
-      !!params.period_from &&
-      !!params.period_to,
+      !!params.report_type && !!params.company_id && !!params.period_from && !!params.period_to,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -350,7 +344,7 @@ export function useReportComparison(params: {
  * 获取报表趋势分析
  */
 export function useReportTrend(params: {
-  report_type: "balance_sheet" | "income_statement" | "cash_flow";
+  report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
   company_id: string;
   period_from: string;
   period_to: string;
@@ -358,13 +352,10 @@ export function useReportTrend(params: {
   currency_code?: string;
 }) {
   return useQuery({
-    queryKey: ["report-trend", params],
+    queryKey: ['report-trend', params],
     queryFn: () => financialReportApi.getReportTrend(params),
     enabled:
-      !!params.report_type &&
-      !!params.company_id &&
-      !!params.period_from &&
-      !!params.period_to,
+      !!params.report_type && !!params.company_id && !!params.period_from && !!params.period_to,
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -373,14 +364,14 @@ export function useReportTrend(params: {
  * 获取报表同比分析
  */
 export function useReportYearOverYear(params: {
-  report_type: "balance_sheet" | "income_statement" | "cash_flow";
+  report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
   company_id: string;
   current_period: string;
   previous_year_period: string;
   currency_code?: string;
 }) {
   return useQuery({
-    queryKey: ["report-year-over-year", params],
+    queryKey: ['report-year-over-year', params],
     queryFn: () => financialReportApi.getReportYearOverYear(params),
     enabled:
       !!params.report_type &&
@@ -395,14 +386,14 @@ export function useReportYearOverYear(params: {
  * 获取报表环比分析
  */
 export function useReportPeriodOverPeriod(params: {
-  report_type: "balance_sheet" | "income_statement" | "cash_flow";
+  report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
   company_id: string;
   current_period: string;
   previous_period: string;
   currency_code?: string;
 }) {
   return useQuery({
-    queryKey: ["report-period-over-period", params],
+    queryKey: ['report-period-over-period', params],
     queryFn: () => financialReportApi.getReportPeriodOverPeriod(params),
     enabled:
       !!params.report_type &&
@@ -427,17 +418,17 @@ export function useGenerateConsolidatedReport() {
   return useMutation({
     mutationFn: (data: {
       consolidation_id: string;
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       period: string;
       currency_code?: string;
       eliminate_intercompany?: boolean;
     }) => financialReportApi.generateConsolidatedReport(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidated-reports"] });
-      success("合并报表生成成功");
+      queryClient.invalidateQueries({ queryKey: ['consolidated-reports'] });
+      success('合并报表生成成功');
     },
     onError: (err: any) => {
-      error(err.message || "合并报表生成失败");
+      error(err.message || '合并报表生成失败');
     },
   });
 }
@@ -448,15 +439,14 @@ export function useGenerateConsolidatedReport() {
 export function useConsolidatedReport(
   consolidationId: string,
   params: {
-    report_type: "balance_sheet" | "income_statement" | "cash_flow";
+    report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
     period: string;
     currency_code?: string;
-  },
+  }
 ) {
   return useQuery({
-    queryKey: ["consolidated-report", consolidationId, params],
-    queryFn: () =>
-      financialReportApi.getConsolidatedReport(consolidationId, params),
+    queryKey: ['consolidated-report', consolidationId, params],
+    queryFn: () => financialReportApi.getConsolidatedReport(consolidationId, params),
     enabled: !!consolidationId && !!params.report_type && !!params.period,
     staleTime: 5 * 60 * 1000,
   });
@@ -472,7 +462,7 @@ export function useConsolidationEntities(params?: {
   page_size?: number;
 }) {
   return useQuery({
-    queryKey: ["consolidation-entities", params],
+    queryKey: ['consolidation-entities', params],
     queryFn: () => financialReportApi.getConsolidationEntities(params),
     staleTime: 10 * 60 * 1000,
   });
@@ -490,16 +480,16 @@ export function useCreateConsolidationEntity() {
       name: string;
       code: string;
       parent_id?: string;
-      entity_type: "holding" | "subsidiary" | "associate" | "joint_venture";
+      entity_type: 'holding' | 'subsidiary' | 'associate' | 'joint_venture';
       ownership_percentage: number;
       currency_code?: string;
     }) => financialReportApi.createConsolidationEntity(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-entities"] });
-      success("合并主体创建成功");
+      queryClient.invalidateQueries({ queryKey: ['consolidation-entities'] });
+      success('合并主体创建成功');
     },
     onError: (err: any) => {
-      error(err.message || "合并主体创建失败");
+      error(err.message || '合并主体创建失败');
     },
   });
 }
@@ -515,11 +505,11 @@ export function useUpdateConsolidationEntity() {
     mutationFn: ({ entityId, data }: { entityId: string; data: any }) =>
       financialReportApi.updateConsolidationEntity(entityId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-entities"] });
-      success("合并主体更新成功");
+      queryClient.invalidateQueries({ queryKey: ['consolidation-entities'] });
+      success('合并主体更新成功');
     },
     onError: (err: any) => {
-      error(err.message || "合并主体更新失败");
+      error(err.message || '合并主体更新失败');
     },
   });
 }
@@ -532,14 +522,13 @@ export function useDeleteConsolidationEntity() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: (entityId: string) =>
-      financialReportApi.deleteConsolidationEntity(entityId),
+    mutationFn: (entityId: string) => financialReportApi.deleteConsolidationEntity(entityId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-entities"] });
-      success("合并主体删除成功");
+      queryClient.invalidateQueries({ queryKey: ['consolidation-entities'] });
+      success('合并主体删除成功');
     },
     onError: (err: any) => {
-      error(err.message || "合并主体删除失败");
+      error(err.message || '合并主体删除失败');
     },
   });
 }
@@ -556,18 +545,18 @@ export function useExportFinancialReport() {
 
   return useMutation({
     mutationFn: async (params: {
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       report_id?: string;
       company_id: string;
       period: string;
       currency_code?: string;
-      format: "pdf" | "xlsx" | "csv";
+      format: 'pdf' | 'xlsx' | 'csv';
       include_notes?: boolean;
       include_comparison?: boolean;
     }) => {
       const blob = await financialReportApi.exportReport(params);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `${params.report_type}-${params.period}.${params.format}`;
       document.body.appendChild(link);
@@ -577,10 +566,10 @@ export function useExportFinancialReport() {
       return blob;
     },
     onSuccess: () => {
-      success("财务报表导出成功");
+      success('财务报表导出成功');
     },
     onError: (err: any) => {
-      error(err.message || "导出失败");
+      error(err.message || '导出失败');
     },
   });
 }
@@ -594,14 +583,14 @@ export function useExportConsolidatedReport() {
   return useMutation({
     mutationFn: async (params: {
       consolidation_id: string;
-      report_type: "balance_sheet" | "income_statement" | "cash_flow";
+      report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
       period: string;
       currency_code?: string;
-      format: "pdf" | "xlsx";
+      format: 'pdf' | 'xlsx';
     }) => {
       const blob = await financialReportApi.exportConsolidatedReport(params);
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `consolidated-${params.report_type}-${params.period}.${params.format}`;
       document.body.appendChild(link);
@@ -611,10 +600,10 @@ export function useExportConsolidatedReport() {
       return blob;
     },
     onSuccess: () => {
-      success("合并报表导出成功");
+      success('合并报表导出成功');
     },
     onError: (err: any) => {
-      error(err.message || "导出失败");
+      error(err.message || '导出失败');
     },
   });
 }

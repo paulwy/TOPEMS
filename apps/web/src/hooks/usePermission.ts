@@ -1,34 +1,28 @@
-import { useAuth } from "./useAuth";
-import { useCallback, useMemo } from "react";
+import { useAuth } from './useAuth';
+import { useCallback, useMemo } from 'react';
 
 export const usePermission = () => {
-  const {
-    hasPermission,
-    hasAnyPermission,
-    hasAllPermissions,
-    permissions,
-    user,
-  } = useAuth();
+  const { hasPermission, hasAnyPermission, hasAllPermissions, permissions, user } = useAuth();
 
   const checkPermission = useCallback(
     (permission: string): boolean => {
       return hasPermission(permission);
     },
-    [hasPermission],
+    [hasPermission]
   );
 
   const checkAnyPermission = useCallback(
     (permissionList: string[]): boolean => {
       return hasAnyPermission(permissionList);
     },
-    [hasAnyPermission],
+    [hasAnyPermission]
   );
 
   const checkAllPermissions = useCallback(
     (permissionList: string[]): boolean => {
       return hasAllPermissions(permissionList);
     },
-    [hasAllPermissions],
+    [hasAllPermissions]
   );
 
   const getModulePermissions = useCallback(
@@ -40,7 +34,7 @@ export const usePermission = () => {
         admin: hasPermission(`${module}:admin`),
       };
     },
-    [hasPermission],
+    [hasPermission]
   );
 
   const canAccessModule = useCallback(
@@ -48,20 +42,17 @@ export const usePermission = () => {
       if (user?.is_superuser) return true;
       return permissions.some((p) => p === `${module}:read`);
     },
-    [permissions, user?.is_superuser],
+    [permissions, user?.is_superuser]
   );
 
   const canWriteModule = useCallback(
     (module: string): boolean => {
       if (user?.is_superuser) return true;
       return permissions.some(
-        (p) =>
-          p === `${module}:write` ||
-          p === `${module}:create` ||
-          p === `${module}:update`,
+        (p) => p === `${module}:write` || p === `${module}:create` || p === `${module}:update`
       );
     },
-    [permissions, user?.is_superuser],
+    [permissions, user?.is_superuser]
   );
 
   const canDeleteModule = useCallback(
@@ -69,7 +60,7 @@ export const usePermission = () => {
       if (user?.is_superuser) return true;
       return permissions.some((p) => p === `${module}:delete`);
     },
-    [permissions, user?.is_superuser],
+    [permissions, user?.is_superuser]
   );
 
   const canAdminModule = useCallback(
@@ -77,13 +68,10 @@ export const usePermission = () => {
       if (user?.is_superuser) return true;
       return permissions.some((p) => p === `${module}:admin`);
     },
-    [permissions, user?.is_superuser],
+    [permissions, user?.is_superuser]
   );
 
-  const isSuperuser = useMemo(
-    () => user?.is_superuser || false,
-    [user?.is_superuser],
-  );
+  const isSuperuser = useMemo(() => user?.is_superuser || false, [user?.is_superuser]);
 
   // 避免引用稳定化
   return useMemo(
@@ -110,7 +98,7 @@ export const usePermission = () => {
       canWriteModule,
       canDeleteModule,
       canAdminModule,
-    ],
+    ]
   );
 };
 

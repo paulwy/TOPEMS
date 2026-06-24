@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Box, Typography, Paper } from "@mui/material";
-import { logger } from "@/utils/logger";
+import React, { useEffect, useRef, useState } from 'react';
+import { Box, Typography, Paper } from '@mui/material';
+import { logger } from '@/utils/logger';
 
 interface PerformanceMetrics {
   pageLoadTime: number;
@@ -14,7 +14,7 @@ interface PerformanceMetrics {
 interface ApiCallMetrics {
   endpoint: string;
   duration: number;
-  status: "success" | "error";
+  status: 'success' | 'error';
   timestamp: number;
 }
 
@@ -31,76 +31,68 @@ class PerformanceMonitor {
   private apiCalls: ApiCallMetrics[] = [];
 
   constructor() {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       this.initPerformanceObservers();
     }
   }
 
   private initPerformanceObservers() {
     // 监控页面加载时间
-    window.addEventListener("load", () => {
-      const perfData = performance.getEntriesByType(
-        "navigation",
-      )[0] as PerformanceNavigationTiming;
+    window.addEventListener('load', () => {
+      const perfData = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
       if (perfData) {
         this.metrics.pageLoadTime = perfData.loadEventEnd - perfData.startTime;
-        this.metrics.domContentLoaded =
-          perfData.domContentLoadedEventEnd - perfData.startTime;
+        this.metrics.domContentLoaded = perfData.domContentLoadedEventEnd - perfData.startTime;
       }
     });
 
     // 监控 FP (First Paint)
     const fpObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.name === "first-paint") {
+        if (entry.name === 'first-paint') {
           this.metrics.firstPaint = entry.startTime;
         }
       }
     });
 
     try {
-      fpObserver.observe({ type: "paint", buffered: true });
+      fpObserver.observe({ type: 'paint', buffered: true });
     } catch (e) {
-      logger.warn("FP observer not supported");
+      logger.warn('FP observer not supported');
     }
 
     // 监控 FCP (First Contentful Paint)
     const fcpObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.name === "first-contentful-paint") {
+        if (entry.name === 'first-contentful-paint') {
           this.metrics.firstContentfulPaint = entry.startTime;
         }
       }
     });
 
     try {
-      fcpObserver.observe({ type: "paint", buffered: true });
+      fcpObserver.observe({ type: 'paint', buffered: true });
     } catch (e) {
-      logger.warn("FCP observer not supported");
+      logger.warn('FCP observer not supported');
     }
 
     // 监控资源加载时间
     const resourceObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         const resource = entry as PerformanceResourceTiming;
-        this.metrics.resourceLoadTimes[resource.name] =
-          resource.responseEnd - resource.startTime;
+        this.metrics.resourceLoadTimes[resource.name] = resource.responseEnd - resource.startTime;
       }
     });
 
     try {
-      resourceObserver.observe({ type: "resource", buffered: true });
+      resourceObserver.observe({ type: 'resource', buffered: true });
     } catch (e) {
-      logger.warn("Resource observer not supported");
+      logger.warn('Resource observer not supported');
     }
   }
 
   // 记录 API 调用时间
-  recordApiCall(
-    endpoint: string,
-    duration: number,
-    status: "success" | "error",
-  ) {
+  recordApiCall(endpoint: string, duration: number, status: 'success' | 'error') {
     const metric: ApiCallMetrics = {
       endpoint,
       duration,
@@ -136,18 +128,13 @@ class PerformanceMonitor {
     }
 
     if (this.apiCalls.length === 0) return 0;
-    return (
-      this.apiCalls.reduce((sum, c) => sum + c.duration, 0) /
-      this.apiCalls.length
-    );
+    return this.apiCalls.reduce((sum, c) => sum + c.duration, 0) / this.apiCalls.length;
   }
 
   // 获取 API 成功率
   getApiSuccessRate(): number {
     if (this.apiCalls.length === 0) return 100;
-    const successCalls = this.apiCalls.filter(
-      (c) => c.status === "success",
-    ).length;
+    const successCalls = this.apiCalls.filter((c) => c.status === 'success').length;
     return (successCalls / this.apiCalls.length) * 100;
   }
 
@@ -177,7 +164,7 @@ class PerformanceMonitor {
         exportedAt: new Date().toISOString(),
       },
       null,
-      2,
+      2
     );
   }
 }
@@ -187,9 +174,7 @@ export const performanceMonitor = new PerformanceMonitor();
 
 // React Hook
 export function usePerformanceMonitor() {
-  const [metrics, setMetrics] = useState<PerformanceMetrics>(
-    performanceMonitor.getMetrics(),
-  );
+  const [metrics, setMetrics] = useState<PerformanceMetrics>(performanceMonitor.getMetrics());
 
   useEffect(() => {
     // 定期更新指标
@@ -203,37 +188,31 @@ export function usePerformanceMonitor() {
   return {
     metrics,
     recordApiCall: performanceMonitor.recordApiCall.bind(performanceMonitor),
-    getApiCallHistory:
-      performanceMonitor.getApiCallHistory.bind(performanceMonitor),
+    getApiCallHistory: performanceMonitor.getApiCallHistory.bind(performanceMonitor),
     getAverageApiResponseTime:
       performanceMonitor.getAverageApiResponseTime.bind(performanceMonitor),
-    getApiSuccessRate:
-      performanceMonitor.getApiSuccessRate.bind(performanceMonitor),
-    getSlowApiCalls:
-      performanceMonitor.getSlowApiCalls.bind(performanceMonitor),
+    getApiSuccessRate: performanceMonitor.getApiSuccessRate.bind(performanceMonitor),
+    getSlowApiCalls: performanceMonitor.getSlowApiCalls.bind(performanceMonitor),
     exportReport: performanceMonitor.exportReport.bind(performanceMonitor),
     clear: performanceMonitor.clear.bind(performanceMonitor),
   };
 }
 
 // API 调用包装器
-export async function measureApiCall<T>(
-  endpoint: string,
-  apiCall: () => Promise<T>,
-): Promise<T> {
+export async function measureApiCall<T>(endpoint: string, apiCall: () => Promise<T>): Promise<T> {
   const startTime = performance.now();
 
   try {
     const result = await apiCall();
     const duration = performance.now() - startTime;
 
-    performanceMonitor.recordApiCall(endpoint, duration, "success");
+    performanceMonitor.recordApiCall(endpoint, duration, 'success');
 
     return result;
   } catch (error) {
     const duration = performance.now() - startTime;
 
-    performanceMonitor.recordApiCall(endpoint, duration, "error");
+    performanceMonitor.recordApiCall(endpoint, duration, 'error');
 
     throw error;
   }
@@ -242,7 +221,7 @@ export async function measureApiCall<T>(
 // React Hook: API 调用
 export function useApiCall<T, A extends any[] = any[]>(
   apiCall: (...args: A) => Promise<T>,
-  _deps: React.DependencyList = [],
+  _deps: React.DependencyList = []
 ) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -259,9 +238,7 @@ export function useApiCall<T, A extends any[] = any[]>(
     setError(null);
 
     try {
-      const result = await measureApiCall(callApi.current.name, () =>
-        callApi.current(...args),
-      );
+      const result = await measureApiCall(callApi.current.name, () => callApi.current(...args));
       setData(result);
       return result;
     } catch (err) {
@@ -289,32 +266,28 @@ export function PerformanceWarnings() {
   return (
     <Paper
       sx={{
-        position: "fixed",
+        position: 'fixed',
         bottom: 16,
         right: 16,
-        backgroundColor: "#fef3c7",
-        border: "1px solid #fde68a",
+        backgroundColor: '#fef3c7',
+        border: '1px solid #fde68a',
         borderRadius: 2,
         p: 4,
         maxWidth: 400,
         boxShadow: 3,
       }}
     >
-      <Typography sx={{ fontWeight: 600, color: "#92400e", mb: 2 }}>
-        ⚠️ 性能警告
-      </Typography>
+      <Typography sx={{ fontWeight: 600, color: '#92400e', mb: 2 }}>⚠️ 性能警告</Typography>
 
       {successRate < 95 && (
-        <Typography sx={{ fontSize: "0.875rem", color: "#b45309", mb: 2 }}>
+        <Typography sx={{ fontSize: '0.875rem', color: '#b45309', mb: 2 }}>
           API 成功率: {successRate.toFixed(1)}%
         </Typography>
       )}
 
       {slowCalls.length > 0 && (
-        <Box sx={{ fontSize: "0.875rem", color: "#b45309" }}>
-          <Typography sx={{ fontWeight: 500, mb: 1 }}>
-            慢 API 调用 ({slowCalls.length}):
-          </Typography>
+        <Box sx={{ fontSize: '0.875rem', color: '#b45309' }}>
+          <Typography sx={{ fontWeight: 500, mb: 1 }}>慢 API 调用 ({slowCalls.length}):</Typography>
           <Box sx={{ pl: 4 }}>
             {slowCalls.slice(0, 3).map((call, idx) => (
               <Typography key={idx}>

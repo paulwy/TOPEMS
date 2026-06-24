@@ -1,18 +1,12 @@
-import React from "react";
-import { Box, Typography, Chip, useTheme } from "@mui/material";
-import {
-  CheckCircle2,
-  Circle,
-  Clock,
-  AlertCircle,
-  ArrowRight,
-} from "lucide-react";
+import React from 'react';
+import { Box, Typography, Chip, useTheme } from '@mui/material';
+import { CheckCircle2, Circle, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 
 export interface TimelineItem {
   id: string;
   title: string;
   description?: string;
-  status: "completed" | "current" | "pending" | "failed";
+  status: 'completed' | 'current' | 'pending' | 'failed';
   time?: string;
   user?: string;
   icon?: React.ReactNode;
@@ -20,7 +14,7 @@ export interface TimelineItem {
 
 export interface StatusTimelineProps {
   items: TimelineItem[];
-  orientation?: "vertical" | "horizontal";
+  orientation?: 'vertical' | 'horizontal';
   showLabels?: boolean;
   showIcons?: boolean;
 }
@@ -28,50 +22,50 @@ export interface StatusTimelineProps {
 const statusConfig = {
   completed: {
     icon: <CheckCircle2 size={18} />,
-    color: "#22c55e",
-    bgColor: "#f0fdf4",
-    label: "已完成",
+    color: '#22c55e',
+    bgColor: '#f0fdf4',
+    label: '已完成',
   },
   current: {
     icon: <Clock size={18} />,
-    color: "#3b82f6",
-    bgColor: "#eff6ff",
-    label: "进行中",
+    color: '#3b82f6',
+    bgColor: '#eff6ff',
+    label: '进行中',
   },
   pending: {
     icon: <Circle size={18} />,
-    color: "#9ca3af",
-    bgColor: "#f9fafb",
-    label: "待处理",
+    color: '#9ca3af',
+    bgColor: '#f9fafb',
+    label: '待处理',
   },
   failed: {
     icon: <AlertCircle size={18} />,
-    color: "#ef4444",
-    bgColor: "#fef2f2",
-    label: "失败",
+    color: '#ef4444',
+    bgColor: '#fef2f2',
+    label: '失败',
   },
 };
 
 export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   items,
-  orientation = "vertical",
+  orientation = 'vertical',
   showLabels = true,
   showIcons = true,
 }) => {
   const theme = useTheme();
 
-  if (orientation === "horizontal") {
+  if (orientation === 'horizontal') {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
         {items.map((item, index) => {
           const config = statusConfig[item.status];
           return (
             <React.Fragment key={item.id}>
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  flexDirection: "column",
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexDirection: 'column',
                   minWidth: 80,
                 }}
               >
@@ -79,28 +73,23 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                   sx={{
                     width: 24,
                     height: 24,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     bgcolor: config.bgColor,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     mb: 1,
                   }}
                 >
-                  <Box sx={{ color: config.color }}>
-                    {item.icon || (showIcons && config.icon)}
-                  </Box>
+                  <Box sx={{ color: config.color }}>{item.icon || (showIcons && config.icon)}</Box>
                 </Box>
                 {showLabels && (
                   <Typography
-                    variant="caption"
+                    variant='caption'
                     sx={{
-                      textAlign: "center",
-                      color:
-                        item.status === "current"
-                          ? "primary.main"
-                          : "text.secondary",
-                      fontWeight: item.status === "current" ? 600 : 400,
+                      textAlign: 'center',
+                      color: item.status === 'current' ? 'primary.main' : 'text.secondary',
+                      fontWeight: item.status === 'current' ? 600 : 400,
                     }}
                   >
                     {item.title}
@@ -108,8 +97,8 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 )}
                 {item.time && (
                   <Typography
-                    variant="caption"
-                    color="text.disabled"
+                    variant='caption'
+                    color='text.disabled'
                     sx={{ mt: 0.5 }}
                   >
                     {item.time}
@@ -117,7 +106,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 )}
               </Box>
               {index < items.length - 1 && (
-                <Box sx={{ mx: 1, color: "divider" }}>
+                <Box sx={{ mx: 1, color: 'divider' }}>
                   <ArrowRight size={16} />
                 </Box>
               )}
@@ -136,16 +125,16 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
           <Box
             key={item.id}
             sx={{
-              display: "flex",
+              display: 'flex',
               gap: 2,
               pb: index < items.length - 1 ? 3 : 0,
             }}
           >
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
                 width: 32,
                 flexShrink: 0,
               }}
@@ -154,24 +143,16 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 sx={{
                   width: 20,
                   height: 20,
-                  borderRadius: item.status === "current" ? "50%" : "4px",
+                  borderRadius: item.status === 'current' ? '50%' : '4px',
                   bgcolor: config.bgColor,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border:
-                    item.status === "current"
-                      ? `2px solid ${config.color}`
-                      : "none",
-                  boxShadow:
-                    item.status === "current"
-                      ? `0 0 0 4px ${config.bgColor}`
-                      : "none",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: item.status === 'current' ? `2px solid ${config.color}` : 'none',
+                  boxShadow: item.status === 'current' ? `0 0 0 4px ${config.bgColor}` : 'none',
                 }}
               >
-                <Box sx={{ color: config.color }}>
-                  {item.icon || (showIcons && config.icon)}
-                </Box>
+                <Box sx={{ color: config.color }}>{item.icon || (showIcons && config.icon)}</Box>
               </Box>
               {index < items.length - 1 && (
                 <Box
@@ -180,45 +161,41 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     flex: 1,
                     minHeight: 40,
                     bgColor:
-                      items[index + 1].status === "completed" ||
-                      item.status === "completed"
+                      items[index + 1].status === 'completed' || item.status === 'completed'
                         ? config.color
-                        : "divider",
+                        : 'divider',
                     mt: 1,
                   }}
                 />
               )}
             </Box>
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Typography
-                  variant="body1"
+                  variant='body1'
                   sx={{
-                    fontWeight: item.status === "current" ? 600 : 500,
-                    color:
-                      item.status === "current"
-                        ? "primary.main"
-                        : "text.primary",
+                    fontWeight: item.status === 'current' ? 600 : 500,
+                    color: item.status === 'current' ? 'primary.main' : 'text.primary',
                   }}
                 >
                   {item.title}
                 </Typography>
                 {showLabels && (
                   <Chip
-                    size="small"
+                    size='small'
                     label={config.label}
                     sx={{
                       bgcolor: config.bgColor,
                       color: config.color,
-                      fontSize: "0.7rem",
+                      fontSize: '0.7rem',
                     }}
                   />
                 )}
               </Box>
               {item.description && (
                 <Typography
-                  variant="body2"
-                  color="text.secondary"
+                  variant='body2'
+                  color='text.secondary'
                   sx={{ mt: 0.5 }}
                 >
                   {item.description}
@@ -226,9 +203,9 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
               )}
               {(item.time || item.user) && (
                 <Typography
-                  variant="caption"
-                  color="text.disabled"
-                  sx={{ mt: 0.5, display: "block" }}
+                  variant='caption'
+                  color='text.disabled'
+                  sx={{ mt: 0.5, display: 'block' }}
                 >
                   {item.user && `${item.user} · `}
                   {item.time}

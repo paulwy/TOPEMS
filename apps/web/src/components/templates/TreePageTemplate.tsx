@@ -3,9 +3,27 @@
  * 适用于部门管理、分类管理等场景
  */
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Box, Paper, Typography, TextField, InputAdornment, IconButton, Select, MenuItem, FormControl, InputLabel, Avatar, Chip, Divider, useTheme, useMediaQuery, Skeleton, Tooltip,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Avatar,
+  Chip,
+  Divider,
+  useTheme,
+  useMediaQuery,
+  Skeleton,
+  Tooltip,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   Search,
   RefreshCw,
@@ -17,8 +35,8 @@ import {
   Eye,
   Building2,
   Users,
-} from "lucide-react";
-import { EmptyState } from "@/components/mui";
+} from 'lucide-react';
+import { EmptyState } from '@/components/mui';
 
 /**
  * 树形节点类型
@@ -26,7 +44,7 @@ import { EmptyState } from "@/components/mui";
 export interface TreeNode<T = any> {
   id: string;
   name: string;
-  type: "folder" | "item";
+  type: 'folder' | 'item';
   children?: TreeNode<T>[];
   data?: T;
   icon?: React.ReactNode;
@@ -52,10 +70,10 @@ export interface StatCard {
   title: string;
   value: string | number;
   icon?: React.ReactNode;
-  color?: "primary" | "success" | "warning" | "error" | "info";
+  color?: 'primary' | 'success' | 'warning' | 'error' | 'info';
   trend?: {
     value: number;
-    direction: "up" | "down" | "neutral";
+    direction: 'up' | 'down' | 'neutral';
   };
 }
 
@@ -66,7 +84,7 @@ export interface TreeAction {
   label: string;
   icon?: React.ReactNode;
   onClick: (node: TreeNode) => void;
-  color?: "primary" | "secondary" | "success" | "error" | "warning" | "info";
+  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
   disabled?: (node: TreeNode) => boolean;
   divider?: boolean;
 }
@@ -117,9 +135,7 @@ export interface TreePageTemplateProps {
   /** 当前选中的节点ID */
   selectedId?: string;
   /** 详情面板渲染 */
-  detailPanel?:
-    | React.ReactNode
-    | ((selectedNode: TreeNode | null) => React.ReactNode);
+  detailPanel?: React.ReactNode | ((selectedNode: TreeNode | null) => React.ReactNode);
   /** 详情面板标题 */
   detailPanelTitle?: string;
   /** 空状态配置 */
@@ -140,7 +156,7 @@ export interface TreePageTemplateProps {
       isSelected: boolean;
       hasChildren: boolean;
       level: number;
-    },
+    }
   ) => React.ReactNode;
   /** 自定义树形宽度 */
   treeWidth?: number | string;
@@ -173,14 +189,14 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
   data,
   treeConfig,
   loading = false,
-  searchPlaceholder = "搜索...",
+  searchPlaceholder = '搜索...',
   filterOptions,
   filterValue,
   onFilterChange,
   onSearch,
   onReset,
   onAdd,
-  addButtonText = "新增",
+  addButtonText = '新增',
   addButtonIcon,
   rowActions = [],
   onSelect,
@@ -201,20 +217,19 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
   detailPanelClassName,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // 状态
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [internalSelectedId, setInternalSelectedId] = useState<
-    string | undefined
-  >(selectedId);
+  const [internalSelectedId, setInternalSelectedId] = useState<string | undefined>(selectedId);
 
   // 使用props或内部状态
-  const activeSelectedId =
-    selectedId !== undefined ? selectedId : internalSelectedId;
-  const setActiveSelectedId =
-    selectedId !== undefined ? () => {} : setInternalSelectedId;
+  const activeSelectedId = selectedId !== undefined ? selectedId : internalSelectedId;
+  const setActiveSelectedId = useMemo(
+    () => (selectedId !== undefined ? () => {} : setInternalSelectedId),
+    [selectedId]
+  );
 
   // 节点展开/折叠
   const toggleExpand = useCallback((id: string) => {
@@ -235,7 +250,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
       setActiveSelectedId(node.id);
       onSelect?.(node);
     },
-    [onSelect, setActiveSelectedId],
+    [onSelect, setActiveSelectedId]
   );
 
   // 搜索处理
@@ -245,7 +260,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
 
   // 重置处理
   const handleReset = useCallback(() => {
-    setSearchText("");
+    setSearchText('');
     onReset?.();
   }, [onReset]);
 
@@ -314,32 +329,28 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
         <Box key={node.id}>
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
               px: 2,
               py: 1.5,
               borderRadius: 1,
-              cursor: node.disabled ? "not-allowed" : "pointer",
+              cursor: node.disabled ? 'not-allowed' : 'pointer',
               pl: `${level * 16 + 12}px`,
-              bgcolor: isSelected ? "primary.light" : "transparent",
-              color: isSelected
-                ? "primary.main"
-                : node.disabled
-                  ? "text.disabled"
-                  : "text.primary",
+              bgcolor: isSelected ? 'primary.light' : 'transparent',
+              color: isSelected ? 'primary.main' : node.disabled ? 'text.disabled' : 'text.primary',
               opacity: node.disabled ? 0.5 : 1,
-              "&:hover": {
-                bgcolor: isSelected ? "primary.light" : "action.hover",
+              '&:hover': {
+                bgcolor: isSelected ? 'primary.light' : 'action.hover',
               },
-              transition: "all 0.15s ease",
+              transition: 'all 0.15s ease',
             }}
             onClick={() => !node.disabled && handleSelect(node)}
           >
             {/* 展开/折叠按钮 */}
             {hasChildren ? (
               <IconButton
-                size="small"
+                size='small'
                 sx={{ p: 0.25 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -365,18 +376,18 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                   width: 28,
                   height: 28,
                   borderRadius: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: isSelected ? "primary.light" : "grey.100",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: isSelected ? 'primary.light' : 'grey.100',
                 }}
               >
-                {node.type === "folder" ? (
+                {node.type === 'folder' ? (
                   <Building2
                     sx={{
                       width: 16,
                       height: 16,
-                      color: isSelected ? "primary.main" : "success.main",
+                      color: isSelected ? 'primary.main' : 'success.main',
                     }}
                   />
                 ) : (
@@ -384,7 +395,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                     sx={{
                       width: 16,
                       height: 16,
-                      color: isSelected ? "primary.main" : "primary.main",
+                      color: isSelected ? 'primary.main' : 'primary.main',
                     }}
                   />
                 )}
@@ -393,13 +404,13 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
 
             {/* 名称 */}
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
                 flex: 1,
                 fontWeight: isSelected ? 600 : 400,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {node.name}
@@ -408,13 +419,13 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
             {/* 子节点数量 */}
             {hasChildren && (
               <Chip
-                size="small"
+                size='small'
                 label={node.children?.length}
                 sx={{
                   height: 20,
-                  fontSize: "0.75rem",
-                  bgcolor: isSelected ? "primary.main" : "grey.200",
-                  color: isSelected ? "white" : "text.secondary",
+                  fontSize: '0.75rem',
+                  bgcolor: isSelected ? 'primary.main' : 'grey.200',
+                  color: isSelected ? 'white' : 'text.secondary',
                 }}
               />
             )}
@@ -429,13 +440,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
         </Box>
       );
     },
-    [
-      expandedIds,
-      activeSelectedId,
-      handleSelect,
-      toggleExpand,
-      customRenderNode,
-    ],
+    [expandedIds, activeSelectedId, handleSelect, toggleExpand, customRenderNode]
   );
 
   // 渲染统计卡片
@@ -446,9 +451,9 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
       <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
         <Box
           sx={{
-            display: "grid",
+            display: 'grid',
             gridTemplateColumns: {
-              xs: "repeat(2, 1fr)",
+              xs: 'repeat(2, 1fr)',
               md: `repeat(${Math.min(statsColumns, stats.length)}, 1fr)`,
             },
             gap: 2,
@@ -458,19 +463,19 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
             <Box
               key={stat.id}
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 2,
                 p: 2,
-                bgcolor: "grey.50",
+                bgcolor: 'grey.50',
                 borderRadius: 2,
               }}
             >
               {stat.icon && (
                 <Avatar
                   sx={{
-                    bgcolor: `${stat.color || "primary"}.light`,
-                    color: `${stat.color || "primary"}.main`,
+                    bgcolor: `${stat.color || 'primary'}.light`,
+                    color: `${stat.color || 'primary'}.main`,
                     width: 40,
                     height: 40,
                   }}
@@ -479,10 +484,16 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                 </Avatar>
               )}
               <Box sx={{ flex: 1 }}>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {stat.title}
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700 }}
+                >
                   {stat.value}
                 </Typography>
               </Box>
@@ -499,37 +510,46 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
       <Box
         sx={{
           mb: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
           gap: 2,
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600, mb: 0.5 }}
+          >
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {subtitle}
             </Typography>
           )}
         </Box>
 
         {/* 操作按钮 */}
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           {showRefresh && (
-            <Tooltip title="刷新">
-              <IconButton onClick={onRefresh} disabled={loading}>
+            <Tooltip title='刷新'>
+              <IconButton
+                onClick={onRefresh}
+                disabled={loading}
+              >
                 <RefreshCw
                   sx={{
                     width: 18,
                     height: 18,
-                    animation: loading ? "spin 1s linear infinite" : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
+                    animation: loading ? 'spin 1s linear infinite' : 'none',
+                    '@keyframes spin': {
+                      '0%': { transform: 'rotate(0deg)' },
+                      '100%': { transform: 'rotate(360deg)' },
                     },
                   }}
                 />
@@ -538,10 +558,8 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
           )}
           {showAddButton && onAdd && (
             <Button
-              variant="contained"
-              startIcon={
-                addButtonIcon || <Plus style={{ width: 18, height: 18 }} />
-              }
+              variant='contained'
+              startIcon={addButtonIcon || <Plus style={{ width: 18, height: 18 }} />}
               onClick={onAdd}
             >
               {addButtonText}
@@ -557,17 +575,14 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
       {customToolbar && <Box sx={{ mb: 2 }}>{customToolbar}</Box>}
 
       {/* 主内容区 - 树形+详情 */}
-      <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
+      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <Box
           sx={{
-            display: "grid",
+            display: 'grid',
             gridTemplateColumns: {
-              md:
-                typeof treeWidth === "number"
-                  ? `${treeWidth}px 1fr`
-                  : `${treeWidth} 1fr`,
+              md: typeof treeWidth === 'number' ? `${treeWidth}px 1fr` : `${treeWidth} 1fr`,
             },
-            minHeight: isMobile ? "auto" : 500,
+            minHeight: isMobile ? 'auto' : 500,
           }}
         >
           {/* 左侧树形区域 */}
@@ -575,33 +590,33 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
             className={treePanelClassName}
             sx={{
               borderRight: 1,
-              borderColor: "divider",
-              bgcolor: "grey.50",
-              display: "flex",
-              flexDirection: "column",
+              borderColor: 'divider',
+              bgcolor: 'grey.50',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* 搜索和筛选 */}
             <Box sx={{ p: 2 }}>
               {showSearch && (
                 <TextField
-                  type="text"
+                  type='text'
                   placeholder={searchPlaceholder}
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  size="small"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  size='small'
                   fullWidth
                   sx={{ mb: showFilter ? 2 : 0 }}
                   slotProps={{
                     input: {
                       startAdornment: (
-                        <InputAdornment position="start">
+                        <InputAdornment position='start'>
                           <Search
                             sx={{
                               width: 18,
                               height: 18,
-                              color: "text.secondary",
+                              color: 'text.secondary',
                             }}
                           />
                         </InputAdornment>
@@ -612,28 +627,38 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               )}
 
               {showFilter && filterOptions && filterOptions.length > 0 && (
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <FormControl size="small" sx={{ minWidth: 120, flex: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <FormControl
+                    size='small'
+                    sx={{ minWidth: 120, flex: 1 }}
+                  >
                     <Select
-                      value={filterValue || "all"}
+                      value={filterValue || 'all'}
                       onChange={(e) => onFilterChange?.(e.target.value)}
                       displayEmpty
                     >
                       {filterOptions.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
+                        <MenuItem
+                          key={option.value}
+                          value={option.value}
+                        >
                           {option.label}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                   <Button
-                    variant="outlined"
-                    size="small"
+                    variant='outlined'
+                    size='small'
                     onClick={handleSearch}
                   >
                     搜索
                   </Button>
-                  <Button variant="outlined" size="small" onClick={handleReset}>
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    onClick={handleReset}
+                  >
                     重置
                   </Button>
                 </Box>
@@ -644,7 +669,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
             <Box
               sx={{
                 flex: 1,
-                overflow: "auto",
+                overflow: 'auto',
                 px: 1,
                 pb: 2,
                 maxHeight: `calc(100vh - ${isMobile ? 400 : 320}px)`,
@@ -653,21 +678,23 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               {loading ? (
                 <Box sx={{ p: 4 }}>
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} height={48} sx={{ mb: 1 }} />
+                    <Skeleton
+                      key={i}
+                      height={48}
+                      sx={{ mb: 1 }}
+                    />
                   ))}
                 </Box>
               ) : filteredData.length === 0 ? (
                 <EmptyState
-                  emoji={emptyState?.emoji || "📂"}
-                  title={emptyState?.title || "暂无数据"}
+                  emoji={emptyState?.emoji || '📂'}
+                  title={emptyState?.title || '暂无数据'}
                   description={emptyState?.description}
                   actionLabel={emptyState?.actionLabel}
                   onAction={emptyState?.onAction}
                 />
               ) : (
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-                >
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   {filteredData.map((node) => renderTreeItem(node))}
                 </Box>
               )}
@@ -678,8 +705,8 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
           <Box
             className={detailPanelClassName}
             sx={{
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               minWidth: minDetailWidth,
             }}
           >
@@ -691,25 +718,31 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                     sx={{
                       p: 2,
                       borderBottom: 1,
-                      borderColor: "divider",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      borderColor: 'divider',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                     }}
                   >
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600 }}
+                    >
                       {detailPanelTitle}
                     </Typography>
 
                     {/* 行操作按钮 */}
                     {rowActions.length > 0 && (
-                      <Box sx={{ display: "flex", gap: 0.5 }}>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
                         {rowActions.map((action, index) => (
-                          <Tooltip key={index} title={action.label}>
+                          <Tooltip
+                            key={index}
+                            title={action.label}
+                          >
                             <IconButton
-                              size="small"
+                              size='small'
                               sx={{
-                                color: `${action.color || "primary"}.main`,
+                                color: `${action.color || 'primary'}.main`,
                               }}
                               onClick={() => action.onClick(selectedNode)}
                               disabled={action.disabled?.(selectedNode)}
@@ -728,29 +761,27 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                   sx={{
                     flex: 1,
                     p: 3,
-                    overflow: "auto",
+                    overflow: 'auto',
                     maxHeight: `calc(100vh - ${isMobile ? 280 : 200}px)`,
                   }}
                 >
-                  {typeof detailPanel === "function"
-                    ? detailPanel(selectedNode)
-                    : detailPanel}
+                  {typeof detailPanel === 'function' ? detailPanel(selectedNode) : detailPanel}
                 </Box>
               </>
             ) : (
               <Box
                 sx={{
                   flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   p: 4,
                 }}
               >
                 <EmptyState
-                  emoji="👈"
-                  title="选择项目查看详情"
-                  description="从左侧列表中选择一个项目，查看详细信息"
+                  emoji='👈'
+                  title='选择项目查看详情'
+                  description='从左侧列表中选择一个项目，查看详细信息'
                 />
               </Box>
             )}

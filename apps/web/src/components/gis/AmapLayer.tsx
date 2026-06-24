@@ -1,8 +1,8 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
-import AMapLoader from "@amap/amap-jsapi-loader";
-import type { DevicePoint, StorageLocation } from "../../api/gis";
-import config from "../../config/runtime";
-import { logger } from "@/utils/logger";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import AMapLoader from '@amap/amap-jsapi-loader';
+import type { DevicePoint, StorageLocation } from '../../api/gis';
+import config from '../../config/runtime';
+import { logger } from '@/utils/logger';
 
 interface AmapLayerProps {
   devicePoints: DevicePoint[];
@@ -16,15 +16,7 @@ export interface AmapLayerRef {
 }
 
 const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
-  (
-    {
-      devicePoints,
-      storageLocations,
-      center = [116.397428, 39.90923],
-      zoom = 10,
-    },
-    ref,
-  ) => {
+  ({ devicePoints, storageLocations, center = [116.397428, 39.90923], zoom = 10 }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const mapRef = useRef<any>(null);
     const markersRef = useRef<Map<string, any>>(new Map());
@@ -37,15 +29,15 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       if (!mapContainer.current) return;
 
       AMapLoader.load({
-        key: config.thirdParty.amapKey || "您的高德地图API Key",
-        version: "2.0",
-        plugins: ["AMap.Scale", "AMap.ToolBar", "AMap.MarkerClusterer"],
+        key: config.thirdParty.amapKey || '您的高德地图API Key',
+        version: '2.0',
+        plugins: ['AMap.Scale', 'AMap.ToolBar', 'AMap.MarkerClusterer'],
       })
         .then((AMap) => {
           const map = new AMap.Map(mapContainer.current, {
             center,
             zoom,
-            viewMode: "3D",
+            viewMode: '3D',
             pitch: 30,
           });
 
@@ -65,7 +57,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
           };
         })
         .catch((error) => {
-          logger.error("高德地图加载失败:", error);
+          logger.error('高德地图加载失败:', error);
         });
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -73,7 +65,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
     useEffect(() => {
       if (!mapRef.current) return;
 
-      mapRef.current.plugin(["AMap.Marker"], () => {
+      mapRef.current.plugin(['AMap.Marker'], () => {
         updateMarkers((window as any).AMap, mapRef.current);
       });
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,12 +84,12 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
           icon: new AMap.Icon({
             size: new AMap.Size(32, 32),
             image:
-              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iIzAwQzg5NyIvPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0aCkiLz48L3N2Zz4=",
+              'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iIzAwQzg5NyIvPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0aCkiLz48L3N2Zz4=',
             imageSize: new AMap.Size(32, 32),
           }),
         });
 
-        marker.on("click", () => {
+        marker.on('click', () => {
           const infoWindow = new AMap.InfoWindow({
             content: `
             <div style="padding: 10px;">
@@ -122,18 +114,18 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
           icon: new AMap.Icon({
             size: new AMap.Size(32, 32),
             image:
-              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSI5IiBmaWxsPSIjRjVFOUgwQiIvPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0aCkiLz48L3N2Zz4=",
+              'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSI5IiBmaWxsPSIjRjVFOUgwQiIvPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjcGF0aCkiLz48L3N2Zz4=',
             imageSize: new AMap.Size(32, 32),
           }),
         });
 
-        marker.on("click", () => {
+        marker.on('click', () => {
           const infoWindow = new AMap.InfoWindow({
             content: `
             <div style="padding: 10px;">
               <h4>${location.name}</h4>
               <p>类型: ${location.location_type}</p>
-              <p>容量: ${location.capacity || "未设置"}</p>
+              <p>容量: ${location.capacity || '未设置'}</p>
               <p>坐标: ${location.latitude}, ${location.longitude}</p>
             </div>
           `,
@@ -146,10 +138,15 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       });
     };
 
-    return <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />;
-  },
+    return (
+      <div
+        ref={mapContainer}
+        style={{ width: '100%', height: '100%' }}
+      />
+    );
+  }
 );
 
-AmapLayer.displayName = "AmapLayer";
+AmapLayer.displayName = 'AmapLayer';
 
 export default AmapLayer;

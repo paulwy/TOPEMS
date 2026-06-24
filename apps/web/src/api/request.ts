@@ -1,8 +1,8 @@
-import type { ApiResponse } from "./client";
-import { handleApiError, type AppError } from "../utils/errors";
-import createLogger from "../utils/logger";
+import type { ApiResponse } from './client';
+import { handleApiError, type AppError } from '../utils/errors';
+import createLogger from '../utils/logger';
 
-const logger = createLogger("request");
+const logger = createLogger('request');
 
 export interface RequestOptions {
   skipErrorHandler?: boolean;
@@ -13,10 +13,7 @@ export interface RequestOptions {
 /**
  * 统一处理 API 响应
  */
-export function handleResponse<T>(
-  response: ApiResponse<T>,
-  options?: RequestOptions,
-): T {
+export function handleResponse<T>(response: ApiResponse<T>, options?: RequestOptions): T {
   if (!response.success) {
     const error: AppError = {
       code: response.code,
@@ -25,7 +22,7 @@ export function handleResponse<T>(
     };
 
     if (!options?.skipErrorHandler) {
-      logger.error("API Error:", error);
+      logger.error('API Error:', error);
       if (!options?.skipErrorToast) {
         throw error;
       }
@@ -42,7 +39,7 @@ export function handleResponse<T>(
  */
 export function handleRequestError(error: unknown): AppError {
   const appError = handleApiError(error);
-  logger.error("Request Error:", appError);
+  logger.error('Request Error:', appError);
   return appError;
 }
 
@@ -51,7 +48,7 @@ export function handleRequestError(error: unknown): AppError {
  */
 export async function safeRequest<T>(
   requestFn: () => Promise<ApiResponse<T>>,
-  options?: RequestOptions,
+  options?: RequestOptions
 ): Promise<T | null> {
   try {
     const response = await requestFn();
@@ -70,16 +67,14 @@ export async function safeRequest<T>(
  */
 export async function paginatedRequest<T>(
   requestFn: (
-    _params: any,
-  ) => Promise<
-    ApiResponse<{ items: T[]; total: number; page: number; page_size: number }>
-  >,
+    _params: any
+  ) => Promise<ApiResponse<{ items: T[]; total: number; page: number; page_size: number }>>,
   params: {
     page?: number;
     page_size?: number;
     search?: string;
     [key: string]: any;
-  } = {},
+  } = {}
 ): Promise<{ items: T[]; total: number; page: number; page_size: number }> {
   const response = await requestFn(params);
 

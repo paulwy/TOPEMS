@@ -1,34 +1,45 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { Plus, Eye, FileText, Users } from "lucide-react";
-import { ListPageTemplate } from "@/components/mui";
-import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
-import { ehsApi } from "@/api/ehs";
-import type { EmergencyPlan } from "@/api/ehs";
-import { toast } from "react-toastify";
-import { apiLogger } from "@/utils/logger";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Plus, Eye, FileText, Users } from 'lucide-react';
+import { ListPageTemplate } from '@/components/mui';
+import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
+import { ehsApi } from '@/api/ehs';
+import type { EmergencyPlan } from '@/api/ehs';
+import { toast } from 'react-toastify';
+import { apiLogger } from '@/utils/logger';
 
 const EhsPlanPage: React.FC = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<EmergencyPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null);
   const [formData, setFormData] = useState({
-    plan_no: "",
-    name: "",
-    plan_type: "",
-    scope: "",
-    trigger_conditions: "",
-    response_procedures: "",
-    responsible_persons: "",
-    contact_info: "",
+    plan_no: '',
+    name: '',
+    plan_type: '',
+    scope: '',
+    trigger_conditions: '',
+    response_procedures: '',
+    responsible_persons: '',
+    contact_info: '',
   });
 
   useEffect(() => {
@@ -43,18 +54,14 @@ const EhsPlanPage: React.FC = () => {
         const adapted = (response.data as any).data.map((item: any) => ({
           ...item,
           status:
-            item.status === "active"
-              ? "有效"
-              : item.status === "inactive"
-                ? "无效"
-                : item.status,
+            item.status === 'active' ? '有效' : item.status === 'inactive' ? '无效' : item.status,
         }));
         setPlans(adapted);
       } else {
         setPlans([]);
       }
     } catch (err) {
-      apiLogger.error("加载应急预案数据失败:", err);
+      apiLogger.error('加载应急预案数据失败:', err);
       setPlans([]);
     } finally {
       setLoading(false);
@@ -63,14 +70,14 @@ const EhsPlanPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      有效: { bg: "#dcfce7", color: "#16a34a" },
-      无效: { bg: "#fee2e2", color: "#dc2626" },
+      有效: { bg: '#dcfce7', color: '#16a34a' },
+      无效: { bg: '#fee2e2', color: '#dc2626' },
     };
-    const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
+    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
     return (
       <Chip
         label={status}
-        size="small"
+        size='small'
         sx={{
           backgroundColor: colors.bg,
           color: colors.color,
@@ -83,64 +90,65 @@ const EhsPlanPage: React.FC = () => {
   const columns = useMemo<ColumnDef<EmergencyPlan>[]>(
     () => [
       {
-        id: "plan_no",
-        label: "预案编号",
+        id: 'plan_no',
+        label: '预案编号',
         render: (row) => row.plan_no,
       },
       {
-        id: "name",
-        label: "预案名称",
+        id: 'name',
+        label: '预案名称',
         render: (row) => (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {row.name}
           </Typography>
         ),
       },
       {
-        id: "plan_type",
-        label: "预案类型",
-        render: (row) => row.plan_type || "-",
+        id: 'plan_type',
+        label: '预案类型',
+        render: (row) => row.plan_type || '-',
       },
       {
-        id: "scope",
-        label: "适用范围",
-        render: (row) => row.scope || "-",
+        id: 'scope',
+        label: '适用范围',
+        render: (row) => row.scope || '-',
       },
       {
-        id: "responsible_persons",
-        label: "负责人",
+        id: 'responsible_persons',
+        label: '负责人',
         render: (row) => {
           const persons = row.responsible_persons;
-          const displayText = Array.isArray(persons)
-            ? persons.join(", ")
-            : persons;
+          const displayText = Array.isArray(persons) ? persons.join(', ') : persons;
           return (
             <Box
               sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
                 maxWidth: 150,
               }}
               title={displayText}
             >
-              {displayText || "-"}
+              {displayText || '-'}
             </Box>
           );
         },
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    [],
+    []
   );
 
   const rowActions = useMemo<RowAction<EmergencyPlan>[]>(
     () => [
       {
-        label: "详情",
+        label: '详情',
         icon: <Eye size={16} />,
         onClick: (row) => {
           setSelectedPlan(row);
@@ -148,39 +156,39 @@ const EhsPlanPage: React.FC = () => {
         },
       },
     ],
-    [],
+    []
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
-        id: "plan_type",
-        label: "预案类型",
-        type: "select",
+        id: 'plan_type',
+        label: '预案类型',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "火灾预案", label: "火灾预案" },
-          { value: "化学品泄漏", label: "化学品泄漏" },
-          { value: "地震预案", label: "地震预案" },
-          { value: "应急预案", label: "应急预案" },
+          { value: '', label: '全部' },
+          { value: '火灾预案', label: '火灾预案' },
+          { value: '化学品泄漏', label: '化学品泄漏' },
+          { value: '地震预案', label: '地震预案' },
+          { value: '应急预案', label: '应急预案' },
         ],
         value: typeFilter,
         onChange: (value) => setTypeFilter(value as string),
       },
       {
-        id: "status",
-        label: "状态",
-        type: "select",
+        id: 'status',
+        label: '状态',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "有效", label: "有效" },
-          { value: "无效", label: "无效" },
+          { value: '', label: '全部' },
+          { value: '有效', label: '有效' },
+          { value: '无效', label: '无效' },
         ],
         value: statusFilter,
         onChange: (value) => setStatusFilter(value as string),
       },
     ],
-    [typeFilter, statusFilter],
+    [typeFilter, statusFilter]
   );
 
   const filteredPlans = useMemo(() => {
@@ -196,14 +204,14 @@ const EhsPlanPage: React.FC = () => {
 
   const handleCreate = () => {
     setFormData({
-      plan_no: "",
-      name: "",
-      plan_type: "",
-      scope: "",
-      trigger_conditions: "",
-      response_procedures: "",
-      responsible_persons: "",
-      contact_info: "",
+      plan_no: '',
+      name: '',
+      plan_type: '',
+      scope: '',
+      trigger_conditions: '',
+      response_procedures: '',
+      responsible_persons: '',
+      contact_info: '',
     });
     setShowCreateModal(true);
   };
@@ -218,97 +226,96 @@ const EhsPlanPage: React.FC = () => {
         trigger_conditions: formData.trigger_conditions || null,
         response_procedures: formData.response_procedures || null,
         responsible_persons: formData.responsible_persons
-          .split(",")
+          .split(',')
           .map((s) => s.trim())
           .filter((s) => s),
         contact_info: formData.contact_info || null,
-        status: "active",
+        status: 'active',
       });
-      toast.success("应急预案创建成功");
+      toast.success('应急预案创建成功');
       setShowCreateModal(false);
       loadPlans();
     } catch (err) {
-      toast.error("创建失败");
-      apiLogger.error("创建应急预案失败:", err);
+      toast.error('创建失败');
+      apiLogger.error('创建应急预案失败:', err);
     }
   };
 
   const stats = useMemo(
     () => ({
       total: plans.length,
-      active: plans.filter((p) => p.status === "有效").length,
-      inactive: plans.filter((p) => p.status === "无效").length,
+      active: plans.filter((p) => p.status === '有效').length,
+      inactive: plans.filter((p) => p.status === '无效').length,
     }),
-    [plans],
+    [plans]
   );
 
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)',
       }}
     >
       <Box
-        component="header"
+        component='header'
         sx={{
-          bgcolor: "background.paper",
+          bgcolor: 'background.paper',
           boxShadow: 1,
           borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
+          borderColor: 'divider',
+          position: 'sticky',
           top: 0,
           zIndex: 10,
         }}
       >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               height: 64,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  background:
-                    "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
                   borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <FileText sx={{ width: 24, height: 24, color: "white" }} />
+                <FileText sx={{ width: 24, height: 24, color: 'white' }} />
               </Box>
               <Box>
                 <Typography
-                  variant="h6"
+                  variant='h6'
                   sx={{
                     fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
+                    color: 'slate.900',
+                    fontSize: '1.25rem',
                   }}
                 >
                   应急预案
                 </Typography>
                 <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
+                  variant='caption'
+                  sx={{ color: 'slate.500', fontSize: '0.75rem' }}
                 >
                   Emergency Plan
                 </Typography>
               </Box>
             </Box>
             <Button
-              variant="contained"
+              variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: "#22c55e", "&:hover": { bgcolor: "#16a34a" } }}
+              sx={{ bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
             >
               新增预案
             </Button>
@@ -317,43 +324,43 @@ const EhsPlanPage: React.FC = () => {
       </Box>
 
       <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
+        component='main'
+        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
       >
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
             gap: 2,
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: "#f0fdf4" }}>
+          <Card sx={{ bgcolor: '#f0fdf4' }}>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#dcfce7",
+                    bgcolor: '#dcfce7',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: "#22c55e" }} />
+                  <FileText sx={{ width: 20, height: 20, color: '#22c55e' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     预案总数
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.total}
                   </Typography>
@@ -363,30 +370,30 @@ const EhsPlanPage: React.FC = () => {
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#dcfce7",
+                    bgcolor: '#dcfce7',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <FileText sx={{ width: 20, height: 20, color: '#16a34a' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     有效预案
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.active}
                   </Typography>
@@ -396,30 +403,30 @@ const EhsPlanPage: React.FC = () => {
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: "#fee2e2",
+                    bgcolor: '#fee2e2',
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                  <FileText sx={{ width: 20, height: 20, color: '#dc2626' }} />
                 </Box>
                 <Box>
                   <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                    variant='body2'
+                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
                     无效预案
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
                     {stats.inactive}
                   </Typography>
@@ -430,12 +437,12 @@ const EhsPlanPage: React.FC = () => {
         </Box>
 
         <ListPageTemplate<EmergencyPlan>
-          title="应急预案列表"
+          title='应急预案列表'
           columns={columns}
           data={filteredPlans}
           loading={loading}
           searchable
-          searchPlaceholder="搜索预案名称或编号..."
+          searchPlaceholder='搜索预案名称或编号...'
           searchValue={searchTerm}
           onSearch={(value) => setSearchTerm(value)}
           filters={filters}
@@ -447,64 +454,54 @@ const EhsPlanPage: React.FC = () => {
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>新增应急预案</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label="预案编号 *"
+              label='预案编号 *'
               value={formData.plan_no}
-              onChange={(e) =>
-                setFormData({ ...formData, plan_no: e.target.value })
-              }
-              placeholder="请输入预案编号"
+              onChange={(e) => setFormData({ ...formData, plan_no: e.target.value })}
+              placeholder='请输入预案编号'
             />
             <TextField
               fullWidth
-              label="预案名称 *"
+              label='预案名称 *'
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="请输入预案名称"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder='请输入预案名称'
             />
             <TextField
               fullWidth
-              label="预案类型 *"
+              label='预案类型 *'
               value={formData.plan_type}
-              onChange={(e) =>
-                setFormData({ ...formData, plan_type: e.target.value })
-              }
-              placeholder="请输入预案类型"
+              onChange={(e) => setFormData({ ...formData, plan_type: e.target.value })}
+              placeholder='请输入预案类型'
             />
             <TextField
               fullWidth
-              label="适用范围"
+              label='适用范围'
               value={formData.scope}
-              onChange={(e) =>
-                setFormData({ ...formData, scope: e.target.value })
-              }
-              placeholder="请输入适用范围"
+              onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
+              placeholder='请输入适用范围'
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label="触发条件"
+              label='触发条件'
               value={formData.trigger_conditions}
-              onChange={(e) =>
-                setFormData({ ...formData, trigger_conditions: e.target.value })
-              }
-              placeholder="请输入触发条件"
+              onChange={(e) => setFormData({ ...formData, trigger_conditions: e.target.value })}
+              placeholder='请输入触发条件'
               multiline
               rows={2}
             />
             <TextField
               fullWidth
-              label="响应程序"
+              label='响应程序'
               value={formData.response_procedures}
               onChange={(e) =>
                 setFormData({
@@ -512,13 +509,13 @@ const EhsPlanPage: React.FC = () => {
                   response_procedures: e.target.value,
                 })
               }
-              placeholder="请输入响应程序"
+              placeholder='请输入响应程序'
               multiline
               rows={3}
             />
             <TextField
               fullWidth
-              label="负责人"
+              label='负责人'
               value={formData.responsible_persons}
               onChange={(e) =>
                 setFormData({
@@ -526,27 +523,28 @@ const EhsPlanPage: React.FC = () => {
                   responsible_persons: e.target.value,
                 })
               }
-              placeholder="多个负责人用逗号分隔"
+              placeholder='多个负责人用逗号分隔'
             />
             <TextField
               fullWidth
-              label="联系方式"
+              label='联系方式'
               value={formData.contact_info}
-              onChange={(e) =>
-                setFormData({ ...formData, contact_info: e.target.value })
-              }
-              placeholder="请输入联系方式"
+              onChange={(e) => setFormData({ ...formData, contact_info: e.target.value })}
+              placeholder='请输入联系方式'
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateModal(false)}
+          >
             取消
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: "#22c55e" }}
+            sx={{ bgcolor: '#22c55e' }}
           >
             保存
           </Button>
@@ -556,7 +554,7 @@ const EhsPlanPage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth="lg"
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle>应急预案详情</DialogTitle>
@@ -565,15 +563,15 @@ const EhsPlanPage: React.FC = () => {
             <Box
               sx={{
                 pt: 2,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
                 gap: 2,
               }}
             >
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   预案编号
                 </Box>
@@ -581,8 +579,8 @@ const EhsPlanPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   预案名称
                 </Box>
@@ -590,8 +588,8 @@ const EhsPlanPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   预案类型
                 </Box>
@@ -599,64 +597,62 @@ const EhsPlanPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(selectedPlan.status)}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedPlan.status)}</Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   适用范围
                 </Box>
-                <Box>{selectedPlan.scope || "-"}</Box>
+                <Box>{selectedPlan.scope || '-'}</Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   负责人
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Users style={{ width: 16, height: 16 }} />
                   {Array.isArray(selectedPlan.responsible_persons)
-                    ? selectedPlan.responsible_persons.join(", ")
-                    : selectedPlan.responsible_persons || "-"}
+                    ? selectedPlan.responsible_persons.join(', ')
+                    : selectedPlan.responsible_persons || '-'}
                 </Box>
               </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   触发条件
                 </Box>
-                <Box>{selectedPlan.trigger_conditions || "-"}</Box>
+                <Box>{selectedPlan.trigger_conditions || '-'}</Box>
               </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   响应程序
                 </Box>
-                <Box>{selectedPlan.response_procedures || "-"}</Box>
+                <Box>{selectedPlan.response_procedures || '-'}</Box>
               </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   联系方式
                 </Box>
-                <Box>{selectedPlan.contact_info || "-"}</Box>
+                <Box>{selectedPlan.contact_info || '-'}</Box>
               </Box>
             </Box>
           )}

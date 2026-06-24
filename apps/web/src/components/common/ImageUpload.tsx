@@ -1,19 +1,19 @@
-import React, { useState, useCallback, useRef } from "react";
-import { Box, Typography, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Slider, TextField,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { styled } from "@mui/material/styles";
+import React, { useState, useCallback, useRef } from 'react';
 import {
-  Image,
-  X,
-  Upload,
-  Crop,
-  Trash2,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  Check,
-} from "lucide-react";
-import { logger } from "@/utils/logger";
+  Box,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Slider,
+  TextField,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { styled } from '@mui/material/styles';
+import { Image, X, Upload, Crop, Trash2, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 /**
  * 图片上传组件属性
@@ -57,7 +57,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   value = [],
   onChange,
   maxCount = 9,
-  accept = "image/*",
+  accept = 'image/*',
   maxSize = 5,
   cropEnabled = true,
   cropAspect = 1,
@@ -70,7 +70,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       id: `existing-${index}`,
       file: new File([], url),
       preview: url,
-    })),
+    }))
   );
   const [dragging, setDragging] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -83,8 +83,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   /**
    * 生成唯一ID
    */
-  const generateId = () =>
-    `img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const generateId = () => `img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
   /**
    * 处理文件选择
@@ -99,7 +98,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       Array.from(files).forEach((file) => {
         if (validFiles.length >= remainingSlots) return;
 
-        if (!file.type.startsWith("image/")) {
+        if (!file.type.startsWith('image/')) {
           logger.warn(`文件 ${file.name} 不是图片类型`);
           return;
         }
@@ -124,7 +123,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setImages(updatedImages);
       onChange?.(updatedImages.map((img) => img.preview));
     },
-    [images, maxCount, maxSize, onChange],
+    [images, maxCount, maxSize, onChange]
   );
 
   /**
@@ -190,9 +189,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
     // 模拟裁剪后的结果（实际项目中需要使用 canvas 或专业裁剪库）
     const updatedImages = images.map((img) =>
-      img.preview === cropImage
-        ? { ...img, preview: cropImage + `?crop=${Date.now()}` }
-        : img,
+      img.preview === cropImage ? { ...img, preview: cropImage + `?crop=${Date.now()}` } : img
     );
 
     setImages(updatedImages);
@@ -217,19 +214,26 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       className={className}
     >
       <Upload size={40} />
-      <Typography variant="body1" sx={{ mt: 1 }}>
-        {dragging ? "松开以上传" : "拖拽图片或点击上传"}
+      <Typography
+        variant='body1'
+        sx={{ mt: 1 }}
+      >
+        {dragging ? '松开以上传' : '拖拽图片或点击上传'}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mt: 0.5 }}
+      >
         最多上传 {maxCount} 张图片，单张不超过 {maxSize}MB
       </Typography>
       <input
         ref={fileInputRef}
-        type="file"
+        type='file'
         accept={accept}
         multiple
         onChange={(e) => handleFileSelect(e.target.files)}
-        style={{ display: "none" }}
+        style={{ display: 'none' }}
       />
     </UploadArea>
   );
@@ -238,17 +242,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
    * 渲染图片网格
    */
   const renderImageGrid = () => (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
       {images.map((image) => (
         <ImageItem key={image.id}>
           <img
             src={image.preview}
-            alt=""
+            alt=''
             onClick={() => setPreviewImage(image.preview)}
           />
           <ImageOverlay>
             <IconButton
-              size="small"
+              size='small'
               onClick={(e) => {
                 e.stopPropagation();
                 setPreviewImage(image.preview);
@@ -258,7 +262,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             </IconButton>
             {cropEnabled && (
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCrop(image);
@@ -268,7 +272,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               </IconButton>
             )}
             <IconButton
-              size="small"
+              size='small'
               onClick={(e) => {
                 e.stopPropagation();
                 handleDelete(image.id);
@@ -298,14 +302,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       <Dialog
         open={!!previewImage}
         onClose={() => setPreviewImage(null)}
-        maxWidth="xl"
+        maxWidth='xl'
       >
         <DialogTitle>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             图片预览
             <IconButton
               onClick={() => setPreviewImage(null)}
-              sx={{ ml: "auto" }}
+              sx={{ ml: 'auto' }}
             >
               <X size={20} />
             </IconButton>
@@ -315,8 +319,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           {previewImage && (
             <img
               src={previewImage}
-              alt=""
-              style={{ maxWidth: "80vw", maxHeight: "70vh" }}
+              alt=''
+              style={{ maxWidth: '80vw', maxHeight: '70vh' }}
             />
           )}
         </DialogContent>
@@ -326,13 +330,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       <Dialog
         open={!!cropImage}
         onClose={() => setCropImage(null)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             图片裁剪
-            <IconButton onClick={() => setCropImage(null)} sx={{ ml: "auto" }}>
+            <IconButton
+              onClick={() => setCropImage(null)}
+              sx={{ ml: 'auto' }}
+            >
               <X size={20} />
             </IconButton>
           </Box>
@@ -342,21 +349,24 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             {cropImage && (
               <img
                 src={cropImage}
-                alt=""
+                alt=''
                 style={{
                   transform: `scale(${cropZoom}) rotate(${cropRotation}deg)`,
-                  maxWidth: "100%",
-                  maxHeight: "50vh",
-                  transition: "transform 0.2s",
+                  maxWidth: '100%',
+                  maxHeight: '50vh',
+                  transition: 'transform 0.2s',
                 }}
               />
             )}
           </CropContainer>
           <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" gutterBottom>
+            <Typography
+              variant='body2'
+              gutterBottom
+            >
               缩放
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <ZoomOut size={20} />
               <Slider
                 value={cropZoom}
@@ -367,21 +377,28 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               />
               <ZoomIn size={20} />
             </Box>
-            <Typography variant="body2" gutterBottom sx={{ mt: 1 }}>
+            <Typography
+              variant='body2'
+              gutterBottom
+              sx={{ mt: 1 }}
+            >
               旋转
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconButton onClick={() => setCropRotation((r) => r - 90)}>
-                <RotateCw size={20} style={{ transform: "scaleX(-1)" }} />
+                <RotateCw
+                  size={20}
+                  style={{ transform: 'scaleX(-1)' }}
+                />
               </IconButton>
               <TextField
                 value={cropRotation}
                 onChange={(e) => setCropRotation(parseInt(e.target.value) || 0)}
-                type="number"
-                size="small"
+                type='number'
+                size='small'
                 slotProps={{
                   input: {
-                    endAdornment: <Typography variant="body2">°</Typography>,
+                    endAdornment: <Typography variant='body2'>°</Typography>,
                   },
                 }}
               />
@@ -395,7 +412,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           <Button onClick={() => setCropImage(null)}>取消</Button>
           <Button
             onClick={handleCropConfirm}
-            variant="contained"
+            variant='contained'
             startIcon={<Check size={16} />}
           >
             确认裁剪
@@ -408,17 +425,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
 // 样式化组件
 const UploadArea = styled(Box, {
-  shouldForwardProp: (prop) =>
-    !["isDragging", "isDisabled", "isFull"].includes(prop as string),
+  shouldForwardProp: (prop) => !['isDragging', 'isDisabled', 'isFull'].includes(prop as string),
 })<{
   isDragging?: boolean;
   isDisabled?: boolean;
   isFull?: boolean;
 }>(({ theme, isDragging, isDisabled, isFull }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
   border: `2px dashed ${
     isDragging
       ? theme.palette.primary.main
@@ -428,68 +444,65 @@ const UploadArea = styled(Box, {
   }`,
   borderRadius: theme.shape.borderRadius,
   backgroundColor: isDragging
-    ? theme.palette.primary.light + "20"
+    ? theme.palette.primary.light + '20'
     : isDisabled
       ? theme.palette.grey[50]
-      : "transparent",
-  cursor: isDisabled || isFull ? "not-allowed" : "pointer",
-  transition: "all 0.2s",
+      : 'transparent',
+  cursor: isDisabled || isFull ? 'not-allowed' : 'pointer',
+  transition: 'all 0.2s',
   color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
-  "&:hover": {
-    borderColor: isDisabled
-      ? theme.palette.grey[300]
-      : theme.palette.primary.main,
-    backgroundColor:
-      isDisabled || isFull ? "transparent" : theme.palette.primary.light + "10",
+  '&:hover': {
+    borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
+    backgroundColor: isDisabled || isFull ? 'transparent' : theme.palette.primary.light + '10',
   },
 }));
 
 const ImageItem = styled(Box)({
-  position: "relative",
+  position: 'relative',
   width: 100,
   height: 100,
   borderRadius: 8,
-  overflow: "hidden",
-  "& img": {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    cursor: "pointer",
+  overflow: 'hidden',
+  '& img': {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    cursor: 'pointer',
   },
-  "&:hover .overlay": {
+  '&:hover .overlay': {
     opacity: 1,
   },
 });
 
 const ImageOverlay = styled(Box)({
-  position: "absolute",
+  position: 'absolute',
   top: 0,
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   gap: 4,
   opacity: 0,
-  transition: "opacity 0.2s",
-  "& .MuiIconButton-root": {
-    color: "#fff",
-    "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 0.2)",
+  transition: 'opacity 0.2s',
+  '& .MuiIconButton-root': {
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
     },
   },
 });
 
 const CropContainer = styled(Box)({
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
   minHeight: 300,
-  backgroundColor: "#f5f5f5",
+  backgroundColor: '#f5f5f5',
   borderRadius: 8,
-  overflow: "hidden",
+  overflow: 'hidden',
 });
 
 export default ImageUpload;

@@ -2,19 +2,19 @@
  * HRM财务模块React Query Hooks
  */
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type { EmployeeFinance, PayrollRecord } from "@/types/hrm-finance";
-import { apiClient } from "@/api/client";
+import { useMutation, useQuery } from '@tanstack/react-query';
+import type { EmployeeFinance, PayrollRecord } from '@/types/hrm-finance';
+import { apiClient } from '@/api/client';
 
 /**
  * 获取员工财务数据
  */
 export const useEmployeeFinance = (employeeId: string) => {
   return useQuery({
-    queryKey: ["employee-finance", employeeId],
+    queryKey: ['employee-finance', employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
-        `/api/hrm/employees/${employeeId}/finance`,
+        `/api/hrm/employees/${employeeId}/finance`
       );
       return response.data?.data!;
     },
@@ -27,10 +27,10 @@ export const useEmployeeFinance = (employeeId: string) => {
  */
 export const useEmployeeFinanceInfo = (employeeId: string) => {
   return useQuery({
-    queryKey: ["employee-finance-info", employeeId],
+    queryKey: ['employee-finance-info', employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
-        `/api/hrm/employees/${employeeId}/finance`,
+        `/api/hrm/employees/${employeeId}/finance`
       );
       return response.data?.data!;
     },
@@ -52,7 +52,7 @@ export const useUpdateEmployeeFinanceInfo = () => {
     }) => {
       const response = await apiClient.hrm.put<{ data: EmployeeFinance }>(
         `/api/hrm/employees/${employeeId}/finance`,
-        data,
+        data
       );
       return response.data;
     },
@@ -64,10 +64,10 @@ export const useUpdateEmployeeFinanceInfo = () => {
  */
 export const useEmployeePayrolls = (employeeId: string) => {
   return useQuery({
-    queryKey: ["employee-payrolls", employeeId],
+    queryKey: ['employee-payrolls', employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: PayrollRecord[] }>(
-        `/api/hrm/employees/${employeeId}/payrolls`,
+        `/api/hrm/employees/${employeeId}/payrolls`
       );
       return response.data;
     },
@@ -78,12 +78,9 @@ export const useEmployeePayrolls = (employeeId: string) => {
 /**
  * 获取部门工资汇总
  */
-export const useDepartmentPayrollSummary = (
-  departmentId: string,
-  period: string,
-) => {
+export const useDepartmentPayrollSummary = (departmentId: string, period: string) => {
   return useQuery({
-    queryKey: ["department-payroll-summary", departmentId, period],
+    queryKey: ['department-payroll-summary', departmentId, period],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{
         data: {
@@ -112,11 +109,9 @@ export const useDepartmentPayrollSummary = (
  */
 export const usePayrollPeriods = () => {
   return useQuery({
-    queryKey: ["payroll-periods"],
+    queryKey: ['payroll-periods'],
     queryFn: async () => {
-      const response = await apiClient.hrm.get<{ data: string[] }>(
-        "/api/hrm/payroll/periods",
-      );
+      const response = await apiClient.hrm.get<{ data: string[] }>('/api/hrm/payroll/periods');
       return response.data;
     },
   });

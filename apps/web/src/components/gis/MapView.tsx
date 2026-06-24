@@ -1,11 +1,4 @@
-import React, {
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useId,
-} from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo, useId } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -16,7 +9,7 @@ import {
   useMap,
   useMapEvents,
   Rectangle,
-} from "react-leaflet";
+} from 'react-leaflet';
 import {
   MapPin,
   Info,
@@ -38,22 +31,17 @@ import {
   FileJson,
   Thermometer,
   Box,
-} from "lucide-react";
-import { Box as MuiBox, Typography, Paper, Chip, IconButton,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import type {
-  DevicePoint,
-  Pipeline,
-  StorageLocation,
-  GeoJSONFeature,
-} from "../../api/gis";
-import DeviceTrackPanel from "./DeviceTrackPanel";
-import HeatmapLayer, { HeatmapLegend } from "./HeatmapLayer";
-import Map3DView from "./Map3DView";
-import AmapLayer from "./AmapLayer";
+} from 'lucide-react';
+import { Box as MuiBox, Typography, Paper, Chip, IconButton } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../api/gis';
+import DeviceTrackPanel from './DeviceTrackPanel';
+import HeatmapLayer, { HeatmapLegend } from './HeatmapLayer';
+import Map3DView from './Map3DView';
+import AmapLayer from './AmapLayer';
 
-import "leaflet/dist/leaflet.css";
-import "leaflet-draw/dist/leaflet.draw.css";
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
 
 interface MapViewProps {
   devicePoints?: DevicePoint[];
@@ -63,12 +51,12 @@ interface MapViewProps {
 }
 
 type ToolMode =
-  | "select"
-  | "measure-distance"
-  | "measure-area"
-  | "draw-point"
-  | "draw-line"
-  | "draw-polygon";
+  | 'select'
+  | 'measure-distance'
+  | 'measure-area'
+  | 'draw-point'
+  | 'draw-line'
+  | 'draw-polygon';
 
 interface DrawPoint {
   lat: number;
@@ -78,7 +66,7 @@ interface DrawPoint {
 
 interface DrawFeature {
   id: string;
-  type: "point" | "line" | "polygon";
+  type: 'point' | 'line' | 'polygon';
   points: DrawPoint[];
   color: string;
   label?: string;
@@ -93,14 +81,14 @@ const LayerToggle: React.FC<{
 }> = ({ label, icon: _, checked, onChange, color }) => (
   <MuiBox
     sx={{
-      display: "flex",
-      alignItems: "center",
+      display: 'flex',
+      alignItems: 'center',
       gap: 1,
-      cursor: "pointer",
-      padding: "4px 8px",
+      cursor: 'pointer',
+      padding: '4px 8px',
       borderRadius: 1,
-      "&:hover": {
-        backgroundColor: "#f9fafb",
+      '&:hover': {
+        backgroundColor: '#f9fafb',
       },
     }}
     onClick={() => onChange(!checked)}
@@ -109,11 +97,14 @@ const LayerToggle: React.FC<{
       sx={{
         width: 12,
         height: 12,
-        borderRadius: "50%",
-        backgroundColor: checked ? color : "#d1d5db",
+        borderRadius: '50%',
+        backgroundColor: checked ? color : '#d1d5db',
       }}
     />
-    <Typography variant="body2" sx={{ color: "#374151", fontSize: "0.875rem" }}>
+    <Typography
+      variant='body2'
+      sx={{ color: '#374151', fontSize: '0.875rem' }}
+    >
       {label}
     </Typography>
   </MuiBox>
@@ -133,19 +124,22 @@ const FitBoundsControl: React.FC<{
   return (
     <IconButton
       onClick={fitBounds}
-      title="缩放到所有标记"
+      title='缩放到所有标记'
       sx={{
         padding: 1,
-        backgroundColor: "white",
+        backgroundColor: 'white',
         borderRadius: 2,
-        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-        "&:hover": {
-          backgroundColor: "#f9fafb",
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        '&:hover': {
+          backgroundColor: '#f9fafb',
         },
-        transition: "background-color 0.2s",
+        transition: 'background-color 0.2s',
       }}
     >
-      <Maximize2 size={20} style={{ color: "#374151" }} />
+      <Maximize2
+        size={20}
+        style={{ color: '#374151' }}
+      />
     </IconButton>
   );
 };
@@ -198,61 +192,55 @@ const MapEventHandler: React.FC<MapEventHandlerProps> = ({
       const latlng = e.latlng;
       const point: [number, number] = [latlng.lat, latlng.lng];
 
-      if (toolMode === "measure-distance") {
+      if (toolMode === 'measure-distance') {
         const newPoints = [...measurePoints, point];
         setMeasurePoints(newPoints);
         if (newPoints.length >= 2) {
           const totalDistance = calculateTotalDistance(newPoints);
           setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
         }
-      } else if (toolMode === "measure-area") {
+      } else if (toolMode === 'measure-area') {
         const newPoints = [...measurePoints, point];
         setMeasurePoints(newPoints);
         if (newPoints.length >= 3) {
           const area = calculateArea(newPoints);
           setMeasureResult(`面积: ${formatArea(area)}`);
         }
-      } else if (toolMode === "draw-point") {
+      } else if (toolMode === 'draw-point') {
         const newFeature: DrawFeature = {
           id: `point-${Date.now()}`,
-          type: "point",
+          type: 'point',
           points: [{ lat: point[0], lng: point[1], timestamp: Date.now() }],
-          color: "#EF4444",
+          color: '#EF4444',
         };
         setDrawFeatures([...drawFeatures, newFeature]);
-      } else if (toolMode === "draw-line") {
+      } else if (toolMode === 'draw-line') {
         if (!currentDrawing) {
           setCurrentDrawing({
             id: `line-${Date.now()}`,
-            type: "line",
+            type: 'line',
             points: [{ lat: point[0], lng: point[1] }],
-            color: "#3B82F6",
+            color: '#3B82F6',
           });
         } else {
           const updatedDrawing = {
             ...currentDrawing,
-            points: [
-              ...currentDrawing.points,
-              { lat: point[0], lng: point[1] },
-            ],
+            points: [...currentDrawing.points, { lat: point[0], lng: point[1] }],
           };
           setCurrentDrawing(updatedDrawing);
         }
-      } else if (toolMode === "draw-polygon") {
+      } else if (toolMode === 'draw-polygon') {
         if (!currentDrawing) {
           setCurrentDrawing({
             id: `polygon-${Date.now()}`,
-            type: "polygon",
+            type: 'polygon',
             points: [{ lat: point[0], lng: point[1] }],
-            color: "#10B981",
+            color: '#10B981',
           });
         } else {
           const updatedDrawing = {
             ...currentDrawing,
-            points: [
-              ...currentDrawing.points,
-              { lat: point[0], lng: point[1] },
-            ],
+            points: [...currentDrawing.points, { lat: point[0], lng: point[1] }],
           };
           setCurrentDrawing(updatedDrawing);
         }
@@ -260,21 +248,18 @@ const MapEventHandler: React.FC<MapEventHandlerProps> = ({
     },
     mousemove: (e) => {
       if (
-        (toolMode === "measure-distance" || toolMode === "measure-area") &&
+        (toolMode === 'measure-distance' || toolMode === 'measure-area') &&
         measurePoints.length > 0
       ) {
         const latlng = e.latlng;
         setTooltipPosition([latlng.lat, latlng.lng]);
         setShowMeasureTooltip(true);
 
-        const tempPoints: [number, number][] = [
-          ...measurePoints,
-          [latlng.lat, latlng.lng],
-        ];
-        if (toolMode === "measure-distance") {
+        const tempPoints: [number, number][] = [...measurePoints, [latlng.lat, latlng.lng]];
+        if (toolMode === 'measure-distance') {
           const totalDistance = calculateTotalDistance(tempPoints);
           setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
-        } else if (toolMode === "measure-area" && tempPoints.length >= 3) {
+        } else if (toolMode === 'measure-area' && tempPoints.length >= 3) {
           const area = calculateArea(tempPoints);
           setMeasureResult(`面积: ${formatArea(area)}`);
         }
@@ -294,18 +279,18 @@ const MeasureTooltip: React.FC<{
   return (
     <Paper
       sx={{
-        position: "absolute",
-        backgroundColor: "#111827",
-        color: "white",
-        fontSize: "0.75rem",
-        padding: "4px 8px",
+        position: 'absolute',
+        backgroundColor: '#111827',
+        color: 'white',
+        fontSize: '0.75rem',
+        padding: '4px 8px',
         borderRadius: 1,
-        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-        pointerEvents: "none",
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        pointerEvents: 'none',
         zIndex: 50,
         left: position[1] + 10,
         top: position[0] - 20,
-        transform: "translateX(-50%)",
+        transform: 'translateX(-50%)',
       }}
     >
       {content}
@@ -338,9 +323,7 @@ const MapView: React.FC<MapViewProps> = ({
     116.4, // 北京
   ]);
   const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
-  const [selectedItem, setSelectedItem] = useState<
-    DevicePoint | StorageLocation | null
-  >(null);
+  const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(true);
   const [visibleLayers, setVisibleLayers] = useState({
@@ -348,23 +331,17 @@ const MapView: React.FC<MapViewProps> = ({
     pipelines: true,
     storage: true,
   });
-  const [toolMode, setToolMode] = useState<ToolMode>("select");
+  const [toolMode, setToolMode] = useState<ToolMode>('select');
   const [measurePoints, setMeasurePoints] = useState<[number, number][]>([]);
-  const [measureResult, setMeasureResult] = useState<string>("");
+  const [measureResult, setMeasureResult] = useState<string>('');
   const [drawFeatures, setDrawFeatures] = useState<DrawFeature[]>([]);
-  const [currentDrawing, setCurrentDrawing] = useState<DrawFeature | null>(
-    null,
-  );
+  const [currentDrawing, setCurrentDrawing] = useState<DrawFeature | null>(null);
   const [showMeasureTooltip, setShowMeasureTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<[number, number]>([
-    0, 0,
-  ]);
+  const [tooltipPosition, setTooltipPosition] = useState<[number, number]>([0, 0]);
   const [showTrackPanel, setShowTrackPanel] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
-  const [heatmapMode, setHeatmapMode] = useState<"density" | "status">(
-    "density",
-  );
-  const [mapType, setMapType] = useState<"osm" | "amap">("osm");
+  const [heatmapMode, setHeatmapMode] = useState<'density' | 'status'>('density');
+  const [mapType, setMapType] = useState<'osm' | 'amap'>('osm');
   const [show3DView, setShow3DView] = useState(false);
   const [offlineMode, setOfflineMode] = useState(true); // 默认使用离线瓦片
   const _mapRef = useRef<any>(null);
@@ -375,7 +352,7 @@ const MapView: React.FC<MapViewProps> = ({
   const stableId = useId();
 
   // Force new key when map type changes to ensure proper remount
-  const handleSetMapType = (type: "osm" | "amap") => {
+  const handleSetMapType = (type: 'osm' | 'amap') => {
     if (type !== mapType) {
       setMapKey((prev) => prev + 1);
       setMapType(type);
@@ -386,12 +363,7 @@ const MapView: React.FC<MapViewProps> = ({
   // Using useId for stability + mapKey for map type changes
   const currentMapKey = `${stableId}-${mapKey}`;
 
-  const calculateDistance = (
-    lat1: number,
-    lng1: number,
-    lat2: number,
-    lng2: number,
-  ): number => {
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
     const R = 6371000;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLng = ((lng2 - lng1) * Math.PI) / 180;
@@ -408,12 +380,7 @@ const MapView: React.FC<MapViewProps> = ({
   const calculateTotalDistance = (points: [number, number][]): number => {
     let total = 0;
     for (let i = 0; i < points.length - 1; i++) {
-      total += calculateDistance(
-        points[i][0],
-        points[i][1],
-        points[i + 1][0],
-        points[i + 1][1],
-      );
+      total += calculateDistance(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
     }
     return total;
   };
@@ -449,7 +416,7 @@ const MapView: React.FC<MapViewProps> = ({
   };
 
   const handleMarkerClick = (item: DevicePoint | StorageLocation) => {
-    if (toolMode !== "select") return;
+    if (toolMode !== 'select') return;
     setSelectedItem(item);
     setShowDetailsPanel(true);
     if (onMarkerClick) {
@@ -461,35 +428,35 @@ const MapView: React.FC<MapViewProps> = ({
     const latlng = e.latlng;
     const point: [number, number] = [latlng.lat, latlng.lng];
 
-    if (toolMode === "measure-distance") {
+    if (toolMode === 'measure-distance') {
       const newPoints = [...measurePoints, point];
       setMeasurePoints(newPoints);
       if (newPoints.length >= 2) {
         const totalDistance = calculateTotalDistance(newPoints);
         setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
       }
-    } else if (toolMode === "measure-area") {
+    } else if (toolMode === 'measure-area') {
       const newPoints = [...measurePoints, point];
       setMeasurePoints(newPoints);
       if (newPoints.length >= 3) {
         const area = calculateArea(newPoints);
         setMeasureResult(`面积: ${formatArea(area)}`);
       }
-    } else if (toolMode === "draw-point") {
+    } else if (toolMode === 'draw-point') {
       const newFeature: DrawFeature = {
         id: `point-${Date.now()}`,
-        type: "point",
+        type: 'point',
         points: [{ lat: point[0], lng: point[1], timestamp: Date.now() }],
-        color: "#EF4444",
+        color: '#EF4444',
       };
       setDrawFeatures([...drawFeatures, newFeature]);
-    } else if (toolMode === "draw-line") {
+    } else if (toolMode === 'draw-line') {
       if (!currentDrawing) {
         setCurrentDrawing({
           id: `line-${Date.now()}`,
-          type: "line",
+          type: 'line',
           points: [{ lat: point[0], lng: point[1] }],
-          color: "#3B82F6",
+          color: '#3B82F6',
         });
       } else {
         const updatedDrawing = {
@@ -498,13 +465,13 @@ const MapView: React.FC<MapViewProps> = ({
         };
         setCurrentDrawing(updatedDrawing);
       }
-    } else if (toolMode === "draw-polygon") {
+    } else if (toolMode === 'draw-polygon') {
       if (!currentDrawing) {
         setCurrentDrawing({
           id: `polygon-${Date.now()}`,
-          type: "polygon",
+          type: 'polygon',
           points: [{ lat: point[0], lng: point[1] }],
-          color: "#10B981",
+          color: '#10B981',
         });
       } else {
         const updatedDrawing = {
@@ -518,21 +485,18 @@ const MapView: React.FC<MapViewProps> = ({
 
   const _handleMapMove = (e: any) => {
     if (
-      (toolMode === "measure-distance" || toolMode === "measure-area") &&
+      (toolMode === 'measure-distance' || toolMode === 'measure-area') &&
       measurePoints.length > 0
     ) {
       const latlng = e.latlng || e.target.getCenter();
       setTooltipPosition([latlng.lat, latlng.lng]);
       setShowMeasureTooltip(true);
 
-      const tempPoints: [number, number][] = [
-        ...measurePoints,
-        [latlng.lat, latlng.lng],
-      ];
-      if (toolMode === "measure-distance") {
+      const tempPoints: [number, number][] = [...measurePoints, [latlng.lat, latlng.lng]];
+      if (toolMode === 'measure-distance') {
         const totalDistance = calculateTotalDistance(tempPoints);
         setMeasureResult(`距离: ${formatDistance(totalDistance)}`);
-      } else if (toolMode === "measure-area" && tempPoints.length >= 3) {
+      } else if (toolMode === 'measure-area' && tempPoints.length >= 3) {
         const area = calculateArea(tempPoints);
         setMeasureResult(`面积: ${formatArea(area)}`);
       }
@@ -544,7 +508,7 @@ const MapView: React.FC<MapViewProps> = ({
   const finishDrawing = () => {
     if (
       currentDrawing &&
-      currentDrawing.points.length >= (currentDrawing.type === "point" ? 1 : 2)
+      currentDrawing.points.length >= (currentDrawing.type === 'point' ? 1 : 2)
     ) {
       setDrawFeatures([...drawFeatures, currentDrawing]);
     }
@@ -553,7 +517,7 @@ const MapView: React.FC<MapViewProps> = ({
 
   const clearMeasure = () => {
     setMeasurePoints([]);
-    setMeasureResult("");
+    setMeasureResult('');
     setShowMeasureTooltip(false);
   };
 
@@ -564,7 +528,7 @@ const MapView: React.FC<MapViewProps> = ({
 
   const setTool = (tool: ToolMode) => {
     setToolMode(tool);
-    if (tool === "select") {
+    if (tool === 'select') {
       clearMeasure();
       setCurrentDrawing(null);
     }
@@ -577,15 +541,15 @@ const MapView: React.FC<MapViewProps> = ({
       if (visibleLayers.devices) {
         devicePoints.forEach((point) => {
           features.push({
-            type: "Feature",
+            type: 'Feature',
             geometry: {
-              type: "Point",
+              type: 'Point',
               coordinates: [point.longitude, point.latitude],
             },
             properties: {
               id: point.id,
               name: point.name,
-              type: "device",
+              type: 'device',
               device_type: point.device_type,
               status: point.status,
               description: point.description,
@@ -599,15 +563,15 @@ const MapView: React.FC<MapViewProps> = ({
       if (visibleLayers.storage) {
         storageLocations.forEach((location) => {
           features.push({
-            type: "Feature",
+            type: 'Feature',
             geometry: {
-              type: "Point",
+              type: 'Point',
               coordinates: [location.longitude, location.latitude],
             },
             properties: {
               id: location.id,
               name: location.name,
-              type: "storage",
+              type: 'storage',
               location_type: location.location_type,
               capacity: location.capacity,
               current_usage: location.current_usage,
@@ -622,9 +586,9 @@ const MapView: React.FC<MapViewProps> = ({
         pipelines.forEach((pipeline) => {
           if (pipeline.start_point && pipeline.end_point) {
             features.push({
-              type: "Feature",
+              type: 'Feature',
               geometry: {
-                type: "LineString",
+                type: 'LineString',
                 coordinates: [
                   [pipeline.start_point[1], pipeline.start_point[0]],
                   [pipeline.end_point[1], pipeline.end_point[0]],
@@ -633,7 +597,7 @@ const MapView: React.FC<MapViewProps> = ({
               properties: {
                 id: pipeline.id,
                 name: pipeline.name,
-                type: "pipeline",
+                type: 'pipeline',
                 pipeline_type: pipeline.pipeline_type,
                 status: pipeline.status,
                 code: pipeline.code,
@@ -652,30 +616,30 @@ const MapView: React.FC<MapViewProps> = ({
     }
 
     allDrawFeatures.forEach((feature) => {
-      let geometryType: "Point" | "LineString" | "Polygon" = "Point";
+      let geometryType: 'Point' | 'LineString' | 'Polygon' = 'Point';
       let coordinates: any[] = [];
 
-      if (feature.type === "point") {
-        geometryType = "Point";
+      if (feature.type === 'point') {
+        geometryType = 'Point';
         coordinates = [feature.points[0].lng, feature.points[0].lat];
-      } else if (feature.type === "line") {
-        geometryType = "LineString";
+      } else if (feature.type === 'line') {
+        geometryType = 'LineString';
         coordinates = feature.points.map((p) => [p.lng, p.lat]);
-      } else if (feature.type === "polygon") {
-        geometryType = "Polygon";
+      } else if (feature.type === 'polygon') {
+        geometryType = 'Polygon';
         coordinates = [feature.points.map((p) => [p.lng, p.lat])];
         coordinates[0].push([feature.points[0].lng, feature.points[0].lat]);
       }
 
       features.push({
-        type: "Feature",
+        type: 'Feature',
         geometry: {
           type: geometryType,
           coordinates,
         },
         properties: {
           id: feature.id,
-          name: feature.label || "Drawing",
+          name: feature.label || 'Drawing',
           type: `drawing_${feature.type}`,
           color: feature.color,
           timestamp: Date.now(),
@@ -684,19 +648,19 @@ const MapView: React.FC<MapViewProps> = ({
     });
 
     const geojson = {
-      type: "FeatureCollection",
+      type: 'FeatureCollection',
       features,
       generated_at: new Date().toISOString(),
-      source: "TOPEMS GIS Module",
+      source: 'TOPEMS GIS Module',
     };
 
     const blob = new Blob([JSON.stringify(geojson, null, 2)], {
-      type: "application/json",
+      type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `gis-export-${drawOnly ? "drawings" : "data"}-${Date.now()}.geojson`;
+    a.download = `gis-export-${drawOnly ? 'drawings' : 'data'}-${Date.now()}.geojson`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -727,15 +691,15 @@ const MapView: React.FC<MapViewProps> = ({
   }, [devicePoints, storageLocations, visibleLayers]);
 
   const getStatusColor = (status: string) => {
-    if (!status) return "#6b7280";
+    if (!status) return '#6b7280';
     const s = status.toLowerCase();
-    if (s.includes("active") || s.includes("启用")) return "#00C897";
-    if (s.includes("pending") || s.includes("待处理")) return "#F59E0B";
-    if (s.includes("inactive") || s.includes("禁用")) return "#EF4444";
-    return "#6b7280";
+    if (s.includes('active') || s.includes('启用')) return '#00C897';
+    if (s.includes('pending') || s.includes('待处理')) return '#F59E0B';
+    if (s.includes('inactive') || s.includes('禁用')) return '#EF4444';
+    return '#6b7280';
   };
 
-  const toggleLayer = (layer: "devices" | "pipelines" | "storage") => {
+  const toggleLayer = (layer: 'devices' | 'pipelines' | 'storage') => {
     setVisibleLayers((prev) => ({ ...prev, [layer]: !prev[layer] }));
   };
 
@@ -750,31 +714,31 @@ const MapView: React.FC<MapViewProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setToolMode("select");
+      if (e.key === 'Escape') {
+        setToolMode('select');
         clearMeasure();
         setCurrentDrawing(null);
       }
-      if (e.key === "Enter" && currentDrawing) {
+      if (e.key === 'Enter' && currentDrawing) {
         finishDrawing();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDrawing]);
 
   return (
     <MuiBox
       sx={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
+        position: 'relative',
+        width: '100%',
+        height: '100%',
         minHeight: 500,
       }}
       ref={containerRef}
     >
-      {mapType === "amap" ? (
+      {mapType === 'amap' ? (
         <AmapLayer
           devicePoints={devicePoints}
           storageLocations={storageLocations}
@@ -785,7 +749,7 @@ const MapView: React.FC<MapViewProps> = ({
         <MapContainer
           center={mapCenter}
           zoom={zoom}
-          style={{ height: "100%", width: "100%", minHeight: 500 }}
+          style={{ height: '100%', width: '100%', minHeight: 500 }}
           ref={leafletMapRef}
           key={currentMapKey}
         >
@@ -810,8 +774,8 @@ const MapView: React.FC<MapViewProps> = ({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url={
               offlineMode
-                ? "/offline_tiles/amap/{z}/{x}/{y}.png"
-                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                ? '/offline_tiles/amap/{z}/{x}/{y}.png'
+                : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             }
           />
 
@@ -838,33 +802,36 @@ const MapView: React.FC<MapViewProps> = ({
                 <Polyline
                   key={pipeline.id}
                   positions={pathCoords}
-                  color="#6366F1"
+                  color='#6366F1'
                   weight={4}
                   opacity={0.8}
                 >
-                  <Tooltip direction="top" offset={[0, -10]}>
+                  <Tooltip
+                    direction='top'
+                    offset={[0, -10]}
+                  >
                     <Paper
                       sx={{
-                        backgroundColor: "white",
-                        padding: "8px 12px",
+                        backgroundColor: 'white',
+                        padding: '8px 12px',
                         borderRadius: 2,
-                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                        minWidth: "120px",
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        minWidth: '120px',
                       }}
                     >
                       <Typography
-                        variant="body1"
+                        variant='body1'
                         sx={{
-                          fontWeight: "medium",
-                          color: "#111827",
+                          fontWeight: 'medium',
+                          color: '#111827',
                         }}
                       >
                         {pipeline.name}
                       </Typography>
                       <Typography
-                        variant="body2"
+                        variant='body2'
                         sx={{
-                          color: "#6b7280",
+                          color: '#6b7280',
                         }}
                       >
                         {pipeline.pipeline_type}
@@ -884,54 +851,52 @@ const MapView: React.FC<MapViewProps> = ({
                 eventHandlers={{ click: () => handleMarkerClick(point) }}
               >
                 <Popup>
-                  <MuiBox sx={{ maxWidth: "320px" }}>
+                  <MuiBox sx={{ maxWidth: '320px' }}>
                     <MuiBox
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 1,
                         mb: 1,
                       }}
                     >
-                      <MapPin size={20} style={{ color: "#00C897" }} />
+                      <MapPin
+                        size={20}
+                        style={{ color: '#00C897' }}
+                      />
                       <Typography
-                        variant="h6"
-                        sx={{ fontWeight: "semibold", color: "#111827" }}
+                        variant='h6'
+                        sx={{ fontWeight: 'semibold', color: '#111827' }}
                       >
                         {point.name}
                       </Typography>
                     </MuiBox>
-                    <MuiBox sx={{ fontSize: "0.875rem", color: "#4b5563" }}>
-                      <Typography variant="body2">
-                        类型: {point.device_type}
-                      </Typography>
-                      <Typography variant="body2">
-                        状态:{" "}
-                        <span style={{ color: getStatusColor(point.status) }}>
-                          {point.status}
-                        </span>
+                    <MuiBox sx={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                      <Typography variant='body2'>类型: {point.device_type}</Typography>
+                      <Typography variant='body2'>
+                        状态:{' '}
+                        <span style={{ color: getStatusColor(point.status) }}>{point.status}</span>
                       </Typography>
                       <MuiBox
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 0.5,
                           mt: 0.5,
                         }}
                       >
                         <Navigation size={12} />
-                        <Typography variant="body2">
-                          {point.latitude.toFixed(4)},{" "}
-                          {point.longitude.toFixed(4)}
+                        <Typography variant='body2'>
+                          {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
                         </Typography>
                       </MuiBox>
                     </MuiBox>
                     {point.description && (
                       <MuiBox
                         sx={{
-                          fontSize: "0.875rem",
-                          color: "#6b7280",
-                          borderTop: "1px solid #e5e7eb",
+                          fontSize: '0.875rem',
+                          color: '#6b7280',
+                          borderTop: '1px solid #e5e7eb',
                           paddingTop: 1,
                           marginTop: 1,
                         }}
@@ -944,13 +909,13 @@ const MapView: React.FC<MapViewProps> = ({
                       onClick={() => handleMarkerClick(point)}
                       sx={{
                         mt: 1,
-                        color: "#0891b2",
-                        backgroundColor: "#ecfeff",
-                        "&:hover": {
-                          backgroundColor: "#cffafe",
+                        color: '#0891b2',
+                        backgroundColor: '#ecfeff',
+                        '&:hover': {
+                          backgroundColor: '#cffafe',
                         },
-                        fontSize: "0.875rem",
-                        padding: "4px 8px",
+                        fontSize: '0.875rem',
+                        padding: '4px 8px',
                       }}
                     >
                       查看详情
@@ -969,49 +934,45 @@ const MapView: React.FC<MapViewProps> = ({
                 eventHandlers={{ click: () => handleMarkerClick(location) }}
               >
                 <Popup>
-                  <MuiBox sx={{ maxWidth: "320px" }}>
+                  <MuiBox sx={{ maxWidth: '320px' }}>
                     <MuiBox
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 1,
                         mb: 1,
                       }}
                     >
-                      <Info size={20} style={{ color: "#F59E0B" }} />
+                      <Info
+                        size={20}
+                        style={{ color: '#F59E0B' }}
+                      />
                       <Typography
-                        variant="h6"
-                        sx={{ fontWeight: "semibold", color: "#111827" }}
+                        variant='h6'
+                        sx={{ fontWeight: 'semibold', color: '#111827' }}
                       >
                         {location.name}
                       </Typography>
                     </MuiBox>
-                    <MuiBox sx={{ fontSize: "0.875rem", color: "#4b5563" }}>
-                      <Typography variant="body2">
-                        类型: {location.location_type}
-                      </Typography>
+                    <MuiBox sx={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                      <Typography variant='body2'>类型: {location.location_type}</Typography>
                       {location.capacity !== undefined && (
-                        <Typography variant="body2">
-                          容量: {location.capacity}
-                        </Typography>
+                        <Typography variant='body2'>容量: {location.capacity}</Typography>
                       )}
                       {location.current_usage !== undefined && (
-                        <Typography variant="body2">
-                          当前: {location.current_usage}
-                        </Typography>
+                        <Typography variant='body2'>当前: {location.current_usage}</Typography>
                       )}
                       <MuiBox
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
+                          display: 'flex',
+                          alignItems: 'center',
                           gap: 0.5,
                           mt: 0.5,
                         }}
                       >
                         <Navigation size={12} />
-                        <Typography variant="body2">
-                          {location.latitude.toFixed(4)},{" "}
-                          {location.longitude.toFixed(4)}
+                        <Typography variant='body2'>
+                          {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
                         </Typography>
                       </MuiBox>
                     </MuiBox>
@@ -1020,13 +981,13 @@ const MapView: React.FC<MapViewProps> = ({
                       onClick={() => handleMarkerClick(location)}
                       sx={{
                         mt: 1,
-                        color: "#0891b2",
-                        backgroundColor: "#ecfeff",
-                        "&:hover": {
-                          backgroundColor: "#cffafe",
+                        color: '#0891b2',
+                        backgroundColor: '#ecfeff',
+                        '&:hover': {
+                          backgroundColor: '#cffafe',
                         },
-                        fontSize: "0.875rem",
-                        padding: "4px 8px",
+                        fontSize: '0.875rem',
+                        padding: '4px 8px',
                       }}
                     >
                       查看详情
@@ -1036,16 +997,16 @@ const MapView: React.FC<MapViewProps> = ({
               </Marker>
             ))}
 
-          {toolMode === "measure-distance" && measurePoints.length > 0 && (
+          {toolMode === 'measure-distance' && measurePoints.length > 0 && (
             <Polyline
               positions={measurePoints}
-              color="#EF4444"
+              color='#EF4444'
               weight={2}
-              dashArray="5,5"
+              dashArray='5,5'
             />
           )}
 
-          {toolMode === "measure-area" && measurePoints.length > 2 && (
+          {toolMode === 'measure-area' && measurePoints.length > 2 && (
             <Rectangle
               bounds={[
                 [
@@ -1057,23 +1018,23 @@ const MapView: React.FC<MapViewProps> = ({
                   Math.max(...measurePoints.map((p) => p[1])),
                 ],
               ]}
-              color="#F59E0B"
+              color='#F59E0B'
               weight={2}
               fillOpacity={0.1}
             />
           )}
 
-          {toolMode === "measure-area" && measurePoints.length > 1 && (
+          {toolMode === 'measure-area' && measurePoints.length > 1 && (
             <Polyline
               positions={[...measurePoints, measurePoints[0]]}
-              color="#F59E0B"
+              color='#F59E0B'
               weight={2}
-              dashArray="5,5"
+              dashArray='5,5'
             />
           )}
 
           {drawFeatures.map((feature) => {
-            if (feature.type === "point") {
+            if (feature.type === 'point') {
               return (
                 <Marker
                   key={feature.id}
@@ -1088,10 +1049,8 @@ const MapView: React.FC<MapViewProps> = ({
                 />
               );
             }
-            const coords = feature.points.map(
-              (p) => [p.lat, p.lng] as [number, number],
-            );
-            if (feature.type === "line") {
+            const coords = feature.points.map((p) => [p.lat, p.lng] as [number, number]);
+            if (feature.type === 'line') {
               return (
                 <Polyline
                   key={feature.id}
@@ -1101,7 +1060,7 @@ const MapView: React.FC<MapViewProps> = ({
                 />
               );
             }
-            if (feature.type === "polygon") {
+            if (feature.type === 'polygon') {
               return (
                 <Polyline
                   key={feature.id}
@@ -1118,35 +1077,30 @@ const MapView: React.FC<MapViewProps> = ({
 
           {currentDrawing && (
             <>
-              {currentDrawing.type === "line" && (
+              {currentDrawing.type === 'line' && (
                 <Polyline
-                  positions={currentDrawing.points.map(
-                    (p) => [p.lat, p.lng] as [number, number],
-                  )}
+                  positions={currentDrawing.points.map((p) => [p.lat, p.lng] as [number, number])}
                   color={currentDrawing.color}
                   weight={3}
-                  dashArray="5,5"
+                  dashArray='5,5'
                 />
               )}
-              {currentDrawing.type === "polygon" &&
-                currentDrawing.points.length > 1 && (
-                  <Polyline
-                    positions={[
-                      ...currentDrawing.points.map(
-                        (p) => [p.lat, p.lng] as [number, number],
-                      ),
-                      [
-                        currentDrawing.points[0].lat,
-                        currentDrawing.points[0].lng,
-                      ] as [number, number],
-                    ]}
-                    color={currentDrawing.color}
-                    weight={3}
-                    dashArray="5,5"
-                    fill={true}
-                    fillOpacity={0.1}
-                  />
-                )}
+              {currentDrawing.type === 'polygon' && currentDrawing.points.length > 1 && (
+                <Polyline
+                  positions={[
+                    ...currentDrawing.points.map((p) => [p.lat, p.lng] as [number, number]),
+                    [currentDrawing.points[0].lat, currentDrawing.points[0].lng] as [
+                      number,
+                      number,
+                    ],
+                  ]}
+                  color={currentDrawing.color}
+                  weight={3}
+                  dashArray='5,5'
+                  fill={true}
+                  fillOpacity={0.1}
+                />
+              )}
             </>
           )}
 
@@ -1164,19 +1118,19 @@ const MapView: React.FC<MapViewProps> = ({
 
       <Paper
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: 16,
           left: 16,
-          backgroundColor: "white",
+          backgroundColor: 'white',
           borderRadius: 2,
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-          overflow: "hidden",
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
         }}
       >
-        <MuiBox sx={{ padding: "12px", borderBottom: "1px solid #f3f4f6" }}>
+        <MuiBox sx={{ padding: '12px', borderBottom: '1px solid #f3f4f6' }}>
           <Typography
-            variant="caption"
-            sx={{ fontWeight: "medium", color: "#6b7280" }}
+            variant='caption'
+            sx={{ fontWeight: 'medium', color: '#6b7280' }}
           >
             工具
           </Typography>
@@ -1184,34 +1138,34 @@ const MapView: React.FC<MapViewProps> = ({
         <MuiBox
           sx={{
             padding: 1,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
             gap: 0.5,
           }}
         >
           <Button
             fullWidth
-            onClick={() => setTool("select")}
+            onClick={() => setTool('select')}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: toolMode === "select" ? "#3b82f6" : "white",
-              color: toolMode === "select" ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor: toolMode === "select" ? "#2563eb" : "#f9fafb",
+              backgroundColor: toolMode === 'select' ? '#3b82f6' : 'white',
+              color: toolMode === 'select' ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: toolMode === 'select' ? '#2563eb' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="选择工具"
+            title='选择工具'
           >
             <MuiBox
               sx={{
                 width: 16,
                 height: 16,
-                border: "2px solid #374151",
+                border: '2px solid #374151',
                 borderRadius: 1,
               }}
             />
@@ -1219,137 +1173,129 @@ const MapView: React.FC<MapViewProps> = ({
           </Button>
           <Button
             fullWidth
-            onClick={() => setTool("measure-distance")}
+            onClick={() => setTool('measure-distance')}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor:
-                toolMode === "measure-distance" ? "#3b82f6" : "white",
-              color: toolMode === "measure-distance" ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor:
-                  toolMode === "measure-distance" ? "#2563eb" : "#f9fafb",
+              backgroundColor: toolMode === 'measure-distance' ? '#3b82f6' : 'white',
+              color: toolMode === 'measure-distance' ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: toolMode === 'measure-distance' ? '#2563eb' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="距离测量"
+            title='距离测量'
           >
             <Ruler size={16} />
             测距
           </Button>
           <Button
             fullWidth
-            onClick={() => setTool("measure-area")}
+            onClick={() => setTool('measure-area')}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor:
-                toolMode === "measure-area" ? "#3b82f6" : "white",
-              color: toolMode === "measure-area" ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor:
-                  toolMode === "measure-area" ? "#2563eb" : "#f9fafb",
+              backgroundColor: toolMode === 'measure-area' ? '#3b82f6' : 'white',
+              color: toolMode === 'measure-area' ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: toolMode === 'measure-area' ? '#2563eb' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="面积测量"
+            title='面积测量'
           >
             <Ruler size={16} />
             测面积
           </Button>
-          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <MuiBox sx={{ borderTop: '1px solid #f3f4f6', my: 1 }} />
           <Button
             fullWidth
-            onClick={() => setTool("draw-point")}
+            onClick={() => setTool('draw-point')}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: toolMode === "draw-point" ? "#3b82f6" : "white",
-              color: toolMode === "draw-point" ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor:
-                  toolMode === "draw-point" ? "#2563eb" : "#f9fafb",
+              backgroundColor: toolMode === 'draw-point' ? '#3b82f6' : 'white',
+              color: toolMode === 'draw-point' ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: toolMode === 'draw-point' ? '#2563eb' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="绘制点"
+            title='绘制点'
           >
             <Pencil size={16} />
             绘点
           </Button>
           <Button
             fullWidth
-            onClick={() => setTool("draw-line")}
+            onClick={() => setTool('draw-line')}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: toolMode === "draw-line" ? "#3b82f6" : "white",
-              color: toolMode === "draw-line" ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor:
-                  toolMode === "draw-line" ? "#2563eb" : "#f9fafb",
+              backgroundColor: toolMode === 'draw-line' ? '#3b82f6' : 'white',
+              color: toolMode === 'draw-line' ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: toolMode === 'draw-line' ? '#2563eb' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="绘制线"
+            title='绘制线'
           >
             <Pencil size={16} />
             绘线
           </Button>
           <Button
             fullWidth
-            onClick={() => setTool("draw-polygon")}
+            onClick={() => setTool('draw-polygon')}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor:
-                toolMode === "draw-polygon" ? "#3b82f6" : "white",
-              color: toolMode === "draw-polygon" ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor:
-                  toolMode === "draw-polygon" ? "#2563eb" : "#f9fafb",
+              backgroundColor: toolMode === 'draw-polygon' ? '#3b82f6' : 'white',
+              color: toolMode === 'draw-polygon' ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: toolMode === 'draw-polygon' ? '#2563eb' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="绘制多边形"
+            title='绘制多边形'
           >
             <Pencil size={16} />
             绘多边形
           </Button>
-          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
-          {(toolMode === "measure-distance" || toolMode === "measure-area") && (
+          <MuiBox sx={{ borderTop: '1px solid #f3f4f6', my: 1 }} />
+          {(toolMode === 'measure-distance' || toolMode === 'measure-area') && (
             <Button
               fullWidth
               onClick={clearMeasure}
               sx={{
                 padding: 1,
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1,
-                backgroundColor: "#f3f4f6",
-                color: "#374151",
-                "&:hover": {
-                  backgroundColor: "#e5e7eb",
+                backgroundColor: '#f3f4f6',
+                color: '#374151',
+                '&:hover': {
+                  backgroundColor: '#e5e7eb',
                 },
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
               }}
-              title="清除测量"
+              title='清除测量'
             >
               <Eraser size={16} />
               清除
@@ -1362,17 +1308,17 @@ const MapView: React.FC<MapViewProps> = ({
               sx={{
                 padding: 1,
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1,
-                backgroundColor: "#fee2e2",
-                color: "#dc2626",
-                "&:hover": {
-                  backgroundColor: "#fecaca",
+                backgroundColor: '#fee2e2',
+                color: '#dc2626',
+                '&:hover': {
+                  backgroundColor: '#fecaca',
                 },
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
               }}
-              title="清除所有绘制"
+              title='清除所有绘制'
             >
               <Trash2 size={16} />
               清除绘制
@@ -1385,64 +1331,64 @@ const MapView: React.FC<MapViewProps> = ({
               sx={{
                 padding: 1,
                 borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1,
-                backgroundColor: "#dcfce7",
-                color: "#16a34a",
-                "&:hover": {
-                  backgroundColor: "#bbf7d0",
+                backgroundColor: '#dcfce7',
+                color: '#16a34a',
+                '&:hover': {
+                  backgroundColor: '#bbf7d0',
                 },
-                fontSize: "0.75rem",
+                fontSize: '0.75rem',
               }}
-              title="完成绘制 (Enter)"
+              title='完成绘制 (Enter)'
             >
               完成绘制
             </Button>
           )}
-          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <MuiBox sx={{ borderTop: '1px solid #f3f4f6', my: 1 }} />
           <Button
             fullWidth
             onClick={() => {
               setShowTrackPanel(true);
-              setToolMode("select");
+              setToolMode('select');
             }}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: showTrackPanel ? "#9333ea" : "white",
-              color: showTrackPanel ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor: showTrackPanel ? "#7c3aed" : "#f9fafb",
+              backgroundColor: showTrackPanel ? '#9333ea' : 'white',
+              color: showTrackPanel ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: showTrackPanel ? '#7c3aed' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="设备轨迹追踪"
+            title='设备轨迹追踪'
           >
             <PlayCircle size={16} />
             轨迹追踪
           </Button>
-          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <MuiBox sx={{ borderTop: '1px solid #f3f4f6', my: 1 }} />
           <Button
             fullWidth
             onClick={() => exportGeoJSON()}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: "#dbeafe",
-              color: "#2563eb",
-              "&:hover": {
-                backgroundColor: "#bfdbfe",
+              backgroundColor: '#dbeafe',
+              color: '#2563eb',
+              '&:hover': {
+                backgroundColor: '#bfdbfe',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="导出GeoJSON"
+            title='导出GeoJSON'
           >
             <Download size={16} />
             导出GeoJSON
@@ -1453,61 +1399,61 @@ const MapView: React.FC<MapViewProps> = ({
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: "#e0e7ff",
-              color: "#4f46e5",
-              "&:hover": {
-                backgroundColor: "#c7d2fe",
+              backgroundColor: '#e0e7ff',
+              color: '#4f46e5',
+              '&:hover': {
+                backgroundColor: '#c7d2fe',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="导出绘制图形"
+            title='导出绘制图形'
           >
             <FileJson size={16} />
             导出绘制图形
           </Button>
-          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <MuiBox sx={{ borderTop: '1px solid #f3f4f6', my: 1 }} />
           <Button
             fullWidth
-            onClick={() => handleSetMapType(mapType === "osm" ? "amap" : "osm")}
+            onClick={() => handleSetMapType(mapType === 'osm' ? 'amap' : 'osm')}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: mapType === "amap" ? "#3b82f6" : "white",
-              color: mapType === "amap" ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor: mapType === "amap" ? "#2563eb" : "#f9fafb",
+              backgroundColor: mapType === 'amap' ? '#3b82f6' : 'white',
+              color: mapType === 'amap' ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: mapType === 'amap' ? '#2563eb' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="切换地图"
+            title='切换地图'
           >
             <Globe size={16} />
-            {mapType === "osm" ? "切换高德" : "切换OSM"}
+            {mapType === 'osm' ? '切换高德' : '切换OSM'}
           </Button>
-          <MuiBox sx={{ borderTop: "1px solid #f3f4f6", my: 1 }} />
+          <MuiBox sx={{ borderTop: '1px solid #f3f4f6', my: 1 }} />
           <Button
             fullWidth
             onClick={() => setShowHeatmap(!showHeatmap)}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: showHeatmap ? "#ef4444" : "white",
-              color: showHeatmap ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor: showHeatmap ? "#dc2626" : "#f9fafb",
+              backgroundColor: showHeatmap ? '#ef4444' : 'white',
+              color: showHeatmap ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: showHeatmap ? '#dc2626' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="热力图"
+            title='热力图'
           >
             <Thermometer size={16} />
             热力图
@@ -1515,46 +1461,42 @@ const MapView: React.FC<MapViewProps> = ({
           {showHeatmap && (
             <MuiBox
               sx={{
-                padding: "4px 8px",
-                display: "flex",
-                flexDirection: "column",
+                padding: '4px 8px',
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 0.5,
               }}
             >
               <Button
                 fullWidth
-                onClick={() => setHeatmapMode("density")}
+                onClick={() => setHeatmapMode('density')}
                 sx={{
-                  padding: "6px",
+                  padding: '6px',
                   borderRadius: 1,
-                  textAlign: "left",
-                  backgroundColor:
-                    heatmapMode === "density" ? "#fee2e2" : "transparent",
-                  color: heatmapMode === "density" ? "#b91c1c" : "#4b5563",
-                  "&:hover": {
-                    backgroundColor:
-                      heatmapMode === "density" ? "#fecaca" : "#f3f4f6",
+                  textAlign: 'left',
+                  backgroundColor: heatmapMode === 'density' ? '#fee2e2' : 'transparent',
+                  color: heatmapMode === 'density' ? '#b91c1c' : '#4b5563',
+                  '&:hover': {
+                    backgroundColor: heatmapMode === 'density' ? '#fecaca' : '#f3f4f6',
                   },
-                  fontSize: "0.75rem",
+                  fontSize: '0.75rem',
                 }}
               >
                 密度模式
               </Button>
               <Button
                 fullWidth
-                onClick={() => setHeatmapMode("status")}
+                onClick={() => setHeatmapMode('status')}
                 sx={{
-                  padding: "6px",
+                  padding: '6px',
                   borderRadius: 1,
-                  textAlign: "left",
-                  backgroundColor:
-                    heatmapMode === "status" ? "#fee2e2" : "transparent",
-                  color: heatmapMode === "status" ? "#b91c1c" : "#4b5563",
-                  "&:hover": {
-                    backgroundColor:
-                      heatmapMode === "status" ? "#fecaca" : "#f3f4f6",
+                  textAlign: 'left',
+                  backgroundColor: heatmapMode === 'status' ? '#fee2e2' : 'transparent',
+                  color: heatmapMode === 'status' ? '#b91c1c' : '#4b5563',
+                  '&:hover': {
+                    backgroundColor: heatmapMode === 'status' ? '#fecaca' : '#f3f4f6',
                   },
-                  fontSize: "0.75rem",
+                  fontSize: '0.75rem',
                 }}
               >
                 状态模式
@@ -1565,22 +1507,22 @@ const MapView: React.FC<MapViewProps> = ({
             fullWidth
             onClick={() => {
               setShow3DView(true);
-              setToolMode("select");
+              setToolMode('select');
             }}
             sx={{
               padding: 1,
               borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
-              backgroundColor: show3DView ? "#4f46e5" : "white",
-              color: show3DView ? "white" : "#374151",
-              "&:hover": {
-                backgroundColor: show3DView ? "#4338ca" : "#f9fafb",
+              backgroundColor: show3DView ? '#4f46e5' : 'white',
+              color: show3DView ? 'white' : '#374151',
+              '&:hover': {
+                backgroundColor: show3DView ? '#4338ca' : '#f9fafb',
               },
-              fontSize: "0.75rem",
+              fontSize: '0.75rem',
             }}
-            title="3D视图"
+            title='3D视图'
           >
             <Box size={16} />
             3D视图
@@ -1588,40 +1530,43 @@ const MapView: React.FC<MapViewProps> = ({
         </MuiBox>
       </Paper>
 
-      {(toolMode === "measure-distance" || toolMode === "measure-area") && (
+      {(toolMode === 'measure-distance' || toolMode === 'measure-area') && (
         <Paper
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 16,
             left: 128,
-            backgroundColor: "white",
+            backgroundColor: 'white',
             borderRadius: 2,
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            padding: "8px 16px",
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            padding: '8px 16px',
           }}
         >
           <Typography
-            variant="body2"
-            sx={{ fontWeight: "medium", color: "#374151" }}
+            variant='body2'
+            sx={{ fontWeight: 'medium', color: '#374151' }}
           >
             {measureResult}
           </Typography>
         </Paper>
       )}
 
-      {toolMode !== "select" && (
+      {toolMode !== 'select' && (
         <Paper
           sx={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 16,
             left: 16,
-            backgroundColor: "#fef3c7",
-            border: "1px solid #fde68a",
+            backgroundColor: '#fef3c7',
+            border: '1px solid #fde68a',
             borderRadius: 2,
-            padding: "8px 16px",
+            padding: '8px 16px',
           }}
         >
-          <Typography variant="caption" sx={{ color: "#92400e" }}>
+          <Typography
+            variant='caption'
+            sx={{ color: '#92400e' }}
+          >
             按 ESC 退出工具模式 | 按 Enter 完成绘制
           </Typography>
         </Paper>
@@ -1629,131 +1574,149 @@ const MapView: React.FC<MapViewProps> = ({
 
       <MuiBox
         sx={{
-          position: "absolute",
+          position: 'absolute',
           bottom: 16,
           right: 16,
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
           gap: 1,
         }}
       >
         <IconButton
           onClick={() => setZoom((z) => Math.min(z + 1, 18))}
-          title="放大"
+          title='放大'
           sx={{
             padding: 1,
-            backgroundColor: "white",
+            backgroundColor: 'white',
             borderRadius: 2,
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            "&:hover": {
-              backgroundColor: "#f9fafb",
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            '&:hover': {
+              backgroundColor: '#f9fafb',
             },
           }}
         >
-          <ZoomIn size={20} style={{ color: "#374151" }} />
+          <ZoomIn
+            size={20}
+            style={{ color: '#374151' }}
+          />
         </IconButton>
         <IconButton
           onClick={() => setZoom((z) => Math.max(z - 1, 1))}
-          title="缩小"
+          title='缩小'
           sx={{
             padding: 1,
-            backgroundColor: "white",
+            backgroundColor: 'white',
             borderRadius: 2,
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            "&:hover": {
-              backgroundColor: "#f9fafb",
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            '&:hover': {
+              backgroundColor: '#f9fafb',
             },
           }}
         >
-          <ZoomOut size={20} style={{ color: "#374151" }} />
+          <ZoomOut
+            size={20}
+            style={{ color: '#374151' }}
+          />
         </IconButton>
-        <FitBoundsControl bounds={bounds} mapRef={leafletMapRef} />
+        <FitBoundsControl
+          bounds={bounds}
+          mapRef={leafletMapRef}
+        />
       </MuiBox>
 
       <Paper
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: 16,
           right: 16,
-          backgroundColor: "white",
+          backgroundColor: 'white',
           borderRadius: 2,
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-          overflow: "hidden",
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
         }}
       >
         <Button
           fullWidth
           onClick={() => setShowLayerPanel(!showLayerPanel)}
           sx={{
-            padding: "8px 16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            "&:hover": {
-              backgroundColor: "#f9fafb",
+            padding: '8px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            '&:hover': {
+              backgroundColor: '#f9fafb',
             },
           }}
         >
-          <MuiBox sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Layers size={20} style={{ color: "#374151" }} />
+          <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Layers
+              size={20}
+              style={{ color: '#374151' }}
+            />
             <Typography
-              variant="body2"
-              sx={{ fontWeight: "medium", color: "#374151" }}
+              variant='body2'
+              sx={{ fontWeight: 'medium', color: '#374151' }}
             >
               图层
             </Typography>
           </MuiBox>
           {showLayerPanel ? (
-            <ChevronUp size={16} style={{ color: "#6b7280" }} />
+            <ChevronUp
+              size={16}
+              style={{ color: '#6b7280' }}
+            />
           ) : (
-            <ChevronDown size={16} style={{ color: "#6b7280" }} />
+            <ChevronDown
+              size={16}
+              style={{ color: '#6b7280' }}
+            />
           )}
         </Button>
         {showLayerPanel && (
           <MuiBox
             sx={{
-              padding: "12px",
-              display: "flex",
-              flexDirection: "column",
+              padding: '12px',
+              display: 'flex',
+              flexDirection: 'column',
               gap: 1,
-              borderTop: "1px solid #e5e7eb",
+              borderTop: '1px solid #e5e7eb',
             }}
           >
             <LayerToggle
-              label="设备点位"
+              label='设备点位'
               icon={<MapPin size={16} />}
               checked={visibleLayers.devices}
-              onChange={() => toggleLayer("devices")}
-              color="#00C897"
+              onChange={() => toggleLayer('devices')}
+              color='#00C897'
             />
             <LayerToggle
-              label="管线"
+              label='管线'
               icon={<Navigation size={16} />}
               checked={visibleLayers.pipelines}
-              onChange={() => toggleLayer("pipelines")}
-              color="#6366F1"
+              onChange={() => toggleLayer('pipelines')}
+              color='#6366F1'
             />
             <LayerToggle
-              label="仓储位置"
+              label='仓储位置'
               icon={<Info size={16} />}
               checked={visibleLayers.storage}
-              onChange={() => toggleLayer("storage")}
-              color="#F59E0B"
+              onChange={() => toggleLayer('storage')}
+              color='#F59E0B'
             />
             {drawFeatures.length > 0 && (
               <MuiBox
                 sx={{
-                  borderTop: "1px solid #e5e7eb",
+                  borderTop: '1px solid #e5e7eb',
                   paddingTop: 1,
                   marginTop: 1,
                 }}
               >
                 <LayerToggle
-                  label="绘制图形"
+                  label='绘制图形'
                   icon={<Pencil size={16} />}
                   checked={true}
                   onChange={() => {}}
-                  color="#EF4444"
+                  color='#EF4444'
                 />
               </MuiBox>
             )}
@@ -1764,29 +1727,29 @@ const MapView: React.FC<MapViewProps> = ({
       {showDetailsPanel && selectedItem && (
         <Paper
           sx={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 16,
             left: 16,
-            width: "320px",
-            backgroundColor: "white",
+            width: '320px',
+            backgroundColor: 'white',
             borderRadius: 3,
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-            overflow: "hidden",
-            border: "1px solid #e5e7eb",
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden',
+            border: '1px solid #e5e7eb',
           }}
         >
           <MuiBox
             sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 16px",
-              background: "linear-gradient(to right, #06b6d4, #3b82f6)",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              background: 'linear-gradient(to right, #06b6d4, #3b82f6)',
             }}
           >
             <Typography
-              variant="h6"
-              sx={{ fontWeight: "semibold", color: "white" }}
+              variant='h6'
+              sx={{ fontWeight: 'semibold', color: 'white' }}
             >
               详情信息
             </Typography>
@@ -1794,153 +1757,165 @@ const MapView: React.FC<MapViewProps> = ({
               onClick={closeDetailsPanel}
               sx={{
                 padding: 0.5,
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.2)",
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 },
                 borderRadius: 1,
               }}
             >
-              <X size={20} style={{ color: "white" }} />
+              <X
+                size={20}
+                style={{ color: 'white' }}
+              />
             </IconButton>
           </MuiBox>
           <MuiBox
             sx={{
               padding: 2,
-              display: "flex",
-              flexDirection: "column",
+              display: 'flex',
+              flexDirection: 'column',
               gap: 2,
             }}
           >
             <MuiBox>
               <Typography
-                variant="caption"
-                sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                variant='caption'
+                sx={{ color: '#6b7280', marginBottom: 0.5 }}
               >
                 名称
               </Typography>
               <Typography
-                variant="body1"
-                sx={{ fontWeight: "medium", color: "#111827" }}
+                variant='body1'
+                sx={{ fontWeight: 'medium', color: '#111827' }}
               >
                 {selectedItem.name}
               </Typography>
             </MuiBox>
-            {"device_type" in selectedItem && (
+            {'device_type' in selectedItem && (
               <MuiBox>
                 <Typography
-                  variant="caption"
-                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                  variant='caption'
+                  sx={{ color: '#6b7280', marginBottom: 0.5 }}
                 >
                   设备类型
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#374151" }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: '#374151' }}
+                >
                   {selectedItem.device_type}
                 </Typography>
               </MuiBox>
             )}
-            {"location_type" in selectedItem && (
+            {'location_type' in selectedItem && (
               <MuiBox>
                 <Typography
-                  variant="caption"
-                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                  variant='caption'
+                  sx={{ color: '#6b7280', marginBottom: 0.5 }}
                 >
                   位置类型
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#374151" }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: '#374151' }}
+                >
                   {selectedItem.location_type}
                 </Typography>
               </MuiBox>
             )}
-            {"status" in selectedItem && (
+            {'status' in selectedItem && (
               <MuiBox>
                 <Typography
-                  variant="caption"
-                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                  variant='caption'
+                  sx={{ color: '#6b7280', marginBottom: 0.5 }}
                 >
                   状态
                 </Typography>
                 <Chip
                   label={selectedItem.status}
-                  size="small"
+                  size='small'
                   sx={{
                     backgroundColor:
-                      selectedItem.status.toLowerCase().includes("active") ||
-                      selectedItem.status.includes("启用")
-                        ? "#d1fae5"
-                        : selectedItem.status
-                              .toLowerCase()
-                              .includes("pending") ||
-                            selectedItem.status.includes("待处理")
-                          ? "#fef3c7"
-                          : "#fee2e2",
+                      selectedItem.status.toLowerCase().includes('active') ||
+                      selectedItem.status.includes('启用')
+                        ? '#d1fae5'
+                        : selectedItem.status.toLowerCase().includes('pending') ||
+                            selectedItem.status.includes('待处理')
+                          ? '#fef3c7'
+                          : '#fee2e2',
                     color:
-                      selectedItem.status.toLowerCase().includes("active") ||
-                      selectedItem.status.includes("启用")
-                        ? "#065f46"
-                        : selectedItem.status
-                              .toLowerCase()
-                              .includes("pending") ||
-                            selectedItem.status.includes("待处理")
-                          ? "#92400e"
-                          : "#991b1b",
-                    fontWeight: "medium",
+                      selectedItem.status.toLowerCase().includes('active') ||
+                      selectedItem.status.includes('启用')
+                        ? '#065f46'
+                        : selectedItem.status.toLowerCase().includes('pending') ||
+                            selectedItem.status.includes('待处理')
+                          ? '#92400e'
+                          : '#991b1b',
+                    fontWeight: 'medium',
                   }}
                 />
               </MuiBox>
             )}
-            {"capacity" in selectedItem &&
-              selectedItem.capacity !== undefined && (
-                <MuiBox>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "#6b7280", marginBottom: 0.5 }}
-                  >
-                    容量
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "#374151" }}>
-                    {selectedItem.capacity}
-                  </Typography>
-                </MuiBox>
-              )}
-            {"current_usage" in selectedItem &&
-              selectedItem.current_usage !== undefined && (
-                <MuiBox>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "#6b7280", marginBottom: 0.5 }}
-                  >
-                    当前用量
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "#374151" }}>
-                    {selectedItem.current_usage}
-                  </Typography>
-                </MuiBox>
-              )}
-            {"description" in selectedItem && selectedItem.description && (
+            {'capacity' in selectedItem && selectedItem.capacity !== undefined && (
               <MuiBox>
                 <Typography
-                  variant="caption"
-                  sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                  variant='caption'
+                  sx={{ color: '#6b7280', marginBottom: 0.5 }}
+                >
+                  容量
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: '#374151' }}
+                >
+                  {selectedItem.capacity}
+                </Typography>
+              </MuiBox>
+            )}
+            {'current_usage' in selectedItem && selectedItem.current_usage !== undefined && (
+              <MuiBox>
+                <Typography
+                  variant='caption'
+                  sx={{ color: '#6b7280', marginBottom: 0.5 }}
+                >
+                  当前用量
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: '#374151' }}
+                >
+                  {selectedItem.current_usage}
+                </Typography>
+              </MuiBox>
+            )}
+            {'description' in selectedItem && selectedItem.description && (
+              <MuiBox>
+                <Typography
+                  variant='caption'
+                  sx={{ color: '#6b7280', marginBottom: 0.5 }}
                 >
                   描述
                 </Typography>
-                <Typography variant="body2" sx={{ color: "#4b5563" }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: '#4b5563' }}
+                >
                   {selectedItem.description}
                 </Typography>
               </MuiBox>
             )}
-            <MuiBox sx={{ paddingTop: 1, borderTop: "1px solid #e5e7eb" }}>
+            <MuiBox sx={{ paddingTop: 1, borderTop: '1px solid #e5e7eb' }}>
               <Typography
-                variant="caption"
-                sx={{ color: "#6b7280", marginBottom: 0.5 }}
+                variant='caption'
+                sx={{ color: '#6b7280', marginBottom: 0.5 }}
               >
                 坐标
               </Typography>
               <Typography
-                variant="body2"
-                sx={{ color: "#374151", fontFamily: "monospace" }}
+                variant='body2'
+                sx={{ color: '#374151', fontFamily: 'monospace' }}
               >
-                {formatCoordinate(selectedItem.latitude)},{" "}
+                {formatCoordinate(selectedItem.latitude)},{' '}
                 {formatCoordinate(selectedItem.longitude)}
               </Typography>
             </MuiBox>
@@ -1949,31 +1924,34 @@ const MapView: React.FC<MapViewProps> = ({
       )}
 
       {showMeasureTooltip && (
-        <MeasureTooltip position={tooltipPosition} content={measureResult} />
+        <MeasureTooltip
+          position={tooltipPosition}
+          content={measureResult}
+        />
       )}
 
       {showTrackPanel && (
         <MuiBox
           sx={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             zIndex: 50,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <Paper
             sx={{
-              backgroundColor: "white",
+              backgroundColor: 'white',
               borderRadius: 3,
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              width: "90%",
-              maxWidth: "1024px",
-              height: "80%",
-              maxHeight: "600px",
-              overflow: "hidden",
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              width: '90%',
+              maxWidth: '1024px',
+              height: '80%',
+              maxHeight: '600px',
+              overflow: 'hidden',
             }}
           >
             <DeviceTrackPanel
@@ -1985,7 +1963,7 @@ const MapView: React.FC<MapViewProps> = ({
       )}
 
       {showHeatmap && (
-        <MuiBox sx={{ position: "absolute", bottom: 16, right: 96 }}>
+        <MuiBox sx={{ position: 'absolute', bottom: 16, right: 96 }}>
           <HeatmapLegend mode={heatmapMode} />
         </MuiBox>
       )}
@@ -1993,25 +1971,25 @@ const MapView: React.FC<MapViewProps> = ({
       {show3DView && (
         <MuiBox
           sx={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             zIndex: 50,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <Paper
             sx={{
-              backgroundColor: "white",
+              backgroundColor: 'white',
               borderRadius: 3,
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              width: "95%",
-              maxWidth: "1536px",
-              height: "90%",
-              maxHeight: "700px",
-              overflow: "hidden",
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              width: '95%',
+              maxWidth: '1536px',
+              height: '90%',
+              maxHeight: '700px',
+              overflow: 'hidden',
             }}
           >
             <Map3DView

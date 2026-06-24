@@ -4,7 +4,9 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use bigdecimal::BigDecimal;
 use chrono::Utc;
+use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -182,9 +184,9 @@ async fn list_alerts(
             i.material_name
         LIMIT $4 OFFSET $5
         "#,
-        &alert_type,
-        &severity,
-        &warehouse_id,
+        alert_type.as_deref(),
+        severity.as_deref(),
+        warehouse_id,
         page_size,
         offset
     )
@@ -200,14 +202,14 @@ async fn list_alerts(
                     inventory_id: r.inventory_id,
                     material_code: r.material_code,
                     material_name: r.material_name,
-                    warehouse_id: r.warehouse_id,
-                    warehouse_name: r.warehouse_name,
+                    warehouse_id: Some(r.warehouse_id),
+                    warehouse_name: Some(r.warehouse_name),
                     location_id: r.location_id,
-                    location_code: r.location_code,
+                    location_code: Some(r.location_code),
                     alert_type: r.alert_type.unwrap_or_default(),
-                    current_quantity: r.current_quantity,
-                    threshold_value: r.threshold_value,
-                    deviation_quantity: r.deviation_quantity,
+                    current_quantity: r.current_quantity.to_f64().unwrap_or(0.0),
+                    threshold_value: r.threshold_value.map(|v| v.to_f64().unwrap_or(0.0)),
+                    deviation_quantity: r.deviation_quantity.map(|v| v.to_f64().unwrap_or(0.0)),
                     severity: r.severity.unwrap_or_default(),
                     status: r.status.unwrap_or_default(),
                     remarks: r.remarks,
@@ -301,14 +303,14 @@ async fn get_alert(
                 inventory_id: r.inventory_id,
                 material_code: r.material_code,
                 material_name: r.material_name,
-                warehouse_id: r.warehouse_id,
-                warehouse_name: r.warehouse_name,
+                warehouse_id: Some(r.warehouse_id),
+                warehouse_name: Some(r.warehouse_name),
                 location_id: r.location_id,
-                location_code: r.location_code,
+                location_code: Some(r.location_code),
                 alert_type: r.alert_type.unwrap_or_default(),
-                current_quantity: r.current_quantity,
-                threshold_value: r.threshold_value,
-                deviation_quantity: r.deviation_quantity,
+                current_quantity: r.current_quantity.to_f64().unwrap_or(0.0),
+                threshold_value: r.threshold_value.map(|v| v.to_f64().unwrap_or(0.0)),
+                deviation_quantity: r.deviation_quantity.map(|v| v.to_f64().unwrap_or(0.0)),
                 severity: r.severity.unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
                 remarks: r.remarks,
@@ -346,7 +348,7 @@ async fn acknowledge_alert(
     .await;
 
     match exists {
-        Ok(c) if c > 0 => {
+        Ok(Some(c)) if c > 0 => {
             log_audit_event(
                 &state.db,
                 "acknowledge".to_string(),
@@ -413,15 +415,15 @@ async fn get_alert_statistics(
 
     let summary = match summary_result {
         Ok(r) => AlertSummary {
-            total_alerts: r.below_min_count.unwrap_or(0),
-            critical_count: r.critical_count.unwrap_or(0),
-            warning_count: r.warning_count.unwrap_or(0),
-            info_count: r.info_count.unwrap_or(0),
-            below_min_count: r.below_min_count.unwrap_or(0),
-            above_max_count: r.above_max_count.unwrap_or(0),
-            reorder_count: r.reorder_count.unwrap_or(0),
-            expiry_count: r.expiry_count.unwrap_or(0),
-            out_of_stock_count: r.out_of_stock_count.unwrap_or(0),
+            total_alerts: r.below_min_count.unwrap_or(0) as i64,
+            critical_count: r.critical_count.unwrap_or(0) as i64,
+            warning_count: r.warning_count.unwrap_or(0) as i64,
+            info_count: r.info_count.unwrap_or(0) as i64,
+            below_min_count: r.below_min_count.unwrap_or(0) as i64,
+            above_max_count: r.above_max_count.unwrap_or(0) as i64,
+            reorder_count: r.reorder_count.unwrap_or(0) as i64,
+            expiry_count: r.expiry_count.unwrap_or(0) as i64,
+            out_of_stock_count: r.out_of_stock_count.unwrap_or(0) as i64,
         },
         Err(e) => {
             tracing::error!("获取预警汇总失败: {}", e);
@@ -455,9 +457,9 @@ async fn get_alert_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| WarehouseAlertCount {
-                warehouse_id: r.warehouse_id,
-                warehouse_name: r.warehouse_name,
-                alert_count: r.alert_count.unwrap_or(0),
+                warehouse_id: Some(r.warehouse_id),
+                warehouse_name: Some(r.warehouse_name),
+                alert_count: r.alert_count.unwrap_or(0) as i64,
             })
             .collect(),
         Err(_) => vec![],
@@ -546,15 +548,15 @@ async fn get_alert_summary(
     match result {
         Ok(r) => {
             let summary = AlertSummary {
-                total_alerts: r.total_alerts.unwrap_or(0),
-                critical_count: r.critical_count.unwrap_or(0),
-                warning_count: r.warning_count.unwrap_or(0),
-                info_count: r.info_count.unwrap_or(0),
-                below_min_count: r.below_min_count.unwrap_or(0),
-                above_max_count: r.above_max_count.unwrap_or(0),
-                reorder_count: r.reorder_count.unwrap_or(0),
-                expiry_count: r.expiry_count.unwrap_or(0),
-                out_of_stock_count: r.out_of_stock_count.unwrap_or(0),
+                total_alerts: r.total_alerts.unwrap_or(0) as i64,
+                critical_count: r.critical_count.unwrap_or(0) as i64,
+                warning_count: r.warning_count.unwrap_or(0) as i64,
+                info_count: r.info_count.unwrap_or(0) as i64,
+                below_min_count: r.below_min_count.unwrap_or(0) as i64,
+                above_max_count: r.above_max_count.unwrap_or(0) as i64,
+                reorder_count: r.reorder_count.unwrap_or(0) as i64,
+                expiry_count: r.expiry_count.unwrap_or(0) as i64,
+                out_of_stock_count: r.out_of_stock_count.unwrap_or(0) as i64,
             };
             Json(ApiResponse::success(summary, "获取预警汇总成功"))
         }
@@ -636,7 +638,7 @@ async fn get_alerts_by_warehouse(
             END,
             i.material_name
         "#,
-        &warehouse_id
+        warehouse_id
     )
     .fetch_all(&state.db)
     .await;
@@ -650,14 +652,14 @@ async fn get_alerts_by_warehouse(
                     inventory_id: r.inventory_id,
                     material_code: r.material_code,
                     material_name: r.material_name,
-                    warehouse_id: r.warehouse_id,
-                    warehouse_name: r.warehouse_name,
+                    warehouse_id: Some(r.warehouse_id),
+                    warehouse_name: Some(r.warehouse_name),
                     location_id: r.location_id,
-                    location_code: r.location_code,
+                    location_code: Some(r.location_code),
                     alert_type: r.alert_type.unwrap_or_default(),
-                    current_quantity: r.current_quantity,
-                    threshold_value: r.threshold_value,
-                    deviation_quantity: r.deviation_quantity,
+                    current_quantity: r.current_quantity.to_f64().unwrap_or(0.0),
+                    threshold_value: r.threshold_value.map(|v| v.to_f64().unwrap_or(0.0)),
+                    deviation_quantity: r.deviation_quantity.map(|v| v.to_f64().unwrap_or(0.0)),
                     severity: r.severity.unwrap_or_default(),
                     status: r.status.unwrap_or_default(),
                     remarks: r.remarks,

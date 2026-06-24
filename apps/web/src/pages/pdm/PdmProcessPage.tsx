@@ -1,28 +1,36 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { apiLogger } from "@/utils/logger";
-import { Plus, Eye, Clock } from "lucide-react";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
-import type { RowAction, FilterConfig } from "@/components/templates";
-import { pdmApi } from "@/api/pdm";
-import type { ProductionProcess } from "@/api/pdm";
-import { toast } from "react-toastify";
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { apiLogger } from '@/utils/logger';
+import { Plus, Eye, Clock } from 'lucide-react';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import type { RowAction, FilterConfig } from '@/components/templates';
+import { pdmApi } from '@/api/pdm';
+import type { ProductionProcess } from '@/api/pdm';
+import { toast } from 'react-toastify';
 
 const PdmProcessPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedProcess, setSelectedProcess] =
-    useState<ProductionProcess | null>(null);
+  const [selectedProcess, setSelectedProcess] = useState<ProductionProcess | null>(null);
   const [formData, setFormData] = useState({
-    process_no: "",
-    name: "",
-    description: "",
-    version: "1.0",
+    process_no: '',
+    name: '',
+    description: '',
+    version: '1.0',
   });
 
   useEffect(() => {
@@ -37,18 +45,14 @@ const PdmProcessPage: React.FC = () => {
         const adapted = (response.data as any).map((item: any) => ({
           ...item,
           status:
-            item.status === "active"
-              ? "启用"
-              : item.status === "inactive"
-                ? "禁用"
-                : item.status,
+            item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
         }));
         setProcesses(adapted);
       } else {
         setProcesses([]);
       }
     } catch (err) {
-      apiLogger.error("加载生产工艺数据失败:", err);
+      apiLogger.error('加载生产工艺数据失败:', err);
       setProcesses([]);
     } finally {
       setLoading(false);
@@ -57,14 +61,14 @@ const PdmProcessPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: "#dcfce7", color: "#16a34a" },
-      禁用: { bg: "#fee2e2", color: "#dc2626" },
+      启用: { bg: '#dcfce7', color: '#16a34a' },
+      禁用: { bg: '#fee2e2', color: '#dc2626' },
     };
-    const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
+    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
     return (
       <Chip
         label={status}
-        size="small"
+        size='small'
         sx={{
           backgroundColor: colors.bg,
           color: colors.color,
@@ -86,22 +90,22 @@ const PdmProcessPage: React.FC = () => {
 
   const columns = useMemo<ColumnDef<ProductionProcess>[]>(
     () => [
-      { id: "process_no", label: "工艺编号" },
-      { id: "name", label: "工艺名称" },
-      { id: "version", label: "版本" },
+      { id: 'process_no', label: '工艺编号' },
+      { id: 'name', label: '工艺名称' },
+      { id: 'version', label: '版本' },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    [],
+    []
   );
 
   const rowActions = useMemo<RowAction<ProductionProcess>[]>(
     () => [
       {
-        label: "详情",
+        label: '详情',
         icon: <Eye size={16} />,
         onClick: (row) => {
           setSelectedProcess(row);
@@ -109,33 +113,33 @@ const PdmProcessPage: React.FC = () => {
         },
       },
     ],
-    [],
+    []
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
-        id: "status",
-        label: "状态",
-        type: "select",
+        id: 'status',
+        label: '状态',
+        type: 'select',
         options: [
-          { value: "", label: "全部" },
-          { value: "启用", label: "启用" },
-          { value: "禁用", label: "禁用" },
+          { value: '', label: '全部' },
+          { value: '启用', label: '启用' },
+          { value: '禁用', label: '禁用' },
         ],
         value: statusFilter,
         onChange: (value) => setStatusFilter(value as string),
       },
     ],
-    [statusFilter],
+    [statusFilter]
   );
 
   const handleCreate = () => {
     setFormData({
-      process_no: "",
-      name: "",
-      description: "",
-      version: "1.0",
+      process_no: '',
+      name: '',
+      description: '',
+      version: '1.0',
     });
     setShowCreateModal(true);
   };
@@ -147,53 +151,71 @@ const PdmProcessPage: React.FC = () => {
         name: formData.name,
         description: formData.description || undefined,
         version: formData.version,
-        status: "active",
+        status: 'active',
       });
-      toast.success("生产工艺创建成功");
+      toast.success('生产工艺创建成功');
       setShowCreateModal(false);
       loadProcesses();
     } catch (err) {
-      toast.error("创建失败");
-      apiLogger.error("创建生产工艺失败:", err);
+      toast.error('创建失败');
+      apiLogger.error('创建生产工艺失败:', err);
     }
   };
 
   const stats = {
     total: processes.length,
-    active: processes.filter((p) => p.status === "启用").length,
-    inactive: processes.filter((p) => p.status === "禁用").length,
+    active: processes.filter((p) => p.status === '启用').length,
+    inactive: processes.filter((p) => p.status === '禁用').length,
   };
 
   const statsContent = (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
         gap: 2,
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: "#ecfeff", borderRadius: 2 }}>
-        <Typography variant="body2" sx={{ color: "slate.600" }}>
+      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'slate.600' }}
+        >
           工艺总数
         </Typography>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: "#dcfce7", borderRadius: 2 }}>
-        <Typography variant="body2" sx={{ color: "slate.600" }}>
+      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'slate.600' }}
+        >
           已启用
         </Typography>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: "#fee2e2", borderRadius: 2 }}>
-        <Typography variant="body2" sx={{ color: "slate.600" }}>
+      <Box sx={{ p: 2, bgcolor: '#fee2e2', borderRadius: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'slate.600' }}
+        >
           已禁用
         </Typography>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.inactive}
         </Typography>
       </Box>
@@ -203,87 +225,82 @@ const PdmProcessPage: React.FC = () => {
   return (
     <>
       <ListPageTemplate<ProductionProcess>
-        title="生产工艺"
-        subtitle="Production Process"
-        backButton={{ href: "/dashboard" }}
+        title='生产工艺'
+        subtitle='Production Process'
+        backButton={{ href: '/dashboard' }}
         columns={columns}
         data={filteredProcesses}
         loading={loading}
         searchable
-        searchPlaceholder="搜索工艺名称或编号..."
+        searchPlaceholder='搜索工艺名称或编号...'
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
         rowActions={rowActions}
         actions={[
           {
-            label: "新增工艺",
+            label: '新增工艺',
             icon: <Plus size={18} />,
             onClick: handleCreate,
-            variant: "contained",
+            variant: 'contained',
           },
         ]}
         headerContent={statsContent}
-        emptyMessage="暂无生产工艺数据"
+        emptyMessage='暂无生产工艺数据'
       />
 
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>新增生产工艺</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label="工艺编号 *"
+              label='工艺编号 *'
               value={formData.process_no}
-              onChange={(e) =>
-                setFormData({ ...formData, process_no: e.target.value })
-              }
-              placeholder="请输入工艺编号"
+              onChange={(e) => setFormData({ ...formData, process_no: e.target.value })}
+              placeholder='请输入工艺编号'
             />
             <TextField
               fullWidth
-              label="工艺名称 *"
+              label='工艺名称 *'
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="请输入工艺名称"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder='请输入工艺名称'
             />
             <TextField
               fullWidth
-              label="版本"
+              label='版本'
               value={formData.version}
-              onChange={(e) =>
-                setFormData({ ...formData, version: e.target.value })
-              }
-              placeholder="请输入版本号"
+              onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+              placeholder='请输入版本号'
             />
             <TextField
               fullWidth
-              label="描述"
+              label='描述'
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="请输入工艺描述"
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder='请输入工艺描述'
               multiline
               rows={2}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateModal(false)}
+          >
             取消
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: "#06b6d4" }}
+            sx={{ bgcolor: '#06b6d4' }}
           >
             保存
           </Button>
@@ -293,7 +310,7 @@ const PdmProcessPage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>生产工艺详情</DialogTitle>
@@ -302,15 +319,15 @@ const PdmProcessPage: React.FC = () => {
             <Box
               sx={{
                 pt: 2,
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
                 gap: 2,
               }}
             >
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   工艺编号
                 </Box>
@@ -318,8 +335,8 @@ const PdmProcessPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   工艺名称
                 </Box>
@@ -327,8 +344,8 @@ const PdmProcessPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   版本
                 </Box>
@@ -336,46 +353,44 @@ const PdmProcessPage: React.FC = () => {
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(selectedProcess.status)}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedProcess.status)}</Box>
               </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   描述
                 </Box>
-                <Box>{selectedProcess.description || "-"}</Box>
+                <Box>{selectedProcess.description || '-'}</Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   创建时间
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Clock style={{ width: 16, height: 16 }} />
-                  {selectedProcess.created_at || "-"}
+                  {selectedProcess.created_at || '-'}
                 </Box>
               </Box>
               <Box>
                 <Box
-                  component="span"
-                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
                   更新时间
                 </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Clock style={{ width: 16, height: 16 }} />
-                  {selectedProcess.updated_at || "-"}
+                  {selectedProcess.updated_at || '-'}
                 </Box>
               </Box>
             </Box>

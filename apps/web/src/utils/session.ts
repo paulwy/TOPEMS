@@ -1,6 +1,6 @@
-import createLogger from "./logger";
+import createLogger from './logger';
 
-const logger = createLogger("Session");
+const logger = createLogger('Session');
 
 export interface SessionUser {
   id: string;
@@ -12,9 +12,9 @@ export interface SessionUser {
 }
 
 const STORAGE_KEYS = {
-  USER: "topems_user",
-  TOKEN: "token",
-  LAST_ACTIVITY: "last_activity",
+  USER: 'topems_user',
+  TOKEN: 'token',
+  LAST_ACTIVITY: 'last_activity',
 };
 
 export const session = {
@@ -23,7 +23,7 @@ export const session = {
       const userStr = localStorage.getItem(STORAGE_KEYS.USER);
       return userStr ? JSON.parse(userStr) : null;
     } catch (error) {
-      logger.error("Failed to parse user from storage:", error);
+      logger.error('Failed to parse user from storage:', error);
       return null;
     }
   },
@@ -33,7 +33,7 @@ export const session = {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
       this.updateLastActivity();
     } catch (error) {
-      logger.error("Failed to save user to storage:", error);
+      logger.error('Failed to save user to storage:', error);
     }
   },
 
@@ -73,7 +73,7 @@ export const session = {
     this.removeUser();
     this.removeToken();
     localStorage.removeItem(STORAGE_KEYS.LAST_ACTIVITY);
-    logger.info("Session cleared");
+    logger.info('Session cleared');
   },
 
   async validate(): Promise<boolean> {

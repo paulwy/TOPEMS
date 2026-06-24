@@ -111,6 +111,7 @@ async fn main() {
         .route("/api/mes/orders/{id}", get(modules::mes::production_order::get_production_order))
         .route("/api/mes/orders/{id}", put(modules::mes::production_order::update_production_order))
         .route("/api/mes/orders/{id}", delete(modules::mes::production_order::delete_production_order))
+        .route("/api/mes/orders/{id}/release", post(modules::mes::production_order::release_production_order))
         .route("/api/mes/orders/{id}/start", post(modules::mes::production_order::start_production_order))
         .route("/api/mes/orders/{id}/complete", post(modules::mes::production_order::complete_production_order))
         .route("/api/mes/orders/{id}/cancel", post(modules::mes::production_order::cancel_production_order))
@@ -120,20 +121,29 @@ async fn main() {
         .route("/api/mes/processes/{id}", get(modules::mes::production_process::get_process))
         .route("/api/mes/processes/{id}", put(modules::mes::production_process::update_process))
         .route("/api/mes/processes/{id}", delete(modules::mes::production_process::delete_process))
+        .route("/api/mes/processes/{id}/deactivate", post(modules::mes::production_process::deactivate_process))
         // Production Record
         .route("/api/mes/records", get(modules::mes::production_record::list_records))
         .route("/api/mes/records", post(modules::mes::production_record::create_record))
         .route("/api/mes/records/{id}", get(modules::mes::production_record::get_record))
+        .route("/api/mes/records/{id}", put(modules::mes::production_record::update_record))
+        .route("/api/mes/records/{id}", delete(modules::mes::production_record::delete_record))
+        .route("/api/mes/records/{id}/complete", post(modules::mes::production_record::complete_record))
         // Equipment
         .route("/api/mes/equipment", get(modules::mes::equipment::list_equipment))
         .route("/api/mes/equipment", post(modules::mes::equipment::create_equipment))
         .route("/api/mes/equipment/{id}", get(modules::mes::equipment::get_equipment))
         .route("/api/mes/equipment/{id}", put(modules::mes::equipment::update_equipment))
+        .route("/api/mes/equipment/{id}", delete(modules::mes::equipment::delete_equipment))
+        .route("/api/mes/equipment/{id}/maintenance", post(modules::mes::equipment::maintenance_equipment))
         // Work Station
         .route("/api/mes/workstations", get(modules::mes::work_station::list_work_stations))
         .route("/api/mes/workstations", post(modules::mes::work_station::create_work_station))
         .route("/api/mes/workstations/{id}", get(modules::mes::work_station::get_work_station))
         .route("/api/mes/workstations/{id}", put(modules::mes::work_station::update_work_station))
+        .route("/api/mes/workstations/{id}", delete(modules::mes::work_station::delete_work_station))
+        .route("/api/mes/workstations/{id}/activate", post(modules::mes::work_station::activate_work_station))
+        .route("/api/mes/workstations/{id}/deactivate", post(modules::mes::work_station::deactivate_work_station))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))

@@ -10,6 +10,8 @@ volumes:
   rabbitmq_data:
   grafana_data:
   prometheus_data:
+  consul_data:
+  jaeger_data:
 
 services:
   postgres:
@@ -77,6 +79,36 @@ services:
     restart: unless-stopped
 
   # ================================================
+  # 服务注册与发现
+  # ================================================
+  consul:
+    image: consul:latest
+    container_name: topems-consul
+    ports:
+      - "${CONSUL_HTTP_PORT:-8500}:8500"
+      - "${CONSUL_DNS_PORT:-8600}:8600/udp"
+    volumes:
+      - consul_data:/consul/data
+      - ./consul:/consul/config
+    networks:
+      - topems-network
+    command: >
+      agent -server -ui
+      -bootstrap-expect=1
+      -data-dir=/consul/data
+      -config-dir=/consul/config
+      -bind=0.0.0.0
+      -client=0.0.0.0
+      -log-level=info
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ================================================
   # 核心平台服务
   # ================================================
   unified-core:
@@ -88,6 +120,10 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - CORE_PORT=8000
       - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
+      - CONSUL_URL=http://consul:8500
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - TRACING_SAMPLING_RATIO=1.0
     ports:
       - "${CORE_PORT:-8000}:8000"
     volumes:
@@ -95,8 +131,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - postgres
-      - redis
+      consul:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -117,6 +159,9 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - ERP_PORT=8010
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
     ports:
       - "${ERP_PORT:-8010}:8010"
     volumes:
@@ -124,8 +169,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
       interval: 10s
@@ -146,6 +197,9 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - HRM_PORT=8020
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
     ports:
       - "${HRM_PORT:-8020}:8020"
     volumes:
@@ -153,8 +207,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8020/health"]
       interval: 10s
@@ -172,6 +232,9 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - PM_PORT=8023
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
     ports:
       - "${PM_PORT:-8023}:8023"
     volumes:
@@ -179,8 +242,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8023/health"]
       interval: 10s
@@ -198,6 +267,9 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - CRM_PORT=8029
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:-topems_secret}@rabbitmq:5672/%2f
     ports:
       - "${CRM_PORT:-8029}:8029"
     volumes:
@@ -205,8 +277,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8029/health"]
       interval: 10s
@@ -227,12 +305,15 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - MES_PORT=8030
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - RUST_LOG=info
     ports:
       - "${MES_PORT:-8030}:8030"
     networks:
       - topems-network
     depends_on:
+      consul:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       unified-core:
@@ -254,6 +335,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - PDM_PORT=8031
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - MES_URL=http://mes:8030
       - RUST_LOG=info
     ports:
@@ -285,6 +367,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - SCM_PORT=8040
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - ERP_URL=http://erp:8010
     ports:
       - "${SCM_PORT:-8040}:8040"
@@ -293,9 +376,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - erp
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      erp:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8040/health"]
       interval: 10s
@@ -313,6 +401,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - WMS_PORT=8041
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - SCM_URL=http://scm:8040
     ports:
       - "${WMS_PORT:-8041}:8041"
@@ -321,9 +410,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - scm
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      scm:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8041/health"]
       interval: 10s
@@ -341,6 +435,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - SRM_PORT=8042
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - SCM_URL=http://scm:8040
     ports:
       - "${SRM_PORT:-8042}:8042"
@@ -349,9 +444,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - scm
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      scm:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8042/health"]
       interval: 10s
@@ -372,6 +472,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - QMS_PORT=8050
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - ERP_URL=http://erp:8010
       - MES_URL=http://mes:8030
       - RUST_LOG=info
@@ -380,6 +481,8 @@ services:
     networks:
       - topems-network
     depends_on:
+      consul:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       unified-core:
@@ -401,6 +504,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - LIMS_PORT=8051
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - QMS_URL=http://qms:8050
       - RUST_LOG=info
     ports:
@@ -408,6 +512,8 @@ services:
     networks:
       - topems-network
     depends_on:
+      consul:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       qms:
@@ -429,6 +535,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - EHS_PORT=8052
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - MES_URL=http://mes:8030
       - QMS_URL=http://qms:8050
       - RUST_LOG=info
@@ -437,6 +544,8 @@ services:
     networks:
       - topems-network
     depends_on:
+      consul:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       mes:
@@ -460,6 +569,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - RS_PORT=8053
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - PM_URL=http://pm:8023
       - MES_URL=http://mes:8030
     ports:
@@ -469,10 +579,16 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - pm
-      - mes
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      pm:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8053/health"]
       interval: 10s
@@ -493,12 +609,15 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - BI_PORT=8060
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - RUST_LOG=info
     ports:
       - "${BI_PORT:-8060}:8060"
     networks:
       - topems-network
     depends_on:
+      consul:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       unified-core:
@@ -520,12 +639,15 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - REPORT_PORT=8061
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - RUST_LOG=info
     ports:
       - "${REPORT_PORT:-8061}:8061"
     networks:
       - topems-network
     depends_on:
+      consul:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       unified-core:
@@ -547,6 +669,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - MONITOR_PORT=8062
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
     ports:
       - "${MONITOR_PORT:-8062}:8062"
     volumes:
@@ -554,8 +677,12 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8062/health"]
       interval: 10s
@@ -573,6 +700,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - PORTAL_PORT=8063
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
     ports:
       - "${PORTAL_PORT:-8063}:8063"
     volumes:
@@ -580,8 +708,12 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8063/health"]
       interval: 10s
@@ -602,6 +734,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - AI_PORT=8064
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
     ports:
       - "${AI_PORT:-8064}:8064"
@@ -610,8 +743,12 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8064/health"]
       interval: 10s
@@ -632,6 +769,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - MOBILE_PORT=8070
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
     ports:
       - "${MOBILE_PORT:-8070}:8070"
     volumes:
@@ -639,8 +777,12 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8070/health"]
       interval: 10s
@@ -658,6 +800,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - GIS_PORT=8071
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
       - MES_URL=http://mes:8030
     ports:
       - "${GIS_PORT:-8071}:8071"
@@ -666,9 +809,14 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - mes
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8071/health"]
       interval: 10s
@@ -686,6 +834,7 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:-topems_secret}@postgres:5432/${POSTGRES_DB:-topems}
       - INTEGRATION_PORT=8072
       - CORE_URL=http://unified-core:8000
+      - CONSUL_URL=http://consul:8500
     ports:
       - "${INTEGRATION_PORT:-8072}:8072"
     volumes:
@@ -693,8 +842,12 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - postgres
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8072/health"]
       interval: 10s
@@ -718,30 +871,84 @@ services:
     networks:
       - topems-network
     depends_on:
-      - unified-core
-      - erp
-      - hrm
-      - pm
-      - crm
-      - mes
-      - pdm
-      - scm
-      - wms
-      - srm
-      - qms
-      - lims
-      - ehs
-      - rs
-      - bi
-      - report
-      - monitor
-      - portal
-      - ai
-      - mobile
-      - gis
-      - integration
+      consul:
+        condition: service_healthy
+      unified-core:
+        condition: service_healthy
+      erp:
+        condition: service_healthy
+      hrm:
+        condition: service_healthy
+      pm:
+        condition: service_healthy
+      crm:
+        condition: service_healthy
+      mes:
+        condition: service_healthy
+      pdm:
+        condition: service_healthy
+      scm:
+        condition: service_healthy
+      wms:
+        condition: service_healthy
+      srm:
+        condition: service_healthy
+      qms:
+        condition: service_healthy
+      lims:
+        condition: service_healthy
+      ehs:
+        condition: service_healthy
+      rs:
+        condition: service_healthy
+      bi:
+        condition: service_healthy
+      report:
+        condition: service_healthy
+      monitor:
+        condition: service_healthy
+      portal:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+      mobile:
+        condition: service_healthy
+      gis:
+        condition: service_healthy
+      integration:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ================================================
+  # 链路追踪系统
+  # ================================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: topems-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    volumes:
+      - jaeger_data:/var/lib/jaeger
+    networks:
+      - topems-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:14268/"]
       interval: 10s
       timeout: 5s
       retries: 3

@@ -1,0 +1,31 @@
+{{ define "feishu.default.title" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }} - {{ .CommonLabels.severity | toUpper }}{{ end }}] {{ .GroupLabels.alertname }}
+{{ end }}
+
+{{ define "feishu.default.content" }}
+## 🔔 告警通知
+
+**告警名称**: {{ .GroupLabels.alertname }}
+**告警状态**: {{ .Status | toUpper }}
+**严重级别**: {{ .CommonLabels.severity | toUpper }}
+**服务团队**: {{ .CommonLabels.team }}
+
+---
+
+### 📋 告警详情
+
+{{ range .Alerts }}
+**实例**: {{ .Labels.instance }}
+**任务**: {{ .Labels.job }}
+
+{{ if .Annotations.summary }}**摘要**: {{ .Annotations.summary }}{{ end }}
+{{ if .Annotations.description }}**描述**: {{ .Annotations.description }}{{ end }}
+
+{{ if .StartsAt }}**开始时间**: {{ .StartsAt.Local.Format "2006-01-02 15:04:05" }}{{ end }}
+{{ if .EndsAt }}**结束时间**: {{ .EndsAt.Local.Format "2006-01-02 15:04:05" }}{{ end }}
+
+---
+{{ end }}
+
+**触发时间**: {{ .CommonAnnotations.truncatedTriggerTime }}
+**监控环境**: {{ .CommonLabels.monitor }}

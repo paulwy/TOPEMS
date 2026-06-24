@@ -1,8 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { apiLogger } from "@/utils/logger";
-import { Box, Typography, Chip, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Stack, Paper,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { FileUpload } from "@/components/common";
+import React, { useState, useEffect } from 'react';
+import { apiLogger } from '@/utils/logger';
+import {
+  Box,
+  Typography,
+  Chip,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  Paper,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { FileUpload } from '@/components/common';
 import {
   Plus,
   Upload,
@@ -14,12 +25,8 @@ import {
   BookOpen,
   File,
   Folder,
-} from "lucide-react";
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type FilterConfig,
-} from "@/components/templates";
+} from 'lucide-react';
+import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 
 interface Document {
   id: string;
@@ -36,7 +43,7 @@ const RsDocPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [docTypeFilter, setDocTypeFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [newDocDialogOpen, setNewDocDialogOpen] = useState(false);
@@ -45,66 +52,66 @@ const RsDocPage: React.FC = () => {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [newDocForm, setNewDocForm] = useState({
-    doc_name: "",
-    doc_type: "设计文档",
-    description: "",
+    doc_name: '',
+    doc_type: '设计文档',
+    description: '',
   });
 
   useEffect(() => {
     const mockDocs: Document[] = [
       {
-        id: "1",
-        doc_name: "系统架构设计文档",
-        doc_type: "设计文档",
-        version: "v2.1.0",
-        author: "张三",
-        update_time: "2024-06-15 14:30:00",
-        status: "published",
+        id: '1',
+        doc_name: '系统架构设计文档',
+        doc_type: '设计文档',
+        version: 'v2.1.0',
+        author: '张三',
+        update_time: '2024-06-15 14:30:00',
+        status: 'published',
       },
       {
-        id: "2",
-        doc_name: "API接口规范",
-        doc_type: "接口文档",
-        version: "v1.5.0",
-        author: "李四",
-        update_time: "2024-06-14 10:20:00",
-        status: "published",
+        id: '2',
+        doc_name: 'API接口规范',
+        doc_type: '接口文档',
+        version: 'v1.5.0',
+        author: '李四',
+        update_time: '2024-06-14 10:20:00',
+        status: 'published',
       },
       {
-        id: "3",
-        doc_name: "数据库设计文档",
-        doc_type: "设计文档",
-        version: "v3.0.0",
-        author: "王五",
-        update_time: "2024-06-13 16:45:00",
-        status: "draft",
+        id: '3',
+        doc_name: '数据库设计文档',
+        doc_type: '设计文档',
+        version: 'v3.0.0',
+        author: '王五',
+        update_time: '2024-06-13 16:45:00',
+        status: 'draft',
       },
       {
-        id: "4",
-        doc_name: "用户使用手册",
-        doc_type: "用户文档",
-        version: "v1.2.0",
-        author: "赵六",
-        update_time: "2024-06-12 09:15:00",
-        status: "published",
+        id: '4',
+        doc_name: '用户使用手册',
+        doc_type: '用户文档',
+        version: 'v1.2.0',
+        author: '赵六',
+        update_time: '2024-06-12 09:15:00',
+        status: 'published',
       },
       {
-        id: "5",
-        doc_name: "测试报告-2024Q2",
-        doc_type: "测试文档",
-        version: "v1.0.0",
-        author: "孙七",
-        update_time: "2024-06-11 11:30:00",
-        status: "published",
+        id: '5',
+        doc_name: '测试报告-2024Q2',
+        doc_type: '测试文档',
+        version: 'v1.0.0',
+        author: '孙七',
+        update_time: '2024-06-11 11:30:00',
+        status: 'published',
       },
       {
-        id: "6",
-        doc_name: "部署运维手册",
-        doc_type: "运维文档",
-        version: "v0.9.0",
-        author: "周八",
-        update_time: "2024-06-10 14:00:00",
-        status: "draft",
+        id: '6',
+        doc_name: '部署运维手册',
+        doc_type: '运维文档',
+        version: 'v0.9.0',
+        author: '周八',
+        update_time: '2024-06-10 14:00:00',
+        status: 'draft',
       },
     ];
     setDocs(mockDocs);
@@ -113,36 +120,54 @@ const RsDocPage: React.FC = () => {
 
   const getDocTypeIcon = (type: string) => {
     switch (type) {
-      case "设计文档":
-        return <File size={16} color="#3b82f6" />;
-      case "接口文档":
-        return <FileText size={16} color="#3b82f6" />;
-      case "用户文档":
-        return <BookOpen size={16} color="#3b82f6" />;
+      case '设计文档':
+        return (
+          <File
+            size={16}
+            color='#3b82f6'
+          />
+        );
+      case '接口文档':
+        return (
+          <FileText
+            size={16}
+            color='#3b82f6'
+          />
+        );
+      case '用户文档':
+        return (
+          <BookOpen
+            size={16}
+            color='#3b82f6'
+          />
+        );
       default:
-        return <Folder size={16} color="#3b82f6" />;
+        return (
+          <Folder
+            size={16}
+            color='#3b82f6'
+          />
+        );
     }
   };
 
-  const getStatusColor = (
-    status: string,
-  ): "success" | "warning" | "default" => {
+  const getStatusColor = (status: string): 'success' | 'warning' | 'default' => {
     switch (status) {
-      case "published":
-        return "success";
-      case "draft":
-        return "warning";
+      case 'published':
+        return 'success';
+      case 'draft':
+        return 'warning';
       default:
-        return "default";
+        return 'default';
     }
   };
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
-      case "published":
-        return "已发布";
-      case "draft":
-        return "草稿";
+      case 'published':
+        return '已发布';
+      case 'draft':
+        return '草稿';
       default:
         return status;
     }
@@ -157,10 +182,7 @@ const RsDocPage: React.FC = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const paginatedDocs = filteredDocs.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
+  const paginatedDocs = filteredDocs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const uniqueDocTypes = [...new Set(docs.map((d) => d.doc_type))];
 
@@ -169,14 +191,14 @@ const RsDocPage: React.FC = () => {
       id: String(Date.now()),
       doc_name: newDocForm.doc_name,
       doc_type: newDocForm.doc_type,
-      version: "v0.1.0",
-      author: "当前用户",
+      version: 'v0.1.0',
+      author: '当前用户',
       update_time: new Date().toLocaleString(),
-      status: "draft",
+      status: 'draft',
     };
     setDocs([newDoc, ...docs]);
     setNewDocDialogOpen(false);
-    setNewDocForm({ doc_name: "", doc_type: "设计文档", description: "" });
+    setNewDocForm({ doc_name: '', doc_type: '设计文档', description: '' });
   };
 
   const handleViewVersion = (doc: Document) => {
@@ -190,41 +212,45 @@ const RsDocPage: React.FC = () => {
 
   const columns: ColumnDef<Document>[] = [
     {
-      id: "doc_name",
-      label: "文档名称",
+      id: 'doc_name',
+      label: '文档名称',
       render: (row) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {getDocTypeIcon(row.doc_type)}
           {row.doc_name}
         </Box>
       ),
     },
     {
-      id: "doc_type",
-      label: "文档类型",
+      id: 'doc_type',
+      label: '文档类型',
     },
     {
-      id: "version",
-      label: "版本",
+      id: 'version',
+      label: '版本',
       render: (row) => (
-        <Chip label={row.version} size="small" variant="outlined" />
+        <Chip
+          label={row.version}
+          size='small'
+          variant='outlined'
+        />
       ),
     },
     {
-      id: "author",
-      label: "作者",
+      id: 'author',
+      label: '作者',
     },
     {
-      id: "update_time",
-      label: "更新时间",
+      id: 'update_time',
+      label: '更新时间',
     },
     {
-      id: "status",
-      label: "状态",
+      id: 'status',
+      label: '状态',
       render: (row) => (
         <Chip
           label={getStatusLabel(row.status)}
-          size="small"
+          size='small'
           color={getStatusColor(row.status)}
         />
       ),
@@ -233,69 +259,69 @@ const RsDocPage: React.FC = () => {
 
   const filters: FilterConfig[] = [
     {
-      id: "doc_type",
-      label: "文档类型",
-      type: "select",
+      id: 'doc_type',
+      label: '文档类型',
+      type: 'select',
       options: [
-        { label: "全部", value: "" },
+        { label: '全部', value: '' },
         ...uniqueDocTypes.map((type) => ({ label: type, value: type })),
       ],
-      value: docTypeFilter || "",
+      value: docTypeFilter || '',
       onChange: (value) => setDocTypeFilter(value || null),
     },
     {
-      id: "status",
-      label: "状态",
-      type: "select",
+      id: 'status',
+      label: '状态',
+      type: 'select',
       options: [
-        { label: "全部", value: "" },
-        { label: "已发布", value: "published" },
-        { label: "草稿", value: "draft" },
+        { label: '全部', value: '' },
+        { label: '已发布', value: 'published' },
+        { label: '草稿', value: 'draft' },
       ],
-      value: statusFilter || "",
+      value: statusFilter || '',
       onChange: (value) => setStatusFilter(value || null),
     },
   ];
 
   const rowActions = [
     {
-      label: "编辑",
+      label: '编辑',
       icon: <Edit size={16} />,
       onClick: () => {},
     },
     {
-      label: "版本管理",
+      label: '版本管理',
       icon: <History size={16} />,
       onClick: handleViewVersion,
     },
     {
-      label: "权限设置",
+      label: '权限设置',
       icon: <Shield size={16} />,
       onClick: () => {},
     },
     {
-      label: "删除",
+      label: '删除',
       icon: <Trash2 size={16} />,
-      color: "error" as const,
+      color: 'error' as const,
       onClick: (row: Document) => handleDelete(row.id),
     },
   ];
 
   return (
-    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
+    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
-        title="文档管理"
+        title='文档管理'
         columns={columns}
         data={paginatedDocs}
         loading={loading}
         searchable
-        searchPlaceholder="搜索文档名称、作者..."
+        searchPlaceholder='搜索文档名称、作者...'
         searchValue={searchTerm}
         onSearch={setSearchTerm}
         filters={filters}
         filtersValue={{
-          doc_type: docTypeFilter || "",
-          status: statusFilter || "",
+          doc_type: docTypeFilter || '',
+          status: statusFilter || '',
         }}
         onFilterChange={(filters) => {
           if (filters.doc_type !== undefined) {
@@ -314,72 +340,69 @@ const RsDocPage: React.FC = () => {
         }}
         actions={[
           {
-            label: "上传",
-            variant: "outlined",
+            label: '上传',
+            variant: 'outlined',
             icon: <Upload size={18} />,
             onClick: () => setUploadDialogOpen(true),
           },
           {
-            label: "新建文档",
-            variant: "contained",
+            label: '新建文档',
+            variant: 'contained',
             icon: <Plus size={18} />,
             onClick: () => setNewDocDialogOpen(true),
           },
         ]}
         rowActions={rowActions}
         showRowNumber
-        emptyMessage="暂无文档数据"
+        emptyMessage='暂无文档数据'
       />
 
       <Dialog
         open={newDocDialogOpen}
         onClose={() => setNewDocDialogOpen(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>新建文档</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 2 }}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 2 }}
+          >
             <TextField
-              label="文档名称"
+              label='文档名称'
               fullWidth
               value={newDocForm.doc_name}
-              onChange={(e) =>
-                setNewDocForm({ ...newDocForm, doc_name: e.target.value })
-              }
+              onChange={(e) => setNewDocForm({ ...newDocForm, doc_name: e.target.value })}
             />
             <TextField
               select
-              label="文档类型"
+              label='文档类型'
               fullWidth
               value={newDocForm.doc_type}
-              onChange={(e) =>
-                setNewDocForm({ ...newDocForm, doc_type: e.target.value })
-              }
+              onChange={(e) => setNewDocForm({ ...newDocForm, doc_type: e.target.value })}
             >
-              <option value="设计文档">设计文档</option>
-              <option value="接口文档">接口文档</option>
-              <option value="用户文档">用户文档</option>
-              <option value="测试文档">测试文档</option>
-              <option value="运维文档">运维文档</option>
+              <option value='设计文档'>设计文档</option>
+              <option value='接口文档'>接口文档</option>
+              <option value='用户文档'>用户文档</option>
+              <option value='测试文档'>测试文档</option>
+              <option value='运维文档'>运维文档</option>
             </TextField>
             <TextField
-              label="描述"
+              label='描述'
               fullWidth
               multiline
               rows={3}
               value={newDocForm.description}
-              onChange={(e) =>
-                setNewDocForm({ ...newDocForm, description: e.target.value })
-              }
+              onChange={(e) => setNewDocForm({ ...newDocForm, description: e.target.value })}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewDocDialogOpen(false)}>取消</Button>
           <Button
-            variant="contained"
-            sx={{ bgcolor: "#3b82f6" }}
+            variant='contained'
+            sx={{ bgcolor: '#3b82f6' }}
             onClick={handleCreateDoc}
           >
             创建
@@ -390,54 +413,69 @@ const RsDocPage: React.FC = () => {
       <Dialog
         open={versionDialogOpen}
         onClose={() => setVersionDialogOpen(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>版本历史</DialogTitle>
         <DialogContent>
           {selectedDoc && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 'bold' }}
+              >
                 {selectedDoc.doc_name}
               </Typography>
-              <Stack spacing={2} sx={{ mt: 2 }}>
+              <Stack
+                spacing={2}
+                sx={{ mt: 2 }}
+              >
                 {[
                   {
-                    version: "v2.1.0",
-                    date: "2024-06-15",
-                    author: "张三",
-                    note: "更新架构设计",
+                    version: 'v2.1.0',
+                    date: '2024-06-15',
+                    author: '张三',
+                    note: '更新架构设计',
                   },
                   {
-                    version: "v2.0.0",
-                    date: "2024-05-20",
-                    author: "张三",
-                    note: "重大改版",
+                    version: 'v2.0.0',
+                    date: '2024-05-20',
+                    author: '张三',
+                    note: '重大改版',
                   },
                   {
-                    version: "v1.0.0",
-                    date: "2024-04-01",
-                    author: "李四",
-                    note: "初始版本",
+                    version: 'v1.0.0',
+                    date: '2024-04-01',
+                    author: '李四',
+                    note: '初始版本',
                   },
                 ].map((v, i) => (
-                  <Paper key={i} sx={{ p: 2 }}>
+                  <Paper
+                    key={i}
+                    sx={{ p: 2 }}
+                  >
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
                       <Box>
-                        <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                        <Typography
+                          variant='body1'
+                          sx={{ fontWeight: 'bold' }}
+                        >
                           {v.version}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           {v.date} - {v.author}
                         </Typography>
                       </Box>
-                      <Typography variant="body2">{v.note}</Typography>
+                      <Typography variant='body2'>{v.note}</Typography>
                     </Box>
                   </Paper>
                 ))}
@@ -453,7 +491,7 @@ const RsDocPage: React.FC = () => {
       <Dialog
         open={uploadDialogOpen}
         onClose={() => setUploadDialogOpen(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>上传文档</DialogTitle>
@@ -462,7 +500,7 @@ const RsDocPage: React.FC = () => {
             <FileUpload
               value={attachments}
               onChange={setAttachments}
-              accept={["pdf", "doc", "docx", "xls", "xlsx", "txt", "md"]}
+              accept={['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'md']}
               maxCount={10}
               maxSize={50}
               maxTotalSize={200}
@@ -472,10 +510,10 @@ const RsDocPage: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setUploadDialogOpen(false)}>关闭</Button>
           <Button
-            variant="contained"
-            sx={{ bgcolor: "#3b82f6" }}
+            variant='contained'
+            sx={{ bgcolor: '#3b82f6' }}
             onClick={() => {
-              apiLogger.info("上传的文件:", attachments);
+              apiLogger.info('上传的文件:', attachments);
               setUploadDialogOpen(false);
             }}
           >

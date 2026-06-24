@@ -2,19 +2,19 @@
  * PM财务模块React Query Hooks
  */
 
-import { useQuery } from "@tanstack/react-query";
-import type { ProjectFinance, ProjectBudgetItem } from "@/types/pm-finance";
-import { apiClient } from "@/api/client";
+import { useQuery } from '@tanstack/react-query';
+import type { ProjectFinance, ProjectBudgetItem } from '@/types/pm-finance';
+import { apiClient } from '@/api/client';
 
 /**
  * 获取项目财务数据
  */
 export const useProjectFinance = (projectId: string) => {
   return useQuery({
-    queryKey: ["project-finance", projectId],
+    queryKey: ['project-finance', projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{ data: ProjectFinance }>(
-        `/api/pm/projects/${projectId}/finance`,
+        `/api/pm/projects/${projectId}/finance`
       );
       return response.data;
     },
@@ -27,10 +27,10 @@ export const useProjectFinance = (projectId: string) => {
  */
 export const useProjectBudgetItems = (projectId: string) => {
   return useQuery({
-    queryKey: ["project-budget-items", projectId],
+    queryKey: ['project-budget-items', projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{ data: ProjectBudgetItem[] }>(
-        `/api/pm/projects/${projectId}/budget-items`,
+        `/api/pm/projects/${projectId}/budget-items`
       );
       return response.data;
     },
@@ -43,7 +43,7 @@ export const useProjectBudgetItems = (projectId: string) => {
  */
 export const useProjectCostPerformance = (projectId: string) => {
   return useQuery({
-    queryKey: ["project-cost-performance", projectId],
+    queryKey: ['project-cost-performance', projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{
         data: {

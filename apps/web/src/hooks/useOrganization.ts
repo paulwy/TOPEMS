@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   companyApi,
   departmentApi,
@@ -6,8 +6,8 @@ import {
   type Company,
   type Department,
   type Employee,
-} from "@/api/hrm";
-import { logger } from "@/utils/logger";
+} from '@/api/hrm';
+import { logger } from '@/utils/logger';
 
 export interface OrganizationData {
   companies: Company[];
@@ -59,10 +59,10 @@ export const useOrganization = (): UseOrganizationReturn => {
       }
     } catch (error: any) {
       // 忽略请求被取消的错误
-      if (error?.name === "AbortError" || error?.code === "ERR_CANCELED") {
+      if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED') {
         return;
       }
-      logger.error("Failed to load companies:", error);
+      logger.error('Failed to load companies:', error);
     } finally {
       setLoading(false);
     }
@@ -84,10 +84,10 @@ export const useOrganization = (): UseOrganizationReturn => {
       }
     } catch (error: any) {
       // 忽略请求被取消的错误
-      if (error?.name === "AbortError" || error?.code === "ERR_CANCELED") {
+      if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED') {
         return;
       }
-      logger.error("Failed to load departments:", error);
+      logger.error('Failed to load departments:', error);
     } finally {
       setLoading(false);
     }
@@ -109,10 +109,10 @@ export const useOrganization = (): UseOrganizationReturn => {
       }
     } catch (error: any) {
       // 忽略请求被取消的错误
-      if (error?.name === "AbortError" || error?.code === "ERR_CANCELED") {
+      if (error?.name === 'AbortError' || error?.code === 'ERR_CANCELED') {
         return;
       }
-      logger.error("Failed to load employees:", error);
+      logger.error('Failed to load employees:', error);
     } finally {
       setLoading(false);
     }

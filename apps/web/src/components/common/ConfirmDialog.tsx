@@ -2,9 +2,18 @@
  * 增强版ConfirmDialog组件
  * 支持多种对话框类型、图标、自定义按钮、拖拽等功能
  */
-import React, { useState, useRef, useCallback } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, IconButton, Box, Typography,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useRef, useCallback } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  IconButton,
+  Box,
+  Typography,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 import {
   AlertCircle,
   CheckCircle,
@@ -13,37 +22,25 @@ import {
   X,
   HelpCircle,
   type LucideIcon,
-} from "lucide-react";
-import { useAppStore } from "@/store";
+} from 'lucide-react';
+import { useAppStore } from '@/store';
 
 // ============ 类型定义 ============
 
 /**
  * 对话框类型
  */
-export type DialogType =
-  | "alert"
-  | "confirm"
-  | "prompt"
-  | "info"
-  | "success"
-  | "warning"
-  | "error";
+export type DialogType = 'alert' | 'confirm' | 'prompt' | 'info' | 'success' | 'warning' | 'error';
 
 /**
  * 按钮类型
  */
-export type DialogButtonType =
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "error";
+export type DialogButtonType = 'primary' | 'secondary' | 'success' | 'warning' | 'error';
 
 /**
  * 对话框尺寸
  */
-export type DialogSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type DialogSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /**
  * 按钮配置
@@ -120,34 +117,31 @@ export interface ConfirmDialogConfig {
 // ============ 尺寸配置 ============
 
 const SIZE_MAP: Record<DialogSize, string> = {
-  xs: "280px",
-  sm: "360px",
-  md: "480px",
-  lg: "640px",
-  xl: "800px",
+  xs: '280px',
+  sm: '360px',
+  md: '480px',
+  lg: '640px',
+  xl: '800px',
 };
 
-const MAX_WIDTH_MAP: Record<DialogSize, "xs" | "sm" | "md" | "lg" | "xl"> = {
-  xs: "xs",
-  sm: "sm",
-  md: "md",
-  lg: "lg",
-  xl: "xl",
+const MAX_WIDTH_MAP: Record<DialogSize, 'xs' | 'sm' | 'md' | 'lg' | 'xl'> = {
+  xs: 'xs',
+  sm: 'sm',
+  md: 'md',
+  lg: 'lg',
+  xl: 'xl',
 };
 
 // ============ 图标配置 ============
 
-const TYPE_CONFIG: Record<
-  DialogType,
-  { icon: LucideIcon; color: string; bgColor: string }
-> = {
-  alert: { icon: AlertCircle, color: "#f59e0b", bgColor: "#fffbeb" },
-  confirm: { icon: HelpCircle, color: "#3b82f6", bgColor: "#eff6ff" },
-  prompt: { icon: Info, color: "#06b6d4", bgColor: "#cffafe" },
-  info: { icon: Info, color: "#3b82f6", bgColor: "#eff6ff" },
-  success: { icon: CheckCircle, color: "#10b981", bgColor: "#dcfce7" },
-  warning: { icon: AlertTriangle, color: "#f59e0b", bgColor: "#fffbeb" },
-  error: { icon: AlertCircle, color: "#ef4444", bgColor: "#fee2e2" },
+const TYPE_CONFIG: Record<DialogType, { icon: LucideIcon; color: string; bgColor: string }> = {
+  alert: { icon: AlertCircle, color: '#f59e0b', bgColor: '#fffbeb' },
+  confirm: { icon: HelpCircle, color: '#3b82f6', bgColor: '#eff6ff' },
+  prompt: { icon: Info, color: '#06b6d4', bgColor: '#cffafe' },
+  info: { icon: Info, color: '#3b82f6', bgColor: '#eff6ff' },
+  success: { icon: CheckCircle, color: '#10b981', bgColor: '#dcfce7' },
+  warning: { icon: AlertTriangle, color: '#f59e0b', bgColor: '#fffbeb' },
+  error: { icon: AlertCircle, color: '#ef4444', bgColor: '#fee2e2' },
 };
 
 // ============ ConfirmDialog组件 ============
@@ -198,12 +192,12 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   message,
-  type = "confirm",
-  confirmLabel = "确认",
-  cancelLabel = "取消",
-  confirmColor = "primary",
+  type = 'confirm',
+  confirmLabel = '确认',
+  cancelLabel = '取消',
+  confirmColor = 'primary',
   danger = false,
-  size = "md",
+  size = 'md',
   confirmDisabled = false,
   closable = true,
   showCloseButton = false,
@@ -234,18 +228,18 @@ export default function ConfirmDialog({
     setIsLoading(true);
     try {
       await onConfirm();
-      if (type === "success") {
+      if (type === 'success') {
         addNotification({
-          title: "操作成功",
-          message: "操作已成功完成",
-          type: "success",
+          title: '操作成功',
+          message: '操作已成功完成',
+          type: 'success',
         });
       }
     } catch (error) {
       addNotification({
-        title: "操作失败",
-        message: error instanceof Error ? error.message : "操作过程中发生错误",
-        type: "error",
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '操作过程中发生错误',
+        type: 'error',
       });
     } finally {
       setIsLoading(false);
@@ -264,7 +258,7 @@ export default function ConfirmDialog({
         startTop: position.y,
       };
     },
-    [draggable, position],
+    [draggable, position]
   );
 
   const handleMouseMove = useCallback(
@@ -275,7 +269,7 @@ export default function ConfirmDialog({
         y: dragRef.current.startTop + e.clientY - dragRef.current.startY,
       });
     },
-    [isDragging],
+    [isDragging]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -284,14 +278,13 @@ export default function ConfirmDialog({
 
   React.useEffect(() => {
     if (isDragging) {
-      const onMouseMove = (e: MouseEvent) =>
-        handleMouseMove(e as unknown as React.MouseEvent);
+      const onMouseMove = (e: MouseEvent) => handleMouseMove(e as unknown as React.MouseEvent);
       const onMouseUp = () => handleMouseUp();
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
       return () => {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
       };
     }
     return undefined;
@@ -305,11 +298,9 @@ export default function ConfirmDialog({
 
   const paperSx = {
     width: SIZE_MAP[size],
-    maxWidth: "95vw",
-    transform: isDragging
-      ? `translate(${position.x}px, ${position.y}px)`
-      : undefined,
-    cursor: draggable ? "move" : "default",
+    maxWidth: '95vw',
+    transform: isDragging ? `translate(${position.x}px, ${position.y}px)` : undefined,
+    cursor: draggable ? 'move' : 'default',
     ...(sx?.paper || {}),
   };
 
@@ -329,8 +320,8 @@ export default function ConfirmDialog({
         </div>
       )}
       sx={{
-        "& .MuiDialog-container": {
-          alignItems: centered ? "center" : "flex-start",
+        '& .MuiDialog-container': {
+          alignItems: centered ? 'center' : 'flex-start',
         },
         ...sx,
       }}
@@ -339,8 +330,8 @@ export default function ConfirmDialog({
       {showSuccessIcon && (
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "center",
+            display: 'flex',
+            justifyContent: 'center',
             pt: 4,
           }}
         >
@@ -348,16 +339,19 @@ export default function ConfirmDialog({
             sx={{
               width: 72,
               height: 72,
-              borderRadius: "50%",
+              borderRadius: '50%',
               backgroundColor: config.bgColor,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               boxShadow: `0 4px 20px ${config.color}30`,
             }}
           >
             {icon || (
-              <IconComponent size={40} style={{ color: config.color }} />
+              <IconComponent
+                size={40}
+                style={{ color: config.color }}
+              />
             )}
           </Box>
         </Box>
@@ -366,30 +360,36 @@ export default function ConfirmDialog({
       {/* 标题区域 */}
       <DialogTitle
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           px: showSuccessIcon ? 3 : undefined,
           pt: showSuccessIcon ? 2 : undefined,
         }}
       >
         {showTitle && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {!showSuccessIcon &&
               (icon || (
-                <IconComponent size={20} style={{ color: config.color }} />
+                <IconComponent
+                  size={20}
+                  style={{ color: config.color }}
+                />
               ))}
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
               {title}
             </Typography>
           </Box>
         )}
         {showCloseButton && closable && (
           <IconButton
-            size="small"
+            size='small'
             onClick={onClose}
             disabled={isLoading}
-            sx={{ ml: "auto" }}
+            sx={{ ml: 'auto' }}
           >
             <X size={20} />
           </IconButton>
@@ -398,7 +398,7 @@ export default function ConfirmDialog({
 
       {/* 内容区域 */}
       <DialogContent sx={{ px: showSuccessIcon ? 6 : undefined }}>
-        {showMessage && <Typography variant="body1">{message}</Typography>}
+        {showMessage && <Typography variant='body1'>{message}</Typography>}
         {children}
       </DialogContent>
 
@@ -408,24 +408,27 @@ export default function ConfirmDialog({
           buttons.map((button, index) => (
             <Button
               key={index}
-              variant={button.primary ? "contained" : "outlined"}
+              variant={button.primary ? 'contained' : 'outlined'}
               color={
-                button.type === "success"
-                  ? "success"
-                  : button.type === "warning"
-                    ? "warning"
-                    : button.type === "error"
-                      ? "error"
-                      : "primary"
+                button.type === 'success'
+                  ? 'success'
+                  : button.type === 'warning'
+                    ? 'warning'
+                    : button.type === 'error'
+                      ? 'error'
+                      : 'primary'
               }
               onClick={button.onClick}
               disabled={button.disabled || button.loading || isLoading}
               sx={{
-                ...(button.primary ? {} : { color: "text.primary" }),
+                ...(button.primary ? {} : { color: 'text.primary' }),
               }}
             >
               {button.loading ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress
+                  size={20}
+                  color='inherit'
+                />
               ) : (
                 button.label
               )}
@@ -433,34 +436,38 @@ export default function ConfirmDialog({
           ))
         ) : (
           <>
-            {type !== "alert" && type !== "success" && (
-              <Button onClick={onClose} disabled={isLoading}>
+            {type !== 'alert' && type !== 'success' && (
+              <Button
+                onClick={onClose}
+                disabled={isLoading}
+              >
                 {cancelLabel}
               </Button>
             )}
             <Button
-              variant="contained"
+              variant='contained'
               color={
                 danger
-                  ? "error"
-                  : confirmColor === "success"
-                    ? "success"
-                    : confirmColor === "warning"
-                      ? "warning"
-                      : confirmColor === "error"
-                        ? "error"
-                        : "primary"
+                  ? 'error'
+                  : confirmColor === 'success'
+                    ? 'success'
+                    : confirmColor === 'warning'
+                      ? 'warning'
+                      : confirmColor === 'error'
+                        ? 'error'
+                        : 'primary'
               }
               onClick={handleConfirm}
               disabled={confirmDisabled || isLoading}
               sx={{
-                ...(danger
-                  ? { bgcolor: "#dc2626", "&:hover": { bgcolor: "#b91c1c" } }
-                  : {}),
+                ...(danger ? { bgcolor: '#dc2626', '&:hover': { bgcolor: '#b91c1c' } } : {}),
               }}
             >
               {isLoading ? (
-                <CircularProgress size={20} color="inherit" />
+                <CircularProgress
+                  size={20}
+                  color='inherit'
+                />
               ) : (
                 confirmLabel
               )}
@@ -477,41 +484,60 @@ export default function ConfirmDialog({
 /**
  * 警告对话框
  */
-export const AlertDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
-  props,
-) => <ConfirmDialog {...props} type="alert" />;
+export const AlertDialog: React.FC<Omit<ConfirmDialogConfig, 'type'>> = (props) => (
+  <ConfirmDialog
+    {...props}
+    type='alert'
+  />
+);
 
 /**
  * 信息对话框
  */
-export const InfoDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
-  props,
-) => <ConfirmDialog {...props} type="info" />;
+export const InfoDialog: React.FC<Omit<ConfirmDialogConfig, 'type'>> = (props) => (
+  <ConfirmDialog
+    {...props}
+    type='info'
+  />
+);
 
 /**
  * 成功对话框
  */
-export const SuccessDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
-  props,
-) => <ConfirmDialog {...props} type="success" showSuccessIcon />;
+export const SuccessDialog: React.FC<Omit<ConfirmDialogConfig, 'type'>> = (props) => (
+  <ConfirmDialog
+    {...props}
+    type='success'
+    showSuccessIcon
+  />
+);
 
 /**
  * 警告对话框
  */
-export const WarningDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
-  props,
-) => <ConfirmDialog {...props} type="warning" />;
+export const WarningDialog: React.FC<Omit<ConfirmDialogConfig, 'type'>> = (props) => (
+  <ConfirmDialog
+    {...props}
+    type='warning'
+  />
+);
 
 /**
  * 错误对话框
  */
-export const ErrorDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
-  props,
-) => <ConfirmDialog {...props} type="error" />;
+export const ErrorDialog: React.FC<Omit<ConfirmDialogConfig, 'type'>> = (props) => (
+  <ConfirmDialog
+    {...props}
+    type='error'
+  />
+);
 
 /**
  * 确认对话框（默认）
  */
-export const ConfirmationDialog: React.FC<Omit<ConfirmDialogConfig, "type">> = (
-  props,
-) => <ConfirmDialog {...props} type="confirm" />;
+export const ConfirmationDialog: React.FC<Omit<ConfirmDialogConfig, 'type'>> = (props) => (
+  <ConfirmDialog
+    {...props}
+    type='confirm'
+  />
+);

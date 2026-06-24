@@ -27,6 +27,7 @@ use serde::Serialize;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
+use utoipa::OpenApi;
 
 use topems_shared::{
     check_http_health, create_api_info_router, create_cors_layer,
@@ -272,6 +273,10 @@ async fn check_iam_health() -> DependencyHealth {
 
 async fn init_db(_db: &sqlx::PgPool) -> Result<()> {
     Ok(())
+}
+
+async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
+    axum::Json(api::openapi::CrmApiDoc::openapi())
 }
 
 /// CRM 自定义认证中间件

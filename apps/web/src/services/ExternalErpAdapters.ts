@@ -3,9 +3,9 @@
  * 支持金蝶、用友、SAP等主流ERP系统的数据同步
  */
 
-import type { AxiosInstance } from "axios";
-import axios from "axios";
-import type { CreateVoucherRequest } from "../types/erp-finance";
+import type { AxiosInstance } from 'axios';
+import axios from 'axios';
+import type { CreateVoucherRequest } from '../types/finance';
 
 // ============================================
 // 一、类型定义
@@ -15,14 +15,14 @@ import type { CreateVoucherRequest } from "../types/erp-finance";
  * 外部ERP类型
  */
 export type ExternalErpType =
-  | "kingdee_k3" // 金蝶K3
-  | "kingdee_cloud" // 金蝶云星空
-  | "kingdee_eas" // 金蝶EAS
-  | "yonyou_u8" // 用友U8
-  | "yonyou_nc" // 用友NC
-  | "sap_s4" // SAP S/4HANA
-  | "浪潮gs" // 浪潮GS
-  | "custom"; // 自定义
+  | 'kingdee_k3' // 金蝶K3
+  | 'kingdee_cloud' // 金蝶云星空
+  | 'kingdee_eas' // 金蝶EAS
+  | 'yonyou_u8' // 用友U8
+  | 'yonyou_nc' // 用友NC
+  | 'sap_s4' // SAP S/4HANA
+  | '浪潮gs' // 浪潮GS
+  | 'custom'; // 自定义
 
 /**
  * 适配器配置
@@ -138,16 +138,14 @@ abstract class BaseAdapter implements ErpAdapter {
     pageSize?: number;
   }): Promise<{ items: any[]; total: number }>;
   abstract createVoucher(voucher: CreateVoucherRequest): Promise<string>;
-  abstract batchCreateVouchers(
-    vouchers: CreateVoucherRequest[],
-  ): Promise<SyncResult>;
+  abstract batchCreateVouchers(vouchers: CreateVoucherRequest[]): Promise<SyncResult>;
 
   /**
    * 带重试的请求
    */
   protected async withRetry<T>(
     fn: () => Promise<T>,
-    maxRetries: number = this.config.retry_times || 3,
+    maxRetries: number = this.config.retry_times || 3
   ): Promise<T> {
     let lastError: Error | null = null;
     const retryDelay = this.config.retry_delay || 1000;
@@ -176,7 +174,7 @@ abstract class BaseAdapter implements ErpAdapter {
    * 判断错误是否可重试
    */
   protected isRetryable(error: any): boolean {
-    if (error.code === "ECONNABORTED" || error.code === "ENOTFOUND") {
+    if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND') {
       return true;
     }
     if (error.response?.status >= 500) {
@@ -218,7 +216,7 @@ export class KingdeeAdapter extends BaseAdapter {
   async authenticate(): Promise<string> {
     if (this.token) return this.token;
 
-    const response = await this.httpClient.post("/api/v1/auth/login", {
+    const response = await this.httpClient.post('/api/v1/auth/login', {
       username: this.config.username,
       password: this.config.password,
     });
@@ -237,13 +235,13 @@ export class KingdeeAdapter extends BaseAdapter {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/api/v1/bd/account", {
+      this.httpClient.get('/api/v1/bd/account', {
         headers: { Authorization: `Bearer ${this.token}` },
         params: {
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -262,13 +260,13 @@ export class KingdeeAdapter extends BaseAdapter {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/api/v1/crm/customers", {
+      this.httpClient.get('/api/v1/crm/customers', {
         headers: { Authorization: `Bearer ${this.token}` },
         params: {
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -287,13 +285,13 @@ export class KingdeeAdapter extends BaseAdapter {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/api/v1/ap/suppliers", {
+      this.httpClient.get('/api/v1/ap/suppliers', {
         headers: { Authorization: `Bearer ${this.token}` },
         params: {
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -314,7 +312,7 @@ export class KingdeeAdapter extends BaseAdapter {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/api/v1/gl/vouchers", {
+      this.httpClient.get('/api/v1/gl/vouchers', {
         headers: { Authorization: `Bearer ${this.token}` },
         params: {
           date_begin: params?.start_date,
@@ -322,7 +320,7 @@ export class KingdeeAdapter extends BaseAdapter {
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -340,9 +338,9 @@ export class KingdeeAdapter extends BaseAdapter {
     const kingdeeVoucher = this.transformToKingdeeFormat(voucher);
 
     const response = await this.withRetry(() =>
-      this.httpClient.post("/api/v1/gl/vouchers", kingdeeVoucher, {
+      this.httpClient.post('/api/v1/gl/vouchers', kingdeeVoucher, {
         headers: { Authorization: `Bearer ${this.token}` },
-      }),
+      })
     );
 
     return response.data.FVoucherId;
@@ -351,9 +349,7 @@ export class KingdeeAdapter extends BaseAdapter {
   /**
    * 批量创建凭证
    */
-  async batchCreateVouchers(
-    vouchers: CreateVoucherRequest[],
-  ): Promise<SyncResult> {
+  async batchCreateVouchers(vouchers: CreateVoucherRequest[]): Promise<SyncResult> {
     const startTime = Date.now();
     const result: SyncResult = {
       success: false,
@@ -373,17 +369,17 @@ export class KingdeeAdapter extends BaseAdapter {
       try {
         await this.withRetry(() =>
           this.httpClient.post(
-            "/api/v1/gl/vouchers/batch",
+            '/api/v1/gl/vouchers/batch',
             { vouchers: batch.map((v) => this.transformToKingdeeFormat(v)) },
-            { headers: { Authorization: `Bearer ${this.token}` } },
-          ),
+            { headers: { Authorization: `Bearer ${this.token}` } }
+          )
         );
         result.created += batch.length;
       } catch (error: any) {
         result.failed += batch.length;
         result.errors.push({
           id: `batch-${i}`,
-          error: error.message || "批量创建失败",
+          error: error.message || '批量创建失败',
         });
       }
     }
@@ -421,7 +417,7 @@ export class KingdeeAdapter extends BaseAdapter {
 // ============================================
 
 export class YonyouAdapter extends BaseAdapter {
-  private session: string = "";
+  private session: string = '';
 
   /**
    * 连接测试
@@ -443,12 +439,12 @@ export class YonyouAdapter extends BaseAdapter {
   async authenticate(): Promise<string> {
     if (this.session) return this.session;
 
-    const response = await this.httpClient.post("/u8api/login", {
+    const response = await this.httpClient.post('/u8api/login', {
       account: this.config.username,
       password: this.config.password,
     });
 
-    this.session = response.data.session_id || "";
+    this.session = response.data.session_id || '';
     return this.session;
   }
 
@@ -463,13 +459,13 @@ export class YonyouAdapter extends BaseAdapter {
 
     const response = await this.withRetry(() =>
       this.httpClient.post(
-        "/u8api/account/query",
+        '/u8api/account/query',
         {
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-        { headers: { Authorization: this.session } },
-      ),
+        { headers: { Authorization: this.session } }
+      )
     );
 
     return {
@@ -489,13 +485,13 @@ export class YonyouAdapter extends BaseAdapter {
 
     const response = await this.withRetry(() =>
       this.httpClient.post(
-        "/u8api/customer/query",
+        '/u8api/customer/query',
         {
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-        { headers: { Authorization: this.session } },
-      ),
+        { headers: { Authorization: this.session } }
+      )
     );
 
     return {
@@ -515,13 +511,13 @@ export class YonyouAdapter extends BaseAdapter {
 
     const response = await this.withRetry(() =>
       this.httpClient.post(
-        "/u8api/supplier/query",
+        '/u8api/supplier/query',
         {
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-        { headers: { Authorization: this.session } },
-      ),
+        { headers: { Authorization: this.session } }
+      )
     );
 
     return {
@@ -543,15 +539,15 @@ export class YonyouAdapter extends BaseAdapter {
 
     const response = await this.withRetry(() =>
       this.httpClient.post(
-        "/u8api/voucher/query",
+        '/u8api/voucher/query',
         {
           date_begin: params?.start_date,
           date_end: params?.end_date,
           page: params?.page || 1,
           pagesize: params?.pageSize || 100,
         },
-        { headers: { Authorization: this.session } },
-      ),
+        { headers: { Authorization: this.session } }
+      )
     );
 
     return {
@@ -569,9 +565,9 @@ export class YonyouAdapter extends BaseAdapter {
     const yonyouVoucher = this.transformToYonyouFormat(voucher);
 
     const response = await this.withRetry(() =>
-      this.httpClient.post("/u8api/voucher/add", yonyouVoucher, {
+      this.httpClient.post('/u8api/voucher/add', yonyouVoucher, {
         headers: { Authorization: this.session },
-      }),
+      })
     );
 
     return response.data.voucher_id;
@@ -580,9 +576,7 @@ export class YonyouAdapter extends BaseAdapter {
   /**
    * 批量创建凭证
    */
-  async batchCreateVouchers(
-    vouchers: CreateVoucherRequest[],
-  ): Promise<SyncResult> {
+  async batchCreateVouchers(vouchers: CreateVoucherRequest[]): Promise<SyncResult> {
     const startTime = Date.now();
     const result: SyncResult = {
       success: false,
@@ -601,8 +595,8 @@ export class YonyouAdapter extends BaseAdapter {
       } catch (error: any) {
         result.failed++;
         result.errors.push({
-          id: voucher.entries[0]?.account_id || "unknown",
-          error: error.message || "创建失败",
+          id: voucher.entries[0]?.account_id || 'unknown',
+          error: error.message || '创建失败',
         });
       }
     }
@@ -617,7 +611,7 @@ export class YonyouAdapter extends BaseAdapter {
    */
   private transformToYonyouFormat(voucher: CreateVoucherRequest): any {
     return {
-      vouch_type: "记",
+      vouch_type: '记',
       date: voucher.voucher_date,
       period: voucher.period,
       explanation: voucher.summary,
@@ -660,9 +654,7 @@ export class SapAdapter extends BaseAdapter {
   async authenticate(): Promise<string> {
     if (this.token) return this.token;
 
-    const auth = Buffer.from(
-      `${this.config.username}:${this.config.password}`,
-    ).toString("base64");
+    const auth = Buffer.from(`${this.config.username}:${this.config.password}`).toString('base64');
 
     this.token = `Basic ${auth}`;
     return this.token;
@@ -678,14 +670,14 @@ export class SapAdapter extends BaseAdapter {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/sap/opu/odata/sap/API_GLACCOUNTHierarchy", {
+      this.httpClient.get('/sap/opu/odata/sap/API_GLACCOUNTHierarchy', {
         headers: { Authorization: this.token },
         params: {
-          $select: "GLAccount,GLAccountHierarchyName,GLAccountName",
+          $select: 'GLAccount,GLAccountHierarchyName,GLAccountName',
           $skip: ((params?.page || 1) - 1) * (params?.pageSize || 100),
           $top: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -704,14 +696,14 @@ export class SapAdapter extends BaseAdapter {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/sap/opu/odata/sap/API_BUSINESS_PARTNER", {
+      this.httpClient.get('/sap/opu/odata/sap/API_BUSINESS_PARTNER', {
         headers: { Authorization: this.token },
         params: {
-          $filter: "Customer",
+          $filter: 'Customer',
           $skip: ((params?.page || 1) - 1) * (params?.pageSize || 100),
           $top: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -730,14 +722,14 @@ export class SapAdapter extends BaseAdapter {
     await this.authenticate();
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/sap/opu/odata/sap/API_BUSINESS_PARTNER", {
+      this.httpClient.get('/sap/opu/odata/sap/API_BUSINESS_PARTNER', {
         headers: { Authorization: this.token },
         params: {
-          $filter: "Supplier",
+          $filter: 'Supplier',
           $skip: ((params?.page || 1) - 1) * (params?.pageSize || 100),
           $top: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -759,17 +751,17 @@ export class SapAdapter extends BaseAdapter {
 
     const filter = params?.start_date
       ? `PostingDate ge datetime'${params.start_date}' and PostingDate le datetime'${params.end_date}'`
-      : "";
+      : '';
 
     const response = await this.withRetry(() =>
-      this.httpClient.get("/sap/opu/odata/sap/API_JOURNALENTRY", {
+      this.httpClient.get('/sap/opu/odata/sap/API_JOURNALENTRY', {
         headers: { Authorization: this.token },
         params: {
           $filter: filter,
           $skip: ((params?.page || 1) - 1) * (params?.pageSize || 100),
           $top: params?.pageSize || 100,
         },
-      }),
+      })
     );
 
     return {
@@ -787,25 +779,23 @@ export class SapAdapter extends BaseAdapter {
     const bapiParams = this.transformToSapFormat(voucher);
 
     const response = await this.withRetry(() =>
-      this.httpClient.post(
-        "/sap/bc/rest/ygl/bapi_acc_document_post",
-        bapiParams,
-        { headers: { Authorization: this.token } },
-      ),
+      this.httpClient.post('/sap/bc/rest/ygl/bapi_acc_document_post', bapiParams, {
+        headers: { Authorization: this.token },
+      })
     );
 
     // 检查错误
-    const errors = response.data.RETURN?.filter((r: any) => r.TYPE === "E");
+    const errors = response.data.RETURN?.filter((r: any) => r.TYPE === 'E');
 
     if (errors?.length > 0) {
-      throw new Error(errors.map((e: any) => e.MESSAGE).join("; "));
+      throw new Error(errors.map((e: any) => e.MESSAGE).join('; '));
     }
 
     // 提交事务
     await this.httpClient.post(
-      "/sap/bc/rest/ygl/bapi_transaction_commit",
+      '/sap/bc/rest/ygl/bapi_transaction_commit',
       {},
-      { headers: { Authorization: this.token } },
+      { headers: { Authorization: this.token } }
     );
 
     return response.data.AC_DOC_NO;
@@ -814,9 +804,7 @@ export class SapAdapter extends BaseAdapter {
   /**
    * 批量创建凭证
    */
-  async batchCreateVouchers(
-    vouchers: CreateVoucherRequest[],
-  ): Promise<SyncResult> {
+  async batchCreateVouchers(vouchers: CreateVoucherRequest[]): Promise<SyncResult> {
     const startTime = Date.now();
     const result: SyncResult = {
       success: false,
@@ -835,8 +823,8 @@ export class SapAdapter extends BaseAdapter {
       } catch (error: any) {
         result.failed++;
         result.errors.push({
-          id: voucher.entries[0]?.account_id || "unknown",
-          error: error.message || "创建失败",
+          id: voucher.entries[0]?.account_id || 'unknown',
+          error: error.message || '创建失败',
         });
       }
     }
@@ -870,7 +858,7 @@ export class SapAdapter extends BaseAdapter {
 
     return {
       DOCUMENTHEADER: {
-        DOC_TYPE: "SA",
+        DOC_TYPE: 'SA',
         DOC_DATE: voucher.voucher_date,
         PSTNG_DATE: voucher.voucher_date,
         FISCAL_YEAR: voucher.voucher_date.substring(0, 4),
@@ -881,7 +869,7 @@ export class SapAdapter extends BaseAdapter {
       ACCOUNTGL: lines,
       CURRENCYAMOUNT: lines.map((line: any) => ({
         ITEMNO_ACC: line.ITEMNO_ACC,
-        CURRENCY: "CNY",
+        CURRENCY: 'CNY',
         AMT_DOCCUR: line.AMT_DOCCUR || 0,
       })),
     };
@@ -897,14 +885,14 @@ export class SapAdapter extends BaseAdapter {
  */
 export function createAdapter(config: AdapterConfig): ErpAdapter {
   switch (config.type) {
-    case "kingdee_k3":
-    case "kingdee_cloud":
-    case "kingdee_eas":
+    case 'kingdee_k3':
+    case 'kingdee_cloud':
+    case 'kingdee_eas':
       return new KingdeeAdapter(config);
-    case "yonyou_u8":
-    case "yonyou_nc":
+    case 'yonyou_u8':
+    case 'yonyou_nc':
       return new YonyouAdapter(config);
-    case "sap_s4":
+    case 'sap_s4':
       return new SapAdapter(config);
     default:
       throw new Error(`不支持的ERP类型: ${config.type}`);

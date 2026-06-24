@@ -1,11 +1,11 @@
-import React, { lazy } from "react";
-import type { RouteConfig } from "./utils";
+import React, { lazy } from 'react';
+import type { RouteConfig } from './utils';
 
-const LoginPage = lazy(() => import("../pages/shared/LoginPage"));
+const LoginPage = lazy(() => import('../pages/shared/LoginPage'));
 
 export const authRoutes: RouteConfig[] = [
   {
-    path: "/login",
+    path: '/login',
     element: LoginPage,
   },
 ];

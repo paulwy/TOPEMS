@@ -1,2 +1,2 @@
 // modules/HeatmapModule/index.ts
-export { default as HeatmapLayer, HeatmapLegend } from "./HeatmapLayer";
+export { default as HeatmapLayer, HeatmapLegend } from './HeatmapLayer';

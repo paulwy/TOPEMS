@@ -1,0 +1,282 @@
+//! AI 客户端接口定义
+
+use anyhow::Result;
+use async_trait::async_trait;
+use futures::StreamExt;
+use reqwest::Client;
+use std::pin::Pin;
+use std::sync::Arc;
+
+use super::models::*;
+use super::config::AIModelConfig;
+use super::providers::{OpenAIClient, GeminiClient, OllamaClient, AzureOpenAIClient};
+
+/// AI 客户端错误类型
+#[derive(Debug)]
+pub enum AIClientError {
+    /// 网络错误
+    NetworkError(String),
+    /// API 错误
+    ApiError(String),
+    /// 解析错误
+    ParseError(String),
+    /// 配置错误
+    ConfigError(String),
+    /// 超时错误
+    TimeoutError(String),
+    /// 认证错误
+    AuthError(String),
+    /// 服务不可用
+    ServiceUnavailable(String),
+    /// 未实现
+    NotImplemented(String),
+}
+
+impl std::fmt::Display for AIClientError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AIClientError::NetworkError(msg) => write!(f, "Network error: {}", msg),
+            AIClientError::ApiError(msg) => write!(f, "API error: {}", msg),
+            AIClientError::ParseError(msg) => write!(f, "Parse error: {}", msg),
+            AIClientError::ConfigError(msg) => write!(f, "Config error: {}", msg),
+            AIClientError::TimeoutError(msg) => write!(f, "Timeout error: {}", msg),
+            AIClientError::AuthError(msg) => write!(f, "Auth error: {}", msg),
+            AIClientError::ServiceUnavailable(msg) => write!(f, "Service unavailable: {}", msg),
+            AIClientError::NotImplemented(msg) => write!(f, "Not implemented: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for AIClientError {}
+
+impl From<reqwest::Error> for AIClientError {
+    fn from(e: reqwest::Error) -> Self {
+        if e.is_timeout() {
+            AIClientError::TimeoutError(e.to_string())
+        } else if e.is_connect() {
+            AIClientError::NetworkError(e.to_string())
+        } else {
+            AIClientError::NetworkError(e.to_string())
+        }
+    }
+}
+
+impl From<serde_json::Error> for AIClientError {
+    fn from(e: serde_json::Error) -> Self {
+        AIClientError::ParseError(e.to_string())
+    }
+}
+
+/// AI 客户端接口（非 dyn 安全版本）
+#[async_trait]
+pub trait AIClient: Send + Sync {
+    /// 聊天完成
+    async fn chat_completion(&self, request: ChatCompletionRequest) -> Result<ChatCompletionResponse, AIClientError>;
+
+    /// 流式聊天完成
+    async fn chat_completion_stream(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>, AIClientError>;
+
+    /// 生成嵌入
+    async fn embeddings(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, AIClientError>;
+
+    /// 获取模型列表
+    async fn list_models(&self) -> Result<ModelListResponse, AIClientError>;
+
+    /// 健康检查
+    async fn health_check(&self) -> Result<bool, AIClientError>;
+
+    /// 获取配置
+    fn get_config(&self) -> &AIModelConfig;
+}
+
+/// 统一 AI 客户端包装器 - 使用枚举包装不同客户端类型
+#[derive(Clone)]
+pub enum UnifiedAIClient {
+    OpenAI(Arc<OpenAIClient>),
+    Gemini(Arc<GeminiClient>),
+    Ollama(Arc<OllamaClient>),
+    AzureOpenAI(Arc<AzureOpenAIClient>),
+}
+
+impl UnifiedAIClient {
+    /// 创建聊天请求
+    pub fn create_chat_request(&self, messages: Vec<ChatMessage>) -> ChatCompletionRequest {
+        let config = self.get_config();
+        ChatCompletionRequest {
+            model: config.model_name.clone(),
+            messages,
+            temperature: Some(config.get_temperature()),
+            max_tokens: Some(config.get_max_tokens()),
+            stream: Some(false),
+            ..Default::default()
+        }
+    }
+
+    /// 创建流式聊天请求
+    pub fn create_streaming_chat_request(&self, messages: Vec<ChatMessage>) -> ChatCompletionRequest {
+        let config = self.get_config();
+        ChatCompletionRequest {
+            model: config.model_name.clone(),
+            messages,
+            temperature: Some(config.get_temperature()),
+            max_tokens: Some(config.get_max_tokens()),
+            stream: Some(true),
+            ..Default::default()
+        }
+    }
+
+    /// 简单聊天接口
+    pub async fn chat(&self, messages: Vec<ChatMessage>) -> Result<String, AIClientError> {
+        let request = self.create_chat_request(messages);
+        let response = match self {
+            UnifiedAIClient::OpenAI(client) => client.chat_completion(request).await,
+            UnifiedAIClient::Gemini(client) => client.chat_completion(request).await,
+            UnifiedAIClient::Ollama(client) => client.chat_completion(request).await,
+            UnifiedAIClient::AzureOpenAI(client) => client.chat_completion(request).await,
+        }?;
+        
+        if let Some(choice) = response.choices.first() {
+            Ok(choice.message.content.clone())
+        } else {
+            Err(AIClientError::ApiError("No response choices".to_string()))
+        }
+    }
+
+    /// 简单流式聊天接口
+    pub async fn chat_stream(
+        &self,
+        messages: Vec<ChatMessage>,
+    ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>, AIClientError> {
+        let request = self.create_streaming_chat_request(messages);
+        
+        let result: Result<Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>, AIClientError>;
+        
+        match self {
+            UnifiedAIClient::OpenAI(client) => {
+                let stream = client.chat_completion_stream(request).await?;
+                result = Ok(process_stream(stream));
+            }
+            UnifiedAIClient::Gemini(_) => {
+                result = Err(AIClientError::NotImplemented("Gemini streaming not implemented".to_string()));
+            }
+            UnifiedAIClient::Ollama(client) => {
+                let stream = client.chat_completion_stream(request).await?;
+                result = Ok(process_stream(stream));
+            }
+            UnifiedAIClient::AzureOpenAI(client) => {
+                let stream = client.chat_completion_stream(request).await?;
+                result = Ok(process_stream(stream));
+            }
+        }
+        
+        result
+    }
+
+    /// 简单嵌入接口
+    pub async fn embed(&self, text: &str) -> Result<Vec<f32>, AIClientError> {
+        let config = self.get_config();
+        let request = EmbeddingRequest {
+            model: config.model_name.clone(),
+            input: vec![text.to_string()],
+            ..Default::default()
+        };
+        
+        let response = match self {
+            UnifiedAIClient::OpenAI(client) => client.embeddings(request).await,
+            UnifiedAIClient::Gemini(client) => client.embeddings(request).await,
+            UnifiedAIClient::Ollama(client) => client.embeddings(request).await,
+            UnifiedAIClient::AzureOpenAI(client) => client.embeddings(request).await,
+        }?;
+        
+        if let Some(data) = response.data.first() {
+            Ok(data.embedding.clone())
+        } else {
+            Err(AIClientError::ApiError("No embedding data".to_string()))
+        }
+    }
+
+    /// 批量嵌入接口
+    pub async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Vec<f32>>, AIClientError> {
+        let config = self.get_config();
+        let request = EmbeddingRequest {
+            model: config.model_name.clone(),
+            input: texts.to_vec(),
+            ..Default::default()
+        };
+        
+        let response = match self {
+            UnifiedAIClient::OpenAI(client) => client.embeddings(request).await,
+            UnifiedAIClient::Gemini(client) => client.embeddings(request).await,
+            UnifiedAIClient::Ollama(client) => client.embeddings(request).await,
+            UnifiedAIClient::AzureOpenAI(client) => client.embeddings(request).await,
+        }?;
+        
+        Ok(response.data.into_iter().map(|d| d.embedding).collect())
+    }
+
+    /// 健康检查
+    pub async fn health_check(&self) -> Result<bool, AIClientError> {
+        match self {
+            UnifiedAIClient::OpenAI(client) => client.health_check().await,
+            UnifiedAIClient::Gemini(client) => client.health_check().await,
+            UnifiedAIClient::Ollama(client) => client.health_check().await,
+            UnifiedAIClient::AzureOpenAI(client) => client.health_check().await,
+        }
+    }
+
+    /// 获取配置
+    pub fn get_config(&self) -> &AIModelConfig {
+        match self {
+            UnifiedAIClient::OpenAI(client) => client.get_config(),
+            UnifiedAIClient::Gemini(client) => client.get_config(),
+            UnifiedAIClient::Ollama(client) => client.get_config(),
+            UnifiedAIClient::AzureOpenAI(client) => client.get_config(),
+        }
+    }
+}
+
+fn process_stream<S>(stream: S) -> Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>
+where
+    S: futures::Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static,
+{
+    Box::pin(stream.map(|result| {
+        result.map(|chunk| {
+            chunk.choices
+                .first()
+                .and_then(|c| c.delta.content.clone())
+                .unwrap_or_default()
+        })
+    }))
+}
+
+/// 创建 HTTP 客户端
+pub fn create_http_client(timeout: std::time::Duration) -> Client {
+    Client::builder()
+        .timeout(timeout)
+        .connect_timeout(timeout / 2)
+        .build()
+        .expect("Failed to create HTTP client")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_display() {
+        let error = AIClientError::NetworkError("test".to_string());
+        assert!(error.to_string().contains("Network error"));
+
+        let error = AIClientError::TimeoutError("timeout".to_string());
+        assert!(error.to_string().contains("Timeout error"));
+    }
+
+    #[test]
+    fn test_create_http_client() {
+        let client = create_http_client(std::time::Duration::from_secs(30));
+        assert!(client.timeout().is_some());
+    }
+}

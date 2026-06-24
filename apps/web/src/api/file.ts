@@ -1,6 +1,6 @@
-import apiClient, { downloadBlob } from "./client";
-import type { ApiResponse } from "./client";
-import config from "../config/runtime";
+import apiClient, { downloadBlob } from './client';
+import type { ApiResponse } from './client';
+import config from '../config/runtime';
 
 export interface FileMetadata {
   id: string;
@@ -9,7 +9,7 @@ export interface FileMetadata {
   size: number;
   content_type: string;
   path: string;
-  visibility: "private" | "public" | "department";
+  visibility: 'private' | 'public' | 'department';
   category?: string;
   owner_id: string;
   owner_department_id?: string;
@@ -19,18 +19,18 @@ export interface FileMetadata {
 }
 
 export interface ShareFileRequest {
-  principal_type: "user" | "group" | "department";
+  principal_type: 'user' | 'group' | 'department';
   principal_id: string;
-  permission: "read" | "write" | "manage";
+  permission: 'read' | 'write' | 'manage';
 }
 
 export interface FilePermission {
   id: string;
   file_id: string;
-  principal_type: "user" | "group" | "department";
+  principal_type: 'user' | 'group' | 'department';
   principal_id: string;
   principal_name?: string;
-  permission: "read" | "write" | "manage";
+  permission: 'read' | 'write' | 'manage';
   granted_by?: string;
   granted_at?: string;
   created_at: string;
@@ -68,8 +68,8 @@ export interface ShareInfo {
 export interface SharedWith {
   id: string;
   name: string;
-  type: "user" | "group" | "department";
-  permission: "read" | "write" | "manage";
+  type: 'user' | 'group' | 'department';
+  permission: 'read' | 'write' | 'manage';
 }
 
 export interface ExportRequest {
@@ -82,47 +82,44 @@ export const fileApi = {
     file: File,
     options?: {
       category?: string;
-      visibility?: "private" | "public" | "department";
+      visibility?: 'private' | 'public' | 'department';
       external_id?: string;
-    },
+    }
   ): Promise<ApiResponse<FileMetadata>> {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
     if (options?.category) {
-      formData.append("category", options.category);
+      formData.append('category', options.category);
     }
     if (options?.visibility) {
-      formData.append("visibility", options.visibility);
+      formData.append('visibility', options.visibility);
     }
     if (options?.external_id) {
-      formData.append("external_id", options.external_id);
+      formData.append('external_id', options.external_id);
     }
 
     // 获取当前用户的认证令牌
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
 
-    return apiClient.file.post<FileMetadata>("/api/files/upload", formData, {
+    return apiClient.file.post<FileMetadata>('/api/files/upload', formData, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
         ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
   },
 
-  async list(
-    params?: ListFilesQuery,
-  ): Promise<ApiResponse<PagedResponse<FileMetadata>>> {
+  async list(params?: ListFilesQuery): Promise<ApiResponse<PagedResponse<FileMetadata>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.category) searchParams.set("category", params.category);
-    if (params?.owner_id) searchParams.set("owner_id", params.owner_id);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.category) searchParams.set('category', params.category);
+    if (params?.owner_id) searchParams.set('owner_id', params.owner_id);
 
     const queryString = searchParams.toString();
     return apiClient.file.get<PagedResponse<FileMetadata>>(
-      `/api/files${queryString ? "?" + queryString : ""}`,
+      `/api/files${queryString ? '?' + queryString : ''}`
     );
   },
 
@@ -131,8 +128,7 @@ export const fileApi = {
   },
 
   async download(id: string): Promise<Blob> {
-    const baseURL =
-      (apiClient.file as any).defaults?.baseURL || config.services.file;
+    const baseURL = (apiClient.file as any).defaults?.baseURL || config.services.file;
     return downloadBlob(baseURL, `/api/files/${id}/download`);
   },
 
@@ -140,14 +136,8 @@ export const fileApi = {
     return apiClient.file.delete<string>(`/api/files/${id}`);
   },
 
-  async share(
-    id: string,
-    request: ShareFileRequest,
-  ): Promise<ApiResponse<FilePermission>> {
-    return apiClient.file.post<FilePermission>(
-      `/api/files/${id}/share`,
-      request,
-    );
+  async share(id: string, request: ShareFileRequest): Promise<ApiResponse<FilePermission>> {
+    return apiClient.file.post<FilePermission>(`/api/files/${id}/share`, request);
   },
 
   async getPermissions(id: string): Promise<ApiResponse<FilePermission[]>> {
@@ -158,71 +148,64 @@ export const fileApi = {
     id: string,
     principal_type: string,
     principal_id: string,
-    permission: string,
+    permission: string
   ): Promise<ApiResponse<string>> {
     return apiClient.file.delete<string>(
-      `/api/files/${id}/permissions/revoke/${principal_type}/${principal_id}/${permission}`,
+      `/api/files/${id}/permissions/revoke/${principal_type}/${principal_id}/${permission}`
     );
   },
 
   async getSharedFiles(): Promise<ApiResponse<ShareInfo[]>> {
-    return apiClient.file.get<ShareInfo[]>("/api/files/shared");
+    return apiClient.file.get<ShareInfo[]>('/api/files/shared');
   },
 
   async getStats(): Promise<ApiResponse<FileStats>> {
-    return apiClient.file.get<FileStats>("/api/files/stats");
+    return apiClient.file.get<FileStats>('/api/files/stats');
   },
 
   async export(request: ExportRequest): Promise<ApiResponse<any>> {
-    return apiClient.file.post("/api/files/export", request);
+    return apiClient.file.post('/api/files/export', request);
   },
 
   async health(): Promise<ApiResponse<string>> {
-    return apiClient.file.get<string>("/health");
+    return apiClient.file.get<string>('/health');
   },
 };
 
 export const VISIBILITY_OPTIONS = [
-  { value: "private", label: "私有", description: "只有所有者可以访问" },
-  { value: "public", label: "公开", description: "所有用户都可以访问" },
-  { value: "department", label: "部门", description: "同一部门用户可以访问" },
+  { value: 'private', label: '私有', description: '只有所有者可以访问' },
+  { value: 'public', label: '公开', description: '所有用户都可以访问' },
+  { value: 'department', label: '部门', description: '同一部门用户可以访问' },
 ];
 
 export const PERMISSION_OPTIONS = [
-  { value: "read", label: "只读", description: "只能查看和下载文件" },
-  { value: "write", label: "读写", description: "可以查看、下载和修改文件" },
-  { value: "manage", label: "管理", description: "完全控制，包括分享和删除" },
+  { value: 'read', label: '只读', description: '只能查看和下载文件' },
+  { value: 'write', label: '读写', description: '可以查看、下载和修改文件' },
+  { value: 'manage', label: '管理', description: '完全控制，包括分享和删除' },
 ];
 
 export const PRINCIPAL_TYPE_OPTIONS = [
-  { value: "user", label: "用户" },
-  { value: "group", label: "用户组" },
-  { value: "department", label: "部门" },
+  { value: 'user', label: '用户' },
+  { value: 'group', label: '用户组' },
+  { value: 'department', label: '部门' },
 ];
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 export function getFileIcon(contentType: string): string {
-  if (contentType.startsWith("image/")) return "image";
-  if (contentType.includes("pdf")) return "pdf";
-  if (contentType.includes("word") || contentType.includes("document"))
-    return "word";
-  if (contentType.includes("excel") || contentType.includes("spreadsheet"))
-    return "excel";
-  if (
-    contentType.includes("powerpoint") ||
-    contentType.includes("presentation")
-  )
-    return "ppt";
-  if (contentType.includes("zip") || contentType.includes("archive"))
-    return "archive";
-  if (contentType.includes("video/")) return "video";
-  if (contentType.includes("audio/")) return "audio";
-  return "file";
+  if (contentType.startsWith('image/')) return 'image';
+  if (contentType.includes('pdf')) return 'pdf';
+  if (contentType.includes('word') || contentType.includes('document')) return 'word';
+  if (contentType.includes('excel') || contentType.includes('spreadsheet')) return 'excel';
+  if (contentType.includes('powerpoint') || contentType.includes('presentation')) return 'ppt';
+  if (contentType.includes('zip') || contentType.includes('archive')) return 'archive';
+  if (contentType.includes('video/')) return 'video';
+  if (contentType.includes('audio/')) return 'audio';
+  return 'file';
 }

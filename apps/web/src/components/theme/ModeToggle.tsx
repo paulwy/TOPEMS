@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Moon, Sun, Monitor } from "lucide-react";
-import { Menu, MenuItem } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { useAppStore } from "@/store";
+import { useState } from 'react';
+import { Moon, Sun, Monitor } from 'lucide-react';
+import { Menu, MenuItem } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { useAppStore } from '@/store';
 
 export function ModeToggle() {
   const setTheme = useAppStore((state) => state.setTheme);
@@ -13,9 +13,9 @@ export function ModeToggle() {
 
   const getIcon = () => {
     switch (theme) {
-      case "dark":
+      case 'dark':
         return <Moon style={{ width: 18, height: 18 }} />;
-      case "light":
+      case 'light':
         return <Sun style={{ width: 18, height: 18 }} />;
       default:
         return <Monitor style={{ width: 18, height: 18 }} />;
@@ -30,14 +30,18 @@ export function ModeToggle() {
     setAnchorEl(null);
   };
 
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme);
     handleMenuClose();
   };
 
   return (
     <>
-      <Button variant="outlined" size="small" onClick={handleMenuOpen}>
+      <Button
+        variant='outlined'
+        size='small'
+        onClick={handleMenuOpen}
+      >
         {getIcon()}
       </Button>
       <Menu
@@ -45,23 +49,23 @@ export function ModeToggle() {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
+          vertical: 'bottom',
+          horizontal: 'right',
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
+          vertical: 'top',
+          horizontal: 'right',
         }}
       >
-        <MenuItem onClick={() => handleThemeChange("light")}>
+        <MenuItem onClick={() => handleThemeChange('light')}>
           <Sun style={{ width: 16, height: 16, marginRight: 8 }} />
           浅色模式
         </MenuItem>
-        <MenuItem onClick={() => handleThemeChange("dark")}>
+        <MenuItem onClick={() => handleThemeChange('dark')}>
           <Moon style={{ width: 16, height: 16, marginRight: 8 }} />
           深色模式
         </MenuItem>
-        <MenuItem onClick={() => handleThemeChange("system")}>
+        <MenuItem onClick={() => handleThemeChange('system')}>
           <Monitor style={{ width: 16, height: 16, marginRight: 8 }} />
           跟随系统
         </MenuItem>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Package,
@@ -14,22 +14,34 @@ import {
   Trash2,
   Plus,
   BarChart3,
-} from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, Card, CardContent, Box, Typography, MenuItem,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  Box,
+  Typography,
+  MenuItem,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
 
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
-import { limsApi } from "@/api/lims";
-import type { Sample, InspectionTask, InspectionRecord } from "@/api/lims";
-import { toast } from "react-toastify";
-import { logger } from "@/utils/logger";
+import { DataTable } from '@/components/DataTable';
+import type { ColumnDef } from '@tanstack/react-table';
+import { limsApi } from '@/api/lims';
+import type { Sample, InspectionTask, InspectionRecord } from '@/api/lims';
+import { toast } from 'react-toastify';
+import { logger } from '@/utils/logger';
 import {
   DetailPageTemplate,
   ListPageTemplate,
   type ColumnDef as ListColumnDef,
   type SectionConfig,
-} from "@/components/templates";
+} from '@/components/templates';
 import {
   BarChart,
   Bar,
@@ -39,8 +51,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-} from "recharts";
-import dayjs from "dayjs";
+} from 'recharts';
+import dayjs from 'dayjs';
 
 interface SampleTestRecord {
   id: string;
@@ -61,9 +73,9 @@ const LimsSampleDetailPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    status: "",
+    name: '',
+    description: '',
+    status: '',
   });
 
   useEffect(() => {
@@ -84,7 +96,7 @@ const LimsSampleDetailPage: React.FC = () => {
         setSample(sampleRes.data as Sample);
         setFormData({
           name: (sampleRes.data as Sample).name,
-          description: (sampleRes.data as Sample).description || "",
+          description: (sampleRes.data as Sample).description || '',
           status: (sampleRes.data as Sample).status,
         });
       }
@@ -100,53 +112,46 @@ const LimsSampleDetailPage: React.FC = () => {
           const recordRes = await limsApi.listRecordsByTask(task.id);
           if (recordRes.success && recordRes.data) {
             const recordData = recordRes.data as any;
-            const recordArray = Array.isArray(recordData)
-              ? recordData
-              : recordData.records || [];
+            const recordArray = Array.isArray(recordData) ? recordData : recordData.records || [];
             const formattedRecords = recordArray.map((r: any) => ({
               id: r.id,
               step_name: r.step_name || r.step_id,
-              inspector: r.inspector || "-",
-              result: r.result || "-",
-              conclusion: r.conclusion || "-",
-              tested_at: r.created_at
-                ? new Date(r.created_at).toLocaleDateString("zh-CN")
-                : "-",
+              inspector: r.inspector || '-',
+              result: r.result || '-',
+              conclusion: r.conclusion || '-',
+              tested_at: r.created_at ? new Date(r.created_at).toLocaleDateString('zh-CN') : '-',
             }));
             setRecords((prev) => [...prev, ...formattedRecords]);
           }
         }
       }
     } catch (error) {
-      logger.error("加载样品详情失败:", error);
+      logger.error('加载样品详情失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<
-      string,
-      { bg: string; color: string; label: string }
-    > = {
-      pending: { bg: "#fef9c3", color: "#ca8a04", label: "待测试" },
-      待测试: { bg: "#fef9c3", color: "#ca8a04", label: "待测试" },
-      in_progress: { bg: "#dbeafe", color: "#2563eb", label: "测试中" },
-      测试中: { bg: "#dbeafe", color: "#2563eb", label: "测试中" },
-      completed: { bg: "#dcfce7", color: "#16a34a", label: "已完成" },
-      已完成: { bg: "#dcfce7", color: "#16a34a", label: "已完成" },
-      cancelled: { bg: "#fee2e2", color: "#dc2626", label: "已终止" },
-      已终止: { bg: "#fee2e2", color: "#dc2626", label: "已终止" },
+    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
+      pending: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
+      待测试: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
+      in_progress: { bg: '#dbeafe', color: '#2563eb', label: '测试中' },
+      测试中: { bg: '#dbeafe', color: '#2563eb', label: '测试中' },
+      completed: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
+      已完成: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
+      cancelled: { bg: '#fee2e2', color: '#dc2626', label: '已终止' },
+      已终止: { bg: '#fee2e2', color: '#dc2626', label: '已终止' },
     };
     const item = statusMap[status] || {
-      bg: "#f3f4f6",
-      color: "#4b5563",
+      bg: '#f3f4f6',
+      color: '#4b5563',
       label: status,
     };
     return (
       <Chip
         label={item.label}
-        size="small"
+        size='small'
         sx={{ backgroundColor: item.bg, color: item.color }}
       />
     );
@@ -155,21 +160,21 @@ const LimsSampleDetailPage: React.FC = () => {
   const handleEdit = async () => {
     if (!sample) return;
     if (!formData.name.trim()) {
-      toast.error("请输入样品名称");
+      toast.error('请输入样品名称');
       return;
     }
     try {
       const response = await limsApi.updateSample(sample.id, formData);
       if (response.success) {
-        toast.success("样品信息更新成功");
+        toast.success('样品信息更新成功');
         setShowEditModal(false);
         loadSampleDetail(sample.id);
       } else {
-        toast.error("更新失败，请稍后重试");
+        toast.error('更新失败，请稍后重试');
       }
     } catch (error) {
-      logger.error("更新样品失败:", error);
-      toast.error("更新失败，请稍后重试");
+      logger.error('更新样品失败:', error);
+      toast.error('更新失败，请稍后重试');
     }
   };
 
@@ -179,144 +184,138 @@ const LimsSampleDetailPage: React.FC = () => {
     try {
       const response = await limsApi.deleteSample(sample.id);
       if (response.success) {
-        toast.success("样品删除成功");
-        navigate("/lims");
+        toast.success('样品删除成功');
+        navigate('/lims');
       } else {
-        toast.error("删除失败，请稍后重试");
+        toast.error('删除失败，请稍后重试');
       }
     } catch (error) {
-      logger.error("删除样品失败:", error);
-      toast.error("删除失败，请稍后重试");
+      logger.error('删除样品失败:', error);
+      toast.error('删除失败，请稍后重试');
     }
   };
 
   const getTestStatistics = () => {
     const stats = {
       total: records.length,
-      passed: records.filter((r) => r.conclusion === "合格").length,
-      failed: records.filter((r) => r.conclusion === "不合格").length,
-      pending: records.filter(
-        (r) => r.conclusion === "待定" || r.conclusion === "-",
-      ).length,
+      passed: records.filter((r) => r.conclusion === '合格').length,
+      failed: records.filter((r) => r.conclusion === '不合格').length,
+      pending: records.filter((r) => r.conclusion === '待定' || r.conclusion === '-').length,
     };
     return stats;
   };
 
   const chartData = [
-    { name: "已完成", value: records.length, fill: "#10b981" },
+    { name: '已完成', value: records.length, fill: '#10b981' },
     {
-      name: "合格",
-      value: records.filter((r) => r.conclusion === "合格").length,
-      fill: "#22c55e",
+      name: '合格',
+      value: records.filter((r) => r.conclusion === '合格').length,
+      fill: '#22c55e',
     },
     {
-      name: "不合格",
-      value: records.filter((r) => r.conclusion === "不合格").length,
-      fill: "#ef4444",
+      name: '不合格',
+      value: records.filter((r) => r.conclusion === '不合格').length,
+      fill: '#ef4444',
     },
     {
-      name: "待定",
-      value: records.filter(
-        (r) => r.conclusion === "待定" || r.conclusion === "-",
-      ).length,
-      fill: "#f59e0b",
+      name: '待定',
+      value: records.filter((r) => r.conclusion === '待定' || r.conclusion === '-').length,
+      fill: '#f59e0b',
     },
   ];
 
   const recordColumns: ColumnDef<SampleTestRecord>[] = [
-    { accessorKey: "step_name", header: "检验步骤" },
-    { accessorKey: "inspector", header: "检验员" },
-    { accessorKey: "result", header: "检验结果" },
-    { accessorKey: "conclusion", header: "结论" },
-    { accessorKey: "tested_at", header: "检验时间" },
+    { accessorKey: 'step_name', header: '检验步骤' },
+    { accessorKey: 'inspector', header: '检验员' },
+    { accessorKey: 'result', header: '检验结果' },
+    { accessorKey: 'conclusion', header: '结论' },
+    { accessorKey: 'tested_at', header: '检验时间' },
   ];
 
   const stats = getTestStatistics();
 
   // Sidebar - 关联检验任务
   const sidebarContent = (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography
-        variant="subtitle1"
-        sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}
+        variant='subtitle1'
+        sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
       >
-        <FileText sx={{ fontSize: 20, color: "#2563eb" }} />
+        <FileText sx={{ fontSize: 20, color: '#2563eb' }} />
         关联检验任务
       </Typography>
       {tasks.length > 0 ? (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {tasks.map((task) => (
             <Card
               key={task.id}
               sx={{
-                cursor: "pointer",
-                "&:hover": { bgcolor: "grey.50" },
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'grey.50' },
               }}
               onClick={() => navigate(`/lims/task/${task.id}`)}
             >
-              <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                     mb: 1,
                   }}
                 >
                   <Box>
-                    <Typography sx={{ fontWeight: 500, color: "#0f172a" }}>
+                    <Typography sx={{ fontWeight: 500, color: '#0f172a' }}>
                       {task.task_no}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {task.sample_name || "样品检验"}
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {task.sample_name || '样品检验'}
                     </Typography>
                   </Box>
                   <Chip
                     label={
-                      task.status === "completed" || task.status === "已完成"
-                        ? "已完成"
-                        : task.status === "in_progress" ||
-                            task.status === "进行中"
-                          ? "进行中"
-                          : "待处理"
+                      task.status === 'completed' || task.status === '已完成'
+                        ? '已完成'
+                        : task.status === 'in_progress' || task.status === '进行中'
+                          ? '进行中'
+                          : '待处理'
                     }
-                    size="small"
+                    size='small'
                     sx={{
                       backgroundColor:
-                        task.status === "completed" || task.status === "已完成"
-                          ? "#dcfce7"
-                          : task.status === "in_progress" ||
-                              task.status === "进行中"
-                            ? "#dbeafe"
-                            : "#fef9c3",
+                        task.status === 'completed' || task.status === '已完成'
+                          ? '#dcfce7'
+                          : task.status === 'in_progress' || task.status === '进行中'
+                            ? '#dbeafe'
+                            : '#fef9c3',
                       color:
-                        task.status === "completed" || task.status === "已完成"
-                          ? "#16a34a"
-                          : task.status === "in_progress" ||
-                              task.status === "进行中"
-                            ? "#2563eb"
-                            : "#ca8a04",
+                        task.status === 'completed' || task.status === '已完成'
+                          ? '#16a34a'
+                          : task.status === 'in_progress' || task.status === '进行中'
+                            ? '#2563eb'
+                            : '#ca8a04',
                     }}
                   />
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <User sx={{ width: 12, height: 12 }} />
-                    {task.inspector || "-"}
+                    {task.inspector || '-'}
                   </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <Clock sx={{ width: 12, height: 12 }} />
-                    {task.created_at
-                      ? dayjs(task.created_at).format("YYYY-MM-DD")
-                      : "-"}
+                    {task.created_at ? dayjs(task.created_at).format('YYYY-MM-DD') : '-'}
                   </Box>
                 </Box>
               </CardContent>
@@ -324,11 +323,9 @@ const LimsSampleDetailPage: React.FC = () => {
           ))}
         </Box>
       ) : (
-        <Box sx={{ textAlign: "center", py: 3, color: "text.secondary" }}>
-          <FileText
-            sx={{ width: 48, height: 48, opacity: 0.5, mx: "auto", mb: 1 }}
-          />
-          <Typography variant="body2">暂无检验任务</Typography>
+        <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
+          <FileText sx={{ width: 48, height: 48, opacity: 0.5, mx: 'auto', mb: 1 }} />
+          <Typography variant='body2'>暂无检验任务</Typography>
         </Box>
       )}
     </Box>
@@ -337,27 +334,43 @@ const LimsSampleDetailPage: React.FC = () => {
   // Sections - 检验统计
   const sections: SectionConfig[] = [
     {
-      id: "statistics",
-      title: "检验统计",
+      id: 'statistics',
+      title: '检验统计',
       content: (
         <Box>
           <Box sx={{ height: 256 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="name" width={60} />
+            <ResponsiveContainer
+              width='100%'
+              height='100%'
+            >
+              <BarChart
+                data={chartData}
+                layout='vertical'
+              >
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis type='number' />
+                <YAxis
+                  type='category'
+                  dataKey='name'
+                  width={60}
+                />
                 <Tooltip
-                  formatter={(value: unknown) => [`${value} 条`, "数量"]}
+                  formatter={(value: unknown) => [`${value} 条`, '数量']}
                   contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
+                    backgroundColor: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
                   }}
                 />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                <Bar
+                  dataKey='value'
+                  radius={[0, 4, 4, 0]}
+                >
                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.fill}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -365,80 +378,81 @@ const LimsSampleDetailPage: React.FC = () => {
           </Box>
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
               gap: 2,
               mt: 2,
             }}
           >
             <Box
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 p: 2,
-                bgcolor: "#f8fafc",
+                bgcolor: '#f8fafc',
                 borderRadius: 2,
               }}
             >
-              <Typography
-                sx={{ fontSize: "1.5rem", fontWeight: 700, color: "#0f172a" }}
-              >
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>
                 {stats.total}
               </Typography>
               <Typography
-                variant="caption"
-                sx={{ color: "text.secondary", mt: 0.5 }}
+                variant='caption'
+                sx={{ color: 'text.secondary', mt: 0.5 }}
               >
                 检验总数
               </Typography>
             </Box>
             <Box
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 p: 2,
-                bgcolor: "#f0fdf4",
+                bgcolor: '#f0fdf4',
                 borderRadius: 2,
               }}
             >
-              <Typography
-                sx={{ fontSize: "1.5rem", fontWeight: 700, color: "#16a34a" }}
-              >
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>
                 {stats.passed}
               </Typography>
-              <Typography variant="caption" sx={{ color: "#16a34a", mt: 0.5 }}>
+              <Typography
+                variant='caption'
+                sx={{ color: '#16a34a', mt: 0.5 }}
+              >
                 合格
               </Typography>
             </Box>
             <Box
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 p: 2,
-                bgcolor: "#fef2f2",
+                bgcolor: '#fef2f2',
                 borderRadius: 2,
               }}
             >
-              <Typography
-                sx={{ fontSize: "1.5rem", fontWeight: 700, color: "#dc2626" }}
-              >
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#dc2626' }}>
                 {stats.failed}
               </Typography>
-              <Typography variant="caption" sx={{ color: "#dc2626", mt: 0.5 }}>
+              <Typography
+                variant='caption'
+                sx={{ color: '#dc2626', mt: 0.5 }}
+              >
                 不合格
               </Typography>
             </Box>
             <Box
               sx={{
-                textAlign: "center",
+                textAlign: 'center',
                 p: 2,
-                bgcolor: "#fefce8",
+                bgcolor: '#fefce8',
                 borderRadius: 2,
               }}
             >
-              <Typography
-                sx={{ fontSize: "1.5rem", fontWeight: 700, color: "#ca8a04" }}
-              >
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#ca8a04' }}>
                 {stats.pending}
               </Typography>
-              <Typography variant="caption" sx={{ color: "#ca8a04", mt: 0.5 }}>
+              <Typography
+                variant='caption'
+                sx={{ color: '#ca8a04', mt: 0.5 }}
+              >
                 待定
               </Typography>
             </Box>
@@ -447,8 +461,8 @@ const LimsSampleDetailPage: React.FC = () => {
       ),
     },
     {
-      id: "records",
-      title: "检验记录",
+      id: 'records',
+      title: '检验记录',
       content: (
         <Box>
           {records.length > 0 ? (
@@ -458,10 +472,8 @@ const LimsSampleDetailPage: React.FC = () => {
               enablePagination={false}
             />
           ) : (
-            <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-              <CheckCircle
-                sx={{ width: 64, height: 64, opacity: 0.5, mx: "auto", mb: 2 }}
-              />
+            <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+              <CheckCircle sx={{ width: 64, height: 64, opacity: 0.5, mx: 'auto', mb: 2 }} />
               <Typography>暂无检验记录</Typography>
             </Box>
           )}
@@ -474,26 +486,26 @@ const LimsSampleDetailPage: React.FC = () => {
     return (
       <div
         style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         }}
       >
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: 'center' }}>
           <div
             style={{
               width: 48,
               height: 48,
-              border: "4px solid #e9d5ff",
-              borderTop: "4px solid #9333ea",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              margin: "0 auto 16px auto",
+              border: '4px solid #e9d5ff',
+              borderTop: '4px solid #9333ea',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px auto',
             }}
           ></div>
-          <p style={{ color: "#475569" }}>加载中...</p>
+          <p style={{ color: '#475569' }}>加载中...</p>
         </div>
       </div>
     );
@@ -503,24 +515,27 @@ const LimsSampleDetailPage: React.FC = () => {
     return (
       <div
         style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         }}
       >
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: 'center' }}>
           <AlertCircle
             sx={{
               width: 64,
               height: 64,
-              color: "#ef4444",
-              margin: "0 auto 16px auto",
+              color: '#ef4444',
+              margin: '0 auto 16px auto',
             }}
           />
-          <p style={{ color: "#475569" }}>样品不存在或已被删除</p>
-          <Button onClick={() => navigate("/lims")} sx={{ mt: 2 }}>
+          <p style={{ color: '#475569' }}>样品不存在或已被删除</p>
+          <Button
+            onClick={() => navigate('/lims')}
+            sx={{ mt: 2 }}
+          >
             返回列表
           </Button>
         </div>
@@ -530,25 +545,25 @@ const LimsSampleDetailPage: React.FC = () => {
 
   return (
     <DetailPageTemplate
-      title="样品详情"
-      subtitle="Sample Detail"
+      title='样品详情'
+      subtitle='Sample Detail'
       breadcrumbs={[
-        { label: "首页", href: "/dashboard" },
-        { label: "LIMS", href: "/lims" },
-        { label: "样品详情" },
+        { label: '首页', href: '/dashboard' },
+        { label: 'LIMS', href: '/lims' },
+        { label: '样品详情' },
       ]}
-      backHref="/lims"
+      backHref='/lims'
       loading={loading}
       onEdit={() => setShowEditModal(true)}
       onDelete={handleDelete}
       infoCard={{
-        avatar: <Package sx={{ fontSize: 40, color: "#9333ea" }} />,
+        avatar: <Package sx={{ fontSize: 40, color: '#9333ea' }} />,
         title: sample.name,
         subtitle: sample.sample_no || sample.id,
         tags: [sample.status],
         stats: [
-          { label: "关联任务", value: tasks.length },
-          { label: "检验记录", value: records.length },
+          { label: '关联任务', value: tasks.length },
+          { label: '检验记录', value: records.length },
         ],
       }}
       sidebar={sidebarContent}
@@ -557,24 +572,22 @@ const LimsSampleDetailPage: React.FC = () => {
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>编辑样品信息</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="样品名称 *"
+              label='样品名称 *'
               value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               fullWidth
-              size="small"
-              placeholder="请输入样品名称"
+              size='small'
+              placeholder='请输入样品名称'
             />
             <TextField
-              label="描述"
+              label='描述'
               value={formData.description}
               onChange={(e) =>
                 setFormData((prev) => ({
@@ -585,30 +598,34 @@ const LimsSampleDetailPage: React.FC = () => {
               fullWidth
               multiline
               rows={3}
-              placeholder="请输入样品描述"
+              placeholder='请输入样品描述'
             />
             <TextField
               select
-              label="状态"
+              label='状态'
               value={formData.status}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, status: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
               fullWidth
-              size="small"
+              size='small'
             >
-              <MenuItem value="待测试">待测试</MenuItem>
-              <MenuItem value="测试中">测试中</MenuItem>
-              <MenuItem value="已完成">已完成</MenuItem>
-              <MenuItem value="已终止">已终止</MenuItem>
+              <MenuItem value='待测试'>待测试</MenuItem>
+              <MenuItem value='测试中'>测试中</MenuItem>
+              <MenuItem value='已完成'>已完成</MenuItem>
+              <MenuItem value='已终止'>已终止</MenuItem>
             </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowEditModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowEditModal(false)}
+          >
             取消
           </Button>
-          <Button variant="contained" onClick={handleEdit}>
+          <Button
+            variant='contained'
+            onClick={handleEdit}
+          >
             保存
           </Button>
         </DialogActions>
@@ -617,43 +634,54 @@ const LimsSampleDetailPage: React.FC = () => {
       <Dialog
         open={showRecordModal}
         onClose={() => setShowRecordModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>添加检验记录</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="检验步骤"
+              label='检验步骤'
               fullWidth
-              size="small"
-              placeholder="请输入检验步骤名称"
+              size='small'
+              placeholder='请输入检验步骤名称'
             />
             <TextField
-              label="检验员"
+              label='检验员'
               fullWidth
-              size="small"
-              placeholder="请输入检验员姓名"
+              size='small'
+              placeholder='请输入检验员姓名'
             />
             <TextField
-              label="检验结果"
+              label='检验结果'
               fullWidth
               multiline
               rows={3}
-              placeholder="请输入检验结果"
+              placeholder='请输入检验结果'
             />
-            <TextField select label="结论" fullWidth size="small">
-              <MenuItem value="合格">合格</MenuItem>
-              <MenuItem value="不合格">不合格</MenuItem>
-              <MenuItem value="待定">待定</MenuItem>
+            <TextField
+              select
+              label='结论'
+              fullWidth
+              size='small'
+            >
+              <MenuItem value='合格'>合格</MenuItem>
+              <MenuItem value='不合格'>不合格</MenuItem>
+              <MenuItem value='待定'>待定</MenuItem>
             </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowRecordModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowRecordModal(false)}
+          >
             取消
           </Button>
-          <Button variant="contained" onClick={() => setShowRecordModal(false)}>
+          <Button
+            variant='contained'
+            onClick={() => setShowRecordModal(false)}
+          >
             保存
           </Button>
         </DialogActions>

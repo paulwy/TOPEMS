@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from 'react';
 import {
   HelpCircle,
   Search,
@@ -14,14 +14,14 @@ import {
   ThumbsUp,
   Clock,
   ExternalLink,
-} from "lucide-react";
-import { Box, Typography, Tabs, Tab, Chip } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { useNotification } from "@/hooks/useNotification";
-import { NotificationContainer } from "@/components/NotificationContainer";
+} from 'lucide-react';
+import { Box, Typography, Tabs, Tab, Chip } from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { useNotification } from '@/hooks/useNotification';
+import { NotificationContainer } from '@/components/NotificationContainer';
 
 // 内网文档中心地址（可配置）
-const DOCS_CENTER_URL = import.meta.env.VITE_DOCS_CENTER_URL || "http://localhost:8080";
+const DOCS_CENTER_URL = import.meta.env.VITE_DOCS_CENTER_URL || 'http://localhost:8080';
 
 interface HelpArticle {
   id: string;
@@ -57,67 +57,63 @@ interface VideoTutorial {
 const HelpCenterPage: React.FC = () => {
   const { success, notifications, hideNotification } = useNotification();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"articles" | "videos" | "faq">(
-    "articles",
-  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'articles' | 'videos' | 'faq'>('articles');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  const [selectedArticle, setSelectedArticle] = useState<HelpArticle | null>(
-    null,
-  );
+  const [selectedArticle, setSelectedArticle] = useState<HelpArticle | null>(null);
   const [showArticleDetail, setShowArticleDetail] = useState(false);
 
   const [categories] = useState<HelpCategory[]>([
     {
-      id: "1",
-      name: "快速入门",
-      icon: "🚀",
-      description: "新用户必读，快速上手 TOPEMS 系统",
+      id: '1',
+      name: '快速入门',
+      icon: '🚀',
+      description: '新用户必读，快速上手 TOPEMS 系统',
       article_count: 8,
     },
     {
-      id: "2",
-      name: "系统管理",
-      icon: "⚙️",
-      description: "用户、角色、权限等系统配置",
+      id: '2',
+      name: '系统管理',
+      icon: '⚙️',
+      description: '用户、角色、权限等系统配置',
       article_count: 12,
     },
     {
-      id: "3",
-      name: "ERP 模块",
-      icon: "📦",
-      description: "企业资源计划相关功能",
+      id: '3',
+      name: 'ERP 模块',
+      icon: '📦',
+      description: '企业资源计划相关功能',
       article_count: 15,
     },
     {
-      id: "4",
-      name: "HRM 模块",
-      icon: "👥",
-      description: "人力资源管理相关功能",
+      id: '4',
+      name: 'HRM 模块',
+      icon: '👥',
+      description: '人力资源管理相关功能',
       article_count: 10,
     },
     {
-      id: "5",
-      name: "CRM 模块",
-      icon: "🤝",
-      description: "客户关系管理相关功能",
+      id: '5',
+      name: 'CRM 模块',
+      icon: '🤝',
+      description: '客户关系管理相关功能',
       article_count: 8,
     },
     {
-      id: "6",
-      name: "报表管理",
-      icon: "📊",
-      description: "报表设计和生成",
+      id: '6',
+      name: '报表管理',
+      icon: '📊',
+      description: '报表设计和生成',
       article_count: 6,
     },
   ]);
 
   const [articles] = useState<HelpArticle[]>([
     {
-      id: "1",
-      title: "如何创建第一个项目",
-      category: "快速入门",
-      module: "RS",
+      id: '1',
+      title: '如何创建第一个项目',
+      category: '快速入门',
+      module: 'RS',
       content: `
 # 如何创建第一个项目
 
@@ -157,15 +153,15 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       `,
       views: 1250,
       likes: 89,
-      created_at: "2024-01-15",
-      updated_at: "2024-03-20",
-      tags: ["项目", "入门", "教程"],
+      created_at: '2024-01-15',
+      updated_at: '2024-03-20',
+      tags: ['项目', '入门', '教程'],
     },
     {
-      id: "2",
-      title: "系统权限配置指南",
-      category: "系统管理",
-      module: "IAM",
+      id: '2',
+      title: '系统权限配置指南',
+      category: '系统管理',
+      module: 'IAM',
       content: `
 # 系统权限配置指南
 
@@ -210,15 +206,15 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       `,
       views: 890,
       likes: 67,
-      created_at: "2024-01-20",
-      updated_at: "2024-04-10",
-      tags: ["权限", "系统管理", "安全"],
+      created_at: '2024-01-20',
+      updated_at: '2024-04-10',
+      tags: ['权限', '系统管理', '安全'],
     },
     {
-      id: "3",
-      title: "报表设计器使用教程",
-      category: "报表管理",
-      module: "Report",
+      id: '3',
+      title: '报表设计器使用教程',
+      category: '报表管理',
+      module: 'Report',
       content: `
 # 报表设计器使用教程
 
@@ -262,39 +258,39 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       `,
       views: 567,
       likes: 45,
-      created_at: "2024-02-05",
-      updated_at: "2024-04-15",
-      tags: ["报表", "设计器", "教程"],
+      created_at: '2024-02-05',
+      updated_at: '2024-04-15',
+      tags: ['报表', '设计器', '教程'],
     },
   ]);
 
   const [videos] = useState<VideoTutorial[]>([
     {
-      id: "1",
-      title: "TOPEMS 系统概览",
-      description: "了解 TOPEMS 系统的整体架构和功能模块",
-      thumbnail: "https://via.placeholder.com/320x180",
-      duration: "10:25",
-      module: "系统",
-      url: "#",
+      id: '1',
+      title: 'TOPEMS 系统概览',
+      description: '了解 TOPEMS 系统的整体架构和功能模块',
+      thumbnail: 'https://via.placeholder.com/320x180',
+      duration: '10:25',
+      module: '系统',
+      url: '#',
     },
     {
-      id: "2",
-      title: "项目管理实战",
-      description: "学习如何在系统中管理项目全生命周期",
-      thumbnail: "https://via.placeholder.com/320x180",
-      duration: "25:30",
-      module: "RS",
-      url: "#",
+      id: '2',
+      title: '项目管理实战',
+      description: '学习如何在系统中管理项目全生命周期',
+      thumbnail: 'https://via.placeholder.com/320x180',
+      duration: '25:30',
+      module: 'RS',
+      url: '#',
     },
     {
-      id: "3",
-      title: "权限配置详解",
-      description: "深入了解系统的权限管理机制",
-      thumbnail: "https://via.placeholder.com/320x180",
-      duration: "15:45",
-      module: "IAM",
-      url: "#",
+      id: '3',
+      title: '权限配置详解',
+      description: '深入了解系统的权限管理机制',
+      thumbnail: 'https://via.placeholder.com/320x180',
+      duration: '15:45',
+      module: 'IAM',
+      url: '#',
     },
   ]);
 
@@ -302,9 +298,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
     (article) =>
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       article.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
+      article.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleArticleClick = (article: HelpArticle) => {
@@ -313,11 +307,11 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
   };
 
   const handleLikeArticle = () => {
-    success("感谢您的反馈！");
+    success('感谢您的反馈！');
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
@@ -326,62 +320,63 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       {/* Header */}
       <Box
         sx={{
-          background: "linear-gradient(to right, #2563eb, #9333ea)",
-          color: "white",
+          background: 'linear-gradient(to right, #2563eb, #9333ea)',
+          color: 'white',
         }}
       >
         <Box
           sx={{
             maxWidth: 1280,
-            mx: "auto",
+            mx: 'auto',
             px: 4,
             py: 16,
           }}
         >
-          <Box sx={{ textAlign: "center" }}>
-            <HelpCircle
-              sx={{ width: 64, height: 64, mx: "auto", mb: 2, opacity: 0.9 }}
-            />
+          <Box sx={{ textAlign: 'center' }}>
+            <HelpCircle sx={{ width: 64, height: 64, mx: 'auto', mb: 2, opacity: 0.9 }} />
             <Typography
-              variant="h3"
-              sx={{ fontWeight: 700, mb: 2, color: "inherit" }}
+              variant='h3'
+              sx={{ fontWeight: 700, mb: 2, color: 'inherit' }}
             >
               帮助中心
             </Typography>
-            <Typography variant="h6" sx={{ color: "#93c5fd", mb: 4 }}>
+            <Typography
+              variant='h6'
+              sx={{ color: '#93c5fd', mb: 4 }}
+            >
               找到您需要的答案，了解如何使用 TOPEMS 系统
             </Typography>
 
             {/* Search Bar */}
-            <Box sx={{ maxWidth: 768, mx: "auto" }}>
-              <Box sx={{ position: "relative" }}>
+            <Box sx={{ maxWidth: 768, mx: 'auto' }}>
+              <Box sx={{ position: 'relative' }}>
                 <Search
                   sx={{
-                    position: "absolute",
+                    position: 'absolute',
                     left: 4,
-                    top: "50%",
-                    transform: "translateY(-50%)",
+                    top: '50%',
+                    transform: 'translateY(-50%)',
                     width: 20,
                     height: 20,
-                    color: "grey.400",
+                    color: 'grey.400',
                   }}
                 />
                 <input
-                  type="text"
+                  type='text'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索帮助文章、视频教程..."
+                  placeholder='搜索帮助文章、视频教程...'
                   style={{
-                    width: "100%",
+                    width: '100%',
                     paddingLeft: 48,
                     paddingRight: 16,
                     paddingTop: 16,
                     paddingBottom: 16,
                     borderRadius: 12,
-                    border: "none",
-                    fontSize: "1rem",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    outline: "none",
+                    border: 'none',
+                    fontSize: '1rem',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    outline: 'none',
                   }}
                 />
               </Box>
@@ -394,7 +389,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       <Box
         sx={{
           maxWidth: 1280,
-          mx: "auto",
+          mx: 'auto',
           px: 4,
           mt: -8,
           mb: 4,
@@ -402,57 +397,57 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       >
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
             gap: 2,
           }}
         >
           {[
             {
               icon: Book,
-              iconColor: "#2563eb",
-              iconBg: "#dbeafe",
-              title: "使用文档",
-              desc: "详细的功能说明",
-              onClick: () => window.open(DOCS_CENTER_URL, "_blank"),
+              iconColor: '#2563eb',
+              iconBg: '#dbeafe',
+              title: '使用文档',
+              desc: '详细的功能说明',
+              onClick: () => window.open(DOCS_CENTER_URL, '_blank'),
             },
             {
               icon: Video,
-              iconColor: "#16a34a",
-              iconBg: "#dcfce7",
-              title: "视频教程",
-              desc: "直观的学习方式",
+              iconColor: '#16a34a',
+              iconBg: '#dcfce7',
+              title: '视频教程',
+              desc: '直观的学习方式',
             },
             {
               icon: MessageCircle,
-              iconColor: "#9333ea",
-              iconBg: "#f3e8ff",
-              title: "在线客服",
-              desc: "7x24 小时支持",
+              iconColor: '#9333ea',
+              iconBg: '#f3e8ff',
+              title: '在线客服',
+              desc: '7x24 小时支持',
             },
             {
               icon: ExternalLink,
-              iconColor: "#dc2626",
-              iconBg: "#fee2e2",
-              title: "内网文档中心",
-              desc: "完整用户手册",
-              onClick: () => window.open(DOCS_CENTER_URL, "_blank"),
+              iconColor: '#dc2626',
+              iconBg: '#fee2e2',
+              title: '内网文档中心',
+              desc: '完整用户手册',
+              onClick: () => window.open(DOCS_CENTER_URL, '_blank'),
             },
           ].map((item, idx) => (
             <Button
               key={idx}
-              variant="contained"
+              variant='contained'
               onClick={item.onClick}
               sx={{
-                bgcolor: "background.paper",
+                bgcolor: 'background.paper',
                 borderRadius: 2,
                 p: 2,
                 boxShadow: 3,
-                "&:hover": { boxShadow: 6 },
-                transition: "box-shadow 0.2s",
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
+                '&:hover': { boxShadow: 6 },
+                transition: 'box-shadow 0.2s',
+                textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1.5,
               }}
             >
@@ -462,23 +457,24 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                   height: 48,
                   bgcolor: item.iconBg,
                   borderRadius: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <item.icon
-                  sx={{ width: 24, height: 24, color: item.iconColor }}
-                />
+                <item.icon sx={{ width: 24, height: 24, color: item.iconColor }} />
               </Box>
-              <Box sx={{ textAlign: "left" }}>
+              <Box sx={{ textAlign: 'left' }}>
                 <Typography
-                  variant="body1"
-                  sx={{ fontWeight: 600, color: "grey.900" }}
+                  variant='body1'
+                  sx={{ fontWeight: 600, color: 'grey.900' }}
                 >
                   {item.title}
                 </Typography>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
                   {item.desc}
                 </Typography>
               </Box>
@@ -491,7 +487,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       <Box
         sx={{
           maxWidth: 1280,
-          mx: "auto",
+          mx: 'auto',
           px: 4,
           py: 4,
         }}
@@ -499,17 +495,17 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
         {/* Tabs */}
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 4,
             mb: 4,
             borderBottom: 1,
-            borderColor: "divider",
+            borderColor: 'divider',
           }}
         >
           {[
-            { value: "articles", label: "帮助文章", icon: Book },
-            { value: "videos", label: "视频教程", icon: Video },
-            { value: "faq", label: "常见问题", icon: FileText },
+            { value: 'articles', label: '帮助文章', icon: Book },
+            { value: 'videos', label: '视频教程', icon: Video },
+            { value: 'faq', label: '常见问题', icon: FileText },
           ].map((tab) => (
             <Box
               key={tab.value}
@@ -518,17 +514,17 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                 pb: 2,
                 px: 1,
                 fontWeight: 500,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1,
-                color: activeTab === tab.value ? "primary.main" : "grey.500",
+                color: activeTab === tab.value ? 'primary.main' : 'grey.500',
                 borderBottom: activeTab === tab.value ? 2 : 0,
-                borderColor: "primary.main",
-                "&:hover": {
-                  color: activeTab === tab.value ? "primary.main" : "grey.700",
+                borderColor: 'primary.main',
+                '&:hover': {
+                  color: activeTab === tab.value ? 'primary.main' : 'grey.700',
                 },
-                transition: "color 0.2s",
+                transition: 'color 0.2s',
               }}
             >
               <tab.icon sx={{ width: 20, height: 20 }} />
@@ -538,13 +534,13 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
         </Box>
 
         {/* Tab Content */}
-        {activeTab === "articles" && (
+        {activeTab === 'articles' && (
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "repeat(1, 1fr)",
-                lg: "repeat(3, 1fr)",
+                xs: 'repeat(1, 1fr)',
+                lg: 'repeat(3, 1fr)',
               },
               gap: 3,
             }}
@@ -552,62 +548,57 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
             {/* Categories */}
             <Box sx={{ lg: { gridColumn: 1 } }}>
               <Typography
-                variant="h6"
-                sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}
+                variant='h6'
+                sx={{ fontWeight: 600, color: 'grey.900', mb: 2 }}
               >
                 分类浏览
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {categories.map((category) => (
                   <Box key={category.id}>
                     <Button
                       fullWidth
                       onClick={() =>
-                        setExpandedCategory(
-                          expandedCategory === category.id ? null : category.id,
-                        )
+                        setExpandedCategory(expandedCategory === category.id ? null : category.id)
                       }
                       sx={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         p: 2,
-                        bgcolor: "background.paper",
+                        bgcolor: 'background.paper',
                         borderRadius: 2,
-                        "&:hover": { bgcolor: "grey.50" },
-                        transition: "background-color 0.2s",
+                        '&:hover': { bgcolor: 'grey.50' },
+                        transition: 'background-color 0.2s',
                       }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                      >
-                        <Typography variant="body1" sx={{ fontSize: "1.5rem" }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Typography
+                          variant='body1'
+                          sx={{ fontSize: '1.5rem' }}
+                        >
                           {category.icon}
                         </Typography>
-                        <Box sx={{ textAlign: "left" }}>
+                        <Box sx={{ textAlign: 'left' }}>
                           <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 500, color: "grey.900" }}
+                            variant='body2'
+                            sx={{ fontWeight: 500, color: 'grey.900' }}
                           >
                             {category.name}
                           </Typography>
                           <Typography
-                            variant="body2"
-                            sx={{ color: "grey.500" }}
+                            variant='body2'
+                            sx={{ color: 'grey.500' }}
                           >
                             {category.article_count} 篇文章
                           </Typography>
                         </Box>
                       </Box>
                       {expandedCategory === category.id ? (
-                        <ChevronDown
-                          sx={{ width: 20, height: 20, color: "grey.400" }}
-                        />
+                        <ChevronDown sx={{ width: 20, height: 20, color: 'grey.400' }} />
                       ) : (
-                        <ChevronRight
-                          sx={{ width: 20, height: 20, color: "grey.400" }}
-                        />
+                        <ChevronRight sx={{ width: 20, height: 20, color: 'grey.400' }} />
                       )}
                     </Button>
                     {expandedCategory === category.id && (
@@ -615,8 +606,8 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                         sx={{
                           ml: 3,
                           mt: 1,
-                          display: "flex",
-                          flexDirection: "column",
+                          display: 'flex',
+                          flexDirection: 'column',
                           gap: 1,
                         }}
                       >
@@ -628,16 +619,16 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                               fullWidth
                               onClick={() => handleArticleClick(article)}
                               sx={{
-                                textAlign: "left",
+                                textAlign: 'left',
                                 p: 1.5,
-                                color: "grey.600",
-                                fontSize: "0.875rem",
+                                color: 'grey.600',
+                                fontSize: '0.875rem',
                                 borderRadius: 1,
-                                "&:hover": {
-                                  color: "primary.main",
-                                  bgcolor: "primary.50",
+                                '&:hover': {
+                                  color: 'primary.main',
+                                  bgcolor: 'primary.50',
                                 },
-                                transition: "all 0.2s",
+                                transition: 'all 0.2s',
                               }}
                             >
                               {article.title}
@@ -651,81 +642,81 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
             </Box>
 
             {/* Articles List */}
-            <Box sx={{ lg: { gridColumn: "span 2" } }}>
+            <Box sx={{ lg: { gridColumn: 'span 2' } }}>
               <Typography
-                variant="h6"
-                sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}
+                variant='h6'
+                sx={{ fontWeight: 600, color: 'grey.900', mb: 2 }}
               >
-                {searchQuery ? `搜索结果: "${searchQuery}"` : "热门文章"}
+                {searchQuery ? `搜索结果: "${searchQuery}"` : '热门文章'}
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {filteredArticles.map((article) => (
                   <Box
                     key={article.id}
                     onClick={() => handleArticleClick(article)}
                     sx={{
-                      bgcolor: "background.paper",
+                      bgcolor: 'background.paper',
                       borderRadius: 2,
                       p: 3,
-                      cursor: "pointer",
-                      "&:hover": { boxShadow: 3 },
-                      transition: "box-shadow 0.2s",
+                      cursor: 'pointer',
+                      '&:hover': { boxShadow: 3 },
+                      transition: 'box-shadow 0.2s',
                     }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
                       }}
                     >
                       <Box sx={{ flex: 1 }}>
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 1,
                             mb: 1,
                           }}
                         >
                           <Chip
                             label={article.category}
-                            size="small"
+                            size='small'
                             sx={{
-                              bgcolor: "primary.100",
-                              color: "primary.700",
-                              fontSize: "0.75rem",
+                              bgcolor: 'primary.100',
+                              color: 'primary.700',
+                              fontSize: '0.75rem',
                             }}
                           />
                           <Chip
                             label={article.module}
-                            size="small"
+                            size='small'
                             sx={{
-                              bgcolor: "grey.100",
-                              color: "grey.600",
-                              fontSize: "0.75rem",
+                              bgcolor: 'grey.100',
+                              color: 'grey.600',
+                              fontSize: '0.75rem',
                             }}
                           />
                         </Box>
                         <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+                          variant='h6'
+                          sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
                         >
                           {article.title}
                         </Typography>
                         <Box
                           sx={{
-                            display: "flex",
-                            alignItems: "center",
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 2,
-                            fontSize: "0.875rem",
-                            color: "grey.500",
+                            fontSize: '0.875rem',
+                            color: 'grey.500',
                           }}
                         >
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: 0.5,
                             }}
                           >
@@ -734,8 +725,8 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                           </Box>
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: 0.5,
                             }}
                           >
@@ -744,8 +735,8 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                           </Box>
                           <Box
                             sx={{
-                              display: "flex",
-                              alignItems: "center",
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: 0.5,
                             }}
                           >
@@ -754,27 +745,23 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                           </Box>
                         </Box>
                       </Box>
-                      <ChevronRight
-                        sx={{ width: 20, height: 20, color: "grey.400" }}
-                      />
+                      <ChevronRight sx={{ width: 20, height: 20, color: 'grey.400' }} />
                     </Box>
                   </Box>
                 ))}
 
                 {filteredArticles.length === 0 && (
-                  <Box sx={{ textAlign: "center", py: 6 }}>
+                  <Box sx={{ textAlign: 'center', py: 6 }}>
                     <Search
                       sx={{
                         width: 48,
                         height: 48,
-                        color: "grey.400",
-                        mx: "auto",
+                        color: 'grey.400',
+                        mx: 'auto',
                         mb: 2,
                       }}
                     />
-                    <Typography sx={{ color: "grey.500" }}>
-                      未找到相关文章
-                    </Typography>
+                    <Typography sx={{ color: 'grey.500' }}>未找到相关文章</Typography>
                   </Box>
                 )}
               </Box>
@@ -782,14 +769,14 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           </Box>
         )}
 
-        {activeTab === "videos" && (
+        {activeTab === 'videos' && (
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "repeat(1, 1fr)",
-                md: "repeat(2, 1fr)",
-                lg: "repeat(3, 1fr)",
+                xs: 'repeat(1, 1fr)',
+                md: 'repeat(2, 1fr)',
+                lg: 'repeat(3, 1fr)',
               },
               gap: 3,
             }}
@@ -798,36 +785,36 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
               <Box
                 key={video.id}
                 sx={{
-                  bgcolor: "background.paper",
+                  bgcolor: 'background.paper',
                   borderRadius: 2,
-                  overflow: "hidden",
-                  "&:hover": { boxShadow: 4 },
-                  transition: "box-shadow 0.2s",
+                  overflow: 'hidden',
+                  '&:hover': { boxShadow: 4 },
+                  transition: 'box-shadow 0.2s',
                 }}
               >
-                <Box sx={{ position: "relative" }}>
+                <Box sx={{ position: 'relative' }}>
                   <Box
                     sx={{
-                      bgcolor: "grey.200",
-                      aspectRatio: "16/9",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      bgcolor: 'grey.200',
+                      aspectRatio: '16/9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
-                    <Video sx={{ width: 48, height: 48, color: "grey.400" }} />
+                    <Video sx={{ width: 48, height: 48, color: 'grey.400' }} />
                   </Box>
                   <Box
                     sx={{
-                      position: "absolute",
+                      position: 'absolute',
                       bottom: 1,
                       right: 1,
-                      bgcolor: "rgba(0,0,0,0.75)",
-                      color: "white",
+                      bgcolor: 'rgba(0,0,0,0.75)',
+                      color: 'white',
                       px: 1,
                       py: 0.5,
                       borderRadius: 1,
-                      fontSize: "0.75rem",
+                      fontSize: '0.75rem',
                     }}
                   >
                     {video.duration}
@@ -836,41 +823,44 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                 <Box sx={{ p: 2 }}>
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1,
                       mb: 1,
                     }}
                   >
                     <Chip
                       label={video.module}
-                      size="small"
+                      size='small'
                       sx={{
-                        bgcolor: "secondary.100",
-                        color: "secondary.700",
-                        fontSize: "0.75rem",
+                        bgcolor: 'secondary.100',
+                        color: 'secondary.700',
+                        fontSize: '0.75rem',
                       }}
                     />
                   </Box>
                   <Typography
-                    variant="body1"
-                    sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+                    variant='body1'
+                    sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
                   >
                     {video.title}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "grey.500", mb: 2 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500', mb: 2 }}
+                  >
                     {video.description}
                   </Typography>
                   <Button
                     fullWidth
-                    variant="contained"
+                    variant='contained'
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       gap: 1,
-                      bgcolor: "primary.main",
-                      "&:hover": { bgcolor: "primary.dark" },
+                      bgcolor: 'primary.main',
+                      '&:hover': { bgcolor: 'primary.dark' },
                     }}
                   >
                     <Video sx={{ width: 16, height: 16 }} />
@@ -882,58 +872,58 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           </Box>
         )}
 
-        {activeTab === "faq" && (
-          <Box sx={{ maxWidth: 768, mx: "auto" }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {activeTab === 'faq' && (
+          <Box sx={{ maxWidth: 768, mx: 'auto' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {[
                 {
-                  q: "如何重置密码？",
+                  q: '如何重置密码？',
                   a: '在登录页面点击"忘记密码"，输入注册邮箱，系统会发送重置链接到您的邮箱。',
                 },
                 {
-                  q: "如何申请新功能？",
+                  q: '如何申请新功能？',
                   a: '您可以通过"反馈建议"功能提交功能需求，我们会定期评估并纳入后续版本规划。',
                 },
                 {
-                  q: "数据导出有限制吗？",
-                  a: "付费版本支持批量导出，无数据量限制。免费版本每次最多导出 1000 条记录。",
+                  q: '数据导出有限制吗？',
+                  a: '付费版本支持批量导出，无数据量限制。免费版本每次最多导出 1000 条记录。',
                 },
                 {
-                  q: "系统支持哪些浏览器？",
-                  a: "推荐使用 Chrome、Firefox、Edge、Safari 的最新版本。IE 浏览器不再支持。",
+                  q: '系统支持哪些浏览器？',
+                  a: '推荐使用 Chrome、Firefox、Edge、Safari 的最新版本。IE 浏览器不再支持。',
                 },
               ].map((faq, idx) => (
                 <Box
                   key={idx}
                   sx={{
-                    bgcolor: "background.paper",
+                    bgcolor: 'background.paper',
                     borderRadius: 2,
                     p: 3,
-                    "&:hover": { boxShadow: 2 },
-                    transition: "box-shadow 0.2s",
+                    '&:hover': { boxShadow: 2 },
+                    transition: 'box-shadow 0.2s',
                   }}
                 >
                   <Typography
-                    variant="body1"
+                    variant='body1'
                     sx={{
                       fontWeight: 600,
-                      color: "grey.900",
+                      color: 'grey.900',
                       mb: 1,
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                     }}
                   >
                     <Box
                       sx={{
                         width: 24,
                         height: 24,
-                        bgcolor: "primary.100",
-                        color: "primary.main",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "0.875rem",
+                        bgcolor: 'primary.100',
+                        color: 'primary.main',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.875rem',
                         mr: 1.5,
                       }}
                     >
@@ -941,9 +931,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                     </Box>
                     {faq.q}
                   </Typography>
-                  <Typography sx={{ color: "grey.600", ml: 5 }}>
-                    {faq.a}
-                  </Typography>
+                  <Typography sx={{ color: 'grey.600', ml: 5 }}>{faq.a}</Typography>
                 </Box>
               ))}
             </Box>
@@ -955,54 +943,54 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
       {showArticleDetail && selectedArticle && (
         <Box
           sx={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            bgcolor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            bgcolor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 50,
             p: 2,
           }}
         >
           <Box
             sx={{
-              bgcolor: "background.paper",
+              bgcolor: 'background.paper',
               borderRadius: 3,
               boxShadow: 6,
-              width: "100%",
+              width: '100%',
               maxWidth: 1024,
-              maxHeight: "90vh",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             <Box
               sx={{
                 p: 3,
                 borderBottom: 1,
-                borderColor: "divider",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                borderColor: 'divider',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
               <Box>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: "grey.900" }}
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'grey.900' }}
                 >
                   {selectedArticle.title}
                 </Typography>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
                     mt: 1,
-                    fontSize: "0.875rem",
-                    color: "grey.500",
+                    fontSize: '0.875rem',
+                    color: 'grey.500',
                   }}
                 >
                   <span>{selectedArticle.category}</span>
@@ -1019,7 +1007,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                 }}
                 sx={{
                   p: 1,
-                  "&:hover": { bgcolor: "grey.100" },
+                  '&:hover': { bgcolor: 'grey.100' },
                   borderRadius: 1,
                 }}
               >
@@ -1027,38 +1015,38 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
               </Button>
             </Box>
 
-            <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
-              <Box sx={{ maxWidth: "none" }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
+              <Box sx={{ maxWidth: 'none' }}>
                 <pre
                   style={{
-                    whiteSpace: "pre-wrap",
-                    fontSize: "0.875rem",
-                    color: "grey.700",
-                    fontFamily: "inherit",
+                    whiteSpace: 'pre-wrap',
+                    fontSize: '0.875rem',
+                    color: 'grey.700',
+                    fontFamily: 'inherit',
                   }}
                 >
                   {selectedArticle.content}
                 </pre>
               </Box>
 
-              <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: "divider" }}>
+              <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {selectedArticle.tags?.map((tag, idx) => (
                       <Chip
                         key={idx}
                         label={`#${tag}`}
-                        size="small"
+                        size='small'
                         sx={{
-                          bgcolor: "grey.100",
-                          color: "grey.600",
-                          fontSize: "0.875rem",
+                          bgcolor: 'grey.100',
+                          color: 'grey.600',
+                          fontSize: '0.875rem',
                         }}
                       />
                     ))}
@@ -1066,11 +1054,11 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                   <Button
                     onClick={() => handleLikeArticle()}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1,
-                      color: "grey.600",
-                      "&:hover": { bgcolor: "grey.100" },
+                      color: 'grey.600',
+                      '&:hover': { bgcolor: 'grey.100' },
                       borderRadius: 1,
                     }}
                   >
@@ -1085,34 +1073,34 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
               sx={{
                 p: 3,
                 borderTop: 1,
-                borderColor: "divider",
-                display: "flex",
-                justifyContent: "space-between",
+                borderColor: 'divider',
+                display: 'flex',
+                justifyContent: 'space-between',
               }}
             >
               <Button
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
-                  color: "primary.main",
-                  "&:hover": { bgcolor: "primary.50" },
+                  color: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.50' },
                   borderRadius: 1,
                 }}
               >
                 <Download sx={{ width: 16, height: 16 }} />
                 <span>下载 PDF</span>
               </Button>
-              <Box sx={{ display: "flex", gap: 1.5 }}>
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
                 <Button
                   onClick={() => {
                     setShowArticleDetail(false);
                     setSelectedArticle(null);
                   }}
                   sx={{
-                    bgcolor: "grey.100",
-                    color: "grey.700",
-                    "&:hover": { bgcolor: "grey.200" },
+                    bgcolor: 'grey.100',
+                    color: 'grey.700',
+                    '&:hover': { bgcolor: 'grey.200' },
                   }}
                 >
                   关闭

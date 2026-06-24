@@ -242,7 +242,7 @@ JWT_SECRET=your_jwt_secret_key_at_least_32_characters
 
 ```bash
 # 服务配置
-SERVER_PORT=8011
+SERVER_PORT=8000
 SERVICE_VERSION=0.1.0
 ENABLE_AUTH=true
 ENABLE_CORS=true
@@ -313,7 +313,7 @@ anyhow = "1.0"
 
 ```bash
 DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
-SERVER_PORT=8011
+SERVER_PORT=8000
 JWT_SECRET=your_secret_key
 ```
 

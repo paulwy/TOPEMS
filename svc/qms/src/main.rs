@@ -136,23 +136,31 @@ async fn main() {
         .route("/api/qms/issues/{id}", get(modules::qms::quality_issue::get_issue))
         .route("/api/qms/issues/{id}", put(modules::qms::quality_issue::update_issue))
         .route("/api/qms/issues/{id}", delete(modules::qms::quality_issue::delete_issue))
+        .route("/api/qms/issues/{id}/resolve", post(modules::qms::quality_issue::resolve_issue))
         // Dashboard
         .route("/api/qms/dashboard", get(modules::qms::dashboard::get_dashboard_stats))
-        // Quality Improvements/Corrective Actions
-        .route("/api/qms/improvements", get(modules::qms::corrective_action::list_actions))
-        .route("/api/qms/improvements", post(modules::qms::corrective_action::create_action))
-        .route("/api/qms/improvements/{id}", get(modules::qms::corrective_action::get_action))
-        .route("/api/qms/improvements/{id}", put(modules::qms::corrective_action::update_action))
-        .route("/api/qms/improvements/{id}", delete(modules::qms::corrective_action::delete_action))
+        // Corrective Actions
+        .route("/api/qms/actions", get(modules::qms::corrective_action::list_actions))
+        .route("/api/qms/actions", post(modules::qms::corrective_action::create_action))
+        .route("/api/qms/actions/{id}", get(modules::qms::corrective_action::get_action))
+        .route("/api/qms/actions/{id}", put(modules::qms::corrective_action::update_action))
+        .route("/api/qms/actions/{id}", delete(modules::qms::corrective_action::delete_action))
+        .route("/api/qms/actions/{id}/complete", post(modules::qms::corrective_action::complete_action))
+        .route("/api/qms/actions/{id}/items", get(modules::qms::corrective_action::get_action_items))
         // Audit Plans
         .route("/api/qms/audit-plans", get(modules::qms::audit::list_audit_plans))
         .route("/api/qms/audit-plans", post(modules::qms::audit::create_audit_plan))
         .route("/api/qms/audit-plans/{id}", get(modules::qms::audit::get_audit_plan))
+        .route("/api/qms/audit-plans/{id}/start", post(modules::qms::audit::start_audit_plan))
+        .route("/api/qms/audit-plans/{id}/complete", post(modules::qms::audit::complete_audit_plan))
         // Audit Tasks
         .route("/api/qms/audit-tasks", get(modules::qms::audit::list_audit_tasks))
+        .route("/api/qms/audit-plans/{plan_id}/tasks", post(modules::qms::audit::create_audit_task))
         .route("/api/qms/audit-tasks/{id}/complete", put(modules::qms::audit::complete_audit_task))
         // Audit Findings
         .route("/api/qms/audit-findings", get(modules::qms::audit::list_audit_findings))
+        .route("/api/qms/audit-tasks/{task_id}/findings", post(modules::qms::audit::create_audit_finding))
+        .route("/api/qms/audit-findings/{id}/verify", post(modules::qms::audit::verify_audit_finding))
         // Data Sync
         .route("/api/qms/sync-records", get(modules::qms::data_sync::list_sync_records))
         .route("/api/qms/sync-records/{id}", get(modules::qms::data_sync::get_sync_record))
@@ -166,7 +174,8 @@ async fn main() {
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
-        ));
+        ))
+        .layer(axum::middleware::from_fn(modules::qms::permission::check_permission));
 
     let app = Router::new()
         .merge(public_routes)

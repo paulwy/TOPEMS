@@ -1,16 +1,17 @@
-import React from "react";
+import React from 'react';
 
-export const useAriaLiveRegion = (): [
-  (message: string) => void,
-  React.ReactNode,
-] => {
-  const [message, setMessage] = React.useState("");
+export const useAriaLiveRegion = (): [(message: string) => void, React.ReactNode] => {
+  const [message, setMessage] = React.useState('');
   const announce = React.useCallback((msg: string) => {
-    setMessage("");
+    setMessage('');
     setTimeout(() => setMessage(msg), 100);
   }, []);
   const liveRegion = (
-    <div aria-live="polite" aria-atomic="true" className="sr-only">
+    <div
+      aria-live='polite'
+      aria-atomic='true'
+      className='sr-only'
+    >
       {message}
     </div>
   );
@@ -27,34 +28,34 @@ export const useKeyboardNavigation = (
     onArrowRight?: () => void;
     onSpace?: () => void;
   },
-  deps: React.DependencyList = [],
+  deps: React.DependencyList = []
 ) => {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case "Escape":
+        case 'Escape':
           callbacks.onEscape?.();
           break;
-        case "Enter":
+        case 'Enter':
           callbacks.onEnter?.();
           break;
-        case "ArrowUp":
+        case 'ArrowUp':
           e.preventDefault();
           callbacks.onArrowUp?.();
           break;
-        case "ArrowDown":
+        case 'ArrowDown':
           e.preventDefault();
           callbacks.onArrowDown?.();
           break;
-        case "ArrowLeft":
+        case 'ArrowLeft':
           e.preventDefault();
           callbacks.onArrowLeft?.();
           break;
-        case "ArrowRight":
+        case 'ArrowRight':
           e.preventDefault();
           callbacks.onArrowRight?.();
           break;
-        case " ":
+        case ' ':
           e.preventDefault();
           callbacks.onSpace?.();
           break;
@@ -62,14 +63,12 @@ export const useKeyboardNavigation = (
           break;
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 };
 
-export const VisuallyHidden: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  return <span className="sr-only">{children}</span>;
+export const VisuallyHidden: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <span className='sr-only'>{children}</span>;
 };

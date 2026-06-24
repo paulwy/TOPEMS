@@ -1,5 +1,5 @@
-import React from "react";
-import { FileText, Download, X } from "lucide-react";
+import React from 'react';
+import { FileText, Download, X } from 'lucide-react';
 
 export interface ExportPreviewProps {
   isOpen: boolean;
@@ -20,59 +20,62 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
   columns,
   format,
   fileName,
-  title = "导出预览",
+  title = '导出预览',
 }) => {
   if (!isOpen) return null;
 
   const previewData = data.slice(0, 10);
   const getColumnLabel = (col: string) => {
-    return col.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+    return col.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         zIndex: 50,
         padding: 16,
       }}
     >
       <div
         style={{
-          backgroundColor: "white",
+          backgroundColor: 'white',
           borderRadius: 12,
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          width: "100%",
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          width: '100%',
           maxWidth: 896,
-          maxHeight: "90vh",
-          overflow: "hidden",
+          maxHeight: '90vh',
+          overflow: 'hidden',
         }}
       >
         <div
           style={{
             padding: 24,
-            borderBottom: "1px solid #e2e8f0",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            borderBottom: '1px solid #e2e8f0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <h3
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: "#0f172a",
+              color: '#0f172a',
               margin: 0,
             }}
           >
             {title}
           </h3>
-          <button onClick={onClose} style={{ color: "#94a3b8" }}>
+          <button
+            onClick={onClose}
+            style={{ color: '#94a3b8' }}
+          >
             <X style={{ width: 20, height: 20 }} />
           </button>
         </div>
@@ -80,60 +83,58 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
         <div
           style={{
             padding: 24,
-            maxHeight: "calc(90vh - 180px)",
-            overflow: "auto",
+            maxHeight: 'calc(90vh - 180px)',
+            overflow: 'auto',
           }}
         >
           <div
             style={{
-              backgroundColor: "#f0fdf4",
-              border: "1px solid #bbf7d0",
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #bbf7d0',
               borderRadius: 8,
               padding: 16,
               marginBottom: 16,
             }}
           >
-            <div
-              style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
-            >
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
               <FileText
                 style={{
                   width: 20,
                   height: 20,
-                  color: "#16a34a",
+                  color: '#16a34a',
                   marginRight: 8,
                 }}
               />
-              <span style={{ fontWeight: 500, color: "#166534" }}>
+              <span style={{ fontWeight: 500, color: '#166534' }}>
                 {fileName || `export.${format}`}
               </span>
             </div>
-            <p style={{ fontSize: 14, color: "#15803d", margin: 0 }}>
+            <p style={{ fontSize: 14, color: '#15803d', margin: 0 }}>
               共 {data.length} 条数据，{columns.length} 列
             </p>
           </div>
 
           <div
             style={{
-              border: "1px solid #e2e8f0",
+              border: '1px solid #e2e8f0',
               borderRadius: 8,
-              overflow: "hidden",
+              overflow: 'hidden',
             }}
           >
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
-                <thead style={{ backgroundColor: "#f8fafc" }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ backgroundColor: '#f8fafc' }}>
                   <tr>
                     {columns.map((col) => (
                       <th
                         key={col}
                         style={{
-                          padding: "8px 16px",
-                          textAlign: "left",
+                          padding: '8px 16px',
+                          textAlign: 'left',
                           fontSize: 12,
                           fontWeight: 500,
-                          color: "#64748b",
-                          textTransform: "uppercase",
+                          color: '#64748b',
+                          textTransform: 'uppercase',
                         }}
                       >
                         {getColumnLabel(col)}
@@ -141,19 +142,19 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
                     ))}
                   </tr>
                 </thead>
-                <tbody style={{ backgroundColor: "white" }}>
+                <tbody style={{ backgroundColor: 'white' }}>
                   {previewData.map((row, idx) => (
                     <tr key={idx}>
                       {columns.map((col) => (
                         <td
                           key={col}
                           style={{
-                            padding: "8px 16px",
+                            padding: '8px 16px',
                             fontSize: 14,
-                            color: "#0f172a",
+                            color: '#0f172a',
                           }}
                         >
-                          {String(row[col] || "")}
+                          {String(row[col] || '')}
                         </td>
                       ))}
                     </tr>
@@ -164,11 +165,11 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
             {data.length > 10 && (
               <div
                 style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#f8fafc",
+                  padding: '8px 16px',
+                  backgroundColor: '#f8fafc',
                   fontSize: 14,
-                  color: "#475569",
-                  textAlign: "center",
+                  color: '#475569',
+                  textAlign: 'center',
                 }}
               >
                 ... 还有 {data.length - 10} 行数据
@@ -180,18 +181,18 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
         <div
           style={{
             padding: 24,
-            borderTop: "1px solid #e2e8f0",
-            display: "flex",
-            justifyContent: "flex-end",
+            borderTop: '1px solid #e2e8f0',
+            display: 'flex',
+            justifyContent: 'flex-end',
             gap: 12,
           }}
         >
           <button
             onClick={onClose}
             style={{
-              padding: "8px 16px",
-              color: "#334155",
-              backgroundColor: "#f1f5f9",
+              padding: '8px 16px',
+              color: '#334155',
+              backgroundColor: '#f1f5f9',
               borderRadius: 8,
             }}
           >
@@ -200,13 +201,13 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
           <button
             onClick={onDownload}
             style={{
-              padding: "8px 16px",
-              backgroundColor: "#16a34a",
-              color: "white",
+              padding: '8px 16px',
+              backgroundColor: '#16a34a',
+              color: 'white',
               borderRadius: 8,
             }}
           >
-            <span style={{ display: "flex", alignItems: "center" }}>
+            <span style={{ display: 'flex', alignItems: 'center' }}>
               <Download style={{ width: 16, height: 16, marginRight: 8 }} />
               下载文件
             </span>

@@ -1,6 +1,6 @@
-import apiClient, { downloadBlob } from "./client";
-import type { ApiResponse } from "./client";
-import config from "../config/runtime";
+import apiClient, { downloadBlob } from './client';
+import type { ApiResponse } from './client';
+import config from '../config/runtime';
 
 export interface FileMetadata {
   id: string;
@@ -56,24 +56,21 @@ export const docApi = {
   list: async (folderId?: string): Promise<ApiResponse<FileListResponse>> => {
     const params = folderId ? { folder_id: folderId } : {};
     // 使用 doc 服务，路径 /doc/* 会被代理到 /api/core/doc/*
-    return apiClient.doc.get<FileListResponse>("/documents", { params });
+    return apiClient.doc.get<FileListResponse>('/documents', { params });
   },
 
   get: async (id: string): Promise<ApiResponse<FileMetadata>> => {
     return apiClient.doc.get<FileMetadata>(`/documents/${id}`);
   },
 
-  upload: async (
-    file: File,
-    folderId?: string,
-  ): Promise<ApiResponse<FileMetadata>> => {
+  upload: async (file: File, folderId?: string): Promise<ApiResponse<FileMetadata>> => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
     if (folderId) {
-      formData.append("folder_id", folderId);
+      formData.append('folder_id', folderId);
     }
     // 上传使用 file 服务
-    return apiClient.file.post<FileMetadata>("/upload", formData);
+    return apiClient.file.post<FileMetadata>('/upload', formData);
   },
 
   download: async (id: string): Promise<Blob> => {
@@ -92,27 +89,20 @@ export const docApi = {
 
   // ========== 文件夹操作 (使用 /api/core/doc/folders) ==========
 
-  listFolders: async (
-    parentId?: string,
-  ): Promise<ApiResponse<ListFoldersData>> => {
+  listFolders: async (parentId?: string): Promise<ApiResponse<ListFoldersData>> => {
     const params = parentId ? { parent_id: parentId } : {};
-    return apiClient.doc.get<ListFoldersData>("/folders", { params });
+    return apiClient.doc.get<ListFoldersData>('/folders', { params });
   },
 
-  createFolder: async (
-    request: CreateFolderRequest,
-  ): Promise<ApiResponse<Folder>> => {
-    return apiClient.doc.post<Folder>("/folders", request);
+  createFolder: async (request: CreateFolderRequest): Promise<ApiResponse<Folder>> => {
+    return apiClient.doc.post<Folder>('/folders', request);
   },
 
   getFolder: async (id: string): Promise<ApiResponse<Folder>> => {
     return apiClient.doc.get<Folder>(`/folders/${id}`);
   },
 
-  updateFolder: async (
-    id: string,
-    request: CreateFolderRequest,
-  ): Promise<ApiResponse<Folder>> => {
+  updateFolder: async (id: string, request: CreateFolderRequest): Promise<ApiResponse<Folder>> => {
     return apiClient.doc.put<Folder>(`/folders/${id}`, request);
   },
 
@@ -123,6 +113,6 @@ export const docApi = {
   // ========== 健康检查 ==========
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.doc.get<string>("/health");
+    return apiClient.doc.get<string>('/health');
   },
 };

@@ -1,0 +1,201 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "productName": "TOPEMS",
+  "version": "1.0.0",
+  "identifier": "com.topems.desktop",
+  "description": "TOPEMS Enterprise Management System Desktop Application",
+  "copyright": "Copyright 2024 TOPEMS Team",
+  "icon": [
+    "icons/32x32.png",
+    "icons/128x128.png",
+    "icons/128x128@2x.png",
+    "icons/icon.icns",
+    "icons/icon.ico"
+  ],
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:5173",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "TOPEMS",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "resources": [],
+      "externalBin": [],
+      "copyright": "Copyright 2024 TOPEMS Team",
+      "category": "Business",
+      "shortDescription": "Enterprise Management System",
+      "longDescription": "TOPEMS is a comprehensive enterprise management system providing integrated solutions for HR, CRM, ERP, and more."
+    },
+    "windows": [
+      {
+        "title": "TOPEMS - Enterprise Management System",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 768,
+        "resizable": true,
+        "maximizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "focus": true,
+        "center": true,
+        "visible": true,
+        "titleBarStyle": "default"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' http://localhost:8080 https://api.topems.com;"
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://api.topems.com/updates/{{target}}/{{arch}}"
+      ],
+      "pubkey": "YOUR_PUBLIC_KEY",
+      "windows": {
+        "installMode": "passive"
+      }
+    },
+    "menu": {
+      "appMenu": [
+        {
+          "label": "文件",
+          "submenu": [
+            {
+              "label": "新建",
+              "accelerator": "CmdOrCtrl+N"
+            },
+            {
+              "label": "打开",
+              "accelerator": "CmdOrCtrl+O"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "label": "退出",
+              "accelerator": "CmdOrCtrl+Q",
+              "role": "quit"
+            }
+          ]
+        },
+        {
+          "label": "编辑",
+          "submenu": [
+            {
+              "label": "撤销",
+              "accelerator": "CmdOrCtrl+Z",
+              "role": "undo"
+            },
+            {
+              "label": "重做",
+              "accelerator": "Shift+CmdOrCtrl+Z",
+              "role": "redo"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "label": "剪切",
+              "accelerator": "CmdOrCtrl+X",
+              "role": "cut"
+            },
+            {
+              "label": "复制",
+              "accelerator": "CmdOrCtrl+C",
+              "role": "copy"
+            },
+            {
+              "label": "粘贴",
+              "accelerator": "CmdOrCtrl+V",
+              "role": "paste"
+            },
+            {
+              "label": "全选",
+              "accelerator": "CmdOrCtrl+A",
+              "role": "selectAll"
+            }
+          ]
+        },
+        {
+          "label": "视图",
+          "submenu": [
+            {
+              "label": "刷新",
+              "accelerator": "CmdOrCtrl+R"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "label": "切换全屏",
+              "accelerator": "F11",
+              "role": "toggleFullscreen"
+            }
+          ]
+        },
+        {
+          "label": "帮助",
+          "submenu": [
+            {
+              "label": "关于 TOPEMS",
+              "role": "about"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "label": "检查更新"
+            }
+          ]
+        }
+      ],
+      "systemTray": {
+        "iconPath": "icons/128x128.png",
+        "iconAsTemplate": true,
+        "menu": [
+          {
+            "label": "显示主窗口",
+            "action": "show"
+          },
+          {
+            "label": "隐藏主窗口",
+            "action": "hide"
+          },
+          {
+            "type": "separator"
+          },
+          {
+            "label": "退出",
+            "role": "quit"
+          }
+        ]
+      }
+    },
+    "plugins": {
+      "shell": {},
+      "fs": {},
+      "dialog": {},
+      "opener": {},
+      "log": {}
+    }
+  }
+}

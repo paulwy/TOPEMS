@@ -1,21 +1,21 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
 export type ReportType =
-  | "rs_project_progress"
-  | "rs_experiment_record"
-  | "lims_inspection_stats"
-  | "lims_sample_summary"
-  | "qms_quality_analysis"
-  | "qms_defect_stats"
-  | "ehs_safety_check"
-  | "ehs_risk_assessment"
-  | "srm_supplier_eval"
-  | "srm_purchase_stats"
-  | "pdm_production_stats"
-  | "pdm_process_summary";
+  | 'rs_project_progress'
+  | 'rs_experiment_record'
+  | 'lims_inspection_stats'
+  | 'lims_sample_summary'
+  | 'qms_quality_analysis'
+  | 'qms_defect_stats'
+  | 'ehs_safety_check'
+  | 'ehs_risk_assessment'
+  | 'srm_supplier_eval'
+  | 'srm_purchase_stats'
+  | 'pdm_production_stats'
+  | 'pdm_process_summary';
 
-export type ExportFormat = "excel" | "pdf" | "csv";
+export type ExportFormat = 'excel' | 'pdf' | 'csv';
 
 export interface DateRange {
   start_date: string;
@@ -183,9 +183,9 @@ export interface ReportsCenterStats {
   activityTypes: ActivityTypeDataPoint[];
 }
 
-export type ScheduleType = "cron" | "interval" | "one_time";
+export type ScheduleType = 'cron' | 'interval' | 'one_time';
 
-export type ScheduleStatus = "active" | "paused" | "completed" | "failed";
+export type ScheduleStatus = 'active' | 'paused' | 'completed' | 'failed';
 
 export interface ReportSchedule {
   id: string;
@@ -235,11 +235,7 @@ export interface ScheduleExecutionRecord {
   completed_at?: string;
 }
 
-export type SubscriptionFrequency =
-  | "daily"
-  | "weekly"
-  | "monthly"
-  | "quarterly";
+export type SubscriptionFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly';
 
 export interface ReportSubscription {
   id: string;
@@ -270,31 +266,26 @@ export interface UpdateSubscriptionRequest {
 
 export const reportApi = {
   listReports: async (): Promise<ApiResponse<ReportData[]>> => {
-    return apiClient.report.get<ReportData[]>("/api/report/reports");
+    return apiClient.report.get<ReportData[]>('/api/report/reports');
   },
 
   getReport: async (id: string): Promise<ApiResponse<ReportData>> => {
     return apiClient.report.get<ReportData>(`/api/report/reports/${id}`);
   },
 
-  createReport: async (
-    data: CreateReportRequest,
-  ): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.post<ReportData>("/api/report/reports", data);
+  createReport: async (data: CreateReportRequest): Promise<ApiResponse<ReportData>> => {
+    return apiClient.report.post<ReportData>('/api/report/reports', data);
   },
 
   createReportFromTemplate: async (
-    data: CreateReportFromTemplateRequest,
+    data: CreateReportFromTemplateRequest
   ): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.post<ReportData>(
-      "/api/report/reports/from-template",
-      data,
-    );
+    return apiClient.report.post<ReportData>('/api/report/reports/from-template', data);
   },
 
   updateReport: async (
     id: string,
-    data: Partial<ReportConfig>,
+    data: Partial<ReportConfig>
   ): Promise<ApiResponse<ReportData>> => {
     return apiClient.report.put<ReportData>(`/api/report/reports/${id}`, data);
   },
@@ -305,12 +296,9 @@ export const reportApi = {
 
   exportReport: async (
     id: string,
-    data: ExportReportRequest,
+    data: ExportReportRequest
   ): Promise<ApiResponse<ExportResult>> => {
-    return apiClient.report.post<ExportResult>(
-      `/api/report/reports/${id}/export`,
-      data,
-    );
+    return apiClient.report.post<ExportResult>(`/api/report/reports/${id}/export`, data);
   },
 
   runReport: async (id: string): Promise<ApiResponse<ReportData>> => {
@@ -318,7 +306,7 @@ export const reportApi = {
   },
 
   listTemplates: async (): Promise<ApiResponse<ReportTemplate[]>> => {
-    return apiClient.report.get<ReportTemplate[]>("/api/report/templates");
+    return apiClient.report.get<ReportTemplate[]>('/api/report/templates');
   },
 
   getTemplate: async (id: string): Promise<ApiResponse<ReportTemplate>> => {
@@ -326,19 +314,16 @@ export const reportApi = {
   },
 
   createTemplate: async (
-    data: Omit<ReportTemplate, "id" | "created_at" | "updated_at">,
+    data: Omit<ReportTemplate, 'id' | 'created_at' | 'updated_at'>
   ): Promise<ApiResponse<ReportTemplate>> => {
-    return apiClient.report.post<ReportTemplate>("/api/report/templates", data);
+    return apiClient.report.post<ReportTemplate>('/api/report/templates', data);
   },
 
   updateTemplate: async (
     id: string,
-    data: Partial<ReportTemplate>,
+    data: Partial<ReportTemplate>
   ): Promise<ApiResponse<ReportTemplate>> => {
-    return apiClient.report.put<ReportTemplate>(
-      `/api/report/templates/${id}`,
-      data,
-    );
+    return apiClient.report.put<ReportTemplate>(`/api/report/templates/${id}`, data);
   },
 
   deleteTemplate: async (id: string): Promise<ApiResponse<boolean>> => {
@@ -346,31 +331,26 @@ export const reportApi = {
   },
 
   listReportTypes: async (): Promise<ApiResponse<ReportTypeInfo[]>> => {
-    return apiClient.report.get<ReportTypeInfo[]>("/api/report/report-types");
+    return apiClient.report.get<ReportTypeInfo[]>('/api/report/report-types');
   },
 
   listSchedules: async (): Promise<ApiResponse<ReportSchedule[]>> => {
-    return apiClient.report.get<ReportSchedule[]>("/api/report/schedules");
+    return apiClient.report.get<ReportSchedule[]>('/api/report/schedules');
   },
 
   getSchedule: async (id: string): Promise<ApiResponse<ReportSchedule>> => {
     return apiClient.report.get<ReportSchedule>(`/api/report/schedules/${id}`);
   },
 
-  createSchedule: async (
-    data: CreateScheduleRequest,
-  ): Promise<ApiResponse<ReportSchedule>> => {
-    return apiClient.report.post<ReportSchedule>("/api/report/schedules", data);
+  createSchedule: async (data: CreateScheduleRequest): Promise<ApiResponse<ReportSchedule>> => {
+    return apiClient.report.post<ReportSchedule>('/api/report/schedules', data);
   },
 
   updateSchedule: async (
     id: string,
-    data: UpdateScheduleRequest,
+    data: UpdateScheduleRequest
   ): Promise<ApiResponse<ReportSchedule>> => {
-    return apiClient.report.put<ReportSchedule>(
-      `/api/report/schedules/${id}`,
-      data,
-    );
+    return apiClient.report.put<ReportSchedule>(`/api/report/schedules/${id}`, data);
   },
 
   deleteSchedule: async (id: string): Promise<ApiResponse<boolean>> => {
@@ -378,89 +358,60 @@ export const reportApi = {
   },
 
   executeSchedule: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.report.post<boolean>(
-      `/api/report/schedules/${id}/execute`,
-    );
+    return apiClient.report.post<boolean>(`/api/report/schedules/${id}/execute`);
   },
 
-  getExecutionHistory: async (
-    id: string,
-  ): Promise<ApiResponse<ScheduleExecutionRecord[]>> => {
-    return apiClient.report.get<ScheduleExecutionRecord[]>(
-      `/api/report/schedules/${id}/history`,
-    );
+  getExecutionHistory: async (id: string): Promise<ApiResponse<ScheduleExecutionRecord[]>> => {
+    return apiClient.report.get<ScheduleExecutionRecord[]>(`/api/report/schedules/${id}/history`);
   },
 
   listSubscriptions: async (): Promise<ApiResponse<ReportSubscription[]>> => {
-    return apiClient.report.get<ReportSubscription[]>(
-      "/api/report/subscriptions",
-    );
+    return apiClient.report.get<ReportSubscription[]>('/api/report/subscriptions');
   },
 
-  getSubscription: async (
-    id: string,
-  ): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.get<ReportSubscription>(
-      `/api/report/subscriptions/${id}`,
-    );
+  getSubscription: async (id: string): Promise<ApiResponse<ReportSubscription>> => {
+    return apiClient.report.get<ReportSubscription>(`/api/report/subscriptions/${id}`);
   },
 
   createSubscription: async (
-    data: CreateSubscriptionRequest,
+    data: CreateSubscriptionRequest
   ): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.post<ReportSubscription>(
-      "/api/report/subscriptions",
-      data,
-    );
+    return apiClient.report.post<ReportSubscription>('/api/report/subscriptions', data);
   },
 
   updateSubscription: async (
     id: string,
-    data: UpdateSubscriptionRequest,
+    data: UpdateSubscriptionRequest
   ): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.put<ReportSubscription>(
-      `/api/report/subscriptions/${id}`,
-      data,
-    );
+    return apiClient.report.put<ReportSubscription>(`/api/report/subscriptions/${id}`, data);
   },
 
   deleteSubscription: async (id: string): Promise<ApiResponse<boolean>> => {
     return apiClient.report.delete<boolean>(`/api/report/subscriptions/${id}`);
   },
 
-  toggleSubscription: async (
-    id: string,
-  ): Promise<ApiResponse<ReportSubscription>> => {
-    return apiClient.report.post<ReportSubscription>(
-      `/api/report/subscriptions/${id}/toggle`,
-    );
+  toggleSubscription: async (id: string): Promise<ApiResponse<ReportSubscription>> => {
+    return apiClient.report.post<ReportSubscription>(`/api/report/subscriptions/${id}/toggle`);
   },
 
-  getUserSubscriptions: async (
-    user_id: string,
-  ): Promise<ApiResponse<ReportSubscription[]>> => {
-    return apiClient.report.get<ReportSubscription[]>(
-      `/api/report/subscriptions/user/${user_id}`,
-    );
+  getUserSubscriptions: async (user_id: string): Promise<ApiResponse<ReportSubscription[]>> => {
+    return apiClient.report.get<ReportSubscription[]>(`/api/report/subscriptions/user/${user_id}`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.report.get<string>("/health");
+    return apiClient.report.get<string>('/health');
   },
 
   getReportsCenterStats: async (): Promise<ApiResponse<ReportsCenterStats>> => {
-    return apiClient.report.get<ReportsCenterStats>(
-      "/api/report/reports-center/stats",
-    );
+    return apiClient.report.get<ReportsCenterStats>('/api/report/reports-center/stats');
   },
 
   exportStatsReport: async (
-    reportType: "users" | "permissions" | "activities",
-    format: ExportFormat,
+    reportType: 'users' | 'permissions' | 'activities',
+    format: ExportFormat
   ): Promise<ApiResponse<ExportResult>> => {
-    return apiClient.report.post<ExportResult>(
-      `/api/report/reports-center/export/${reportType}`,
-      { format },
-    );
+    return apiClient.report.post<ExportResult>(`/api/report/reports-center/export/${reportType}`, {
+      format,
+    });
   },
 };

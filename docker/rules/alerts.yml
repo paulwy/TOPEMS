@@ -2,7 +2,7 @@ groups:
   - name: topems-service-alerts
     rules:
       - alert: ServiceDown
-        expr: up == 0
+        expr: up{job=~"topems-.*"} == 0
         for: 30s
         labels:
           severity: critical
@@ -12,14 +12,24 @@ groups:
           description: "服务 {{ $labels.job }} 在 {{ $labels.instance }} 上已停止运行超过30秒"
 
       - alert: ServiceHighErrorRate
-        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job) > 0.05
         for: 1m
         labels:
           severity: warning
           team: devops
         annotations:
           summary: "服务 {{ $labels.job }} 错误率过高"
-          description: "服务 {{ $labels.job }} 错误率超过5% (当前: {{ $value }}%)"
+          description: "服务 {{ $labels.job }} 错误率超过5% (当前: {{ $value | humanizePercentage }})"
+
+      - alert: ServiceCriticalErrorRate
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job) > 0.01
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 发生严重错误"
+          description: "服务 {{ $labels.job }} 错误率超过1% (当前: {{ $value | humanizePercentage }})"
 
       - alert: ServiceHighLatency
         expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 2
@@ -29,22 +39,42 @@ groups:
           team: devops
         annotations:
           summary: "服务 {{ $labels.job }} 响应时间过长"
-          description: "服务 {{ $labels.job }} P95响应时间超过2秒"
+          description: "服务 {{ $labels.job }} P95响应时间超过2秒 (当前: {{ $value | humanizeDuration }})"
+
+      - alert: ServiceCriticalLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 5
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "服务 {{ $labels.job }} 响应时间严重超时"
+          description: "服务 {{ $labels.job }} P95响应时间超过5秒 (当前: {{ $value | humanizeDuration }})"
 
   - name: topems-database-alerts
     rules:
       - alert: DatabaseConnectionPoolHigh
-        expr: pg_stat_activity_count / pg_settings_max_connections > 0.8
+        expr: sum(pg_stat_activity_count{datname="topems"}) / pg_settings_max_connections > 0.8
         for: 1m
         labels:
           severity: warning
           team: devops
         annotations:
           summary: "PostgreSQL连接池使用率过高"
-          description: "连接池使用率: {{ $value }}%"
+          description: "连接池使用率: {{ $value | humanizePercentage }}"
+
+      - alert: DatabaseConnectionPoolCritical
+        expr: sum(pg_stat_activity_count{datname="topems"}) / pg_settings_max_connections > 0.9
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "PostgreSQL连接池即将耗尽"
+          description: "连接池使用率: {{ $value | humanizePercentage }}"
 
       - alert: DatabaseSlowQueries
-        expr: sum(rate(pg_stat_statements_total_time[5m])) by (queryid) > 60
+        expr: rate(pg_stat_statements_total_time[5m]) > 60
         for: 1m
         labels:
           severity: warning
@@ -73,7 +103,17 @@ groups:
           team: devops
         annotations:
           summary: "Redis内存使用率过高"
-          description: "内存使用率: {{ $value }}%"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
+
+      - alert: RedisCriticalMemoryUsage
+        expr: redis_used_memory / redis_maxmemory > 0.9
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Redis内存即将耗尽"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
 
       - alert: RedisHighConnectionCount
         expr: redis_connected_clients > 100
@@ -95,6 +135,28 @@ groups:
           summary: "Redis慢命令过多"
           description: "慢命令数量: {{ $value }}"
 
+  - name: topems-rabbitmq-alerts
+    rules:
+      - alert: RabbitMQHighQueueDepth
+        expr: rabbitmq_queue_messages > 1000
+        for: 2m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "RabbitMQ队列消息积压"
+          description: "队列消息数: {{ $value }}"
+
+      - alert: RabbitMQNoConsumers
+        expr: rabbitmq_queue_consumers == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "RabbitMQ队列没有消费者"
+          description: "队列 {{ $labels.queue }} 没有活跃消费者"
+
   - name: topems-resource-alerts
     rules:
       - alert: HighCPUUsage
@@ -105,7 +167,17 @@ groups:
           team: devops
         annotations:
           summary: "CPU使用率过高"
-          description: "CPU使用率: {{ $value }}%"
+          description: "CPU使用率: {{ $value | humanizePercentage }}"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[1m])) * 100) > 95
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "CPU使用率严重过高"
+          description: "CPU使用率: {{ $value | humanizePercentage }}"
 
       - alert: HighMemoryUsage
         expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
@@ -115,7 +187,17 @@ groups:
           team: devops
         annotations:
           summary: "内存使用率过高"
-          description: "内存使用率: {{ $value }}%"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
+
+      - alert: CriticalMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 95
+        for: 30s
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "内存使用率严重过高"
+          description: "内存使用率: {{ $value | humanizePercentage }}"
 
       - alert: HighDiskUsage
         expr: 100 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) > 90
@@ -125,7 +207,73 @@ groups:
           team: devops
         annotations:
           summary: "磁盘使用率过高"
-          description: "磁盘使用率: {{ $value }}%"
+          description: "磁盘使用率: {{ $value | humanizePercentage }}"
+
+  - name: topems-erp-alerts
+    rules:
+      - alert: ErpHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"topems-erp.*"}[5m])) by (le)) > 1
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "ERP服务响应时间过长"
+          description: "ERP服务P95延迟超过1秒"
+
+      - alert: ErpHighErrorRate
+        expr: sum(rate(http_requests_total{job=~"topems-erp.*", status_code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total{job=~"topems-erp.*"}[5m])) by (job) > 0.01
+        for: 30s
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "ERP服务错误率过高"
+          description: "ERP服务错误率: {{ $value | humanizePercentage }}"
+
+  - name: topems-hrm-alerts
+    rules:
+      - alert: HrmHighEmployeeQueryLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"topems-hrm.*"}[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "HRM员工查询延迟过高"
+          description: "P95查询延迟超过500ms"
+
+      - alert: HrmHighDepartmentQueryLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"topems-hrm.*"}[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "HRM部门查询延迟过高"
+          description: "P95查询延迟超过500ms"
+
+  - name: topems-mes-alerts
+    rules:
+      - alert: MesHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~"topems-mes.*"}[5m])) by (le)) > 2
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "MES服务响应时间过长"
+          description: "MES服务P95延迟超过2秒"
+
+      - alert: MesHighErrorRate
+        expr: sum(rate(http_requests_total{job=~"topems-mes.*", status_code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total{job=~"topems-mes.*"}[5m])) by (job) > 0.01
+        for: 30s
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "MES服务错误率过高"
+          description: "MES服务错误率: {{ $value | humanizePercentage }}"
 
   - name: topems-shared-schema-alerts
     rules:
@@ -137,7 +285,7 @@ groups:
           team: devops
         annotations:
           summary: "shared schema查询延迟过高"
-          description: "P95查询延迟: {{ $value }}秒"
+          description: "P95查询延迟: {{ $value | humanizeDuration }}"
 
       - alert: SharedSchemaHighErrorRate
         expr: sum(rate(shared_schema_query_errors_total[5m])) > 0
@@ -149,24 +297,24 @@ groups:
           summary: "shared schema查询错误"
           description: "错误数量: {{ $value }}"
 
-  - name: topems-hrm-alerts
+  - name: topems-qps-alerts
     rules:
-      - alert: HrmHighEmployeeQueryLatency
-        expr: histogram_quantile(0.95, sum(rate(hrm_employee_query_duration_seconds_bucket[5m])) by (le)) > 0.5
-        for: 1m
+      - alert: ServiceLowQPS
+        expr: sum(rate(http_requests_total[5m])) by (job) < 1
+        for: 5m
         labels:
-          severity: warning
+          severity: info
           team: devops
         annotations:
-          summary: "HRM员工查询延迟过高"
-          description: "P95查询延迟: {{ $value }}秒"
+          summary: "服务 {{ $labels.job }} 请求量过低"
+          description: "服务 {{ $labels.job }} QPS低于1，可能存在异常"
 
-      - alert: HrmHighDepartmentQueryLatency
-        expr: histogram_quantile(0.95, sum(rate(hrm_department_query_duration_seconds_bucket[5m])) by (le)) > 0.5
+      - alert: ServiceHighQPS
+        expr: sum(rate(http_requests_total[5m])) by (job) > 1000
         for: 1m
         labels:
           severity: warning
           team: devops
         annotations:
-          summary: "HRM部门查询延迟过高"
-          description: "P95查询延迟: {{ $value }}秒"
+          summary: "服务 {{ $labels.job }} 请求量过高"
+          description: "服务 {{ $labels.job }} QPS超过1000"

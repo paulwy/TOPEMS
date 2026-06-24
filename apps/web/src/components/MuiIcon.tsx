@@ -1,8 +1,8 @@
-import * as React from "react";
-import { styled } from "@mui/material/styles";
-import type { LucideIcon, LucideProps } from "lucide-react";
+import * as React from 'react';
+import { styled } from '@mui/material/styles';
+import type { LucideIcon, LucideProps } from 'lucide-react';
 
-export interface MuiIconProps extends Omit<LucideProps, "size"> {
+export interface MuiIconProps extends Omit<LucideProps, 'size'> {
   icon: LucideIcon;
   size?: number;
 }
@@ -10,7 +10,12 @@ export interface MuiIconProps extends Omit<LucideProps, "size"> {
 export const MuiIcon = styled(
   React.forwardRef<SVGSVGElement, MuiIconProps>(
     ({ icon: Icon, size = 24, style, ...props }, ref) => (
-      <Icon ref={ref as any} size={size} style={style} {...props} />
-    ),
-  ),
+      <Icon
+        ref={ref as any}
+        size={size}
+        style={style}
+        {...props}
+      />
+    )
+  )
 )<MuiIconProps>``;

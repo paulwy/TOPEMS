@@ -8,6 +8,9 @@ use uuid::Uuid;
 use crate::db::SharedRepository;
 use crate::models::*;
 
+/// ID 序列号的 TTL（秒）- 24小时
+const SEQUENCE_TTL_SECONDS: u64 = 86400;
+
 pub struct SharedService {
     repository: Arc<SharedRepository>,
     redis_client: redis::Client,
@@ -38,9 +41,13 @@ impl SharedService {
         let prefix = self.id_prefixes.get(&request.id_type)
             .ok_or(format!("Unknown ID type: {}", request.id_type))?;
 
-        let key = format!("id:seq:{}", request.id_type);
+        // 使用统一缓存 key 格式: shared:id:seq:{type}
+        let key = format!("shared:id:seq:{}", request.id_type);
         let mut conn = self.redis_client.get_async_connection().await?;
         let seq: u64 = conn.incr(&key, 1).await?;
+        
+        // 为序列号添加 TTL，防止 Redis 键无限增长
+        let _: () = conn.expire(&key, SEQUENCE_TTL_SECONDS).await?;
 
         let id = format!("{}{:08}", prefix, seq);
 

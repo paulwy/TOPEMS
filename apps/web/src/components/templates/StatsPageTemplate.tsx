@@ -3,18 +3,30 @@
  * 适用于数据统计、仪表盘、分析报表等场景
  */
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Box, Paper, Typography, TextField, InputAdornment, IconButton, Select, MenuItem, FormControl, InputLabel, Chip, Skeleton, Tooltip, Tabs, Tab, useTheme, useMediaQuery, Divider,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useCallback, useMemo } from 'react';
 import {
-  Search,
-  RefreshCw,
-  Download,
-  Filter,
-  ChevronDown,
-  Calendar,
-} from "lucide-react";
-import { EmptyState } from "@/components/mui";
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Chip,
+  Skeleton,
+  Tooltip,
+  Tabs,
+  Tab,
+  useTheme,
+  useMediaQuery,
+  Divider,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { Search, RefreshCw, Download, Filter, ChevronDown, Calendar } from 'lucide-react';
+import { EmptyState } from '@/components/mui';
 
 /**
  * 统计指标卡片类型
@@ -24,13 +36,13 @@ export interface StatCard {
   title: string;
   value: string | number;
   icon?: React.ReactNode;
-  color?: "primary" | "success" | "warning" | "error" | "info";
+  color?: 'primary' | 'success' | 'warning' | 'error' | 'info';
   suffix?: string;
   prefix?: string;
   description?: string;
   trend?: {
     value: number;
-    direction: "up" | "down" | "neutral";
+    direction: 'up' | 'down' | 'neutral';
     label?: string;
   };
   gradient?: [string, string];
@@ -52,7 +64,7 @@ export interface ChartData {
 export interface ChartConfig {
   id: string;
   title: string;
-  type: "line" | "bar" | "pie" | "donut" | "area" | "radar";
+  type: 'line' | 'bar' | 'pie' | 'donut' | 'area' | 'radar';
   dataKey: string;
   nameKey: string;
   data: ChartData[];
@@ -74,7 +86,7 @@ export interface TableColumn {
   label: string;
   field?: string;
   render?: (value: any, row: any) => React.ReactNode;
-  align?: "left" | "center" | "right";
+  align?: 'left' | 'center' | 'right';
   width?: number | string;
   sortable?: boolean;
 }
@@ -193,7 +205,7 @@ export interface StatsPageTemplateProps {
   /** 是否显示统计卡片网格 */
   showStatCards?: boolean;
   /** 统计卡片排列方向 */
-  statCardDirection?: "row" | "column";
+  statCardDirection?: 'row' | 'column';
 }
 
 /**
@@ -215,7 +227,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   search,
   onSearch,
   onExport,
-  exportText = "导出",
+  exportText = '导出',
   onRefresh,
   tabs = [],
   tabValue,
@@ -231,19 +243,21 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   showTables = true,
   chartMinHeight = 300,
   showStatCards = true,
-  statCardDirection = "row",
+  statCardDirection = 'row',
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   // 内部状态
-  const [internalTabValue, setInternalTabValue] = useState<string>("");
+  const [internalTabValue, setInternalTabValue] = useState<string>('');
 
   // 使用受控或内部状态
   const activeTabValue = tabValue !== undefined ? tabValue : internalTabValue;
-  const setActiveTabValue =
-    tabValue !== undefined ? () => {} : setInternalTabValue;
+  const setActiveTabValue = useMemo(
+    () => (tabValue !== undefined ? () => {} : setInternalTabValue),
+    [tabValue]
+  );
 
   // 标签页变更
   const handleTabChange = useCallback(
@@ -251,7 +265,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       setActiveTabValue(newValue);
       onTabChange?.(newValue);
     },
-    [onTabChange, setActiveTabValue],
+    [onTabChange, setActiveTabValue]
   );
 
   // 渲染统计卡片
@@ -261,51 +275,49 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
     return (
       <Box
         sx={{
-          display: "flex",
-          flexDirection: statCardDirection === "column" ? "column" : "row",
+          display: 'flex',
+          flexDirection: statCardDirection === 'column' ? 'column' : 'row',
           gap: 2,
           mb: 3,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         {statCards.map((stat) => (
           <Paper
             key={stat.id}
             sx={{
-              flex: statCardDirection === "row" ? 1 : undefined,
-              minWidth: statCardDirection === "row" ? 200 : "100%",
+              flex: statCardDirection === 'row' ? 1 : undefined,
+              minWidth: statCardDirection === 'row' ? 200 : '100%',
               p: 2.5,
               borderRadius: 2,
               background: stat.gradient
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
-              bgcolor: stat.gradient ? undefined : "background.paper",
-              color: stat.gradient ? "white" : "inherit",
-              position: "relative",
-              overflow: "hidden",
-              transition: "all 0.2s ease",
-              "&:hover": {
-                transform: "translateY(-2px)",
+              bgcolor: stat.gradient ? undefined : 'background.paper',
+              color: stat.gradient ? 'white' : 'inherit',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
                 boxShadow: 4,
               },
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
               {stat.icon && (
                 <Box
                   sx={{
                     width: 48,
                     height: 48,
                     borderRadius: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     bgcolor: stat.gradient
-                      ? "rgba(255,255,255,0.2)"
-                      : `${stat.color || "primary"}.light`,
-                    color: stat.gradient
-                      ? "white"
-                      : `${stat.color || "primary"}.main`,
+                      ? 'rgba(255,255,255,0.2)'
+                      : `${stat.color || 'primary'}.light`,
+                    color: stat.gradient ? 'white' : `${stat.color || 'primary'}.main`,
                   }}
                 >
                   {stat.icon}
@@ -313,45 +325,41 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               )}
               <Box sx={{ flex: 1 }}>
                 <Typography
-                  variant="caption"
+                  variant='caption'
                   sx={{
                     opacity: stat.gradient ? 0.8 : 1,
-                    color: stat.gradient
-                      ? "rgba(255,255,255,0.8)"
-                      : "text.secondary",
+                    color: stat.gradient ? 'rgba(255,255,255,0.8)' : 'text.secondary',
                   }}
                 >
                   {stat.title}
                 </Typography>
-                <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
                   {stat.prefix && (
                     <Typography
-                      variant="h4"
+                      variant='h4'
                       sx={{
                         fontWeight: 700,
-                        color: stat.gradient ? "white" : "text.primary",
+                        color: stat.gradient ? 'white' : 'text.primary',
                       }}
                     >
                       {stat.prefix}
                     </Typography>
                   )}
                   <Typography
-                    variant="h3"
+                    variant='h3'
                     sx={{
                       fontWeight: 700,
-                      color: stat.gradient ? "white" : "text.primary",
+                      color: stat.gradient ? 'white' : 'text.primary',
                     }}
                   >
                     {stat.value}
                   </Typography>
                   {stat.suffix && (
                     <Typography
-                      variant="h5"
+                      variant='h5'
                       sx={{
                         fontWeight: 500,
-                        color: stat.gradient
-                          ? "rgba(255,255,255,0.8)"
-                          : "text.secondary",
+                        color: stat.gradient ? 'rgba(255,255,255,0.8)' : 'text.secondary',
                       }}
                     >
                       {stat.suffix}
@@ -360,11 +368,9 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 </Box>
                 {stat.description && (
                   <Typography
-                    variant="caption"
+                    variant='caption'
                     sx={{
-                      color: stat.gradient
-                        ? "rgba(255,255,255,0.7)"
-                        : "text.secondary",
+                      color: stat.gradient ? 'rgba(255,255,255,0.7)' : 'text.secondary',
                     }}
                   >
                     {stat.description}
@@ -376,39 +382,36 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             {/* 趋势指示器 */}
             {stat.trend && (
               <Chip
-                size="small"
+                size='small'
                 icon={
-                  stat.trend.direction === "up" ? (
+                  stat.trend.direction === 'up' ? (
                     <TrendingUpIcon />
-                  ) : stat.trend.direction === "down" ? (
+                  ) : stat.trend.direction === 'down' ? (
                     <TrendingDownIcon />
                   ) : undefined
                 }
-                label={
-                  stat.trend.label ||
-                  `${stat.trend.value > 0 ? "+" : ""}${stat.trend.value}%`
-                }
+                label={stat.trend.label || `${stat.trend.value > 0 ? '+' : ''}${stat.trend.value}%`}
                 sx={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 12,
                   right: 12,
                   bgcolor:
-                    stat.trend.direction === "up"
+                    stat.trend.direction === 'up'
                       ? stat.gradient
-                        ? "rgba(255,255,255,0.2)"
-                        : "success.light"
-                      : stat.trend.direction === "down"
+                        ? 'rgba(255,255,255,0.2)'
+                        : 'success.light'
+                      : stat.trend.direction === 'down'
                         ? stat.gradient
-                          ? "rgba(255,255,255,0.2)"
-                          : "error.light"
-                        : "grey.200",
+                          ? 'rgba(255,255,255,0.2)'
+                          : 'error.light'
+                        : 'grey.200',
                   color: stat.gradient
-                    ? "white"
-                    : stat.trend.direction === "up"
-                      ? "success.main"
-                      : stat.trend.direction === "down"
-                        ? "error.main"
-                        : "text.secondary",
+                    ? 'white'
+                    : stat.trend.direction === 'up'
+                      ? 'success.main'
+                      : stat.trend.direction === 'down'
+                        ? 'error.main'
+                        : 'text.secondary',
                   fontWeight: 500,
                 }}
               />
@@ -426,16 +429,19 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
     return (
       <Box sx={{ mb: 3 }}>
         {chartSectionTitle && (
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
             {chartSectionTitle}
           </Typography>
         )}
 
         <Box
           sx={{
-            display: "grid",
+            display: 'grid',
             gridTemplateColumns: {
-              xs: "1fr",
+              xs: '1fr',
               sm: `repeat(${chartColumns.sm || 2}, 1fr)`,
               md: `repeat(${chartColumns.md || 2}, 1fr)`,
               lg: `repeat(${chartColumns.lg || 2}, 1fr)`,
@@ -452,7 +458,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 minHeight: chartMinHeight,
               }}
             >
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 {chart.title}
               </Typography>
 
@@ -460,14 +469,14 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               <Box
                 sx={{
                   height: chart.height || 250,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: "grey.50",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: 'grey.50',
                   borderRadius: 1,
                 }}
               >
-                <Typography color="text.secondary">
+                <Typography color='text.secondary'>
                   图表: {chart.type} - {chart.data.length} 项数据
                 </Typography>
               </Box>
@@ -485,7 +494,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
     return (
       <Box sx={{ mb: 3 }}>
         {tableSectionTitle && (
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
             {tableSectionTitle}
           </Typography>
         )}
@@ -500,31 +512,34 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             }}
           >
             {table.title && (
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 {table.title}
               </Typography>
             )}
 
-            <Box sx={{ overflowX: "auto" }}>
+            <Box sx={{ overflowX: 'auto' }}>
               <Box
-                component="table"
+                component='table'
                 sx={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  "& th, & td": {
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  '& th, & td': {
                     p: 1.5,
-                    textAlign: "left",
+                    textAlign: 'left',
                     borderBottom: 1,
-                    borderColor: "divider",
+                    borderColor: 'divider',
                   },
-                  "& th": {
+                  '& th': {
                     fontWeight: 600,
-                    bgcolor: "grey.50",
-                    color: "text.secondary",
-                    fontSize: "0.875rem",
+                    bgcolor: 'grey.50',
+                    color: 'text.secondary',
+                    fontSize: '0.875rem',
                   },
-                  "& td": {
-                    fontSize: "0.875rem",
+                  '& td': {
+                    fontSize: '0.875rem',
                   },
                 }}
               >
@@ -534,7 +549,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                       <th
                         key={col.id}
                         style={{
-                          textAlign: col.align || "left",
+                          textAlign: col.align || 'left',
                           width: col.width,
                         }}
                       >
@@ -548,20 +563,18 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     <tr>
                       <td
                         colSpan={table.columns.length}
-                        style={{ textAlign: "center", padding: 40 }}
+                        style={{ textAlign: 'center', padding: 40 }}
                       >
-                        <Typography color="text.secondary">
-                          加载中...
-                        </Typography>
+                        <Typography color='text.secondary'>加载中...</Typography>
                       </td>
                     </tr>
                   ) : table.data.length === 0 ? (
                     <tr>
                       <td
                         colSpan={table.columns.length}
-                        style={{ textAlign: "center", padding: 40 }}
+                        style={{ textAlign: 'center', padding: 40 }}
                       >
-                        <Typography color="text.secondary">暂无数据</Typography>
+                        <Typography color='text.secondary'>暂无数据</Typography>
                       </td>
                     </tr>
                   ) : (
@@ -570,11 +583,13 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                         {table.columns.map((col) => (
                           <td
                             key={col.id}
-                            style={{ textAlign: col.align || "left" }}
+                            style={{ textAlign: col.align || 'left' }}
                           >
                             {col.render && col.field
                               ? col.render(row[col.field], row)
-                              : col.field ? row[col.field] : ""}
+                              : col.field
+                                ? row[col.field]
+                                : ''}
                           </td>
                         ))}
                       </tr>
@@ -595,16 +610,25 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         {/* 页面标题栏 */}
         <Box sx={{ mb: 3 }}>
-          <Skeleton variant="text" width={200} height={40} />
-          <Skeleton variant="text" width={300} height={24} sx={{ mt: 1 }} />
+          <Skeleton
+            variant='text'
+            width={200}
+            height={40}
+          />
+          <Skeleton
+            variant='text'
+            width={300}
+            height={24}
+            sx={{ mt: 1 }}
+          />
         </Box>
 
         {/* 统计卡片 */}
         <Box
           sx={{
-            display: "grid",
+            display: 'grid',
             gridTemplateColumns: {
-              xs: "repeat(2, 1fr)",
+              xs: 'repeat(2, 1fr)',
               md: `repeat(${statColumns}, 1fr)`,
             },
             gap: 2,
@@ -612,20 +636,28 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
           }}
         >
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} height={120} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              key={i}
+              height={120}
+              sx={{ borderRadius: 2 }}
+            />
           ))}
         </Box>
 
         {/* 图表 */}
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
             gap: 3,
           }}
         >
           {[1, 2].map((i) => (
-            <Skeleton key={i} height={300} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              key={i}
+              height={300}
+              sx={{ borderRadius: 2 }}
+            />
           ))}
         </Box>
       </Box>
@@ -637,8 +669,8 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
     return (
       <Box sx={{ p: { xs: 2, md: 3 } }}>
         <EmptyState
-          emoji={emptyState?.emoji || "📊"}
-          title={emptyState?.title || "暂无数据"}
+          emoji={emptyState?.emoji || '📊'}
+          title={emptyState?.title || '暂无数据'}
           description={emptyState?.description}
           actionLabel={emptyState?.actionLabel}
           onAction={emptyState?.onAction}
@@ -653,19 +685,25 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       <Box
         sx={{
           mb: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
           gap: 2,
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600, mb: 0.5 }}
+          >
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {subtitle}
             </Typography>
           )}
@@ -674,23 +712,26 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
         {/* 操作按钮 */}
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 1,
-            alignItems: "center",
-            flexWrap: "wrap",
+            alignItems: 'center',
+            flexWrap: 'wrap',
           }}
         >
           {showRefresh && onRefresh && (
-            <Tooltip title="刷新">
-              <IconButton onClick={onRefresh} disabled={loading}>
+            <Tooltip title='刷新'>
+              <IconButton
+                onClick={onRefresh}
+                disabled={loading}
+              >
                 <RefreshCw
                   sx={{
                     width: 18,
                     height: 18,
-                    animation: loading ? "spin 1s linear infinite" : "none",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
+                    animation: loading ? 'spin 1s linear infinite' : 'none',
+                    '@keyframes spin': {
+                      '0%': { transform: 'rotate(0deg)' },
+                      '100%': { transform: 'rotate(360deg)' },
                     },
                   }}
                 />
@@ -700,10 +741,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
 
           {showExport && onExport && (
             <Button
-              variant="outlined"
+              variant='outlined'
               startIcon={<Download style={{ width: 16, height: 16 }} />}
               onClick={onExport}
-              size="small"
+              size='small'
             >
               {exportText}
             </Button>
@@ -722,7 +763,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             onChange={handleTabChange}
             sx={{
               borderBottom: 1,
-              borderColor: "divider",
+              borderColor: 'divider',
               px: 2,
             }}
           >
@@ -733,7 +774,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 label={tab.label}
                 icon={tab.icon as React.ReactElement<unknown> | undefined}
                 disabled={tab.disabled}
-                iconPosition="start"
+                iconPosition='start'
               />
             ))}
           </Tabs>
@@ -744,28 +785,26 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
         <Box
           sx={{
-            display: "flex",
+            display: 'flex',
             gap: 2,
-            flexWrap: "wrap",
-            alignItems: "center",
+            flexWrap: 'wrap',
+            alignItems: 'center',
           }}
         >
           {/* 搜索框 */}
           {showSearch && search && (
             <TextField
-              size="small"
-              placeholder={search.placeholder || "搜索..."}
+              size='small'
+              placeholder={search.placeholder || '搜索...'}
               value={search.value}
               onChange={(e) => search.onChange(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && onSearch?.()}
+              onKeyDown={(e) => e.key === 'Enter' && onSearch?.()}
               sx={{ minWidth: 250 }}
               slotProps={{
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 18, height: 18, color: "text.secondary" }}
-                      />
+                    <InputAdornment position='start'>
+                      <Search sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                     </InputAdornment>
                   ),
                 },
@@ -775,17 +814,20 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
 
           {/* 时间范围选择 */}
           {showTimeRange && timeRangeOptions.length > 0 && (
-            <FormControl size="small" sx={{ minWidth: 150 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 150 }}
+            >
               <Select
                 value={timeRange || timeRangeOptions[0]?.value}
                 onChange={(e) => onTimeRangeChange?.(e.target.value)}
                 startAdornment={
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <Calendar
                       sx={{
                         width: 16,
                         height: 16,
-                        color: "text.secondary",
+                        color: 'text.secondary',
                         mr: 0.5,
                       }}
                     />
@@ -793,7 +835,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 }
               >
                 {timeRangeOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                  >
                     {option.label}
                   </MenuItem>
                 ))}
@@ -803,7 +848,11 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
 
           {/* 搜索按钮 */}
           {showSearch && onSearch && (
-            <Button variant="contained" size="small" onClick={onSearch}>
+            <Button
+              variant='contained'
+              size='small'
+              onClick={onSearch}
+            >
               搜索
             </Button>
           )}
@@ -824,39 +873,49 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
 
 // 趋势图标组件
 const TrendingUpIcon: React.FC = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+  <svg
+    width='12'
+    height='12'
+    viewBox='0 0 12 12'
+    fill='none'
+  >
     <path
-      d="M2 9L5 5L7 7L10 3"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      d='M2 9L5 5L7 7L10 3'
+      stroke='currentColor'
+      strokeWidth='1.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
     />
     <path
-      d="M8 3H10V5"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      d='M8 3H10V5'
+      stroke='currentColor'
+      strokeWidth='1.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
     />
   </svg>
 );
 
 const TrendingDownIcon: React.FC = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+  <svg
+    width='12'
+    height='12'
+    viewBox='0 0 12 12'
+    fill='none'
+  >
     <path
-      d="M2 3L5 7L7 5L10 9"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      d='M2 3L5 7L7 5L10 9'
+      stroke='currentColor'
+      strokeWidth='1.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
     />
     <path
-      d="M8 9H10V7"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      d='M8 9H10V7'
+      stroke='currentColor'
+      strokeWidth='1.5'
+      strokeLinecap='round'
+      strokeLinejoin='round'
     />
   </svg>
 );

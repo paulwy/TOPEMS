@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   Edit2,
@@ -13,18 +13,36 @@ import {
   RefreshCw,
   Calendar,
   FileText,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { budgetApi, type Budget, type PaginatedResult } from "@/api/erp";
-import { useAppStore } from "../../store";
-import { Typography, Box, TextField, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, IconButton, LinearProgress, Card, CardContent, Stack,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { ListPageTemplate, StatCardGroup } from "@/components/mui";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { budgetApi, type Budget, type PaginatedResult } from '@/api/erp';
+import { useAppStore } from '../../store';
+import {
+  Typography,
+  Box,
+  TextField,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+  LinearProgress,
+  Card,
+  CardContent,
+  Stack,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import OrganizationFilter, {
   type OrganizationFilterValue,
-} from "@/components/ui/OrganizationFilter";
-import { StatsChart } from "@/components/StatsChart";
-import { apiLogger } from "@/utils/logger";
+} from '@/components/ui/OrganizationFilter';
+import { StatsChart } from '@/components/StatsChart';
+import { apiLogger } from '@/utils/logger';
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,23 +50,22 @@ const FinanceBudgetPage: React.FC = () => {
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
-  const [organizationFilter, setOrganizationFilter] =
-    useState<OrganizationFilterValue>({});
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
 
   const [formData, setFormData] = useState({
-    department_id: "",
-    budget_type: "operating",
+    department_id: '',
+    budget_type: 'operating',
     fiscal_year: new Date().getFullYear().toString(),
-    total_budget: "",
-    status: "active",
+    total_budget: '',
+    status: 'active',
   });
 
   useEffect(() => {
@@ -64,11 +81,11 @@ const FinanceBudgetPage: React.FC = () => {
         setBudgets(response.data.items || []);
       }
     } catch (err) {
-      apiLogger.error("加载预算数据失败:", err);
+      apiLogger.error('加载预算数据失败:', err);
       addNotification({
-        title: "错误",
-        message: "加载预算数据失败",
-        type: "error",
+        title: '错误',
+        message: '加载预算数据失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -84,20 +101,20 @@ const FinanceBudgetPage: React.FC = () => {
       const response = await budgetApi.create(data);
       if (response.success) {
         addNotification({
-          title: "成功",
-          message: "预算创建成功",
-          type: "success",
+          title: '成功',
+          message: '预算创建成功',
+          type: 'success',
         });
         setShowCreateDialog(false);
         resetForm();
         loadBudgets();
       }
     } catch (err) {
-      apiLogger.error("创建预算失败:", err);
+      apiLogger.error('创建预算失败:', err);
       addNotification({
-        title: "错误",
-        message: "创建预算失败",
-        type: "error",
+        title: '错误',
+        message: '创建预算失败',
+        type: 'error',
       });
     }
   };
@@ -112,9 +129,9 @@ const FinanceBudgetPage: React.FC = () => {
       const response = await budgetApi.update(editingBudget.id, data);
       if (response.success) {
         addNotification({
-          title: "成功",
-          message: "预算更新成功",
-          type: "success",
+          title: '成功',
+          message: '预算更新成功',
+          type: 'success',
         });
         setEditingBudget(null);
         setShowCreateDialog(false);
@@ -122,33 +139,33 @@ const FinanceBudgetPage: React.FC = () => {
         loadBudgets();
       }
     } catch (err) {
-      apiLogger.error("更新预算失败:", err);
+      apiLogger.error('更新预算失败:', err);
       addNotification({
-        title: "错误",
-        message: "更新预算失败",
-        type: "error",
+        title: '错误',
+        message: '更新预算失败',
+        type: 'error',
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("确定要删除此预算吗？")) return;
+    if (!window.confirm('确定要删除此预算吗？')) return;
     try {
       const response = await budgetApi.delete(id);
       if (response.success) {
         addNotification({
-          title: "成功",
-          message: "预算删除成功",
-          type: "success",
+          title: '成功',
+          message: '预算删除成功',
+          type: 'success',
         });
         loadBudgets();
       }
     } catch (err) {
-      apiLogger.error("删除预算失败:", err);
+      apiLogger.error('删除预算失败:', err);
       addNotification({
-        title: "错误",
-        message: "删除预算失败",
-        type: "error",
+        title: '错误',
+        message: '删除预算失败',
+        type: 'error',
       });
     }
   };
@@ -156,8 +173,8 @@ const FinanceBudgetPage: React.FC = () => {
   const openEditDialog = (budget: Budget) => {
     setEditingBudget(budget);
     setFormData({
-      department_id: budget.department_id || "",
-      budget_type: budget.budget_type || "operating",
+      department_id: budget.department_id || '',
+      budget_type: budget.budget_type || 'operating',
       fiscal_year: budget.fiscal_year || new Date().getFullYear().toString(),
       total_budget: budget.total_budget.toString(),
       status: budget.status,
@@ -172,16 +189,16 @@ const FinanceBudgetPage: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      department_id: "",
-      budget_type: "operating",
+      department_id: '',
+      budget_type: 'operating',
       fiscal_year: new Date().getFullYear().toString(),
-      total_budget: "",
-      status: "active",
+      total_budget: '',
+      status: 'active',
     });
   };
 
   const formatCurrency = (amount: number) =>
-    `¥${amount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}`;
+    `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
   const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
   const filteredBudgets = budgets.filter((budget) => {
@@ -195,14 +212,10 @@ const FinanceBudgetPage: React.FC = () => {
 
   const totalBudget = budgets.reduce((sum, b) => sum + b.total_budget, 0);
   const totalUsed = budgets.reduce((sum, b) => sum + (b.used_amount || 0), 0);
-  const totalRemaining = budgets.reduce(
-    (sum, b) => sum + (b.remaining_amount || 0),
-    0,
-  );
+  const totalRemaining = budgets.reduce((sum, b) => sum + (b.remaining_amount || 0), 0);
   const avgUsageRate =
     budgets.length > 0
-      ? budgets.reduce((sum, b) => sum + (b.usage_rate || 0), 0) /
-        budgets.length
+      ? budgets.reduce((sum, b) => sum + (b.usage_rate || 0), 0) / budgets.length
       : 0;
 
   // 预算统计数据
@@ -212,159 +225,165 @@ const FinanceBudgetPage: React.FC = () => {
       totalUsed,
       totalRemaining,
       avgUsageRate,
-      activeBudgets: budgets.filter((b) => b.status === "active").length,
-      completedBudgets: budgets.filter((b) => b.status === "completed").length,
-      frozenBudgets: budgets.filter((b) => b.status === "frozen").length,
-      expiredBudgets: budgets.filter((b) => b.status === "expired").length,
+      activeBudgets: budgets.filter((b) => b.status === 'active').length,
+      completedBudgets: budgets.filter((b) => b.status === 'completed').length,
+      frozenBudgets: budgets.filter((b) => b.status === 'frozen').length,
+      expiredBudgets: budgets.filter((b) => b.status === 'expired').length,
     }),
-    [budgets, totalBudget, totalUsed, totalRemaining, avgUsageRate],
+    [budgets, totalBudget, totalUsed, totalRemaining, avgUsageRate]
   );
 
   // 统计卡片数据
   const statCards = useMemo(
     () => [
       {
-        title: "总预算",
+        title: '总预算',
         value: formatCurrency(budgetStats.totalBudget),
         icon: <DollarSign size={24} />,
-        color: "primary" as const,
+        color: 'primary' as const,
       },
       {
-        title: "已使用",
+        title: '已使用',
         value: formatCurrency(budgetStats.totalUsed),
         icon: <PieChart size={24} />,
-        color: "warning" as const,
+        color: 'warning' as const,
       },
       {
-        title: "剩余预算",
+        title: '剩余预算',
         value: formatCurrency(budgetStats.totalRemaining),
         icon: <CheckCircle2 size={24} />,
-        color: "success" as const,
+        color: 'success' as const,
       },
       {
-        title: "平均使用率",
+        title: '平均使用率',
         value: formatPercent(budgetStats.avgUsageRate),
         icon: <Calendar size={24} />,
-        color: "secondary" as const,
+        color: 'secondary' as const,
       },
       {
-        title: "执行中预算",
+        title: '执行中预算',
         value: budgetStats.activeBudgets,
         icon: <CheckCircle2 size={24} />,
-        color: "success" as const,
+        color: 'success' as const,
       },
       {
-        title: "已完成预算",
+        title: '已完成预算',
         value: budgetStats.completedBudgets,
         icon: <FileText size={24} />,
-        color: "primary" as const,
+        color: 'primary' as const,
       },
       {
-        title: "已冻结预算",
+        title: '已冻结预算',
         value: budgetStats.frozenBudgets,
         icon: <XCircle size={24} />,
-        color: "info" as const,
+        color: 'info' as const,
       },
       {
-        title: "已过期预算",
+        title: '已过期预算',
         value: budgetStats.expiredBudgets,
         icon: <AlertCircle size={24} />,
-        color: "error" as const,
+        color: 'error' as const,
       },
     ],
-    [budgetStats],
+    [budgetStats]
   );
 
   // 预算类型分布数据
   const budgetTypeData = useMemo(
     () => [
       {
-        name: "运营预算",
+        name: '运营预算',
         value: budgets
-          .filter((b) => b.budget_type === "operating")
+          .filter((b) => b.budget_type === 'operating')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: "#3b82f6",
+        color: '#3b82f6',
       },
       {
-        name: "资本预算",
+        name: '资本预算',
         value: budgets
-          .filter((b) => b.budget_type === "capital")
+          .filter((b) => b.budget_type === 'capital')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: "#22c55e",
+        color: '#22c55e',
       },
       {
-        name: "项目预算",
+        name: '项目预算',
         value: budgets
-          .filter((b) => b.budget_type === "project")
+          .filter((b) => b.budget_type === 'project')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: "#f59e0b",
+        color: '#f59e0b',
       },
       {
-        name: "市场预算",
+        name: '市场预算',
         value: budgets
-          .filter((b) => b.budget_type === "marketing")
+          .filter((b) => b.budget_type === 'marketing')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: "#ef4444",
+        color: '#ef4444',
       },
       {
-        name: "人事预算",
+        name: '人事预算',
         value: budgets
-          .filter((b) => b.budget_type === "personnel")
+          .filter((b) => b.budget_type === 'personnel')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: "#8b5cf6",
+        color: '#8b5cf6',
       },
     ],
-    [budgets],
+    [budgets]
   );
 
   // 预算状态分布数据
   const budgetStatusData = useMemo(
     () => [
       {
-        name: "执行中",
-        value: budgets.filter((b) => b.status === "active").length,
-        color: "#22c55e",
+        name: '执行中',
+        value: budgets.filter((b) => b.status === 'active').length,
+        color: '#22c55e',
       },
       {
-        name: "已完成",
-        value: budgets.filter((b) => b.status === "completed").length,
-        color: "#3b82f6",
+        name: '已完成',
+        value: budgets.filter((b) => b.status === 'completed').length,
+        color: '#3b82f6',
       },
       {
-        name: "已冻结",
-        value: budgets.filter((b) => b.status === "frozen").length,
-        color: "#94a3b8",
+        name: '已冻结',
+        value: budgets.filter((b) => b.status === 'frozen').length,
+        color: '#94a3b8',
       },
       {
-        name: "已过期",
-        value: budgets.filter((b) => b.status === "expired").length,
-        color: "#ef4444",
+        name: '已过期',
+        value: budgets.filter((b) => b.status === 'expired').length,
+        color: '#ef4444',
       },
     ],
-    [budgets],
+    [budgets]
   );
 
   const getStatusChip = (status: string) => {
     const variants: Record<
       string,
-      { color: "success" | "error" | "default" | "warning"; label: string }
+      { color: 'success' | 'error' | 'default' | 'warning'; label: string }
     > = {
-      active: { color: "success", label: "执行中" },
-      expired: { color: "error", label: "已过期" },
-      frozen: { color: "default", label: "已冻结" },
-      completed: { color: "warning", label: "已完成" },
+      active: { color: 'success', label: '执行中' },
+      expired: { color: 'error', label: '已过期' },
+      frozen: { color: 'default', label: '已冻结' },
+      completed: { color: 'warning', label: '已完成' },
     };
     const config = variants[status as keyof typeof variants] || variants.active;
-    return <Chip size="small" color={config.color} label={config.label} />;
+    return (
+      <Chip
+        size='small'
+        color={config.color}
+        label={config.label}
+      />
+    );
   };
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      operating: "运营预算",
-      capital: "资本预算",
-      project: "项目预算",
-      marketing: "市场预算",
-      personnel: "人事预算",
+      operating: '运营预算',
+      capital: '资本预算',
+      project: '项目预算',
+      marketing: '市场预算',
+      personnel: '人事预算',
     };
     return labels[type] || type;
   };
@@ -373,80 +392,72 @@ const FinanceBudgetPage: React.FC = () => {
   const columns = useMemo(
     () => [
       {
-        id: "budget_type",
-        label: "预算类型",
+        id: 'budget_type',
+        label: '预算类型',
         render: (row: Budget) => (
-          <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Building2
               sx={{
                 width: 16,
                 height: 16,
                 mr: 2,
-                color: "grey.400",
+                color: 'grey.400',
               }}
             />
-            {getTypeLabel(row.budget_type || "")}
+            {getTypeLabel(row.budget_type || '')}
           </Box>
         ),
       },
       {
-        id: "fiscal_year",
-        label: "预算年度",
+        id: 'fiscal_year',
+        label: '预算年度',
+        render: (row: Budget) => <Box sx={{ color: 'text.secondary' }}>{row.fiscal_year}</Box>,
+      },
+      {
+        id: 'total_budget',
+        label: '预算金额',
+        align: 'right' as const,
         render: (row: Budget) => (
-          <Box sx={{ color: "text.secondary" }}>{row.fiscal_year}</Box>
+          <Box sx={{ fontWeight: 'medium' }}>{formatCurrency(row.total_budget)}</Box>
         ),
       },
       {
-        id: "total_budget",
-        label: "预算金额",
-        align: "right" as const,
+        id: 'used_amount',
+        label: '已使用',
+        align: 'right' as const,
         render: (row: Budget) => (
-          <Box sx={{ fontWeight: "medium" }}>
-            {formatCurrency(row.total_budget)}
-          </Box>
+          <Box sx={{ color: 'warning.main' }}>{formatCurrency(row.used_amount || 0)}</Box>
         ),
       },
       {
-        id: "used_amount",
-        label: "已使用",
-        align: "right" as const,
+        id: 'remaining_amount',
+        label: '剩余',
+        align: 'right' as const,
         render: (row: Budget) => (
-          <Box sx={{ color: "warning.main" }}>
-            {formatCurrency(row.used_amount || 0)}
-          </Box>
+          <Box sx={{ color: 'success.main' }}>{formatCurrency(row.remaining_amount || 0)}</Box>
         ),
       },
       {
-        id: "remaining_amount",
-        label: "剩余",
-        align: "right" as const,
-        render: (row: Budget) => (
-          <Box sx={{ color: "success.main" }}>
-            {formatCurrency(row.remaining_amount || 0)}
-          </Box>
-        ),
-      },
-      {
-        id: "usage_rate",
-        label: "使用率",
+        id: 'usage_rate',
+        label: '使用率',
         render: (row: Budget) => (
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 1,
             }}
           >
             <Box sx={{ flex: 1, maxWidth: 100 }}>
               <LinearProgress
-                variant="determinate"
+                variant='determinate'
                 value={row.usage_rate || 0}
                 sx={{ height: 8, borderRadius: 1 }}
               />
             </Box>
             <Typography
-              variant="body2"
-              color="text.secondary"
+              variant='body2'
+              color='text.secondary'
               sx={{ width: 50 }}
             >
               {formatPercent(row.usage_rate || 0)}
@@ -455,91 +466,98 @@ const FinanceBudgetPage: React.FC = () => {
         ),
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row: Budget) => getStatusChip(row.status),
       },
     ],
-    [],
+    []
   );
 
   // 行操作
   const rowActions = useMemo(
     () => [
       {
-        label: "查看详情",
+        label: '查看详情',
         icon: <Eye sx={{ width: 16, height: 16 }} />,
         onClick: (row: Budget) => openDetailDialog(row),
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit2 sx={{ width: 16, height: 16 }} />,
         onClick: (row: Budget) => openEditDialog(row),
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
-        color: "error" as const,
+        color: 'error' as const,
         onClick: (row: Budget) => handleDelete(row.id),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   // 筛选器配置
   const filters = useMemo(
     () => [
       {
-        id: "budget_type",
-        label: "类型",
-        type: "select" as const,
+        id: 'budget_type',
+        label: '类型',
+        type: 'select' as const,
         options: [
-          { value: "operating", label: "运营预算" },
-          { value: "capital", label: "资本预算" },
-          { value: "project", label: "项目预算" },
-          { value: "marketing", label: "市场预算" },
-          { value: "personnel", label: "人事预算" },
+          { value: 'operating', label: '运营预算' },
+          { value: 'capital', label: '资本预算' },
+          { value: 'project', label: '项目预算' },
+          { value: 'marketing', label: '市场预算' },
+          { value: 'personnel', label: '人事预算' },
         ],
         value: filterType,
         onChange: setFilterType,
       },
       {
-        id: "status",
-        label: "状态",
-        type: "select" as const,
+        id: 'status',
+        label: '状态',
+        type: 'select' as const,
         options: [
-          { value: "active", label: "执行中" },
-          { value: "completed", label: "已完成" },
-          { value: "frozen", label: "已冻结" },
-          { value: "expired", label: "已过期" },
+          { value: 'active', label: '执行中' },
+          { value: 'completed', label: '已完成' },
+          { value: 'frozen', label: '已冻结' },
+          { value: 'expired', label: '已过期' },
         ],
         value: filterStatus,
         onChange: setFilterStatus,
       },
     ],
-    [filterType, filterStatus],
+    [filterType, filterStatus]
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+          <Typography
+            variant='h4'
+            sx={{ fontWeight: 'bold' }}
+          >
             预算管理
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ mt: 0.5 }}
+          >
             管理企业各项预算的分配与执行情况
           </Typography>
         </Box>
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus sx={{ width: 16, height: 16 }} />}
           onClick={() => {
             setEditingBudget(null);
@@ -551,7 +569,7 @@ const FinanceBudgetPage: React.FC = () => {
         </Button>
       </Box>
 
-      <Box sx={{ bgcolor: "grey.100", borderRadius: 1, p: 2, mb: 3 }}>
+      <Box sx={{ bgcolor: 'grey.100', borderRadius: 1, p: 2, mb: 3 }}>
         <OrganizationFilter
           value={organizationFilter}
           onChange={setOrganizationFilter}
@@ -562,51 +580,62 @@ const FinanceBudgetPage: React.FC = () => {
       </Box>
 
       {/* 统计卡片 */}
-      <StatCardGroup stats={statCards} columns={4} />
+      <StatCardGroup
+        stats={statCards}
+        columns={4}
+      />
 
       {/* 图表区域 */}
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' },
           gap: 3,
         }}
       >
         <Card>
           <CardContent sx={{ p: 3 }}>
             <Typography
-              variant="h6"
-              sx={{ fontWeight: "semibold" }}
+              variant='h6'
+              sx={{ fontWeight: 'semibold' }}
               gutterBottom
             >
               预算类型分布
             </Typography>
-            <StatsChart type="pie" data={budgetTypeData} height={250} />
+            <StatsChart
+              type='pie'
+              data={budgetTypeData}
+              height={250}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardContent sx={{ p: 3 }}>
             <Typography
-              variant="h6"
-              sx={{ fontWeight: "semibold" }}
+              variant='h6'
+              sx={{ fontWeight: 'semibold' }}
               gutterBottom
             >
               预算状态分布
             </Typography>
-            <StatsChart type="pie" data={budgetStatusData} height={250} />
+            <StatsChart
+              type='pie'
+              data={budgetStatusData}
+              height={250}
+            />
           </CardContent>
         </Card>
       </Box>
 
       {/* 预算列表 */}
       <ListPageTemplate
-        title="预算列表"
+        title='预算列表'
         columns={columns}
         data={filteredBudgets}
         loading={loading}
         searchable
-        searchPlaceholder="搜索预算类型或年度..."
+        searchPlaceholder='搜索预算类型或年度...'
         searchValue={searchTerm}
         onSearch={setSearchTerm}
         filters={filters}
@@ -617,23 +646,20 @@ const FinanceBudgetPage: React.FC = () => {
         onFilterChange={(filterValues) => {
           if (filterValues.budget_type !== undefined)
             setFilterType(filterValues.budget_type as string);
-          if (filterValues.status !== undefined)
-            setFilterStatus(filterValues.status as string);
+          if (filterValues.status !== undefined) setFilterStatus(filterValues.status as string);
         }}
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
         rowActions={rowActions}
         onRefresh={loadBudgets}
-        emptyMessage="暂无预算数据"
-        emptyIcon={
-          <AlertCircle sx={{ width: 48, height: 48, color: "grey.300" }} />
-        }
+        emptyMessage='暂无预算数据'
+        emptyIcon={<AlertCircle sx={{ width: 48, height: 48, color: 'grey.300' }} />}
         actions={[
           {
-            label: "刷新",
+            label: '刷新',
             icon: <RefreshCw sx={{ width: 16, height: 16 }} />,
-            variant: "outlined",
+            variant: 'outlined',
             onClick: loadBudgets,
           },
         ]}
@@ -643,68 +669,66 @@ const FinanceBudgetPage: React.FC = () => {
       <Dialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{editingBudget ? "编辑预算" : "新增预算"}</DialogTitle>
+        <DialogTitle>{editingBudget ? '编辑预算' : '新增预算'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <FormControl size="small" fullWidth>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <FormControl
+              size='small'
+              fullWidth
+            >
               <InputLabel>预算类型</InputLabel>
               <Select
                 value={formData.budget_type}
-                label="预算类型"
-                onChange={(e) =>
-                  setFormData({ ...formData, budget_type: e.target.value })
-                }
+                label='预算类型'
+                onChange={(e) => setFormData({ ...formData, budget_type: e.target.value })}
               >
-                <MenuItem value="operating">运营预算</MenuItem>
-                <MenuItem value="capital">资本预算</MenuItem>
-                <MenuItem value="project">项目预算</MenuItem>
-                <MenuItem value="marketing">市场预算</MenuItem>
-                <MenuItem value="personnel">人事预算</MenuItem>
+                <MenuItem value='operating'>运营预算</MenuItem>
+                <MenuItem value='capital'>资本预算</MenuItem>
+                <MenuItem value='project'>项目预算</MenuItem>
+                <MenuItem value='marketing'>市场预算</MenuItem>
+                <MenuItem value='personnel'>人事预算</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              size="small"
-              type="number"
-              label="预算年度"
+              size='small'
+              type='number'
+              label='预算年度'
               value={formData.fiscal_year}
-              onChange={(e) =>
-                setFormData({ ...formData, fiscal_year: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, fiscal_year: e.target.value })}
               fullWidth
             />
             <TextField
-              size="small"
-              type="number"
-              label="预算金额"
+              size='small'
+              type='number'
+              label='预算金额'
               value={formData.total_budget}
-              onChange={(e) =>
-                setFormData({ ...formData, total_budget: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
               fullWidth
             />
-            <FormControl size="small" fullWidth>
+            <FormControl
+              size='small'
+              fullWidth
+            >
               <InputLabel>状态</InputLabel>
               <Select
                 value={formData.status}
-                label="状态"
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
-                }
+                label='状态'
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
-                <MenuItem value="active">执行中</MenuItem>
-                <MenuItem value="completed">已完成</MenuItem>
-                <MenuItem value="frozen">已冻结</MenuItem>
-                <MenuItem value="expired">已过期</MenuItem>
+                <MenuItem value='active'>执行中</MenuItem>
+                <MenuItem value='completed'>已完成</MenuItem>
+                <MenuItem value='frozen'>已冻结</MenuItem>
+                <MenuItem value='expired'>已过期</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button
-            variant="outlined"
+            variant='outlined'
             onClick={() => {
               setShowCreateDialog(false);
               setEditingBudget(null);
@@ -714,10 +738,10 @@ const FinanceBudgetPage: React.FC = () => {
             取消
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={editingBudget ? handleUpdate : handleCreate}
           >
-            {editingBudget ? "更新" : "创建"}
+            {editingBudget ? '更新' : '创建'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -726,40 +750,42 @@ const FinanceBudgetPage: React.FC = () => {
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
-          <PieChart
-            sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
-          />
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+          <PieChart sx={{ width: 20, height: 20, mr: 1, color: 'indigo.600' }} />
           预算详情
         </DialogTitle>
         <DialogContent>
           {selectedBudget && (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     预算类型
                   </Typography>
-                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
-                    {getTypeLabel(selectedBudget.budget_type || "")}
+                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+                    {getTypeLabel(selectedBudget.budget_type || '')}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     预算年度
                   </Typography>
-                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
                     {selectedBudget.fiscal_year}
                   </Typography>
                 </Box>
@@ -768,55 +794,64 @@ const FinanceBudgetPage: React.FC = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: "linear-gradient(to right, #eff6ff, #eef2ff)",
+                  bgcolor: 'linear-gradient(to right, #eff6ff, #eef2ff)',
                   borderRadius: 1,
                 }}
               >
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     mb: 2,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     预算金额
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: "bold" }}
-                    color="primary"
+                    variant='h5'
+                    sx={{ fontWeight: 'bold' }}
+                    color='primary'
                   >
                     {formatCurrency(selectedBudget.total_budget)}
                   </Typography>
                 </Box>
                 <Box
                   sx={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, 1fr)",
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
                     gap: 2,
                   }}
                 >
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       已使用
                     </Typography>
                     <Typography
-                      variant="h6"
-                      sx={{ fontWeight: "bold" }}
-                      color="warning.main"
+                      variant='h6'
+                      sx={{ fontWeight: 'bold' }}
+                      color='warning.main'
                     >
                       {formatCurrency(selectedBudget.used_amount || 0)}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       剩余预算
                     </Typography>
                     <Typography
-                      variant="h6"
-                      sx={{ fontWeight: "bold" }}
-                      color="success.main"
+                      variant='h6'
+                      sx={{ fontWeight: 'bold' }}
+                      color='success.main'
                     >
                       {formatCurrency(selectedBudget.remaining_amount || 0)}
                     </Typography>
@@ -827,20 +862,23 @@ const FinanceBudgetPage: React.FC = () => {
               <Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     mb: 1,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     使用进度
                   </Typography>
-                  <Typography sx={{ fontWeight: "medium" }}>
+                  <Typography sx={{ fontWeight: 'medium' }}>
                     {formatPercent(selectedBudget.usage_rate || 0)}
                   </Typography>
                 </Box>
                 <LinearProgress
-                  variant="determinate"
+                  variant='determinate'
                   value={selectedBudget.usage_rate || 0}
                   sx={{ height: 16, borderRadius: 1 }}
                 />
@@ -848,14 +886,17 @@ const FinanceBudgetPage: React.FC = () => {
 
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   p: 2,
-                  bgcolor: "grey.50",
+                  bgcolor: 'grey.50',
                   borderRadius: 1,
                 }}
               >
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   状态
                 </Typography>
                 {getStatusChip(selectedBudget.status)}
@@ -863,20 +904,14 @@ const FinanceBudgetPage: React.FC = () => {
 
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  typography: "body2",
-                  color: "text.secondary",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  typography: 'body2',
+                  color: 'text.secondary',
                 }}
               >
-                <span>
-                  创建时间:{" "}
-                  {new Date(selectedBudget.created_at).toLocaleDateString()}
-                </span>
-                <span>
-                  更新时间:{" "}
-                  {new Date(selectedBudget.updated_at).toLocaleDateString()}
-                </span>
+                <span>创建时间: {new Date(selectedBudget.created_at).toLocaleDateString()}</span>
+                <span>更新时间: {new Date(selectedBudget.updated_at).toLocaleDateString()}</span>
               </Box>
             </Box>
           )}

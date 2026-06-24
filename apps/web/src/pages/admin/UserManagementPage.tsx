@@ -1,27 +1,37 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, IconButton, Avatar, Box, TextField, Typography, FormControlLabel,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from "lucide-react";
-import { authApi, type User, type Role } from "@/api/iam";
-import { useAppStore } from "../../store";
-import { RoleBadge } from "@/components/PermissionGate";
-import { ListPageTemplate, type ColumnDef } from "@/components/templates";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  IconButton,
+  Avatar,
+  Box,
+  TextField,
+  Typography,
+  FormControlLabel,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from 'lucide-react';
+import { authApi, type User, type Role } from '@/api/iam';
+import { useAppStore } from '../../store';
+import { RoleBadge } from '@/components/PermissionGate';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
 interface UserManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 
-const UserManagementPage: React.FC<UserManagementPageProps> = ({
-  onNavigate: _onNavigate,
-}) => {
+const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRolesModal, setShowRolesModal] = useState(false);
@@ -29,9 +39,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   const [userRoles, setUserRoles] = useState<Role[]>([]);
 
   // 批量选择状态
-  const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>(
-    [],
-  );
+  const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,10 +82,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         setRoles(rolesRes.data);
       }
     } catch (_err: any) {
-      const errorMsg =
-        _err.response?.data?.message || _err.message || "加载数据失败";
+      const errorMsg = _err.response?.data?.message || _err.message || '加载数据失败';
       setError(errorMsg);
-      addNotification({ title: "加载失败", message: errorMsg, type: "error" });
+      addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -87,9 +94,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   const handleBatchUpdateStatus = async (isActive: boolean) => {
     if (selectedUserIds.length === 0) {
       addNotification({
-        title: "提示",
-        message: "请先选择要操作的用户",
-        type: "info",
+        title: '提示',
+        message: '请先选择要操作的用户',
+        type: 'info',
       });
       return;
     }
@@ -101,24 +108,24 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       });
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: `已${isActive ? "启用" : "禁用"} ${selectedUserIds.length} 个用户`,
-          type: "success",
+          title: '成功',
+          message: `已${isActive ? '启用' : '禁用'} ${selectedUserIds.length} 个用户`,
+          type: 'success',
         });
         setSelectedUserIds([]);
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "操作失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '操作失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "操作失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '操作失败',
+        type: 'error',
       });
     }
   };
@@ -127,18 +134,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   const handleBatchDelete = async () => {
     if (selectedUserIds.length === 0) {
       addNotification({
-        title: "提示",
-        message: "请先选择要删除的用户",
-        type: "info",
+        title: '提示',
+        message: '请先选择要删除的用户',
+        type: 'info',
       });
       return;
     }
 
-    if (
-      !confirm(
-        `确定要删除选中的 ${selectedUserIds.length} 个用户吗？此操作不可恢复。`,
-      )
-    ) {
+    if (!confirm(`确定要删除选中的 ${selectedUserIds.length} 个用户吗？此操作不可恢复。`)) {
       return;
     }
 
@@ -148,51 +151,51 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       });
       if (res.success) {
         addNotification({
-          title: "成功",
+          title: '成功',
           message: `已删除 ${selectedUserIds.length} 个用户`,
-          type: "success",
+          type: 'success',
         });
         setSelectedUserIds([]);
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "删除失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '删除失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "删除失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '删除失败',
+        type: 'error',
       });
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm("确定要删除这个用户吗？")) return;
+    if (!confirm('确定要删除这个用户吗？')) return;
     try {
       const res = await authApi.deleteUser(userId);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "用户删除成功",
-          type: "success",
+          title: '成功',
+          message: '用户删除成功',
+          type: 'success',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "删除用户失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '删除用户失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "删除用户失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '删除用户失败',
+        type: 'error',
       });
     }
   };
@@ -211,9 +214,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       }
     } catch (_err: any) {
       addNotification({
-        title: "加载失败",
-        message: "加载用户角色失败",
-        type: "error",
+        title: '加载失败',
+        message: '加载用户角色失败',
+        type: 'error',
       });
     }
   };
@@ -223,23 +226,23 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       const res = await authApi.addUserRole(userId, roleId);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "角色添加成功",
-          type: "success",
+          title: '成功',
+          message: '角色添加成功',
+          type: 'success',
         });
         await loadUserRoles(userId);
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "添加角色失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '添加角色失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "添加角色失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '添加角色失败',
+        type: 'error',
       });
     }
   };
@@ -249,23 +252,23 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       const res = await authApi.removeUserRole(userId, roleId);
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "角色移除成功",
-          type: "success",
+          title: '成功',
+          message: '角色移除成功',
+          type: 'success',
         });
         await loadUserRoles(userId);
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "移除角色失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '移除角色失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "移除角色失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '移除角色失败',
+        type: 'error',
       });
     }
   };
@@ -273,25 +276,31 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   const columns: ColumnDef<User>[] = useMemo(
     () => [
       {
-        id: "username",
-        label: "用户",
+        id: 'username',
+        label: '用户',
         render: (row) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
               sx={{
-                bgcolor: "primary.main",
+                bgcolor: 'primary.main',
                 width: 32,
                 height: 32,
-                fontSize: "0.875rem",
+                fontSize: '0.875rem',
               }}
             >
               {row.username.charAt(0).toUpperCase()}
             </Avatar>
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.full_name || row.username}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {row.email}
               </Typography>
             </Box>
@@ -299,13 +308,19 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         ),
       },
       {
-        id: "role",
-        label: "角色",
+        id: 'role',
+        label: '角色',
         render: (row) => (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <RoleBadge role={row.role || "user"} size="sm" />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <RoleBadge
+              role={row.role || 'user'}
+              size='sm'
+            />
             {row.roles && row.roles.length > 1 && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 +{row.roles.length - 1}
               </Typography>
             )}
@@ -313,67 +328,71 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         ),
       },
       {
-        id: "permissions",
-        label: "权限",
+        id: 'permissions',
+        label: '权限',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.permissions ? row.permissions.length : 0} 个权限
           </Typography>
         ),
       },
       {
-        id: "is_active",
-        label: "状态",
+        id: 'is_active',
+        label: '状态',
         render: (row) => {
           const isActive = row.is_active !== false;
           return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {isActive ? (
                 <Box
-                  component="span"
+                  component='span'
                   sx={{
                     width: 8,
                     height: 8,
-                    borderRadius: "50%",
-                    bgcolor: "success.main",
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
                   }}
                 />
               ) : (
                 <Box
-                  component="span"
+                  component='span'
                   sx={{
                     width: 8,
                     height: 8,
-                    borderRadius: "50%",
-                    bgcolor: "error.main",
+                    borderRadius: '50%',
+                    bgcolor: 'error.main',
                   }}
                 />
               )}
-              <Typography variant="body2">
-                {isActive ? "活跃" : "禁用"}
-              </Typography>
+              <Typography variant='body2'>{isActive ? '活跃' : '禁用'}</Typography>
             </Box>
           );
         },
       },
       {
-        id: "created_at",
-        label: "创建时间",
+        id: 'created_at',
+        label: '创建时间',
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
-            {new Date(row.created_at).toLocaleDateString("zh-CN")}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {new Date(row.created_at).toLocaleDateString('zh-CN')}
           </Typography>
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+
+    []
   );
 
   const rowActions = useMemo(
     () => [
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
         onClick: (row: User) => {
           setSelectedUser(row);
@@ -381,29 +400,29 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         },
       },
       {
-        label: "管理角色",
+        label: '管理角色',
         icon: <Shield size={16} />,
         onClick: (row: User) => openRolesModal(row),
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error" as const,
+        color: 'error' as const,
         onClick: (row: User) => handleDeleteUser(row.id),
         confirm: true,
-        confirmMessage: "确定要删除这个用户吗？",
+        confirmMessage: '确定要删除这个用户吗？',
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   const [newUser, setNewUser] = useState({
-    username: "",
-    email: "",
-    password: "",
-    full_name: "",
-    role: "普通用户",
+    username: '',
+    email: '',
+    password: '',
+    full_name: '',
+    role: '普通用户',
   });
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -417,31 +436,30 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       });
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "用户创建成功",
-          type: "success",
+          title: '成功',
+          message: '用户创建成功',
+          type: 'success',
         });
         setShowCreateModal(false);
         setNewUser({
-          username: "",
-          email: "",
-          password: "",
-          full_name: "",
-          role: "普通用户",
+          username: '',
+          email: '',
+          password: '',
+          full_name: '',
+          role: '普通用户',
         });
         // 重置分页到第一页，确保新数据显示在列表中
         setCurrentPage(1);
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "创建用户失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '创建用户失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
-      const errorMsg =
-        _err.response?.data?.message || _err.message || "创建用户失败";
-      addNotification({ title: "失败", message: errorMsg, type: "error" });
+      const errorMsg = _err.response?.data?.message || _err.message || '创建用户失败';
+      addNotification({ title: '失败', message: errorMsg, type: 'error' });
     }
   };
 
@@ -456,34 +474,34 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       });
       if (res.success) {
         addNotification({
-          title: "成功",
-          message: "用户更新成功",
-          type: "success",
+          title: '成功',
+          message: '用户更新成功',
+          type: 'success',
         });
         setShowEditModal(false);
         setSelectedUser(null);
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: res.message || "更新用户失败",
-          type: "error",
+          title: '失败',
+          message: res.message || '更新用户失败',
+          type: 'error',
         });
       }
     } catch (_err: any) {
       addNotification({
-        title: "失败",
-        message: _err.message || "更新用户失败",
-        type: "error",
+        title: '失败',
+        message: _err.message || '更新用户失败',
+        type: 'error',
       });
     }
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <ListPageTemplate
-        title="用户管理"
-        subtitle="管理平台用户账户、角色和权限"
+        title='用户管理'
+        subtitle='管理平台用户账户、角色和权限'
         columns={columns}
         data={users}
         loading={loading}
@@ -496,24 +514,24 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         }}
         batchActions={[
           {
-            label: "批量启用",
+            label: '批量启用',
             onClick: () => handleBatchUpdateStatus(true),
           },
           {
-            label: "批量禁用",
+            label: '批量禁用',
             onClick: () => handleBatchUpdateStatus(false),
           },
           {
-            label: "批量删除",
+            label: '批量删除',
             icon: <Trash2 size={16} />,
-            color: "error",
+            color: 'error',
             onClick: handleBatchDelete,
             confirm: true,
-            confirmMessage: "确定要删除选中的用户吗？此操作不可恢复。",
+            confirmMessage: '确定要删除选中的用户吗？此操作不可恢复。',
           },
         ]}
         searchable
-        searchPlaceholder="搜索用户名、邮箱..."
+        searchPlaceholder='搜索用户名、邮箱...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         pagination={{
@@ -524,14 +542,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         }}
         actions={[
           {
-            label: "创建用户",
+            label: '创建用户',
             icon: <Plus size={20} />,
             onClick: () => setShowCreateModal(true),
           },
         ]}
         onRefresh={loadData}
         backButton={{
-          href: "/dashboard",
+          href: '/dashboard',
         }}
       />
 
@@ -539,54 +557,44 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>创建新用户</DialogTitle>
         <form onSubmit={handleCreateUser}>
           <DialogContent>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
               <TextField
-                label="用户名 *"
+                label='用户名 *'
                 required
                 value={newUser.username}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, username: e.target.value })
-                }
-                placeholder="输入用户名"
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                placeholder='输入用户名'
                 fullWidth
               />
               <TextField
-                label="邮箱 *"
-                type="email"
+                label='邮箱 *'
+                type='email'
                 required
                 value={newUser.email}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, email: e.target.value })
-                }
-                placeholder="输入邮箱"
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                placeholder='输入邮箱'
                 fullWidth
               />
               <TextField
-                label="密码 *"
-                type="password"
+                label='密码 *'
+                type='password'
                 required
                 value={newUser.password}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, password: e.target.value })
-                }
-                placeholder="输入密码"
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                placeholder='输入密码'
                 fullWidth
               />
               <TextField
-                label="姓名"
+                label='姓名'
                 value={newUser.full_name}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, full_name: e.target.value })
-                }
-                placeholder="输入姓名"
+                onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                placeholder='输入姓名'
                 fullWidth
               />
             </Box>
@@ -596,17 +604,20 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
               onClick={() => {
                 setShowCreateModal(false);
                 setNewUser({
-                  username: "",
-                  email: "",
-                  password: "",
-                  full_name: "",
-                  role: "普通用户",
+                  username: '',
+                  email: '',
+                  password: '',
+                  full_name: '',
+                  role: '普通用户',
                 });
               }}
             >
               取消
             </Button>
-            <Button type="submit" variant="contained">
+            <Button
+              type='submit'
+              variant='contained'
+            >
               创建
             </Button>
           </DialogActions>
@@ -617,25 +628,23 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>编辑用户</DialogTitle>
         {selectedUser && (
           <form onSubmit={handleEditUser}>
             <DialogContent>
-              <Box
-                sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}
-              >
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
                 <TextField
-                  label="用户名"
+                  label='用户名'
                   value={selectedUser.username}
                   disabled
                   fullWidth
                 />
                 <TextField
-                  label="邮箱 *"
-                  type="email"
+                  label='邮箱 *'
+                  type='email'
                   required
                   value={selectedUser.email}
                   onChange={(e) =>
@@ -647,15 +656,15 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                   fullWidth
                 />
                 <TextField
-                  label="姓名"
-                  value={selectedUser.full_name || ""}
+                  label='姓名'
+                  value={selectedUser.full_name || ''}
                   onChange={(e) =>
                     setSelectedUser({
                       ...selectedUser,
                       full_name: e.target.value,
                     })
                   }
-                  placeholder="输入姓名"
+                  placeholder='输入姓名'
                   fullWidth
                 />
                 <FormControlLabel
@@ -670,7 +679,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                       }
                     />
                   }
-                  label="启用账户"
+                  label='启用账户'
                 />
               </Box>
             </DialogContent>
@@ -683,7 +692,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
               >
                 取消
               </Button>
-              <Button type="submit" variant="contained">
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -695,7 +707,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       <Dialog
         open={showRolesModal}
         onClose={() => setShowRolesModal(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>
@@ -703,14 +715,18 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         </DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 2, fontWeight: 600 }}
+            >
               已有角色
             </Typography>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 3 }}>
               {userRoles.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   暂无分配角色
                 </Typography>
               ) : (
@@ -718,32 +734,32 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                   <Box
                     key={role.id}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       p: 2,
-                      bgcolor: "success.light",
+                      bgcolor: 'success.light',
                       borderRadius: 2,
                       border: 1,
-                      borderColor: "success.main",
+                      borderColor: 'success.main',
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Shield size={16} color="#2e7d32" />
-                      <Typography
-                        sx={{ fontWeight: 500, color: "success.main" }}
-                      >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Shield
+                        size={16}
+                        color='#2e7d32'
+                      />
+                      <Typography sx={{ fontWeight: 500, color: 'success.main' }}>
                         {role.name}
                       </Typography>
                     </Box>
                     <IconButton
-                      size="small"
-                      sx={{ color: "error.main" }}
+                      size='small'
+                      sx={{ color: 'error.main' }}
                       onClick={() =>
-                        selectedUser &&
-                        handleRemoveRoleFromUser(selectedUser.id, role.id)
+                        selectedUser && handleRemoveRoleFromUser(selectedUser.id, role.id)
                       }
-                      title="移除角色"
+                      title='移除角色'
                     >
                       <UserMinus size={16} />
                     </IconButton>
@@ -751,44 +767,48 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 ))
               )}
             </Box>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 2, fontWeight: 600 }}
+            >
               可用角色
             </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {roles
                 .filter((r) => !userRoles.some((ur) => ur.id === r.id))
                 .map((role) => (
                   <Box
                     key={role.id}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       p: 2,
-                      bgcolor: "grey.100",
+                      bgcolor: 'grey.100',
                       borderRadius: 2,
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Shield size={16} color="#9e9e9e" />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Shield
+                        size={16}
+                        color='#9e9e9e'
+                      />
                       <Box>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {role.name}
-                        </Typography>
+                        <Typography sx={{ fontWeight: 500 }}>{role.name}</Typography>
                         {role.description && (
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             - {role.description}
                           </Typography>
                         )}
                       </Box>
                     </Box>
                     <IconButton
-                      size="small"
-                      onClick={() =>
-                        selectedUser &&
-                        handleAddRoleToUser(selectedUser.id, role.id)
-                      }
-                      title="添加角色"
+                      size='small'
+                      onClick={() => selectedUser && handleAddRoleToUser(selectedUser.id, role.id)}
+                      title='添加角色'
                     >
                       <UserPlus size={16} />
                     </IconButton>
@@ -798,7 +818,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setShowRolesModal(false)}>
+          <Button
+            variant='contained'
+            onClick={() => setShowRolesModal(false)}
+          >
             关闭
           </Button>
         </DialogActions>

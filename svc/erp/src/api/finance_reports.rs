@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     routing::get,
     Json, Router,
 };
@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
 use super::ApiState;
+use crate::services::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -150,8 +152,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 async fn balance_sheet(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<BalanceSheet>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-{:02}", now.year(), now.month())
@@ -296,8 +303,13 @@ async fn balance_sheet(
 
 async fn income_statement(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<IncomeStatement>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-{:02}", now.year(), now.month())
@@ -378,8 +390,13 @@ async fn income_statement(
 
 async fn cash_flow(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<CashFlowStatement>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-{:02}", now.year(), now.month())
@@ -463,8 +480,13 @@ async fn cash_flow(
 
 async fn voucher_summary(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-{:02}", now.year(), now.month())
@@ -544,8 +566,13 @@ async fn voucher_summary(
 
 async fn voucher_details(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<VoucherDetail>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-{:02}", now.year(), now.month())
@@ -593,8 +620,13 @@ async fn voucher_details(
 
 async fn receivables_report(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<ReceivableSummary>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let start_date = params.start_date.clone().unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-01-01", now.year())
@@ -634,8 +666,13 @@ async fn receivables_report(
 
 async fn payables_report(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<PayableSummary>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let start_date = params.start_date.clone().unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-01-01", now.year())
@@ -675,8 +712,13 @@ async fn payables_report(
 
 async fn budget_summary(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<BudgetSummary>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let fiscal_year = params
         .period
         .unwrap_or_else(|| Utc::now().year().to_string());
@@ -720,8 +762,13 @@ async fn budget_summary(
 
 async fn employee_summary(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(_params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<EmployeeSummary>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let result = sqlx::query(
         r#"
         SELECT e.department_id, d.name as department_name, 
@@ -759,8 +806,13 @@ async fn employee_summary(
 
 async fn voucher_trend(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<VoucherTrend>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let limit = params
         .project_id
         .as_ref()
@@ -804,8 +856,13 @@ async fn voucher_trend(
 
 async fn category_summary(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
 ) -> Json<ApiResponse<Vec<CategorySummary>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
     let period = params.period.unwrap_or_else(|| {
         let now = Utc::now();
         format!("{}-{:02}", now.year(), now.month())

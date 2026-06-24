@@ -1,8 +1,8 @@
-import * as React from "react";
-import { styled } from "@mui/material/styles";
-import type { LucideIcon, LucideProps } from "lucide-react";
+import * as React from 'react';
+import { styled } from '@mui/material/styles';
+import type { LucideIcon, LucideProps } from 'lucide-react';
 
-export interface IconProps extends Omit<LucideProps, "size"> {
+export interface IconProps extends Omit<LucideProps, 'size'> {
   icon: LucideIcon;
   size?: number;
   sx?: React.CSSProperties;
@@ -24,6 +24,6 @@ export const Icon = styled(
           {...props}
         />
       );
-    },
-  ),
+    }
+  )
 )<IconProps>``;

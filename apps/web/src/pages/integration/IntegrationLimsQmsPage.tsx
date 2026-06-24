@@ -1,404 +1,338 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import { integrationApi } from "@/api/integration";
-import type { LimsQmsSync, CreateLimsQmsSyncRequest } from "@/api/integration";
-import { logger } from "@/utils/logger";
+/**
+ * LIMS-QMS 集成页面
+ * 管理 LIMS 样本与 QMS 检验的同步
+ */
+
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Plus,
+  RefreshCw,
+  ArrowRightLeft,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Eye,
+  Edit,
+  Trash2,
+} from 'lucide-react';
+import {
+  Box,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+
+import {
+  ListPageTemplate,
+  FormPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from '@/components/templates';
+import { integrationApi } from '@/api/integration';
+import type { LimsQmsSync, CreateLimsQmsSyncRequest } from '@/api/integration';
+import { logger } from '@/utils/logger';
+
+// 状态配置
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+> = {
+  synced: { label: '已同步', color: 'success' },
+  pending: { label: '待同步', color: 'warning' },
+  failed: { label: '失败', color: 'error' },
+};
+
+// 表单字段配置
+const FORM_SECTIONS = [
+  {
+    id: 'basic',
+    title: '基本信息',
+    fields: [
+      {
+        name: 'lims_sample_id',
+        label: 'LIMS 样本 ID',
+        type: 'text',
+        required: true,
+        placeholder: '输入 LIMS 样本 UUID',
+      },
+      {
+        name: 'sample_name',
+        label: '样本名称',
+        type: 'text',
+        required: true,
+        placeholder: '输入样本名称',
+      },
+      {
+        name: 'inspection_result',
+        label: '检验结果',
+        type: 'text',
+        placeholder: '输入检验结果（可选）',
+      },
+      {
+        name: 'inspection_notes',
+        label: '备注',
+        type: 'textarea',
+        placeholder: '输入备注信息（可选）',
+        rows: 3,
+      },
+    ],
+  },
+];
 
 const IntegrationLimsQmsPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  // 数据状态
   const [syncs, setSyncs] = useState<LimsQmsSync[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ page: 0, pageSize: 10 });
+  const [searchValue, setSearchValue] = useState('');
 
-  const loadData = async () => {
+  // 弹窗状态
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingSync, setEditingSync] = useState<LimsQmsSync | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // 加载数据
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await integrationApi.listLimsQmsSyncs();
-      if (res.success && res.data !== undefined) setSyncs(res.data);
+      if (res.success && res.data !== undefined) {
+        setSyncs(res.data);
+      }
     } catch (error) {
-      logger.error("Error loading data:", error);
+      logger.error('Error loading LIMS-QMS syncs:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
-  const showToast = (message: string) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  // 初始加载
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  // 筛选数据
+  const filteredData = React.useMemo(() => {
+    if (!searchValue) return syncs;
+    const keyword = searchValue.toLowerCase();
+    return syns.filter(
+      (sync) =>
+        sync.sample_name.toLowerCase().includes(keyword) ||
+        sync.lims_sample_id.toLowerCase().includes(keyword)
+    );
+  }, [syncs, searchValue]);
+
+  // 表格列定义
+  const columns: ColumnDef<LimsQmsSync>[] = [
+    {
+      id: 'sample_name',
+      label: '样本名称',
+      sortable: true,
+      render: (row) => (
+        <Box>
+          <Box sx={{ fontWeight: 500, color: 'text.primary' }}>{row.sample_name}</Box>
+          <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+            ID: {row.lims_sample_id.slice(0, 8)}...
+          </Box>
+        </Box>
+      ),
+    },
+    {
+      id: 'inspection_result',
+      label: '检验结果',
+      render: (row) => <Box sx={{ color: 'text.secondary' }}>{row.inspection_result || '-'}</Box>,
+    },
+    {
+      id: 'sync_status',
+      label: '状态',
+      sortable: true,
+      render: (row) => {
+        const config = STATUS_CONFIG[row.sync_status] || STATUS_CONFIG.pending;
+        return (
+          <Chip
+            label={config.label}
+            color={config.color}
+            size='small'
+          />
+        );
+      },
+    },
+    {
+      id: 'last_synced_at',
+      label: '最后同步',
+      sortable: true,
+      render: (row) => (
+        <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+          {row.last_synced_at ? new Date(row.last_synced_at).toLocaleString('zh-CN') : '从未同步'}
+        </Box>
+      ),
+    },
+    {
+      id: 'created_at',
+      label: '创建时间',
+      sortable: true,
+      render: (row) => (
+        <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+          {new Date(row.created_at).toLocaleString('zh-CN')}
+        </Box>
+      ),
+    },
+  ];
+
+  // 行操作
+  const rowActions: RowAction<LimsQmsSync>[] = [
+    {
+      label: '查看详情',
+      icon: <Eye size={14} />,
+      onClick: (row) => setEditingSync(row),
+    },
+    {
+      label: '同步',
+      icon: <RefreshCw size={14} />,
+      onClick: (row) => handleSync(row.id),
+      show: (row) => !row.synced,
+    },
+    {
+      label: '删除',
+      icon: <Trash2 size={14} />,
+      color: 'error',
+      onClick: (row) => handleDelete(row.id),
+    },
+  ];
+
+  // 处理创建/编辑提交
+  const handleSubmit = async (data: any) => {
     try {
-      const data: CreateLimsQmsSyncRequest = {
-        lims_sample_id: formData.get("lims_sample_id") as string,
-        sample_name: formData.get("sample_name") as string,
-        inspection_result:
-          (formData.get("inspection_result") as string) || undefined,
-        inspection_notes:
-          (formData.get("inspection_notes") as string) || undefined,
-      };
-      await integrationApi.createLimsQmsSync(data);
-      showToast("LIMS-QMS sync created successfully");
-      e.currentTarget.reset();
+      setSubmitting(true);
+      if (editingSync) {
+        // 编辑模式暂不支持更新（后端未实现）
+        logger.warn('Update not implemented');
+      } else {
+        const request: CreateLimsQmsSyncRequest = {
+          lims_sample_id: data.lims_sample_id,
+          sample_name: data.sample_name,
+          inspection_result: data.inspection_result || undefined,
+          inspection_notes: data.inspection_notes || undefined,
+        };
+        await integrationApi.createLimsQmsSync(request);
+      }
+      setShowCreateModal(false);
+      setEditingSync(null);
       loadData();
     } catch (error) {
-      logger.error("Error creating sync:", error);
-      showToast("Failed to create sync");
+      logger.error('Error saving sync:', error);
+      throw error;
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  // 处理同步
   const handleSync = async (id: string) => {
     try {
       await integrationApi.syncLimsQms(id);
-      showToast("LIMS-QMS sync completed");
       loadData();
     } catch (error) {
-      logger.error("Error syncing:", error);
-      showToast("Failed to sync");
+      logger.error('Error syncing:', error);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "synced":
-        return { backgroundColor: "#dcfce7", color: "#166534" };
-      case "pending":
-        return { backgroundColor: "#fef9c3", color: "#854d0e" };
-      case "failed":
-        return { backgroundColor: "#fee2e2", color: "#991b1b" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#1f2937" };
+  // 处理删除
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定要删除此同步记录吗？')) return;
+    try {
+      // 后端可能未实现删除接口
+      logger.warn('Delete not implemented');
+    } catch (error) {
+      logger.error('Error deleting:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f9fafb",
-        }}
-      >
-        <Typography sx={{ color: "#4b5563" }}>加载中...</Typography>
-      </Box>
-    );
-  }
+  // 打开编辑弹窗
+  const handleOpenEdit = (sync: LimsQmsSync) => {
+    setEditingSync(sync);
+  };
+
+  // 关闭弹窗
+  const handleCloseModal = () => {
+    setShowCreateModal(false);
+    setEditingSync(null);
+  };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f9fafb", p: 3 }}>
-      {toastMessage && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 2,
-            right: 2,
-            backgroundColor: "#2563eb",
-            color: "#ffffff",
-            px: 2,
-            py: 1,
-            borderRadius: 2,
-            boxShadow: 3,
-            zIndex: 50,
-          }}
-        >
-          {toastMessage}
-        </Box>
-      )}
+    <>
+      <ListPageTemplate
+        title='LIMS ↔ QMS 同步'
+        subtitle='管理 LIMS 样本与 QMS 检验的同步'
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: filteredData.length,
+          onPageChange: (page) => setPagination((p) => ({ ...p, page })),
+          onPageSizeChange: (pageSize) => setPagination({ page: 0, pageSize }),
+        }}
+        searchValue={searchValue}
+        onSearch={setSearchValue}
+        searchable
+        searchPlaceholder='搜索样本名称或 ID...'
+        actions={[
+          {
+            label: '新建同步',
+            icon: <Plus size={16} />,
+            onClick: () => setShowCreateModal(true),
+            variant: 'contained',
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={loadData}
+        emptyMessage='暂无 LIMS-QMS 同步记录'
+      />
 
-      <Box sx={{ maxWidth: 1280, mx: "auto" }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography variant="h5" sx={{ fontWeight: 700, color: "#111827" }}>
-            🔬 LIMS ↔ QMS 同步
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            backgroundColor: "#ffffff",
-            p: 3,
-            borderRadius: 2,
-            boxShadow: 1,
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 600, color: "#111827", mb: 2 }}
-          >
-            ➕ 创建 LIMS ↔ QMS 同步
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleCreate}
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                LIMS 样本 ID
-              </Typography>
-              <input
-                type="text"
-                name="lims_sample_id"
-                required
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="输入 UUID"
-              />
-            </Box>
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                样本名称
-              </Typography>
-              <input
-                type="text"
-                name="sample_name"
-                required
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="输入样本名称"
-              />
-            </Box>
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                检验结果
-              </Typography>
-              <input
-                type="text"
-                name="inspection_result"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="可选"
-              />
-            </Box>
-            <Box>
-              <Typography
-                sx={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  color: "#374151",
-                  mb: 0.5,
-                }}
-              >
-                备注
-              </Typography>
-              <input
-                type="text"
-                name="inspection_notes"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  fontSize: "0.875rem",
-                }}
-                placeholder="可选"
-              />
-            </Box>
-            <Box sx={{ gridColumn: "span 2" }}>
-              <Button
-                type="submit"
-                sx={{
-                  px: 3,
-                  py: 1,
-                  backgroundColor: "#16a34a",
-                  color: "#ffffff",
-                  borderRadius: 2,
-                  "&:hover": { backgroundColor: "#15803d" },
-                }}
-              >
-                创建同步
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            backgroundColor: "#ffffff",
-            p: 3,
-            borderRadius: 2,
-            boxShadow: 1,
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 600, color: "#111827", mb: 2 }}
-          >
-            📋 同步列表
-          </Typography>
-          <Box sx={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    样本名称
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    LIMS ID
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    检验结果
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    状态
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "12px 16px",
-                      fontWeight: 500,
-                      color: "#374151",
-                    }}
-                  >
-                    操作
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {syncs.map((sync) => (
-                  <tr
-                    key={sync.id}
-                    style={{ borderBottom: "1px solid #e5e7eb" }}
-                  >
-                    <td style={{ padding: "12px 16px" }}>{sync.sample_name}</td>
-                    <td
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "0.875rem",
-                        color: "#6b7280",
-                      }}
-                    >
-                      {sync.lims_sample_id.slice(0, 8)}...
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      {sync.inspection_result || "-"}
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          fontSize: "0.875rem",
-                          ...getStatusColor(sync.sync_status),
-                        }}
-                      >
-                        {sync.sync_status}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      {!sync.synced && (
-                        <Button
-                          onClick={() => handleSync(sync.id)}
-                          sx={{
-                            px: 2,
-                            py: 0.5,
-                            backgroundColor: "#2563eb",
-                            color: "#ffffff",
-                            borderRadius: 1,
-                            fontSize: "0.875rem",
-                            "&:hover": { backgroundColor: "#1d4ed8" },
-                          }}
-                        >
-                          同步
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+      {/* 创建/编辑弹窗 */}
+      <Dialog
+        open={showCreateModal || !!editingSync}
+        onClose={handleCloseModal}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>{editingSync ? '查看同步详情' : '创建 LIMS-QMS 同步'}</DialogTitle>
+        <DialogContent>
+          <FormPageTemplate
+            sections={FORM_SECTIONS}
+            defaultValues={editingSync || {}}
+            onSubmit={handleSubmit}
+            onCancel={handleCloseModal}
+            submitting={submitting}
+            columns={1}
+            submitText={editingSync ? '关闭' : '创建'}
+            mode={editingSync ? 'view' : 'edit'}
+          />
+        </DialogContent>
+        {!editingSync && (
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={handleCloseModal}
+            >
+              取消
+            </Button>
+          </DialogActions>
+        )}
+      </Dialog>
+    </>
   );
 };
 

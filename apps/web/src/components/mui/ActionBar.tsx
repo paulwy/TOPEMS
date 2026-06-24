@@ -1,13 +1,16 @@
-import React from "react";
-import { Box, Paper, IconButton, Tooltip, Typography, Divider, useTheme, useMediaQuery,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
+import React from 'react';
 import {
-  RefreshCw,
-  Download,
-  Upload,
-  Plus,
-  MoreHorizontal,
-} from "lucide-react";
+  Box,
+  Paper,
+  IconButton,
+  Tooltip,
+  Typography,
+  Divider,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import { RefreshCw, Download, Upload, Plus, MoreHorizontal } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -16,8 +19,8 @@ export interface Action {
   icon?: React.ReactNode;
   onClick?: () => void;
   href?: string;
-  variant?: "contained" | "outlined" | "text";
-  color?: "primary" | "secondary" | "success" | "error" | "warning" | "info";
+  variant?: 'contained' | 'outlined' | 'text';
+  color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
   disabled?: boolean;
   loading?: boolean;
   tooltip?: string;
@@ -46,7 +49,7 @@ export interface ActionBarProps {
   rightContent?: React.ReactNode;
 
   // 布局
-  density?: "compact" | "standard";
+  density?: 'compact' | 'standard';
 }
 
 // ============ ActionBar 组件 ============
@@ -60,47 +63,43 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   loading,
   leftContent,
   rightContent,
-  density = "standard",
+  density = 'standard',
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   // 可见的次要操作数量
   const visibleSecondaryCount = isMobile ? 0 : isTablet ? 2 : 3;
   const hiddenSecondaryActions = secondaryActions.slice(visibleSecondaryCount);
-  const visibleSecondaryActions = secondaryActions.slice(
-    0,
-    visibleSecondaryCount,
-  );
+  const visibleSecondaryActions = secondaryActions.slice(0, visibleSecondaryCount);
 
   // 是否显示更多菜单
-  const hasMoreActions =
-    moreActions.length > 0 || hiddenSecondaryActions.length > 0;
+  const hasMoreActions = moreActions.length > 0 || hiddenSecondaryActions.length > 0;
   const allMoreActions = [...hiddenSecondaryActions, ...moreActions];
 
   return (
     <Paper
       sx={{
-        p: density === "compact" ? 1.5 : 2,
+        p: density === 'compact' ? 1.5 : 2,
         borderRadius: 2,
         mb: 2,
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
           gap: 2,
         }}
       >
         {/* 左侧内容 */}
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 2,
             flex: 1,
             minWidth: 0,
@@ -110,12 +109,18 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           {(title || subtitle) && (
             <Box sx={{ minWidth: 0 }}>
               {title && (
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
+                >
                   {title}
                 </Typography>
               )}
               {subtitle && (
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {subtitle}
                 </Typography>
               )}
@@ -127,9 +132,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
         </Box>
 
         {/* 操作按钮 */}
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
           {/* 自定义右侧内容 */}
           {rightContent}
 
@@ -137,32 +140,37 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           {visibleSecondaryActions.map((action, index) => (
             <React.Fragment key={index}>
               {action.dividerBefore && (
-                <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+                <Divider
+                  orientation='vertical'
+                  flexItem
+                  sx={{ mx: 0.5 }}
+                />
               )}
-              {renderActionButton(
-                action,
-                density === "compact" ? "small" : "medium",
-              )}
+              {renderActionButton(action, density === 'compact' ? 'small' : 'medium')}
             </React.Fragment>
           ))}
 
           {/* 主要操作 */}
           {primaryAction && (
             <>
-              <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+              <Divider
+                orientation='vertical'
+                flexItem
+                sx={{ mx: 0.5 }}
+              />
               {renderActionButton(
                 {
                   ...primaryAction,
-                  variant: primaryAction.variant || "contained",
+                  variant: primaryAction.variant || 'contained',
                 },
-                density === "compact" ? "small" : "medium",
+                density === 'compact' ? 'small' : 'medium'
               )}
             </>
           )}
 
           {/* 更多按钮 */}
           {hasMoreActions && (
-            <IconButton size="small">
+            <IconButton size='small'>
               <MoreHorizontal style={{ width: 18, height: 18 }} />
             </IconButton>
           )}
@@ -174,10 +182,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
 
 // ============ 辅助函数 ============
 
-function renderActionButton(
-  action: Action,
-  size: "small" | "medium" = "medium",
-) {
+function renderActionButton(action: Action, size: 'small' | 'medium' = 'medium') {
   const {
     label,
     icon,
@@ -185,8 +190,8 @@ function renderActionButton(
     disabled,
     loading,
     tooltip,
-    variant = "outlined",
-    color = "primary",
+    variant = 'outlined',
+    color = 'primary',
   } = action;
 
   const button = (
@@ -197,15 +202,18 @@ function renderActionButton(
       onClick={onClick}
       disabled={disabled || loading}
       startIcon={loading ? undefined : icon}
-      sx={{ whiteSpace: "nowrap" }}
+      sx={{ whiteSpace: 'nowrap' }}
     >
-      {loading ? "处理中..." : label}
+      {loading ? '处理中...' : label}
     </Button>
   );
 
   if (tooltip) {
     return (
-      <Tooltip key={label} title={tooltip}>
+      <Tooltip
+        key={label}
+        title={tooltip}
+      >
         {button}
       </Tooltip>
     );
@@ -226,32 +234,29 @@ export interface QuickActionBarProps {
   loading?: boolean;
 }
 
-export const QuickActionBar: React.FC<QuickActionBarProps> = ({
-  actions,
-  loading,
-}) => {
+export const QuickActionBar: React.FC<QuickActionBarProps> = ({ actions, loading }) => {
   return (
     <Box
       sx={{
-        display: "flex",
+        display: 'flex',
         gap: 1,
-        flexWrap: "wrap",
+        flexWrap: 'wrap',
       }}
     >
       {actions.map((action, index) => (
         <Button
           key={index}
-          size="small"
-          variant="outlined"
+          size='small'
+          variant='outlined'
           onClick={action.onClick}
           startIcon={action.icon}
           disabled={loading}
           sx={{
-            borderColor: action.color || "primary.main",
-            color: action.color || "primary.main",
-            "&:hover": {
-              borderColor: action.color || "primary.dark",
-              bgcolor: `${action.color || "primary"}.light`,
+            borderColor: action.color || 'primary.main',
+            color: action.color || 'primary.main',
+            '&:hover': {
+              borderColor: action.color || 'primary.dark',
+              bgcolor: `${action.color || 'primary'}.light`,
             },
           }}
         >

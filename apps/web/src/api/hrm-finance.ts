@@ -3,8 +3,8 @@
  * 包含工资核算、社保公积金等与财务相关的接口
  */
 
-import { apiClient, downloadBlob } from "./client";
-import config from "../config/runtime";
+import { apiClient, downloadBlob } from './client';
+import config from '../config/runtime';
 
 // ============================================
 // 一、类型定义
@@ -41,7 +41,7 @@ export interface EmployeeFinanceInfo {
   expense_account_id: string;
 
   // 状态
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
 
   created_at: string;
   updated_at: string;
@@ -94,7 +94,7 @@ export interface PayrollRecord {
   total_company_cost: number; // 公司总成本
 
   // 状态
-  status: "draft" | "calculating" | "approved" | "paid" | "cancelled";
+  status: 'draft' | 'calculating' | 'approved' | 'paid' | 'cancelled';
 
   // 关联凭证
   voucher_id?: string;
@@ -133,7 +133,7 @@ export interface SocialSecurityConfig {
 
   // 生效日期
   effective_date: string;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
 }
 
 /**
@@ -188,7 +188,7 @@ export interface PayrollPaymentRecord {
   fail_amount: number;
 
   // 状态
-  status: "pending" | "processing" | "completed" | "failed";
+  status: 'pending' | 'processing' | 'completed' | 'failed';
 
   // 银行返回
   bank_batch_no?: string;
@@ -217,10 +217,8 @@ export const hrmFinanceApi = {
   /**
    * 更新员工财务信息
    */
-  updateEmployeeFinanceInfo: (
-    employeeId: string,
-    data: Partial<EmployeeFinanceInfo>,
-  ) => apiClient.hrm.put(`/api/hrm/employees/${employeeId}/finance`, data),
+  updateEmployeeFinanceInfo: (employeeId: string, data: Partial<EmployeeFinanceInfo>) =>
+    apiClient.hrm.put(`/api/hrm/employees/${employeeId}/finance`, data),
 
   /**
    * 批量更新员工财务信息
@@ -229,9 +227,9 @@ export const hrmFinanceApi = {
     requests: {
       employee_id: string;
       data: Partial<EmployeeFinanceInfo>;
-    }[],
+    }[]
   ) =>
-    apiClient.hrm.post("/api/hrm/employees/finance/batch-update", {
+    apiClient.hrm.post('/api/hrm/employees/finance/batch-update', {
       requests,
     }),
 
@@ -245,7 +243,7 @@ export const hrmFinanceApi = {
     period: string;
     department_ids?: string[];
     employee_ids?: string[];
-  }) => apiClient.hrm.post("/api/hrm/payroll/calculate", params),
+  }) => apiClient.hrm.post('/api/hrm/payroll/calculate', params),
 
   /**
    * 获取工资单列表
@@ -258,19 +256,18 @@ export const hrmFinanceApi = {
     status?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.hrm.get("/api/hrm/payroll/records", { params }),
+  }) => apiClient.hrm.get('/api/hrm/payroll/records', { params }),
 
   /**
    * 获取工资单详情
    */
-  getPayrollRecord: (recordId: string) =>
-    apiClient.hrm.get(`/api/hrm/payroll/records/${recordId}`),
+  getPayrollRecord: (recordId: string) => apiClient.hrm.get(`/api/hrm/payroll/records/${recordId}`),
 
   /**
    * 审核工资单
    */
   approvePayroll: (recordIds: string[]) =>
-    apiClient.hrm.post("/api/hrm/payroll/approve", {
+    apiClient.hrm.post('/api/hrm/payroll/approve', {
       record_ids: recordIds,
     }),
 
@@ -278,7 +275,7 @@ export const hrmFinanceApi = {
    * 批量审核工资单
    */
   batchApprovePayroll: (recordIds: string[]) =>
-    apiClient.hrm.post("/api/hrm/payroll/batch-approve", {
+    apiClient.hrm.post('/api/hrm/payroll/batch-approve', {
       record_ids: recordIds,
     }),
 
@@ -290,15 +287,13 @@ export const hrmFinanceApi = {
     company_id: string;
     record_ids?: string[];
     template_id?: string;
-  }) => apiClient.hrm.post("/api/hrm/payroll/generate-voucher", params),
+  }) => apiClient.hrm.post('/api/hrm/payroll/generate-voucher', params),
 
   /**
    * 批量生成工资凭证
    */
-  batchGeneratePayrollVouchers: (params: {
-    periods: string[];
-    company_id: string;
-  }) => apiClient.hrm.post("/api/hrm/payroll/batch-generate-vouchers", params),
+  batchGeneratePayrollVouchers: (params: { periods: string[]; company_id: string }) =>
+    apiClient.hrm.post('/api/hrm/payroll/batch-generate-vouchers', params),
 
   /**
    * 导出银行报盘文件
@@ -308,9 +303,8 @@ export const hrmFinanceApi = {
     company_id: string;
     bank_code: string;
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
-    return downloadBlob(baseURL, "/api/hrm/payroll/export-bank-file", {
+    const baseURL = (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(baseURL, '/api/hrm/payroll/export-bank-file', {
       params,
     });
   },
@@ -321,11 +315,10 @@ export const hrmFinanceApi = {
   exportPayrollSlips: async (params: {
     period: string;
     company_id: string;
-    format?: "pdf" | "excel";
+    format?: 'pdf' | 'excel';
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
-    return downloadBlob(baseURL, "/api/hrm/payroll/export-slips", {
+    const baseURL = (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(baseURL, '/api/hrm/payroll/export-slips', {
       params,
     });
   },
@@ -333,12 +326,8 @@ export const hrmFinanceApi = {
   /**
    * 更新发放状态
    */
-  updatePaymentStatus: (
-    recordIds: string[],
-    status: string,
-    bankBatchNo?: string,
-  ) =>
-    apiClient.hrm.put("/api/hrm/payroll/payment-status", {
+  updatePaymentStatus: (recordIds: string[], status: string, bankBatchNo?: string) =>
+    apiClient.hrm.put('/api/hrm/payroll/payment-status', {
       record_ids: recordIds,
       status,
       bank_batch_no: bankBatchNo,
@@ -354,7 +343,7 @@ export const hrmFinanceApi = {
     is_active?: boolean;
     page?: number;
     page_size?: number;
-  }) => apiClient.hrm.get("/api/hrm/social-security/configs", { params }),
+  }) => apiClient.hrm.get('/api/hrm/social-security/configs', { params }),
 
   /**
    * 获取社保配置
@@ -366,15 +355,13 @@ export const hrmFinanceApi = {
    * 创建社保配置
    */
   createSocialSecurityConfig: (data: Partial<SocialSecurityConfig>) =>
-    apiClient.hrm.post("/api/hrm/social-security/configs", data),
+    apiClient.hrm.post('/api/hrm/social-security/configs', data),
 
   /**
    * 更新社保配置
    */
-  updateSocialSecurityConfig: (
-    configId: string,
-    data: Partial<SocialSecurityConfig>,
-  ) => apiClient.hrm.put(`/api/hrm/social-security/configs/${configId}`, data),
+  updateSocialSecurityConfig: (configId: string, data: Partial<SocialSecurityConfig>) =>
+    apiClient.hrm.put(`/api/hrm/social-security/configs/${configId}`, data),
 
   /**
    * 删除社保配置
@@ -385,10 +372,8 @@ export const hrmFinanceApi = {
   /**
    * 计算社保公积金
    */
-  calculateSocialSecurity: (params: {
-    base: number;
-    employee_ids?: string[];
-  }) => apiClient.hrm.post("/api/hrm/social-security/calculate", params),
+  calculateSocialSecurity: (params: { base: number; employee_ids?: string[] }) =>
+    apiClient.hrm.post('/api/hrm/social-security/calculate', params),
 
   // -------- 考勤汇总 --------
 
@@ -399,7 +384,7 @@ export const hrmFinanceApi = {
     period: string;
     employee_ids?: string[];
     department_id?: string;
-  }) => apiClient.hrm.get("/api/hrm/attendance/summary", { params }),
+  }) => apiClient.hrm.get('/api/hrm/attendance/summary', { params }),
 
   // -------- 工资发放记录 --------
 
@@ -412,7 +397,7 @@ export const hrmFinanceApi = {
     status?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.hrm.get("/api/hrm/payroll/payment-records", { params }),
+  }) => apiClient.hrm.get('/api/hrm/payroll/payment-records', { params }),
 
   /**
    * 创建工资发放批次
@@ -422,7 +407,7 @@ export const hrmFinanceApi = {
     company_id: string;
     bank_code: string;
     record_ids: string[];
-  }) => apiClient.hrm.post("/api/hrm/payroll/payment-records", data),
+  }) => apiClient.hrm.post('/api/hrm/payroll/payment-records', data),
 
   // -------- 报表 --------
 
@@ -434,16 +419,13 @@ export const hrmFinanceApi = {
     end_period: string;
     company_id?: string;
     department_id?: string;
-  }) => apiClient.hrm.get("/api/hrm/payroll/reports/summary", { params }),
+  }) => apiClient.hrm.get('/api/hrm/payroll/reports/summary', { params }),
 
   /**
    * 获取部门工资对比报表
    */
-  getDepartmentPayrollComparison: (params: {
-    period: string;
-    department_ids?: string[];
-  }) =>
-    apiClient.hrm.get("/api/hrm/payroll/reports/department-comparison", {
+  getDepartmentPayrollComparison: (params: { period: string; department_ids?: string[] }) =>
+    apiClient.hrm.get('/api/hrm/payroll/reports/department-comparison', {
       params,
     }),
 
@@ -456,11 +438,10 @@ export const hrmFinanceApi = {
     company_id?: string;
     period?: string;
     department_id?: string;
-    format: "csv" | "xlsx";
+    format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
-    return downloadBlob(baseURL, "/api/hrm/payroll/export-records", {
+    const baseURL = (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(baseURL, '/api/hrm/payroll/export-records', {
       params,
     });
   },
@@ -471,11 +452,10 @@ export const hrmFinanceApi = {
   exportSocialSecurityDetails: async (params: {
     company_id?: string;
     period?: string;
-    format: "csv" | "xlsx";
+    format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL =
-      (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
-    return downloadBlob(baseURL, "/api/hrm/social-security/export-details", {
+    const baseURL = (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
+    return downloadBlob(baseURL, '/api/hrm/social-security/export-details', {
       params,
     });
   },

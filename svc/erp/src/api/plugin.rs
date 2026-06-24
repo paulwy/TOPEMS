@@ -227,6 +227,7 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
+        .route("/api/plugins/health", get(plugin_health_check))
 }
 
 /// 启动时自动注册到统一核心

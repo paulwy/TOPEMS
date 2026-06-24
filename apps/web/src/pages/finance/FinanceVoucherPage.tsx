@@ -1,6 +1,21 @@
-import { Chip, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Dialog, DialogContent, DialogTitle, DialogActions, Tabs, Tab, Box,  } from "@mui/material";
-import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
+import {
+  Chip,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Tabs,
+  Tab,
+  Box,
+} from '@mui/material';
+import { Button } from '@/components/ui/Button';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
   Plus,
@@ -18,8 +33,8 @@ import {
   FileCheck,
   Clock,
   Building2,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   voucherApi,
   accountingSubjectApi,
@@ -27,25 +42,21 @@ import {
   type VoucherItem,
   type VoucherItemRequest,
   type AccountingSubject,
-} from "@/api/erp";
-import { useAppStore } from "../../store";
-import { ListPageTemplate } from "@/components/templates";
-import type {
-  ColumnDef,
-  RowAction,
-  FilterConfig,
-} from "@/components/templates";
-import { StatCardGroup } from "@/components/mui";
-import { apiLogger } from "@/utils/logger";
+} from '@/api/erp';
+import { useAppStore } from '../../store';
+import { ListPageTemplate } from '@/components/templates';
+import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
+import { StatCardGroup } from '@/components/mui';
+import { apiLogger } from '@/utils/logger';
 
 const FinanceVoucherPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [activeTab, setActiveTab] = useState<string>("vouchers");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [periodFilter, setPeriodFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [activeTab, setActiveTab] = useState<string>('vouchers');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [periodFilter, setPeriodFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const [vouchers, setVouchers] = useState<FinancialVoucher[]>([]);
   const [subjects, setSubjects] = useState<AccountingSubject[]>([]);
@@ -55,18 +66,16 @@ const FinanceVoucherPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [currentVoucher, setCurrentVoucher] = useState<FinancialVoucher | null>(
-    null,
-  );
+  const [currentVoucher, setCurrentVoucher] = useState<FinancialVoucher | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [newVoucher, setNewVoucher] = useState({
-    voucher_number: "",
-    voucher_date: "",
-    period: "",
+    voucher_number: '',
+    voucher_date: '',
+    period: '',
     attachment_count: 0,
-    summary: "",
-    maker_name: "",
+    summary: '',
+    maker_name: '',
     items: [] as VoucherItemRequest[],
   });
 
@@ -91,11 +100,11 @@ const FinanceVoucherPage: React.FC = () => {
         setSubjects(subjectResult.data.items || []);
       }
     } catch (err) {
-      apiLogger.error("加载数据失败:", err);
+      apiLogger.error('加载数据失败:', err);
       addNotification({
-        title: "错误",
-        message: "加载数据失败",
-        type: "error",
+        title: '错误',
+        message: '加载数据失败',
+        type: 'error',
       });
     } finally {
       setLoading(false);
@@ -109,38 +118,28 @@ const FinanceVoucherPage: React.FC = () => {
         setVoucherItems(result.data);
       }
     } catch (err) {
-      apiLogger.error("加载凭证明细失败:", err);
+      apiLogger.error('加载凭证明细失败:', err);
     }
   };
 
   const handleCreate = async () => {
-    if (
-      !newVoucher.voucher_number ||
-      !newVoucher.voucher_date ||
-      !newVoucher.period
-    ) {
+    if (!newVoucher.voucher_number || !newVoucher.voucher_date || !newVoucher.period) {
       addNotification({
-        title: "提示",
-        message: "请填写必填字段",
-        type: "warning",
+        title: '提示',
+        message: '请填写必填字段',
+        type: 'warning',
       });
       return;
     }
 
-    const totalDebit = newVoucher.items.reduce(
-      (sum, item) => sum + item.debit_amount,
-      0,
-    );
-    const totalCredit = newVoucher.items.reduce(
-      (sum, item) => sum + item.credit_amount,
-      0,
-    );
+    const totalDebit = newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0);
+    const totalCredit = newVoucher.items.reduce((sum, item) => sum + item.credit_amount, 0);
 
     if (totalDebit !== totalCredit) {
       addNotification({
-        title: "错误",
-        message: "借贷不平，无法创建凭证",
-        type: "error",
+        title: '错误',
+        message: '借贷不平，无法创建凭证',
+        type: 'error',
       });
       return;
     }
@@ -153,46 +152,46 @@ const FinanceVoucherPage: React.FC = () => {
 
       if (result.success) {
         addNotification({
-          title: "成功",
-          message: "凭证创建成功",
-          type: "success",
+          title: '成功',
+          message: '凭证创建成功',
+          type: 'success',
         });
         setShowCreateModal(false);
         resetForm();
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: result.message || "创建失败",
-          type: "error",
+          title: '失败',
+          message: result.message || '创建失败',
+          type: 'error',
         });
       }
     } catch (err) {
-      addNotification({ title: "错误", message: "操作失败", type: "error" });
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("确定要删除该凭证吗？")) return;
+    if (!confirm('确定要删除该凭证吗？')) return;
 
     try {
       const result = await voucherApi.delete(id);
       if (result.success) {
         addNotification({
-          title: "成功",
-          message: "删除成功",
-          type: "success",
+          title: '成功',
+          message: '删除成功',
+          type: 'success',
         });
         loadData();
       } else {
         addNotification({
-          title: "失败",
-          message: result.message || "删除失败",
-          type: "error",
+          title: '失败',
+          message: result.message || '删除失败',
+          type: 'error',
         });
       }
     } catch (err) {
-      addNotification({ title: "错误", message: "操作失败", type: "error" });
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
     }
   };
 
@@ -207,15 +206,15 @@ const FinanceVoucherPage: React.FC = () => {
 
       if (successCount === selectedIds.length) {
         addNotification({
-          title: "成功",
+          title: '成功',
           message: `批量删除成功，共 ${successCount} 条记录`,
-          type: "success",
+          type: 'success',
         });
       } else {
         addNotification({
-          title: "部分成功",
+          title: '部分成功',
           message: `成功删除 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
-          type: "warning",
+          type: 'warning',
         });
       }
 
@@ -223,9 +222,9 @@ const FinanceVoucherPage: React.FC = () => {
       loadData();
     } catch (err: any) {
       addNotification({
-        title: "错误",
-        message: err.message || "批量删除失败",
-        type: "error",
+        title: '错误',
+        message: err.message || '批量删除失败',
+        type: 'error',
       });
     }
   };
@@ -234,23 +233,21 @@ const FinanceVoucherPage: React.FC = () => {
     if (selectedIds.length === 0) return;
 
     try {
-      const promises = selectedIds.map((id) =>
-        voucherApi.update(id, { status: "approved" }),
-      );
+      const promises = selectedIds.map((id) => voucherApi.update(id, { status: 'approved' }));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
 
       if (successCount === selectedIds.length) {
         addNotification({
-          title: "成功",
+          title: '成功',
           message: `批量审核成功，共 ${successCount} 条记录`,
-          type: "success",
+          type: 'success',
         });
       } else {
         addNotification({
-          title: "部分成功",
+          title: '部分成功',
           message: `成功审核 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
-          type: "warning",
+          type: 'warning',
         });
       }
 
@@ -258,9 +255,9 @@ const FinanceVoucherPage: React.FC = () => {
       loadData();
     } catch (err: any) {
       addNotification({
-        title: "错误",
-        message: err.message || "批量审核失败",
-        type: "error",
+        title: '错误',
+        message: err.message || '批量审核失败',
+        type: 'error',
       });
     }
   };
@@ -268,43 +265,43 @@ const FinanceVoucherPage: React.FC = () => {
   const handleImport = async (fileContent: string) => {
     try {
       const result = await voucherApi.importU8({
-        file_name: "u8_vouchers.json",
+        file_name: 'u8_vouchers.json',
         file_content: fileContent,
-        import_mode: "insert",
+        import_mode: 'insert',
       });
 
       if (result.success && result.data) {
         const { success_count, failed_count, errors } = result.data;
         if (failed_count === 0) {
           addNotification({
-            title: "成功",
+            title: '成功',
             message: `成功导入${success_count}张凭证`,
-            type: "success",
+            type: 'success',
           });
         } else {
           addNotification({
-            title: "部分成功",
+            title: '部分成功',
             message: `成功导入${success_count}张，失败${failed_count}张`,
-            type: "warning",
+            type: 'warning',
           });
-          errors.forEach((err) => apiLogger.warn("导入错误:", err));
+          errors.forEach((err) => apiLogger.warn('导入错误:', err));
         }
         setShowImportModal(false);
         loadData();
       }
     } catch (err) {
-      addNotification({ title: "错误", message: "导入失败", type: "error" });
+      addNotification({ title: '错误', message: '导入失败', type: 'error' });
     }
   };
 
   const resetForm = () => {
     setNewVoucher({
-      voucher_number: "",
-      voucher_date: "",
-      period: "",
+      voucher_number: '',
+      voucher_date: '',
+      period: '',
       attachment_count: 0,
-      summary: "",
-      maker_name: "",
+      summary: '',
+      maker_name: '',
       items: [],
     });
   };
@@ -312,9 +309,9 @@ const FinanceVoucherPage: React.FC = () => {
   const addVoucherItem = () => {
     const newItem: VoucherItemRequest = {
       line_number: newVoucher.items.length + 1,
-      subject_code: "",
-      subject_name: "",
-      summary: "",
+      subject_code: '',
+      subject_name: '',
+      summary: '',
       debit_amount: 0,
       credit_amount: 0,
     };
@@ -325,7 +322,7 @@ const FinanceVoucherPage: React.FC = () => {
     const items = [...newVoucher.items];
     items[index] = { ...items[index], [field]: value };
 
-    if (field === "subject_code") {
+    if (field === 'subject_code') {
       const subject = subjects.find((s) => s.code === value);
       if (subject) {
         items[index].subject_name = subject.name;
@@ -347,176 +344,181 @@ const FinanceVoucherPage: React.FC = () => {
     const badges: Record<
       string,
       {
-        variant: "default" | "secondary" | "destructive" | "outline";
+        variant: 'default' | 'secondary' | 'destructive' | 'outline';
         label: string;
       }
     > = {
-      draft: { variant: "outline", label: "草稿" },
-      pending: { variant: "secondary", label: "待审核" },
-      approved: { variant: "default", label: "已审核" },
-      posted: { variant: "default", label: "已记账" },
-      imported: { variant: "secondary", label: "已导入" },
+      draft: { variant: 'outline', label: '草稿' },
+      pending: { variant: 'secondary', label: '待审核' },
+      approved: { variant: 'default', label: '已审核' },
+      posted: { variant: 'default', label: '已记账' },
+      imported: { variant: 'secondary', label: '已导入' },
     };
     const config = badges[status] || {
-      variant: "outline" as const,
+      variant: 'outline' as const,
       label: status,
     };
     return (
       <Chip
-        size="small"
-        variant={config.variant === "outline" ? "outlined" : "filled"}
+        size='small'
+        variant={config.variant === 'outline' ? 'outlined' : 'filled'}
         label={config.label}
       />
     );
   };
 
   const formatCurrency = (amount: number) =>
-    `¥${amount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}`;
+    `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
   // 统计卡片数据
   const voucherStatCards = useMemo(
     () => [
       {
-        id: "total",
-        title: "凭证总数",
+        id: 'total',
+        title: '凭证总数',
         value: vouchers.length,
         icon: <FileText size={24} />,
-        color: "primary" as const,
+        color: 'primary' as const,
       },
       {
-        id: "approved",
-        title: "已审核",
-        value: vouchers.filter(
-          (v) => v.status === "approved" || v.status === "posted",
-        ).length,
+        id: 'approved',
+        title: '已审核',
+        value: vouchers.filter((v) => v.status === 'approved' || v.status === 'posted').length,
         icon: <FileCheck size={24} />,
-        color: "success" as const,
+        color: 'success' as const,
       },
       {
-        id: "pending",
-        title: "待审核",
-        value: vouchers.filter((v) => v.status === "pending").length,
+        id: 'pending',
+        title: '待审核',
+        value: vouchers.filter((v) => v.status === 'pending').length,
         icon: <Clock size={24} />,
-        color: "warning" as const,
+        color: 'warning' as const,
       },
       {
-        id: "total_amount",
-        title: "总金额",
-        value: formatCurrency(
-          vouchers.reduce((sum, v) => sum + v.total_debit, 0),
-        ),
+        id: 'total_amount',
+        title: '总金额',
+        value: formatCurrency(vouchers.reduce((sum, v) => sum + v.total_debit, 0)),
         icon: <DollarSign size={24} />,
-        color: "secondary" as const,
+        color: 'secondary' as const,
       },
     ],
-    [vouchers],
+    [vouchers]
   );
 
   const subjectStatCards = useMemo(
     () => [
       {
-        id: "total",
-        title: "科目总数",
+        id: 'total',
+        title: '科目总数',
         value: subjects.length,
         icon: <Building2 size={24} />,
-        color: "primary" as const,
+        color: 'primary' as const,
       },
       {
-        id: "active",
-        title: "已启用",
-        value: subjects.filter((s) => s.status === "active").length,
+        id: 'active',
+        title: '已启用',
+        value: subjects.filter((s) => s.status === 'active').length,
         icon: <FileCheck size={24} />,
-        color: "success" as const,
+        color: 'success' as const,
       },
       {
-        id: "level1",
-        title: "一级科目",
+        id: 'level1',
+        title: '一级科目',
         value: subjects.filter((s) => s.level === 1).length,
         icon: <DollarSign size={24} />,
-        color: "warning" as const,
+        color: 'warning' as const,
       },
       {
-        id: "cash_flow",
-        title: "现金流量科目",
+        id: 'cash_flow',
+        title: '现金流量科目',
         value: subjects.filter((s) => s.is_cash_flow).length,
         icon: <Clock size={24} />,
-        color: "info" as const,
+        color: 'info' as const,
       },
     ],
-    [subjects],
+    [subjects]
   );
 
   // 凭证表格列定义
   const voucherColumns = useMemo(
     () => [
       {
-        id: "voucher_number",
-        label: "凭证编号",
+        id: 'voucher_number',
+        label: '凭证编号',
         render: (row: FinancialVoucher) => (
-          <Typography sx={{ fontWeight: 500, color: "primary.main" }}>
+          <Typography sx={{ fontWeight: 500, color: 'primary.main' }}>
             {row.voucher_number}
           </Typography>
         ),
       },
       {
-        id: "voucher_date",
-        label: "凭证日期",
+        id: 'voucher_date',
+        label: '凭证日期',
         render: (row: FinancialVoucher) => (
-          <Typography variant="body2" sx={{ color: "text.primary" }}>
-            {row.voucher_date?.split("T")[0] || "-"}
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.primary' }}
+          >
+            {row.voucher_date?.split('T')[0] || '-'}
           </Typography>
         ),
       },
       {
-        id: "period",
-        label: "期间",
+        id: 'period',
+        label: '期间',
         render: (row: FinancialVoucher) => (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             {row.period}
           </Typography>
         ),
       },
       {
-        id: "total_debit",
-        label: "借方金额",
+        id: 'total_debit',
+        label: '借方金额',
         render: (row: FinancialVoucher) => (
-          <Typography sx={{ fontWeight: "bold", color: "error.main" }}>
+          <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
             {formatCurrency(row.total_debit)}
           </Typography>
         ),
       },
       {
-        id: "total_credit",
-        label: "贷方金额",
+        id: 'total_credit',
+        label: '贷方金额',
         render: (row: FinancialVoucher) => (
-          <Typography sx={{ fontWeight: "bold", color: "success.main" }}>
+          <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
             {formatCurrency(row.total_credit)}
           </Typography>
         ),
       },
       {
-        id: "maker_name",
-        label: "制单人",
+        id: 'maker_name',
+        label: '制单人',
         render: (row: FinancialVoucher) => (
-          <Typography variant="body2" sx={{ color: "text.primary" }}>
-            {row.maker_name || "-"}
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.primary' }}
+          >
+            {row.maker_name || '-'}
           </Typography>
         ),
       },
       {
-        id: "status",
-        label: "状态",
+        id: 'status',
+        label: '状态',
         render: (row: FinancialVoucher) => getStatusBadge(row.status),
       },
     ],
-    [],
+    []
   );
 
   // 行操作
   const voucherRowActions = useMemo(
     () => [
       {
-        label: "查看详情",
+        label: '查看详情',
         icon: <Eye size={16} />,
         onClick: (row: FinancialVoucher) => {
           setCurrentVoucher(row);
@@ -525,74 +527,72 @@ const FinanceVoucherPage: React.FC = () => {
         },
       },
       {
-        label: "编辑",
+        label: '编辑',
         icon: <Edit size={16} />,
-        color: "primary" as const,
+        color: 'primary' as const,
         onClick: (row: FinancialVoucher) => {
           setNewVoucher({
             voucher_number: row.voucher_number,
-            voucher_date: row.voucher_date?.split("T")[0] || "",
+            voucher_date: row.voucher_date?.split('T')[0] || '',
             period: row.period,
             attachment_count: row.attachment_count || 0,
-            summary: row.summary || "",
-            maker_name: row.maker_name || "",
+            summary: row.summary || '',
+            maker_name: row.maker_name || '',
             items: [],
           });
           setShowCreateModal(true);
         },
       },
       {
-        label: "删除",
+        label: '删除',
         icon: <Trash2 size={16} />,
-        color: "error" as const,
+        color: 'error' as const,
         onClick: (row: FinancialVoucher) => handleDelete(row.id),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    []
   );
 
   // 筛选器配置
   const voucherFilters = useMemo(
     () => [
       {
-        id: "status",
-        label: "状态",
-        type: "select" as const,
+        id: 'status',
+        label: '状态',
+        type: 'select' as const,
         options: [
-          { value: "", label: "全部状态" },
-          { value: "draft", label: "草稿" },
-          { value: "pending", label: "待审核" },
-          { value: "approved", label: "已审核" },
-          { value: "posted", label: "已记账" },
-          { value: "imported", label: "已导入" },
+          { value: '', label: '全部状态' },
+          { value: 'draft', label: '草稿' },
+          { value: 'pending', label: '待审核' },
+          { value: 'approved', label: '已审核' },
+          { value: 'posted', label: '已记账' },
+          { value: 'imported', label: '已导入' },
         ],
       },
       {
-        id: "period",
-        label: "期间",
-        type: "select" as const,
+        id: 'period',
+        label: '期间',
+        type: 'select' as const,
         options: [
-          { value: "", label: "全部期间" },
-          { value: "2024-01", label: "2024年01月" },
-          { value: "2024-02", label: "2024年02月" },
-          { value: "2024-03", label: "2024年03月" },
-          { value: "2024-04", label: "2024年04月" },
-          { value: "2024-05", label: "2024年05月" },
-          { value: "2024-06", label: "2024年06月" },
+          { value: '', label: '全部期间' },
+          { value: '2024-01', label: '2024年01月' },
+          { value: '2024-02', label: '2024年02月' },
+          { value: '2024-03', label: '2024年03月' },
+          { value: '2024-04', label: '2024年04月' },
+          { value: '2024-05', label: '2024年05月' },
+          { value: '2024-06', label: '2024年06月' },
         ],
       },
     ],
-    [],
+    []
   );
 
   const filteredVouchers = useMemo(() => {
     return vouchers.filter((voucher) => {
       const matchesSearch =
         !searchQuery ||
-        voucher.voucher_number
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
+        voucher.voucher_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         voucher.summary?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesPeriod = !periodFilter || voucher.period === periodFilter;
       const matchesStatus = !statusFilter || voucher.status === statusFilter;
@@ -605,9 +605,9 @@ const FinanceVoucherPage: React.FC = () => {
   };
 
   const handleReset = () => {
-    setSearchQuery("");
-    setPeriodFilter("");
-    setStatusFilter("");
+    setSearchQuery('');
+    setPeriodFilter('');
+    setStatusFilter('');
   };
 
   const handleFilterChange = (filters: Record<string, unknown>) => {
@@ -618,61 +618,62 @@ const FinanceVoucherPage: React.FC = () => {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        bgcolor: "slate.50",
-        dark: { bgcolor: "slate.900" },
+        minHeight: '100vh',
+        bgcolor: 'slate.50',
+        dark: { bgcolor: 'slate.900' },
       }}
     >
       <Box
         sx={{
-          bgcolor: "background.paper",
-          dark: { bgcolor: "slate.800" },
+          bgcolor: 'background.paper',
+          dark: { bgcolor: 'slate.800' },
           boxShadow: 1,
           borderBottom: 1,
-          borderColor: "divider",
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 3 }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 3 }}>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Button variant="text" onClick={() => navigate("/dashboard")}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Button
+                variant='text'
+                onClick={() => navigate('/dashboard')}
+              >
                 <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
               <Box>
                 <Typography
-                  variant="h5"
+                  variant='h5'
                   sx={{
-                    fontWeight: "bold",
-                    color: "text.primary",
-                    display: "flex",
-                    alignItems: "center",
+                    fontWeight: 'bold',
+                    color: 'text.primary',
+                    display: 'flex',
+                    alignItems: 'center',
                   }}
                 >
-                  <FileText
-                    sx={{ width: 28, height: 28, mr: 1.5, color: "indigo.600" }}
-                  />
+                  <FileText sx={{ width: 28, height: 28, mr: 1.5, color: 'indigo.600' }} />
                   财务凭证管理
                 </Typography>
                 <Typography
-                  variant="body2"
-                  sx={{ mt: 0.5, color: "text.secondary" }}
+                  variant='body2'
+                  sx={{ mt: 0.5, color: 'text.secondary' }}
                 >
                   管理财务凭证、会计科目，支持用友凭证导入
                 </Typography>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Button
                 onClick={() => setShowImportModal(true)}
                 sx={{
-                  backgroundColor: "green.600",
-                  "&:hover": { backgroundColor: "green.700" },
+                  backgroundColor: 'green.600',
+                  '&:hover': { backgroundColor: 'green.700' },
                 }}
               >
                 <Upload sx={{ width: 16, height: 16, mr: 1 }} />
@@ -692,85 +693,91 @@ const FinanceVoucherPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 3 }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 3 }}>
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
           sx={{ mb: 2 }}
         >
           <Tab
-            value="vouchers"
-            label="财务凭证"
+            value='vouchers'
+            label='财务凭证'
             icon={<FileText sx={{ width: 16, height: 16 }} />}
-            iconPosition="start"
+            iconPosition='start'
           />
           <Tab
-            value="subjects"
-            label="会计科目"
+            value='subjects'
+            label='会计科目'
             icon={<Building2 sx={{ width: 16, height: 16 }} />}
-            iconPosition="start"
+            iconPosition='start'
           />
         </Tabs>
 
-        <Box sx={{ display: activeTab === "vouchers" ? "block" : "none" }}>
+        <Box sx={{ display: activeTab === 'vouchers' ? 'block' : 'none' }}>
           {/* 统计卡片 */}
-          <StatCardGroup stats={voucherStatCards} columns={4} />
+          <StatCardGroup
+            stats={voucherStatCards}
+            columns={4}
+          />
 
           {/* 批量操作提示 */}
           {selectedIds.length > 0 && (
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                bgcolor: "blue.50",
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                bgcolor: 'blue.50',
                 px: 2,
                 py: 1.5,
                 borderRadius: 1,
                 mb: 2,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Typography variant="body2" sx={{ color: "blue.700" }}>
-                  已选择{" "}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'blue.700' }}
+                >
+                  已选择{' '}
                   <Chip
-                    size="small"
+                    size='small'
                     sx={{ ml: 2 }}
                     label={selectedIds.length.toString()}
                   />
                   条记录
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Button
-                  variant="outlined"
-                  size="small"
+                  variant='outlined'
+                  size='small'
                   onClick={handleBatchAudit}
                   sx={{
-                    color: "green.600",
-                    borderColor: "green.600",
-                    "&:hover": { color: "green.700", borderColor: "green.700" },
+                    color: 'green.600',
+                    borderColor: 'green.600',
+                    '&:hover': { color: 'green.700', borderColor: 'green.700' },
                   }}
                 >
                   <Check sx={{ width: 16, height: 16, mr: 0.5 }} />
                   批量审核
                 </Button>
                 <Button
-                  variant="outlined"
-                  size="small"
+                  variant='outlined'
+                  size='small'
                   onClick={handleBatchDelete}
                   sx={{
-                    color: "red.600",
-                    borderColor: "red.600",
-                    "&:hover": { color: "red.700", borderColor: "red.700" },
+                    color: 'red.600',
+                    borderColor: 'red.600',
+                    '&:hover': { color: 'red.700', borderColor: 'red.700' },
                   }}
                 >
                   <Trash2 sx={{ width: 16, height: 16, mr: 0.5 }} />
                   批量删除
                 </Button>
                 <Button
-                  variant="outlined"
-                  size="small"
+                  variant='outlined'
+                  size='small'
                   onClick={() => setSelectedIds([])}
                 >
                   取消选择
@@ -785,7 +792,7 @@ const FinanceVoucherPage: React.FC = () => {
             data={filteredVouchers}
             loading={loading}
             searchable
-            searchPlaceholder="搜索凭证编号或摘要..."
+            searchPlaceholder='搜索凭证编号或摘要...'
             filters={voucherFilters}
             filtersValue={{
               status: statusFilter,
@@ -794,29 +801,32 @@ const FinanceVoucherPage: React.FC = () => {
             onFilterChange={handleFilterChange}
             onSearch={handleSearch}
             actions={[
-              { label: "搜索", variant: "outlined", onClick: handleSearch },
-              { label: "重置", variant: "outlined", onClick: handleReset },
+              { label: '搜索', variant: 'outlined', onClick: handleSearch },
+              { label: '重置', variant: 'outlined', onClick: handleReset },
             ]}
             selectable
             selectedIds={selectedIds}
             onSelectionChange={(ids) => setSelectedIds(ids as string[])}
             rowActions={voucherRowActions}
-            emptyMessage="暂无凭证数据"
+            emptyMessage='暂无凭证数据'
           />
         </Box>
 
-        <Box sx={{ display: activeTab === "subjects" ? "block" : "none" }}>
+        <Box sx={{ display: activeTab === 'subjects' ? 'block' : 'none' }}>
           {/* 科目统计卡片 */}
-          <StatCardGroup stats={subjectStatCards} columns={4} />
+          <StatCardGroup
+            stats={subjectStatCards}
+            columns={4}
+          />
 
           {/* 科目列表 */}
           <Box
             sx={{
-              display: "grid",
+              display: 'grid',
               gridTemplateColumns: {
-                xs: "1fr",
-                md: "1fr 1fr",
-                lg: "repeat(3, 1fr)",
+                xs: '1fr',
+                md: '1fr 1fr',
+                lg: 'repeat(3, 1fr)',
               },
               gap: 2,
             }}
@@ -825,106 +835,100 @@ const FinanceVoucherPage: React.FC = () => {
               <Box
                 key={subject.id}
                 sx={{
-                  bgcolor: "background.paper",
-                  "&:hover": { boxShadow: 3 },
-                  transition: "box-shadow 0.3s",
+                  bgcolor: 'background.paper',
+                  '&:hover': { boxShadow: 3 },
+                  transition: 'box-shadow 0.3s',
                   border: 1,
-                  borderColor: "divider",
+                  borderColor: 'divider',
                   borderRadius: 1,
                   p: 3,
                 }}
               >
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                     mb: 2,
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
-                      variant="body1"
-                      sx={{ fontWeight: "bold", color: "indigo.600" }}
+                      variant='body1'
+                      sx={{ fontWeight: 'bold', color: 'indigo.600' }}
                     >
                       {subject.code}
                     </Typography>
                     {subject.is_cash_flow && (
                       <Chip
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontSize: "0.75rem" }}
-                        label="现金流量"
+                        size='small'
+                        variant='outlined'
+                        sx={{ fontSize: '0.75rem' }}
+                        label='现金流量'
                       />
                     )}
                   </Box>
                   <Chip
-                    size="small"
-                    variant={
-                      subject.status === "active" ? "filled" : "outlined"
-                    }
-                    sx={{ backgroundColor: "green.100", color: "green.700" }}
-                    label={subject.status === "active" ? "启用" : "禁用"}
+                    size='small'
+                    variant={subject.status === 'active' ? 'filled' : 'outlined'}
+                    sx={{ backgroundColor: 'green.100', color: 'green.700' }}
+                    label={subject.status === 'active' ? '启用' : '禁用'}
                   />
                 </Box>
                 <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 600, color: "text.primary" }}
+                  variant='h6'
+                  sx={{ fontWeight: 600, color: 'text.primary' }}
                 >
                   {subject.name}
                 </Typography>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
                     mt: 1,
-                    color: "text.secondary",
+                    color: 'text.secondary',
                   }}
                 >
-                  <Typography variant="body2">层级: {subject.level}</Typography>
+                  <Typography variant='body2'>层级: {subject.level}</Typography>
                   <Box
                     sx={{
                       width: 4,
                       height: 4,
-                      borderRadius: "50%",
-                      bgcolor: "grey.300",
+                      borderRadius: '50%',
+                      bgcolor: 'grey.300',
                     }}
                   />
-                  <Typography variant="body2">
-                    {subject.category || "未分类"}
-                  </Typography>
+                  <Typography variant='body2'>{subject.category || '未分类'}</Typography>
                 </Box>
                 {subject.parent_code && (
-                  <Box
-                    sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "grey.100" }}
-                  >
+                  <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'grey.100' }}>
                     <Typography
-                      variant="caption"
-                      sx={{ color: "text.disabled" }}
+                      variant='caption'
+                      sx={{ color: 'text.disabled' }}
                     >
                       <Typography
-                        variant="caption"
-                        component="span"
+                        variant='caption'
+                        component='span'
                         sx={{ fontWeight: 500 }}
                       >
                         上级科目:
-                      </Typography>{" "}
+                      </Typography>{' '}
                       {subject.parent_code}
                     </Typography>
                   </Box>
                 )}
                 {subject.description && (
                   <Typography
-                    variant="body2"
+                    variant='body2'
                     sx={{
-                      color: "text.secondary",
+                      color: 'text.secondary',
                       mt: 1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
                       WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
+                      WebkitBoxOrient: 'vertical',
                     }}
                   >
                     {subject.description}
@@ -943,22 +947,20 @@ const FinanceVoucherPage: React.FC = () => {
           setShowCreateModal(false);
           resetForm();
         }}
-        maxWidth="lg"
+        maxWidth='lg'
       >
-        <DialogTitle>
-          {newVoucher.voucher_number ? "编辑凭证" : "新增财务凭证"}
-        </DialogTitle>
+        <DialogTitle>{newVoucher.voucher_number ? '编辑凭证' : '新增财务凭证'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: 2,
               }}
             >
               <TextField
-                label="凭证编号 *"
+                label='凭证编号 *'
                 value={newVoucher.voucher_number}
                 onChange={(e) =>
                   setNewVoucher((prev) => ({
@@ -966,12 +968,12 @@ const FinanceVoucherPage: React.FC = () => {
                     voucher_number: e.target.value,
                   }))
                 }
-                placeholder="请输入凭证编号"
+                placeholder='请输入凭证编号'
                 fullWidth
               />
               <TextField
-                label="凭证日期 *"
-                type="date"
+                label='凭证日期 *'
+                type='date'
                 value={newVoucher.voucher_date}
                 onChange={(e) =>
                   setNewVoucher((prev) => ({
@@ -982,7 +984,7 @@ const FinanceVoucherPage: React.FC = () => {
                 fullWidth
               />
               <TextField
-                label="期间 *"
+                label='期间 *'
                 value={newVoucher.period}
                 onChange={(e) =>
                   setNewVoucher((prev) => ({
@@ -990,20 +992,20 @@ const FinanceVoucherPage: React.FC = () => {
                     period: e.target.value,
                   }))
                 }
-                placeholder="如: 2024-06"
+                placeholder='如: 2024-06'
                 fullWidth
               />
             </Box>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
                 gap: 2,
               }}
             >
               <TextField
-                label="附件数量"
-                type="number"
+                label='附件数量'
+                type='number'
                 value={newVoucher.attachment_count}
                 onChange={(e) =>
                   setNewVoucher((prev) => ({
@@ -1014,7 +1016,7 @@ const FinanceVoucherPage: React.FC = () => {
                 fullWidth
               />
               <TextField
-                label="制单人"
+                label='制单人'
                 value={newVoucher.maker_name}
                 onChange={(e) =>
                   setNewVoucher((prev) => ({
@@ -1022,12 +1024,12 @@ const FinanceVoucherPage: React.FC = () => {
                     maker_name: e.target.value,
                   }))
                 }
-                placeholder="制单人姓名"
+                placeholder='制单人姓名'
                 fullWidth
               />
             </Box>
             <TextField
-              label="摘要"
+              label='摘要'
               multiline
               rows={2}
               value={newVoucher.summary}
@@ -1037,23 +1039,29 @@ const FinanceVoucherPage: React.FC = () => {
                   summary: e.target.value,
                 }))
               }
-              placeholder="凭证摘要"
+              placeholder='凭证摘要'
               fullWidth
             />
 
-            <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
+            <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   mb: 2,
                 }}
               >
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
                   凭证明细
                 </Typography>
-                <Button size="small" onClick={addVoucherItem}>
+                <Button
+                  size='small'
+                  onClick={addVoucherItem}
+                >
                   <Plus sx={{ width: 16, height: 16 }} />
                   添加分录
                 </Button>
@@ -1061,9 +1069,9 @@ const FinanceVoucherPage: React.FC = () => {
               <Box
                 sx={{
                   maxHeight: 256,
-                  overflowY: "auto",
-                  display: "flex",
-                  flexDirection: "column",
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 1,
                 }}
               >
@@ -1071,20 +1079,20 @@ const FinanceVoucherPage: React.FC = () => {
                   <Box
                     key={index}
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1,
                       p: 1.5,
-                      bgcolor: "grey.50",
+                      bgcolor: 'grey.50',
                       borderRadius: 1,
                     }}
                   >
                     <Typography
                       sx={{
                         width: 24,
-                        textAlign: "center",
-                        color: "text.secondary",
-                        fontSize: "0.875rem",
+                        textAlign: 'center',
+                        color: 'text.secondary',
+                        fontSize: '0.875rem',
                       }}
                     >
                       {item.line_number}
@@ -1093,17 +1101,14 @@ const FinanceVoucherPage: React.FC = () => {
                       <InputLabel>选择科目</InputLabel>
                       <Select
                         value={item.subject_code}
-                        label="选择科目"
-                        onChange={(e) =>
-                          updateVoucherItem(
-                            index,
-                            "subject_code",
-                            e.target.value,
-                          )
-                        }
+                        label='选择科目'
+                        onChange={(e) => updateVoucherItem(index, 'subject_code', e.target.value)}
                       >
                         {subjects.map((s) => (
-                          <MenuItem key={s.id} value={s.code}>
+                          <MenuItem
+                            key={s.id}
+                            value={s.code}
+                          >
                             {s.code} - {s.name}
                           </MenuItem>
                         ))}
@@ -1113,38 +1118,30 @@ const FinanceVoucherPage: React.FC = () => {
                       sx={{ width: 100 }}
                       value={item.subject_name}
                       slotProps={{ input: { readOnly: true } }}
-                      placeholder="科目名称"
+                      placeholder='科目名称'
                     />
                     <TextField
                       sx={{ width: 100 }}
-                      type="number"
-                      value={item.debit_amount || ""}
+                      type='number'
+                      value={item.debit_amount || ''}
                       onChange={(e) =>
-                        updateVoucherItem(
-                          index,
-                          "debit_amount",
-                          parseFloat(e.target.value) || 0,
-                        )
+                        updateVoucherItem(index, 'debit_amount', parseFloat(e.target.value) || 0)
                       }
-                      placeholder="借方"
+                      placeholder='借方'
                     />
                     <TextField
                       sx={{ width: 100 }}
-                      type="number"
-                      value={item.credit_amount || ""}
+                      type='number'
+                      value={item.credit_amount || ''}
                       onChange={(e) =>
-                        updateVoucherItem(
-                          index,
-                          "credit_amount",
-                          parseFloat(e.target.value) || 0,
-                        )
+                        updateVoucherItem(index, 'credit_amount', parseFloat(e.target.value) || 0)
                       }
-                      placeholder="贷方"
+                      placeholder='贷方'
                     />
                     <Button
-                      variant="text"
-                      size="small"
-                      sx={{ color: "red" }}
+                      variant='text'
+                      size='small'
+                      sx={{ color: 'red' }}
                       onClick={() => removeVoucherItem(index)}
                     >
                       <X sx={{ width: 16, height: 16 }} />
@@ -1154,37 +1151,35 @@ const FinanceVoucherPage: React.FC = () => {
               </Box>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "flex-end",
+                  display: 'flex',
+                  justifyContent: 'flex-end',
                   gap: 4,
                   mt: 2,
                 }}
               >
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     借方合计
                   </Typography>
-                  <Typography sx={{ fontWeight: "bold", color: "error.main" }}>
+                  <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
                     {formatCurrency(
-                      newVoucher.items.reduce(
-                        (sum, item) => sum + item.debit_amount,
-                        0,
-                      ),
+                      newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0)
                     )}
                   </Typography>
                 </Box>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     贷方合计
                   </Typography>
-                  <Typography
-                    sx={{ fontWeight: "bold", color: "success.main" }}
-                  >
+                  <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
                     {formatCurrency(
-                      newVoucher.items.reduce(
-                        (sum, item) => sum + item.credit_amount,
-                        0,
-                      ),
+                      newVoucher.items.reduce((sum, item) => sum + item.credit_amount, 0)
                     )}
                   </Typography>
                 </Box>
@@ -1193,7 +1188,7 @@ const FinanceVoucherPage: React.FC = () => {
           </Box>
           <DialogActions>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={() => {
                 setShowCreateModal(false);
                 resetForm();
@@ -1213,58 +1208,62 @@ const FinanceVoucherPage: React.FC = () => {
       <Dialog
         open={showImportModal}
         onClose={() => setShowImportModal(false)}
-        maxWidth="lg"
+        maxWidth='lg'
       >
         <DialogTitle>导入用友财务凭证</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Box sx={{ p: 2, bgcolor: "blue.50", borderRadius: 1 }}>
-              <AlertCircle
-                sx={{ width: 20, height: 20, color: "blue.600", mb: 1 }}
-              />
-              <Typography variant="body2" sx={{ color: "blue.800" }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ p: 2, bgcolor: 'blue.50', borderRadius: 1 }}>
+              <AlertCircle sx={{ width: 20, height: 20, color: 'blue.600', mb: 1 }} />
+              <Typography
+                variant='body2'
+                sx={{ color: 'blue.800' }}
+              >
                 请将用友U8系统导出的凭证数据粘贴到下方文本框中。支持JSON格式数据导入。
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 用友凭证数据 (JSON格式)
               </Typography>
               <TextField
-                id="importData"
+                id='importData'
                 multiline
                 rows={12}
                 placeholder='[{"voucher_number": "记-001", "voucher_date": "2024-01-15", "period": "2024-01", "summary": "支付办公费用", "maker": "张三", "items": [{"line_number": 1, "subject_code": "6602", "subject_name": "管理费用", "summary": "办公用品", "debit_amount": 500.00, "credit_amount": 0}]}]'
                 fullWidth
-                sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}
+                sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
               />
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Button
-                variant="outlined"
+                variant='outlined'
                 onClick={() => {
                   const sampleData = JSON.stringify(
                     [
                       {
-                        voucher_number: "记-001",
-                        voucher_date: "2024-01-15",
-                        period: "2024-01",
-                        summary: "支付办公费用",
-                        maker: "张三",
+                        voucher_number: '记-001',
+                        voucher_date: '2024-01-15',
+                        period: '2024-01',
+                        summary: '支付办公费用',
+                        maker: '张三',
                         items: [
                           {
                             line_number: 1,
-                            subject_code: "6602",
-                            subject_name: "管理费用",
-                            summary: "办公用品",
+                            subject_code: '6602',
+                            subject_name: '管理费用',
+                            summary: '办公用品',
                             debit_amount: 500.0,
                             credit_amount: 0,
                           },
                           {
                             line_number: 2,
-                            subject_code: "1002",
-                            subject_name: "银行存款",
-                            summary: "",
+                            subject_code: '1002',
+                            subject_name: '银行存款',
+                            summary: '',
                             debit_amount: 0,
                             credit_amount: 500.0,
                           },
@@ -1272,11 +1271,9 @@ const FinanceVoucherPage: React.FC = () => {
                       },
                     ],
                     null,
-                    2,
+                    2
                   );
-                  (
-                    document.getElementById("importData") as HTMLTextAreaElement
-                  ).value = sampleData;
+                  (document.getElementById('importData') as HTMLTextAreaElement).value = sampleData;
                 }}
               >
                 <Download sx={{ width: 16, height: 16, mr: 1 }} />
@@ -1286,25 +1283,24 @@ const FinanceVoucherPage: React.FC = () => {
           </Box>
           <DialogActions>
             <Button
-              variant="outlined"
+              variant='outlined'
               onClick={() => setShowImportModal(false)}
             >
               取消
             </Button>
             <Button
               sx={{
-                backgroundColor: "green",
-                "&:hover": { backgroundColor: "green" },
+                backgroundColor: 'green',
+                '&:hover': { backgroundColor: 'green' },
               }}
               onClick={() => {
-                const content = (
-                  document.getElementById("importData") as HTMLTextAreaElement
-                ).value;
+                const content = (document.getElementById('importData') as HTMLTextAreaElement)
+                  .value;
                 if (!content.trim()) {
                   addNotification({
-                    title: "提示",
-                    message: "请输入凭证数据",
-                    type: "warning",
+                    title: '提示',
+                    message: '请输入凭证数据',
+                    type: 'warning',
                   });
                   return;
                 }
@@ -1322,144 +1318,167 @@ const FinanceVoucherPage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth="lg"
+        maxWidth='lg'
       >
         <DialogTitle>凭证详情</DialogTitle>
         <DialogContent>
           {currentVoucher && (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
-            >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
                     凭证编号
                   </Typography>
                   <Typography
-                    variant="h6"
-                    sx={{ color: "indigo.600", fontWeight: "bold" }}
+                    variant='h6'
+                    sx={{ color: 'indigo.600', fontWeight: 'bold' }}
                   >
                     {currentVoucher.voucher_number}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
                     凭证日期
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {currentVoucher.voucher_date?.split("T")[0]}
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 'bold' }}
+                  >
+                    {currentVoucher.voucher_date?.split('T')[0]}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
                     期间
                   </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 'bold' }}
+                  >
                     {currentVoucher.period}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
                     状态
                   </Typography>
                   {getStatusBadge(currentVoucher.status)}
                 </Box>
               </Box>
-              <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
                   摘要
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {currentVoucher.summary || "-"}
+                <Typography
+                  variant='body1'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {currentVoucher.summary || '-'}
                 </Typography>
               </Box>
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
                     制单人
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {currentVoucher.maker_name || "-"}
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {currentVoucher.maker_name || '-'}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
                     审核人
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {currentVoucher.checker_name || "-"}
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {currentVoucher.checker_name || '-'}
                   </Typography>
                 </Box>
               </Box>
-              <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
                   凭证明细
                 </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {voucherItems.map((item) => (
                     <Box
                       key={item.id}
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                         p: 1.5,
-                        bgcolor: "grey.50",
+                        bgcolor: 'grey.50',
                         borderRadius: 1,
                       }}
                     >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                      >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Typography
                           sx={{
                             width: 24,
-                            textAlign: "center",
-                            color: "text.secondary",
-                            fontSize: "0.875rem",
+                            textAlign: 'center',
+                            color: 'text.secondary',
+                            fontSize: '0.875rem',
                           }}
                         >
                           {item.line_number}
                         </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {item.subject_code}
-                        </Typography>
+                        <Typography sx={{ fontWeight: 500 }}>{item.subject_code}</Typography>
                         <Typography>{item.subject_name}</Typography>
                         <Typography
-                          variant="body2"
-                          sx={{ color: "text.secondary" }}
+                          variant='body2'
+                          sx={{ color: 'text.secondary' }}
                         >
                           {item.summary}
                         </Typography>
                       </Box>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 4 }}
-                      >
-                        <Typography
-                          sx={{ color: "error.main", fontWeight: "bold" }}
-                        >
-                          {item.debit_amount > 0
-                            ? formatCurrency(item.debit_amount)
-                            : ""}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Typography sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                          {item.debit_amount > 0 ? formatCurrency(item.debit_amount) : ''}
                         </Typography>
-                        <Typography
-                          sx={{ color: "success.main", fontWeight: "bold" }}
-                        >
-                          {item.credit_amount > 0
-                            ? formatCurrency(item.credit_amount)
-                            : ""}
+                        <Typography sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                          {item.credit_amount > 0 ? formatCurrency(item.credit_amount) : ''}
                         </Typography>
                       </Box>
                     </Box>
@@ -1467,33 +1486,39 @@ const FinanceVoucherPage: React.FC = () => {
                 </Box>
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
+                    display: 'flex',
+                    justifyContent: 'flex-end',
                     gap: 8,
                     mt: 3,
                     borderTop: 1,
-                    borderColor: "divider",
+                    borderColor: 'divider',
                     pt: 2,
                   }}
                 >
-                  <Box sx={{ textAlign: "right" }}>
-                    <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
                       借方合计
                     </Typography>
                     <Typography
-                      variant="h6"
-                      sx={{ color: "error.main", fontWeight: "bold" }}
+                      variant='h6'
+                      sx={{ color: 'error.main', fontWeight: 'bold' }}
                     >
                       {formatCurrency(currentVoucher.total_debit)}
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
                       贷方合计
                     </Typography>
                     <Typography
-                      variant="h6"
-                      sx={{ color: "success.main", fontWeight: "bold" }}
+                      variant='h6'
+                      sx={{ color: 'success.main', fontWeight: 'bold' }}
                     >
                       {formatCurrency(currentVoucher.total_credit)}
                     </Typography>

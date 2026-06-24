@@ -1,14 +1,9 @@
-import React from "react";
-import {
-  Home,
-  FileText,
-  Bot,
-  GitBranch,
-  Shield,
-  Users,
-  Factory,
-  BarChart3,
-} from "lucide-react";
+/**
+ * @deprecated 此组件已弃用，请使用 @/components/layout/MobileNav 中的 MobileNav 组件
+ * 该组件将保留作为向后兼容，预计在未来的版本中移除
+ */
+import React from 'react';
+import { Home, FileText, Bot, GitBranch, Shield, Users, Factory, BarChart3 } from 'lucide-react';
 
 interface MobileNavProps {
   currentPage: string;
@@ -16,24 +11,24 @@ interface MobileNavProps {
 }
 
 const navItems = [
-  { id: "dashboard", label: "首页", icon: Home },
-  { id: "documents", label: "文档", icon: FileText },
-  { id: "ai", label: "AI", icon: Bot },
-  { id: "qms", label: "质量", icon: Shield },
-  { id: "ehs", label: "安全", icon: GitBranch },
-  { id: "srm", label: "供应商", icon: Users },
-  { id: "pdm", label: "生产", icon: Factory },
-  { id: "lims", label: "检测", icon: BarChart3 },
+  { id: 'dashboard', label: '首页', icon: Home },
+  { id: 'documents', label: '文档', icon: FileText },
+  { id: 'ai', label: 'AI', icon: Bot },
+  { id: 'qms', label: '质量', icon: Shield },
+  { id: 'ehs', label: '安全', icon: GitBranch },
+  { id: 'srm', label: '供应商', icon: Users },
+  { id: 'pdm', label: '生产', icon: Factory },
+  { id: 'lims', label: '检测', icon: BarChart3 },
 ];
 
 const MobileNav: React.FC<MobileNavProps> = ({ currentPage, onNavigate }) => {
   return (
-    <div className="mobile-menu mobile-only">
+    <div className='mobile-menu mobile-only'>
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "4px",
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '4px',
         }}
       >
         {navItems.map((item) => {
@@ -43,12 +38,10 @@ const MobileNav: React.FC<MobileNavProps> = ({ currentPage, onNavigate }) => {
             <button
               key={item.id}
               onClick={() => onNavigate(`/${item.id}`)}
-              className={`mobile-nav-item ${isActive ? "active" : "inactive"}`}
+              className={`mobile-nav-item ${isActive ? 'active' : 'inactive'}`}
             >
               <Icon size={20} />
-              <span style={{ fontSize: "12px", marginTop: "2px" }}>
-                {item.label}
-              </span>
+              <span style={{ fontSize: '12px', marginTop: '2px' }}>{item.label}</span>
             </button>
           );
         })}

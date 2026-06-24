@@ -1,11 +1,11 @@
-import type { Theme, ThemeOptions } from "@mui/material/styles";
-import { createTheme } from "@mui/material/styles";
-import type { PaletteMode } from "@mui/material";
-import { designTokens } from "./tokens";
-import { gradients } from "./gradients";
+import type { Theme, ThemeOptions } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
+import type { PaletteMode } from '@mui/material';
+import { designTokens } from './tokens';
+import { gradients } from './gradients';
 
 // 扩展 Theme 接口以包含 gradients
-declare module "@mui/material/styles" {
+declare module '@mui/material/styles' {
   interface Theme {
     gradients: typeof gradients;
   }
@@ -15,7 +15,7 @@ declare module "@mui/material/styles" {
 }
 
 const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
-  const isDark = mode === "dark";
+  const isDark = mode === 'dark';
 
   return {
     palette: {
@@ -40,24 +40,14 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
       },
       grey: designTokens.colors.grey,
       background: {
-        default: isDark
-          ? designTokens.colors.grey[900]
-          : designTokens.colors.background.default,
-        paper: isDark
-          ? designTokens.colors.grey[800]
-          : designTokens.colors.background.paper,
+        default: isDark ? designTokens.colors.grey[900] : designTokens.colors.background.default,
+        paper: isDark ? designTokens.colors.grey[800] : designTokens.colors.background.paper,
       },
       text: {
-        primary: isDark
-          ? designTokens.colors.grey[100]
-          : designTokens.colors.text.primary,
-        secondary: isDark
-          ? designTokens.colors.grey[400]
-          : designTokens.colors.text.secondary,
+        primary: isDark ? designTokens.colors.grey[100] : designTokens.colors.text.primary,
+        secondary: isDark ? designTokens.colors.grey[400] : designTokens.colors.text.secondary,
       },
-      divider: isDark
-        ? designTokens.colors.grey[700]
-        : designTokens.colors.border.default,
+      divider: isDark ? designTokens.colors.grey[700] : designTokens.colors.border.default,
     },
     typography: {
       fontFamily: designTokens.typography.fontFamily,
@@ -99,23 +89,23 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiButton: {
         styleOverrides: {
           root: {
-            textTransform: "none",
+            textTransform: 'none',
             borderRadius: designTokens.borderRadius.md,
             fontWeight: designTokens.typography.fontWeight.medium,
             fontSize: designTokens.typography.fontSize.sm,
-            padding: "6px 16px",
-            minWidth: "auto",
-            "&.MuiButton-contained": {
+            padding: '6px 16px',
+            minWidth: 'auto',
+            '&.MuiButton-contained': {
               boxShadow: designTokens.shadows.sm,
-              "&:hover": {
+              '&:hover': {
                 boxShadow: designTokens.shadows.md,
               },
             },
-            "&.MuiButton-outlined": {
-              borderWidth: "1px",
+            '&.MuiButton-outlined': {
+              borderWidth: '1px',
             },
-            "&.MuiButton-text": {
-              padding: "6px 12px",
+            '&.MuiButton-text': {
+              padding: '6px 12px',
             },
           },
         },
@@ -123,10 +113,10 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiTextField: {
         styleOverrides: {
           root: {
-            "& .MuiOutlinedInput-root": {
+            '& .MuiOutlinedInput-root': {
               borderRadius: designTokens.borderRadius.md,
-              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderWidth: "2px",
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderWidth: '2px',
               },
             },
           },
@@ -168,7 +158,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
           tooltip: {
             borderRadius: designTokens.borderRadius.sm,
             fontSize: designTokens.typography.fontSize.xs,
-            padding: "8px 12px",
+            padding: '8px 12px',
           },
         },
       },
@@ -184,7 +174,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiTable: {
         styleOverrides: {
           root: {
-            borderCollapse: "separate",
+            borderCollapse: 'separate',
             borderSpacing: 0,
           },
         },
@@ -192,7 +182,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiTableRow: {
         styleOverrides: {
           root: {
-            "&:last-child td, &:last-child th": {
+            '&:last-child td, &:last-child th': {
               borderBottom: 0,
             },
           },
@@ -201,7 +191,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiTableCell: {
         styleOverrides: {
           root: {
-            padding: "12px 16px",
+            padding: '12px 16px',
             borderBottom: `1px solid ${designTokens.colors.border.default}`,
           },
           head: {
@@ -213,7 +203,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiPagination: {
         styleOverrides: {
           root: {
-            "& .Mui-selected": {
+            '& .Mui-selected': {
               backgroundColor: designTokens.colors.primary.main,
               color: designTokens.colors.primary.contrastText,
             },
@@ -234,17 +224,17 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiTab: {
         styleOverrides: {
           root: {
-            textTransform: "none",
+            textTransform: 'none',
             fontWeight: designTokens.typography.fontWeight.medium,
-            minWidth: "auto",
-            padding: "12px 20px",
+            minWidth: 'auto',
+            padding: '12px 20px',
           },
         },
       },
       MuiCheckbox: {
         styleOverrides: {
           root: {
-            "&.Mui-checked": {
+            '&.Mui-checked': {
               color: designTokens.colors.primary.main,
             },
           },
@@ -253,14 +243,14 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiSwitch: {
         styleOverrides: {
           root: {
-            "& .MuiSwitch-track": {
+            '& .MuiSwitch-track': {
               borderRadius: designTokens.borderRadius.full,
             },
-            "& .MuiSwitch-thumb": {
+            '& .MuiSwitch-thumb': {
               borderRadius: designTokens.borderRadius.full,
             },
-            "&.Mui-checked": {
-              "& .MuiSwitch-track": {
+            '&.Mui-checked': {
+              '& .MuiSwitch-track': {
                 backgroundColor: designTokens.colors.primary.main,
               },
             },
@@ -270,7 +260,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiRadio: {
         styleOverrides: {
           root: {
-            "&.Mui-checked": {
+            '&.Mui-checked': {
               color: designTokens.colors.primary.main,
             },
           },

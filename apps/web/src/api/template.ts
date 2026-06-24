@@ -1,23 +1,18 @@
-import apiClient from "./client";
-import type { ApiResponse } from "./client";
+import apiClient from './client';
+import type { ApiResponse } from './client';
 
-export type TemplateType =
-  | "workflow"
-  | "document"
-  | "form"
-  | "report"
-  | "notification";
+export type TemplateType = 'workflow' | 'document' | 'form' | 'report' | 'notification';
 
 export type VariableType =
-  | "string"
-  | "number"
-  | "date"
-  | "select"
-  | "multiselect"
-  | "lookup"
-  | "user"
-  | "now"
-  | "context";
+  | 'string'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'multiselect'
+  | 'lookup'
+  | 'user'
+  | 'now'
+  | 'context';
 
 export interface SelectOption {
   value: string;
@@ -119,26 +114,19 @@ export interface PaginatedResult<T> {
 }
 
 export const templateApi = {
-  async list(
-    params?: PaginationParams,
-  ): Promise<ApiResponse<PaginatedResult<Template>>> {
+  async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Template>>> {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set("page", params.page.toString());
-    if (params?.page_size)
-      searchParams.set("page_size", params.page_size.toString());
-    if (params?.search) searchParams.set("search", params.search);
-    if (params?.type) searchParams.set("type", params.type);
-    if (params?.category) searchParams.set("category", params.category);
-    if (params?.module) searchParams.set("module", params.module);
-    if (params?.is_active !== undefined)
-      searchParams.set("is_active", String(params.is_active));
-    if (params?.is_public !== undefined)
-      searchParams.set("is_public", String(params.is_public));
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.type) searchParams.set('type', params.type);
+    if (params?.category) searchParams.set('category', params.category);
+    if (params?.module) searchParams.set('module', params.module);
+    if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active));
+    if (params?.is_public !== undefined) searchParams.set('is_public', String(params.is_public));
 
     const queryString = searchParams.toString();
-    return await apiClient.doc.get(
-      `/api/templates${queryString ? "?" + queryString : ""}`,
-    );
+    return await apiClient.doc.get(`/api/templates${queryString ? '?' + queryString : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Template>> {
@@ -146,13 +134,10 @@ export const templateApi = {
   },
 
   async create(data: CreateTemplateRequest): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.post("/api/templates", data);
+    return await apiClient.doc.post('/api/templates', data);
   },
 
-  async update(
-    id: string,
-    data: Partial<CreateTemplateRequest>,
-  ): Promise<ApiResponse<Template>> {
+  async update(id: string, data: Partial<CreateTemplateRequest>): Promise<ApiResponse<Template>> {
     return await apiClient.doc.put(`/api/templates/${id}`, data);
   },
 
@@ -161,22 +146,21 @@ export const templateApi = {
   },
 
   async listCategories(
-    params?: Pick<PaginationParams, "is_active" | "type">,
+    params?: Pick<PaginationParams, 'is_active' | 'type'>
   ): Promise<ApiResponse<TemplateCategory[]>> {
     const searchParams = new URLSearchParams();
-    if (params?.is_active !== undefined)
-      searchParams.set("is_active", String(params.is_active));
-    if (params?.type) searchParams.set("type", params.type);
+    if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active));
+    if (params?.type) searchParams.set('type', params.type);
 
     const queryString = searchParams.toString();
     return await apiClient.doc.get(
-      `/api/templates/categories${queryString ? "?" + queryString : ""}`,
+      `/api/templates/categories${queryString ? '?' + queryString : ''}`
     );
   },
 
   async render(
     id: string,
-    variables: Record<string, any>,
+    variables: Record<string, any>
   ): Promise<ApiResponse<RenderTemplateResponse>> {
     return await apiClient.doc.post(`/api/templates/${id}/render`, {
       variables,

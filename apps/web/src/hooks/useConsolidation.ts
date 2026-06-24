@@ -2,7 +2,7 @@
  * 合并报表React Query Hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   ConsolidationScope,
   ConsolidationCompany,
@@ -13,8 +13,8 @@ import type {
   InternalTransactionQueryParams,
   ConsolidationReportQueryParams,
   CompanyRelationType,
-} from "@/types/consolidation";
-import * as consolidationApi from "@/api/consolidation";
+} from '@/types/consolidation';
+import * as consolidationApi from '@/api/consolidation';
 
 // ============================================
 // 一、合并范围Hook
@@ -23,11 +23,9 @@ import * as consolidationApi from "@/api/consolidation";
 /**
  * 获取合并范围列表
  */
-export const useConsolidationScopes = (
-  params?: ConsolidationScopeQueryParams,
-) => {
+export const useConsolidationScopes = (params?: ConsolidationScopeQueryParams) => {
   return useQuery({
-    queryKey: ["consolidation-scopes", params],
+    queryKey: ['consolidation-scopes', params],
     queryFn: () => consolidationApi.getConsolidationScopes(params),
   });
 };
@@ -37,7 +35,7 @@ export const useConsolidationScopes = (
  */
 export const useConsolidationScope = (scopeId: string) => {
   return useQuery({
-    queryKey: ["consolidation-scope", scopeId],
+    queryKey: ['consolidation-scope', scopeId],
     queryFn: () => consolidationApi.getConsolidationScope(scopeId),
     enabled: !!scopeId,
   });
@@ -52,7 +50,7 @@ export const useCreateConsolidationScope = () => {
     mutationFn: (data: Partial<ConsolidationScope>) =>
       consolidationApi.createConsolidationScope(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-scopes"] });
+      queryClient.invalidateQueries({ queryKey: ['consolidation-scopes'] });
     },
   });
 };
@@ -63,17 +61,12 @@ export const useCreateConsolidationScope = () => {
 export const useUpdateConsolidationScope = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      scopeId,
-      data,
-    }: {
-      scopeId: string;
-      data: Partial<ConsolidationScope>;
-    }) => consolidationApi.updateConsolidationScope(scopeId, data),
+    mutationFn: ({ scopeId, data }: { scopeId: string; data: Partial<ConsolidationScope> }) =>
+      consolidationApi.updateConsolidationScope(scopeId, data),
     onSuccess: (_, { scopeId }) => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-scopes"] });
+      queryClient.invalidateQueries({ queryKey: ['consolidation-scopes'] });
       queryClient.invalidateQueries({
-        queryKey: ["consolidation-scope", scopeId],
+        queryKey: ['consolidation-scope', scopeId],
       });
     },
   });
@@ -85,10 +78,9 @@ export const useUpdateConsolidationScope = () => {
 export const useDeleteConsolidationScope = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (scopeId: string) =>
-      consolidationApi.deleteConsolidationScope(scopeId),
+    mutationFn: (scopeId: string) => consolidationApi.deleteConsolidationScope(scopeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-scopes"] });
+      queryClient.invalidateQueries({ queryKey: ['consolidation-scopes'] });
     },
   });
 };
@@ -102,7 +94,7 @@ export const useDeleteConsolidationScope = () => {
  */
 export const useScopeCompanies = (scopeId: string) => {
   return useQuery({
-    queryKey: ["scope-companies", scopeId],
+    queryKey: ['scope-companies', scopeId],
     queryFn: () => consolidationApi.getScopeCompanies(scopeId),
     enabled: !!scopeId,
   });
@@ -119,11 +111,11 @@ export const useAddCompanyToScope = () => {
       company_id: string;
       ownership_percentage: number;
       consolidation_percentage: number;
-      control_type: "full_control" | "joint_venture" | "associate";
+      control_type: 'full_control' | 'joint_venture' | 'associate';
     }) => consolidationApi.addCompanyToScope(data),
     onSuccess: (_, data) => {
       queryClient.invalidateQueries({
-        queryKey: ["scope-companies", data.scope_id],
+        queryKey: ['scope-companies', data.scope_id],
       });
     },
   });
@@ -135,15 +127,10 @@ export const useAddCompanyToScope = () => {
 export const useUpdateScopeCompany = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      companyId,
-      data,
-    }: {
-      companyId: string;
-      data: Partial<ConsolidationCompany>;
-    }) => consolidationApi.updateScopeCompany(companyId, data),
+    mutationFn: ({ companyId, data }: { companyId: string; data: Partial<ConsolidationCompany> }) =>
+      consolidationApi.updateScopeCompany(companyId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scope-companies"] });
+      queryClient.invalidateQueries({ queryKey: ['scope-companies'] });
     },
   });
 };
@@ -154,10 +141,9 @@ export const useUpdateScopeCompany = () => {
 export const useRemoveCompanyFromScope = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (companyId: string) =>
-      consolidationApi.removeCompanyFromScope(companyId),
+    mutationFn: (companyId: string) => consolidationApi.removeCompanyFromScope(companyId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scope-companies"] });
+      queryClient.invalidateQueries({ queryKey: ['scope-companies'] });
     },
   });
 };
@@ -171,7 +157,7 @@ export const useRemoveCompanyFromScope = () => {
  */
 export const useEliminationRules = (params: EliminationRuleQueryParams) => {
   return useQuery({
-    queryKey: ["elimination-rules", params],
+    queryKey: ['elimination-rules', params],
     queryFn: () => consolidationApi.getEliminationRules(params),
   });
 };
@@ -181,7 +167,7 @@ export const useEliminationRules = (params: EliminationRuleQueryParams) => {
  */
 export const useEliminationRule = (ruleId: string) => {
   return useQuery({
-    queryKey: ["elimination-rule", ruleId],
+    queryKey: ['elimination-rule', ruleId],
     queryFn: () => consolidationApi.getEliminationRule(ruleId),
     enabled: !!ruleId,
   });
@@ -193,11 +179,10 @@ export const useEliminationRule = (ruleId: string) => {
 export const useCreateEliminationRule = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<EliminationRule>) =>
-      consolidationApi.createEliminationRule(data),
+    mutationFn: (data: Partial<EliminationRule>) => consolidationApi.createEliminationRule(data),
     onSuccess: (_, data) => {
       queryClient.invalidateQueries({
-        queryKey: ["elimination-rules", { scope_id: data.scope_id }],
+        queryKey: ['elimination-rules', { scope_id: data.scope_id }],
       });
     },
   });
@@ -209,16 +194,11 @@ export const useCreateEliminationRule = () => {
 export const useUpdateEliminationRule = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      ruleId,
-      data,
-    }: {
-      ruleId: string;
-      data: Partial<EliminationRule>;
-    }) => consolidationApi.updateEliminationRule(ruleId, data),
+    mutationFn: ({ ruleId, data }: { ruleId: string; data: Partial<EliminationRule> }) =>
+      consolidationApi.updateEliminationRule(ruleId, data),
     onSuccess: (_, { data }) => {
       queryClient.invalidateQueries({
-        queryKey: ["elimination-rules", { scope_id: data.scope_id }],
+        queryKey: ['elimination-rules', { scope_id: data.scope_id }],
       });
     },
   });
@@ -230,10 +210,9 @@ export const useUpdateEliminationRule = () => {
 export const useDeleteEliminationRule = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (ruleId: string) =>
-      consolidationApi.deleteEliminationRule(ruleId),
+    mutationFn: (ruleId: string) => consolidationApi.deleteEliminationRule(ruleId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["elimination-rules"] });
+      queryClient.invalidateQueries({ queryKey: ['elimination-rules'] });
     },
   });
 };
@@ -245,11 +224,9 @@ export const useDeleteEliminationRule = () => {
 /**
  * 获取内部交易列表
  */
-export const useInternalTransactions = (
-  params?: InternalTransactionQueryParams,
-) => {
+export const useInternalTransactions = (params?: InternalTransactionQueryParams) => {
   return useQuery({
-    queryKey: ["internal-transactions", params],
+    queryKey: ['internal-transactions', params],
     queryFn: () => consolidationApi.getInternalTransactions(params),
   });
 };
@@ -259,7 +236,7 @@ export const useInternalTransactions = (
  */
 export const useInternalTransaction = (transactionId: string) => {
   return useQuery({
-    queryKey: ["internal-transaction", transactionId],
+    queryKey: ['internal-transaction', transactionId],
     queryFn: () => consolidationApi.getInternalTransaction(transactionId),
     enabled: !!transactionId,
   });
@@ -271,14 +248,11 @@ export const useInternalTransaction = (transactionId: string) => {
 export const useExecuteElimination = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (params: {
-      scope_id: string;
-      period: string;
-      rule_ids?: string[];
-    }) => consolidationApi.executeElimination(params),
+    mutationFn: (params: { scope_id: string; period: string; rule_ids?: string[] }) =>
+      consolidationApi.executeElimination(params),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["internal-transactions"],
+        queryKey: ['internal-transactions'],
       });
     },
   });
@@ -291,11 +265,9 @@ export const useExecuteElimination = () => {
 /**
  * 获取合并报表列表
  */
-export const useConsolidationReports = (
-  params?: ConsolidationReportQueryParams,
-) => {
+export const useConsolidationReports = (params?: ConsolidationReportQueryParams) => {
   return useQuery({
-    queryKey: ["consolidation-reports", params],
+    queryKey: ['consolidation-reports', params],
     queryFn: () => consolidationApi.getConsolidationReports(params),
   });
 };
@@ -305,7 +277,7 @@ export const useConsolidationReports = (
  */
 export const useConsolidationReport = (reportId: string) => {
   return useQuery({
-    queryKey: ["consolidation-report", reportId],
+    queryKey: ['consolidation-report', reportId],
     queryFn: () => consolidationApi.getConsolidationReport(reportId),
     enabled: !!reportId,
   });
@@ -321,10 +293,10 @@ export const useGenerateConsolidationReport = () => {
       consolidationApi.generateConsolidationReport(data),
     onSuccess: (result) => {
       queryClient.invalidateQueries({
-        queryKey: ["consolidation-reports"],
+        queryKey: ['consolidation-reports'],
       });
       queryClient.invalidateQueries({
-        queryKey: ["consolidation-report", result.data?.report_id],
+        queryKey: ['consolidation-report', result.data?.report_id],
       });
     },
   });
@@ -335,7 +307,7 @@ export const useGenerateConsolidationReport = () => {
  */
 export const useConsolidationReportLines = (reportId: string) => {
   return useQuery({
-    queryKey: ["consolidation-report-lines", reportId],
+    queryKey: ['consolidation-report-lines', reportId],
     queryFn: () => consolidationApi.getConsolidationReportLines(reportId),
     enabled: !!reportId,
   });
@@ -347,10 +319,9 @@ export const useConsolidationReportLines = (reportId: string) => {
 export const useApproveConsolidationReport = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (reportId: string) =>
-      consolidationApi.approveConsolidationReport(reportId),
+    mutationFn: (reportId: string) => consolidationApi.approveConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-reports"] });
+      queryClient.invalidateQueries({ queryKey: ['consolidation-reports'] });
     },
   });
 };
@@ -361,10 +332,9 @@ export const useApproveConsolidationReport = () => {
 export const usePublishConsolidationReport = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (reportId: string) =>
-      consolidationApi.publishConsolidationReport(reportId),
+    mutationFn: (reportId: string) => consolidationApi.publishConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-reports"] });
+      queryClient.invalidateQueries({ queryKey: ['consolidation-reports'] });
     },
   });
 };
@@ -375,10 +345,9 @@ export const usePublishConsolidationReport = () => {
 export const useDeleteConsolidationReport = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (reportId: string) =>
-      consolidationApi.deleteConsolidationReport(reportId),
+    mutationFn: (reportId: string) => consolidationApi.deleteConsolidationReport(reportId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consolidation-reports"] });
+      queryClient.invalidateQueries({ queryKey: ['consolidation-reports'] });
     },
   });
 };
@@ -396,7 +365,7 @@ export const useCompanyRelations = (params?: {
   keyword?: string;
 }) => {
   return useQuery({
-    queryKey: ["company-relations", params],
+    queryKey: ['company-relations', params],
     queryFn: () => consolidationApi.getCompanyRelations(params),
   });
 };
@@ -413,11 +382,11 @@ export const useCreateCompanyRelation = () => {
         child_company_id: string;
         relation_type: CompanyRelationType;
         ownership_percentage: number;
-      }>,
+      }>
     ) => consolidationApi.createCompanyRelation(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["company-relations"] });
-      queryClient.invalidateQueries({ queryKey: ["company-tree"] });
+      queryClient.invalidateQueries({ queryKey: ['company-relations'] });
+      queryClient.invalidateQueries({ queryKey: ['company-tree'] });
     },
   });
 };
@@ -435,11 +404,11 @@ export const useUpdateCompanyRelation = () => {
       relationId: string;
       data: Partial<{
         ownership_percentage: number;
-        status: "active" | "inactive";
+        status: 'active' | 'inactive';
       }>;
     }) => consolidationApi.updateCompanyRelation(relationId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["company-relations"] });
+      queryClient.invalidateQueries({ queryKey: ['company-relations'] });
     },
   });
 };
@@ -450,11 +419,10 @@ export const useUpdateCompanyRelation = () => {
 export const useDeleteCompanyRelation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (relationId: string) =>
-      consolidationApi.deleteCompanyRelation(relationId),
+    mutationFn: (relationId: string) => consolidationApi.deleteCompanyRelation(relationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["company-relations"] });
-      queryClient.invalidateQueries({ queryKey: ["company-tree"] });
+      queryClient.invalidateQueries({ queryKey: ['company-relations'] });
+      queryClient.invalidateQueries({ queryKey: ['company-tree'] });
     },
   });
 };
@@ -464,7 +432,7 @@ export const useDeleteCompanyRelation = () => {
  */
 export const useCompanyTree = () => {
   return useQuery({
-    queryKey: ["company-tree"],
+    queryKey: ['company-tree'],
     queryFn: () => consolidationApi.getCompanyTree(),
   });
 };
