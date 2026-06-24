@@ -22,7 +22,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { qmsApi } from '@/api/qms';
@@ -83,7 +83,7 @@ const QmsStandardDetailPage: React.FC = () => {
           : revisionsData.revisions || [];
         setRevisions(revisionsArray);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载质量标准详情失败:', error);
     } finally {
       setLoading(false);
@@ -111,19 +111,19 @@ const QmsStandardDetailPage: React.FC = () => {
         size='small'
         sx={{
           backgroundColor: item.color.includes('green')
-            ? '#dcfce7'
+            ? 'success.lighter'
             : item.color.includes('yellow')
               ? '#fef9c3'
               : item.color.includes('red')
-                ? '#fee2e2'
-                : '#f3f4f6',
+                ? 'error.lighter'
+                : 'grey.100',
           color: item.color.includes('green')
             ? '#15803d'
             : item.color.includes('yellow')
               ? '#a16207'
               : item.color.includes('red')
-                ? '#b91c1c'
-                : '#4b5563',
+                ? 'error.darker'
+                : 'text.secondary',
         }}
       />
     );
@@ -146,7 +146,7 @@ const QmsStandardDetailPage: React.FC = () => {
         setShowEditModal(false);
         loadStandardDetail(standard.id);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('更新质量标准失败:', error);
     }
   };
@@ -172,7 +172,7 @@ const QmsStandardDetailPage: React.FC = () => {
         setShowRevisionModal(false);
         navigate('/qms/standards');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('创建版本失败:', error);
     }
   };
@@ -185,7 +185,7 @@ const QmsStandardDetailPage: React.FC = () => {
         <Chip
           label={`v${row.version}`}
           size='small'
-          sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }}
+          sx={{ backgroundColor: '#f3e8ff', color: 'secondary.dark' }}
         />
       ),
     },
@@ -221,7 +221,7 @@ const QmsStandardDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -229,7 +229,7 @@ const QmsStandardDetailPage: React.FC = () => {
             sx={{
               width: 64,
               height: 64,
-              color: '#ef4444',
+              color: 'error.main',
               mx: 'auto',
               mb: 2,
             }}
@@ -578,7 +578,7 @@ const QmsStandardDetailPage: React.FC = () => {
                     width: '100%',
                     padding: '8px',
                     borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid border.default',
                   }}
                 >
                   <option value='active'>有效</option>
@@ -638,7 +638,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '6px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid border.default',
                   resize: 'none',
                   height: '96px',
                 }}
@@ -706,7 +706,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   width: '100%',
                   padding: '12px',
                   borderRadius: '6px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid border.default',
                   resize: 'none',
                   height: '96px',
                 }}
@@ -725,7 +725,7 @@ const QmsStandardDetailPage: React.FC = () => {
             variant='contained'
             onClick={handleCreateRevision}
             sx={{
-              backgroundColor: '#7c3aed',
+              backgroundColor: 'secondary.dark',
               '&:hover': { backgroundColor: '#6d28d9' },
             }}
           >

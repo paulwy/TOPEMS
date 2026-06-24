@@ -9,7 +9,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/modules/crm/crm';
 import { crmApi } from '@/api/modules/crm/crm';
 import { useAppStore } from '@/store';
@@ -66,7 +66,7 @@ const ContactManagementPage: React.FC = () => {
           total: response.data?.total || 0,
         }));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载联系人列表失败:', error);
       addNotification({
         type: 'error',
@@ -99,7 +99,7 @@ const ContactManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadContacts();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -119,7 +119,7 @@ const ContactManagementPage: React.FC = () => {
         message: '联系人已删除',
       });
       loadContacts();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('删除失败:', error);
       addNotification({
         type: 'error',

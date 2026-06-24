@@ -34,7 +34,7 @@ import {
   Avatar,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type {
   Sample,
   InspectionProcess,
@@ -156,7 +156,7 @@ const LimsTaskPage: React.FC = () => {
       if (response.success && response.data) {
         setStats(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载统计数据失败:', err);
     }
   };
@@ -195,7 +195,7 @@ const LimsTaskPage: React.FC = () => {
       } else {
         setSamples([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载样品失败:', err);
       setSamples([]);
     }
@@ -218,7 +218,7 @@ const LimsTaskPage: React.FC = () => {
       } else {
         setProcesses([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检验流程失败:', err);
       setProcesses([]);
     }
@@ -260,7 +260,7 @@ const LimsTaskPage: React.FC = () => {
       } else {
         setTasks([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检验任务失败:', err);
       setTasks([]);
     }
@@ -285,7 +285,7 @@ const LimsTaskPage: React.FC = () => {
       } else {
         setSelectedTaskRecords([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检验记录失败:', err);
       setSelectedTaskRecords([]);
     }
@@ -315,7 +315,7 @@ const LimsTaskPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '创建失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '创建检验任务失败');
       apiLogger.error('创建检验任务失败:', err);
     } finally {
@@ -342,7 +342,7 @@ const LimsTaskPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '操作失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '完成检验步骤失败');
       apiLogger.error('完成检验步骤失败:', err);
     } finally {
@@ -393,20 +393,20 @@ const LimsTaskPage: React.FC = () => {
   };
 
   const getStatusColor = (status: string): { bgcolor: string; color: string } => {
-    if (!status) return { bgcolor: '#f1f5f9', color: '#475569' };
+    if (!status) return { bgcolor: 'grey.100', color: '#475569' };
     switch (status) {
       case '进行中':
-        return { bgcolor: '#dbeafe', color: '#1d4ed8' };
+        return { bgcolor: '#dbeafe', color: 'primary.dark' };
       case '已完成':
-        return { bgcolor: '#dcfce7', color: '#15803d' };
+        return { bgcolor: 'success.lighter', color: '#15803d' };
       case '已终止':
-        return { bgcolor: '#fee2e2', color: '#b91c1c' };
+        return { bgcolor: 'error.lighter', color: 'error.darker' };
       case '待测试':
-        return { bgcolor: '#fef3c7', color: '#b45309' };
+        return { bgcolor: 'warning.light', color: '#b45309' };
       case '测试中':
         return { bgcolor: '#f3e8ff', color: '#7e22ce' };
       default:
-        return { bgcolor: '#f1f5f9', color: '#475569' };
+        return { bgcolor: 'grey.100', color: '#475569' };
     }
   };
 
@@ -450,8 +450,9 @@ const LimsTaskPage: React.FC = () => {
 
   // 卡片配置
   const cardConfig = {
-    title: (item: InspectionTask) => getSampleName(item.sample_id),
-    description: (item: InspectionTask) => `检验流程: ${getProcessName(item.process_id)}`,
+    title: (item: unknown) => getSampleName((item as InspectionTask).sample_id),
+    description: (item: unknown) =>
+      `检验流程: ${getProcessName((item as InspectionTask).process_id)}`,
     status: {
       field: 'status',
       options: {
@@ -465,12 +466,12 @@ const LimsTaskPage: React.FC = () => {
       {
         field: 'process_id',
         label: '检验流程',
-        format: (_: any, item: InspectionTask) => getProcessName(item.process_id),
+        format: (_: any, item: unknown) => getProcessName((item as InspectionTask).process_id),
       },
       {
         field: 'current_step',
         label: '当前步骤',
-        format: (_: any, item: InspectionTask) => getCurrentStepName(item),
+        format: (_: any, item: unknown) => getCurrentStepName(item as InspectionTask),
       },
       {
         field: 'inspector',
@@ -483,7 +484,7 @@ const LimsTaskPage: React.FC = () => {
       },
     ],
     icon: <ClipboardCheck size={24} />,
-    iconBgColor: '#e0e7ff',
+    iconBgColor: 'secondary.light',
   };
 
   // 卡片操作
@@ -491,17 +492,17 @@ const LimsTaskPage: React.FC = () => {
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: (item: InspectionTask) => openTaskDetailModal(item),
+      onClick: (item: unknown) => openTaskDetailModal(item as InspectionTask),
       color: 'primary' as const,
       variant: 'text' as const,
     },
     {
       label: '完成步骤',
       icon: <CheckCircle size={16} />,
-      onClick: (item: InspectionTask) => openRecordModal(item),
+      onClick: (item: unknown) => openRecordModal(item as InspectionTask),
       color: 'success' as const,
       variant: 'text' as const,
-      disabled: (item: InspectionTask) => item.status !== '进行中',
+      disabled: (item: unknown) => (item as InspectionTask).status !== '进行中',
     },
   ];
 
@@ -535,7 +536,7 @@ const LimsTaskPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
           p: 2,
         }}
       >
@@ -591,7 +592,7 @@ const LimsTaskPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
     >
       <Snackbar
@@ -630,7 +631,7 @@ const LimsTaskPage: React.FC = () => {
           onClick: () => setShowTaskModal(true),
         }}
         onRefresh={loadAllData}
-        onCardClick={openTaskDetailModal}
+        onCardClick={(item) => openTaskDetailModal(item as InspectionTask)}
         emptyState={{
           emoji: '📋',
           title: '暂无检验任务',

@@ -1,6 +1,6 @@
 import React, { useState, useRef, type ChangeEvent } from 'react';
 import { Box, TextField, FormLabel, Divider, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from 'lucide-react';
 
 type NodeType = 'start' | 'task' | 'approval' | 'condition' | 'end';
@@ -173,7 +173,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         flexDirection: 'column',
         height: '100vh',
         width: '100%',
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'grey.100',
       }}
     >
       <Box
@@ -183,7 +183,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           gap: 1,
           padding: 2,
           backgroundColor: 'white',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid grey.200',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
           zIndex: 10,
         }}
@@ -192,7 +192,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           sx={{
             fontSize: '1.125rem',
             fontWeight: 'bold',
-            color: '#1f2937',
+            color: 'grey.800',
             marginRight: 2,
           }}
         >
@@ -268,7 +268,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         <Box
           sx={{
             flex: 1,
-            backgroundColor: '#f3f4f6',
+            backgroundColor: 'grey.100',
             position: 'relative',
             cursor: 'move',
           }}
@@ -297,7 +297,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 <path
                   d='M 20 0 L 0 0 0 20'
                   fill='none'
-                  stroke='#e5e7eb'
+                  stroke='grey.200'
                   strokeWidth='1'
                 />
               </pattern>
@@ -329,12 +329,12 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     <path
                       d={`M ${s.x} ${s.y} C ${s.x + controlXOffset} ${s.y}, ${t.x - controlXOffset} ${t.y}, ${t.x} ${t.y}`}
                       fill='none'
-                      stroke='#64748b'
+                      stroke='grey.600'
                       strokeWidth='2'
                     />
                     <polygon
                       points='0,-4 8,0 0,4'
-                      fill='#64748b'
+                      fill='grey.600'
                       transform={`translate(${t.x - 8}, ${t.y}) rotate(0)`}
                     />
                   </g>
@@ -347,7 +347,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                   y1={getNodeCenter(nodes.find((n) => n.id === connectingFrom)!).y}
                   x2={dragStart.x}
                   y2={dragStart.y}
-                  stroke='#3b82f6'
+                  stroke='primary.main'
                   strokeWidth='2'
                   strokeDasharray='5,5'
                 />
@@ -366,7 +366,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     rx='8'
                     fill='white'
                     strokeWidth='2'
-                    stroke={selectedNode?.id === node.id ? '#3b82f6' : '#d1d5db'}
+                    stroke={selectedNode?.id === node.id ? 'primary.main' : 'grey.300'}
                     style={{
                       boxShadow:
                         selectedNode?.id === node.id
@@ -382,7 +382,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     height='60'
                     rx='8'
                     opacity='0.1'
-                    fill={selectedNode?.id === node.id ? '#3b82f6' : '#000'}
+                    fill={selectedNode?.id === node.id ? 'primary.main' : 'black'}
                   />
 
                   <text
@@ -391,7 +391,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     textAnchor='middle'
                     fontSize='12'
                     fontWeight='bold'
-                    fill='#374151'
+                    fill='grey.700'
                   >
                     {NODE_ICONS[node.type]} {node.label}
                   </text>
@@ -400,7 +400,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     y='42'
                     textAnchor='middle'
                     fontSize='10'
-                    fill='#6b7280'
+                    fill='text.secondary'
                   >
                     {node.type}
                   </text>
@@ -410,13 +410,13 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     cy='30'
                     r='6'
                     fill='white'
-                    stroke='#9ca3af'
+                    stroke='text.disabled'
                     strokeWidth='2'
                     style={{ cursor: 'pointer' }}
                     onMouseUp={(e) => handlePortMouseUp(e, node.id)}
                     onMouseOver={(e) => {
                       const target = e.target as SVGElement;
-                      target.setAttribute('fill', '#3b82f6');
+                      target.setAttribute('fill', 'primary.main');
                     }}
                     onMouseOut={(e) => {
                       const target = e.target as SVGElement;
@@ -428,13 +428,13 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     cy='30'
                     r='6'
                     fill='white'
-                    stroke='#9ca3af'
+                    stroke='text.disabled'
                     strokeWidth='2'
                     style={{ cursor: 'pointer' }}
                     onMouseDown={(e) => handlePortMouseDown(e, node.id)}
                     onMouseOver={(e) => {
                       const target = e.target as SVGElement;
-                      target.setAttribute('fill', '#3b82f6');
+                      target.setAttribute('fill', 'primary.main');
                     }}
                     onMouseOut={(e) => {
                       const target = e.target as SVGElement;
@@ -451,13 +451,13 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           sx={{
             width: 320,
             backgroundColor: 'white',
-            borderLeft: '1px solid #e5e7eb',
+            borderLeft: '1px solid grey.200',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          <Box sx={{ padding: 2, borderBottom: '1px solid #e5e7eb' }}>
-            <Typography sx={{ fontWeight: 'semibold', color: '#1f2937' }}>属性</Typography>
+          <Box sx={{ padding: 2, borderBottom: '1px solid grey.200' }}>
+            <Typography sx={{ fontWeight: 'semibold', color: 'grey.800' }}>属性</Typography>
           </Box>
           <Box sx={{ padding: 2, flex: 1, overflowY: 'auto' }}>
             {selectedNode ? (
@@ -469,7 +469,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     disabled
                     sx={{
                       marginTop: 1,
-                      backgroundColor: '#f3f4f6',
+                      backgroundColor: 'grey.100',
                     }}
                     fullWidth
                   />
@@ -482,7 +482,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                       fontSize: 14,
                       padding: '4px 8px',
                       borderRadius: 1,
-                      backgroundColor: '#f3f4f6',
+                      backgroundColor: 'grey.100',
                     }}
                   >
                     {selectedNode.type}
@@ -523,7 +523,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 </Button>
               </Box>
             ) : (
-              <Box sx={{ textAlign: 'center', color: '#6b7280', marginTop: 10 }}>
+              <Box sx={{ textAlign: 'center', color: 'text.secondary', marginTop: 10 }}>
                 <Move
                   sx={{
                     width: 40,

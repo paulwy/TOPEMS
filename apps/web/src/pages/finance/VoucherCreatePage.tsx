@@ -18,7 +18,7 @@ import {
   Chip,
   Alert,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -88,7 +88,7 @@ const VoucherCreatePage: React.FC = () => {
       if (result.success && result.data) {
         setSubjects(result.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载会计科目失败:', err);
       addNotification({
         title: '错误',
@@ -232,10 +232,10 @@ const VoucherCreatePage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
-        message: err.message || '创建失败',
+        message: (err as { message?: string }).message || '创建失败',
         type: 'error',
       });
     } finally {

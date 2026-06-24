@@ -26,39 +26,39 @@ interface ModuleCardProps {
 }
 
 const colorToGradient: Record<string, string> = {
-  'bg-blue-500': 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-  'bg-purple-500': 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+  'bg-blue-500': 'linear-gradient(135deg, primary.main, primary.dark)',
+  'bg-purple-500': 'linear-gradient(135deg, secondary.main, #6d28d9)',
   'bg-green-500': 'linear-gradient(135deg, #22c55e, #16a34a)',
-  'bg-emerald-500': 'linear-gradient(135deg, #10b981, #059669)',
+  'bg-emerald-500': 'linear-gradient(135deg, success.main, success.dark)',
   'bg-rose-500': 'linear-gradient(135deg, #f43f5e, #e11d48)',
   'bg-slate-600': 'linear-gradient(135deg, #64748b, #475569)',
   'bg-violet-500': 'linear-gradient(135deg, #a855f7, #9333ea)',
-  'bg-amber-500': 'linear-gradient(135deg, #f59e0b, #ca8a04)',
+  'bg-amber-500': 'linear-gradient(135deg, warning.main, #ca8a04)',
   'bg-teal-500': 'linear-gradient(135deg, #14b8a6, #0d9488)',
   'bg-yellow-500': 'linear-gradient(135deg, #eab308, #ca8a04)',
-  'bg-indigo-500': 'linear-gradient(135deg, #6366f1, #4f46e5)',
+  'bg-indigo-500': 'linear-gradient(135deg, primary.light, primary.main)',
   'bg-cyan-500': 'linear-gradient(135deg, #06b6d4, #0891b2)',
   'bg-orange-500': 'linear-gradient(135deg, #f97316, #ea580c)',
-  'bg-red-500': 'linear-gradient(135deg, #ef4444, #dc2626)',
+  'bg-red-500': 'linear-gradient(135deg, error.main, error.dark)',
   'bg-sky-500': 'linear-gradient(135deg, #0ea5e9, #0284c7)',
   'bg-pink-500': 'linear-gradient(135deg, #ec4899, #db2777)',
 };
 
 const colorToBgLight: Record<string, string> = {
-  'bg-blue-500': '#eff6ff',
-  'bg-purple-500': '#faf5ff',
-  'bg-green-500': '#f0fdf4',
-  'bg-emerald-500': '#ecfdf5',
-  'bg-rose-500': '#fff1f2',
-  'bg-slate-600': '#f8fafc',
+  'bg-blue-500': 'primary.light',
+  'bg-purple-500': 'secondary.light',
+  'bg-green-500': 'success.light',
+  'bg-emerald-500': 'success.light',
+  'bg-rose-500': 'white1f2',
+  'bg-slate-600': 'grey.50',
   'bg-violet-500': '#f5f3ff',
-  'bg-amber-500': '#fffbeb',
+  'bg-amber-500': 'warning.light',
   'bg-teal-500': '#f0fdfa',
-  'bg-yellow-500': '#fefce8',
+  'bg-yellow-500': 'warning.lighter',
   'bg-indigo-500': '#eef2ff',
   'bg-cyan-500': '#ecfeff',
-  'bg-orange-500': '#fff7ed',
-  'bg-red-500': '#fef2f2',
+  'bg-orange-500': 'white7ed',
+  'bg-red-500': 'error.light',
   'bg-sky-500': '#f0f9ff',
   'bg-pink-500': '#fdf2f8',
 };
@@ -86,7 +86,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        background: '#ffffff',
+        background: 'white',
         borderRadius: '16px',
         padding: currentSize.padding,
         cursor: 'pointer',
@@ -109,7 +109,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             item.status === 'online'
               ? 'linear-gradient(90deg, #22c55e, #16a34a)'
               : item.status === 'beta'
-                ? 'linear-gradient(90deg, #f59e0b, #ca8a04)'
+                ? 'linear-gradient(90deg, warning.main, #ca8a04)'
                 : 'linear-gradient(90deg, #94a3b8, #64748b)',
           transition: 'opacity 0.3s ease',
           opacity: isHovered ? 1 : 0.6,
@@ -129,7 +129,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)',
             boxShadow: isHovered
-              ? `0 8px 24px ${colorToGradient[item.color] || '#3b82f6'}40`
+              ? `0 8px 24px ${colorToGradient[item.color] || 'primary.main'}40`
               : '0 4px 12px rgba(0,0,0,0.15)',
             animation: item.status === 'online' ? 'glow 2s ease-in-out infinite' : 'none',
           }}
@@ -138,7 +138,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             style={{
               width: currentSize.iconSize * 0.55,
               height: currentSize.iconSize * 0.55,
-              color: '#ffffff',
+              color: 'white',
               transition: 'transform 0.3s ease',
               transform: isHovered ? 'scale(1.05)' : 'scale(1)',
             }}
@@ -157,7 +157,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
               style={{
                 fontSize: currentSize.titleSize,
                 fontWeight: 600,
-                color: isHovered ? '#1d4ed8' : '#1e293b',
+                color: isHovered ? 'primary.dark' : '#1e293b',
                 margin: 0,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -172,7 +172,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
           <p
             style={{
               fontSize: currentSize.descSize,
-              color: isHovered ? '#475569' : '#64748b',
+              color: isHovered ? '#475569' : 'grey.600',
               margin: 0,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -187,7 +187,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
       <style>{`
         @keyframes glow {
           0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || '#3b82f6'}60; }
+          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || 'primary.main'}60; }
         }
       `}</style>
     </div>

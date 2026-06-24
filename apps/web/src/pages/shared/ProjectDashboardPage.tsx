@@ -96,7 +96,7 @@ const ProjectDashboardPage: React.FC = () => {
         setActiveProjects(projectsRes.data || []);
         setActiveProjects((projectsRes.data || []).filter((p: Project) => p.status === 'active'));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
@@ -144,7 +144,7 @@ const ProjectDashboardPage: React.FC = () => {
             width: 48,
             height: 48,
             borderRadius: '50%',
-            border: '2px solid #2563eb',
+            border: '2px solid primary.dark',
             borderTopColor: 'transparent',
             animation: 'spin 1s linear infinite',
             '@keyframes spin': {
@@ -212,7 +212,7 @@ const ProjectDashboardPage: React.FC = () => {
             <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
               <FolderKanban
                 size={24}
-                color='#2563eb'
+                color='primary.dark'
               />
             </Box>
           </Box>
@@ -278,7 +278,7 @@ const ProjectDashboardPage: React.FC = () => {
             <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
               <TrendingUp
                 size={24}
-                color='#16a34a'
+                color='success.dark'
               />
             </Box>
           </Box>
@@ -436,7 +436,7 @@ const ProjectDashboardPage: React.FC = () => {
             <Box sx={{ p: 1.5, bgcolor: 'error.light', borderRadius: '50%' }}>
               <AlertTriangle
                 size={24}
-                color='#dc2626'
+                color='error.dark'
               />
             </Box>
           </Box>
@@ -474,7 +474,7 @@ const ProjectDashboardPage: React.FC = () => {
             <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
               <CheckCircle
                 size={24}
-                color='#16a34a'
+                color='success.dark'
               />
             </Box>
           </Box>
@@ -512,7 +512,7 @@ const ProjectDashboardPage: React.FC = () => {
             <Box sx={{ p: 1.5, bgcolor: 'info.light', borderRadius: '50%' }}>
               <DollarSign
                 size={24}
-                color='#2563eb'
+                color='primary.dark'
               />
             </Box>
           </Box>
@@ -592,7 +592,7 @@ const ProjectDashboardPage: React.FC = () => {
             >
               <BarChart3
                 size={20}
-                color='#2563eb'
+                color='primary.dark'
               />
               项目类型分布
             </Typography>
@@ -633,7 +633,7 @@ const ProjectDashboardPage: React.FC = () => {
                     sx={{
                       height: 8,
                       borderRadius: '9999px',
-                      bgcolor: '#2563eb',
+                      bgcolor: 'primary.dark',
                       width: `${(stat.count / (summary?.total_projects || 1)) * 100}%`,
                     }}
                   />
@@ -682,7 +682,7 @@ const ProjectDashboardPage: React.FC = () => {
             >
               <Activity
                 size={20}
-                color='#16a34a'
+                color='success.dark'
               />
               项目趋势
             </Typography>
@@ -730,7 +730,7 @@ const ProjectDashboardPage: React.FC = () => {
       </Box>
 
       <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-        <Box sx={{ p: 3, borderBottom: '1px solid #e5e7eb' }}>
+        <Box sx={{ p: 3, borderBottom: '1px solid grey.200' }}>
           <Box
             sx={{
               display: 'flex',
@@ -757,7 +757,7 @@ const ProjectDashboardPage: React.FC = () => {
               onClick={() => navigate('/rs')}
               style={{
                 fontSize: '0.875rem',
-                color: '#2563eb',
+                color: 'primary.dark',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -938,7 +938,7 @@ const ProjectDashboardPage: React.FC = () => {
                       >
                         <Box
                           sx={{
-                            bgcolor: '#2563eb',
+                            bgcolor: 'primary.dark',
                             height: 8,
                             borderRadius: '9999px',
                             width: `${project.progress}%`,

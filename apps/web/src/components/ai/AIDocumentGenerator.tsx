@@ -8,7 +8,7 @@ import {
   CardContent,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Copy, Check } from 'lucide-react';
 

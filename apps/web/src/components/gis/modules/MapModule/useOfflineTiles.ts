@@ -81,7 +81,7 @@ export function useOfflineTiles(options: UseOfflineTilesOptions = {}): UseOfflin
 
       setIsRegistered(true);
       setIsSWReady(true);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('[SW] Registration failed:', error);
     }
   }, [isSWSupported]);
@@ -94,7 +94,7 @@ export function useOfflineTiles(options: UseOfflineTilesOptions = {}): UseOfflin
       const db = await openTileDB();
       const count = await getTileCount(db);
       setCachedTileCount(count);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error getting cached tile count:', error);
     }
   }, []);
@@ -144,7 +144,7 @@ export function useOfflineTiles(options: UseOfflineTilesOptions = {}): UseOfflin
         const key = `${source}:${z}:${x}:${y}`;
         const result = await getTileFromDB(db, key);
         return !!result;
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Error checking tile cache:', error);
         return false;
       }
@@ -187,7 +187,7 @@ export function useOfflineTiles(options: UseOfflineTilesOptions = {}): UseOfflin
       await clearTileStore(db);
       setCachedTileCount(0);
       logger.info('[OfflineTiles] Cache cleared');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error clearing cache:', error);
     }
   }, []);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, AlertTriangle, Info, Sparkles, RefreshCw } from 'lucide-react';
 import { Card, CardContent, Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
 import type { ValidateRequest, ValidationIssue, Suggestion } from '@/types/ai';
@@ -15,9 +15,9 @@ export interface AIFormValidatorProps {
 }
 
 const issueIconMap: Record<string, React.ReactNode> = {
-  error: <AlertCircle style={{ width: 20, height: 20, color: '#ef4444' }} />,
-  warning: <AlertTriangle style={{ width: 20, height: 20, color: '#f59e0b' }} />,
-  info: <Info style={{ width: 20, height: 20, color: '#3b82f6' }} />,
+  error: <AlertCircle style={{ width: 20, height: 20, color: 'error.main' }} />,
+  warning: <AlertTriangle style={{ width: 20, height: 20, color: 'warning.main' }} />,
+  info: <Info style={{ width: 20, height: 20, color: 'primary.main' }} />,
 };
 
 const issueTitleMap: Record<string, string> = {
@@ -94,13 +94,13 @@ export function AIFormValidator({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isValid ? (
               <>
-                <CheckCircle style={{ width: 24, height: 24, color: '#22c55e' }} />
+                <CheckCircle style={{ width: 24, height: 24, color: 'success.dark' }} />
                 <Typography sx={{ fontWeight: 500, color: '#15803d' }}>校验通过</Typography>
               </>
             ) : (
               <>
-                <AlertCircle style={{ width: 24, height: 24, color: '#ef4444' }} />
-                <Typography sx={{ fontWeight: 500, color: '#dc2626' }}>发现问题</Typography>
+                <AlertCircle style={{ width: 24, height: 24, color: 'error.main' }} />
+                <Typography sx={{ fontWeight: 500, color: 'error.dark' }}>发现问题</Typography>
               </>
             )}
           </Box>
@@ -125,7 +125,7 @@ export function AIFormValidator({
 
         {issues.length > 0 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
               发现的问题
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -136,10 +136,10 @@ export function AIFormValidator({
                     borderLeft: '4px solid',
                     borderLeftColor:
                       issue.type === 'error'
-                        ? '#ef4444'
+                        ? 'error.main'
                         : issue.type === 'warning'
-                          ? '#f59e0b'
-                          : '#3b82f6',
+                          ? 'warning.main'
+                          : 'primary.main',
                   }}
                 >
                   <CardContent sx={{ p: 1.5 }}>
@@ -176,7 +176,7 @@ export function AIFormValidator({
                         <Typography
                           sx={{
                             fontSize: '0.875rem',
-                            color: '#4b5563',
+                            color: 'text.secondary',
                             mt: 0.5,
                           }}
                         >
@@ -200,7 +200,7 @@ export function AIFormValidator({
                 justifyContent: 'space-between',
               }}
             >
-              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
                 优化建议
               </Typography>
               {onApplySuggestions && (
@@ -217,7 +217,7 @@ export function AIFormValidator({
               {suggestions.map((suggestion, idx) => (
                 <Card
                   key={idx}
-                  sx={{ bgcolor: '#eff6ff' }}
+                  sx={{ bgcolor: 'primary.light' }}
                 >
                   <CardContent sx={{ p: 1.5 }}>
                     <Box
@@ -231,7 +231,7 @@ export function AIFormValidator({
                         style={{
                           width: 20,
                           height: 20,
-                          color: '#3b82f6',
+                          color: 'primary.main',
                           marginTop: 2,
                         }}
                       />
@@ -242,7 +242,7 @@ export function AIFormValidator({
                         <Typography
                           sx={{
                             fontSize: '0.875rem',
-                            color: '#4b5563',
+                            color: 'text.secondary',
                             mt: 0.5,
                           }}
                         >
@@ -252,9 +252,9 @@ export function AIFormValidator({
                           sx={{
                             fontSize: '0.875rem',
                             fontFamily: 'monospace',
-                            color: '#1d4ed8',
+                            color: 'primary.dark',
                             mt: 0.5,
-                            bgcolor: '#fff',
+                            bgcolor: 'white',
                             px: 0.5,
                             py: 0.5,
                             borderRadius: 0.5,
@@ -273,13 +273,13 @@ export function AIFormValidator({
         )}
 
         {issues.length === 0 && suggestions.length === 0 && !isLoading && (
-          <Box sx={{ textAlign: 'center', py: 4, color: '#6b7280' }}>
+          <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
             <CheckCircle
               style={{
                 width: 48,
                 height: 48,
                 margin: '0 auto 12px',
-                color: '#22c55e',
+                color: 'success.dark',
               }}
             />
             <Typography>表单校验通过！</Typography>

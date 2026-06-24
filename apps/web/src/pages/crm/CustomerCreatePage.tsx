@@ -12,7 +12,7 @@ import {
   Container,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, X } from 'lucide-react';
@@ -51,7 +51,7 @@ const CustomerCreatePage: React.FC = () => {
       // API call would go here
       success('客户创建成功');
       navigate('/crm/customers');
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to create customer:', err);
       error('创建客户失败');
     } finally {

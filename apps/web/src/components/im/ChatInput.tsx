@@ -1,5 +1,5 @@
 import { TextField } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useRef } from 'react';
 import { Send, Paperclip, Image, FileText } from 'lucide-react';
 import { logger } from '@/utils/logger';
@@ -63,7 +63,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onSendMessage(file.name, 'file', result.url, result.name);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to upload file:', error);
     } finally {
       setUploading(false);
@@ -76,8 +76,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div
       style={{
-        borderTop: '1px solid #e5e7eb',
-        backgroundColor: '#ffffff',
+        borderTop: '1px solid grey.200',
+        backgroundColor: 'white',
         padding: 16,
       }}
     >
@@ -90,7 +90,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             disabled={disabled || uploading}
             sx={{ p: 1 }}
           >
-            <Paperclip sx={{ width: 20, height: 20, color: '#6b7280' }} />
+            <Paperclip sx={{ width: 20, height: 20, color: 'text.secondary' }} />
           </Button>
 
           {showFileMenu && (
@@ -101,10 +101,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 left: 0,
                 marginBottom: 8,
                 width: 192,
-                backgroundColor: '#ffffff',
+                backgroundColor: 'white',
                 borderRadius: 8,
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                border: '1px solid #e5e7eb',
+                border: '1px solid grey.200',
                 padding: 4,
                 zIndex: 10,
               }}
@@ -118,14 +118,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                <Image style={{ width: 16, height: 16, color: '#6b7280' }} />
-                <span style={{ fontSize: 14, color: '#374151' }}>图片</span>
+                <Image style={{ width: 16, height: 16, color: 'text.secondary' }} />
+                <span style={{ fontSize: 14, color: 'grey.700' }}>图片</span>
                 <input
                   ref={imageInputRef}
                   type='file'
                   accept='image/*'
                   onChange={(e) => handleFileUpload(e, 'image')}
-                  className='hidden'
+                  style={{ display: 'none' }}
                   disabled={uploading}
                 />
               </label>
@@ -138,13 +138,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                <FileText style={{ width: 16, height: 16, color: '#6b7280' }} />
-                <span style={{ fontSize: 14, color: '#374151' }}>文件</span>
+                <FileText style={{ width: 16, height: 16, color: 'text.secondary' }} />
+                <span style={{ fontSize: 14, color: 'grey.700' }}>文件</span>
                 <input
                   ref={fileInputRef}
                   type='file'
                   onChange={(e) => handleFileUpload(e, 'file')}
-                  className='hidden'
+                  style={{ display: 'none' }}
                   disabled={uploading}
                 />
               </label>
@@ -182,7 +182,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           style={{
             marginTop: 8,
             fontSize: 14,
-            color: '#6b7280',
+            color: 'text.secondary',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -193,8 +193,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               width: 16,
               height: 16,
               borderRadius: '9999px',
-              border: '2px solid #e5e7eb',
-              borderTopColor: '#6366f1',
+              border: '2px solid grey.200',
+              borderTopColor: 'primary.light',
               animation: 'spin 1s linear infinite',
             }}
           />

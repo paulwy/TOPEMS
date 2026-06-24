@@ -11,7 +11,7 @@ import {
   MenuItem,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 /**
  * 财务报表页面
  * 查看资产负债表、利润表、现金流量表
@@ -216,7 +216,7 @@ export default function FinancialReportsPage() {
         period,
       });
       setShowGenerateModal(false);
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Generate report failed:', error);
     }
   };
@@ -230,7 +230,7 @@ export default function FinancialReportsPage() {
         period,
         format,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Export report failed:', error);
     }
   };
@@ -621,7 +621,7 @@ function BalanceSheetContent({ data }: { data: any }) {
         >
           <ArrowUpRight
             size={20}
-            color='#2563eb'
+            color='primary.dark'
           />
           资产
         </Typography>
@@ -791,7 +791,7 @@ function BalanceSheetContent({ data }: { data: any }) {
         >
           <ArrowDownRight
             size={20}
-            color='#dc2626'
+            color='error.dark'
           />
           负债
         </Typography>
@@ -878,7 +878,7 @@ function BalanceSheetContent({ data }: { data: any }) {
         >
           <DollarSign
             size={20}
-            color='#16a34a'
+            color='success.dark'
           />
           所有者权益
         </Typography>
@@ -1252,7 +1252,7 @@ function CashFlowContent({ data }: { data: any }) {
         >
           <TrendingUp
             size={20}
-            color='#16a34a'
+            color='success.dark'
           />
           经营活动现金流量
         </Typography>
@@ -1333,7 +1333,7 @@ function CashFlowContent({ data }: { data: any }) {
         >
           <TrendingDown
             size={20}
-            color='#2563eb'
+            color='primary.dark'
           />
           投资活动现金流量
         </Typography>

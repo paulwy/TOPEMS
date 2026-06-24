@@ -7,7 +7,7 @@ import {
   Typography,
   LinearProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { monitorApi } from '@/api/shared/monitor';
 import { apiLogger } from '@/utils/logger';
@@ -79,7 +79,7 @@ const MonitorPage: React.FC = () => {
       setSystemMetrics(metricsRes.data || null);
       setServiceHealth(healthRes.data || []);
       setAlerts(alertsRes.data?.items || []);
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载监控数据失败:', error);
       addNotification({
         type: 'error',
@@ -312,7 +312,7 @@ const MonitorPage: React.FC = () => {
         <CardContent>
           <Box sx={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: '0.875rem' }}>
-              <thead style={{ backgroundColor: '#f5f5f5' }}>
+              <thead style={{ backgroundColor: 'grey.100' }}>
                 <tr>
                   <th
                     style={{
@@ -458,7 +458,7 @@ const MonitorPage: React.FC = () => {
         <CardContent>
           <Box sx={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', fontSize: '0.875rem' }}>
-              <thead style={{ backgroundColor: '#f5f5f5' }}>
+              <thead style={{ backgroundColor: 'grey.100' }}>
                 <tr>
                   <th
                     style={{

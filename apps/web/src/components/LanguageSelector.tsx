@@ -1,5 +1,5 @@
 import { Menu, MenuItem, Box } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
@@ -69,7 +69,7 @@ const LanguageSelector: React.FC = () => {
                   justifyContent: 'center',
                   fontSize: 12,
                   fontWeight: 'bold',
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: 'grey.100',
                   borderRadius: 0.5,
                 }}
               >

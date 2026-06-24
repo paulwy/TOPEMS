@@ -113,7 +113,7 @@ export class DynamicModuleLoader {
       this.cache.set(cacheKey, module);
       this.retryCount.delete(retryKey);
       return module;
-    } catch (error) {
+    } catch (error: unknown) {
       if (retries < this.maxRetries) {
         this.retryCount.set(retryKey, retries + 1);
         // Exponential backoff
@@ -170,7 +170,7 @@ export const ModuleRouteWrapper: React.FC<ModuleRouteWrapperProps> = ({
           setModuleComponent(() => mod.default || mod);
           setError(null);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (mounted) {
           setError(err as Error);
         }

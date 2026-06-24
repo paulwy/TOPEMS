@@ -31,7 +31,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -145,7 +145,7 @@ const EhsHazardDetailPage: React.FC = () => {
           : controlsData.data || controlsData.measures || [];
         setControls(controlsArray);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载危险源详情失败:', error);
       toast.error('加载危险源详情失败');
     } finally {
@@ -184,7 +184,7 @@ const EhsHazardDetailPage: React.FC = () => {
       } else {
         toast.error('更新失败，请稍后重试');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('更新危险源失败:', error);
       toast.error('更新失败，请稍后重试');
     }
@@ -217,7 +217,7 @@ const EhsHazardDetailPage: React.FC = () => {
       } else {
         toast.error('添加失败，请稍后重试');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('添加控制措施失败:', error);
       toast.error('添加失败，请稍后重试');
     }
@@ -234,7 +234,7 @@ const EhsHazardDetailPage: React.FC = () => {
       } else {
         toast.error('删除失败，请稍后重试');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('删除控制措施失败:', error);
       toast.error('删除失败，请稍后重试');
     }
@@ -274,13 +274,13 @@ const EhsHazardDetailPage: React.FC = () => {
           row.original.likelihood || 'medium'
         );
         const colorMap: Record<string, { bg: string; color: string }> = {
-          高风险: { bg: '#fee2e2', color: '#dc2626' },
+          高风险: { bg: 'error.lighter', color: 'error.dark' },
           中风险: { bg: '#fef9c3', color: '#ca8a04' },
-          低风险: { bg: '#dcfce7', color: '#16a34a' },
+          低风险: { bg: 'success.lighter', color: 'success.dark' },
         };
         const colors = colorMap[`${riskResult.level}风险`] || {
-          bg: '#f3f4f6',
-          color: '#4b5563',
+          bg: 'grey.100',
+          color: 'text.secondary',
         };
         return (
           <Chip
@@ -347,7 +347,7 @@ const EhsHazardDetailPage: React.FC = () => {
           variant='text'
           size='small'
           onClick={() => handleDeleteControl(row.original.id)}
-          sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
+          sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
           startIcon={
             <Box
               component={Trash2}
@@ -367,7 +367,7 @@ const EhsHazardDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)',
+          background: 'linear-gradient(to bottom right, #f8fafc, grey.100)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -398,13 +398,13 @@ const EhsHazardDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)',
+          background: 'linear-gradient(to bottom right, #f8fafc, grey.100)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
           <Box
             component={AlertCircle}
-            sx={{ fontSize: 64, color: '#ef4444', mx: 'auto', mb: 2 }}
+            sx={{ fontSize: 64, color: 'error.main', mx: 'auto', mb: 2 }}
           />
           <Typography sx={{ color: 'slate.600' }}>危险源不存在或已被删除</Typography>
           <Button
@@ -424,7 +424,7 @@ const EhsHazardDetailPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)',
+        background: 'linear-gradient(to bottom right, #f8fafc, grey.100)',
       }}
     >
       <Box
@@ -565,7 +565,7 @@ const EhsHazardDetailPage: React.FC = () => {
                     alignItems: 'center',
                     gap: 1,
                     p: 2,
-                    bgcolor: '#fff7ed',
+                    bgcolor: 'white7ed',
                     borderRadius: 2,
                   }}
                 >
@@ -634,12 +634,12 @@ const EhsHazardDetailPage: React.FC = () => {
                     sx={{
                       textAlign: 'center',
                       p: 1.5,
-                      bgcolor: '#fef2f2',
+                      bgcolor: 'error.light',
                       borderRadius: 1,
                     }}
                   >
-                    <Typography sx={{ color: '#dc2626', fontSize: 12 }}>严重程度</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#b91c1c', mt: 0.5 }}>
+                    <Typography sx={{ color: 'error.dark', fontSize: 12 }}>严重程度</Typography>
+                    <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
                       {hazard.severity === 'high'
                         ? '高'
                         : hazard.severity === 'medium'
@@ -651,7 +651,7 @@ const EhsHazardDetailPage: React.FC = () => {
                     sx={{
                       textAlign: 'center',
                       p: 1.5,
-                      bgcolor: '#fefce8',
+                      bgcolor: 'warning.lighter',
                       borderRadius: 1,
                     }}
                   >
@@ -668,12 +668,12 @@ const EhsHazardDetailPage: React.FC = () => {
                     sx={{
                       textAlign: 'center',
                       p: 1.5,
-                      bgcolor: '#eff6ff',
+                      bgcolor: 'primary.light',
                       borderRadius: 1,
                     }}
                   >
-                    <Typography sx={{ color: '#2563eb', fontSize: 12 }}>发生概率</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#1d4ed8', mt: 0.5 }}>
+                    <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>发生概率</Typography>
+                    <Typography sx={{ fontWeight: 500, color: 'primary.dark', mt: 0.5 }}>
                       {hazard.likelihood === 'high'
                         ? '高'
                         : hazard.likelihood === 'medium'
@@ -774,7 +774,7 @@ const EhsHazardDetailPage: React.FC = () => {
                 >
                   <Box
                     component={Shield}
-                    sx={{ fontSize: 20, color: '#2563eb' }}
+                    sx={{ fontSize: 20, color: 'primary.dark' }}
                   />
                   控制措施
                 </Typography>

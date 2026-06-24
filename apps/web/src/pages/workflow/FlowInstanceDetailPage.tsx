@@ -1,5 +1,5 @@
 import { Card, CardContent, Typography, Box, Stack, Chip, IconButton } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   GitBranch,
@@ -59,7 +59,7 @@ const FlowInstanceDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载实例详情失败:', err);
       addNotification({
         title: '错误',
@@ -78,21 +78,21 @@ const FlowInstanceDetailPage: React.FC = () => {
         return (
           <CheckCircle
             size={20}
-            style={{ color: '#16a34a' }}
+            style={{ color: 'success.dark' }}
           />
         );
       case 'rejected':
         return (
           <XCircle
             size={20}
-            style={{ color: '#dc2626' }}
+            style={{ color: 'error.dark' }}
           />
         );
       case 'running':
         return (
           <Play
             size={20}
-            style={{ color: '#2563eb' }}
+            style={{ color: 'primary.dark' }}
           />
         );
       case 'pending':
@@ -106,7 +106,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         return (
           <AlertCircle
             size={20}
-            style={{ color: '#4b5563' }}
+            style={{ color: 'text.secondary' }}
           />
         );
     }
@@ -153,7 +153,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         <Loader2
           size={32}
           className='animate-spin'
-          style={{ color: '#6366f1' }}
+          style={{ color: 'primary.light' }}
         />
       </Box>
     );
@@ -165,7 +165,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         <Box sx={{ textAlign: 'center', py: 12 }}>
           <AlertCircle
             size={64}
-            style={{ color: '#d1d5db', margin: '0 auto', marginBottom: 16 }}
+            style={{ color: 'grey.300', margin: '0 auto', marginBottom: 16 }}
           />
           <Typography sx={{ color: 'grey.500' }}>实例不存在</Typography>
           <Button
@@ -211,7 +211,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               >
                 <GitBranch
                   size={24}
-                  style={{ color: '#6366f1' }}
+                  style={{ color: 'primary.light' }}
                 />
               </Box>
               <Box>
@@ -384,7 +384,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   <Users
                     size={48}
                     style={{
-                      color: '#d1d5db',
+                      color: 'grey.300',
                       margin: '0 auto',
                       marginBottom: 8,
                     }}
@@ -508,7 +508,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                         >
                           <MessageSquare
                             size={16}
-                            style={{ color: '#6b7280', marginTop: 2 }}
+                            style={{ color: 'text.secondary', marginTop: 2 }}
                           />
                           <Typography
                             variant='body2'
@@ -541,7 +541,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                   <FileText
                     size={48}
                     style={{
-                      color: '#d1d5db',
+                      color: 'grey.300',
                       margin: '0 auto',
                       marginBottom: 8,
                     }}
@@ -563,12 +563,12 @@ const FlowInstanceDetailPage: React.FC = () => {
                         {record.action === 'approve' ? (
                           <CheckCircle2
                             size={16}
-                            style={{ color: '#16a34a' }}
+                            style={{ color: 'success.dark' }}
                           />
                         ) : (
                           <XCircle
                             size={16}
-                            style={{ color: '#dc2626' }}
+                            style={{ color: 'error.dark' }}
                           />
                         )}
                         <Typography

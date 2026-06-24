@@ -13,7 +13,7 @@ import {
   CircularProgress,
   Skeleton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, X } from 'lucide-react';
@@ -40,12 +40,6 @@ const CustomerEditPage: React.FC = () => {
     description: '',
   });
 
-  useEffect(() => {
-    if (id) {
-      loadCustomer(id);
-    }
-  }, [id, loadCustomer]);
-
   const loadCustomer = useCallback(
     async (customerId: string) => {
       setLoading(true);
@@ -63,7 +57,7 @@ const CustomerEditPage: React.FC = () => {
           address: '北京市朝阳区科技园',
           description: '一家专注于软件开发的高科技企业',
         });
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Failed to load customer:', err);
         error('加载客户信息失败');
       } finally {
@@ -72,6 +66,12 @@ const CustomerEditPage: React.FC = () => {
     },
     [error]
   );
+
+  useEffect(() => {
+    if (id) {
+      loadCustomer(id);
+    }
+  }, [id, loadCustomer]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -86,7 +86,7 @@ const CustomerEditPage: React.FC = () => {
     try {
       success('客户信息更新成功');
       navigate(`/crm/customers/${id}`);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to update customer:', err);
       error('更新客户信息失败');
     } finally {

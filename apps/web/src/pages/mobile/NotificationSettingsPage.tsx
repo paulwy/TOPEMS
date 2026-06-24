@@ -246,9 +246,7 @@ export const NotificationSettingsPage: React.FC = () => {
       >
         {stats.map((stat) => (
           <Grid
-            item
-            xs={6}
-            sm={3}
+            size={{ xs: 12, sm: 6, lg: 3 }}
             key={stat.label}
           >
             <Card>
@@ -285,11 +283,7 @@ export const NotificationSettingsPage: React.FC = () => {
         container
         spacing={3}
       >
-        <Grid
-          item
-          xs={12}
-          lg={5}
-        >
+        <Grid size={{ xs: 12, lg: 5 }}>
           <Card>
             <CardHeader title='通知类型配置' />
             <CardContent>
@@ -412,11 +406,7 @@ export const NotificationSettingsPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={7}
-        >
+        <Grid size={{ xs: 12, lg: 7 }}>
           <Card>
             <CardHeader
               title='推送历史'
@@ -456,7 +446,7 @@ export const NotificationSettingsPage: React.FC = () => {
                                 <CheckCircle size={14} />
                               ) : record.status === 'failed' ? (
                                 <AlertCircle size={14} />
-                              ) : null
+                              ) : undefined
                             }
                           />
                         </TableCell>

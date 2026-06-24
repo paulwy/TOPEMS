@@ -20,7 +20,7 @@ export interface TemplateContext {
   source_id: string;
 
   // 业务数据
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 
   // 关联实体
   entities?: {
@@ -93,7 +93,7 @@ export class ExpressionEvaluator {
   /**
    * 求值表达式
    */
-  evaluate(expression: string): any {
+  evaluate(expression: string): unknown {
     if (!expression) return undefined;
 
     // 清理表达式
@@ -102,7 +102,10 @@ export class ExpressionEvaluator {
     // 处理字段引用 ${field.path}
     const fieldPattern = /\$\{([^}]+)\}/g;
     expression = expression.replace(fieldPattern, (_, path) => {
-      return this.getFieldValue(path);
+      const value = this.getFieldValue(path);
+      if (value === null || value === undefined) return 'null';
+      if (typeof value === 'object') return JSON.stringify(value);
+      return String(value);
     });
 
     // 处理条件表达式 ${condition ? value1 : value2}
@@ -133,13 +136,13 @@ export class ExpressionEvaluator {
   /**
    * 获取字段值
    */
-  private getFieldValue(path: string): any {
+  private getFieldValue(path: string): unknown {
     const parts = path.split('.');
-    let value: any = this.context;
+    let value: unknown = this.context;
 
     for (const part of parts) {
       if (value === null || value === undefined) return undefined;
-      value = value[part];
+      value = (value as Record<string, unknown>)[part];
     }
 
     return value;
@@ -165,7 +168,7 @@ export class ExpressionEvaluator {
   /**
    * 解析值
    */
-  private parseValue(value: string): any {
+  private parseValue(value: string): unknown {
     // null
     if (value === 'null' || value === 'undefined') return undefined;
 
@@ -276,7 +279,7 @@ export class VoucherTemplateEngine {
       account = await this.findAccountByCode(rule.account_code);
     } else if (rule.account_rule_type === 'dynamic' && rule.account_expression) {
       const accountCode = evaluator.evaluate(rule.account_expression);
-      if (accountCode) {
+      if (typeof accountCode === 'string' && accountCode) {
         account = await this.findAccountByCode(accountCode);
       }
     }
@@ -299,7 +302,8 @@ export class VoucherTemplateEngine {
         }
       }
     } else if (rule.amount_rule_type === 'field' && rule.amount_field) {
-      const amount = evaluator.evaluate(rule.amount_field) || 0;
+      const rawAmount = evaluator.evaluate(rule.amount_field);
+      const amount = typeof rawAmount === 'number' ? rawAmount : Number(rawAmount) || 0;
       if (rule.direction_rule_type === 'fixed') {
         if (rule.fixed_direction === 'debit') {
           debit_amount = amount;
@@ -308,7 +312,8 @@ export class VoucherTemplateEngine {
         }
       }
     } else if (rule.amount_rule_type === 'expression' && rule.amount_expression) {
-      const amount = evaluator.evaluate(rule.amount_expression) || 0;
+      const rawAmount = evaluator.evaluate(rule.amount_expression);
+      const amount = typeof rawAmount === 'number' ? rawAmount : Number(rawAmount) || 0;
       if (rule.direction_rule_type === 'expression' && rule.direction_expression) {
         const direction = evaluator.evaluate(rule.direction_expression);
         if (direction === 'debit') {
@@ -329,9 +334,11 @@ export class VoucherTemplateEngine {
         if (dimRule.source_type === 'fixed' && dimRule.fixed_value) {
           value = dimRule.fixed_value;
         } else if (dimRule.source_type === 'field' && dimRule.field) {
-          value = evaluator.evaluate(dimRule.field);
+          const raw = evaluator.evaluate(dimRule.field);
+          value = raw !== null && raw !== undefined ? String(raw) : undefined;
         } else if (dimRule.source_type === 'expression' && dimRule.expression) {
-          value = evaluator.evaluate(dimRule.expression);
+          const raw = evaluator.evaluate(dimRule.expression);
+          value = raw !== null && raw !== undefined ? String(raw) : undefined;
         }
 
         if (value) {
@@ -345,9 +352,11 @@ export class VoucherTemplateEngine {
     if (rule.summary_rule_type === 'fixed' && rule.fixed_summary) {
       summary = rule.fixed_summary;
     } else if (rule.summary_rule_type === 'field' && rule.summary_field) {
-      summary = evaluator.evaluate(rule.summary_field) || '';
+      const raw = evaluator.evaluate(rule.summary_field);
+      summary = raw !== null && raw !== undefined ? String(raw) : '';
     } else if (rule.summary_rule_type === 'expression' && rule.summary_expression) {
-      summary = evaluator.evaluate(rule.summary_expression) || '';
+      const raw = evaluator.evaluate(rule.summary_expression);
+      summary = raw !== null && raw !== undefined ? String(raw) : '';
     }
 
     return {
@@ -388,7 +397,9 @@ export class VoucherTemplateEngine {
     const defaultTemplate = summaryTemplates[template.type] || `${template.name}`;
     const evaluator = new ExpressionEvaluator(context);
 
-    return evaluator.evaluate(defaultTemplate);
+    const result = evaluator.evaluate(defaultTemplate);
+    if (result === null || result === undefined) return '';
+    return String(result);
   }
 
   /**

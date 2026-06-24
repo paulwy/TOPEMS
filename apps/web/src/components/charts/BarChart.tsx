@@ -28,7 +28,7 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
   xKey = 'name',
   yKey = 'value',
   yKeys,
-  color = '#3b82f6',
+  color = 'primary.main',
   height = 200,
   barRadius = [4, 4, 0, 0],
 }) => {
@@ -46,17 +46,17 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
         <BarChart data={data}>
           <CartesianGrid
             strokeDasharray='3 3'
-            stroke='#e2e8f0'
+            stroke='border.default'
           />
           <XAxis
             dataKey={xKey}
-            tick={{ fill: '#64748b', fontSize: 12 }}
+            tick={{ fill: 'grey.600', fontSize: 12 }}
           />
-          <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+          <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
           <Tooltip
             contentStyle={{
               backgroundColor: 'white',
-              border: '1px solid #e2e8f0',
+              border: '1px solid border.default',
               borderRadius: '8px',
               padding: '12px',
             }}

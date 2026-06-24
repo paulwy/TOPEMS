@@ -42,37 +42,45 @@ TOPEMS 共包含 **21 个服务**，端口分配遵循统一规范：
 
 ## 部署方式
 
-### 方式一：本地开发部署（推荐）
+### 方式一：本地开发部署（推荐 - 默认方式）
 
-适用于开发环境和团队协作。
+适用于开发环境和团队协作。**完全本地进程，不依赖 Docker**。
 
 ```bash
 # 1. 克隆项目
 git clone https://github.com/your-org/topems.git
 cd topems
 
-# 2. 安装依赖（macOS 示例）
-brew install rust node pnpm postgresql redis ollama
+# 2. 安装系统依赖（macOS 示例）
+brew install rust node pnpm postgresql@16 redis ollama
+brew services start postgresql@16
+brew services start redis
 
 # 3. 配置环境
 cp .env.example .env
-# 编辑 .env 配置数据库连接等
+# 编辑 .env，配置 JWT 密钥（必须！）
+echo "JWT_SECRET=$(openssl rand -base64 32)" >> .env
+echo "JWT_REFRESH_SECRET=$(openssl rand -base64 32)" >> .env
 
-# 4. 启动数据库和 Redis
-cd docker
-docker-compose up -d postgres redis
-cd ..
+# 4. 创建数据库
+createdb topems
 
-# 5. 使用统一脚本启动所有服务
-./scripts/topems.sh start
+# 5. 一键启动所有服务（推荐）
+./scripts/start-local.sh
+# 或
+pnpm dev
 
-# 6. 启动前端
-cd apps/web && pnpm install && pnpm dev
+# 6. 单独启动（如需精细控制）
+./scripts/topems.sh start iam           # 启动后端
+cd apps/web && pnpm install && pnpm dev  # 启动前端
+cd apps/core && pnpm install && pnpm dev # 启动 core
 ```
 
-### 方式二：Docker 部署
+> **Docker 仅作为可选的容器化方案**，不是本地开发的必需项。详细说明见 [本地部署指南](./LOCAL_DEPLOYMENT.md)。
 
-适用于快速部署和测试。
+### 方式二：Docker 部署（可选）
+
+适用于快速部署和测试，**不是默认方式**。
 
 ```bash
 # 1. 启动所有服务（含数据库）

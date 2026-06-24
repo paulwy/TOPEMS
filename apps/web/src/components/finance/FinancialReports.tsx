@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { reportApi } from '@/api/finance';
 import { Card, CardContent, CardHeader, Typography, Chip, Box, Tabs, Tab } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Download, AlertCircle } from 'lucide-react';
 import {
   BarChart,
@@ -131,8 +131,8 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
             width: 32,
             height: 32,
             borderRadius: '50%',
-            border: '3px solid #e5e7eb',
-            borderTopColor: '#2563eb',
+            border: '3px solid grey.200',
+            borderTopColor: 'primary.dark',
             animation: 'spin 1s linear infinite',
             '@keyframes spin': {
               '0%': { transform: 'rotate(0deg)' },
@@ -173,7 +173,15 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
     { name: '未分配利润', value: data.equity.retained_earnings.total },
   ];
 
-  const COLORS = ['#10b981', '#059669', '#f59e0b', '#d97706', '#3b82f6', '#2563eb', '#6366f1'];
+  const COLORS = [
+    'success.main',
+    'success.dark',
+    'warning.main',
+    'warning.dark',
+    'primary.main',
+    'primary.dark',
+    'primary.light',
+  ];
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -291,7 +299,7 @@ export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
                 <Tooltip formatter={(value) => String((value as number).toLocaleString())} />
                 <Bar
                   dataKey='value'
-                  fill='#3b82f6'
+                  fill='primary.main'
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -421,8 +429,8 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
             width: 32,
             height: 32,
             borderRadius: '50%',
-            border: '3px solid #e5e7eb',
-            borderTopColor: '#2563eb',
+            border: '3px solid grey.200',
+            borderTopColor: 'primary.dark',
             animation: 'spin 1s linear infinite',
             '@keyframes spin': {
               '0%': { transform: 'rotate(0deg)' },
@@ -584,7 +592,7 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                 <Tooltip formatter={(value) => String((value as number).toLocaleString())} />
                 <Bar
                   dataKey='value'
-                  fill='#3b82f6'
+                  fill='primary.main'
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -611,7 +619,9 @@ export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerPr
                   {costBreakdown.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={['#f59e0b', '#d97706', '#3b82f6', '#6366f1'][index]}
+                      fill={
+                        ['warning.main', 'warning.dark', 'primary.main', 'primary.light'][index]
+                      }
                     />
                   ))}
                 </Pie>
@@ -774,8 +784,8 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
             width: 32,
             height: 32,
             borderRadius: '50%',
-            border: '3px solid #e5e7eb',
-            borderTopColor: '#2563eb',
+            border: '3px solid grey.200',
+            borderTopColor: 'primary.dark',
             animation: 'spin 1s linear infinite',
             '@keyframes spin': {
               '0%': { transform: 'rotate(0deg)' },
@@ -903,7 +913,7 @@ export function CashFlowStatementViewer({ data, loading }: CashFlowStatementView
                 {flowData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry.value >= 0 ? '#10b981' : '#ef4444'}
+                    fill={entry.value >= 0 ? 'success.main' : 'error.main'}
                   />
                 ))}
               </Bar>
@@ -1266,9 +1276,41 @@ export function FinancialReportsViewer({ companyId, period }: FinancialReportsVi
     enabled: activeReport === 'cash',
   });
 
-  const handleExport = () => {
-    // TODO: 实现导出功能
-    logger.info('Export report');
+  const handleExport = async () => {
+    logger.info('Export report:', activeReport);
+    try {
+      const params = { company_id: companyId, period };
+      let blob: Blob;
+      let filename: string;
+
+      switch (activeReport) {
+        case 'balance':
+          blob = await reportApi.exportBalanceSheet(params);
+          filename = `资产负债表_${period}.xlsx`;
+          break;
+        case 'income':
+          blob = await reportApi.exportIncomeStatement(params);
+          filename = `利润表_${period}.xlsx`;
+          break;
+        case 'cash':
+          blob = await reportApi.exportCashFlowStatement(params);
+          filename = `现金流量表_${period}.xlsx`;
+          break;
+        default:
+          return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      logger.error('Export failed:', err);
+    }
   };
 
   return (

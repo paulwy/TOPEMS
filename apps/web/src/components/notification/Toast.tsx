@@ -22,10 +22,10 @@ const colorMap = {
 };
 
 const iconColorMap = {
-  success: '#22c55e',
-  error: '#ef4444',
-  info: '#3b82f6',
-  warning: '#eab308',
+  success: 'success.dark',
+  error: 'error.main',
+  info: 'primary.main',
+  warning: 'warning.main',
 };
 
 export const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
@@ -71,29 +71,29 @@ export const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
         transform: isVisible && !isLeaving ? 'translateX(0)' : 'translateX(16px)',
         ...(notification.type === 'success'
           ? {
-              backgroundColor: '#f0fdf4',
-              borderColor: '#bbf7d0',
+              backgroundColor: 'success.light',
+              borderColor: 'success.light',
               color: '#166534',
             }
           : {}),
         ...(notification.type === 'error'
           ? {
-              backgroundColor: '#fef2f2',
-              borderColor: '#fecaca',
+              backgroundColor: 'error.light',
+              borderColor: 'error.light',
               color: '#991b1b',
             }
           : {}),
         ...(notification.type === 'info'
           ? {
-              backgroundColor: '#eff6ff',
-              borderColor: '#bfdbfe',
+              backgroundColor: 'primary.light',
+              borderColor: 'primary.light',
               color: '#1e40af',
             }
           : {}),
         ...(notification.type === 'warning'
           ? {
-              backgroundColor: '#fefce8',
-              borderColor: '#fef08a',
+              backgroundColor: 'warning.lighter',
+              borderColor: 'warning.light',
               color: '#854d0e',
             }
           : {}),

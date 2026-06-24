@@ -22,7 +22,7 @@ export const session = {
     try {
       const userStr = localStorage.getItem(STORAGE_KEYS.USER);
       return userStr ? JSON.parse(userStr) : null;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to parse user from storage:', error);
       return null;
     }
@@ -32,7 +32,7 @@ export const session = {
     try {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
       this.updateLastActivity();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save user to storage:', error);
     }
   },

@@ -75,6 +75,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/scm/sync/statistics", post(get_sync_statistics))
         .route("/api/scm/sync/sync-logs", post(get_sync_logs))
         .route("/api/scm/sync/purchase-batch", post(batch_sync_purchase_to_wms))
+        .route("/api/scm/sync/consistency-check", post(check_consistency))
 }
 
 async fn purchase_to_inbound(
@@ -1089,6 +1090,181 @@ async fn batch_sync_purchase_to_wms(
             tracing::error!("查询待同步采购订单失败: {}", e);
             Json(api_error(500, "查询待同步采购订单失败"))
         }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ConsistencyCheckResult {
+    pub check_type: String,
+    pub total_records: i64,
+    pub consistent_count: i64,
+    pub inconsistent_count: i64,
+    pub details: Vec<InconsistencyDetail>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InconsistencyDetail {
+    pub source_id: String,
+    pub source_code: Option<String>,
+    pub target_id: Option<String>,
+    pub target_code: Option<String>,
+    pub inconsistency_type: String,
+    pub description: String,
+}
+
+async fn check_consistency(
+    State(state): State<ApiState>,
+) -> Json<ApiResponse<Vec<ConsistencyCheckResult>>> {
+    let mut results: Vec<ConsistencyCheckResult> = Vec::new();
+
+    let purchase_inbound_result = check_purchase_inbound_consistency(&state).await;
+    results.push(purchase_inbound_result);
+
+    let supplier_sync_result = check_supplier_sync_consistency(&state).await;
+    results.push(supplier_sync_result);
+
+    Json(ApiResponse::success(results, "一致性检查完成"))
+}
+
+async fn check_purchase_inbound_consistency(state: &ApiState) -> ConsistencyCheckResult {
+    let rows = sqlx::query(
+        r#"
+        SELECT po.id as po_id, po.order_number as po_number, 
+               po.inbound_order_id as inbound_id, po.inbound_order_number as inbound_number,
+               po.is_synced_to_wms as synced, po.status as po_status,
+               io.id as wms_inbound_id, io.order_number as wms_inbound_number
+        FROM scm.purchase_orders po
+        LEFT JOIN wms.inbound_orders io ON po.inbound_order_id = io.id
+        WHERE po.status IN ('in_transit', 'delivered')
+        ORDER BY po.created_at DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let mut details: Vec<InconsistencyDetail> = Vec::new();
+    let mut consistent_count = 0;
+    let mut inconsistent_count = 0;
+
+    if let Ok(rows) = rows {
+        for row in rows {
+            let po_id: Uuid = row.get("po_id");
+            let po_number: String = row.get("po_number");
+            let inbound_id: Option<Uuid> = row.get("inbound_id");
+            let inbound_number: Option<String> = row.get("inbound_number");
+            let synced: bool = row.get("synced");
+            let wms_inbound_id: Option<Uuid> = row.get("wms_inbound_id");
+
+            if synced && inbound_id.is_some() && wms_inbound_id.is_none() {
+                details.push(InconsistencyDetail {
+                    source_id: po_id.to_string(),
+                    source_code: Some(po_number),
+                    target_id: inbound_id.map(|id| id.to_string()),
+                    target_code: inbound_number,
+                    inconsistency_type: "orphan_reference".to_string(),
+                    description: "采购订单引用了不存在的入库单".to_string(),
+                });
+                inconsistent_count += 1;
+            } else if !synced && inbound_id.is_some() {
+                details.push(InconsistencyDetail {
+                    source_id: po_id.to_string(),
+                    source_code: Some(po_number),
+                    target_id: inbound_id.map(|id| id.to_string()),
+                    target_code: inbound_number,
+                    inconsistency_type: "status_mismatch".to_string(),
+                    description: "同步状态与引用状态不一致".to_string(),
+                });
+                inconsistent_count += 1;
+            } else {
+                consistent_count += 1;
+            }
+        }
+    }
+
+    ConsistencyCheckResult {
+        check_type: "purchase_order_inbound".to_string(),
+        total_records: consistent_count + inconsistent_count,
+        consistent_count,
+        inconsistent_count,
+        details,
+    }
+}
+
+async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckResult {
+    let rows = sqlx::query(
+        r#"
+        SELECT s.id as scm_id, s.name as scm_name, s.sync_from_srm as scm_sync_from_srm,
+               srm.id as srm_id, srm.name as srm_name, srm.sync_from_scm as srm_sync_from_scm
+        FROM scm.suppliers s
+        FULL OUTER JOIN srm.suppliers srm ON s.id = srm.id
+        WHERE (s.id IS NOT NULL OR srm.id IS NOT NULL)
+          AND s.status != 'deleted' AND (srm.status IS NULL OR srm.status != 'deleted')
+        ORDER BY COALESCE(s.created_at, srm.created_at) DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let mut details: Vec<InconsistencyDetail> = Vec::new();
+    let mut consistent_count = 0;
+    let mut inconsistent_count = 0;
+
+    if let Ok(rows) = rows {
+        for row in rows {
+            let scm_id: Option<Uuid> = row.get("scm_id");
+            let scm_name: Option<String> = row.get("scm_name");
+            let scm_sync_from_srm: Option<bool> = row.get("scm_sync_from_srm");
+            let srm_id: Option<Uuid> = row.get("srm_id");
+            let srm_name: Option<String> = row.get("srm_name");
+            let srm_sync_from_scm: Option<bool> = row.get("srm_sync_from_scm");
+
+            if scm_id.is_some() && srm_id.is_none() {
+                details.push(InconsistencyDetail {
+                    source_id: scm_id.unwrap().to_string(),
+                    source_code: scm_name,
+                    target_id: None,
+                    target_code: None,
+                    inconsistency_type: "missing_in_target".to_string(),
+                    description: "SCM供应商在SRM中不存在".to_string(),
+                });
+                inconsistent_count += 1;
+            } else if scm_id.is_none() && srm_id.is_some() {
+                details.push(InconsistencyDetail {
+                    source_id: srm_id.unwrap().to_string(),
+                    source_code: srm_name,
+                    target_id: None,
+                    target_code: None,
+                    inconsistency_type: "missing_in_source".to_string(),
+                    description: "SRM供应商在SCM中不存在".to_string(),
+                });
+                inconsistent_count += 1;
+            } else if scm_id.is_some() && srm_id.is_some() {
+                let scm_sync = scm_sync_from_srm.unwrap_or(false);
+                let srm_sync = srm_sync_from_scm.unwrap_or(false);
+                
+                if !scm_sync && !srm_sync {
+                    details.push(InconsistencyDetail {
+                        source_id: scm_id.unwrap().to_string(),
+                        source_code: scm_name,
+                        target_id: srm_id.map(|id| id.to_string()),
+                        target_code: srm_name,
+                        inconsistency_type: "unsynced".to_string(),
+                        description: "供应商未标记为双向同步".to_string(),
+                    });
+                    inconsistent_count += 1;
+                } else {
+                    consistent_count += 1;
+                }
+            }
+        }
+    }
+
+    ConsistencyCheckResult {
+        check_type: "supplier_sync".to_string(),
+        total_records: consistent_count + inconsistent_count,
+        consistent_count,
+        inconsistent_count,
+        details,
     }
 }
 

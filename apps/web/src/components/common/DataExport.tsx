@@ -17,7 +17,7 @@ import {
   ListItemText,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -218,7 +218,7 @@ const DataExport: React.FC<DataExportProps> = ({
               body { font-family: Arial, sans-serif; padding: 20px; }
               table { width: 100%; border-collapse: collapse; }
               th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f5f5f5; }
+              th { background-color: grey.100; }
               h1 { font-size: 18px; margin-bottom: 20px; }
               .export-time { color: #666; font-size: 12px; margin-bottom: 10px; }
             </style>

@@ -12,7 +12,7 @@ import {
   MenuItem,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Briefcase, Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import {
@@ -66,10 +66,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       } else {
         setData({ items: [], total: 0, page: 1, page_size: 10 });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '加载失败',
-        message: error.message || '获取岗位列表失败',
+        message: (error as { message?: string }).message || '获取岗位列表失败',
         type: 'error',
       });
       setData({ items: [], total: 0, page: 1, page_size: 10 });
@@ -87,10 +87,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       } else {
         setDepartments([]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '加载失败',
-        message: error.message || '获取部门列表失败',
+        message: (error as { message?: string }).message || '获取部门列表失败',
         type: 'error',
       });
       setDepartments([]);
@@ -138,10 +138,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           type: 'error',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '删除岗位失败',
+        message: (error as { message?: string }).message || '删除岗位失败',
         type: 'error',
       });
     }
@@ -159,10 +159,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       setShowCreateModal(false);
       setFormData({});
       fetchPositions();
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '创建岗位失败',
+        message: (error as { message?: string }).message || '创建岗位失败',
         type: 'error',
       });
     }
@@ -181,10 +181,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       setShowEditModal(false);
       setSelectedPosition(null);
       fetchPositions();
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '更新岗位失败',
+        message: (error as { message?: string }).message || '更新岗位失败',
         type: 'error',
       });
     }
@@ -269,7 +269,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Briefcase style={{ width: 20, height: 20, color: '#4f46e5' }} />
+                <Briefcase style={{ width: 20, height: 20, color: 'primary.main' }} />
               </Box>
               <Box>
                 <Typography
@@ -436,7 +436,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           ]}
           onRefresh={() => fetchPositions()}
           emptyMessage='暂无岗位数据'
-          emptyIcon={<Briefcase style={{ width: 48, height: 48, color: '#9ca3af' }} />}
+          emptyIcon={<Briefcase style={{ width: 48, height: 48, color: 'text.disabled' }} />}
           headerContent={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <ModeToggle />

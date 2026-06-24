@@ -21,7 +21,7 @@ import {
   StepLabel,
   LinearProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Plus,
   Eye,
@@ -74,17 +74,13 @@ const EhsHazardPage: React.FC = () => {
     remarks: '',
   });
 
-  useEffect(() => {
-    loadIssues();
-  }, [loadIssues]);
-
   const loadIssues = useCallback(async () => {
     try {
       setLoading(true);
       const response = await ehsApi.listSafetyIssues({ page_size: 100 });
       if (response.success && response.data) {
         const issuesData = Array.isArray(response.data) ? response.data : response.data.data || [];
-        const adapted = issuesData.map((item: any) => ({
+        const adapted = issuesData.map((item: SafetyIssue) => ({
           ...item,
           status: translateStatus(item.status),
         }));
@@ -92,13 +88,17 @@ const EhsHazardPage: React.FC = () => {
       } else {
         setIssues([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载隐患列表失败:', err);
       setIssues([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadIssues();
+  }, [loadIssues]);
 
   const loadIssueDetail = async (issueId: string) => {
     try {
@@ -109,7 +109,7 @@ const EhsHazardPage: React.FC = () => {
         setRectification(data.rectification || null);
         setVerification(data.verification || null);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载隐患详情失败:', err);
     }
   };
@@ -163,12 +163,12 @@ const EhsHazardPage: React.FC = () => {
 
   const getLevelBadge = (level: string) => {
     const levelMap: Record<string, { bg: string; color: string; label: string }> = {
-      major: { bg: '#fee2e2', color: '#dc2626', label: '重大' },
-      serious: { bg: '#fecaca', color: '#b91c1c', label: '严重' },
+      major: { bg: 'error.lighter', color: 'error.dark', label: '重大' },
+      serious: { bg: 'error.light', color: 'error.darker', label: '严重' },
       general: { bg: '#fef9c3', color: '#ca8a04', label: '一般' },
-      minor: { bg: '#dcfce7', color: '#16a34a', label: '轻微' },
+      minor: { bg: 'success.lighter', color: 'success.dark', label: '轻微' },
     };
-    const colors = levelMap[level] || { bg: '#f3f4f6', color: '#4b5563', label: level };
+    const colors = levelMap[level] || { bg: 'grey.100', color: 'text.secondary', label: level };
     return (
       <Chip
         label={colors.label}
@@ -184,14 +184,14 @@ const EhsHazardPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待整改: { bg: '#fee2e2', color: '#dc2626' },
+      待整改: { bg: 'error.lighter', color: 'error.dark' },
       整改中: { bg: '#fef9c3', color: '#ca8a04' },
-      待验收: { bg: '#eff6ff', color: '#2563eb' },
-      已验收: { bg: '#dcfce7', color: '#16a34a' },
-      已闭环: { bg: '#f3f4f6', color: '#4b5563' },
-      已驳回: { bg: '#fecaca', color: '#b91c1c' },
+      待验收: { bg: 'primary.light', color: 'primary.dark' },
+      已验收: { bg: 'success.lighter', color: 'success.dark' },
+      已闭环: { bg: 'grey.100', color: 'text.secondary' },
+      已驳回: { bg: 'error.light', color: 'error.darker' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -308,7 +308,7 @@ const EhsHazardPage: React.FC = () => {
       toast.success('隐患上报成功');
       setShowCreateModal(false);
       loadIssues();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('上报失败');
       apiLogger.error('创建隐患失败:', err);
     }
@@ -335,7 +335,7 @@ const EhsHazardPage: React.FC = () => {
       setShowRectificationModal(false);
       await loadIssueDetail(selectedIssue.id);
       loadIssues();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建整改任务失败:', err);
     }
@@ -348,7 +348,7 @@ const EhsHazardPage: React.FC = () => {
       toast.success('整改完成，等待验收');
       await loadIssueDetail(selectedIssue.id);
       loadIssues();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('提交失败');
       apiLogger.error('提交整改失败:', err);
     }
@@ -375,7 +375,7 @@ const EhsHazardPage: React.FC = () => {
       setShowVerificationModal(false);
       await loadIssueDetail(selectedIssue.id);
       loadIssues();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('验收失败');
       apiLogger.error('验收失败:', err);
     }
@@ -388,7 +388,7 @@ const EhsHazardPage: React.FC = () => {
       toast.success('隐患已闭环');
       setShowDetailModal(false);
       loadIssues();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('闭环失败');
       apiLogger.error('闭环失败:', err);
     }
@@ -452,21 +452,21 @@ const EhsHazardPage: React.FC = () => {
           mb: 4,
         }}
       >
-        <Card sx={{ bgcolor: '#fef2f2' }}>
+        <Card sx={{ bgcolor: 'error.light' }}>
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#fee2e2',
+                  bgcolor: 'error.lighter',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <AlertTriangle sx={{ width: 20, height: 20, color: '#ef4444' }} />
+                <AlertTriangle sx={{ width: 20, height: 20, color: 'error.main' }} />
               </Box>
               <Box>
                 <Typography
@@ -492,14 +492,14 @@ const EhsHazardPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#fee2e2',
+                  bgcolor: 'error.lighter',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <XCircle sx={{ width: 20, height: 20, color: '#dc2626' }} />
+                <XCircle sx={{ width: 20, height: 20, color: 'error.dark' }} />
               </Box>
               <Box>
                 <Typography
@@ -525,7 +525,7 @@ const EhsHazardPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#fef3c7',
+                  bgcolor: 'warning.light',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -558,14 +558,14 @@ const EhsHazardPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#dcfce7',
+                  bgcolor: 'success.lighter',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <CheckCircle sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
               </Box>
               <Box>
                 <Typography
@@ -708,7 +708,7 @@ const EhsHazardPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#ef4444' }}
+            sx={{ bgcolor: 'error.main' }}
           >
             上报
           </Button>
@@ -908,7 +908,7 @@ const EhsHazardPage: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <CheckSquare sx={{ width: 18, height: 18, color: '#16a34a' }} />
+                      <CheckSquare sx={{ width: 18, height: 18, color: 'success.dark' }} />
                       <Typography
                         variant='subtitle2'
                         sx={{ fontWeight: 600 }}
@@ -941,13 +941,13 @@ const EhsHazardPage: React.FC = () => {
                             <Chip
                               label='验收通过'
                               size='small'
-                              sx={{ bgcolor: '#dcfce7', color: '#16a34a' }}
+                              sx={{ bgcolor: 'success.lighter', color: 'success.dark' }}
                             />
                           ) : (
                             <Chip
                               label='验收未通过'
                               size='small'
-                              sx={{ bgcolor: '#fee2e2', color: '#dc2626' }}
+                              sx={{ bgcolor: 'error.lighter', color: 'error.dark' }}
                             />
                           )}
                         </Typography>
@@ -992,7 +992,7 @@ const EhsHazardPage: React.FC = () => {
                 <Button
                   variant='contained'
                   onClick={handleSubmitRectification}
-                  sx={{ bgcolor: '#2563eb' }}
+                  sx={{ bgcolor: 'primary.dark' }}
                 >
                   提交整改
                 </Button>
@@ -1001,7 +1001,7 @@ const EhsHazardPage: React.FC = () => {
                 <Button
                   variant='contained'
                   onClick={handleStartVerification}
-                  sx={{ bgcolor: '#16a34a' }}
+                  sx={{ bgcolor: 'success.dark' }}
                 >
                   开始验收
                 </Button>
@@ -1010,7 +1010,7 @@ const EhsHazardPage: React.FC = () => {
                 <Button
                   variant='contained'
                   onClick={handleCloseIssue}
-                  sx={{ bgcolor: '#4b5563' }}
+                  sx={{ bgcolor: 'text.secondary' }}
                 >
                   闭环处理
                 </Button>
@@ -1150,7 +1150,7 @@ const EhsHazardPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSaveVerification}
-            sx={{ bgcolor: '#16a34a' }}
+            sx={{ bgcolor: 'success.dark' }}
           >
             完成验收
           </Button>

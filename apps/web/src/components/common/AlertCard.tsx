@@ -14,7 +14,7 @@ import {
   Alert,
   AlertTitle,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   AlertTriangle,
   AlertCircle,
@@ -148,38 +148,38 @@ export interface AlertCardProps {
 const LEVEL_CONFIG = {
   success: {
     icon: CheckCircle,
-    color: '#22c55e',
-    bgColor: '#f0fdf4',
-    borderColor: '#bbf7d0',
+    color: 'success.dark',
+    bgColor: 'success.light',
+    borderColor: 'success.light',
     titleColor: '#166534',
     messageColor: '#15803d',
     alertColor: 'success' as const,
   },
   warning: {
     icon: AlertTriangle,
-    color: '#f59e0b',
-    bgColor: '#fffbeb',
-    borderColor: '#fde68a',
+    color: 'warning.main',
+    bgColor: 'warning.light',
+    borderColor: 'warning.light',
     titleColor: '#92400e',
     messageColor: '#b45309',
     alertColor: 'warning' as const,
   },
   error: {
     icon: AlertCircle,
-    color: '#ef4444',
-    bgColor: '#fef2f2',
-    borderColor: '#fecaca',
+    color: 'error.main',
+    bgColor: 'error.light',
+    borderColor: 'error.light',
     titleColor: '#991b1b',
-    messageColor: '#b91c1c',
+    messageColor: 'error.darker',
     alertColor: 'error' as const,
   },
   info: {
     icon: Info,
-    color: '#3b82f6',
-    bgColor: '#eff6ff',
-    borderColor: '#bfdbfe',
+    color: 'primary.main',
+    bgColor: 'primary.light',
+    borderColor: 'primary.light',
     titleColor: '#1e40af',
-    messageColor: '#1d4ed8',
+    messageColor: 'primary.dark',
     alertColor: 'info' as const,
   },
 };
@@ -504,7 +504,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                         startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
                         sx={{
                           borderColor: config.borderColor,
-                          color: action.primary ? '#fff' : config.titleColor,
+                          color: action.primary ? 'white' : config.titleColor,
                           bgcolor: action.primary ? config.color : 'transparent',
                           '&:hover': {
                             bgcolor: action.primary ? config.color : config.bgColor,
@@ -638,7 +638,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
                   sx={{
                     borderColor: config.borderColor,
-                    color: action.primary ? '#fff' : config.titleColor,
+                    color: action.primary ? 'white' : config.titleColor,
                     bgcolor: action.primary ? config.color : 'transparent',
                     '&:hover': {
                       bgcolor: action.primary ? config.color : config.bgColor,

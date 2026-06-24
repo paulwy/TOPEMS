@@ -32,7 +32,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   useCompanyRelations,
   useCompanyTree,

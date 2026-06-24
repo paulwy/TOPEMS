@@ -11,7 +11,7 @@ import {
   CardContent,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, ClipboardList, ShoppingCart, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { srmApi } from '@/api/srm';
@@ -44,7 +44,7 @@ const SrmOrderPage: React.FC = () => {
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.orders || [];
-        const adapted = items.map((item: any) => ({
+        const adapted = items.map((item: { [key: string]: unknown }) => ({
           ...item,
           total_amount: item.total_amount || item.amount || 0,
           status:
@@ -65,7 +65,7 @@ const SrmOrderPage: React.FC = () => {
       } else {
         setOrders([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载订单数据失败:', err);
       setOrders([]);
     } finally {
@@ -75,13 +75,13 @@ const SrmOrderPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待处理: { bg: '#fef3c7', color: '#b45309' },
-      处理中: { bg: '#dbeafe', color: '#2563eb' },
-      已交付: { bg: '#dcfce7', color: '#15803d' },
-      已完成: { bg: '#e0e7ff', color: '#6366f1' },
-      已取消: { bg: '#fee2e2', color: '#b91c1c' },
+      待处理: { bg: 'warning.light', color: '#b45309' },
+      处理中: { bg: '#dbeafe', color: 'primary.dark' },
+      已交付: { bg: 'success.lighter', color: '#15803d' },
+      已完成: { bg: 'secondary.light', color: 'primary.light' },
+      已取消: { bg: 'error.lighter', color: 'error.darker' },
     };
-    const colors = statusMap[status] || { bg: '#f1f5f9', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
     return (
       <Chip
         label={status}
@@ -99,7 +99,7 @@ const SrmOrderPage: React.FC = () => {
         id: 'total_amount',
         label: '订单金额',
         render: (row) => (
-          <Typography sx={{ fontWeight: 600, color: '#1f2937' }}>
+          <Typography sx={{ fontWeight: 600, color: 'grey.800' }}>
             ¥{(row.total_amount || 0).toLocaleString()}
           </Typography>
         ),
@@ -165,7 +165,7 @@ const SrmOrderPage: React.FC = () => {
       toast.success('订单创建成功');
       setShowCreateModal(false);
       loadOrders();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建订单失败:', err);
     }
@@ -202,14 +202,14 @@ const SrmOrderPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#bfdbfe',
+                  bgcolor: 'primary.light',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <ClipboardList sx={{ width: 20, height: 20, color: '#1d4ed8' }} />
+                <ClipboardList sx={{ width: 20, height: 20, color: 'primary.dark' }} />
               </Box>
               <Box>
                 <Typography
@@ -235,14 +235,14 @@ const SrmOrderPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#fef3c7',
+                  bgcolor: 'warning.light',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <ClipboardList sx={{ width: 20, height: 20, color: '#d97706' }} />
+                <ClipboardList sx={{ width: 20, height: 20, color: 'warning.dark' }} />
               </Box>
               <Box>
                 <Typography
@@ -275,7 +275,7 @@ const SrmOrderPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <ClipboardList sx={{ width: 20, height: 20, color: '#2563eb' }} />
+                <ClipboardList sx={{ width: 20, height: 20, color: 'primary.dark' }} />
               </Box>
               <Box>
                 <Typography
@@ -301,14 +301,14 @@ const SrmOrderPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#dcfce7',
+                  bgcolor: 'success.lighter',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <ClipboardList sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                <ClipboardList sx={{ width: 20, height: 20, color: 'success.dark' }} />
               </Box>
               <Box>
                 <Typography
@@ -334,14 +334,14 @@ const SrmOrderPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#e0e7ff',
+                  bgcolor: 'secondary.light',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <ShoppingCart sx={{ width: 20, height: 20, color: '#6366f1' }} />
+                <ShoppingCart sx={{ width: 20, height: 20, color: 'primary.light' }} />
               </Box>
               <Box>
                 <Typography
@@ -394,7 +394,7 @@ const SrmOrderPage: React.FC = () => {
         ]}
         onRefresh={loadOrders}
         emptyMessage='暂无订单数据'
-        emptyIcon={<ClipboardList style={{ width: 48, height: 48, color: '#9ca3af' }} />}
+        emptyIcon={<ClipboardList style={{ width: 48, height: 48, color: 'text.disabled' }} />}
         headerContent={headerContent}
         getRowId={(row) => row.id || row.po_no || Math.random().toString()}
       />
@@ -473,7 +473,7 @@ const SrmOrderPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             保存
           </Button>

@@ -297,11 +297,18 @@ export default defineConfig({
     strictPort: true,
     hmr: {
       path: '/vite-hmr',
+      host: 'localhost',
+      port: 3000,
+      protocol: 'ws',
     },
     fs: {
       allow: ['..'],
     },
     proxy: {
+      '/api/core/plugins': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/core/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -389,7 +396,6 @@ export default defineConfig({
       },
 
       '/health': { target: 'http://localhost:8000', changeOrigin: true },
-      '/api': { target: 'http://localhost:8000', changeOrigin: true },
 
       '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
       '/erp/health': createServiceProxyConfig('erp', 'http://localhost:8010'),
@@ -499,11 +505,119 @@ export default defineConfig({
       '/manufacturing/api': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
       '/manufacturing/health': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
 
+      '/plugin-health/erp': {
+        target: 'http://localhost:8010',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/erp/, ''),
+      },
+      '/plugin-health/hrm': {
+        target: 'http://localhost:8020',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/hrm/, ''),
+      },
+      '/plugin-health/pm': {
+        target: 'http://localhost:8023',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/pm/, ''),
+      },
+      '/plugin-health/crm': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/crm/, ''),
+      },
+      '/plugin-health/mes': {
+        target: 'http://localhost:8030',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/mes/, ''),
+      },
+      '/plugin-health/pdm': {
+        target: 'http://localhost:8031',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/pdm/, ''),
+      },
+      '/plugin-health/scm': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/scm/, ''),
+      },
+      '/plugin-health/wms': {
+        target: 'http://localhost:8041',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/wms/, ''),
+      },
+      '/plugin-health/srm': {
+        target: 'http://localhost:8042',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/srm/, ''),
+      },
+      '/plugin-health/qms': {
+        target: 'http://localhost:8050',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/qms/, ''),
+      },
+      '/plugin-health/lims': {
+        target: 'http://localhost:8051',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/lims/, ''),
+      },
+      '/plugin-health/ehs': {
+        target: 'http://localhost:8052',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/ehs/, ''),
+      },
+      '/plugin-health/rs': {
+        target: 'http://localhost:8053',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/rs/, ''),
+      },
+      '/plugin-health/bi': {
+        target: 'http://localhost:8060',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/bi/, ''),
+      },
+      '/plugin-health/report': {
+        target: 'http://localhost:8061',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/report/, ''),
+      },
+      '/plugin-health/monitor': {
+        target: 'http://localhost:8062',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/monitor/, ''),
+      },
+      '/plugin-health/portal': {
+        target: 'http://localhost:8063',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/portal/, ''),
+      },
+      '/plugin-health/mobile': {
+        target: 'http://localhost:8070',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/mobile/, ''),
+      },
+      '/plugin-health/gis': {
+        target: 'http://localhost:8071',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/gis/, ''),
+      },
+      '/plugin-health/integration': {
+        target: 'http://localhost:8072',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/integration/, ''),
+      },
+      '/plugin-health/workflow': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/plugin-health\/workflow/, ''),
+      },
+
       '/mfg/api': {
         target: 'http://localhost:8030',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/mfg/, '/api/mfg'),
       },
+
+      '/api': { target: 'http://localhost:8000', changeOrigin: true },
     },
   },
 });

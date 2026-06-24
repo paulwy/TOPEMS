@@ -46,7 +46,7 @@ export const downloadBase64File = (base64Data: string, filename: string): void =
 export interface ExportColumn<T> {
   key: keyof T;
   label: string;
-  format?: (value: any) => string;
+  format?: (value: unknown) => string;
 }
 
 export const exportToExcel = <T>(
@@ -122,7 +122,7 @@ export const importFromExcel = async <T>(
               });
               result.push(item as T);
             }
-          } catch (error) {
+          } catch (error: unknown) {
             errors.push({
               row: index + 2,
               message: error instanceof Error ? error.message : '导入失败',
@@ -135,7 +135,7 @@ export const importFromExcel = async <T>(
           data: result,
           errors,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         resolve({
           success: false,
           data: [],

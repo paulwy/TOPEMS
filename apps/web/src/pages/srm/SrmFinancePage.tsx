@@ -12,7 +12,7 @@ import {
   CardHeader,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, DollarSign, Search, CreditCard, Receipt, TrendingUp } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import { MetricCard } from '@/components/MetricCard';
@@ -70,7 +70,7 @@ const SrmFinancePage: React.FC = () => {
         const data = contractsRes.data as any;
         const items = Array.isArray(data) ? data : data.contracts || [];
         invoiceRecords.push(
-          ...items.map((item: any) => ({
+          ...items.map((item: { [key: string]: unknown }) => ({
             ...item,
             record_no: item.contract_no || item.record_no || '',
             supplier_name: item.supplier_name || '',
@@ -96,7 +96,7 @@ const SrmFinancePage: React.FC = () => {
         const data = ordersRes.data as any;
         const items = Array.isArray(data) ? data : data.orders || [];
         paymentRecords.push(
-          ...items.map((item: any) => ({
+          ...items.map((item: { [key: string]: unknown }) => ({
             ...item,
             record_no: item.po_no || item.record_no || '',
             supplier_name: '',
@@ -121,7 +121,7 @@ const SrmFinancePage: React.FC = () => {
       }
 
       setRecords([...paymentRecords, ...invoiceRecords]);
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载财务数据失败:', err);
       setRecords([]);
     } finally {
@@ -131,11 +131,11 @@ const SrmFinancePage: React.FC = () => {
 
   const getTypeBadge = (type: string) => {
     const typeMap: Record<string, { bg: string; color: string; label: string }> = {
-      order: { bg: '#dbeafe', color: '#2563eb', label: '订单' },
-      contract: { bg: '#dcfce7', color: '#15803d', label: '合同' },
+      order: { bg: '#dbeafe', color: 'primary.dark', label: '订单' },
+      contract: { bg: 'success.lighter', color: '#15803d', label: '合同' },
     };
     const style = typeMap[type] || {
-      bg: '#f1f5f9',
+      bg: 'grey.100',
       color: '#475569',
       label: type,
     };
@@ -150,17 +150,17 @@ const SrmFinancePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待处理: { bg: '#fef3c7', color: '#b45309' },
-      处理中: { bg: '#dbeafe', color: '#2563eb' },
-      已交付: { bg: '#dcfce7', color: '#15803d' },
-      已完成: { bg: '#e0e7ff', color: '#6366f1' },
-      已取消: { bg: '#f1f5f9', color: '#64748b' },
-      有效: { bg: '#dcfce7', color: '#15803d' },
-      已过期: { bg: '#fee2e2', color: '#b91c1c' },
-      草稿: { bg: '#f1f5f9', color: '#64748b' },
-      已终止: { bg: '#fde68a', color: '#92400e' },
+      待处理: { bg: 'warning.light', color: '#b45309' },
+      处理中: { bg: '#dbeafe', color: 'primary.dark' },
+      已交付: { bg: 'success.lighter', color: '#15803d' },
+      已完成: { bg: 'secondary.light', color: 'primary.light' },
+      已取消: { bg: 'grey.100', color: 'grey.600' },
+      有效: { bg: 'success.lighter', color: '#15803d' },
+      已过期: { bg: 'error.lighter', color: 'error.darker' },
+      草稿: { bg: 'grey.100', color: 'grey.600' },
+      已终止: { bg: 'warning.light', color: '#92400e' },
     };
-    const colors = statusMap[status] || { bg: '#f1f5f9', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
     return (
       <Chip
         label={status}
@@ -182,7 +182,7 @@ const SrmFinancePage: React.FC = () => {
       accessorKey: 'amount',
       header: '金额',
       cell: ({ row }) => (
-        <Typography sx={{ fontWeight: 600, color: '#1f2937' }}>
+        <Typography sx={{ fontWeight: 600, color: 'grey.800' }}>
           ¥{row.original.amount.toLocaleString()}
         </Typography>
       ),
@@ -252,7 +252,7 @@ const SrmFinancePage: React.FC = () => {
       toast.success(`${formData.type === 'order' ? '订单' : '合同'}创建成功`);
       setShowCreateModal(false);
       loadRecords();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建财务记录失败:', err);
     }
@@ -272,8 +272,8 @@ const SrmFinancePage: React.FC = () => {
   };
 
   const typeDistribution = [
-    { name: '订单', value: stats.orders, color: '#3b82f6' },
-    { name: '合同', value: stats.contracts, color: '#10b981' },
+    { name: '订单', value: stats.orders, color: 'primary.main' },
+    { name: '合同', value: stats.contracts, color: 'success.main' },
   ];
 
   const statusDistribution = [
@@ -312,7 +312,7 @@ const SrmFinancePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -321,8 +321,8 @@ const SrmFinancePage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#10b981',
-              borderTopColor: '#059669',
+              borderColor: 'success.main',
+              borderTopColor: 'success.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -339,7 +339,7 @@ const SrmFinancePage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
       }}
     >
       <Box
@@ -368,7 +368,7 @@ const SrmFinancePage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: 'linear-gradient(135deg, success.main 0%, success.dark 100%)',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -400,7 +400,7 @@ const SrmFinancePage: React.FC = () => {
               variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
+              sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
             >
               新增单据
             </Button>
@@ -429,7 +429,7 @@ const SrmFinancePage: React.FC = () => {
             title='单据总数'
             value={stats.totalRecords}
             icon={<Receipt sx={{ width: 24, height: 24 }} />}
-            gradient={['#10B981', '#059669']}
+            gradient={['success.main', 'success.dark']}
             subtitle={`${stats.orders}个订单, ${stats.contracts}份合同`}
             trend='neutral'
           />
@@ -437,7 +437,7 @@ const SrmFinancePage: React.FC = () => {
             title='订单数量'
             value={stats.orders}
             icon={<CreditCard sx={{ width: 24, height: 24 }} />}
-            gradient={['#3B82F6', '#1D4ED8']}
+            gradient={['primary.main', '#1D4ED8']}
             subtitle='已记录订单'
             trend='neutral'
           />
@@ -461,7 +461,7 @@ const SrmFinancePage: React.FC = () => {
             title='待结算'
             value={`¥${stats.pendingAmount.toLocaleString()}`}
             icon={<TrendingUp sx={{ width: 24, height: 24 }} />}
-            gradient={['#F59E0B', '#D97706']}
+            gradient={['warning.main', '#D97706']}
             subtitle='待处理/处理中/有效'
             trend='neutral'
           />
@@ -469,7 +469,7 @@ const SrmFinancePage: React.FC = () => {
             title='已完成'
             value={`¥${stats.completedAmount.toLocaleString()}`}
             icon={<DollarSign sx={{ width: 24, height: 24 }} />}
-            gradient={['#10B981', '#059669']}
+            gradient={['success.main', 'success.dark']}
             subtitle='已完成/已交付'
             trend='neutral'
           />
@@ -521,7 +521,7 @@ const SrmFinancePage: React.FC = () => {
               variant='h6'
               sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
-              <DollarSign style={{ width: 20, height: 20, color: '#10b981' }} />
+              <DollarSign style={{ width: 20, height: 20, color: 'success.main' }} />
               财务记录
             </Typography>
           </CardHeader>
@@ -640,7 +640,7 @@ const SrmFinancePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#10b981' }}
+            sx={{ bgcolor: 'success.main' }}
           >
             保存
           </Button>

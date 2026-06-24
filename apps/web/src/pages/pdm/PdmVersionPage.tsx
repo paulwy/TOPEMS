@@ -233,11 +233,7 @@ export const PdmVersionPage: React.FC = () => {
         spacing={3}
         sx={{ mb: 4 }}
       >
-        <Grid
-          item
-          xs={12}
-          lg={4}
-        >
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card>
             <CardHeader title='选择文档' />
             <CardContent>
@@ -276,17 +272,13 @@ export const PdmVersionPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid
-          item
-          xs={6}
-          lg={4}
-        >
+        <Grid size={{ xs: 6, lg: 4 }}>
           <Card>
             <CardContent>
               <Typography
                 variant='body2'
                 color='text.secondary'
-                mb={2}
+                sx={{ mb: 2 }}
               >
                 版本总数
               </Typography>
@@ -299,17 +291,13 @@ export const PdmVersionPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid
-          item
-          xs={6}
-          lg={4}
-        >
+        <Grid size={{ xs: 6, lg: 4 }}>
           <Card>
             <CardContent>
               <Typography
                 variant='body2'
                 color='text.secondary'
-                mb={2}
+                sx={{ mb: 2 }}
               >
                 当前版本
               </Typography>
@@ -397,7 +385,7 @@ export const PdmVersionPage: React.FC = () => {
                 <Typography
                   variant='body2'
                   color='text.secondary'
-                  mb={2}
+                  sx={{ mb: 2 }}
                 >
                   {version.description}
                 </Typography>

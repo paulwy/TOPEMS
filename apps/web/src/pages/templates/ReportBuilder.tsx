@@ -12,7 +12,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Box, Typography, TextField, Checkbox, FormControlLabel } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '@/api/report';
 import { logger } from '@/utils/logger';
 
@@ -126,7 +126,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
 
       logger.info('生成报表:', request);
       onSuccess();
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('生成报表失败:', err);
       setErrors({ submit: '生成报表失败，请重试' });
     } finally {
@@ -178,7 +178,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
         {/* Header */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+            background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
             color: 'white',
             p: 3,
           }}

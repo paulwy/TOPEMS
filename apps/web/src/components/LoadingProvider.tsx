@@ -69,7 +69,7 @@ const GlobalLoadingOverlay: React.FC<GlobalLoadingOverlayProps> = ({ isLoading, 
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           padding: '32px',
@@ -82,14 +82,14 @@ const GlobalLoadingOverlay: React.FC<GlobalLoadingOverlayProps> = ({ isLoading, 
           style={{
             width: '64px',
             height: '64px',
-            border: '4px solid #2563eb',
+            border: '4px solid primary.dark',
             borderTop: '4px solid transparent',
             borderRadius: '9999px',
             animation: 'spin 1s linear infinite',
             marginBottom: '16px',
           }}
         ></div>
-        <p style={{ color: '#374151', fontSize: '18px' }}>{message}</p>
+        <p style={{ color: 'grey.700', fontSize: '18px' }}>{message}</p>
       </div>
     </div>
   );

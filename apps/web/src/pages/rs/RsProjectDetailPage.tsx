@@ -25,7 +25,7 @@ import {
   Avatar,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Timeline,
   TimelineItem,
@@ -414,14 +414,14 @@ const RsProjectDetailPage: React.FC = () => {
                   </TableCell>
                   <TableCell>{exp.experimenter}</TableCell>
                   <TableCell align='center'>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      component={Link}
-                      to={`/rs/experiments/${exp.id}`}
-                    >
-                      查看
-                    </Button>
+                    <Link to={`/rs/experiments/${exp.id}`}>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                      >
+                        查看
+                      </Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}

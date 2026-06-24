@@ -21,7 +21,7 @@ import {
   Avatar,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { InspectionProcess, LimsStatistics } from '@/api/lims';
 import { limsApi } from '@/api/lims';
 import { MetricCard } from '@/components/MetricCard';
@@ -114,7 +114,7 @@ const LimsProcessPage: React.FC = () => {
       if (response.success && response.data) {
         setStats(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载统计数据失败:', err);
     }
   };
@@ -145,7 +145,7 @@ const LimsProcessPage: React.FC = () => {
       } else {
         setProcesses([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载检验流程失败:', err);
       setProcesses([]);
     }
@@ -174,7 +174,7 @@ const LimsProcessPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -196,7 +196,7 @@ const LimsProcessPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
           p: 2,
         }}
       >
@@ -252,7 +252,7 @@ const LimsProcessPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
     >
       <Paper
@@ -287,7 +287,7 @@ const LimsProcessPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    background: 'linear-gradient(135deg, warning.main 0%, warning.dark 100%)',
                     borderRadius: 1.5,
                     display: 'flex',
                     alignItems: 'center',
@@ -379,7 +379,7 @@ const LimsProcessPage: React.FC = () => {
               title='检验流程'
               value={stats.total_processes}
               icon={<FileText size={24} />}
-              gradient={['#F59E0B', '#D97706']}
+              gradient={['warning.main', '#D97706']}
               trend='neutral'
             />
           </Grid>
@@ -459,7 +459,7 @@ const LimsProcessPage: React.FC = () => {
                   >
                     <FileText
                       size={24}
-                      color='#7c3aed'
+                      color='secondary.dark'
                     />
                   </Box>
                 </Box>
@@ -485,7 +485,7 @@ const LimsProcessPage: React.FC = () => {
               <Box sx={{ p: 6, textAlign: 'center' }}>
                 <FileText
                   size={64}
-                  color='#cbd5e1'
+                  color='grey.400'
                   style={{ marginBottom: 16 }}
                 />
                 <Typography color='text.secondary'>暂无检验流程</Typography>

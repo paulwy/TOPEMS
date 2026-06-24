@@ -25,13 +25,13 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
   const getColor = () => {
     switch (contact.contact_type) {
       case 'EMPLOYEE':
-        return { bg: '#dbeafe', color: '#2563eb' };
+        return { bg: '#dbeafe', color: 'primary.dark' };
       case 'DEPARTMENT':
-        return { bg: '#dcfce7', color: '#16a34a' };
+        return { bg: 'success.lighter', color: 'success.dark' };
       case 'COMPANY':
         return { bg: '#f3e8ff', color: '#9333ea' };
       default:
-        return { bg: '#f3f4f6', color: '#6b7280' };
+        return { bg: 'grey.100', color: 'text.secondary' };
     }
   };
 
@@ -97,13 +97,13 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   style={{
                     fontSize: 24,
                     fontWeight: 700,
-                    color: '#0f172a',
+                    color: 'grey.900',
                     margin: 0,
                   }}
                 >
                   {contact.name}
                 </h2>
-                <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>{getTypeLabel()}</p>
+                <p style={{ fontSize: 14, color: 'grey.600', margin: 0 }}>{getTypeLabel()}</p>
               </div>
             </div>
             <button
@@ -116,13 +116,13 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f1f5f9';
+                e.currentTarget.style.backgroundColor = 'grey.100';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              <X sx={{ width: 24, height: 24, color: '#64748b' }} />
+              <X sx={{ width: 24, height: 24, color: 'grey.600' }} />
             </button>
           </div>
 
@@ -133,7 +133,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 style={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: '#0f172a',
+                  color: 'grey.900',
                   marginBottom: 12,
                 }}
               >
@@ -141,7 +141,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
               </h3>
               <div
                 style={{
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'grey.50',
                   borderRadius: 8,
                   padding: 16,
                   display: 'flex',
@@ -157,8 +157,8 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: '#64748b' }}>编号</span>
-                    <span style={{ fontSize: 14, color: '#0f172a' }}>{contact.code}</span>
+                    <span style={{ fontSize: 14, color: 'grey.600' }}>编号</span>
+                    <span style={{ fontSize: 14, color: 'grey.900' }}>{contact.code}</span>
                   </div>
                 )}
                 {contact.position && (
@@ -169,8 +169,8 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: '#64748b' }}>职位</span>
-                    <span style={{ fontSize: 14, color: '#0f172a' }}>{contact.position}</span>
+                    <span style={{ fontSize: 14, color: 'grey.600' }}>职位</span>
+                    <span style={{ fontSize: 14, color: 'grey.900' }}>{contact.position}</span>
                   </div>
                 )}
                 {contact.department_name && (
@@ -181,8 +181,8 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: '#64748b' }}>部门</span>
-                    <span style={{ fontSize: 14, color: '#0f172a' }}>
+                    <span style={{ fontSize: 14, color: 'grey.600' }}>部门</span>
+                    <span style={{ fontSize: 14, color: 'grey.900' }}>
                       {contact.department_name}
                     </span>
                   </div>
@@ -194,7 +194,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                     justifyContent: 'space-between',
                   }}
                 >
-                  <span style={{ fontSize: 14, color: '#64748b' }}>状态</span>
+                  <span style={{ fontSize: 14, color: 'grey.600' }}>状态</span>
                   <span
                     style={{
                       display: 'inline-flex',
@@ -204,8 +204,8 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       fontSize: 12,
                       fontWeight: 500,
                       ...(contact.status === 'active'
-                        ? { backgroundColor: '#dcfce7', color: '#15803d' }
-                        : { backgroundColor: '#fee2e2', color: '#b91c1c' }),
+                        ? { backgroundColor: 'success.lighter', color: '#15803d' }
+                        : { backgroundColor: 'error.lighter', color: 'error.darker' }),
                     }}
                   >
                     {contact.status === 'active' ? '在职' : '离职'}
@@ -220,7 +220,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 style={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: '#0f172a',
+                  color: 'grey.900',
                   marginBottom: 12,
                 }}
               >
@@ -228,7 +228,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
               </h3>
               <div
                 style={{
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'grey.50',
                   borderRadius: 8,
                   padding: 16,
                   display: 'flex',
@@ -243,14 +243,14 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       href={`mailto:${contact.email}`}
                       style={{
                         fontSize: 14,
-                        color: '#2563eb',
+                        color: 'primary.dark',
                         textDecoration: 'none',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.color = '#1d4ed8';
+                        e.currentTarget.style.color = 'primary.dark';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = '#2563eb';
+                        e.currentTarget.style.color = 'primary.dark';
                       }}
                     >
                       {contact.email}
@@ -264,14 +264,14 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       href={`tel:${contact.phone}`}
                       style={{
                         fontSize: 14,
-                        color: '#2563eb',
+                        color: 'primary.dark',
                         textDecoration: 'none',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.color = '#1d4ed8';
+                        e.currentTarget.style.color = 'primary.dark';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = '#2563eb';
+                        e.currentTarget.style.color = 'primary.dark';
                       }}
                     >
                       {contact.phone}
@@ -288,7 +288,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   style={{
                     fontSize: 14,
                     fontWeight: 600,
-                    color: '#0f172a',
+                    color: 'grey.900',
                     marginBottom: 12,
                   }}
                 >
@@ -296,14 +296,14 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 </h3>
                 <div
                   style={{
-                    backgroundColor: '#f8fafc',
+                    backgroundColor: 'grey.50',
                     borderRadius: 8,
                     padding: 16,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <Calendar sx={{ width: 20, height: 20, color: '#94a3b8' }} />
-                    <span style={{ fontSize: 14, color: '#0f172a' }}>
+                    <span style={{ fontSize: 14, color: 'grey.900' }}>
                       入职时间: {new Date(contact.hire_date).toLocaleDateString()}
                     </span>
                   </div>
@@ -317,7 +317,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 style={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: '#0f172a',
+                  color: 'grey.900',
                   marginBottom: 12,
                 }}
               >
@@ -325,14 +325,14 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
               </h3>
               <div
                 style={{
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'grey.50',
                   borderRadius: 8,
                   padding: 16,
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 12,
                   fontSize: 14,
-                  color: '#64748b',
+                  color: 'grey.600',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -358,7 +358,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
               onClick={onClose}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#f1f5f9',
+                backgroundColor: 'grey.100',
                 color: '#334155',
                 borderRadius: 8,
                 border: 'none',
@@ -366,10 +366,10 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 transition: 'background-color 0.2s',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e2e8f0';
+                e.currentTarget.style.backgroundColor = 'border.default';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f1f5f9';
+                e.currentTarget.style.backgroundColor = 'grey.100';
               }}
             >
               关闭

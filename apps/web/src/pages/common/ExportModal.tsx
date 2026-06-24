@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReportData } from '@/api/report';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface ExportModalProps {
   report: ReportData;
@@ -80,7 +80,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
             style={{
               width: '100%',
               padding: '8px 12px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid border.default',
               borderRadius: '8px',
               fontSize: '0.875rem',
             }}

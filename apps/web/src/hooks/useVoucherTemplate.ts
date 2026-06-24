@@ -63,7 +63,7 @@ export function useCreateVoucherTemplate() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success('凭证模板创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证模板创建失败');
     },
   });
@@ -83,7 +83,7 @@ export function useUpdateVoucherTemplate() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success('凭证模板更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证模板更新失败');
     },
   });
@@ -102,7 +102,7 @@ export function useDeleteVoucherTemplate() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success('凭证模板删除成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证模板删除失败');
     },
   });
@@ -129,7 +129,7 @@ export function useCopyVoucherTemplate() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success('凭证模板复制成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证模板复制失败');
     },
   });
@@ -149,7 +149,7 @@ export function useSetDefaultVoucherTemplate() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success('默认模板设置成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '默认模板设置失败');
     },
   });
@@ -169,7 +169,7 @@ export function useToggleVoucherTemplate() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success('模板状态更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '模板状态更新失败');
     },
   });
@@ -196,7 +196,7 @@ export function usePreviewGeneratedVouchers() {
     onSuccess: () => {
       success('凭证预览生成成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证预览生成失败');
     },
   });
@@ -223,7 +223,7 @@ export function useGenerateVoucherFromSource() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success(`凭证 ${result.data.voucher_no} 生成成功`);
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证生成失败');
     },
   });
@@ -249,7 +249,7 @@ export function useBatchGenerateVouchers() {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
       success(`成功生成 ${result.data?.success || 0} 张凭证`);
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '批量生成凭证失败');
     },
   });
@@ -278,7 +278,7 @@ export function useAutoGenerateVouchers() {
         success('凭证自动生成成功');
       }
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证自动生成失败');
     },
   });
@@ -303,7 +303,7 @@ export function useRegenerateReversedVoucher() {
       queryClient.invalidateQueries({ queryKey: ['vouchers'] });
       success(`凭证 ${result.data.voucher_no} 重新生成成功`);
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证重新生成失败');
     },
   });
@@ -387,7 +387,7 @@ export function useCreateGenerationRule() {
       queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
       success('生成规则创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '生成规则创建失败');
     },
   });
@@ -407,7 +407,7 @@ export function useUpdateGenerationRule() {
       queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
       success('生成规则更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '生成规则更新失败');
     },
   });
@@ -426,7 +426,7 @@ export function useDeleteGenerationRule() {
       queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
       success('生成规则删除成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '生成规则删除失败');
     },
   });
@@ -446,7 +446,7 @@ export function useToggleGenerationRule() {
       queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
       success('生成规则状态更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '生成规则状态更新失败');
     },
   });

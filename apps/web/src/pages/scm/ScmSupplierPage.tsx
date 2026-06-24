@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -56,7 +56,7 @@ const ScmSupplierPage: React.FC = () => {
         setSuppliers(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('加载供应商失败');
     } finally {
       setLoading(false);
@@ -72,7 +72,7 @@ const ScmSupplierPage: React.FC = () => {
         // 重置分页到第一页，确保新数据显示在列表中
         setCurrentPage(1);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('创建失败');
     }
   };

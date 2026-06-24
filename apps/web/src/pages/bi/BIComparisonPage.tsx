@@ -28,7 +28,7 @@ import {
   InputLabel,
   TablePagination,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import ExportButton from '@/components/export/ExportButton';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
@@ -141,7 +141,7 @@ const BIComparisonPage = () => {
         setLoading(false);
         setIsRefreshing(false);
       }, 500);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load comparison data:', error);
       setLoading(false);
       setIsRefreshing(false);
@@ -169,7 +169,7 @@ const BIComparisonPage = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: any) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };

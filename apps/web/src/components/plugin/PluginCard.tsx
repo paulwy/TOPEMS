@@ -55,7 +55,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
             <div>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 {plugin.name}
               </Typography>
@@ -99,7 +99,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
             <Star className='w-4 h-4 text-yellow-500 fill-yellow-500' />
             <Typography
               variant='body2'
-              fontWeight='medium'
+              sx={{ fontWeight: 'medium' }}
             >
               {plugin.rating || 0}
             </Typography>

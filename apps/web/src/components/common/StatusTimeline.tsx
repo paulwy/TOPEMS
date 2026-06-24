@@ -22,26 +22,26 @@ export interface StatusTimelineProps {
 const statusConfig = {
   completed: {
     icon: <CheckCircle2 size={18} />,
-    color: '#22c55e',
-    bgColor: '#f0fdf4',
+    color: 'success.dark',
+    bgColor: 'success.light',
     label: '已完成',
   },
   current: {
     icon: <Clock size={18} />,
-    color: '#3b82f6',
-    bgColor: '#eff6ff',
+    color: 'primary.main',
+    bgColor: 'primary.light',
     label: '进行中',
   },
   pending: {
     icon: <Circle size={18} />,
-    color: '#9ca3af',
-    bgColor: '#f9fafb',
+    color: 'text.disabled',
+    bgColor: 'grey.50',
     label: '待处理',
   },
   failed: {
     icon: <AlertCircle size={18} />,
-    color: '#ef4444',
-    bgColor: '#fef2f2',
+    color: 'error.main',
+    bgColor: 'error.light',
     label: '失败',
   },
 };

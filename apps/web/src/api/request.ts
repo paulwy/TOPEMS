@@ -53,7 +53,7 @@ export async function safeRequest<T>(
   try {
     const response = await requestFn();
     return handleResponse(response, options);
-  } catch (error) {
+  } catch (error: unknown) {
     const appError = handleRequestError(error);
     if (!options?.skipErrorHandler) {
       throw appError;

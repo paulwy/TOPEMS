@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, IconButton, Paper } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { X, Download } from 'lucide-react';
 
 export interface ExportOptionsProps {
@@ -75,13 +75,13 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
         <Box
           sx={{
             p: 6,
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid border.default',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: '#0f172a' }}>
+          <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'grey.900' }}>
             {title}
           </Typography>
           <IconButton
@@ -162,8 +162,8 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                 onClick={handleSelectAll}
                 sx={{
                   fontSize: '0.875rem',
-                  color: '#2563eb',
-                  '&:hover': { color: '#1d4ed8' },
+                  color: 'primary.dark',
+                  '&:hover': { color: 'primary.dark' },
                 }}
               >
                 {selectAll ? '取消全选' : '全选'}
@@ -171,7 +171,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
             </Box>
             <Box
               sx={{
-                border: '1px solid #e2e8f0',
+                border: '1px solid border.default',
                 borderRadius: 2,
                 p: 4,
                 maxHeight: 240,
@@ -188,7 +188,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                       cursor: 'pointer',
                       borderRadius: 2,
                       p: 2,
-                      '&:hover': { backgroundColor: '#f8fafc' },
+                      '&:hover': { backgroundColor: 'grey.50' },
                     }}
                     onClick={() => handleToggleColumn(column.key)}
                   >
@@ -209,7 +209,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
 
           <Box
             sx={{
-              backgroundColor: '#eff6ff',
+              backgroundColor: 'primary.light',
               border: '1px solid #bfdbfe',
               borderRadius: 2,
               p: 4,
@@ -224,7 +224,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
         <Box
           sx={{
             p: 6,
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid border.default',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 3,
@@ -236,9 +236,9 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
               px: 4,
               py: 2,
               color: '#334155',
-              backgroundColor: '#f1f5f9',
+              backgroundColor: 'grey.100',
               borderRadius: 2,
-              '&:hover': { backgroundColor: '#e2e8f0' },
+              '&:hover': { backgroundColor: 'border.default' },
             }}
           >
             取消
@@ -249,12 +249,12 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
             sx={{
               px: 4,
               py: 2,
-              backgroundColor: '#2563eb',
+              backgroundColor: 'primary.dark',
               color: 'white',
               borderRadius: 2,
               display: 'flex',
               alignItems: 'center',
-              '&:hover': { backgroundColor: '#1d4ed8' },
+              '&:hover': { backgroundColor: 'primary.dark' },
               '&:disabled': {
                 opacity: 0.5,
                 cursor: 'not-allowed',

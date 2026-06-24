@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Chip, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { BillingRecord } from '@/api/modules/crm/crm';
 import { crmApi } from '@/api/modules/crm/crm';
 import { useAppStore } from '@/store';
@@ -30,7 +30,7 @@ const CRMBillingPage: React.FC = () => {
         activeTab === 'collections' ? 'paid' : activeTab === 'invoices' ? 'pending' : undefined;
       const response = await crmApi.billing.list(status ? { status } : undefined);
       setBills(response.data?.items || []);
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载账单数据失败:', error);
       addNotification({
         type: 'error',
@@ -51,7 +51,7 @@ const CRMBillingPage: React.FC = () => {
         message: '账单已标记为已支付',
       });
       loadBills();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('标记支付失败:', error);
       addNotification({
         type: 'error',
@@ -69,7 +69,7 @@ const CRMBillingPage: React.FC = () => {
         title: '成功',
         message: '账单通知已发送',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('发送通知失败:', error);
       addNotification({
         type: 'error',
@@ -214,7 +214,7 @@ const CRMBillingPage: React.FC = () => {
               }}
             >
               <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: '#f5f5f5' }}>
+                <thead style={{ backgroundColor: 'grey.100' }}>
                   <tr>
                     <th
                       style={{
@@ -377,7 +377,7 @@ const CRMBillingPage: React.FC = () => {
               }}
             >
               <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: '#f5f5f5' }}>
+                <thead style={{ backgroundColor: 'grey.100' }}>
                   <tr>
                     <th
                       style={{
@@ -520,7 +520,7 @@ const CRMBillingPage: React.FC = () => {
               }}
             >
               <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: '#f5f5f5' }}>
+                <thead style={{ backgroundColor: 'grey.100' }}>
                   <tr>
                     <th
                       style={{

@@ -9,7 +9,7 @@ import {
   Chip,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -43,7 +43,7 @@ const PdmFormulaPage: React.FC = () => {
       setLoading(true);
       const response = await pdmApi.listFormulas();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: any) => ({
+        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
           ...item,
           product_name: item.name || '',
           status:
@@ -61,7 +61,7 @@ const PdmFormulaPage: React.FC = () => {
       } else {
         setFormulas([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载配方数据失败:', err);
       setFormulas([]);
     } finally {
@@ -71,12 +71,12 @@ const PdmFormulaPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: '#dcfce7', color: '#16a34a' },
-      禁用: { bg: '#fee2e2', color: '#dc2626' },
-      草稿: { bg: '#fef3c7', color: '#ca8a04' },
-      已批准: { bg: '#dbeafe', color: '#3b82f6' },
+      启用: { bg: 'success.lighter', color: 'success.dark' },
+      禁用: { bg: 'error.lighter', color: 'error.dark' },
+      草稿: { bg: 'warning.light', color: '#ca8a04' },
+      已批准: { bg: '#dbeafe', color: 'primary.main' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -172,7 +172,7 @@ const PdmFormulaPage: React.FC = () => {
       toast.success('配方创建成功');
       setShowCreateModal(false);
       loadFormulas();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建配方失败:', err);
     }
@@ -208,7 +208,7 @@ const PdmFormulaPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -222,7 +222,7 @@ const PdmFormulaPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}

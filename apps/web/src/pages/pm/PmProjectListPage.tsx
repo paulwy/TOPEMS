@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Chip, LinearProgress, IconButton, Tooltip, MenuItem } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { Project } from '@/api/pm';
 import { pmApi } from '@/api/pm';
 import { DataExport } from '@/components/common';
@@ -81,7 +81,7 @@ const PmProjectListPage: React.FC = () => {
           setTotalPages(response.data.total_pages || 1);
           setTotalCount(response.data.total_count || 0);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('Failed to load projects:', error);
       } finally {
         setLoading(false);
@@ -111,7 +111,7 @@ const PmProjectListPage: React.FC = () => {
             return prev;
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('Failed to delete project:', error);
       }
     },

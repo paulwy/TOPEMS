@@ -2,7 +2,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Mic, Square, Pause, Play, X, Check } from 'lucide-react';
 import { Box, IconButton, Typography, Paper } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface AudioCaptureProps {
@@ -77,7 +77,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
           return prev + 1;
         });
       }, 1000);
-    } catch (err) {
+    } catch (err: unknown) {
       setError('无法访问麦克风，请确保已授予麦克风权限');
       logger.error('Audio capture error:', err);
     }
@@ -153,7 +153,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        bgcolor: '#111827',
+        bgcolor: 'text.primary',
       }}
     >
       {/* Header */}
@@ -164,17 +164,17 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
           justifyContent: 'space-between',
           p: 16,
           borderBottom: 1,
-          borderColor: '#374151',
+          borderColor: 'grey.700',
         }}
       >
         <Typography sx={{ color: 'white', fontWeight: 500 }}>录音取证</Typography>
         <IconButton
           onClick={onCancel}
-          sx={{ borderRadius: 4, '&:hover': { bgcolor: '#1f2937' } }}
+          sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.800' } }}
         >
           <X
             size={20}
-            style={{ color: '#9ca3af' }}
+            style={{ color: 'text.disabled' }}
           />
         </IconButton>
       </Box>
@@ -197,11 +197,11 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
               p: 12,
               bgcolor: 'rgba(239,68,68,0.2)',
               border: 1,
-              borderColor: '#ef4444',
+              borderColor: 'error.main',
               borderRadius: 8,
             }}
           >
-            <Typography sx={{ color: '#f87171', fontSize: '0.875rem' }}>{error}</Typography>
+            <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>{error}</Typography>
           </Paper>
         )}
 
@@ -218,7 +218,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
         </Typography>
 
         {/* Max Duration Hint */}
-        <Typography sx={{ color: '#6b7280', fontSize: '0.875rem', mb: 32 }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 32 }}>
           最长 {formatTime(maxDuration)}
         </Typography>
 
@@ -229,10 +229,10 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
               onClick={startRecording}
               sx={{
                 p: 16,
-                bgcolor: '#ef4444',
+                bgcolor: 'error.main',
                 borderRadius: '9999px',
                 color: 'white',
-                '&:hover': { bgcolor: '#dc2626' },
+                '&:hover': { bgcolor: 'error.dark' },
               }}
             >
               <Mic size={32} />
@@ -245,10 +245,10 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 onClick={togglePause}
                 sx={{
                   p: 12,
-                  bgcolor: '#374151',
+                  bgcolor: 'grey.700',
                   borderRadius: '9999px',
                   color: 'white',
-                  '&:hover': { bgcolor: '#4b5563' },
+                  '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
                 {isPaused ? <Play size={24} /> : <Pause size={24} />}
@@ -257,10 +257,10 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 onClick={stopRecording}
                 sx={{
                   p: 16,
-                  bgcolor: '#ef4444',
+                  bgcolor: 'error.main',
                   borderRadius: '9999px',
                   color: 'white',
-                  '&:hover': { bgcolor: '#dc2626' },
+                  '&:hover': { bgcolor: 'error.dark' },
                 }}
               >
                 <Square size={32} />
@@ -294,10 +294,10 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 sx={{
                   px: 16,
                   py: 8,
-                  bgcolor: '#374151',
+                  bgcolor: 'grey.700',
                   borderRadius: 8,
                   color: 'white',
-                  '&:hover': { bgcolor: '#4b5563' },
+                  '&:hover': { bgcolor: 'text.secondary' },
                 }}
               >
                 重新录制
@@ -308,10 +308,10 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
                 sx={{
                   px: 16,
                   py: 8,
-                  bgcolor: '#22c55e',
+                  bgcolor: 'success.dark',
                   borderRadius: 8,
                   color: 'white',
-                  '&:hover': { bgcolor: '#16a34a' },
+                  '&:hover': { bgcolor: 'success.dark' },
                 }}
               >
                 保存

@@ -10,7 +10,7 @@ import {
   Divider,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, Calendar, User, Building2, Edit2, Trash2, Clock } from 'lucide-react';
@@ -26,12 +26,6 @@ const HrmContractDetailPage: React.FC = () => {
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadContract(id);
-    }
-  }, [id, loadContract]);
-
   const loadContract = useCallback(
     async (contractId: string) => {
       setLoading(true);
@@ -40,7 +34,7 @@ const HrmContractDetailPage: React.FC = () => {
         if (res.code === 200 && res.data) {
           setContract(res.data.contract);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error('Failed to load contract:', err);
         error('加载合同信息失败');
       } finally {
@@ -49,6 +43,12 @@ const HrmContractDetailPage: React.FC = () => {
     },
     [error]
   );
+
+  useEffect(() => {
+    if (id) {
+      loadContract(id);
+    }
+  }, [id, loadContract]);
 
   const handleDelete = async () => {
     if (!id || !window.confirm('确定要删除此合同吗？')) return;
@@ -61,7 +61,7 @@ const HrmContractDetailPage: React.FC = () => {
       } else {
         error(res.message || '删除失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to delete contract:', err);
       error('删除合同失败');
     }

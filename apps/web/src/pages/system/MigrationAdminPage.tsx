@@ -16,7 +16,7 @@ import {
   Chip,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useToast } from '@/components/notification/ToastProvider';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
 
@@ -53,8 +53,8 @@ const MigrationAdminPage: React.FC = () => {
         });
         setStatusMap((prev) => ({ ...prev, ...nextStatusMap }));
       }
-    } catch (err: any) {
-      showToast('error', err.message || '加载服务列表失败');
+    } catch (err: unknown) {
+      showToast('error', (err as { message?: string }).message || '加载服务列表失败');
     } finally {
       setLoading(false);
     }
@@ -70,8 +70,8 @@ const MigrationAdminPage: React.FC = () => {
       const result = await migrationApi.applyMigration(service.name, 'schema');
       showToast('success', `${service.name} 迁移执行成功，共 ${result.files.length} 个文件`);
       await fetchStatusFor(service.name, true);
-    } catch (err: any) {
-      showToast('error', err.message || `${service.name} 迁移执行失败`);
+    } catch (err: unknown) {
+      showToast('error', (err as { message?: string }).message || `${service.name} 迁移执行失败`);
     } finally {
       setApplyingService(null);
     }
@@ -89,8 +89,8 @@ const MigrationAdminPage: React.FC = () => {
         `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`
       );
       await fetchStatusFor(service.name, true);
-    } catch (err: any) {
-      showToast('error', err.message || `${service.name} 回滚失败`);
+    } catch (err: unknown) {
+      showToast('error', (err as { message?: string }).message || `${service.name} 回滚失败`);
     } finally {
       setRollingBackService(null);
     }
@@ -102,8 +102,8 @@ const MigrationAdminPage: React.FC = () => {
       const status = await migrationApi.getMigrationStatus(serviceName);
       setStatusMap((prev) => ({ ...prev, [serviceName]: status }));
       return status;
-    } catch (err: any) {
-      if (!silent) showToast('error', err.message || '获取迁移状态失败');
+    } catch (err: unknown) {
+      if (!silent) showToast('error', (err as { message?: string }).message || '获取迁移状态失败');
       return null;
     } finally {
       if (!silent) setStatusLoading(null);
@@ -130,9 +130,12 @@ const MigrationAdminPage: React.FC = () => {
       try {
         await migrationApi.applyMigration(svc.name, 'schema');
         succeeded += 1;
-      } catch (err: any) {
+      } catch (err: unknown) {
         failed += 1;
-        showToast('error', `${svc.name} 迁移失败：${err.message || '未知错误'}`);
+        showToast(
+          'error',
+          `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`
+        );
       }
     }
     try {
@@ -144,7 +147,7 @@ const MigrationAdminPage: React.FC = () => {
         if (results[idx]) nextStatusMap[svc.name] = results[idx] as MigrationStatus;
       });
       setStatusMap((prev) => ({ ...prev, ...nextStatusMap }));
-    } catch (err) {
+    } catch (err: unknown) {
       // ignore
     }
     showToast(

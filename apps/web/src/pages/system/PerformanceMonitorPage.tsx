@@ -8,7 +8,7 @@ import {
   TextField,
   Switch,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Activity,
@@ -93,7 +93,7 @@ const PerformanceMonitorPage: React.FC = () => {
         accessorKey: 'timestamp',
         header: '时间',
         cell: ({ row }) => (
-          <div style={{ fontSize: 14, color: '#111827' }}>
+          <div style={{ fontSize: 14, color: 'text.primary' }}>
             {new Date(row.original.timestamp).toLocaleTimeString()}
           </div>
         ),
@@ -102,7 +102,7 @@ const PerformanceMonitorPage: React.FC = () => {
         accessorKey: 'endpoint',
         header: 'API 端点',
         cell: ({ row }) => (
-          <div style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'text.primary' }}>
             {row.original.endpoint}
           </div>
         ),

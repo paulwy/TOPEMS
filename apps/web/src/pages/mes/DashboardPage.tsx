@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Package, ClipboardList, AlertCircle, Factory, ArrowRight } from 'lucide-react';
 import BarChartComponent from '../../components/charts/BarChart';
 import PieChartComponent from '../../components/charts/PieChart';
@@ -136,28 +136,28 @@ export const DashboardPage: React.FC = () => {
       label: '创建工单',
       icon: <ArrowRight size={20} />,
       href: '/mes/orders/create',
-      color: '#3b82f6',
+      color: 'primary.main',
     },
     {
       id: 'order-list',
       label: '工单列表',
       icon: <ArrowRight size={20} />,
       href: '/mes/orders',
-      color: '#3b82f6',
+      color: 'primary.main',
     },
     {
       id: 'process-config',
       label: '工艺配置',
       icon: <ArrowRight size={20} />,
       href: '/mes/processes',
-      color: '#3b82f6',
+      color: 'primary.main',
     },
     {
       id: 'workstation-management',
       label: '工位管理',
       icon: <ArrowRight size={20} />,
       href: '/mes/workstations',
-      color: '#3b82f6',
+      color: 'primary.main',
     },
   ];
 

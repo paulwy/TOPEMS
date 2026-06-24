@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, Typography, Chip } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React from 'react';
 
 import { Clock, Tag, ArrowRight } from 'lucide-react';
@@ -37,7 +37,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
               width: 48,
               height: 48,
               borderRadius: 12,
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -55,7 +55,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             >
               {template.name}
             </Typography>
-            <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>{template.project_type}</p>
+            <p style={{ fontSize: '0.875rem', color: 'text.secondary' }}>{template.project_type}</p>
           </div>
         </div>
       </CardHeader>
@@ -63,7 +63,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
         <p
           style={{
             fontSize: '0.875rem',
-            color: '#374151',
+            color: 'grey.700',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -79,7 +79,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             alignItems: 'center',
             gap: 16,
             fontSize: '0.875rem',
-            color: '#6b7280',
+            color: 'text.secondary',
             marginTop: 8,
           }}
         >
@@ -112,8 +112,8 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
                 </span>
               }
               sx={{
-                backgroundColor: '#eff6ff',
-                color: '#1d4ed8',
+                backgroundColor: 'primary.light',
+                color: 'primary.dark',
                 fontSize: '0.75rem',
                 height: 24,
               }}
@@ -126,10 +126,10 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
           sx={{
             width: '100%',
             marginTop: 8,
-            color: '#374151',
+            color: 'grey.700',
             '&:hover': {
-              backgroundColor: '#eff6ff',
-              color: '#2563eb',
+              backgroundColor: 'primary.light',
+              color: 'primary.dark',
             },
             transition: 'background-color 0.2s, color 0.2s',
             gap: 1,

@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Play,
   Save,
@@ -64,11 +64,11 @@ const mockEdges: FlowEdge[] = [
 ];
 
 const nodeTypes = [
-  { type: 'start', label: '开始', icon: Play, color: '#16a34a' },
-  { type: 'end', label: '结束', icon: Square, color: '#dc2626' },
-  { type: 'task', label: '任务', icon: Circle, color: '#8b5cf6' },
-  { type: 'approval', label: '审批', icon: Diamond, color: '#f59e0b' },
-  { type: 'condition', label: '条件', icon: Diamond, color: '#3b82f6' },
+  { type: 'start', label: '开始', icon: Play, color: 'success.dark' },
+  { type: 'end', label: '结束', icon: Square, color: 'error.dark' },
+  { type: 'task', label: '任务', icon: Circle, color: 'secondary.main' },
+  { type: 'approval', label: '审批', icon: Diamond, color: 'warning.main' },
+  { type: 'condition', label: '条件', icon: Diamond, color: 'primary.main' },
 ];
 
 const FlowDesignerPage: React.FC = () => {
@@ -180,7 +180,7 @@ const FlowDesignerPage: React.FC = () => {
                 variant='contained'
                 startIcon={<Save size={16} />}
                 onClick={handleSave}
-                sx={{ bgcolor: '#8b5cf6', '&:hover': { bgcolor: '#7c3aed' } }}
+                sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
               >
                 保存
               </Button>
@@ -294,13 +294,13 @@ const FlowDesignerPage: React.FC = () => {
                   py: 2,
                   bgcolor:
                     node.type === 'start'
-                      ? '#16a34a'
+                      ? 'success.dark'
                       : node.type === 'end'
-                        ? '#dc2626'
+                        ? 'error.dark'
                         : node.type === 'approval'
-                          ? '#f59e0b'
+                          ? 'warning.main'
                           : node.type === 'condition'
-                            ? '#3b82f6'
+                            ? 'primary.main'
                             : 'white',
                   color:
                     node.type === 'start' ||
@@ -313,13 +313,13 @@ const FlowDesignerPage: React.FC = () => {
                   border: node.type === 'start' || node.type === 'end' ? 'none' : '2px solid',
                   borderColor:
                     node.type === 'start'
-                      ? '#16a34a'
+                      ? 'success.dark'
                       : node.type === 'end'
-                        ? '#dc2626'
+                        ? 'error.dark'
                         : node.type === 'approval'
-                          ? '#f59e0b'
+                          ? 'warning.main'
                           : node.type === 'condition'
-                            ? '#3b82f6'
+                            ? 'primary.main'
                             : 'grey.300',
                   cursor: 'pointer',
                   '&:hover': {
@@ -495,7 +495,7 @@ const FlowDesignerPage: React.FC = () => {
                   <Button
                     variant='contained'
                     fullWidth
-                    sx={{ bgcolor: '#8b5cf6' }}
+                    sx={{ bgcolor: 'secondary.main' }}
                   >
                     保存
                   </Button>

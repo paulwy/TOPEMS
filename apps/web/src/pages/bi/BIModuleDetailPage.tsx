@@ -27,7 +27,7 @@ import {
   TableCell,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Grid } from '@/components/Grid';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import ExportButton from '@/components/export/ExportButton';
@@ -52,10 +52,10 @@ import {
 import { BIChartColors } from '@/components/charts/chartTheme';
 
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
-  rs: { name: '研发管理', icon: '🔬', color: '#3B82F6' },
-  lims: { name: '实验室管理', icon: '🧪', color: '#10B981' },
-  qms: { name: '质量管理', icon: '✅', color: '#F59E0B' },
-  ehs: { name: '安全环保', icon: '🛡️', color: '#EF4444' },
+  rs: { name: '研发管理', icon: '🔬', color: 'primary.main' },
+  lims: { name: '实验室管理', icon: '🧪', color: 'success.main' },
+  qms: { name: '质量管理', icon: '✅', color: 'warning.main' },
+  ehs: { name: '安全环保', icon: '🛡️', color: 'error.main' },
   srm: { name: '供应链管理', icon: '📦', color: '#8B5CF6' },
   pdm: { name: '生产数据', icon: '🏭', color: '#06B6D4' },
 };
@@ -415,7 +415,7 @@ const BIModuleDetailPage = () => {
   const config = moduleConfig[moduleId || 'rs'] || {
     name: '未知模块',
     icon: '📊',
-    color: '#6B7280',
+    color: 'grey.500',
   };
 
   useEffect(() => {
@@ -432,7 +432,7 @@ const BIModuleDetailPage = () => {
         setLoading(false);
         setIsRefreshing(false);
       }, 500);
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to load module data:', error);
       setLoading(false);
       setIsRefreshing(false);

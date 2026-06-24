@@ -9,12 +9,13 @@ import {
   IconButton,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from 'lucide-react';
 import { authApi, type Role, type Permission } from '@/api/iam';
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { extractErrorMessage } from '@/utils/errors';
 
 interface RoleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -59,8 +60,8 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
       if (permsRes.success && permsRes.data) {
         setAllPermissions(permsRes.data);
       }
-    } catch (_err: any) {
-      setError(_err.message || '加载数据失败');
+    } catch (_err: unknown) {
+      setError(extractErrorMessage(_err, '加载数据失败'));
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -77,7 +78,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
       if (res.success && res.data) {
         setRolePermissions(res.data);
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '加载失败',
         message: '加载角色权限失败',
@@ -106,10 +107,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '创建角色失败',
+        message: extractErrorMessage(_err, '创建角色失败'),
         type: 'error',
       });
     }
@@ -139,10 +140,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '更新角色失败',
+        message: extractErrorMessage(_err, '更新角色失败'),
         type: 'error',
       });
     }
@@ -167,10 +168,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '删除角色失败',
+        message: extractErrorMessage(_err, '删除角色失败'),
         type: 'error',
       });
     }
@@ -193,10 +194,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '添加权限失败',
+        message: extractErrorMessage(_err, '添加权限失败'),
         type: 'error',
       });
     }
@@ -219,10 +220,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '移除权限失败',
+        message: extractErrorMessage(_err, '移除权限失败'),
         type: 'error',
       });
     }
@@ -254,7 +255,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
             >
               <Shield
                 size={20}
-                color='#6366f1'
+                color='primary.light'
               />
             </Box>
             <Box>
@@ -499,7 +500,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
                       {hasPermission && (
                         <CheckCircle
                           size={16}
-                          color='#2e7d32'
+                          color='success.dark'
                         />
                       )}
                     </Box>

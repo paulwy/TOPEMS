@@ -90,10 +90,11 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
           variant: 'destructive',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       toast({
         title: '安装失败',
-        description: error.message || '无法安装插件',
+        description: err.message || '无法安装插件',
         variant: 'destructive',
       });
     } finally {
@@ -103,19 +104,37 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
 
   return (
     <Card
-      className='h-full flex flex-col hover:shadow-lg transition-shadow duration-300'
-      sx={{ borderRadius: 2 }}
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        '&:hover': { boxShadow: 4 },
+        transition: 'box-shadow 0.3s ease',
+        borderRadius: 2,
+      }}
     >
-      <CardContent className='flex flex-col h-full'>
-        <div className='flex items-start justify-between mb-3'>
-          <div className='flex items-center gap-2'>
-            <div className='w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center'>
-              <Package className='w-6 h-6 text-white' />
-            </div>
-            <div>
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box
+          sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Package sx={{ width: 24, height: 24, color: 'white' }} />
+            </Box>
+            <Box>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 {plugin.name}
               </Typography>
@@ -125,24 +144,29 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
               >
                 v{plugin.version}
               </Typography>
-            </div>
-          </div>
+            </Box>
+          </Box>
           {healthStatus !== undefined && (
-            <div
-              className={`w-3 h-3 rounded-full ${healthStatus ? 'bg-green-500' : 'bg-red-500'}`}
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: healthStatus ? 'success.main' : 'error.main',
+              }}
             />
           )}
-        </div>
+        </Box>
 
         <Typography
           variant='body2'
           color='textSecondary'
-          className='mb-3 flex-grow'
+          sx={{ mb: 3, flexGrow: 1 }}
         >
           {plugin.description || '暂无描述'}
         </Typography>
 
-        <div className='flex flex-wrap gap-1 mb-3'>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
           {plugin.tags?.slice(0, 3).map((tag) => (
             <Chip
               key={tag}
@@ -152,14 +176,14 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
               sx={{ fontSize: 10 }}
             />
           ))}
-        </div>
+        </Box>
 
-        <div className='flex items-center justify-between mb-3'>
-          <div className='flex items-center gap-1'>
-            <Star className='w-4 h-4 text-yellow-500 fill-yellow-500' />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Star sx={{ width: 16, height: 16, color: 'warning.main', fill: 'warning.main' }} />
             <Typography
               variant='body2'
-              fontWeight='medium'
+              sx={{ fontWeight: 'medium' }}
             >
               {plugin.rating || 0}
             </Typography>
@@ -169,25 +193,25 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
             >
               ({plugin.rating_count || 0})
             </Typography>
-          </div>
-          <div className='flex items-center gap-1'>
-            <Download className='w-4 h-4 text-gray-400' />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Download sx={{ width: 16, height: 16, color: 'grey.400' }} />
             <Typography
               variant='body2'
               color='textSecondary'
             >
               {plugin.install_count?.toLocaleString() || 0}
             </Typography>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div className='flex gap-2'>
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant='outlined'
             size='small'
             fullWidth
             onClick={onViewDetails}
-            startIcon={<ExternalLink className='w-4 h-4' />}
+            startIcon={<ExternalLink sx={{ width: 16, height: 16 }} />}
           >
             详情
           </Button>
@@ -197,7 +221,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
               size='small'
               fullWidth
               disabled
-              startIcon={<CheckCircle className='w-4 h-4' />}
+              startIcon={<CheckCircle sx={{ width: 16, height: 16 }} />}
             >
               已安装
             </Button>
@@ -210,16 +234,16 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
               disabled={isInstalling}
               startIcon={
                 isInstalling ? (
-                  <Loader2 className='w-4 h-4 animate-spin' />
+                  <Loader2 sx={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
                 ) : (
-                  <ShoppingCart className='w-4 h-4' />
+                  <ShoppingCart sx={{ width: 16, height: 16 }} />
                 )
               }
             >
               {isInstalling ? '安装中...' : plugin.is_free ? '免费安装' : '购买'}
             </Button>
           )}
-        </div>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -274,10 +298,11 @@ const PluginDetailModal: React.FC<{
           setReviews(res.data.reviews);
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       toast({
         title: '评价失败',
-        description: error.message || '无法提交评价',
+        description: err.message || '无法提交评价',
         variant: 'destructive',
       });
     } finally {
@@ -302,10 +327,11 @@ const PluginDetailModal: React.FC<{
           variant: 'destructive',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       toast({
         title: '安装失败',
-        description: error.message || '无法安装插件',
+        description: err.message || '无法安装插件',
         variant: 'destructive',
       });
     } finally {
@@ -321,15 +347,25 @@ const PluginDetailModal: React.FC<{
       fullWidth
       sx={{ borderRadius: 2 }}
     >
-      <DialogTitle className='flex items-center justify-between'>
-        <div className='flex items-center gap-3'>
-          <div className='w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center'>
-            <Package className='w-6 h-6 text-white' />
-          </div>
-          <div>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Package sx={{ width: 24, height: 24, color: 'white' }} />
+          </Box>
+          <Box>
             <Typography
               variant='h5'
-              fontWeight='bold'
+              sx={{ fontWeight: 'bold' }}
             >
               {plugin.name}
             </Typography>
@@ -339,23 +375,32 @@ const PluginDetailModal: React.FC<{
             >
               v{plugin.version}
             </Typography>
-          </div>
-        </div>
+          </Box>
+        </Box>
         <Button
           onClick={onClose}
-          startIcon={<X className='w-5 h-5' />}
+          startIcon={<X sx={{ width: 20, height: 20 }} />}
         >
           关闭
         </Button>
       </DialogTitle>
 
-      <DialogContent className='max-h-[70vh] overflow-y-auto'>
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-2 space-y-6'>
-            <div>
+      <DialogContent sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <Box
+          sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' }, gap: 6 }}
+        >
+          <Box
+            sx={{
+              gridColumn: { xs: '1', lg: 'span 2' },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
+            <Box>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 描述
               </Typography>
@@ -365,25 +410,31 @@ const PluginDetailModal: React.FC<{
               >
                 {plugin.description || '暂无描述'}
               </Typography>
-            </div>
+            </Box>
 
-            <div>
+            <Box>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 版本历史
               </Typography>
-              <div className='space-y-2'>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {versions.length > 0 ? (
                   versions.map((v) => (
-                    <div
+                    <Box
                       key={v.id}
-                      className='p-3 bg-gray-50 rounded-lg'
+                      sx={{ p: 3, bgcolor: 'grey.50', borderRadius: 1 }}
                     >
-                      <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2'>
-                          <Typography fontWeight='medium'>{v.version}</Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography sx={{ fontWeight: 'medium' }}>{v.version}</Typography>
                           {v.is_latest && (
                             <Chip
                               label='最新'
@@ -400,24 +451,24 @@ const PluginDetailModal: React.FC<{
                               variant='outlined'
                             />
                           )}
-                        </div>
+                        </Box>
                         <Typography
                           variant='body2'
                           color='textSecondary'
                         >
                           {new Date(v.created_at).toLocaleDateString()}
                         </Typography>
-                      </div>
+                      </Box>
                       {v.release_notes && (
                         <Typography
                           variant='body2'
                           color='textSecondary'
-                          className='mt-1'
+                          sx={{ mt: 1 }}
                         >
                           {v.release_notes}
                         </Typography>
                       )}
-                    </div>
+                    </Box>
                   ))
                 ) : (
                   <Typography
@@ -427,28 +478,35 @@ const PluginDetailModal: React.FC<{
                     暂无版本信息
                   </Typography>
                 )}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div>
+            <Box>
               <Typography
                 variant='h6'
-                fontWeight='bold'
+                sx={{ fontWeight: 'bold' }}
               >
                 用户评价 ({reviews.length})
               </Typography>
-              <div className='space-y-4'>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {reviews.length > 0 ? (
                   reviews.map((review) => (
-                    <div
+                    <Box
                       key={review.id}
-                      className='p-4 bg-gray-50 rounded-lg'
+                      sx={{ p: 4, bgcolor: 'grey.50', borderRadius: 1 }}
                     >
-                      <div className='flex items-center justify-between mb-2'>
-                        <div className='flex items-center gap-2'>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mb: 2,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Avatar>{review.user_name?.charAt(0) || 'U'}</Avatar>
-                          <div>
-                            <Typography fontWeight='medium'>
+                          <Box>
+                            <Typography sx={{ fontWeight: 'medium' }}>
                               {review.user_name || '匿名用户'}
                             </Typography>
                             <Typography
@@ -457,15 +515,17 @@ const PluginDetailModal: React.FC<{
                             >
                               {new Date(review.created_at).toLocaleDateString()}
                             </Typography>
-                          </div>
-                        </div>
+                          </Box>
+                        </Box>
                         <Rating
                           value={review.rating || 0}
                           readOnly
                           size='small'
                         />
-                      </div>
-                      {review.title && <Typography fontWeight='medium'>{review.title}</Typography>}
+                      </Box>
+                      {review.title && (
+                        <Typography sx={{ fontWeight: 'medium' }}>{review.title}</Typography>
+                      )}
                       {review.content && (
                         <Typography
                           variant='body2'
@@ -480,10 +540,10 @@ const PluginDetailModal: React.FC<{
                           size='small'
                           color='primary'
                           variant='outlined'
-                          className='mt-2'
+                          sx={{ mt: 2 }}
                         />
                       )}
-                    </div>
+                    </Box>
                   ))
                 ) : (
                   <Typography
@@ -493,24 +553,26 @@ const PluginDetailModal: React.FC<{
                     暂无评价
                   </Typography>
                 )}
-              </div>
-            </div>
-          </div>
+              </Box>
+            </Box>
+          </Box>
 
-          <div className='space-y-6'>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <Card>
-              <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between'>
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <Typography
                     variant='h6'
-                    fontWeight='bold'
+                    sx={{ fontWeight: 'bold' }}
                   >
                     评分
                   </Typography>
-                  <div className='text-center'>
+                  <Box sx={{ textAlign: 'center' }}>
                     <Typography
                       variant='h3'
-                      fontWeight='bold'
+                      sx={{ fontWeight: 'bold' }}
                     >
                       {plugin.rating || 0}
                     </Typography>
@@ -518,27 +580,35 @@ const PluginDetailModal: React.FC<{
                       value={plugin.rating || 0}
                       readOnly
                     />
-                  </div>
-                </div>
+                  </Box>
+                </Box>
 
                 <Divider />
 
-                <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>下载量</span>
-                  <Typography fontWeight='medium'>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <Typography sx={{ color: 'grey.600' }}>下载量</Typography>
+                  <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.install_count?.toLocaleString() || 0}
                   </Typography>
-                </div>
+                </Box>
 
-                <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>分类</span>
-                  <Typography fontWeight='medium'>{plugin.category}</Typography>
-                </div>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <Typography sx={{ color: 'grey.600' }}>分类</Typography>
+                  <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
+                </Box>
 
-                <div className='flex items-center justify-between'>
-                  <span className='text-gray-600'>作者</span>
-                  <Typography fontWeight='medium'>{plugin.author_name || '未知'}</Typography>
-                </div>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <Typography sx={{ color: 'grey.600' }}>作者</Typography>
+                  <Typography sx={{ fontWeight: 'medium' }}>
+                    {plugin.author_name || '未知'}
+                  </Typography>
+                </Box>
 
                 <Divider />
 
@@ -550,11 +620,13 @@ const PluginDetailModal: React.FC<{
                   onClick={handleInstall}
                   startIcon={
                     installed ? (
-                      <CheckCircle className='w-5 h-5' />
+                      <CheckCircle sx={{ width: 20, height: 20 }} />
                     ) : isInstalling ? (
-                      <Loader2 className='w-5 h-5 animate-spin' />
+                      <Loader2
+                        sx={{ width: 20, height: 20, animation: 'spin 1s linear infinite' }}
+                      />
                     ) : (
-                      <ShoppingCart className='w-5 h-5' />
+                      <ShoppingCart sx={{ width: 20, height: 20 }} />
                     )
                   }
                 >
@@ -573,12 +645,11 @@ const PluginDetailModal: React.FC<{
               <CardContent>
                 <Typography
                   variant='h6'
-                  fontWeight='bold'
-                  className='mb-4'
+                  sx={{ fontWeight: 'bold', mb: 4 }}
                 >
                   发表评价
                 </Typography>
-                <div className='space-y-3'>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <Rating
                     value={rating}
                     onChange={(_, newValue) => setRating(newValue || 0)}
@@ -605,11 +676,11 @@ const PluginDetailModal: React.FC<{
                   >
                     {isSubmitting ? '提交中...' : '提交评价'}
                   </Button>
-                </div>
+                </Box>
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </Box>
+        </Box>
       </DialogContent>
     </Dialog>
   );
@@ -636,7 +707,7 @@ const PluginMarketplacePage: React.FC = () => {
     const fetchData = async () => {
       try {
         await Promise.all([fetchMarketplacePlugins(), fetchHealthStatus()]);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to load marketplace data:', err);
       }
     };
@@ -677,7 +748,9 @@ const PluginMarketplacePage: React.FC = () => {
         result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
       case 'newest':
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        result.sort(
+          (a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+        );
         break;
       case 'price':
         result.sort((a, b) => (a.price_cents || 0) - (b.price_cents || 0));
@@ -696,42 +769,59 @@ const PluginMarketplacePage: React.FC = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <div className='bg-gradient-to-r from-primary-600 to-primary-700 text-white py-8 px-6'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='flex items-center gap-3 mb-2'>
-            <Sparkles className='w-8 h-8' />
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      <Box
+        sx={{
+          background: 'linear-gradient(90deg, primary.main 0%, primary.main 100%)',
+          color: 'white',
+          py: 8,
+          px: 6,
+        }}
+      >
+        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+            <Sparkles sx={{ width: 32, height: 32 }} />
             <Typography
               variant='h4'
-              fontWeight='bold'
+              sx={{ fontWeight: 'bold' }}
             >
               插件市场
             </Typography>
-          </div>
+          </Box>
           <Typography
             variant='body1'
-            opacity={0.9}
+            sx={{ opacity: 0.6 }}
           >
             发现和安装强大的插件，扩展您的 TOPEMS 功能
           </Typography>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {error && (
-        <div className='max-w-7xl mx-auto px-6 py-4'>
+        <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 4 }}>
           <Alert
             severity='error'
             onClose={() => {}}
           >
             {error}
           </Alert>
-        </div>
+        </Box>
       )}
 
-      <div className='max-w-7xl mx-auto px-6 py-8'>
-        <div className='flex flex-col lg:flex-row gap-6 mb-8'>
-          <div className='flex-1 relative'>
-            <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+      <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 8 }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 6, mb: 8 }}>
+          <Box sx={{ flexGrow: 1, position: 'relative' }}>
+            <Search
+              sx={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 20,
+                height: 20,
+                color: 'grey.400',
+              }}
+            />
             <TextField
               placeholder='搜索插件...'
               value={searchQuery}
@@ -739,12 +829,12 @@ const PluginMarketplacePage: React.FC = () => {
               fullWidth
               sx={{ pl: 10 }}
             />
-          </div>
+          </Box>
 
-          <div className='flex gap-3'>
+          <Box sx={{ display: 'flex', gap: 3 }}>
             <FormControl
               size='small'
-              className='min-w-[160px]'
+              sx={{ minWidth: 160 }}
             >
               <InputLabel>套件分类</InputLabel>
               <Select
@@ -766,7 +856,7 @@ const PluginMarketplacePage: React.FC = () => {
 
             <FormControl
               size='small'
-              className='min-w-[140px]'
+              sx={{ minWidth: 140 }}
             >
               <InputLabel>排序方式</InputLabel>
               <Select
@@ -775,19 +865,19 @@ const PluginMarketplacePage: React.FC = () => {
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
               >
                 <MenuItem value='popular'>
-                  <TrendingUp className='w-4 h-4 mr-2' />
+                  <TrendingUp sx={{ width: 16, height: 16, mr: 2 }} />
                   最受欢迎
                 </MenuItem>
                 <MenuItem value='rating'>
-                  <Star className='w-4 h-4 mr-2' />
+                  <Star sx={{ width: 16, height: 16, mr: 2 }} />
                   评分最高
                 </MenuItem>
                 <MenuItem value='newest'>
-                  <Clock className='w-4 h-4 mr-2' />
+                  <Clock sx={{ width: 16, height: 16, mr: 2 }} />
                   最新发布
                 </MenuItem>
                 <MenuItem value='price'>
-                  <ShoppingCart className='w-4 h-4 mr-2' />
+                  <ShoppingCart sx={{ width: 16, height: 16, mr: 2 }} />
                   价格排序
                 </MenuItem>
               </Select>
@@ -798,35 +888,65 @@ const PluginMarketplacePage: React.FC = () => {
               size='small'
               onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
             >
-              {viewMode === 'grid' ? <List className='w-5 h-5' /> : <Grid3X3 className='w-5 h-5' />}
+              {viewMode === 'grid' ? (
+                <List sx={{ width: 20, height: 20 }} />
+              ) : (
+                <Grid3X3 sx={{ width: 20, height: 20 }} />
+              )}
             </Button>
 
             <Button
               variant='outlined'
               size='small'
               onClick={handleRefresh}
-              startIcon={<RefreshCw className='w-4 h-4' />}
+              startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
             >
               刷新
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8'>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
+              xl: 'repeat(4, 1fr)',
+            },
+            gap: 6,
+            mb: 8,
+          }}
+        >
           {SUITES.map((suite) => (
             <Card
               key={suite.id}
-              className='cursor-pointer hover:shadow-lg transition-shadow'
+              sx={{
+                cursor: 'pointer',
+                '&:hover': { boxShadow: 4 },
+                transition: 'box-shadow 0.3s ease',
+              }}
               onClick={() => setSelectedSuite(suite.code)}
             >
-              <CardContent className='flex items-center gap-4'>
-                <div className='w-14 h-14 rounded-xl bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center'>
-                  <Package className='w-7 h-7 text-primary-600' />
-                </div>
-                <div className='flex-1'>
+              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Box
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Package sx={{ width: 28, height: 28, color: 'primary.dark' }} />
+                </Box>
+                <Box sx={{ flexGrow: 1 }}>
                   <Typography
                     variant='h6'
-                    fontWeight='bold'
+                    sx={{ fontWeight: 'bold' }}
                   >
                     {suite.name}
                   </Typography>
@@ -836,7 +956,7 @@ const PluginMarketplacePage: React.FC = () => {
                   >
                     {suite.description}
                   </Typography>
-                  <div className='flex items-center gap-2 mt-1'>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
                     <Chip
                       label={`${suite.plugins.length} 个插件`}
                       size='small'
@@ -855,18 +975,18 @@ const PluginMarketplacePage: React.FC = () => {
                         color='primary'
                       />
                     )}
-                  </div>
-                </div>
-                <ChevronRight className='w-5 h-5 text-gray-400' />
+                  </Box>
+                </Box>
+                <ChevronRight sx={{ width: 20, height: 20, color: 'grey.400' }} />
               </CardContent>
             </Card>
           ))}
-        </div>
+        </Box>
 
-        <div className='flex items-center justify-between mb-6'>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 6 }}>
           <Typography
             variant='h5'
-            fontWeight='bold'
+            sx={{ fontWeight: 'bold' }}
           >
             {selectedSuite === 'all'
               ? '全部插件'
@@ -878,12 +998,17 @@ const PluginMarketplacePage: React.FC = () => {
           >
             共 {filteredPlugins.length} 个插件
           </Typography>
-        </div>
+        </Box>
 
-        <div
-          className={`grid gap-6 ${
-            viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
-          }`}
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 6,
+            gridTemplateColumns:
+              viewMode === 'grid'
+                ? { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }
+                : '1fr',
+          }}
         >
           {filteredPlugins.map((plugin) => (
             <PluginCard
@@ -893,14 +1018,14 @@ const PluginMarketplacePage: React.FC = () => {
               onViewDetails={() => setSelectedPlugin(plugin)}
             />
           ))}
-        </div>
+        </Box>
 
         {filteredPlugins.length === 0 && (
-          <div className='text-center py-16'>
-            <Package className='w-16 h-16 text-gray-300 mx-auto mb-4' />
+          <Box sx={{ textAlign: 'center', py: 16 }}>
+            <Package sx={{ width: 64, height: 64, color: 'grey.300', mx: 'auto', mb: 4 }} />
             <Typography
               variant='h6'
-              fontWeight='medium'
+              sx={{ fontWeight: 'medium' }}
             >
               未找到匹配的插件
             </Typography>
@@ -910,9 +1035,9 @@ const PluginMarketplacePage: React.FC = () => {
             >
               尝试调整搜索条件或选择其他分类
             </Typography>
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
 
       {selectedPlugin && (
         <PluginDetailModal
@@ -920,7 +1045,7 @@ const PluginMarketplacePage: React.FC = () => {
           onClose={() => setSelectedPlugin(null)}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

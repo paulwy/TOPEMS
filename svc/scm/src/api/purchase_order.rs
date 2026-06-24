@@ -23,6 +23,8 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/scm/purchase-orders/{id}",
             get(get_order).put(update_order).delete(delete_order),
         )
+        .route("/api/scm/purchase-orders/{id}/approve", post(approve_order))
+        .route("/api/scm/purchase-orders/{id}/reject", post(reject_order))
 }
 
 async fn list_orders(
@@ -337,6 +339,202 @@ async fn delete_order(
         None,
         None,
         None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ApprovalRequest {
+    pub approver_id: Option<Uuid>,
+    pub approver_name: Option<String>,
+    pub remarks: Option<String>,
+}
+
+async fn approve_order(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<PurchaseOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let existing = sqlx::query_as::<_, PurchaseOrder>(
+        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(o)) => o,
+        Ok(None) => return Json(api_error(404, "采购订单不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
+    };
+
+    if existing.status != "pending" {
+        return Json(api_error(400, &format!("采购订单当前状态为{}，无法审批", existing.status)));
+    }
+
+    let approver_name = req.approver_name.or(Some(claims.username.clone()));
+    let new_remarks = match (existing.remarks.clone(), req.remarks.clone()) {
+        (Some(old), Some(new)) => Some(format!("{} | 审批通过 ({}): {}", old, approver_name.clone().unwrap_or_default(), new)),
+        (Some(old), None) => Some(format!("{} | 审批通过 ({})", old, approver_name.clone().unwrap_or_default())),
+        (None, Some(new)) => Some(format!("审批通过 ({}): {}", approver_name.clone().unwrap_or_default(), new)),
+        (None, None) => Some(format!("审批通过 ({})", approver_name.unwrap_or_default())),
+    };
+
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PurchaseOrder>(
+        r#"
+        UPDATE scm.purchase_orders SET
+            status = 'approved', remarks = $2, updated_at = $3
+        WHERE id = $1
+        RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&new_remarks)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(order) => (
+            Json(ApiResponse::success(order.clone(), "采购订单审批通过")),
+            "success",
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("审批采购订单失败: {}", e);
+            (
+                Json(api_error(500, "审批采购订单失败")),
+                "error",
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(order) = &result {
+        serde_json::to_value(order).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "approve".to_string(),
+        "purchase_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+async fn reject_order(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<PurchaseOrder>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let existing = sqlx::query_as::<_, PurchaseOrder>(
+        "SELECT id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(o)) => o,
+        Ok(None) => return Json(api_error(404, "采购订单不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
+    };
+
+    if existing.status != "pending" {
+        return Json(api_error(400, &format!("采购订单当前状态为{}，无法驳回", existing.status)));
+    }
+
+    let approver_name = req.approver_name.or(Some(claims.username.clone()));
+    let reject_reason = req.remarks.clone().unwrap_or_default();
+    let new_remarks = match existing.remarks.clone() {
+        Some(old) => Some(format!("{} | 审批驳回 ({}): {}", old, approver_name.clone().unwrap_or_default(), reject_reason)),
+        None => Some(format!("审批驳回 ({}): {}", approver_name.unwrap_or_default(), reject_reason)),
+    };
+
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PurchaseOrder>(
+        r#"
+        UPDATE scm.purchase_orders SET
+            status = 'rejected', remarks = $2, updated_at = $3
+        WHERE id = $1
+        RETURNING id, order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&new_remarks)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(order) => (
+            Json(ApiResponse::success(order.clone(), "采购订单已驳回")),
+            "success",
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("驳回采购订单失败: {}", e);
+            (
+                Json(api_error(500, "驳回采购订单失败")),
+                "error",
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let request_data = serde_json::to_value(&req).ok();
+    let response_data = if let Ok(order) = &result {
+        serde_json::to_value(order).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        "reject".to_string(),
+        "purchase_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
         response_data,
         status_str.to_string(),
         error_msg,

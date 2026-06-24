@@ -12,7 +12,7 @@ import {
   IconButton,
   TextField,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   CheckCircle,
@@ -37,6 +37,7 @@ const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
+  const user = useAppStore((state) => state.user);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [records, setRecords] = useState<ApprovalRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +79,7 @@ const FlowApprovalDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载审批详情失败:', err);
       addNotification({
         title: '错误',
@@ -106,8 +107,8 @@ const FlowApprovalDetailPage: React.FC = () => {
       const response = await flowApi.processApproval(approval.id, {
         action: approvalAction,
         comment: comment || undefined,
-        actor_id: 'system-user-id', // TODO: Get from auth context
-        actor_name: 'Current User',
+        actor_id: user?.id || 'system-user-id',
+        actor_name: user?.fullName || user?.username || 'Current User',
       });
 
       if (response.success) {
@@ -126,7 +127,7 @@ const FlowApprovalDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: '处理审批失败',
@@ -144,14 +145,14 @@ const FlowApprovalDetailPage: React.FC = () => {
         return (
           <CheckCircle
             size={20}
-            style={{ color: '#16a34a' }}
+            style={{ color: 'success.dark' }}
           />
         );
       case 'rejected':
         return (
           <XCircle
             size={20}
-            style={{ color: '#dc2626' }}
+            style={{ color: 'error.dark' }}
           />
         );
       case 'pending':
@@ -165,7 +166,7 @@ const FlowApprovalDetailPage: React.FC = () => {
         return (
           <AlertCircle
             size={20}
-            style={{ color: '#4b5563' }}
+            style={{ color: 'text.secondary' }}
           />
         );
     }
@@ -207,7 +208,7 @@ const FlowApprovalDetailPage: React.FC = () => {
         <Loader2
           size={32}
           className='animate-spin'
-          style={{ color: '#6366f1' }}
+          style={{ color: 'primary.light' }}
         />
       </Box>
     );
@@ -219,7 +220,7 @@ const FlowApprovalDetailPage: React.FC = () => {
         <Box sx={{ textAlign: 'center', py: 12 }}>
           <AlertCircle
             size={64}
-            style={{ color: '#d1d5db', margin: '0 auto', marginBottom: 8 }}
+            style={{ color: 'grey.300', margin: '0 auto', marginBottom: 8 }}
           />
           <Typography sx={{ color: 'grey.500' }}>审批不存在</Typography>
           <Button
@@ -263,7 +264,7 @@ const FlowApprovalDetailPage: React.FC = () => {
             >
               <CheckCircle
                 size={24}
-                style={{ color: '#6366f1' }}
+                style={{ color: 'primary.light' }}
               />
             </Box>
             <Box>
@@ -482,7 +483,7 @@ const FlowApprovalDetailPage: React.FC = () => {
                     >
                       <MessageSquare
                         size={16}
-                        style={{ color: '#9ca3af', marginTop: 2 }}
+                        style={{ color: 'text.disabled', marginTop: 2 }}
                       />
                       <Typography variant='body2'>{approval.comment}</Typography>
                     </Stack>
@@ -529,7 +530,7 @@ const FlowApprovalDetailPage: React.FC = () => {
                   <FileText
                     size={48}
                     style={{
-                      color: '#d1d5db',
+                      color: 'grey.300',
                       margin: '0 auto',
                       marginBottom: 4,
                     }}
@@ -560,12 +561,12 @@ const FlowApprovalDetailPage: React.FC = () => {
                         {record.action === 'approve' ? (
                           <CheckCircle2
                             size={16}
-                            style={{ color: '#16a34a' }}
+                            style={{ color: 'success.dark' }}
                           />
                         ) : (
                           <XCircle
                             size={16}
-                            style={{ color: '#dc2626' }}
+                            style={{ color: 'error.dark' }}
                           />
                         )}
                         <Typography

@@ -96,7 +96,7 @@ function useErpBase<T extends { id?: string }>(
         }
         setError(null);
         return response.data?.items || [];
-      } catch (err) {
+      } catch (err: unknown) {
         return handleError(err, '加载数据失败');
       } finally {
         setLoading(false);
@@ -115,7 +115,7 @@ function useErpBase<T extends { id?: string }>(
           return response.data;
         }
         return null;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取数据失败');
         return null;
       } finally {
@@ -137,7 +137,7 @@ function useErpBase<T extends { id?: string }>(
           return response.data;
         }
         return null;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '创建失败');
         return null;
       } finally {
@@ -159,7 +159,7 @@ function useErpBase<T extends { id?: string }>(
           return response.data;
         }
         return null;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '更新失败');
         return null;
       } finally {
@@ -180,7 +180,7 @@ function useErpBase<T extends { id?: string }>(
           setError(null);
           handleSuccess('删除成功');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '删除失败');
       } finally {
         setLoading(false);
@@ -198,7 +198,7 @@ function useErpBase<T extends { id?: string }>(
         setTotal((prev) => Math.max(0, prev - ids.length));
         setError(null);
         handleSuccess(`已删除 ${ids.length} 条记录`);
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '批量删除失败');
       } finally {
         setLoading(false);
@@ -320,7 +320,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.balanceSheet(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取资产负债表失败');
         return null;
       } finally {
@@ -337,7 +337,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.incomeStatement(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取利润表失败');
         return null;
       } finally {
@@ -354,7 +354,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.cashFlowStatement(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取现金流量表失败');
         return null;
       } finally {
@@ -371,7 +371,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.businessOverview(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取经营概览失败');
         return null;
       } finally {
@@ -388,7 +388,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.projectSummary(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取项目财务汇总失败');
         return null;
       } finally {
@@ -404,7 +404,7 @@ export function useFinanceReports() {
       const response = await financeReportApi.monthlyTrend();
       setError(null);
       return response.data;
-    } catch (err) {
+    } catch (err: unknown) {
       handleError(err, '获取月度趋势失败');
       return null;
     } finally {
@@ -419,7 +419,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.departmentSummary(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取部门财务汇总失败');
         return null;
       } finally {
@@ -435,7 +435,7 @@ export function useFinanceReports() {
       const response = await financeReportApi.agingAnalysis();
       setError(null);
       return response.data;
-    } catch (err) {
+    } catch (err: unknown) {
       handleError(err, '获取账龄分析失败');
       return null;
     } finally {
@@ -450,7 +450,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.cashFlowAnalysis(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取现金流分析失败');
         return null;
       } finally {
@@ -467,7 +467,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.expenseAnalysis(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取费用分析失败');
         return null;
       } finally {
@@ -484,7 +484,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.profitAnalysis(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取利润分析失败');
         return null;
       } finally {
@@ -501,7 +501,7 @@ export function useFinanceReports() {
         const response = await financeReportApi.financialOverview(params);
         setError(null);
         return response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         handleError(err, '获取财务概览失败');
         return null;
       } finally {

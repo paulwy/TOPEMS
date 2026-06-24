@@ -118,5 +118,7 @@ walkdir = "2"
 libc = "0.2"
 cron = "0.12"
 job_scheduler_ng = "2.0"
+lettre = { version = "0.11", features = ["default", "smtp-transport", "tokio1-native-tls"] }
+handlebars = { version = "5", features = ["dir_source"] }
 
 [patch.crates-io]

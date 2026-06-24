@@ -22,7 +22,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Settings, Plus, Edit, Trash2, Bell, Shield, FileText, Layers } from 'lucide-react';
 
 interface FlowCategory {
@@ -179,7 +179,7 @@ const FlowSettingsPage: React.FC = () => {
           >
             <Layers
               size={24}
-              style={{ color: '#8b5cf6' }}
+              style={{ color: 'secondary.main' }}
             />
           </Box>
           <Box>
@@ -216,7 +216,7 @@ const FlowSettingsPage: React.FC = () => {
                     },
                   }}
                 >
-                  <Box sx={{ mr: 1.5, color: '#8b5cf6' }}>{tab.icon}</Box>
+                  <Box sx={{ mr: 1.5, color: 'secondary.main' }}>{tab.icon}</Box>
                   <Typography variant='body2'>{tab.label}</Typography>
                 </ListItem>
               ))}
@@ -423,7 +423,7 @@ const FlowSettingsPage: React.FC = () => {
                 >
                   <Button
                     variant='contained'
-                    sx={{ bgcolor: '#8b5cf6' }}
+                    sx={{ bgcolor: 'secondary.main' }}
                   >
                     保存设置
                   </Button>
@@ -618,7 +618,7 @@ const FlowSettingsPage: React.FC = () => {
                 >
                   <Button
                     variant='contained'
-                    sx={{ bgcolor: '#8b5cf6' }}
+                    sx={{ bgcolor: 'secondary.main' }}
                   >
                     保存设置
                   </Button>
@@ -701,7 +701,7 @@ const FlowSettingsPage: React.FC = () => {
                 >
                   <Button
                     variant='contained'
-                    sx={{ bgcolor: '#8b5cf6' }}
+                    sx={{ bgcolor: 'secondary.main' }}
                   >
                     保存设置
                   </Button>
@@ -878,7 +878,7 @@ const FlowSettingsPage: React.FC = () => {
                 >
                   <Button
                     variant='contained'
-                    sx={{ bgcolor: '#8b5cf6' }}
+                    sx={{ bgcolor: 'secondary.main' }}
                   >
                     保存设置
                   </Button>

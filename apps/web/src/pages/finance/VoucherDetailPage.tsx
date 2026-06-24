@@ -16,7 +16,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -76,7 +76,7 @@ const VoucherDetailPage: React.FC = () => {
       if (itemsResult.success && itemsResult.data) {
         setVoucherItems(itemsResult.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载凭证详情失败:', err);
       addNotification({
         title: '错误',
@@ -111,7 +111,7 @@ const VoucherDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: '删除失败',
@@ -139,7 +139,7 @@ const VoucherDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: '审核失败',
@@ -167,7 +167,7 @@ const VoucherDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: '记账失败',

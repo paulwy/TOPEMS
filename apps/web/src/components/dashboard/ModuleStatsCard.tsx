@@ -17,8 +17,8 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
   total = 8,
   active = 8,
   icon: Icon = CheckCircle2,
-  iconBgColor = '#dcfce7',
-  iconColor = '#22c55e',
+  iconBgColor = 'success.lighter',
+  iconColor = 'success.dark',
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -161,7 +161,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
         <Typography
           sx={{
             fontSize: '0.75rem',
-            color: '#64748b',
+            color: 'grey.600',
             mt: 1.5,
           }}
         >

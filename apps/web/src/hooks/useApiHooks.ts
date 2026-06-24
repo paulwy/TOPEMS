@@ -63,7 +63,7 @@ export function useApi<T>(
       setData(result);
       onSuccess?.(result);
       return result;
-    } catch (err) {
+    } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error('Unknown error');
       setError(error);
       onError?.(error);
@@ -110,7 +110,7 @@ export function usePaginatedApi<T>(
         totalPages: response.pagination.totalPages,
       }));
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       const error = err instanceof Error ? err : new Error('Unknown error');
       setError(error);
       throw error;
@@ -173,7 +173,7 @@ export function useMutation<TData, TVariables = any>(
         options?.onSuccess?.(result, variables);
         options?.onSettled?.(result, undefined, variables);
         return result;
-      } catch (err) {
+      } catch (err: unknown) {
         const error = err instanceof Error ? err : new Error('Unknown error');
         setError(error);
         options?.onError?.(error, variables);
@@ -232,7 +232,7 @@ export function useInfiniteQuery<T>(
               if (result.hasMore) {
                 setPage((p) => p + 1);
               }
-            } catch (err) {
+            } catch (err: unknown) {
               setError(err instanceof Error ? err : new Error('Unknown error'));
             } finally {
               setLoading(false);

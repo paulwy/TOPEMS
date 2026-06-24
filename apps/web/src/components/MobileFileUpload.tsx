@@ -56,19 +56,19 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
 
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) {
-      return <FileImage sx={{ width: 32, height: 32, color: '#22c55e' }} />;
+      return <FileImage sx={{ width: 32, height: 32, color: 'success.dark' }} />;
     }
     if (type.includes('pdf')) {
-      return <FileText sx={{ width: 32, height: 32, color: '#ef4444' }} />;
+      return <FileText sx={{ width: 32, height: 32, color: 'error.main' }} />;
     }
     if (
       type.includes('document') ||
       type.includes('spreadsheet') ||
       type.includes('presentation')
     ) {
-      return <FileText sx={{ width: 32, height: 32, color: '#3b82f6' }} />;
+      return <FileText sx={{ width: 32, height: 32, color: 'primary.main' }} />;
     }
-    return <File sx={{ width: 32, height: 32, color: '#6b7280' }} />;
+    return <File sx={{ width: 32, height: 32, color: 'text.secondary' }} />;
   };
 
   const handleFileChange = useCallback(
@@ -218,8 +218,8 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
           cursor: disabled ? 'not-allowed' : 'pointer',
           transition: 'all 0.2s',
           opacity: disabled ? 0.5 : 1,
-          borderColor: isDragging ? '#3b82f6' : '#d1d5db',
-          backgroundColor: isDragging ? '#eff6ff' : 'transparent',
+          borderColor: isDragging ? 'primary.main' : 'grey.300',
+          backgroundColor: isDragging ? 'primary.light' : 'transparent',
         }}
       >
         <div
@@ -233,14 +233,14 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
             style={{
               padding: '16px',
               borderRadius: '9999px',
-              backgroundColor: isDragging ? '#dbeafe' : '#f3f4f6',
+              backgroundColor: isDragging ? '#dbeafe' : 'grey.100',
             }}
           >
             <Upload
               sx={{
                 width: 32,
                 height: 32,
-                color: isDragging ? '#2563eb' : '#6b7280',
+                color: isDragging ? 'primary.dark' : 'text.secondary',
               }}
             />
           </div>
@@ -249,12 +249,14 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
               marginTop: '16px',
               fontSize: '18px',
               fontWeight: 500,
-              color: '#111827',
+              color: 'text.primary',
             }}
           >
             {isDragging ? '释放以上传文件' : '拖拽文件到此处'}
           </h3>
-          <p style={{ marginTop: '4px', fontSize: '14px', color: '#6b7280' }}>或点击选择文件</p>
+          <p style={{ marginTop: '4px', fontSize: '14px', color: 'text.secondary' }}>
+            或点击选择文件
+          </p>
           <div
             style={{
               marginTop: '16px',
@@ -263,7 +265,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
               justifyContent: 'center',
               gap: '16px',
               fontSize: '12px',
-              color: '#9ca3af',
+              color: 'text.disabled',
             }}
           >
             <span>支持格式: {accept === '*' ? '所有格式' : accept}</span>
@@ -286,7 +288,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '12px 16px',
-            backgroundColor: '#f0fdf4',
+            backgroundColor: 'success.light',
             color: '#15803d',
             borderRadius: '8px',
             border: 'none',
@@ -307,8 +309,8 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '12px 16px',
-            backgroundColor: '#eff6ff',
-            color: '#1d4ed8',
+            backgroundColor: 'primary.light',
+            color: 'primary.dark',
             borderRadius: '8px',
             border: 'none',
             cursor: disabled ? 'not-allowed' : 'pointer',
@@ -324,7 +326,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
       {/* Uploaded Files List */}
       {uploadedFiles.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <h4 style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+          <h4 style={{ fontSize: '14px', fontWeight: 500, color: 'grey.700' }}>
             已选择 {uploadedFiles.length}/{maxFiles} 个文件
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -335,7 +337,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   padding: '12px',
-                  backgroundColor: '#f9fafb',
+                  backgroundColor: 'grey.50',
                   borderRadius: '8px',
                 }}
               >
@@ -348,9 +350,9 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'white',
                     borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid grey.200',
                     overflow: 'hidden',
                   }}
                 >
@@ -375,7 +377,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                     style={{
                       fontSize: '14px',
                       fontWeight: 500,
-                      color: '#111827',
+                      color: 'text.primary',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -383,7 +385,9 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                   >
                     {file.name}
                   </p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{formatFileSize(file.size)}</p>
+                  <p style={{ fontSize: '12px', color: 'text.secondary' }}>
+                    {formatFileSize(file.size)}
+                  </p>
 
                   {/* Progress Bar */}
                   {file.status === 'uploading' && (
@@ -391,7 +395,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                       <div
                         style={{
                           height: '6px',
-                          backgroundColor: '#e5e7eb',
+                          backgroundColor: 'grey.200',
                           borderRadius: '9999px',
                           overflow: 'hidden',
                         }}
@@ -399,7 +403,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                         <div
                           style={{
                             height: '100%',
-                            backgroundColor: '#2563eb',
+                            backgroundColor: 'primary.dark',
                             borderRadius: '9999px',
                             transition: 'all 0.2s',
                             width: `${file.progress}%`,
@@ -409,7 +413,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                       <span
                         style={{
                           fontSize: '12px',
-                          color: '#6b7280',
+                          color: 'text.secondary',
                           marginLeft: '4px',
                         }}
                       >
@@ -435,7 +439,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                         sx={{
                           width: 16,
                           height: 16,
-                          color: '#9ca3af',
+                          color: 'text.disabled',
                           animation: 'spin 1s linear infinite',
                         }}
                       />
@@ -455,17 +459,17 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                         sx={{
                           width: 16,
                           height: 16,
-                          color: '#2563eb',
+                          color: 'primary.dark',
                           animation: 'spin 1s linear infinite',
                         }}
                       />
                     </div>
                   )}
                   {file.status === 'completed' && (
-                    <CheckCircle sx={{ width: 24, height: 24, color: '#22c55e' }} />
+                    <CheckCircle sx={{ width: 24, height: 24, color: 'success.dark' }} />
                   )}
                   {file.status === 'error' && (
-                    <AlertCircle sx={{ width: 24, height: 24, color: '#ef4444' }} />
+                    <AlertCircle sx={{ width: 24, height: 24, color: 'error.main' }} />
                   )}
                 </div>
 
@@ -476,7 +480,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                     flexShrink: 0,
                     marginLeft: '8px',
                     padding: '4px',
-                    color: '#9ca3af',
+                    color: 'text.disabled',
                     border: 'none',
                     background: 'transparent',
                     cursor: 'pointer',
@@ -498,7 +502,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
             textAlign: 'center',
             paddingTop: '24px',
             paddingBottom: '24px',
-            color: '#9ca3af',
+            color: 'text.disabled',
           }}
         >
           <File

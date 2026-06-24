@@ -17,7 +17,7 @@ import {
   Divider,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Save, X } from 'lucide-react';
 
 const RsExperimentCreatePage: React.FC = () => {

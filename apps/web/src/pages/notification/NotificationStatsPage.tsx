@@ -61,7 +61,7 @@ const NotificationStatsPage: React.FC = () => {
           dependencies,
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error loading stats:', err);
     } finally {
       setLoading(false);
@@ -72,11 +72,11 @@ const NotificationStatsPage: React.FC = () => {
     if (!stats) return [];
     const byType = stats.notifications_by_type;
     return [
-      { name: '系统通知', value: byType?.system || 0, color: '#3B82F6' },
+      { name: '系统通知', value: byType?.system || 0, color: 'primary.main' },
       { name: '审批通知', value: byType?.workflow || 0, color: '#8B5CF6' },
-      { name: '提醒通知', value: byType?.reminder || 0, color: '#F59E0B' },
-      { name: '告警通知', value: byType?.alert || 0, color: '#EF4444' },
-      { name: '消息通知', value: byType?.message || 0, color: '#10B981' },
+      { name: '提醒通知', value: byType?.reminder || 0, color: 'warning.main' },
+      { name: '告警通知', value: byType?.alert || 0, color: 'error.main' },
+      { name: '消息通知', value: byType?.message || 0, color: 'success.main' },
     ];
   };
 
@@ -99,7 +99,7 @@ const NotificationStatsPage: React.FC = () => {
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#f9fafb',
+          backgroundColor: 'grey.50',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -110,19 +110,19 @@ const NotificationStatsPage: React.FC = () => {
             sx={{
               width: 48,
               height: 48,
-              color: '#2563eb',
+              color: 'primary.dark',
               margin: '0 auto',
               animation: 'spin 1s linear infinite',
             }}
           />
-          <p style={{ marginTop: 8, color: '#6b7280' }}>加载中...</p>
+          <p style={{ marginTop: 8, color: 'text.secondary' }}>加载中...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
@@ -131,9 +131,9 @@ const NotificationStatsPage: React.FC = () => {
       {/* Header */}
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           boxShadow: 'sm',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid grey.200',
         }}
       >
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px' }}>
@@ -148,17 +148,17 @@ const NotificationStatsPage: React.FC = () => {
               <button
                 onClick={() => navigate('/notifications')}
                 style={{ padding: 8, borderRadius: 8, transition: 'all 0.2s' }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'grey.100')}
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
-                <ChevronLeft sx={{ width: 20, height: 20, color: '#4b5563' }} />
+                <ChevronLeft sx={{ width: 20, height: 20, color: 'text.secondary' }} />
               </button>
               <div>
                 <h1
                   style={{
                     fontSize: '1.5rem',
                     fontWeight: 700,
-                    color: '#111827',
+                    color: 'text.primary',
                     display: 'flex',
                     alignItems: 'center',
                   }}
@@ -168,7 +168,7 @@ const NotificationStatsPage: React.FC = () => {
                       width: 28,
                       height: 28,
                       marginRight: 12,
-                      color: '#2563eb',
+                      color: 'primary.dark',
                     }}
                   />
                   通知统计
@@ -177,7 +177,7 @@ const NotificationStatsPage: React.FC = () => {
                   style={{
                     marginTop: 4,
                     fontSize: '0.875rem',
-                    color: '#6b7280',
+                    color: 'text.secondary',
                   }}
                 >
                   查看通知数据的统计分析
@@ -191,13 +191,13 @@ const NotificationStatsPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   padding: '8px 16px',
-                  color: '#374151',
-                  backgroundColor: '#f3f4f6',
+                  color: 'grey.700',
+                  backgroundColor: 'grey.100',
                   borderRadius: 8,
                   transition: 'all 0.2s',
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e5e7eb')}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'grey.200')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'grey.100')}
               >
                 <RefreshCw sx={{ width: 20, height: 20, marginRight: 8 }} />
                 刷新
@@ -212,7 +212,7 @@ const NotificationStatsPage: React.FC = () => {
         {serviceStatus && (
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: 'white',
               borderRadius: 8,
               boxShadow: 'sm',
               padding: 16,
@@ -232,14 +232,15 @@ const NotificationStatsPage: React.FC = () => {
                     height: 12,
                     borderRadius: '50%',
                     marginRight: 12,
-                    backgroundColor: serviceStatus.status === 'healthy' ? '#22c55e' : '#ef4444',
+                    backgroundColor:
+                      serviceStatus.status === 'healthy' ? 'success.dark' : 'error.main',
                   }}
                 />
                 <span
                   style={{
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#111827',
+                    color: 'text.primary',
                   }}
                 >
                   通知服务状态：
@@ -252,7 +253,7 @@ const NotificationStatsPage: React.FC = () => {
                   alignItems: 'center',
                   gap: 24,
                   fontSize: '0.875rem',
-                  color: '#6b7280',
+                  color: 'text.secondary',
                 }}
               >
                 <span>运行时长：{serviceStatus.uptime}</span>
@@ -307,7 +308,7 @@ const NotificationStatsPage: React.FC = () => {
           {/* Notification by Type */}
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: 'white',
               borderRadius: 8,
               boxShadow: 'sm',
               padding: 24,
@@ -320,12 +321,12 @@ const NotificationStatsPage: React.FC = () => {
                 marginBottom: 16,
               }}
             >
-              <TrendingUp sx={{ width: 20, height: 20, color: '#2563eb', marginRight: 8 }} />
+              <TrendingUp sx={{ width: 20, height: 20, color: 'primary.dark', marginRight: 8 }} />
               <h3
                 style={{
                   fontSize: '1.125rem',
                   fontWeight: 600,
-                  color: '#111827',
+                  color: 'text.primary',
                 }}
               >
                 通知类型分布
@@ -346,7 +347,7 @@ const NotificationStatsPage: React.FC = () => {
           {/* Daily Trend */}
           <div
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: 'white',
               borderRadius: 8,
               boxShadow: 'sm',
               padding: 24,
@@ -359,12 +360,12 @@ const NotificationStatsPage: React.FC = () => {
                 marginBottom: 16,
               }}
             >
-              <Calendar sx={{ width: 20, height: 20, color: '#2563eb', marginRight: 8 }} />
+              <Calendar sx={{ width: 20, height: 20, color: 'primary.dark', marginRight: 8 }} />
               <h3
                 style={{
                   fontSize: '1.125rem',
                   fontWeight: 600,
-                  color: '#111827',
+                  color: 'text.primary',
                 }}
               >
                 近7天趋势
@@ -377,7 +378,7 @@ const NotificationStatsPage: React.FC = () => {
                 data={getDailyStats()}
                 xKey='date'
                 yKey='count'
-                colors={['#3B82F6']}
+                colors={['primary.main']}
               />
             </div>
           </div>
@@ -386,7 +387,7 @@ const NotificationStatsPage: React.FC = () => {
         {/* Detailed Breakdown */}
         <div
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: 'white',
             borderRadius: 8,
             boxShadow: 'sm',
             padding: 24,
@@ -396,7 +397,7 @@ const NotificationStatsPage: React.FC = () => {
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#111827',
+              color: 'text.primary',
               marginBottom: 16,
             }}
           >
@@ -404,7 +405,7 @@ const NotificationStatsPage: React.FC = () => {
           </h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ backgroundColor: '#f9fafb' }}>
+              <thead style={{ backgroundColor: 'grey.50' }}>
                 <tr>
                   <th
                     style={{
@@ -412,7 +413,7 @@ const NotificationStatsPage: React.FC = () => {
                       textAlign: 'left',
                       fontSize: 12,
                       fontWeight: 500,
-                      color: '#6b7280',
+                      color: 'text.secondary',
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
                     }}
@@ -425,7 +426,7 @@ const NotificationStatsPage: React.FC = () => {
                       textAlign: 'left',
                       fontSize: 12,
                       fontWeight: 500,
-                      color: '#6b7280',
+                      color: 'text.secondary',
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
                     }}
@@ -438,7 +439,7 @@ const NotificationStatsPage: React.FC = () => {
                       textAlign: 'left',
                       fontSize: 12,
                       fontWeight: 500,
-                      color: '#6b7280',
+                      color: 'text.secondary',
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
                     }}
@@ -447,14 +448,14 @@ const NotificationStatsPage: React.FC = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody style={{ backgroundColor: '#ffffff' }}>
+              <tbody style={{ backgroundColor: 'white' }}>
                 <tr>
                   <td
                     style={{
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#111827',
+                      color: 'text.primary',
                     }}
                   >
                     系统通知
@@ -464,7 +465,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats?.notifications_by_type?.system || 0}
@@ -474,7 +475,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats && stats.total_notifications > 0
@@ -492,7 +493,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#111827',
+                      color: 'text.primary',
                     }}
                   >
                     审批通知
@@ -502,7 +503,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats?.notifications_by_type?.workflow || 0}
@@ -512,7 +513,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats && stats.total_notifications > 0
@@ -531,7 +532,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#111827',
+                      color: 'text.primary',
                     }}
                   >
                     提醒通知
@@ -541,7 +542,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats?.notifications_by_type?.reminder || 0}
@@ -551,7 +552,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats && stats.total_notifications > 0
@@ -570,7 +571,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#111827',
+                      color: 'text.primary',
                     }}
                   >
                     告警通知
@@ -580,7 +581,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats?.notifications_by_type?.alert || 0}
@@ -590,7 +591,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats && stats.total_notifications > 0
@@ -608,7 +609,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#111827',
+                      color: 'text.primary',
                     }}
                   >
                     消息通知
@@ -618,7 +619,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats?.notifications_by_type?.message || 0}
@@ -628,7 +629,7 @@ const NotificationStatsPage: React.FC = () => {
                       padding: '16px 24px',
                       whiteSpace: 'nowrap',
                       fontSize: 14,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     {stats && stats.total_notifications > 0
@@ -649,7 +650,7 @@ const NotificationStatsPage: React.FC = () => {
             style={{
               marginTop: 16,
               fontSize: 12,
-              color: '#6b7280',
+              color: 'text.secondary',
               textAlign: 'right',
             }}
           >

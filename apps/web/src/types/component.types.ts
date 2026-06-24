@@ -44,7 +44,7 @@ export interface ValidationRule {
   min?: number;
   max?: number;
   pattern?: RegExp;
-  custom?: (value: unknown, allValues?: Record<string, unknown>) => boolean | string;
+  custom?: (value: any, allValues?: Record<string, unknown>) => boolean | string;
   message?: string;
 }
 

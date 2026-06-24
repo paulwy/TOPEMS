@@ -13,7 +13,7 @@ import {
   CardHeader,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Eye, Clock, Search, Users, Calendar } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -53,7 +53,7 @@ const EhsDrillPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listDrills();
       if (response.success && response.data) {
-        const adapted = (response.data as any).data.map((item: any) => ({
+        const adapted = (response.data as any).data.map((item: { [key: string]: unknown }) => ({
           ...item,
           status:
             item.status === 'completed'
@@ -68,7 +68,7 @@ const EhsDrillPage: React.FC = () => {
       } else {
         setDrills([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载演练记录数据失败:', err);
       setDrills([]);
     } finally {
@@ -78,11 +78,11 @@ const EhsDrillPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      已完成: { bg: '#dcfce7', color: '#16a34a' },
-      已计划: { bg: '#dbeafe', color: '#3b82f6' },
+      已完成: { bg: 'success.lighter', color: 'success.dark' },
+      已计划: { bg: '#dbeafe', color: 'primary.main' },
       进行中: { bg: '#fef9c3', color: '#ca8a04' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -187,7 +187,7 @@ const EhsDrillPage: React.FC = () => {
       toast.success('演练记录创建成功');
       setShowCreateModal(false);
       loadDrills();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建演练记录失败:', err);
     }
@@ -208,7 +208,7 @@ const EhsDrillPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #fef3c7 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, warning.light 0%, #f8fafc 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -217,8 +217,8 @@ const EhsDrillPage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#f59e0b',
-              borderTopColor: '#d97706',
+              borderColor: 'warning.main',
+              borderTopColor: 'warning.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -235,7 +235,7 @@ const EhsDrillPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #fef3c7 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, warning.light 0%, #f8fafc 100%)',
       }}
     >
       <Box
@@ -264,7 +264,7 @@ const EhsDrillPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  background: 'linear-gradient(135deg, warning.main 0%, warning.dark 100%)',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -296,7 +296,7 @@ const EhsDrillPage: React.FC = () => {
               variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: '#f59e0b', '&:hover': { bgcolor: '#d97706' } }}
+              sx={{ bgcolor: 'warning.main', '&:hover': { bgcolor: 'warning.dark' } }}
             >
               新增演练
             </Button>
@@ -316,21 +316,21 @@ const EhsDrillPage: React.FC = () => {
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: '#fef3c7' }}>
+          <Card sx={{ bgcolor: 'warning.light' }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fde68a',
+                    bgcolor: 'warning.light',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Clock sx={{ width: 20, height: 20, color: '#f59e0b' }} />
+                  <Clock sx={{ width: 20, height: 20, color: 'warning.main' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -356,14 +356,14 @@ const EhsDrillPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Clock sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <Clock sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -396,7 +396,7 @@ const EhsDrillPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Clock sx={{ width: 20, height: 20, color: '#3b82f6' }} />
+                  <Clock sx={{ width: 20, height: 20, color: 'primary.main' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -464,7 +464,7 @@ const EhsDrillPage: React.FC = () => {
               variant='h6'
               sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
-              <Clock style={{ width: 20, height: 20, color: '#f59e0b' }} />
+              <Clock style={{ width: 20, height: 20, color: 'warning.main' }} />
               演练记录列表
             </Typography>
           </CardHeader>
@@ -606,7 +606,7 @@ const EhsDrillPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#f59e0b' }}
+            sx={{ bgcolor: 'warning.main' }}
           >
             保存
           </Button>

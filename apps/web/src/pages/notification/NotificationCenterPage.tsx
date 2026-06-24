@@ -19,7 +19,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Bell,
   ChevronLeft,
@@ -466,7 +466,7 @@ export default function NotificationCenterPage() {
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Bell style={{ width: 20, height: 20, color: '#3b82f6' }} />
+            <Bell style={{ width: 20, height: 20, color: 'primary.main' }} />
             {selectedMessage?.title}
           </Box>
         </DialogTitle>
@@ -503,7 +503,7 @@ export default function NotificationCenterPage() {
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Send style={{ width: 20, height: 20, color: '#3b82f6' }} />
+            <Send style={{ width: 20, height: 20, color: 'primary.main' }} />
             发送消息
           </Box>
         </DialogTitle>

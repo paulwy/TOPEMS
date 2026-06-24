@@ -50,7 +50,7 @@ import {
   LinearProgress,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from '@/components/ui/OrganizationFilter';
@@ -108,7 +108,7 @@ const FinanceReportsPage: React.FC = () => {
         message: '数据已成功导出为CSV文件',
         type: 'success',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       addNotification({
         title: '导出失败',
         message: '导出过程中发生错误',
@@ -192,7 +192,7 @@ const FinanceReportsPage: React.FC = () => {
         setProfitAnalysis(profitAnalysisData.data);
       if (financialOverviewData.success && financialOverviewData.data)
         setFinancialOverview(financialOverviewData.data);
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载报表失败:', err);
       addNotification({
         title: '错误',
@@ -213,7 +213,7 @@ const FinanceReportsPage: React.FC = () => {
     ratio: number;
     target?: number;
   }> = ({ title, ratio, target }) => (
-    <Card sx={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%)' }}>
+    <Card sx={{ background: 'linear-gradient(135deg, #e0e7ff 0%, grey.100 100%)' }}>
       <CardContent sx={{ p: 2 }}>
         <Typography
           variant='body2'
@@ -223,7 +223,7 @@ const FinanceReportsPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 'bold', color: '#6366f1', mt: 0.5 }}
+          sx={{ fontWeight: 'bold', color: 'primary.light', mt: 0.5 }}
         >
           {formatPercentLocal(ratio)}
         </Typography>
@@ -273,7 +273,7 @@ const FinanceReportsPage: React.FC = () => {
             </Typography>
             <Typography
               variant='body1'
-              sx={{ fontWeight: 'bold', color: '#6366f1' }}
+              sx={{ fontWeight: 'bold', color: 'primary.light' }}
             >
               {formatCurrencyLocal(project.contract_amount)}
             </Typography>
@@ -287,7 +287,7 @@ const FinanceReportsPage: React.FC = () => {
             </Typography>
             <Typography
               variant='body1'
-              sx={{ fontWeight: 'bold', color: '#16a34a' }}
+              sx={{ fontWeight: 'bold', color: 'success.dark' }}
             >
               {formatCurrencyLocal(project.received_amount)}
             </Typography>
@@ -315,7 +315,7 @@ const FinanceReportsPage: React.FC = () => {
             </Typography>
             <Typography
               variant='body1'
-              sx={{ fontWeight: 'bold', color: '#dc2626' }}
+              sx={{ fontWeight: 'bold', color: 'error.dark' }}
             >
               {formatCurrencyLocal(project.paid_amount)}
             </Typography>
@@ -361,7 +361,7 @@ const FinanceReportsPage: React.FC = () => {
               </Typography>
               <Typography
                 variant='body2'
-                sx={{ fontWeight: 600, color: '#6366f1' }}
+                sx={{ fontWeight: 600, color: 'primary.light' }}
               >
                 {formatPercentLocal(project.margin)}
               </Typography>
@@ -424,7 +424,7 @@ const FinanceReportsPage: React.FC = () => {
             </Typography>
             <Typography
               variant='body1'
-              sx={{ fontWeight: 'bold', color: '#6366f1' }}
+              sx={{ fontWeight: 'bold', color: 'primary.light' }}
             >
               {formatCurrencyLocal(dept.total_expenses)}
             </Typography>
@@ -553,7 +553,7 @@ const FinanceReportsPage: React.FC = () => {
                 >
                   <BarChart3
                     size={28}
-                    style={{ marginRight: 12, color: '#6366f1' }}
+                    style={{ marginRight: 12, color: 'primary.light' }}
                   />
                   财务报表分析
                 </Typography>
@@ -570,7 +570,7 @@ const FinanceReportsPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Calendar
                   size={16}
-                  style={{ color: '#9ca3af' }}
+                  style={{ color: 'text.disabled' }}
                 />
                 <FormControl
                   size='small'
@@ -697,7 +697,7 @@ const FinanceReportsPage: React.FC = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                               <LineChartIcon
                                 size={20}
-                                style={{ marginRight: 8, color: '#6366f1' }}
+                                style={{ marginRight: 8, color: 'primary.light' }}
                               />
                               <Typography variant='h6'>月度趋势分析</Typography>
                             </Box>
@@ -717,9 +717,9 @@ const FinanceReportsPage: React.FC = () => {
                           data={monthlyTrends}
                           xKey='month'
                           yKeys={[
-                            { key: 'revenue', name: '收入', color: '#22c55e' },
-                            { key: 'expenses', name: '费用', color: '#ef4444' },
-                            { key: 'profit', name: '利润', color: '#3b82f6' },
+                            { key: 'revenue', name: '收入', color: 'success.dark' },
+                            { key: 'expenses', name: '费用', color: 'error.main' },
+                            { key: 'profit', name: '利润', color: 'primary.main' },
                           ]}
                           height={280}
                         />
@@ -732,7 +732,7 @@ const FinanceReportsPage: React.FC = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <PieChart
                               size={20}
-                              style={{ marginRight: 8, color: '#6366f1' }}
+                              style={{ marginRight: 8, color: 'primary.light' }}
                             />
                             <Typography variant='h6'>关键财务指标</Typography>
                           </Box>
@@ -784,7 +784,7 @@ const FinanceReportsPage: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <DollarSign
                             size={20}
-                            style={{ marginRight: 8, color: '#6366f1' }}
+                            style={{ marginRight: 8, color: 'primary.light' }}
                           />
                           <Typography variant='h6'>财务摘要</Typography>
                         </Box>
@@ -812,7 +812,7 @@ const FinanceReportsPage: React.FC = () => {
                             variant='h6'
                             sx={{
                               fontWeight: 'bold',
-                              color: '#6366f1',
+                              color: 'primary.light',
                               mt: 0.5,
                             }}
                           >
@@ -848,7 +848,7 @@ const FinanceReportsPage: React.FC = () => {
                             variant='h6'
                             sx={{
                               fontWeight: 'bold',
-                              color: '#16a34a',
+                              color: 'success.dark',
                               mt: 0.5,
                             }}
                           >
@@ -866,7 +866,7 @@ const FinanceReportsPage: React.FC = () => {
                             variant='h6'
                             sx={{
                               fontWeight: 'bold',
-                              color: '#2563eb',
+                              color: 'primary.dark',
                               mt: 0.5,
                             }}
                           >

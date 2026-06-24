@@ -96,6 +96,19 @@ export const getErrorMessage = (error: AppError | unknown): string => {
   return '发生未知错误';
 };
 
+/**
+ * 从未知错误中提取消息（兼容 axios 错误响应）
+ * 优先使用服务端返回的 message 字段，否则使用 Error.message，最后使用兜底值
+ */
+export const extractErrorMessage = (error: unknown, fallback = '操作失败'): string => {
+  if (!error) return fallback;
+  const err = error as {
+    response?: { data?: { message?: string } };
+    message?: string;
+  };
+  return err.response?.data?.message || err.message || fallback;
+};
+
 export const logError = (context: string, error: unknown): void => {
   logger.error(`[${context}]`, error);
 };
@@ -106,7 +119,7 @@ export const safeExecute = async <T>(
 ): Promise<T | null> => {
   try {
     return await fn();
-  } catch (error) {
+  } catch (error: unknown) {
     const appError = handleApiError(error);
     if (errorHandler) {
       errorHandler(appError);

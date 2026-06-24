@@ -2,12 +2,12 @@
 
 | 项目 | 内容 |
 |------|------|
-| **文档版本** | v4.0.0 |
+| **文档版本** | v5.0.0 |
 | **创建日期** | 2026-06-18 |
 | **适用阶段** | 插件化架构 UI 重构 |
 | **状态** | 实施中 |
 | **维护团队** | TOPEMS 前端团队 |
-| **架构适配** | 支持插件化架构、微前端 Module Federation |
+| **架构适配** | 支持插件化架构、Module Federation 微前端 |
 
 ---
 
@@ -77,7 +77,7 @@
 |------|------|------|------|
 | **React** | 19.0+ | UI 框架 | ✅ 标准 |
 | **TypeScript** | 5.4+ | 类型系统 | ✅ 标准 |
-| **MUI (Material UI)** | v9.x | 主 UI 组件库 | ✅ 标准 |
+| **MUI (Material UI)** | 6.x → **9.x** (升级中) | 主 UI 组件库 | ⚠️ 升级中 |
 | **Vite** | 6.2+ | 构建工具 | ✅ 标准 |
 | **@module-federation/vite** | 1.0+ | 微前端模块联邦 | ✅ 标准 |
 | **React Router** | 7.0+ | 路由管理 | ✅ 标准 |
@@ -88,7 +88,15 @@
 | **React Query** | 5.x | 数据缓存 | ✅ 推荐 |
 | **Zustand** | 4.5+ | 状态管理 | ✅ 推荐 |
 
-### 2.2 微前端架构说明
+### 2.2 MUI 版本升级说明
+
+| 阶段 | 版本 | 说明 | 状态 |
+|------|------|------|------|
+| 当前 | 6.x | 现有生产版本 | ✅ 运行中 |
+| 目标 | 9.x | 最新稳定版 | ⚠️ 升级中 |
+| 变更点 | - | Grid v2 API、样式系统优化 | 需迁移 |
+
+### 2.3 微前端架构说明
 
 采用 **Module Federation** 实现前端模块化：
 
@@ -190,11 +198,38 @@ import {
 import { Button, Card } from "@/components/ui";
 ```
 
+### 2.6 组件库统一规范
+
+| 组件类型 | 存放位置 | 说明 |
+|----------|----------|------|
+| **MUI 封装组件** | `components/mui/` | 基于 MUI 的业务组件 |
+| **通用业务组件** | `components/common/` | 与框架无关的通用组件 |
+| **页面模板组件** | `components/templates/` | 页面级模板 |
+| **业务模块组件** | `components/{module}/` | 按模块划分的组件 |
+
+**废弃组件清单：**
+
+| 组件 | 废弃时间 | 替代方案 |
+|------|----------|----------|
+| `components/ui/shadcn.tsx` | 2026-06 | 使用 `components/mui/` |
+| `components/ui/Button.tsx` | 2026-06 | 使用 `@mui/material/Button` |
+
 ---
 
 ## 三、设计 Token 系统
 
-### 3.1 颜色系统
+> **重要**：所有设计 Token 必须从 `theme/tokens.ts` 和 `theme/gradients.ts` 导入使用，禁止硬编码颜色值。
+
+### 3.1 设计 Token 文件结构
+
+```
+apps/web/src/theme/
+├── tokens.ts      # 设计变量（颜色、字体、间距、阴影等）
+├── gradients.ts   # 渐变变量（模块渐变、状态渐变等）
+└── theme.ts      # MUI 主题配置
+```
+
+### 3.2 颜色系统
 
 #### 主题色
 
@@ -743,206 +778,172 @@ import { Button, Card } from "@/components/ui";
 
 ## 七、导航系统
 
+> **重要**：导航系统统一使用 `NavigationRegistry` 作为唯一事实来源，禁止在组件中硬编码导航配置。
+
 ### 7.1 导航架构设计
 
-采用 **动态注册 + 三级导航** 体系，支持插件化架构：
+采用 **动态注册 + 三级导航 + 插件化架构**：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    导航架构                              │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
-│  ┌─────────────────┐                                   │
-│  │  插件导航注册    │  ← 插件启动时动态注册导航元数据     │
-│  └────────┬────────┘                                   │
-│           │                                            │
-│           ▼                                            │
-│  ┌─────────────────┐                                   │
-│  │  导航配置中心    │  ← 统一管理所有导航项（核心+插件）  │
-│  └────────┬────────┘                                   │
-│           │                                            │
-│           ▼                                            │
+│  ┌─────────────────────────────┐                       │
+│  │  NavigationRegistry          │ ← 导航注册中心（唯一数据源）│
+│  │  - 插件导航注册               │                       │
+│  │  - 事件通知机制               │                       │
+│  │  - 权限过滤                   │                       │
+│  └──────────────┬────────────────┘                       │
+│                 │                                        │
+│                 ▼                                        │
 │  ┌─────────────────────────────────────────────────┐   │
 │  │           三级导航渲染                           │   │
 │  │                                                 │   │
-│  │  L1: Header全局导航（核心模块+已安装插件）        │   │
-│  │  L2: 模块Tab导航（插件内页面切换）                │   │
-│  │  L3: 页面内部导航（详情页Tab、步骤器等）          │   │
+│  │  L1: Header全局导航 ← TopNav (动态读取Registry) │   │
+│  │  L2: 侧边栏导航 ← Sidebar (按模块渲染)          │   │
+│  │  L3: 页面内部导航 ← 页面组件内部实现            │   │
 │  └─────────────────────────────────────────────────┘   │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 导航元数据规范
-
-插件通过 `plugin.yaml` 声明导航配置：
-
-```yaml
-navigation:
-  # Header 菜单项（L1）
-  top_nav:
-    - code: erp
-      label: 企业资源
-      icon: Building2
-      path: /erp
-      permission: erp:access
-      order: 10
-  
-  # 模块内 Tab（L2）
-  module_tabs:
-    - label: 概览
-      path: /erp
-      icon: LayoutDashboard
-    - label: 资产
-      path: /erp/assets
-      icon: Package
-      permission: erp:asset:read
-    - label: 财务
-      path: /erp/finance
-      icon: DollarSign
-      permission: erp:finance:read
-```
-
-### 7.3 动态导航注册机制
+### 7.2 导航数据模型
 
 ```typescript
-interface NavItem {
+// types/navigation.ts
+export interface NavItem {
+  code: string;           // 唯一标识
+  label: string;          // 显示文本
+  icon?: string;          // Lucide 图标名称
+  path?: string;          // 路由路径
+  permission?: string;    // 权限码
+  order?: number;         // 排序
+  children?: NavItem[];   // 子导航项
+  badge?: number | string; // 徽章
+  badgeColor?: 'primary' | 'success' | 'warning' | 'error';
+}
+
+export interface ModuleCardConfig {
   code: string;
-  label: string;
-  icon?: string;
+  name: string;
+  icon: string;
   path: string;
   permission?: string;
+  status?: 'online' | 'beta' | 'plan' | 'new';
   order?: number;
-  children?: NavItem[];
 }
 
-interface PluginNavConfig {
-  top_nav?: NavItem[];
-  module_tabs?: NavItem[];
-}
-
-class NavigationRegistry {
-  private static instance: NavigationRegistry;
-  private navItems: Map<string, NavItem[]> = new Map();
-
-  static getInstance(): NavigationRegistry {
-    if (!NavigationRegistry.instance) {
-      NavigationRegistry.instance = new NavigationRegistry();
-    }
-    return NavigationRegistry.instance;
-  }
-
-  register(pluginCode: string, config: PluginNavConfig): void {
-    if (config.top_nav) {
-      this.navItems.set(`${pluginCode}:top`, config.top_nav);
-    }
-    if (config.module_tabs) {
-      this.navItems.set(`${pluginCode}:tabs`, config.module_tabs);
-    }
-  }
-
-  getTopNavItems(): NavItem[] {
-    const items: NavItem[] = [];
-    this.navItems.forEach((navItems, key) => {
-      if (key.endsWith(':top')) {
-        items.push(...navItems);
-      }
-    });
-    return items.sort((a, b) => (a.order || 0) - (b.order || 0));
-  }
-
-  getModuleTabs(pluginCode: string): NavItem[] | undefined {
-    return this.navItems.get(`${pluginCode}:tabs`);
-  }
+export interface PluginNavConfig {
+  top_nav?: NavItem[];       // Header 导航项
+  sidebar_nav?: NavItem[];   // 侧边栏导航项
+  module_tabs?: NavItem[];   // 模块 Tab
+  module_card?: ModuleCardConfig;  // 首页模块卡片
 }
 ```
 
-### 7.4 Header 导航组件
-
-```tsx
-interface HeaderProps {
-  navItems: NavItem[];
-  onNavigate: (path: string) => void;
-  onToggleTheme: () => void;
-  mode: PaletteMode;
-}
-
-export const Header: React.FC<HeaderProps> = ({ 
-  navItems, 
-  onNavigate, 
-  onToggleTheme, 
-  mode 
-}) => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [activeNav, setActiveNav] = useState<string>('/');
-
-  const handleNavClick = (path: string, event?: React.MouseEvent<HTMLElement>) => {
-    setActiveNav(path);
-    onNavigate(path);
-    setAnchorEl(null);
-  };
-
-  return (
-    <AppBar 
-      position="sticky"
-      sx={{
-        top: 0,
-        zIndex: 1300,
-        borderBottom: 1,
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-        boxShadow: 'none',
-      }}
-    >
-      <Container maxWidth="xl">
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          {/* Logo */}
-          <Box display="flex" alignItems="center" gap={2}>
-            <Box sx={{ width: 36, height: 36, bgcolor: 'primary.main', borderRadius: 1 }}>
-              <Building sx={{ color: 'white', width: 20, height: 20 }} />
-            </Box>
-            <Typography variant="h6" fontWeight={700}>TOPEMS</Typography>
-          </Box>
-
-          {/* 动态导航菜单 */}
-          <Box display="flex" gap={1}>
-            {navItems.map((item) => (
-              <Button
-                key={item.code}
-                onClick={() => handleNavClick(item.path)}
-                sx={{ 
-                  fontWeight: activeNav === item.path ? 600 : 400,
-                  color: activeNav === item.path ? 'primary.main' : 'text.primary',
-                }}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </Box>
-
-          {/* 右侧操作 */}
-          <Box display="flex" alignItems="center" gap={2}>
-            <IconButton onClick={onToggleTheme}>
-              {mode === 'dark' ? <Sun /> : <Moon />}
-            </IconButton>
-            <IconButton><Bell /></IconButton>
-            <Avatar sx={{ bgcolor: 'secondary.main' }}><User /></Avatar>
-          </Box>
-        </Box>
-      </Container>
-    </AppBar>
-  );
-};
-```
-
-### 7.5 导航权限过滤
-
-导航项必须通过权限校验才能显示：
+### 7.3 NavigationRegistry API
 
 ```typescript
-const filteredNavItems = navItems.filter(item => {
-  if (!item.permission) return true;
-  return hasPermission(item.permission);
+// lib/NavigationRegistry.ts
+class NavigationRegistry {
+  // 单例获取
+  static getInstance(): NavigationRegistry;
+
+  // 注册插件导航
+  register(pluginCode: string, config: PluginNavConfig): void;
+
+  // 注销插件导航
+  unregister(pluginCode: string): void;
+
+  // 获取 Header 导航项
+  getTopNavItems(): NavItem[];
+
+  // 获取侧边栏导航项
+  getSidebarNavItems(pluginCode: string): NavItem[];
+
+  // 获取模块 Tab
+  getModuleTabs(pluginCode: string): NavItem[];
+
+  // 获取首页模块卡片
+  getModuleCards(): ModuleCardConfig[];
+
+  // 按权限过滤导航项
+  getNavItemsByPermission(hasPermission: (perm: string) => boolean): NavItem[];
+
+  // 更新插件状态
+  updateModuleStatus(pluginCode: string, status: 'online' | 'beta' | 'plan' | 'new'): void;
+
+  // 事件发射器（导航更新通知）
+  emitter: EventEmitter;
+}
+```
+
+### 7.4 插件导航注册流程
+
+```typescript
+// 插件入口文件
+import { navigationRegistry } from '@topems/shared';
+
+export const pluginManifest = {
+  pluginCode: 'hrm',
+  name: '人力资源',
+  version: '1.0.0',
+  navigation: {
+    top_nav: [
+      { code: 'hrm', label: '人力资源', icon: 'Users', path: '/hrm', order: 1, permission: 'hrm:read' }
+    ],
+    sidebar_nav: [
+      { code: 'hrm-employee', label: '员工管理', icon: 'Users', path: '/hrm/employees' },
+      { code: 'hrm-department', label: '部门管理', icon: 'Building', path: '/hrm/departments' }
+    ],
+    module_tabs: [
+      { code: 'hrm-dashboard', label: '仪表盘', path: '/hrm/dashboard', pinned: true },
+      { code: 'hrm-employee', label: '员工', path: '/hrm/employees' },
+      { code: 'hrm-attendance', label: '考勤', path: '/hrm/attendance' }
+    ],
+    module_card: {
+      code: 'hrm',
+      name: '人力资源管理',
+      icon: 'Users',
+      path: '/hrm',
+      status: 'online',
+      order: 1
+    }
+  }
+};
+
+// 初始化时注册
+navigationRegistry.register('hrm', pluginManifest.navigation);
+```
+
+### 7.5 Header 导航组件
+
+```tsx
+// components/layout/TopNav.tsx
+export const TopNav: React.FC = observer(() => {
+  const registry = NavigationRegistry.getInstance();
+  const [topNavItems, setTopNavItems] = useState<NavItem[]>([]);
+
+  useEffect(() => {
+    const updateNav = () => setTopNavItems(registry.getTopNavItems());
+    registry.emitter.on('navigationUpdated', updateNav);
+    updateNav();
+    return () => registry.emitter.off('navigationUpdated', updateNav);
+  }, []);
+
+  return (
+    <AppBar position="sticky">
+      {/* Logo */}
+      <Box>TOPEMS</Box>
+      {/* 动态导航 */}
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        {topNavItems.map(item => (
+          <NavMenuItem key={item.code} item={item} />
+        ))}
+      </Box>
+    </AppBar>
+  );
 });
 ```
 
@@ -961,7 +962,8 @@ const filteredNavItems = navItems.filter(item => {
 ### 7.7 面包屑导航
 
 ```tsx
-<Breadcrumbs>
+// components/layout/PageBreadcrumb.tsx
+< Breadcrumbs>
   <Link href="/" underline="hover" color="inherit">
     <Home style={{ width: 16, height: 16 }} />
   </Link>
@@ -972,45 +974,200 @@ const filteredNavItems = navItems.filter(item => {
 </Breadcrumbs>
 ```
 
-### 7.8 模块 Tab 导航
-
-模块Tab由插件动态提供：
+### 7.8 侧边栏导航组件
 
 ```tsx
+// components/layout/Sidebar.tsx
+interface SidebarProps {
+  pluginCode: string;
+  activePath: string;
+}
+
+export const Sidebar: React.FC<SidebarProps> = observer(({ pluginCode, activePath }) => {
+  const registry = NavigationRegistry.getInstance();
+  const sidebarItems = registry.getSidebarNavItems(pluginCode);
+
+  if (!sidebarItems.length) return null;
+
+  return (
+    <Box sx={{ width: 220, borderRight: 1, borderColor: 'divider', p: 1 }}>
+      {sidebarItems.map(item => (
+        <SidebarNavItem key={item.code} item={item} activePath={activePath} />
+      ))}
+    </Box>
+  );
+});
+```
+
+### 7.9 模块 Tab 导航
+
+```tsx
+// components/layout/ModuleTabs.tsx
 interface ModuleTabsProps {
-  tabs: NavItem[];
+  pluginCode: string;
   activePath: string;
   onTabChange: (path: string) => void;
 }
 
-export const ModuleTabs: React.FC<ModuleTabsProps> = ({ 
-  tabs, 
+export const ModuleTabs: React.FC<ModuleTabsProps> = observer(({ 
+  pluginCode, 
   activePath, 
   onTabChange 
 }) => {
-  const filteredTabs = tabs.filter(tab => {
-    if (!tab.permission) return true;
-    return hasPermission(tab.permission);
-  });
+  const registry = NavigationRegistry.getInstance();
+  const tabs = registry.getModuleTabs(pluginCode) || [];
 
   return (
     <Tabs 
-      variant="scrollable"
-      scrollButtons="auto"
-      sx={{ borderBottom: 1, borderColor: 'divider' }}
       value={activePath}
       onChange={(e, value) => onTabChange(value as string)}
+      sx={{ borderBottom: 1, borderColor: 'divider' }}
     >
-      {filteredTabs.map(tab => (
-        <Tab 
-          key={tab.path} 
-          label={tab.label}
-          value={tab.path}
-        />
+      {tabs.map(tab => (
+        <Tab key={tab.code} label={tab.label} value={tab.path} />
       ))}
     </Tabs>
   );
+});
+```
+
+### 7.10 导航权限过滤
+
+```typescript
+// 权限检查 Hook
+const useNavPermission = () => {
+  const { permissions } = useUser();
+
+  const hasPermission = useCallback((permission?: string) => {
+    if (!permission) return true;
+    return permissions.includes(permission);
+  }, [permissions]);
+
+  return { hasPermission };
 };
+
+// 获取过滤后的导航
+const filteredNav = registry.getNavItemsByPermission(hasPermission);
+```
+
+### 7.11 旧导航配置迁移
+
+| 旧配置 | 新配置 | 说明 |
+|--------|--------|------|
+| `navigation-v2.ts` | `NavigationRegistry` | 合并到注册中心 |
+| `topNavItems` | `registry.getTopNavItems()` | 动态获取 |
+| `pluginNavigation` | `registry.register()` | 动态注册 |
+| `suiteNavigation` | `registry.register()` | 按套件分组注册 |
+| `moduleTabsConfig` | `registry.getModuleTabs()` | 按模块获取 |
+
+### 7.12 模块布局组件 (ModuleLayout)
+
+为了统一插件模块页面的布局，平台提供 `ModuleLayout` 组件，自动组合 `Sidebar`、`ModuleTabs`、`PageBreadcrumb`、`PageHeader`。
+
+**文件**：`apps/web/src/components/layout/ModuleLayout.tsx`
+
+**核心特性**：
+
+| 特性 | 说明 |
+|------|------|
+| **自动导航获取** | 从 `NavigationRegistry` 自动获取侧边栏和 Tab |
+| **动态面包屑** | 根据 URL 路径自动生成面包屑 |
+| **响应式适配** | 移动端自动隐藏侧边栏 |
+| **pluginCode 解析** | 支持显式 prop 或 URL 参数自动解析 |
+
+**使用示例**：
+
+```tsx
+import { ModuleLayout } from '@/components/layout/ModuleLayout';
+
+// 方式 1：显式指定 pluginCode
+<ModuleLayout pluginCode="erp">
+  <Outlet />
+</ModuleLayout>
+
+// 方式 2：从 URL 参数自动解析
+<Route 
+  path="/:pluginCode/*" 
+  element={
+    <ModuleLayout>
+      <Outlet />
+    </ModuleLayout>
+  } 
+/>
+```
+
+**布局结构**：
+
+```
+┌─────────────────────────────────────────────────┐
+│ Header (TopNav)                                  │
+├──────────┬──────────────────────────────────────┤
+│          │ ModuleTabs                            │
+│ Sidebar  ├──────────────────────────────────────┤
+│ (L2)     │ Breadcrumb                            │
+│          │ PageHeader                            │
+│          ├──────────────────────────────────────┤
+│          │                                      │
+│          │ Page Content                          │
+│          │                                      │
+└──────────┴──────────────────────────────────────┘
+```
+
+### 7.13 插件生命周期管理 (PluginLifecycleManager)
+
+为了支持插件动态加载/卸载时自动注册/清理导航，平台提供 `PluginLifecycleManager` 单例。
+
+**文件**：`apps/web/src/lib/PluginLifecycleManager.ts`
+
+**核心 API**：
+
+| 方法 | 说明 |
+|------|------|
+| `loadPlugin(code, config)` | 加载插件并注册导航 |
+| `unloadPlugin(code)` | 卸载插件并清理导航 |
+| `loadAllPlugins(plugins)` | 批量加载插件 |
+| `unloadAllPlugins()` | 批量卸载所有插件 |
+| `updatePluginNavConfig(code, config)` | 动态更新插件导航 |
+| `getLoadedPlugins()` | 获取已加载插件列表 |
+| `emitter` | 事件发射器 |
+
+**事件列表**：
+
+| 事件 | 触发时机 | 参数 |
+|------|----------|------|
+| `pluginLoaded` | 插件加载完成 | `(code, info)` |
+| `pluginUnloaded` | 插件卸载完成 | `(code)` |
+| `pluginError` | 加载/卸载错误 | `(code, info)` |
+| `pluginNavUpdated` | 导航配置更新 | `(code, navConfig)` |
+
+**使用示例**：
+
+```typescript
+import { pluginLifecycleManager } from '@/lib/PluginLifecycleManager';
+
+// 加载单个插件
+await pluginLifecycleManager.loadPlugin('erp', {
+  code: 'erp',
+  name: '企业资源管理',
+  version: '1.0.0',
+  navConfig: {
+    top_nav: [...],
+    sidebar_nav: [...],
+    module_tabs: [...],
+    module_card: {...},
+  },
+});
+
+// 批量加载
+await pluginLifecycleManager.loadAllPlugins([erpConfig, crmConfig, hrmConfig]);
+
+// 监听事件
+pluginLifecycleManager.emitter.on('pluginLoaded', (code, info) => {
+  console.log(`Plugin ${code} loaded`, info);
+});
+
+// 卸载插件
+await pluginLifecycleManager.unloadPlugin('erp');
 ```
 
 ---

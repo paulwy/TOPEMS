@@ -37,7 +37,7 @@ const NotificationDetailPage: React.FC = () => {
           setNotification(found);
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Error loading notification:', err);
     } finally {
       setLoading(false);
@@ -56,8 +56,8 @@ const NotificationDetailPage: React.FC = () => {
       } else {
         error(res.message || '操作失败');
       }
-    } catch (err: any) {
-      error(err.message || '操作失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '操作失败');
     } finally {
       setActionLoading(false);
     }
@@ -76,8 +76,8 @@ const NotificationDetailPage: React.FC = () => {
       } else {
         error(res.message || '删除失败');
       }
-    } catch (err: any) {
-      error(err.message || '删除失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '删除失败');
     } finally {
       setActionLoading(false);
     }

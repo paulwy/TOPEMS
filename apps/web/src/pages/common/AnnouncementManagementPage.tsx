@@ -18,7 +18,7 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Bell,
   Search,
@@ -74,8 +74,9 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       if (res.success && res.data) {
         setAnnouncements(res.data.items || []);
       }
-    } catch (err: any) {
-      setError(err.message || '加载数据失败');
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || '加载数据失败');
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -113,10 +114,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
       addNotification({
         title: '失败',
-        message: err.message || '创建公告失败',
+        message: error.message || '创建公告失败',
         type: 'error',
       });
     }
@@ -140,10 +142,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
       addNotification({
         title: '失败',
-        message: err.message || '删除公告失败',
+        message: error.message || '删除公告失败',
         type: 'error',
       });
     }
@@ -170,10 +173,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
       addNotification({
         title: '失败',
-        message: err.message || '更新公告失败',
+        message: error.message || '更新公告失败',
         type: 'error',
       });
     }
@@ -196,10 +200,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
       addNotification({
         title: '失败',
-        message: err.message || '发布公告失败',
+        message: error.message || '发布公告失败',
         type: 'error',
       });
     }
@@ -222,10 +227,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '下架公告失败',
+        message: (err as { message?: string }).message || '下架公告失败',
         type: 'error',
       });
     }

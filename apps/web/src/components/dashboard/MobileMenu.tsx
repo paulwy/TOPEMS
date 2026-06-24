@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   X,
   Activity,
@@ -110,7 +110,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               sx={{
                 p: 2,
                 borderRadius: 2,
-                '&:hover': { backgroundColor: '#f1f5f9' },
+                '&:hover': { backgroundColor: 'grey.100' },
               }}
             >
               <X size={20} />
@@ -133,10 +133,10 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                       p: 3,
                       borderRadius: 2,
                       justifyContent: 'flex-start',
-                      backgroundColor: currentPage === item.id ? '#eff6ff' : 'transparent',
-                      color: currentPage === item.id ? '#2563eb' : '#334155',
+                      backgroundColor: currentPage === item.id ? 'primary.light' : 'transparent',
+                      color: currentPage === item.id ? 'primary.dark' : '#334155',
                       '&:hover': {
-                        backgroundColor: currentPage === item.id ? '#dbeafe' : '#f1f5f9',
+                        backgroundColor: currentPage === item.id ? '#dbeafe' : 'grey.100',
                       },
                     }}
                   >

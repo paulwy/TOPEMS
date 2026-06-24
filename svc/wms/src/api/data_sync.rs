@@ -196,6 +196,7 @@ async fn create_shipping_from_outbound_internal(
                 "create",
                 "success",
                 None,
+                0,
             ).await;
 
             Json(ApiResponse::success(
@@ -224,6 +225,7 @@ async fn create_shipping_from_outbound_internal(
                 "create",
                 "failed",
                 Some(e.to_string()),
+                0,
             ).await;
             Json(api_error(500, "创建销售订单失败"))
         }
@@ -318,6 +320,7 @@ async fn create_inbound_from_scm(
                 "create",
                 "success",
                 None,
+                0,
             ).await;
 
             Json(ApiResponse::success(
@@ -414,14 +417,15 @@ async fn record_sync_log(
     operation: &str,
     status: &str,
     error_message: Option<String>,
+    retry_count: i32,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         INSERT INTO unified_core.inter_module_sync 
             (tenant_id, sync_type, source_module, target_module, source_entity,
              source_id, source_code, target_id, target_code, operation, status,
-             error_message, executed_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+             error_message, retry_count, max_retries, executed_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         "#,
     )
     .bind(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
@@ -436,6 +440,8 @@ async fn record_sync_log(
     .bind(operation)
     .bind(status)
     .bind(error_message)
+    .bind(retry_count)
+    .bind(3)
     .bind(Utc::now())
     .bind(Utc::now())
     .execute(&state.db)

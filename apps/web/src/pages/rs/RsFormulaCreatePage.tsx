@@ -22,7 +22,7 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
 
 interface Component {

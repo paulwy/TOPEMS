@@ -9,7 +9,7 @@ import {
   Divider,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, Calendar, User, Edit2, Trash2, Download, Folder } from 'lucide-react';
@@ -24,12 +24,6 @@ const DocsFileDetailPage: React.FC = () => {
   const [file, setFile] = useState<FileMetadata | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadFile(id);
-    }
-  }, [id, loadFile]);
-
   const loadFile = useCallback(
     async (fileId: string) => {
       setLoading(true);
@@ -38,7 +32,7 @@ const DocsFileDetailPage: React.FC = () => {
         if (res.code === 200 && res.data) {
           setFile(res.data);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         addNotification({
           title: '错误',
           message: '加载文件信息失败',
@@ -50,6 +44,12 @@ const DocsFileDetailPage: React.FC = () => {
     },
     [addNotification]
   );
+
+  useEffect(() => {
+    if (id) {
+      loadFile(id);
+    }
+  }, [id, loadFile]);
 
   const handleDelete = async () => {
     if (!id || !window.confirm('确定要删除此文件吗？')) return;
@@ -70,7 +70,7 @@ const DocsFileDetailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: '删除文件失败',

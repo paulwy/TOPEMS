@@ -44,7 +44,7 @@ import {
   Tab,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 const FlowApprovalPage: React.FC = () => {
   const navigate = useNavigate();
@@ -89,7 +89,7 @@ const FlowApprovalPage: React.FC = () => {
       } else {
         setInstances([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载数据失败:', err);
       addNotification({
         title: '错误',
@@ -138,7 +138,7 @@ const FlowApprovalPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: '处理审批失败',
@@ -156,14 +156,14 @@ const FlowApprovalPage: React.FC = () => {
         return (
           <CheckCircle
             size={20}
-            style={{ color: '#16a34a' }}
+            style={{ color: 'success.dark' }}
           />
         );
       case 'rejected':
         return (
           <XCircle
             size={20}
-            style={{ color: '#dc2626' }}
+            style={{ color: 'error.dark' }}
           />
         );
       case 'pending':
@@ -177,7 +177,7 @@ const FlowApprovalPage: React.FC = () => {
         return (
           <AlertCircle
             size={20}
-            style={{ color: '#4b5563' }}
+            style={{ color: 'text.secondary' }}
           />
         );
     }
@@ -234,7 +234,7 @@ const FlowApprovalPage: React.FC = () => {
           >
             <CheckCircle
               size={24}
-              style={{ color: '#6366f1' }}
+              style={{ color: 'primary.light' }}
             />
           </Box>
           <Box>
@@ -316,7 +316,7 @@ const FlowApprovalPage: React.FC = () => {
                 startAdornment: (
                   <Search
                     size={20}
-                    style={{ marginRight: 8, color: '#9ca3af' }}
+                    style={{ marginRight: 8, color: 'text.disabled' }}
                   />
                 ),
               },
@@ -365,14 +365,14 @@ const FlowApprovalPage: React.FC = () => {
               <Loader2
                 size={32}
                 className='animate-spin'
-                style={{ color: '#6366f1' }}
+                style={{ color: 'primary.light' }}
               />
             </Box>
           ) : filteredApprovals.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <CheckCircle2
                 size={64}
-                style={{ margin: '0 auto', color: '#9ca3af', marginBottom: 16 }}
+                style={{ margin: '0 auto', color: 'text.disabled', marginBottom: 16 }}
               />
               <Typography sx={{ color: 'grey.500' }}>
                 {activeTab === 'pending' ? '暂无待审批项' : '暂无审批记录'}
@@ -431,7 +431,7 @@ const FlowApprovalPage: React.FC = () => {
                           >
                             <FileText
                               size={16}
-                              style={{ color: '#6b7280' }}
+                              style={{ color: 'text.secondary' }}
                             />
                             <Typography
                               variant='body2'
@@ -449,7 +449,7 @@ const FlowApprovalPage: React.FC = () => {
                           >
                             <Users
                               size={16}
-                              style={{ color: '#6b7280' }}
+                              style={{ color: 'text.secondary' }}
                             />
                             <Typography
                               variant='body2'
@@ -488,7 +488,7 @@ const FlowApprovalPage: React.FC = () => {
                         >
                           <Clock
                             size={16}
-                            style={{ color: '#9ca3af' }}
+                            style={{ color: 'text.disabled' }}
                           />
                           <Typography
                             variant='caption'
@@ -505,7 +505,7 @@ const FlowApprovalPage: React.FC = () => {
                           >
                             <CheckCircle
                               size={16}
-                              style={{ color: '#9ca3af' }}
+                              style={{ color: 'text.disabled' }}
                             />
                             <Typography
                               variant='caption'

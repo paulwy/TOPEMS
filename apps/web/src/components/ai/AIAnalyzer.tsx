@@ -12,7 +12,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { Card, CardContent, Box, Typography, TextField, Chip } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import { aiApi } from '../../api/ai';
 import { logger } from '@/utils/logger';
@@ -62,9 +62,9 @@ export interface Keyword {
 }
 
 const sentimentColors: Record<string, { bg: string; text: string; label: string }> = {
-  positive: { bg: '#dcfce7', text: '#15803d', label: '积极' },
-  negative: { bg: '#fee2e2', text: '#dc2626', label: '消极' },
-  neutral: { bg: '#f3f4f6', text: '#374151', label: '中性' },
+  positive: { bg: 'success.lighter', text: '#15803d', label: '积极' },
+  negative: { bg: 'error.lighter', text: 'error.dark', label: '消极' },
+  neutral: { bg: 'grey.100', text: 'grey.700', label: '中性' },
 };
 
 export function AIAnalyzer({
@@ -123,7 +123,7 @@ export function AIAnalyzer({
         entities: entitiesResult.length > 0 ? entitiesResult : undefined,
         keywords: keywordsResult.length > 0 ? keywordsResult : undefined,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('分析失败:', error);
     } finally {
       setIsLoading(false);
@@ -140,7 +140,7 @@ export function AIAnalyzer({
           details: response.data.details as any,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('情感分析失败:', error);
     }
   };
@@ -155,7 +155,7 @@ export function AIAnalyzer({
           all_categories: response.data.all_categories,
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('文本分类失败:', error);
     }
   };
@@ -166,7 +166,7 @@ export function AIAnalyzer({
       if (response.success && response.data) {
         setEntitiesResult(response.data.entities);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('实体提取失败:', error);
     }
   };
@@ -177,7 +177,7 @@ export function AIAnalyzer({
       if (response.success && response.data) {
         setKeywordsResult(response.data.keywords);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('关键词提取失败:', error);
     }
   };
@@ -193,7 +193,7 @@ export function AIAnalyzer({
       await navigator.clipboard.writeText(JSON.stringify(results, null, 2));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('复制失败:', error);
     }
   };
@@ -330,9 +330,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.sentiment ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   )}
                 </Box>
                 {expandedSections.sentiment && sentimentResult.details && (
@@ -351,7 +351,7 @@ export function AIAnalyzer({
                             variant='caption'
                             sx={{
                               fontWeight: 500,
-                              color: '#16a34a',
+                              color: 'success.dark',
                               display: 'block',
                               mb: 0.5,
                             }}
@@ -366,9 +366,9 @@ export function AIAnalyzer({
                                 variant='outlined'
                                 label={word}
                                 sx={{
-                                  bgcolor: '#f0fdf4',
+                                  bgcolor: 'success.light',
                                   color: '#15803d',
-                                  borderColor: '#bbf7d0',
+                                  borderColor: 'success.light',
                                 }}
                               />
                             ))}
@@ -382,7 +382,7 @@ export function AIAnalyzer({
                             variant='caption'
                             sx={{
                               fontWeight: 500,
-                              color: '#dc2626',
+                              color: 'error.dark',
                               display: 'block',
                               mb: 0.5,
                             }}
@@ -397,9 +397,9 @@ export function AIAnalyzer({
                                 variant='outlined'
                                 label={word}
                                 sx={{
-                                  bgcolor: '#fef2f2',
-                                  color: '#b91c1c',
-                                  borderColor: '#fecaca',
+                                  bgcolor: 'error.light',
+                                  color: 'error.darker',
+                                  borderColor: 'error.light',
                                 }}
                               />
                             ))}
@@ -423,7 +423,7 @@ export function AIAnalyzer({
                           sx={{
                             width: '100%',
                             height: 8,
-                            bgcolor: '#e5e7eb',
+                            bgcolor: 'grey.200',
                             borderRadius: 4,
                           }}
                         >
@@ -459,7 +459,7 @@ export function AIAnalyzer({
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: 1.5 }}>
-                      <BarChart3 style={{ width: 20, height: 20, color: '#2563eb' }} />
+                      <BarChart3 style={{ width: 20, height: 20, color: 'primary.dark' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -480,7 +480,7 @@ export function AIAnalyzer({
                         <Chip
                           size='small'
                           label={classificationResult.category}
-                          sx={{ bgcolor: '#dbeafe', color: '#1d4ed8' }}
+                          sx={{ bgcolor: '#dbeafe', color: 'primary.dark' }}
                         />
                         <Typography
                           variant='caption'
@@ -492,9 +492,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.classify ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   )}
                 </Box>
                 {expandedSections.classify &&
@@ -543,14 +543,14 @@ export function AIAnalyzer({
                               sx={{
                                 flex: 1,
                                 height: 8,
-                                bgcolor: '#e5e7eb',
+                                bgcolor: 'grey.200',
                                 borderRadius: 4,
                               }}
                             >
                               <Box
                                 sx={{
                                   height: '100%',
-                                  bgcolor: '#3b82f6',
+                                  bgcolor: 'primary.main',
                                   borderRadius: 4,
                                   width: `${item.score * 100}%`,
                                 }}
@@ -585,8 +585,8 @@ export function AIAnalyzer({
                   onClick={() => toggleSection('entities')}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <Box sx={{ p: 1.5, bgcolor: '#dcfce7', borderRadius: 1.5 }}>
-                      <Users style={{ width: 20, height: 20, color: '#16a34a' }} />
+                    <Box sx={{ p: 1.5, bgcolor: 'success.lighter', borderRadius: 1.5 }}>
+                      <Users style={{ width: 20, height: 20, color: 'success.dark' }} />
                     </Box>
                     <Box>
                       <Typography
@@ -605,9 +605,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.entities ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   )}
                 </Box>
                 {expandedSections.entities && (
@@ -627,14 +627,14 @@ export function AIAnalyzer({
                           alignItems: 'center',
                           gap: 2,
                           p: 1.5,
-                          bgcolor: '#f9fafb',
+                          bgcolor: 'grey.50',
                           borderRadius: 1,
                         }}
                       >
                         <Chip
                           size='small'
                           label={entity.entity_type}
-                          sx={{ bgcolor: '#dcfce7', color: '#15803d' }}
+                          sx={{ bgcolor: 'success.lighter', color: '#15803d' }}
                         />
                         <Typography
                           variant='body2'
@@ -690,9 +690,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.keywords ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: '#9ca3af' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
                   )}
                 </Box>
                 {expandedSections.keywords && (
@@ -746,7 +746,7 @@ export function AIAnalyzer({
                             sx={{
                               flex: 1,
                               height: 8,
-                              bgcolor: '#e5e7eb',
+                              bgcolor: 'grey.200',
                               borderRadius: 4,
                             }}
                           >

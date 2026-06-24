@@ -11,7 +11,7 @@ import {
   MenuItem,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 /**
  * 凭证模板管理页面
  * 管理凭证自动生成规则和模板
@@ -95,7 +95,7 @@ export default function VoucherTemplatePage() {
         newCode,
         newName,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Copy template failed:', error);
     }
   };
@@ -105,7 +105,7 @@ export default function VoucherTemplatePage() {
     if (!window.confirm('确定要删除此模板吗？')) return;
     try {
       await deleteTemplate.mutateAsync(templateId);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Delete template failed:', error);
     }
   };
@@ -117,7 +117,7 @@ export default function VoucherTemplatePage() {
         templateId: template.id,
         isActive: !template.is_active,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Toggle template failed:', error);
     }
   };

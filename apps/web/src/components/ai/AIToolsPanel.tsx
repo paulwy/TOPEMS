@@ -13,7 +13,7 @@ import {
   Chip,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileJson, Calendar, Calculator, Shield, Copy, Check, ArrowRightLeft } from 'lucide-react';
 
 const JsonFormatter: React.FC = () => {
@@ -28,7 +28,7 @@ const JsonFormatter: React.FC = () => {
       const parsed = JSON.parse(input);
       setOutput(JSON.stringify(parsed, null, 2));
       setError(null);
-    } catch (e) {
+    } catch (e: unknown) {
       setError((e as Error).message);
       setOutput('');
     }
@@ -39,7 +39,7 @@ const JsonFormatter: React.FC = () => {
       const parsed = JSON.parse(input);
       setOutput(JSON.stringify(parsed));
       setError(null);
-    } catch (e) {
+    } catch (e: unknown) {
       setError((e as Error).message);
       setOutput('');
     }

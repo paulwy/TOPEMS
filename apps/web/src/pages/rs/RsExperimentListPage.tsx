@@ -30,7 +30,7 @@ import {
   Tab,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Search, Edit, Trash2, Eye, Filter, FlaskConical as Flask } from 'lucide-react';
 
 interface Experiment {
@@ -245,14 +245,14 @@ const RsExperimentListPage: React.FC = () => {
               管理研发试验、记录数据、追踪批次
             </Typography>
           </div>
-          <Button
-            variant='contained'
-            startIcon={<Plus />}
-            component={Link}
-            to='/rs/experiments/create'
-          >
-            新建试验
-          </Button>
+          <Link to='/rs/experiments/create'>
+            <Button
+              variant='contained'
+              startIcon={<Plus />}
+            >
+              新建试验
+            </Button>
+          </Link>
         </Stack>
       </div>
 

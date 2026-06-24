@@ -17,7 +17,7 @@ import {
   Box,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Building,
@@ -269,10 +269,10 @@ const HrmOrganizationPage: React.FC = () => {
       if (empRes.code === 200 && empRes.data) {
         setEmployees((empRes.data as any).items || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '加载失败',
-        message: error.message || '获取数据失败',
+        message: (error as { message?: string }).message || '获取数据失败',
         type: 'error',
       });
     } finally {
@@ -293,7 +293,7 @@ const HrmOrganizationPage: React.FC = () => {
         const filtered = allEmps.filter((e: Employee) => deptIds.includes(e.department_id || ''));
         setEmployees(filtered);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch employees:', error);
     }
   };
@@ -307,7 +307,7 @@ const HrmOrganizationPage: React.FC = () => {
       if (response.code === 200 && response.data) {
         setEmployees((response.data as any).items || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch employees:', error);
     }
   };
@@ -359,10 +359,10 @@ const HrmOrganizationPage: React.FC = () => {
               type: 'error',
             });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           addNotification({
             title: '失败',
-            message: error.message || '删除失败',
+            message: (error as { message?: string }).message || '删除失败',
             type: 'error',
           });
         }
@@ -397,10 +397,10 @@ const HrmOrganizationPage: React.FC = () => {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '操作失败',
+        message: (error as { message?: string }).message || '操作失败',
         type: 'error',
       });
     }
@@ -449,10 +449,10 @@ const HrmOrganizationPage: React.FC = () => {
               type: 'error',
             });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           addNotification({
             title: '失败',
-            message: error.message || '删除失败',
+            message: (error as { message?: string }).message || '删除失败',
             type: 'error',
           });
         }
@@ -487,10 +487,10 @@ const HrmOrganizationPage: React.FC = () => {
           }
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       addNotification({
         title: '失败',
-        message: error.message || '操作失败',
+        message: (error as { message?: string }).message || '操作失败',
         type: 'error',
       });
     }

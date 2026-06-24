@@ -28,7 +28,14 @@ interface StatsChartProps {
   height?: number;
 }
 
-const defaultColors = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
+const defaultColors = [
+  'primary.light',
+  'secondary.main',
+  '#a855f7',
+  '#d946ef',
+  '#ec4899',
+  '#f43f5e',
+];
 
 const CHART_WIDTH = 400;
 const CHART_HEIGHT = 200;
@@ -51,7 +58,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
     return (
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
           padding: '24px',
@@ -61,7 +68,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
           style={{
             fontSize: '18px',
             fontWeight: 600,
-            color: '#0f172a',
+            color: 'grey.900',
             marginBottom: '16px',
           }}
         >
@@ -87,15 +94,15 @@ export const StatsChart: React.FC<StatsChartProps> = ({
       return (
         <div
           style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: 'white',
             padding: '12px',
             borderRadius: '8px',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e2e8f0',
+            border: '1px solid border.default',
           }}
         >
-          <p style={{ fontWeight: 500, color: '#0f172a' }}>{payload[0].name}</p>
-          <p style={{ fontSize: '14px', color: '#64748b' }}>{payload[0].value}</p>
+          <p style={{ fontWeight: 500, color: 'grey.900' }}>{payload[0].name}</p>
+          <p style={{ fontSize: '14px', color: 'grey.600' }}>{payload[0].value}</p>
         </div>
       );
     }
@@ -105,7 +112,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   return (
     <div
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         padding: '24px',
@@ -115,7 +122,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
         style={{
           fontSize: '18px',
           fontWeight: 600,
-          color: '#0f172a',
+          color: 'grey.900',
           marginBottom: '16px',
         }}
       >
@@ -160,7 +167,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             <Line
               type='monotone'
               dataKey={yKey}
-              stroke='#6366f1'
+              stroke='primary.light'
               strokeWidth={2}
             />
           </LineChart>

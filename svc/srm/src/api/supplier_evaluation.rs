@@ -50,6 +50,9 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
             "/api/srm/suppliers/{id}/evaluation-history",
             get(get_evaluation_history),
         )
+        .route("/api/srm/suppliers/{id}/performance-summary", get(get_performance_summary))
+        .route("/api/srm/suppliers/{id}/score-trend", get(get_score_trend))
+        .route("/api/srm/evaluations/statistics", get(get_evaluation_statistics))
         .with_state(state);
 
     Ok(app)
@@ -587,4 +590,233 @@ async fn get_evaluation_history(
             ))
         }
     }
+}
+
+async fn get_performance_summary(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query!(
+        r#"
+        SELECT 
+            COUNT(*) as total_evaluations,
+            AVG(overall_score) as avg_overall_score,
+            AVG(quality_score) as avg_quality_score,
+            AVG(delivery_score) as avg_delivery_score,
+            AVG(service_score) as avg_service_score,
+            AVG(price_score) as avg_price_score,
+            MAX(overall_score) as max_overall_score,
+            MIN(overall_score) as min_overall_score,
+            MAX(evaluation_date) as latest_evaluation_date,
+            MIN(evaluation_date) as earliest_evaluation_date
+        FROM plugin_srm.supplier_evaluations
+        WHERE supplier_id = $1 AND status = 'completed'
+        "#,
+        id
+    )
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let total = row.total_evaluations.unwrap_or(0);
+            let summary = serde_json::json!({
+                "supplier_id": id,
+                "total_evaluations": total,
+                "avg_overall_score": row.avg_overall_score.map(|v| (v * 100.0).round() / 100.0),
+                "avg_quality_score": row.avg_quality_score.map(|v| (v * 100.0).round() / 100.0),
+                "avg_delivery_score": row.avg_delivery_score.map(|v| (v * 100.0).round() / 100.0),
+                "avg_service_score": row.avg_service_score.map(|v| (v * 100.0).round() / 100.0),
+                "avg_price_score": row.avg_price_score.map(|v| (v * 100.0).round() / 100.0),
+                "max_overall_score": row.max_overall_score.map(|v| (v * 100.0).round() / 100.0),
+                "min_overall_score": row.min_overall_score.map(|v| (v * 100.0).round() / 100.0),
+                "latest_evaluation_date": row.latest_evaluation_date,
+                "earliest_evaluation_date": row.earliest_evaluation_date,
+                "performance_level": if total > 0 {
+                    let avg = row.avg_overall_score.unwrap_or(0.0);
+                    if avg >= 90.0 { "excellent" } else if avg >= 80.0 { "good" } else if avg >= 70.0 { "medium" } else if avg >= 60.0 { "poor" } else { "critical" }
+                } else {
+                    "no_data"
+                }
+            });
+            Json(ApiResponse::success(summary, "获取供应商绩效汇总成功"))
+        }
+        Ok(None) => Json(ApiResponse::success(serde_json::json!({
+            "supplier_id": id,
+            "total_evaluations": 0,
+            "avg_overall_score": null,
+            "avg_quality_score": null,
+            "avg_delivery_score": null,
+            "avg_service_score": null,
+            "avg_price_score": null,
+            "max_overall_score": null,
+            "min_overall_score": null,
+            "latest_evaluation_date": null,
+            "earliest_evaluation_date": null,
+            "performance_level": "no_data"
+        }), "获取供应商绩效汇总成功")),
+        Err(e) => {
+            tracing::error!("获取供应商绩效汇总失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商绩效汇总失败"))
+        }
+    }
+}
+
+async fn get_score_trend(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Query(params): Query<EvaluationQueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let start_date = params.start_date.clone().and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(&s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
+    });
+
+    let end_date = params.end_date.clone().and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(&s)
+            .ok()
+            .map(|d| d.with_timezone(&Utc))
+    });
+
+    let result = sqlx::query!(
+        r#"
+        SELECT 
+            evaluation_date,
+            overall_score,
+            quality_score,
+            delivery_score,
+            service_score,
+            price_score,
+            evaluation_no
+        FROM plugin_srm.supplier_evaluations
+        WHERE supplier_id = $1 
+          AND status = 'completed'
+          AND ($2::timestamptz IS NULL OR evaluation_date >= $2)
+          AND ($3::timestamptz IS NULL OR evaluation_date <= $3)
+        ORDER BY evaluation_date ASC
+        "#,
+        id,
+        start_date,
+        end_date
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let trend_data: Vec<serde_json::Value> = rows.into_iter().map(|r| {
+                serde_json::json!({
+                    "evaluation_date": r.evaluation_date,
+                    "evaluation_no": r.evaluation_no,
+                    "overall_score": r.overall_score.map(|v| (v * 100.0).round() / 100.0),
+                    "quality_score": r.quality_score.map(|v| (v * 100.0).round() / 100.0),
+                    "delivery_score": r.delivery_score.map(|v| (v * 100.0).round() / 100.0),
+                    "service_score": r.service_score.map(|v| (v * 100.0).round() / 100.0),
+                    "price_score": r.price_score.map(|v| (v * 100.0).round() / 100.0),
+                })
+            }).collect();
+
+            let summary = if !trend_data.is_empty() {
+                let first_score = trend_data.first().and_then(|d| d.get("overall_score").and_then(|s| s.as_f64()));
+                let last_score = trend_data.last().and_then(|d| d.get("overall_score").and_then(|s| s.as_f64()));
+                let change = match (first_score, last_score) {
+                    (Some(f), Some(l)) => Some((l - f).round() / 100.0 * 100.0),
+                    _ => None
+                };
+                serde_json::json!({
+                    "trend_direction": match change {
+                        Some(c) if c > 0.0 => "up",
+                        Some(c) if c < 0.0 => "down",
+                        _ => "stable"
+                    },
+                    "score_change": change,
+                    "data_points": trend_data.len()
+                })
+            } else {
+                serde_json::json!({
+                    "trend_direction": "no_data",
+                    "score_change": null,
+                    "data_points": 0
+                })
+            };
+
+            Json(ApiResponse::success(serde_json::json!({
+                "supplier_id": id,
+                "trend_data": trend_data,
+                "summary": summary
+            }), "获取供应商评分趋势成功"))
+        }
+        Err(e) => {
+            tracing::error!("获取供应商评分趋势失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商评分趋势失败"))
+        }
+    }
+}
+
+async fn get_evaluation_statistics(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let total_result = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations"
+    )
+    .fetch_one(&state.db)
+    .await;
+
+    let completed_result = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'completed'"
+    )
+    .fetch_one(&state.db)
+    .await;
+
+    let pending_result = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'pending'"
+    )
+    .fetch_one(&state.db)
+    .await;
+
+    let avg_score_result = sqlx::query_scalar::<_, f64>(
+        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE status = 'completed' AND overall_score IS NOT NULL"
+    )
+    .fetch_one(&state.db)
+    .await;
+
+    let supplier_count_result = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations"
+    )
+    .fetch_one(&state.db)
+    .await;
+
+    let statistics = serde_json::json!({
+        "total_evaluations": total_result.unwrap_or(0),
+        "completed_evaluations": completed_result.unwrap_or(0),
+        "pending_evaluations": pending_result.unwrap_or(0),
+        "avg_overall_score": avg_score_result.map(|v| (v * 100.0).round() / 100.0),
+        "evaluated_supplier_count": supplier_count_result.unwrap_or(0),
+        "completion_rate": if total_result.unwrap_or(0) > 0 {
+            ((completed_result.unwrap_or(0) as f64 / total_result.unwrap_or(0) as f64) * 100.0).round() / 100.0
+        } else {
+            0.0
+        }
+    });
+
+    Json(ApiResponse::success(statistics, "获取评估统计成功"))
 }

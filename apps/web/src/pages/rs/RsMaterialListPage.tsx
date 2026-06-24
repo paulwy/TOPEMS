@@ -19,7 +19,7 @@ import {
   CardContent,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Search, Package, Plus } from 'lucide-react';
 
 interface Material {

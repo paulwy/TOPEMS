@@ -40,7 +40,7 @@ import {
   Link,
   ButtonGroup,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { EmptyState, ErrorEmptyState } from '../mui/EmptyState';
 import {
   Search,
@@ -966,7 +966,7 @@ export function ListPageTemplate<T>({
       size: 'small' as const,
       label: filter.label,
       value: filter.value || (filter.type === 'multiselect' ? [] : ''),
-      onChange: (e: any) => {
+      onChange: (e: { target: { value: unknown } }) => {
         filter.onChange?.(e.target.value, filter);
         onFilterChange?.({ [filter.id]: e.target.value });
       },
@@ -988,12 +988,12 @@ export function ListPageTemplate<T>({
               input={<OutlinedInput label={filter.label} />}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value: any) => {
+                  {selected.map((value: unknown) => {
                     const option = filter.options?.find((opt) => opt.value === value);
                     return (
                       <Chip
-                        key={value}
-                        label={option?.label || value}
+                        key={String(value)}
+                        label={option?.label || String(value)}
                         size='small'
                       />
                     );

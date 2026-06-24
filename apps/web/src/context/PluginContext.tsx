@@ -61,7 +61,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
       if (installedRes.success && installedRes.data) {
         setInstalledPlugins(installedRes.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch plugins:', error);
     } finally {
       setIsLoading(false);

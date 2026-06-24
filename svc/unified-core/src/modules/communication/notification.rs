@@ -71,7 +71,9 @@ pub async fn send_notification(
     }
 
     let id = Uuid::new_v4();
-    let notification_type = req.notification_type.unwrap_or_else(|| "info".to_string());
+    let send_email = req.send_email.unwrap_or(false);
+
+    let notification_type = req.notification_type.as_deref().unwrap_or("info").to_string();
     let priority = req.priority.unwrap_or(0);
 
     let result = sqlx::query(
@@ -107,7 +109,7 @@ pub async fn send_notification(
             });
 
             // 如果需要同时发送邮件
-            if req.send_email.unwrap_or(false) {
+            if send_email {
                 let _ = send_notification_email(&state, &req).await;
             }
 
@@ -547,9 +549,7 @@ pub async fn get_unread_notifications(
     }
 }
 
-/// 发送通知邮件（内部辅助函数）
 async fn send_notification_email(state: &AppState, req: &SendNotificationRequest) -> Result<(), ()> {
-    // 查询用户邮箱
     let email: Option<String> = sqlx::query_scalar(
         "SELECT email FROM core_users WHERE id = $1",
     )
@@ -561,13 +561,16 @@ async fn send_notification_email(state: &AppState, req: &SendNotificationRequest
     })?;
 
     if let Some(email) = email {
-        // 使用邮件服务发送邮件
-        let _ = modules::communication::mail::send_notification_email(
-            state,
-            &email,
-            &req.title,
-            req.content.as_deref().unwrap_or_default(),
-        ).await;
+        let queue_id = crate::modules::communication::mail::queue_email(
+            "system@topems.io".to_string(),
+            email,
+            req.title.clone(),
+            req.content.clone().unwrap_or_default(),
+            None,
+            None,
+            None,
+        );
+        tracing::info!("Notification email queued: {}", queue_id);
     }
 
     Ok(())

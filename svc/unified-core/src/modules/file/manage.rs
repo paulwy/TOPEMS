@@ -25,7 +25,7 @@ struct FileInfo {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct FileQuery {
+pub struct FileQuery {
     page: Option<i64>,
     page_size: Option<i64>,
     folder_id: Option<String>,
@@ -33,13 +33,13 @@ struct FileQuery {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct UpdateFileRequest {
+pub struct UpdateFileRequest {
     name: Option<String>,
     folder_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct FilePermissionRequest {
+pub struct FilePermissionRequest {
     user_id: String,
     permission: String, // read, write, delete
 }
@@ -369,10 +369,10 @@ pub async fn update_file(
     // 绑定额外参数
     for (_, value) in params {
         if value.is_string() {
-            query_builder = query_builder.bind(value.as_str().unwrap_or_default());
+            query_builder = query_builder.bind(value.as_str().map(|s| s.to_string()).unwrap_or_default());
         } else if value.is_null() {
             query_builder = query_builder.bind::<Option<Uuid>>(None);
-        } else if let Ok(uuid) = value.as_str().and_then(|s| Uuid::parse_str(s).ok()) {
+        } else if let Some(uuid) = value.as_str().and_then(|s| Uuid::parse_str(s).ok()) {
             query_builder = query_builder.bind(uuid);
         } else {
             query_builder = query_builder.bind(value);

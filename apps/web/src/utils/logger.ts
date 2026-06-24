@@ -20,7 +20,7 @@ export interface Logger {
   warn: (...args: any[]) => void;
   error: (...args: any[]) => void;
   group: (label: string, fn: () => void) => void;
-  table: (data: any) => void;
+  table: (data: unknown) => void;
   time: (label: string) => void;
   timeEnd: (label: string) => void;
   child: (childOptions: LoggerOptions) => Logger;
@@ -112,7 +112,7 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
     /**
      * 记录表格
      */
-    table: (data: any) => {
+    table: (data: unknown) => {
       if (enableConsole && shouldLog('debug')) {
         console.table(data);
       }

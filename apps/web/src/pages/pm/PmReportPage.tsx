@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Filter } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, TextField, MenuItem } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import ProjectReport from '@/components/pm/ProjectReport';
 import { pmApi } from '@/api/pm';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
@@ -60,7 +60,7 @@ const PmReportPage: React.FC = () => {
       if (benefitsResponse.success && benefitsResponse.data) {
         setBenefits(benefitsResponse.data.benefits || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to load report data:', error);
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ const PmReportPage: React.FC = () => {
       style={{
         display: 'flex',
         minHeight: '100vh',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'grey.50',
       }}
     >
       <div
@@ -96,8 +96,8 @@ const PmReportPage: React.FC = () => {
           }}
         >
           <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>项目报表</h1>
-            <p style={{ color: '#6b7280', marginTop: 4 }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'text.primary' }}>项目报表</h1>
+            <p style={{ color: 'text.secondary', marginTop: 4 }}>
               {params.projectId ? '项目详情报表' : '全局项目统计报表'}
             </p>
           </div>
@@ -116,8 +116,8 @@ const PmReportPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Filter sx={{ width: 16, height: 16, color: '#6b7280' }} />
-                  <span style={{ fontSize: '0.875rem', color: '#4b5563' }}>时间范围:</span>
+                  <Filter sx={{ width: 16, height: 16, color: 'text.secondary' }} />
+                  <span style={{ fontSize: '0.875rem', color: 'text.secondary' }}>时间范围:</span>
                 </div>
                 <TextField
                   select
@@ -144,7 +144,7 @@ const PmReportPage: React.FC = () => {
                           transform: 'translateY(-50%)',
                           width: 16,
                           height: 16,
-                          color: '#9ca3af',
+                          color: 'text.disabled',
                         }}
                       />
                       <TextField
@@ -154,7 +154,7 @@ const PmReportPage: React.FC = () => {
                         sx={{ width: 144 }}
                       />
                     </div>
-                    <span style={{ color: '#9ca3af' }}>至</span>
+                    <span style={{ color: 'text.disabled' }}>至</span>
                     <div style={{ position: 'relative' }}>
                       <Calendar
                         sx={{
@@ -164,7 +164,7 @@ const PmReportPage: React.FC = () => {
                           transform: 'translateY(-50%)',
                           width: 16,
                           height: 16,
-                          color: '#9ca3af',
+                          color: 'text.disabled',
                         }}
                       />
                       <TextField
@@ -198,12 +198,12 @@ const PmReportPage: React.FC = () => {
                   borderRadius: '50%',
                   width: 32,
                   height: 32,
-                  border: '2px solid #2563eb',
+                  border: '2px solid primary.dark',
                   borderBottom: '2px solid transparent',
                   margin: '0 auto',
                 }}
               ></div>
-              <p style={{ marginTop: 16, color: '#6b7280' }}>加载中...</p>
+              <p style={{ marginTop: 16, color: 'text.secondary' }}>加载中...</p>
             </CardContent>
           </Card>
         ) : (

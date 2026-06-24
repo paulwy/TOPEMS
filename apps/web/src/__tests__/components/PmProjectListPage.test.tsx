@@ -442,7 +442,7 @@ describe("PmProjectListPage 项目列表页面", () => {
 
   describe("项目操作验证", () => {
     it("应该正确处理项目创建", () => {
-      const mockCreate = async (data: any) => {
+      const mockCreate = async (data: Record<string, unknown>) => {
         return { success: true, data: { id: "new-proj", ...data } };
       };
 

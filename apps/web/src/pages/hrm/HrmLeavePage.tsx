@@ -26,7 +26,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   StatCard,
@@ -73,7 +73,7 @@ const LeaveManagementPage: React.FC = () => {
       if (response.code === 200) {
         setData(response.data!);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to fetch leave requests:', error);
     } finally {
       setLoading(false);
@@ -86,12 +86,17 @@ const LeaveManagementPage: React.FC = () => {
       if (response.code === 200) {
         const items = response.data?.items || response.data || [];
         if (Array.isArray(items)) {
-          setEmployees(items.map((e: any) => ({ id: e.id, name: e.name })) || []);
+          setEmployees(
+            items.map((e: { id?: string; name?: string }) => ({
+              id: e.id || '',
+              name: e.name || '',
+            })) || []
+          );
         } else {
           setEmployees([]);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to fetch employees:', error);
     }
   };
@@ -141,7 +146,7 @@ const LeaveManagementPage: React.FC = () => {
       if (response.code === 200) {
         fetchLeaveRequests();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to delete leave request:', error);
     }
   };
@@ -152,7 +157,7 @@ const LeaveManagementPage: React.FC = () => {
       if (response.code === 200) {
         fetchLeaveRequests();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to approve leave request:', error);
     }
   };
@@ -163,7 +168,7 @@ const LeaveManagementPage: React.FC = () => {
       if (response.code === 200) {
         fetchLeaveRequests();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to reject leave request:', error);
     }
   };
@@ -177,7 +182,7 @@ const LeaveManagementPage: React.FC = () => {
       }
       setIsModalVisible(false);
       fetchLeaveRequests();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save leave request:', error);
     }
   };
@@ -344,7 +349,7 @@ const LeaveManagementPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f9fafb' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}

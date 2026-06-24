@@ -8,8 +8,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:host": "pnpm --filter topems-portal dev",
+    "dev": "./scripts/start-local.sh",
+    "dev:web": "pnpm --filter topems-portal dev",
     "dev:core": "pnpm --filter topems-core dev",
+    "dev:backend": "./scripts/topems.sh start iam",
+    "dev:all": "./scripts/topems.sh start-all",
+    "dev:stop": "./scripts/topems.sh stop-all",
+    "dev:host": "pnpm --filter topems-portal dev",
     "build:host": "pnpm --filter topems-portal build",
     "build:core": "pnpm --filter topems-core build",
     "build:shared-types": "pnpm --filter @topems/shared-types build",
@@ -17,7 +22,9 @@
     "build": "pnpm run build:shared-types && pnpm run build:shared-utils && pnpm run build:core && pnpm run build:host",
     "lint": "pnpm --filter topems-portal lint",
     "test": "pnpm --filter topems-portal test",
-    "typecheck": "pnpm --filter topems-portal typecheck"
+    "typecheck": "pnpm --filter topems-portal typecheck",
+    "topems": "./scripts/topems.sh",
+    "install:all": "./scripts/install-deps.sh"
   },
   "keywords": [
     "enterprise",

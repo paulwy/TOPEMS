@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Bell, Check, CheckCheck, Clock } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
         const data: any = response.data;
         setNotifications(data.notifications || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load notifications:', error);
     } finally {
       setLoading(false);
@@ -43,7 +43,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
           prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
         );
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to mark notification as read:', error);
     }
   };
@@ -59,7 +59,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to mark all notifications as read:', error);
     }
   };
@@ -83,15 +83,15 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
     switch (type.toLowerCase()) {
       case 'chat':
       case 'message':
-        return <Bell sx={{ width: 20, height: 20, color: '#3b82f6' }} />;
+        return <Bell sx={{ width: 20, height: 20, color: 'primary.main' }} />;
       case 'warning':
-        return <Bell sx={{ width: 20, height: 20, color: '#eab308' }} />;
+        return <Bell sx={{ width: 20, height: 20, color: 'warning.main' }} />;
       case 'error':
-        return <Bell sx={{ width: 20, height: 20, color: '#ef4444' }} />;
+        return <Bell sx={{ width: 20, height: 20, color: 'error.main' }} />;
       case 'success':
-        return <Bell sx={{ width: 20, height: 20, color: '#22c55e' }} />;
+        return <Bell sx={{ width: 20, height: 20, color: 'success.dark' }} />;
       default:
-        return <Bell sx={{ width: 20, height: 20, color: '#6b7280' }} />;
+        return <Bell sx={{ width: 20, height: 20, color: 'text.secondary' }} />;
     }
   };
 
@@ -99,7 +99,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ padding: 16, borderBottom: '1px solid grey.200' }}>
         <div
           style={{
             display: 'flex',
@@ -122,8 +122,8 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
             {unreadCount > 0 && (
               <span
                 style={{
-                  backgroundColor: '#ef4444',
-                  color: '#ffffff',
+                  backgroundColor: 'error.main',
+                  color: 'white',
                   fontSize: 12,
                   padding: '2px 8px',
                   borderRadius: 9999,
@@ -162,34 +162,34 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                 width: 32,
                 height: 32,
                 borderRadius: '9999px',
-                border: '4px solid #6366f1',
+                border: '4px solid primary.light',
                 borderTopColor: 'transparent',
                 animation: 'spin 1s linear infinite',
               }}
             />
           </div>
         ) : notifications.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 48, color: '#6b7280' }}>
+          <div style={{ textAlign: 'center', padding: 48, color: 'text.secondary' }}>
             <Bell
               sx={{
                 width: 48,
                 height: 48,
                 mx: 'auto',
                 mb: 3,
-                color: '#d1d5db',
+                color: 'grey.300',
               }}
             />
             <p>暂无通知</p>
           </div>
         ) : (
-          <div style={{ borderTop: '1px solid #f3f4f6' }}>
+          <div style={{ borderTop: '1px solid grey.100' }}>
             {notifications.map((notification) => (
               <div
                 key={notification.id}
                 style={{
                   padding: 16,
                   transition: 'background-color 0.15s',
-                  backgroundColor: !notification.is_read ? '#eff6ff' : undefined,
+                  backgroundColor: !notification.is_read ? 'primary.light' : undefined,
                 }}
               >
                 <div style={{ display: 'flex', gap: 12 }}>
@@ -205,7 +205,9 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                         gap: 8,
                       }}
                     >
-                      <h3 style={{ fontWeight: 500, color: '#111827' }}>{notification.title}</h3>
+                      <h3 style={{ fontWeight: 500, color: 'text.primary' }}>
+                        {notification.title}
+                      </h3>
                       <div
                         style={{
                           display: 'flex',
@@ -216,7 +218,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                         <span
                           style={{
                             fontSize: 12,
-                            color: '#6b7280',
+                            color: 'text.secondary',
                             display: 'flex',
                             alignItems: 'center',
                             gap: 4,
@@ -237,7 +239,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                         )}
                       </div>
                     </div>
-                    <p style={{ fontSize: 14, color: '#4b5563', marginTop: 4 }}>
+                    <p style={{ fontSize: 14, color: 'text.secondary', marginTop: 4 }}>
                       {notification.content}
                     </p>
                   </div>

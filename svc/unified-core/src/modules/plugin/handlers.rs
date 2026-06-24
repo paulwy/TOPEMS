@@ -3,11 +3,13 @@
 use axum::{
     extract::{Path, Query, State},
     Json,
+    Extension,
 };
 use uuid::Uuid;
 
 use crate::{AppState, CoreResponse};
 use super::models::*;
+use topems_shared::auth::Claims;
 
 /// Get marketplace summary
 pub async fn get_marketplace_summary(
@@ -203,9 +205,13 @@ pub async fn get_plugin_reviews(
 pub async fn create_review(
     State(state): State<AppState>,
     Path(plugin_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReviewRequest>,
 ) -> Json<CoreResponse<PluginReview>> {
-    tracing::info!("[Plugin] Creating review for plugin: {}", plugin_id);
+    tracing::info!("[Plugin] Creating review for plugin: {} by user: {}", plugin_id, claims.username);
+    
+    let user_id = claims.user_id().unwrap_or_else(|_| Uuid::nil());
+    let user_name = claims.username.clone();
     
     let review: PluginReview = sqlx::query_as(
         r#"
@@ -215,8 +221,8 @@ pub async fn create_review(
         "#,
     )
     .bind(plugin_id)
-    .bind(Uuid::nil())  // TODO: Get from auth context
-    .bind("Anonymous")
+    .bind(user_id)
+    .bind(user_name)
     .bind(req.rating)
     .bind(&req.title)
     .bind(&req.content)
@@ -255,6 +261,50 @@ pub async fn list_tenant_plugins(
     .unwrap_or_default();
 
     Json(CoreResponse::success(installations, "Tenant plugins retrieved"))
+}
+
+/// Get current user's tenant installed plugins
+pub async fn list_my_plugins(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<CoreResponse<Vec<TenantPluginWithDetails>>> {
+    let tenant_id = match claims.tenant_id {
+        Some(id) => match Uuid::parse_str(&id) {
+            Ok(id) => id,
+            Err(e) => {
+                tracing::error!("[Plugin] Invalid tenant ID in claims: {}", e);
+                return Json(CoreResponse::error("Invalid tenant ID"));
+            }
+        },
+        None => {
+            tracing::error!("[Plugin] No tenant ID in claims");
+            return Json(CoreResponse::error("Tenant ID not found in token"));
+        }
+    };
+
+    tracing::info!("[Plugin] Listing plugins for tenant (from claims): {}", tenant_id);
+
+    let installations: Vec<TenantPluginWithDetails> = sqlx::query_as(
+        r#"
+        SELECT
+            tp.id, tp.tenant_id, tp.plugin_id, tp.installed_version, tp.is_active,
+            tp.license_type, tp.license_expires_at, tp.purchase_order_id,
+            tp.activated_at, tp.last_used_at, tp.usage_count, tp.created_at, tp.updated_at,
+            p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
+            p.version as plugin_version, p.category as plugin_category, p.is_free,
+            p.price_cents, p.install_count, p.rating, p.rating_count
+        FROM core_tenant_plugins tp
+        JOIN core_plugins p ON tp.plugin_id = p.id
+        WHERE tp.tenant_id = $1
+        ORDER BY tp.is_active DESC, tp.activated_at DESC
+        "#,
+    )
+    .bind(tenant_id)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    Json(CoreResponse::success(installations, "My plugins retrieved"))
 }
 
 /// Install plugin for tenant

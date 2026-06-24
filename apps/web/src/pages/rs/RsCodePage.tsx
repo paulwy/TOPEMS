@@ -11,7 +11,7 @@ import {
   Stack,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Plus,
   Download,
@@ -152,7 +152,7 @@ const RsCodePage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Code
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
           {row.repo_name}
         </Box>
@@ -254,7 +254,7 @@ const RsCodePage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='代码管理'
         columns={columns}
@@ -356,7 +356,7 @@ const RsCodePage: React.FC = () => {
               >
                 代码行数: {selectedRepo.lines_of_code.toLocaleString()}
               </Typography>
-              <Paper sx={{ p: 2, mt: 2, bgcolor: '#f5f5f5' }}>
+              <Paper sx={{ p: 2, mt: 2, bgcolor: 'grey.100' }}>
                 <Typography
                   variant='body2'
                   sx={{ fontFamily: 'monospace' }}
@@ -400,7 +400,7 @@ const RsCodePage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <GitCommit
                         size={16}
-                        color='#3b82f6'
+                        color='primary.main'
                       />
                       <Typography
                         variant='body2'

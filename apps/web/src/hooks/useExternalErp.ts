@@ -74,7 +74,7 @@ export function useCreateErpConnection() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
       success('ERP连接创建成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || 'ERP连接创建失败');
     },
   });
@@ -99,7 +99,7 @@ export function useUpdateErpConnection() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
       success('ERP连接更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || 'ERP连接更新失败');
     },
   });
@@ -118,7 +118,7 @@ export function useDeleteErpConnection() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
       success('ERP连接删除成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || 'ERP连接删除失败');
     },
   });
@@ -139,7 +139,7 @@ export function useTestErpConnection() {
         error(result.data?.error_message || '连接测试失败');
       }
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '连接测试失败');
     },
   });
@@ -159,7 +159,7 @@ export function useToggleErpConnection() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-connections'] });
       success('连接状态更新成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '连接状态更新失败');
     },
   });
@@ -188,7 +188,7 @@ export function useSyncAccounts() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
       success(`成功同步 ${result.data.created_count + result.data.updated_count} 个科目`);
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '科目同步失败');
     },
   });
@@ -213,7 +213,7 @@ export function useSyncCustomers() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
       success(`成功同步 ${result.data.created_count + result.data.updated_count} 个客户`);
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '客户同步失败');
     },
   });
@@ -238,7 +238,7 @@ export function useSyncSuppliers() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
       success(`成功同步 ${result.data.created_count + result.data.updated_count} 个供应商`);
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '供应商同步失败');
     },
   });
@@ -269,7 +269,7 @@ export function useSyncVouchers() {
         success(`成功同步 ${result.data.synced_count} 个凭证`);
       }
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '凭证同步失败');
     },
   });
@@ -289,7 +289,7 @@ export function useFullSync() {
       queryClient.invalidateQueries({ queryKey: ['external-erp-sync-logs'] });
       success('全量同步任务已启动');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '全量同步失败');
     },
   });
@@ -391,7 +391,7 @@ export function useImportAccountMappings() {
       });
       success('科目映射导入成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '科目映射导入失败');
     },
   });
@@ -412,8 +412,37 @@ export function useAutoMatchAccountMappings() {
       });
       success('科目映射自动匹配完成');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '科目映射自动匹配失败');
+    },
+  });
+}
+
+/**
+ * 更新科目映射
+ */
+export function useUpdateAccountMapping() {
+  const queryClient = useQueryClient();
+  const { success, error } = useNotification();
+
+  return useMutation({
+    mutationFn: ({
+      connectionId,
+      mappingId,
+      data,
+    }: {
+      connectionId: string;
+      mappingId: string;
+      data: Partial<AccountMappingRule>;
+    }) => externalErpApi.updateAccountMapping(connectionId, mappingId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['external-erp-account-mappings'],
+      });
+      success('科目映射更新成功');
+    },
+    onError: (err) => {
+      error(err.message || '科目映射更新失败');
     },
   });
 }
@@ -461,8 +490,37 @@ export function useImportCustomerMappings() {
       });
       success('客户映射导入成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '客户映射导入失败');
+    },
+  });
+}
+
+/**
+ * 更新客户映射
+ */
+export function useUpdateCustomerMapping() {
+  const queryClient = useQueryClient();
+  const { success, error } = useNotification();
+
+  return useMutation({
+    mutationFn: ({
+      connectionId,
+      mappingId,
+      data,
+    }: {
+      connectionId: string;
+      mappingId: string;
+      data: Partial<CustomerMappingRule>;
+    }) => externalErpApi.updateCustomerMapping(connectionId, mappingId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['external-erp-customer-mappings'],
+      });
+      success('客户映射更新成功');
+    },
+    onError: (err) => {
+      error(err.message || '客户映射更新失败');
     },
   });
 }
@@ -510,8 +568,37 @@ export function useImportSupplierMappings() {
       });
       success('供应商映射导入成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '供应商映射导入失败');
+    },
+  });
+}
+
+/**
+ * 更新供应商映射
+ */
+export function useUpdateSupplierMapping() {
+  const queryClient = useQueryClient();
+  const { success, error } = useNotification();
+
+  return useMutation({
+    mutationFn: ({
+      connectionId,
+      mappingId,
+      data,
+    }: {
+      connectionId: string;
+      mappingId: string;
+      data: Partial<SupplierMappingRule>;
+    }) => externalErpApi.updateSupplierMapping(connectionId, mappingId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['external-erp-supplier-mappings'],
+      });
+      success('供应商映射更新成功');
+    },
+    onError: (err) => {
+      error(err.message || '供应商映射更新失败');
     },
   });
 }
@@ -610,7 +697,7 @@ export function useExportSyncLogs() {
     onSuccess: () => {
       success('同步日志导出成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });
@@ -642,7 +729,7 @@ export function useExportMappingRules() {
     onSuccess: () => {
       success('映射规则导出成功');
     },
-    onError: (err: any) => {
+    onError: (err) => {
       error(err.message || '导出失败');
     },
   });

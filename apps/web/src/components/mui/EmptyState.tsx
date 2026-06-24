@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper, useTheme } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 // ============ 类型定义 ============
 

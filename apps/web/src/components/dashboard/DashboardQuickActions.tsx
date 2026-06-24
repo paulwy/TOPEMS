@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileText, Brain, GitBranch, Clock, Bell, User } from 'lucide-react';
 
 type IconComponent = React.ComponentType<{
@@ -112,27 +112,27 @@ export const defaultQuickActions: QuickAction[] = [
     label: '上传文件',
     icon: FileText,
     path: '/documents',
-    color: '#2563eb',
-    bgColor: '#eff6ff',
-    hoverColor: '#2563eb',
+    color: 'primary.dark',
+    bgColor: 'primary.light',
+    hoverColor: 'primary.dark',
     service: 'doc',
   },
   {
     label: 'AI 问答',
     icon: Brain,
     path: '/ai',
-    color: '#7c3aed',
-    bgColor: '#faf5ff',
-    hoverColor: '#7c3aed',
+    color: 'secondary.dark',
+    bgColor: 'secondary.light',
+    hoverColor: 'secondary.dark',
     service: 'ai',
   },
   {
     label: '发起流程',
     icon: GitBranch,
     path: '/flow/definitions',
-    color: '#16a34a',
-    bgColor: '#f0fdf4',
-    hoverColor: '#16a34a',
+    color: 'success.dark',
+    bgColor: 'success.light',
+    hoverColor: 'success.dark',
     service: 'flow',
   },
   {
@@ -140,7 +140,7 @@ export const defaultQuickActions: QuickAction[] = [
     icon: Clock,
     path: '/flow/approvals',
     color: '#ea580c',
-    bgColor: '#fff7ed',
+    bgColor: 'white7ed',
     hoverColor: '#ea580c',
     service: 'flow',
   },
@@ -149,7 +149,7 @@ export const defaultQuickActions: QuickAction[] = [
     icon: Bell,
     path: '/notifications',
     color: '#ca8a04',
-    bgColor: '#fefce8',
+    bgColor: 'warning.lighter',
     hoverColor: '#ca8a04',
     service: 'notification',
   },
@@ -157,9 +157,9 @@ export const defaultQuickActions: QuickAction[] = [
     label: '个人中心',
     icon: User,
     path: '/profile',
-    color: '#4f46e5',
+    color: 'primary.main',
     bgColor: '#eef2ff',
-    hoverColor: '#4f46e5',
+    hoverColor: 'primary.main',
     service: null,
   },
 ];

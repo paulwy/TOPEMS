@@ -18,7 +18,7 @@ import {
   Tooltip,
   LinearProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   TrendingUp,
   TrendingDown,
@@ -204,10 +204,10 @@ export interface ChartCardProps {
  */
 const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; main: string }> = {
   green: {
-    bg: '#10B981',
-    gradient: 'linear-gradient(135deg, #10B981, #059669)',
+    bg: 'success.main',
+    gradient: 'linear-gradient(135deg, success.main, success.dark)',
     light: '#DCFCE7',
-    main: '#10B981',
+    main: 'success.main',
   },
   purple: {
     bg: '#8B5CF6',
@@ -216,22 +216,22 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
     main: '#8B5CF6',
   },
   blue: {
-    bg: '#3B82F6',
+    bg: 'primary.main',
     gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
     light: '#DBEAFE',
-    main: '#3B82F6',
+    main: 'primary.main',
   },
   orange: {
-    bg: '#F59E0B',
+    bg: 'warning.main',
     gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
     light: '#FEF3C7',
-    main: '#F59E0B',
+    main: 'warning.main',
   },
   red: {
-    bg: '#EF4444',
-    gradient: 'linear-gradient(135deg, #EF4444, #DC2626)',
+    bg: 'error.main',
+    gradient: 'linear-gradient(135deg, error.main, #DC2626)',
     light: '#FEE2E2',
-    main: '#EF4444',
+    main: 'error.main',
   },
   cyan: {
     bg: '#06B6D4',
@@ -247,7 +247,7 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   success: {
     bg: '#388e3c',
-    gradient: 'linear-gradient(135deg, #388e3c, #2e7d32)',
+    gradient: 'linear-gradient(135deg, #388e3c, success.dark)',
     light: '#E8F5E9',
     main: '#388e3c',
   },
@@ -289,7 +289,7 @@ const DEFAULT_TIME_RANGES: TimeRange[] = [
  */
 export const Sparkline: React.FC<SparklineProps> = ({
   data,
-  color = '#3B82F6',
+  color = 'primary.main',
   width = 80,
   height = 32,
   strokeWidth = 2,
@@ -445,7 +445,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
       return '#64748B';
     }
-    return computedTrend === 'up' ? '#10B981' : '#EF4444';
+    return computedTrend === 'up' ? 'success.main' : 'error.main';
   };
 
   const getTrendBgColor = () => {
@@ -685,7 +685,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
       return '#64748B';
     }
-    return computedTrend === 'up' ? '#10B981' : '#EF4444';
+    return computedTrend === 'up' ? 'success.main' : 'error.main';
   };
 
   const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
@@ -809,13 +809,13 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const getTrendIcon = () => {
     if (!trend || trend === 'stable') return null;
     return trend === 'up' ? (
-      <TrendingUp style={{ width: 16, height: 16, color: '#10B981' }} />
+      <TrendingUp style={{ width: 16, height: 16, color: 'success.main' }} />
     ) : (
       <TrendingUp
         style={{
           width: 16,
           height: 16,
-          color: '#EF4444',
+          color: 'error.main',
           transform: 'rotate(180deg)',
         }}
       />
@@ -824,7 +824,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
   const getTrendColor = () => {
     if (!trend || trend === 'stable') return 'text.secondary';
-    return trend === 'up' ? '#10B981' : '#EF4444';
+    return trend === 'up' ? 'success.main' : 'error.main';
   };
 
   return (
@@ -963,7 +963,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 mb: 2,
               }}
             >
-              <AlertCircle style={{ width: 24, height: 24, color: '#EF4444' }} />
+              <AlertCircle style={{ width: 24, height: 24, color: 'error.main' }} />
             </Box>
             <Typography
               variant='body1'

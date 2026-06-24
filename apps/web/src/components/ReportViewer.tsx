@@ -67,7 +67,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           width: '100%',
@@ -82,8 +82,8 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         <div
           style={{
             padding: '24px',
-            borderBottom: '1px solid #e2e8f0',
-            background: 'linear-gradient(to right, #eff6ff, #eef2ff)',
+            borderBottom: '1px solid border.default',
+            background: 'linear-gradient(to right, primary.light, #eef2ff)',
           }}
         >
           <div
@@ -94,7 +94,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             }}
           >
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#0f172a' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 600, color: 'grey.900' }}>
                 {report.config.title}
               </h3>
               {report.config.description && (
@@ -115,7 +115,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   gap: '16px',
                   marginTop: '12px',
                   fontSize: '14px',
-                  color: '#64748b',
+                  color: 'grey.600',
                 }}
               >
                 <span style={{ display: 'flex', alignItems: 'center' }}>
@@ -150,12 +150,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
           <div
             style={{
               overflowX: 'auto',
-              border: '1px solid #e2e8f0',
+              border: '1px solid border.default',
               borderRadius: '8px',
             }}
           >
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ backgroundColor: '#f8fafc' }}>
+              <thead style={{ backgroundColor: 'grey.50' }}>
                 <tr>
                   <th
                     style={{
@@ -163,7 +163,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       textAlign: 'left',
                       fontSize: '12px',
                       fontWeight: 500,
-                      color: '#64748b',
+                      color: 'grey.600',
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
                     }}
@@ -179,7 +179,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         textAlign: 'left',
                         fontSize: '12px',
                         fontWeight: 500,
-                        color: '#64748b',
+                        color: 'grey.600',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                         cursor: 'pointer',
@@ -195,7 +195,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       >
                         <span>{column}</span>
                         {sortColumn === column && (
-                          <span style={{ color: '#2563eb' }}>
+                          <span style={{ color: 'primary.dark' }}>
                             {sortDirection === 'asc' ? '↑' : '↓'}
                           </span>
                         )}
@@ -204,7 +204,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   ))}
                 </tr>
               </thead>
-              <tbody style={{ backgroundColor: '#ffffff' }}>
+              <tbody style={{ backgroundColor: 'white' }}>
                 {currentData.length === 0 ? (
                   <tr>
                     <td
@@ -215,7 +215,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         sx={{
                           width: 48,
                           height: 48,
-                          color: '#cbd5e1',
+                          color: 'grey.400',
                           margin: 'auto',
                           marginBottom: '12px',
                         }}
@@ -233,7 +233,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         style={{
                           padding: '12px 16px',
                           fontSize: '14px',
-                          color: '#64748b',
+                          color: 'grey.600',
                         }}
                       >
                         {startIndex + idx + 1}
@@ -244,7 +244,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                           style={{
                             padding: '12px 16px',
                             fontSize: '14px',
-                            color: '#111827',
+                            color: 'text.primary',
                           }}
                         >
                           {getCellValue(row[column])}
@@ -262,8 +262,8 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         <div
           style={{
             padding: '16px',
-            borderTop: '1px solid #e2e8f0',
-            backgroundColor: '#f8fafc',
+            borderTop: '1px solid border.default',
+            backgroundColor: 'grey.50',
           }}
         >
           <div
@@ -283,7 +283,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 }}
                 style={{
                   padding: '4px 8px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid border.default',
                   borderRadius: '6px',
                   fontSize: '14px',
                 }}

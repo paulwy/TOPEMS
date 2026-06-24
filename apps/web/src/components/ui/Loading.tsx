@@ -33,8 +33,8 @@ export const Loading: React.FC<LoadingProps> = ({
       sx={{
         width: sizeMap[size],
         height: sizeMap[size],
-        border: '2px solid #d1d5db',
-        borderTopColor: '#3b82f6',
+        border: '2px solid grey.300',
+        borderTopColor: 'primary.main',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite',
       }}
@@ -50,7 +50,7 @@ export const Loading: React.FC<LoadingProps> = ({
             width: size === 'sm' ? 6 : size === 'md' ? 8 : 12,
             height: size === 'sm' ? 6 : size === 'md' ? 8 : 12,
             borderRadius: '50%',
-            backgroundColor: '#3b82f6',
+            backgroundColor: 'primary.main',
             animation: 'bounce 1s ease-in-out infinite',
             animationDelay: `${i * 0.15}s`,
           }}
@@ -64,7 +64,7 @@ export const Loading: React.FC<LoadingProps> = ({
       sx={{
         width: sizeMap[size],
         height: sizeMap[size],
-        backgroundColor: '#3b82f6',
+        backgroundColor: 'primary.main',
         borderRadius: '50%',
         animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
       }}

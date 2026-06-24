@@ -100,7 +100,7 @@ export const useNotificationWebSocket = ({
 
           oscillator.start(audioContext.currentTime);
           oscillator.stop(audioContext.currentTime + 0.2);
-        } catch (beepErr) {
+        } catch (beepErr: unknown) {
           logger.debug('Web Audio API not available:', beepErr);
         }
       };
@@ -111,7 +111,7 @@ export const useNotificationWebSocket = ({
         logger.debug('Audio file not found, using fallback beep:', err);
         playBeep();
       });
-    } catch (err) {
+    } catch (err: unknown) {
       logger.debug('Audio initialization failed:', err);
     }
   }, [shouldPlaySound]);
@@ -161,7 +161,7 @@ export const useNotificationWebSocket = ({
             if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
               ws.close(1000, 'Connection timeout');
             }
-          } catch (e) {
+          } catch (e: unknown) {
             logger.error('Failed to close WebSocket on timeout:', e);
           }
         }
@@ -222,7 +222,7 @@ export const useNotificationWebSocket = ({
             default:
               break;
           }
-        } catch (err) {
+        } catch (err: unknown) {
           logger.error('Failed to parse WebSocket message:', err);
         }
       };
@@ -261,7 +261,7 @@ export const useNotificationWebSocket = ({
       };
 
       wsRef.current = ws;
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Failed to create WebSocket:', err);
       setError('Failed to create WebSocket connection');
       setIsConnecting(false);

@@ -55,30 +55,30 @@ export const NotificationContainer: React.FC<NotificationContainerProps> = ({
               transition: 'all 0.3s ease',
               ...(notification.type === 'success'
                 ? {
-                    backgroundColor: '#22c55e',
-                    borderColor: '#16a34a',
-                    color: '#ffffff',
+                    backgroundColor: 'success.dark',
+                    borderColor: 'success.dark',
+                    color: 'white',
                   }
                 : {}),
               ...(notification.type === 'error'
                 ? {
-                    backgroundColor: '#ef4444',
-                    borderColor: '#dc2626',
-                    color: '#ffffff',
+                    backgroundColor: 'error.main',
+                    borderColor: 'error.dark',
+                    color: 'white',
                   }
                 : {}),
               ...(notification.type === 'info'
                 ? {
-                    backgroundColor: '#3b82f6',
-                    borderColor: '#2563eb',
-                    color: '#ffffff',
+                    backgroundColor: 'primary.main',
+                    borderColor: 'primary.dark',
+                    color: 'white',
                   }
                 : {}),
               ...(notification.type === 'warning'
                 ? {
-                    backgroundColor: '#eab308',
+                    backgroundColor: 'warning.main',
                     borderColor: '#ca8a04',
-                    color: '#ffffff',
+                    color: 'white',
                   }
                 : {}),
             }}

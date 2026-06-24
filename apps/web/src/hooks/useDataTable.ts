@@ -120,7 +120,7 @@ export function useExportData<TData extends RowData, TValue>(columns: ColumnDef<
         URL.revokeObjectURL(url);
 
         return { success: true };
-      } catch (error) {
+      } catch (error: unknown) {
         return { success: false, error };
       }
     },
@@ -155,7 +155,7 @@ export function useExportData<TData extends RowData, TValue>(columns: ColumnDef<
         URL.revokeObjectURL(url);
 
         return { success: true };
-      } catch (error) {
+      } catch (error: unknown) {
         return { success: false, error };
       }
     },

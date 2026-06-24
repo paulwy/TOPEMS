@@ -49,7 +49,7 @@ import {
   Alert,
   Snackbar,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileUpload } from '@/components/common';
 
 const contractTypes = [
@@ -233,7 +233,7 @@ export default function ContractManagementPage() {
           showNotification('error', result.message || '获取合同列表失败');
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '获取合同列表失败');
     } finally {
       setLoading(false);
@@ -246,7 +246,7 @@ export default function ContractManagementPage() {
       if (result.code === 0 && result.data) {
         setEmployees(result.data.items);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '获取员工列表失败');
     }
   };
@@ -322,7 +322,7 @@ export default function ContractManagementPage() {
       } else {
         showNotification('error', result.message || '删除失败');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '删除失败');
     }
   };
@@ -370,7 +370,7 @@ export default function ContractManagementPage() {
           showNotification('error', result.message || '更新失败');
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '保存失败');
     }
   };
@@ -406,7 +406,7 @@ export default function ContractManagementPage() {
       } else {
         showNotification('error', result.message || '提交失败');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '提交失败');
     }
   };
@@ -420,7 +420,7 @@ export default function ContractManagementPage() {
       } else {
         showNotification('error', result.message || '操作失败');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '操作失败');
     }
   };
@@ -436,7 +436,7 @@ export default function ContractManagementPage() {
       } else {
         showNotification('error', result.message || '操作失败');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '操作失败');
     }
   };
@@ -450,7 +450,7 @@ export default function ContractManagementPage() {
       } else {
         showNotification('error', result.message || '操作失败');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       showNotification('error', '操作失败');
     }
   };
@@ -523,7 +523,7 @@ export default function ContractManagementPage() {
           >
             <FileTextIcon
               size={16}
-              style={{ color: '#3b82f6' }}
+              style={{ color: 'primary.main' }}
             />
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {row.contract_no || '-'}
@@ -564,7 +564,7 @@ export default function ContractManagementPage() {
               >
                 <Calendar
                   size={14}
-                  style={{ color: '#9ca3af' }}
+                  style={{ color: 'text.disabled' }}
                 />
                 <Typography
                   variant='body2'

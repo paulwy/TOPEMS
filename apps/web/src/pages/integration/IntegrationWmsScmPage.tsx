@@ -6,13 +6,14 @@
 import React, { useState, useCallback } from 'react';
 import { Plus, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import { Box, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
   FormPageTemplate,
   type ColumnDef,
   type RowAction,
+  type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
 import type { WmsScmSync, CreateWmsScmSyncRequest } from '@/api/integration';
@@ -29,7 +30,7 @@ const STATUS_CONFIG: Record<
 };
 
 // 表单字段配置
-const FORM_SECTIONS = [
+const FORM_SECTIONS: FormSection[] = [
   {
     id: 'basic',
     title: '基本信息',
@@ -84,7 +85,7 @@ const IntegrationWmsScmPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setSyncs(res.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error loading WMS-SCM syncs:', error);
     } finally {
       setLoading(false);
@@ -191,23 +192,25 @@ const IntegrationWmsScmPage: React.FC = () => {
   ];
 
   // 处理创建提交
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: unknown) => {
     try {
       setSubmitting(true);
       if (editingSync) {
         logger.warn('Update not implemented');
       } else {
         const request: CreateWmsScmSyncRequest = {
-          wms_inventory_id: data.wms_inventory_id,
-          item_name: data.item_name,
-          quantity: data.quantity ? parseFloat(data.quantity) : undefined,
-          unit: data.unit || undefined,
+          wms_inventory_id: (data as Record<string, unknown>).wms_inventory_id as string,
+          item_name: (data as Record<string, unknown>).item_name as string,
+          quantity: ((data as Record<string, unknown>).quantity as string)
+            ? parseFloat((data as Record<string, unknown>).quantity as string)
+            : undefined,
+          unit: ((data as Record<string, unknown>).unit as string) || undefined,
         };
         await integrationApi.createWmsScmSync(request);
       }
       handleCloseModal();
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error saving sync:', error);
       throw error;
     } finally {
@@ -220,7 +223,7 @@ const IntegrationWmsScmPage: React.FC = () => {
     try {
       await integrationApi.syncWmsScm(id);
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error syncing:', error);
     }
   };
@@ -230,7 +233,7 @@ const IntegrationWmsScmPage: React.FC = () => {
     if (!confirm('确定要删除此同步记录吗？')) return;
     try {
       logger.warn('Delete not implemented');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error deleting:', error);
     }
   };
@@ -283,6 +286,7 @@ const IntegrationWmsScmPage: React.FC = () => {
         <DialogTitle>{editingSync ? '查看同步详情' : '创建 WMS-SCM 同步'}</DialogTitle>
         <DialogContent>
           <FormPageTemplate
+            title={editingSync ? '查看同步详情' : '创建 WMS-SCM 同步'}
             sections={FORM_SECTIONS}
             defaultValues={editingSync || {}}
             onSubmit={handleSubmit}

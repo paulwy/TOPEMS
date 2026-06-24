@@ -1,5 +1,5 @@
 import { TextField } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -108,7 +108,7 @@ export const ChatInterface: React.FC = () => {
         const rooms = data.chat_rooms || data.chatRooms || [];
         setChatRooms(rooms);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load chat rooms:', error);
       addNotification({
         title: '加载失败',
@@ -145,7 +145,7 @@ export const ChatInterface: React.FC = () => {
         }
       }
       setActiveTab('direct');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to create chat room:', error);
       addNotification({
         title: '创建失败',
@@ -163,7 +163,7 @@ export const ChatInterface: React.FC = () => {
         const msgs = data.chat_messages || data.chatMessages || [];
         setMessages(msgs);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load messages:', error);
     }
   };
@@ -175,7 +175,7 @@ export const ChatInterface: React.FC = () => {
         await imApi.markMessageRead(message.id);
       }
       setMessages((prev) => prev.map((m) => ({ ...m, is_read: true })));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to mark messages as read:', error);
     }
   };
@@ -194,7 +194,7 @@ export const ChatInterface: React.FC = () => {
       if (data.success && data.data) {
         setFilteredMessages(data.data.messages || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to search messages:', error);
     }
   };
@@ -209,7 +209,7 @@ export const ChatInterface: React.FC = () => {
           )
         );
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to edit message:', error);
       addNotification({
         title: '编辑失败',
@@ -232,7 +232,7 @@ export const ChatInterface: React.FC = () => {
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to delete message:', error);
       addNotification({
         title: '删除失败',
@@ -261,7 +261,7 @@ export const ChatInterface: React.FC = () => {
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to mute room:', error);
     }
   };
@@ -281,7 +281,7 @@ export const ChatInterface: React.FC = () => {
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to unmute room:', error);
     }
   };
@@ -301,7 +301,7 @@ export const ChatInterface: React.FC = () => {
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to pin room:', error);
     }
   };
@@ -321,7 +321,7 @@ export const ChatInterface: React.FC = () => {
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to unpin room:', error);
     }
   };
@@ -341,7 +341,7 @@ export const ChatInterface: React.FC = () => {
           type: 'success',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to delete room:', error);
       addNotification({
         title: '失败',
@@ -385,7 +385,7 @@ export const ChatInterface: React.FC = () => {
           setMessages((prev) => [...prev, response.data!]);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to send message:', error);
       addNotification({
         title: '发送失败',
@@ -408,7 +408,7 @@ export const ChatInterface: React.FC = () => {
         }
       }
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to upload file:', error);
       return null;
     }
@@ -432,17 +432,17 @@ export const ChatInterface: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#f9fafb' }}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'grey.50' }}>
       <div
         style={{
           width: 320,
-          backgroundColor: '#ffffff',
-          borderRight: '1px solid #e5e7eb',
+          backgroundColor: 'white',
+          borderRight: '1px solid grey.200',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ padding: 16, borderBottom: '1px solid grey.200' }}>
           <div
             style={{
               display: 'flex',
@@ -459,7 +459,7 @@ export const ChatInterface: React.FC = () => {
               >
                 <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>
-              <h1 style={{ fontSize: 20, fontWeight: 'bold', color: '#111827' }}>消息</h1>
+              <h1 style={{ fontSize: 20, fontWeight: 'bold', color: 'text.primary' }}>消息</h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
@@ -467,7 +467,7 @@ export const ChatInterface: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '9999px',
-                  backgroundColor: isConnected ? '#22c55e' : '#ef4444',
+                  backgroundColor: isConnected ? 'success.dark' : 'error.main',
                 }}
               />
               <Button
@@ -489,7 +489,7 @@ export const ChatInterface: React.FC = () => {
                 transform: 'translateY(-50%)',
                 width: 16,
                 height: 16,
-                color: '#9ca3af',
+                color: 'text.disabled',
               }}
             />
             <TextField
@@ -502,7 +502,7 @@ export const ChatInterface: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -517,12 +517,12 @@ export const ChatInterface: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 4,
-                  borderBottom: `2px solid ${activeTab === tab.id ? '#4f46e5' : 'transparent'}`,
+                  borderBottom: `2px solid ${activeTab === tab.id ? 'primary.main' : 'transparent'}`,
                   transition: 'all 0.15s',
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: activeTab === tab.id ? '#4f46e5' : '#6b7280',
+                  color: activeTab === tab.id ? 'primary.main' : 'text.secondary',
                 }}
               >
                 <Icon style={{ width: 16, height: 16 }} />
@@ -556,7 +556,7 @@ export const ChatInterface: React.FC = () => {
                     width: 32,
                     height: 32,
                     borderRadius: '9999px',
-                    border: '4px solid #4f46e5',
+                    border: '4px solid primary.main',
                     borderTopColor: 'transparent',
                     animation: 'spin 1s linear infinite',
                   }}
@@ -568,12 +568,12 @@ export const ChatInterface: React.FC = () => {
                   style={{
                     width: 48,
                     height: 48,
-                    color: '#d1d5db',
+                    color: 'grey.300',
                     margin: '0 auto',
                     marginBottom: 12,
                   }}
                 />
-                <p style={{ color: '#6b7280' }}>暂无聊天记录</p>
+                <p style={{ color: 'text.secondary' }}>暂无聊天记录</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -599,8 +599,8 @@ export const ChatInterface: React.FC = () => {
           <>
             <div
               style={{
-                backgroundColor: '#ffffff',
-                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: 'white',
+                borderBottom: '1px solid grey.200',
                 padding: 16,
               }}
             >
@@ -613,10 +613,10 @@ export const ChatInterface: React.FC = () => {
                 }}
               >
                 <div>
-                  <h2 style={{ fontWeight: 600, color: '#111827' }}>
+                  <h2 style={{ fontWeight: 600, color: 'text.primary' }}>
                     {selectedRoom.name || '未命名会话'}
                   </h2>
-                  <p style={{ fontSize: 14, color: '#6b7280' }}>
+                  <p style={{ fontSize: 14, color: 'text.secondary' }}>
                     {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
                     {!isConnected && ' · 连接断开'}
                   </p>
@@ -631,7 +631,7 @@ export const ChatInterface: React.FC = () => {
                     transform: 'translateY(-50%)',
                     width: 16,
                     height: 16,
-                    color: '#9ca3af',
+                    color: 'text.disabled',
                   }}
                 />
                 <TextField
@@ -652,7 +652,7 @@ export const ChatInterface: React.FC = () => {
                 flex: 1,
                 overflowY: 'auto',
                 padding: 16,
-                backgroundColor: '#f9fafb',
+                backgroundColor: 'grey.50',
               }}
             >
               {messages.length === 0 ? (
@@ -669,12 +669,12 @@ export const ChatInterface: React.FC = () => {
                       style={{
                         width: 48,
                         height: 48,
-                        color: '#d1d5db',
+                        color: 'grey.300',
                         margin: '0 auto',
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: '#6b7280' }}>暂无消息，开始聊天吧</p>
+                    <p style={{ color: 'text.secondary' }}>暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
@@ -691,12 +691,12 @@ export const ChatInterface: React.FC = () => {
                       style={{
                         width: 48,
                         height: 48,
-                        color: '#d1d5db',
+                        color: 'grey.300',
                         margin: '0 auto',
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: '#6b7280' }}>未找到匹配的消息</p>
+                    <p style={{ color: 'text.secondary' }}>未找到匹配的消息</p>
                   </div>
                 </div>
               ) : (
@@ -746,7 +746,7 @@ export const ChatInterface: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#f9fafb',
+              backgroundColor: 'grey.50',
             }}
           >
             <div style={{ textAlign: 'center' }}>
@@ -754,7 +754,7 @@ export const ChatInterface: React.FC = () => {
                 style={{
                   width: 64,
                   height: 64,
-                  color: '#d1d5db',
+                  color: 'grey.300',
                   margin: '0 auto',
                   marginBottom: 16,
                 }}
@@ -763,13 +763,13 @@ export const ChatInterface: React.FC = () => {
                 style={{
                   fontSize: 20,
                   fontWeight: 600,
-                  color: '#111827',
+                  color: 'text.primary',
                   marginBottom: 8,
                 }}
               >
                 欢迎使用 TOPEMS IM
               </h2>
-              <p style={{ color: '#6b7280', marginBottom: 16 }}>
+              <p style={{ color: 'text.secondary', marginBottom: 16 }}>
                 {activeTab === 'notifications' ? '查看通知中心' : '选择一个聊天室开始聊天'}
               </p>
               {activeTab !== 'notifications' && (

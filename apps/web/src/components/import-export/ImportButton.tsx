@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Upload } from 'lucide-react';
 
 export interface ImportButtonProps {
@@ -25,12 +25,12 @@ export const ImportButton: React.FC<ImportButtonProps> = ({
         alignItems: 'center',
         px: 4,
         py: 2,
-        backgroundColor: '#22c55e',
+        backgroundColor: 'success.dark',
         color: 'white',
         borderRadius: 2,
         transition: 'all',
         '&:hover': {
-          backgroundColor: '#16a34a',
+          backgroundColor: 'success.dark',
         },
         '&:disabled': {
           opacity: 0.5,

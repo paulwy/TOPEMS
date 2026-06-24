@@ -46,7 +46,7 @@ import {
   Tab,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 
 const FlowWorkflowPage: React.FC = () => {
@@ -86,7 +86,7 @@ const FlowWorkflowPage: React.FC = () => {
       } else {
         setWorkflows([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载工作流列表失败:', err);
       addNotification({
         title: '加载失败',
@@ -133,7 +133,7 @@ const FlowWorkflowPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
         message: '创建工作流失败',
@@ -164,7 +164,7 @@ const FlowWorkflowPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
         message: '删除工作流失败',
@@ -193,7 +193,7 @@ const FlowWorkflowPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({ title: '失败', message: '操作失败', type: 'error' });
       apiLogger.error('切换状态失败:', err);
     }

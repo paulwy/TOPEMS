@@ -51,7 +51,7 @@ import {
   IconButton,
   Divider,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface DocumentWithMeta extends Document {
   category?: string;
@@ -100,7 +100,7 @@ const KnowledgeBasePage: React.FC = () => {
         const docs = 'items' in response.data ? response.data.items : response.data;
         setDocuments(docs);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('加载文档列表失败:', err);
       addNotification({
         title: '加载失败',
@@ -197,7 +197,7 @@ const KnowledgeBasePage: React.FC = () => {
       setShowUploadDialog(false);
       setUploadFiles([]);
       loadDocuments();
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('上传失败:', err);
       addNotification({
         title: '上传失败',
@@ -225,7 +225,7 @@ const KnowledgeBasePage: React.FC = () => {
         });
         loadDocuments();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('删除失败:', err);
       addNotification({
         title: '删除失败',
@@ -279,7 +279,7 @@ const KnowledgeBasePage: React.FC = () => {
         setShowEditDialog(false);
         loadDocuments();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('保存失败:', err);
       addNotification({
         title: '保存失败',
@@ -302,7 +302,7 @@ const KnowledgeBasePage: React.FC = () => {
         });
         loadDocuments();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '重新加载失败',
         message: '刷新文档列表失败',
@@ -350,7 +350,7 @@ const KnowledgeBasePage: React.FC = () => {
                 sx={{
                   width: 48,
                   height: 48,
-                  background: 'linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)',
+                  background: 'linear-gradient(135deg, #a855f7 0%, primary.main 100%)',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -426,7 +426,7 @@ const KnowledgeBasePage: React.FC = () => {
                       startAdornment: (
                         <Search
                           size={16}
-                          color='#9ca3af'
+                          color='text.disabled'
                           style={{ marginRight: 8 }}
                         />
                       ),
@@ -499,7 +499,7 @@ const KnowledgeBasePage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <FolderOpen
                   size={32}
-                  color='#3b82f6'
+                  color='primary.main'
                 />
                 <Box>
                   <Typography
@@ -520,7 +520,7 @@ const KnowledgeBasePage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <CheckCircle
                   size={32}
-                  color='#22c55e'
+                  color='success.dark'
                 />
                 <Box>
                   <Typography
@@ -584,7 +584,7 @@ const KnowledgeBasePage: React.FC = () => {
               <Box sx={{ textAlign: 'center', py: 6 }}>
                 <FileSearch
                   size={64}
-                  color='#9ca3af'
+                  color='text.disabled'
                   style={{ margin: '0 auto 16px' }}
                 />
                 <Typography sx={{ color: 'grey.500', mb: 1 }}>暂无文档</Typography>
@@ -710,7 +710,7 @@ const KnowledgeBasePage: React.FC = () => {
                             >
                               <Tag
                                 size={12}
-                                color='#9ca3af'
+                                color='text.disabled'
                               />
                               {doc.tags.map((tag, idx) => (
                                 <Chip
@@ -789,7 +789,7 @@ const KnowledgeBasePage: React.FC = () => {
               >
                 <Upload
                   size={48}
-                  color='#9ca3af'
+                  color='text.disabled'
                   style={{ margin: '0 auto 16px' }}
                 />
                 <Typography sx={{ color: 'grey.600', mb: 1 }}>

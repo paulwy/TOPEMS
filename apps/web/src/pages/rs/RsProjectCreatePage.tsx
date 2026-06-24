@@ -20,7 +20,7 @@ import {
   CardContent,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Save, X, Plus } from 'lucide-react';
 
 const RsProjectCreatePage: React.FC = () => {

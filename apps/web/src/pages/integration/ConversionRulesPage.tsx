@@ -38,13 +38,14 @@ import {
   TableRow,
   Button as MuiButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
   FormPageTemplate,
   type ColumnDef,
   type RowAction,
+  type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
 import type {
@@ -94,7 +95,7 @@ const TRIGGER_TYPE_CONFIG: Record<
 };
 
 // 表单字段配置
-const FORM_SECTIONS = [
+const FORM_SECTIONS: FormSection[] = [
   {
     id: 'basic',
     title: '基本信息',
@@ -235,7 +236,7 @@ const ConversionRulesPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setRules(res.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error loading conversion rules:', error);
     } finally {
       setLoading(false);
@@ -340,9 +341,16 @@ const ConversionRulesPage: React.FC = () => {
       onClick: (row) => handleOpenEditDialog(row),
     },
     {
-      label: (row) => (row.is_enabled ? '禁用' : '启用'),
-      icon: (row) => (row.is_enabled ? <PowerOff size={14} /> : <Power size={14} />),
-      onClick: (row) => (row.is_enabled ? handleDisableRule(row) : handleEnableRule(row)),
+      label: '禁用',
+      icon: <PowerOff size={14} />,
+      onClick: (row) => handleDisableRule(row),
+      show: (row) => row.is_enabled,
+    },
+    {
+      label: '启用',
+      icon: <Power size={14} />,
+      onClick: (row) => handleEnableRule(row),
+      show: (row) => !row.is_enabled,
     },
     {
       label: '删除',
@@ -371,44 +379,46 @@ const ConversionRulesPage: React.FC = () => {
   };
 
   // 处理提交
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: unknown) => {
     try {
       setSubmitting(true);
       if (editingRule) {
         const updateData: UpdateConversionRuleRequest = {
-          name: data.name || undefined,
-          description: data.description,
-          trigger_type: data.trigger_type,
-          field_mappings: data.field_mappings,
-          transform_script: data.transform_script,
-          priority: data.priority,
-          max_retries: data.max_retries,
-          retry_interval_secs: data.retry_interval_secs,
-          stop_on_failure: data.stop_on_failure,
+          name: ((data as Record<string, unknown>).name as string as string) || undefined,
+          description: (data as Record<string, unknown>).description as string as string,
+          trigger_type: (data as Record<string, unknown>).trigger_type as any,
+          field_mappings: ((data as Record<string, unknown>).field_mappings as any) || [],
+          transform_script: (data as Record<string, unknown>).transform_script as string as string,
+          priority: (data as Record<string, unknown>).priority as number as number,
+          max_retries: (data as Record<string, unknown>).max_retries as number as number,
+          retry_interval_secs: (data as Record<string, unknown>)
+            .retry_interval_secs as number as number,
+          stop_on_failure: (data as Record<string, unknown>).stop_on_failure as boolean as boolean,
         };
         await integrationApi.updateConversionRule(editingRule.id, updateData);
       } else {
         const createData: CreateConversionRuleRequest = {
-          code: data.code,
-          name: data.name,
-          description: data.description,
-          source_system: data.source_system,
-          source_entity: data.source_entity,
-          target_system: data.target_system,
-          target_entity: data.target_entity,
-          trigger_type: data.trigger_type,
-          field_mappings: data.field_mappings || [],
-          transform_script: data.transform_script,
-          priority: data.priority || 0,
-          max_retries: data.max_retries,
-          retry_interval_secs: data.retry_interval_secs,
-          stop_on_failure: data.stop_on_failure,
+          code: (data as Record<string, unknown>).code as string as string,
+          name: (data as Record<string, unknown>).name as string as string,
+          description: (data as Record<string, unknown>).description as string as string,
+          source_system: (data as Record<string, unknown>).source_system as string as string,
+          source_entity: (data as Record<string, unknown>).source_entity as string as string,
+          target_system: (data as Record<string, unknown>).target_system as string as string,
+          target_entity: (data as Record<string, unknown>).target_entity as string as string,
+          trigger_type: (data as Record<string, unknown>).trigger_type as any,
+          field_mappings: ((data as Record<string, unknown>).field_mappings as any) || [],
+          transform_script: (data as Record<string, unknown>).transform_script as string as string,
+          priority: ((data as Record<string, unknown>).priority as number as number) || 0,
+          max_retries: (data as Record<string, unknown>).max_retries as number as number,
+          retry_interval_secs: (data as Record<string, unknown>)
+            .retry_interval_secs as number as number,
+          stop_on_failure: (data as Record<string, unknown>).stop_on_failure as boolean as boolean,
         };
         await integrationApi.createConversionRule(createData);
       }
       handleCloseDialog();
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error saving conversion rule:', error);
       throw error;
     } finally {
@@ -421,7 +431,7 @@ const ConversionRulesPage: React.FC = () => {
     try {
       await integrationApi.enableConversionRule(rule.id);
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error enabling rule:', error);
     }
   };
@@ -431,7 +441,7 @@ const ConversionRulesPage: React.FC = () => {
     try {
       await integrationApi.disableConversionRule(rule.id);
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error disabling rule:', error);
     }
   };
@@ -442,7 +452,7 @@ const ConversionRulesPage: React.FC = () => {
     try {
       await integrationApi.deleteConversionRule(rule.id);
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error deleting rule:', error);
     }
   };
@@ -459,7 +469,7 @@ const ConversionRulesPage: React.FC = () => {
         setExecutions({ ...executions, [ruleId]: res.data });
       }
       setShowExecutions(ruleId);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error loading executions:', error);
     }
   };
@@ -546,6 +556,7 @@ const ConversionRulesPage: React.FC = () => {
         <DialogTitle>{editingRule ? '编辑转换规则' : '新建转换规则'}</DialogTitle>
         <DialogContent>
           <FormPageTemplate
+            title={editingRule ? '编辑转换规则' : '新建转换规则'}
             sections={FORM_SECTIONS}
             defaultValues={getDefaultValues()}
             onSubmit={handleSubmit}

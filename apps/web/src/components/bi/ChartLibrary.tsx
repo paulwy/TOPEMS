@@ -65,15 +65,15 @@ export interface ChartConfig {
 }
 
 const defaultColors = [
-  '#6366f1',
-  '#8b5cf6',
+  'primary.light',
+  'secondary.main',
   '#a855f7',
   '#d946ef',
   '#ec4899',
   '#f43f5e',
   '#f97316',
-  '#eab308',
-  '#22c55e',
+  'warning.main',
+  'success.dark',
   '#14b8a6',
 ];
 
@@ -85,21 +85,21 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] 
     return (
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           padding: '12px 16px',
           borderRadius: '8px',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e2e8f0',
+          border: '1px solid border.default',
           minWidth: '120px',
         }}
       >
-        <p style={{ fontWeight: 600, color: '#0f172a', marginBottom: '8px' }}>{payload[0].name}</p>
+        <p style={{ fontWeight: 600, color: 'grey.900', marginBottom: '8px' }}>{payload[0].name}</p>
         {payload.map((item, index) => (
           <p
             key={index}
-            style={{ fontSize: '14px', color: '#64748b', margin: '4px 0' }}
+            style={{ fontSize: '14px', color: 'grey.600', margin: '4px 0' }}
           >
-            <span style={{ color: item.color || '#6366f1' }}>●</span>
+            <span style={{ color: item.color || 'primary.light' }}>●</span>
             {item.dataKey}: {item.value}
           </p>
         ))}
@@ -114,7 +114,7 @@ const GaugeChart = ({
   min = 0,
   max = 100,
   label,
-  color = '#6366f1',
+  color = 'primary.light',
 }: {
   value: number;
   min?: number;
@@ -172,11 +172,11 @@ const GaugeChart = ({
           >
             <stop
               offset='0%'
-              stopColor='#e2e8f0'
+              stopColor='border.default'
             />
             <stop
               offset='100%'
-              stopColor='#f1f5f9'
+              stopColor='grey.100'
             />
           </linearGradient>
         </defs>
@@ -205,7 +205,7 @@ const GaugeChart = ({
             x='0'
             y='0'
             textAnchor='middle'
-            fill='#0f172a'
+            fill='grey.900'
             fontSize='36'
             fontWeight='700'
           >
@@ -215,7 +215,7 @@ const GaugeChart = ({
             x='0'
             y='24'
             textAnchor='middle'
-            fill='#64748b'
+            fill='grey.600'
             fontSize='14'
           >
             {label || ''}
@@ -273,7 +273,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
     return (
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
           padding: '24px',
@@ -289,7 +289,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             style={{
               fontSize: '18px',
               fontWeight: 600,
-              color: '#0f172a',
+              color: 'grey.900',
               marginBottom: '16px',
             }}
           >
@@ -370,13 +370,13 @@ export const ChartComponent: React.FC<ChartConfig> = ({
           >
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#e2e8f0'
+              stroke='border.default'
             />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: 'grey.600', fontSize: 12 }}
             />
-            <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+            <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
             {yKeys && yKeys.length > 0 ? (
@@ -457,13 +457,13 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             </defs>
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#e2e8f0'
+              stroke='border.default'
             />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: 'grey.600', fontSize: 12 }}
             />
-            <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+            <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
             {yKeys && yKeys.length > 0 ? (
@@ -494,10 +494,10 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             height={chartHeight}
             data={data}
           >
-            <PolarGrid stroke='#e2e8f0' />
+            <PolarGrid stroke='border.default' />
             <PolarAngleAxis
               dataKey={xKey}
-              tick={{ fill: '#64748b', fontSize: 11 }}
+              tick={{ fill: 'grey.600', fontSize: 11 }}
             />
             <PolarRadiusAxis
               angle={30}
@@ -523,19 +523,19 @@ export const ChartComponent: React.FC<ChartConfig> = ({
           >
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#e2e8f0'
+              stroke='border.default'
             />
             <XAxis
               type='number'
               dataKey={xKey}
               name={xKey}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: 'grey.600', fontSize: 12 }}
             />
             <YAxis
               type='number'
               dataKey={yKey}
               name={yKey}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: 'grey.600', fontSize: 12 }}
             />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
@@ -556,13 +556,13 @@ export const ChartComponent: React.FC<ChartConfig> = ({
           >
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#e2e8f0'
+              stroke='border.default'
             />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: 'grey.600', fontSize: 12 }}
             />
-            <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+            <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
             <Bar
@@ -578,7 +578,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             <Brush
               dataKey={xKey}
               height={30}
-              stroke='#6366f1'
+              stroke='primary.light'
             />
           </ComposedChart>
         );
@@ -592,13 +592,13 @@ export const ChartComponent: React.FC<ChartConfig> = ({
           >
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#e2e8f0'
+              stroke='border.default'
             />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: 'grey.600', fontSize: 12 }}
             />
-            <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+            <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
             <Bar
@@ -640,13 +640,13 @@ export const ChartComponent: React.FC<ChartConfig> = ({
           >
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#e2e8f0'
+              stroke='border.default'
             />
             <XAxis
               dataKey={xKey}
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              tick={{ fill: 'grey.600', fontSize: 12 }}
             />
-            <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+            <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
             {showLegend && <Legend />}
             {yKeys && yKeys.length > 0 ? (
@@ -681,7 +681,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
   return (
     <div
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         padding: '24px',
@@ -692,7 +692,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
           style={{
             fontSize: '18px',
             fontWeight: 600,
-            color: '#0f172a',
+            color: 'grey.900',
             marginBottom: '16px',
           }}
         >

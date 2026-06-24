@@ -26,7 +26,7 @@ import {
   Typography,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { limsApi } from '@/api/lims';
 import type { Instrument, MaintenanceRecord } from '@/api/lims';
@@ -78,7 +78,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           : maintenanceData.items || [];
         setMaintenanceRecords(recordsArray);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载仪器详情失败:', error);
     } finally {
       setLoading(false);
@@ -87,18 +87,18 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      normal: { bg: '#dcfce7', color: '#16a34a', label: '正常' },
-      正常: { bg: '#dcfce7', color: '#16a34a', label: '正常' },
+      normal: { bg: 'success.lighter', color: 'success.dark', label: '正常' },
+      正常: { bg: 'success.lighter', color: 'success.dark', label: '正常' },
       calibration: { bg: '#fef9c3', color: '#ca8a04', label: '校准中' },
       校准中: { bg: '#fef9c3', color: '#ca8a04', label: '校准中' },
-      maintenance: { bg: '#fee2e2', color: '#dc2626', label: '维修中' },
-      维修中: { bg: '#fee2e2', color: '#dc2626', label: '维修中' },
-      disabled: { bg: '#f3f4f6', color: '#4b5563', label: '停用' },
-      停用: { bg: '#f3f4f6', color: '#4b5563', label: '停用' },
+      maintenance: { bg: 'error.lighter', color: 'error.dark', label: '维修中' },
+      维修中: { bg: 'error.lighter', color: 'error.dark', label: '维修中' },
+      disabled: { bg: 'grey.100', color: 'text.secondary', label: '停用' },
+      停用: { bg: 'grey.100', color: 'text.secondary', label: '停用' },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: status,
     };
     return (
@@ -128,7 +128,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         loadInstrumentDetail(instrument.id);
         resetForm();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('创建维护记录失败:', error);
     }
   };
@@ -151,7 +151,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         resetForm();
         setEditingRecord(null);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('更新维护记录失败:', error);
     }
   };
@@ -163,7 +163,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       if (response.success && instrument) {
         loadInstrumentDetail(instrument.id);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('删除维护记录失败:', error);
     }
   };
@@ -206,7 +206,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         <Chip
           label={row.maintenance_type || '-'}
           size='small'
-          sx={{ backgroundColor: '#dbeafe', color: '#2563eb' }}
+          sx={{ backgroundColor: '#dbeafe', color: 'primary.dark' }}
         />
       ),
     },
@@ -224,7 +224,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       id: 'cost',
       label: '费用 (元)',
       render: (row) => (
-        <span style={{ fontWeight: 500, color: '#0f172a' }}>{row.cost?.toFixed(2) || '0.00'}</span>
+        <span style={{ fontWeight: 500, color: 'grey.900' }}>{row.cost?.toFixed(2) || '0.00'}</span>
       ),
     },
     {
@@ -246,7 +246,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           <Button
             variant='text'
             size='small'
-            sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
+            sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
             onClick={() => handleDeleteMaintenance(row.id)}
             startIcon={
               <Box
@@ -273,7 +273,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -302,7 +302,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -310,7 +310,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             sx={{
               width: 64,
               height: 64,
-              color: '#ef4444',
+              color: 'error.main',
               margin: '0 auto 16px auto',
             }}
           />
@@ -330,7 +330,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
       }}
     >
       <PageHeader
@@ -394,12 +394,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   }}
                 >
                   <div>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>仪器编号</p>
+                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>仪器编号</p>
                     <p
                       style={{
                         fontSize: '1.125rem',
                         fontWeight: 600,
-                        color: '#0f172a',
+                        color: 'grey.900',
                         marginTop: 4,
                       }}
                     >
@@ -409,12 +409,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   {getStatusBadge(instrument.status)}
                 </div>
                 <div>
-                  <p style={{ fontSize: '0.875rem', color: '#64748b' }}>仪器名称</p>
+                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>仪器名称</p>
                   <p
                     style={{
                       fontSize: '1.125rem',
                       fontWeight: 500,
-                      color: '#0f172a',
+                      color: 'grey.900',
                       marginTop: 4,
                     }}
                   >
@@ -429,12 +429,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   }}
                 >
                   <div>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>型号</p>
-                    <p style={{ color: '#0f172a', marginTop: 4 }}>{instrument.model || '-'}</p>
+                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>型号</p>
+                    <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.model || '-'}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>分类</p>
-                    <p style={{ color: '#0f172a', marginTop: 4 }}>{instrument.category || '-'}</p>
+                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>分类</p>
+                    <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.category || '-'}</p>
                   </div>
                 </div>
                 <div
@@ -445,12 +445,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   }}
                 >
                   <div>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>位置</p>
-                    <p style={{ color: '#0f172a', marginTop: 4 }}>{instrument.location || '-'}</p>
+                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>位置</p>
+                    <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.location || '-'}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>负责人</p>
-                    <p style={{ color: '#0f172a', marginTop: 4 }}>
+                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>负责人</p>
+                    <p style={{ color: 'grey.900', marginTop: 4 }}>
                       {instrument.responsible_person || '-'}
                     </p>
                   </div>
@@ -466,7 +466,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     <p
                       style={{
                         fontSize: '0.875rem',
-                        color: '#64748b',
+                        color: 'grey.600',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 4,
@@ -475,7 +475,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                       <Calendar sx={{ width: 12, height: 12 }} />
                       采购日期
                     </p>
-                    <p style={{ color: '#0f172a', marginTop: 4 }}>
+                    <p style={{ color: 'grey.900', marginTop: 4 }}>
                       {instrument.purchase_date
                         ? new Date(instrument.purchase_date).toLocaleDateString('zh-CN')
                         : '-'}
@@ -485,7 +485,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     <p
                       style={{
                         fontSize: '0.875rem',
-                        color: '#64748b',
+                        color: 'grey.600',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 4,
@@ -494,7 +494,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                       <Clock sx={{ width: 12, height: 12 }} />
                       下次校准
                     </p>
-                    <p style={{ color: '#0f172a', marginTop: 4 }}>
+                    <p style={{ color: 'grey.900', marginTop: 4 }}>
                       {instrument.next_calibration_date
                         ? new Date(instrument.next_calibration_date).toLocaleDateString('zh-CN')
                         : '-'}
@@ -512,7 +512,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 >
                   <Box
                     component={DollarSign}
-                    sx={{ fontSize: 20, color: '#16a34a' }}
+                    sx={{ fontSize: 20, color: 'success.dark' }}
                   />
                   维护统计
                 </Typography>
@@ -529,11 +529,11 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     style={{
                       textAlign: 'center',
                       padding: 12,
-                      backgroundColor: '#f0fdf4',
+                      backgroundColor: 'success.light',
                       borderRadius: 8,
                     }}
                   >
-                    <p style={{ fontSize: '0.875rem', color: '#16a34a' }}>维护次数</p>
+                    <p style={{ fontSize: '0.875rem', color: 'success.dark' }}>维护次数</p>
                     <p
                       style={{
                         fontSize: '1.5rem',
@@ -552,12 +552,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                       borderRadius: 8,
                     }}
                   >
-                    <p style={{ fontSize: '0.875rem', color: '#2563eb' }}>累计费用</p>
+                    <p style={{ fontSize: '0.875rem', color: 'primary.dark' }}>累计费用</p>
                     <p
                       style={{
                         fontSize: '1.5rem',
                         fontWeight: 700,
-                        color: '#1d4ed8',
+                        color: 'primary.dark',
                       }}
                     >
                       ¥{totalMaintenanceCost.toFixed(2)}
@@ -565,9 +565,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   </div>
                 </div>
                 {maintenanceRecords.length > 0 && (
-                  <div style={{ paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>最近维护</p>
-                    <p style={{ color: '#0f172a', marginTop: 4 }}>
+                  <div style={{ paddingTop: 16, borderTop: '1px solid border.default' }}>
+                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>最近维护</p>
+                    <p style={{ color: 'grey.900', marginTop: 4 }}>
                       {new Date(
                         maintenanceRecords[0].performed_at || Date.now()
                       ).toLocaleDateString('zh-CN')}
@@ -595,7 +595,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 >
                   <Box
                     component={FileText}
-                    sx={{ fontSize: 20, color: '#2563eb' }}
+                    sx={{ fontSize: 20, color: 'primary.dark' }}
                   />
                   维护记录列表
                 </Typography>
@@ -609,7 +609,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   emptyIcon={
                     <FileText
                       size={64}
-                      color='#cbd5e1'
+                      color='grey.400'
                     />
                   }
                 />

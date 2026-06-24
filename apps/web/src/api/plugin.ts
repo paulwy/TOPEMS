@@ -30,6 +30,7 @@ export interface Plugin {
   is_installed?: boolean;
   is_featured?: boolean;
   tags?: string[];
+  created_at?: string;
 }
 
 export interface PluginPermission {
@@ -57,6 +58,7 @@ export interface TenantPlugin {
   activated_at?: string;
   last_used_at?: string;
   usage_count: number;
+  plugin_name?: string;
 }
 
 export interface TenantInstalledPlugin {
@@ -263,17 +265,30 @@ const runtimeAxios = axios.create({
   timeout: PLUGIN_TIMEOUT.DEFAULT,
 });
 
+runtimeAxios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token && !config.headers['Authorization']) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  const tenantId = localStorage.getItem('tenant_id');
+  if (tenantId && !config.headers['X-Tenant-ID']) {
+    config.headers['X-Tenant-ID'] = tenantId;
+  }
+  return config;
+});
+
 export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo | null> => {
   const config = PLUGIN_REGISTRY[code];
   if (!config) return null;
 
   try {
-    const response = await runtimeAxios.get(`${config.url}/api/plugins/info`);
+    // 通过 Vite 代理访问，避免 CORS 问题
+    const response = await runtimeAxios.get(`/plugin-health/${code}/api/plugins/info`);
     if (response.data?.data) {
       return response.data.data;
     }
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     apiLogger.warn(`Failed to fetch plugin info for ${code}:`, error);
     return null;
   }
@@ -300,15 +315,16 @@ export const checkPluginHealth = async (
 
   const startTime = Date.now();
   try {
-    const response = await runtimeAxios.get(`${config.url}/api/plugins/health`);
+    // 通过 Vite 代理访问，避免 CORS 问题
+    const response = await runtimeAxios.get(`/plugin-health/${code}/api/plugins/health`);
     const latency = Date.now() - startTime;
     if (response.data?.data?.status) {
       return { healthy: true, status: response.data.data.status, latency };
     }
     return { healthy: true, status: 'running', latency };
-  } catch (error) {
+  } catch (error: unknown) {
     try {
-      const response = await runtimeAxios.get(`${config.url}/health`);
+      const response = await runtimeAxios.get(`/plugin-health/${code}/health`);
       const latency = Date.now() - startTime;
       return { healthy: true, status: 'running', latency };
     } catch {

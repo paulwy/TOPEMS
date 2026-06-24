@@ -17,6 +17,7 @@ import {
 import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 import {
   Box,
   TextField,
@@ -39,7 +40,7 @@ import {
   Paper,
   Switch,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
 interface DictionaryManagementPageProps {
@@ -113,11 +114,11 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       } else {
         setDictTypes([]);
       }
-    } catch (err: any) {
-      setError(err.message || '加载字典类型失败');
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err, '加载字典类型失败'));
       addNotification({
         title: '加载失败',
-        message: err.message || '加载字典类型失败',
+        message: extractErrorMessage(err, '加载字典类型失败'),
         type: 'error',
       });
     } finally {
@@ -134,7 +135,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       } else {
         setDictItems([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载字典项失败:', err);
       setDictItems([]);
     } finally {
@@ -179,10 +180,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建失败',
+        message: extractErrorMessage(err, '创建失败'),
         type: 'error',
       });
     }
@@ -209,10 +210,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新失败',
+        message: extractErrorMessage(err, '更新失败'),
         type: 'error',
       });
     }
@@ -238,10 +239,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除失败',
+        message: extractErrorMessage(err, '删除失败'),
         type: 'error',
       });
     }
@@ -277,10 +278,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建失败',
+        message: extractErrorMessage(err, '创建失败'),
         type: 'error',
       });
     }
@@ -307,10 +308,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新失败',
+        message: extractErrorMessage(err, '更新失败'),
         type: 'error',
       });
     }
@@ -335,10 +336,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             type: 'error',
           });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         addNotification({
           title: '失败',
-          message: err.message || '删除失败',
+          message: extractErrorMessage(err, '删除失败'),
           type: 'error',
         });
       }
@@ -368,10 +369,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             type: 'error',
           });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         addNotification({
           title: '失败',
-          message: err.message || '状态切换失败',
+          message: extractErrorMessage(err, '状态切换失败'),
           type: 'error',
         });
       }
@@ -392,10 +393,10 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
       });
       setSelectedItems([]);
       if (selectedType) loadDictItems(selectedType.id);
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '批量删除失败',
+        message: extractErrorMessage(err, '批量删除失败'),
         type: 'error',
       });
     }
@@ -469,19 +470,19 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
           setShowImportModal(false);
           setImportFile(null);
           if (selectedType) loadDictItems(selectedType.id);
-        } catch (err: any) {
+        } catch (err: unknown) {
           addNotification({
             title: '失败',
-            message: err.message || '导入失败',
+            message: extractErrorMessage(err, '导入失败'),
             type: 'error',
           });
         }
       };
       reader.readAsText(importFile);
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '导入失败',
+        message: extractErrorMessage(err, '导入失败'),
         type: 'error',
       });
     }
@@ -703,7 +704,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                 >
                   <Book
                     size={28}
-                    style={{ marginRight: 12, color: '#2563eb' }}
+                    style={{ marginRight: 12, color: 'primary.dark' }}
                   />
                   字典管理
                 </Typography>
@@ -739,7 +740,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
 
       {error && (
         <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 2 }}>
-          <Paper sx={{ bgcolor: '#fef2f2', borderColor: '#fecaca', p: 2, border: 1 }}>
+          <Paper sx={{ bgcolor: 'error.light', borderColor: 'error.light', p: 2, border: 1 }}>
             <Typography color='error'>{error}</Typography>
           </Paper>
         </Box>
@@ -772,7 +773,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                           >
                             <Search
                               size={16}
-                              style={{ color: '#9ca3af' }}
+                              style={{ color: 'text.disabled' }}
                             />
                           </Box>
                         ),
@@ -800,7 +801,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                           >
                             <FolderOpen
                               size={16}
-                              style={{ color: '#6b7280' }}
+                              style={{ color: 'text.secondary' }}
                             />
                             <Typography
                               variant='caption'
@@ -856,7 +857,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                                   >
                                     <Tag
                                       size={16}
-                                      style={{ color: '#9ca3af' }}
+                                      style={{ color: 'text.disabled' }}
                                     />
                                     <Box>
                                       <Typography
@@ -875,7 +876,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                                   </Box>
                                   <ChevronRight
                                     size={16}
-                                    style={{ color: '#9ca3af' }}
+                                    style={{ color: 'text.disabled' }}
                                   />
                                 </Box>
                                 <Chip
@@ -995,7 +996,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                 <CardContent sx={{ p: 6, textAlign: 'center' }}>
                   <Book
                     size={64}
-                    style={{ color: '#9ca3af', marginBottom: 16 }}
+                    style={{ color: 'text.disabled', marginBottom: 16 }}
                   />
                   <Typography
                     variant='h6'

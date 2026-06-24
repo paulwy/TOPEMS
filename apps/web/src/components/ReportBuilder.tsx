@@ -94,7 +94,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
       } else {
         alert(response.message || '创建报表失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('创建报表失败:', err);
       alert('创建报表失败，请重试');
     } finally {
@@ -105,25 +105,25 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
   const getModuleColor = (module: string) => {
     const colors: Record<string, string> = {
       RS: '#f97316',
-      LIMS: '#3b82f6',
-      QMS: '#22c55e',
-      EHS: '#ef4444',
+      LIMS: 'primary.main',
+      QMS: 'success.dark',
+      EHS: 'error.main',
       SRM: '#a855f7',
-      PDM: '#6366f1',
+      PDM: 'primary.light',
     };
-    return colors[module] || '#6b7280';
+    return colors[module] || 'text.secondary';
   };
 
   const getModuleTextColor = (module: string) => {
     const colors: Record<string, string> = {
       RS: '#c2410c',
-      LIMS: '#1d4ed8',
+      LIMS: 'primary.dark',
       QMS: '#15803d',
-      EHS: '#b91c1c',
+      EHS: 'error.darker',
       SRM: '#7e22ce',
       PDM: '#4338ca',
     };
-    return colors[module] || '#374151';
+    return colors[module] || 'grey.700';
   };
 
   const groupedTypes = reportTypes.reduce(
@@ -151,7 +151,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
     >
       <div
         style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: 'white',
           borderRadius: 12,
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           width: '100%',
@@ -163,22 +163,22 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
         <div
           style={{
             padding: 24,
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid border.default',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'linear-gradient(to right, #eff6ff, #e0e7ff)',
+            background: 'linear-gradient(to right, primary.light, #e0e7ff)',
           }}
         >
           <div>
-            <h3 style={{ fontSize: 20, fontWeight: 600, color: '#0f172a' }}>报表生成器</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 600, color: 'grey.900' }}>报表生成器</h3>
             <p style={{ fontSize: 14, color: '#475569', marginTop: 4 }}>创建自定义报表</p>
           </div>
           <button
             onClick={onClose}
             style={{
               padding: 8,
-              color: '#64748b',
+              color: 'grey.600',
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -192,8 +192,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
         <div
           style={{
             padding: 16,
-            backgroundColor: '#f8fafc',
-            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: 'grey.50',
+            borderBottom: '1px solid border.default',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -202,7 +202,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                color: step >= 1 ? '#2563eb' : '#94a3b8',
+                color: step >= 1 ? 'primary.dark' : '#94a3b8',
               }}
             >
               <div
@@ -213,8 +213,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: step >= 1 ? '#2563eb' : '#cbd5e1',
-                  color: '#ffffff',
+                  backgroundColor: step >= 1 ? 'primary.dark' : 'grey.400',
+                  color: 'white',
                   fontSize: 14,
                   fontWeight: 500,
                 }}
@@ -223,11 +223,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               </div>
               <span style={{ marginLeft: 8, fontWeight: 500 }}>选择类型</span>
             </div>
-            <div style={{ flex: 1, height: 2, backgroundColor: '#cbd5e1' }}>
+            <div style={{ flex: 1, height: 2, backgroundColor: 'grey.400' }}>
               <div
                 style={{
                   height: '100%',
-                  backgroundColor: '#2563eb',
+                  backgroundColor: 'primary.dark',
                   transition: 'all 0.3s',
                   width: step >= 2 ? '100%' : '0%',
                 }}
@@ -238,7 +238,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                color: step >= 2 ? '#2563eb' : '#94a3b8',
+                color: step >= 2 ? 'primary.dark' : '#94a3b8',
               }}
             >
               <div
@@ -249,8 +249,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: step >= 2 ? '#2563eb' : '#cbd5e1',
-                  color: '#ffffff',
+                  backgroundColor: step >= 2 ? 'primary.dark' : 'grey.400',
+                  color: 'white',
                   fontSize: 14,
                   fontWeight: 500,
                 }}
@@ -259,11 +259,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               </div>
               <span style={{ marginLeft: 8, fontWeight: 500 }}>配置选项</span>
             </div>
-            <div style={{ flex: 1, height: 2, backgroundColor: '#cbd5e1' }}>
+            <div style={{ flex: 1, height: 2, backgroundColor: 'grey.400' }}>
               <div
                 style={{
                   height: '100%',
-                  backgroundColor: '#2563eb',
+                  backgroundColor: 'primary.dark',
                   transition: 'all 0.3s',
                   width: step >= 3 ? '100%' : '0%',
                 }}
@@ -274,7 +274,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                color: step >= 3 ? '#2563eb' : '#94a3b8',
+                color: step >= 3 ? 'primary.dark' : '#94a3b8',
               }}
             >
               <div
@@ -285,8 +285,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: step >= 3 ? '#2563eb' : '#cbd5e1',
-                  color: '#ffffff',
+                  backgroundColor: step >= 3 ? 'primary.dark' : 'grey.400',
+                  color: 'white',
                   fontSize: 14,
                   fontWeight: 500,
                 }}
@@ -312,7 +312,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   style={{
                     fontSize: 18,
                     fontWeight: 600,
-                    color: '#0f172a',
+                    color: 'grey.900',
                     marginBottom: 16,
                   }}
                 >
@@ -345,8 +345,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                             style={{
                               padding: 16,
                               borderRadius: 8,
-                              border: `2px solid ${reportType === type.type ? '#2563eb' : '#e2e8f0'}`,
-                              backgroundColor: reportType === type.type ? '#eff6ff' : 'transparent',
+                              border: `2px solid ${reportType === type.type ? 'primary.dark' : 'border.default'}`,
+                              backgroundColor:
+                                reportType === type.type ? 'primary.light' : 'transparent',
                               transition: 'all 0.2s',
                               cursor: 'pointer',
                               textAlign: 'left',
@@ -374,16 +375,16 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                                   style={{
                                     width: 20,
                                     height: 20,
-                                    color: '#ffffff',
+                                    color: 'white',
                                   }}
                                 />
                               </div>
                               <div>
-                                <p style={{ fontWeight: 500, color: '#0f172a' }}>{type.name}</p>
+                                <p style={{ fontWeight: 500, color: 'grey.900' }}>{type.name}</p>
                                 <p
                                   style={{
                                     fontSize: 14,
-                                    color: '#64748b',
+                                    color: 'grey.600',
                                     marginTop: 4,
                                   }}
                                 >
@@ -408,7 +409,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   style={{
                     fontSize: 18,
                     fontWeight: 600,
-                    color: '#0f172a',
+                    color: 'grey.900',
                     marginBottom: 16,
                   }}
                 >
@@ -436,7 +437,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       style={{
                         width: '100%',
                         padding: '8px 12px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid border.default',
                         borderRadius: 8,
                         fontSize: 14,
                         outline: 'none',
@@ -464,7 +465,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       style={{
                         width: '100%',
                         padding: '8px 12px',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid border.default',
                         borderRadius: 8,
                         fontSize: 14,
                         outline: 'none',
@@ -499,7 +500,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         style={{
                           width: '100%',
                           padding: '8px 12px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid border.default',
                           borderRadius: 8,
                           fontSize: 14,
                           outline: 'none',
@@ -525,7 +526,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         style={{
                           width: '100%',
                           padding: '8px 12px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid border.default',
                           borderRadius: 8,
                           fontSize: 14,
                           outline: 'none',
@@ -557,7 +558,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                           onClick={handleSelectAll}
                           style={{
                             fontSize: 14,
-                            color: '#2563eb',
+                            color: 'primary.dark',
                             backgroundColor: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
@@ -586,7 +587,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         gap: 8,
                         maxHeight: 240,
                         overflowY: 'auto',
-                        border: '1px solid #e2e8f0',
+                        border: '1px solid border.default',
                         borderRadius: 8,
                         padding: 12,
                       }}
@@ -611,7 +612,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                               style={{
                                 width: 16,
                                 height: 16,
-                                color: '#2563eb',
+                                color: 'primary.dark',
                                 borderRadius: 4,
                               }}
                             />
@@ -627,11 +628,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, color: '#0f172a' }}>确认报表配置</h4>
+              <h4 style={{ fontSize: 18, fontWeight: 600, color: 'grey.900' }}>确认报表配置</h4>
 
               <div
                 style={{
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'grey.50',
                   borderRadius: 8,
                   padding: 24,
                   display: 'flex',
@@ -640,23 +641,23 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 }}
               >
                 <div>
-                  <p style={{ fontSize: 14, color: '#64748b' }}>报表类型</p>
-                  <p style={{ fontWeight: 500, color: '#0f172a' }}>
+                  <p style={{ fontSize: 14, color: 'grey.600' }}>报表类型</p>
+                  <p style={{ fontWeight: 500, color: 'grey.900' }}>
                     {reportTypes.find((t) => t.type === reportType)?.name}
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, color: '#64748b' }}>报表标题</p>
-                  <p style={{ fontWeight: 500, color: '#0f172a' }}>{title}</p>
+                  <p style={{ fontSize: 14, color: 'grey.600' }}>报表标题</p>
+                  <p style={{ fontWeight: 500, color: 'grey.900' }}>{title}</p>
                 </div>
                 {description && (
                   <div>
-                    <p style={{ fontSize: 14, color: '#64748b' }}>报表描述</p>
-                    <p style={{ fontWeight: 500, color: '#0f172a' }}>{description}</p>
+                    <p style={{ fontSize: 14, color: 'grey.600' }}>报表描述</p>
+                    <p style={{ fontWeight: 500, color: 'grey.900' }}>{description}</p>
                   </div>
                 )}
                 <div>
-                  <p style={{ fontSize: 14, color: '#64748b' }}>选择的列</p>
+                  <p style={{ fontSize: 14, color: 'grey.600' }}>选择的列</p>
                   <div
                     style={{
                       display: 'flex',
@@ -671,7 +672,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                         style={{
                           padding: '4px 8px',
                           backgroundColor: '#dbeafe',
-                          color: '#1d4ed8',
+                          color: 'primary.dark',
                           borderRadius: 4,
                           fontSize: 14,
                         }}
@@ -683,8 +684,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 </div>
                 {startDate && endDate && (
                   <div>
-                    <p style={{ fontSize: 14, color: '#64748b' }}>日期范围</p>
-                    <p style={{ fontWeight: 500, color: '#0f172a' }}>
+                    <p style={{ fontSize: 14, color: 'grey.600' }}>日期范围</p>
+                    <p style={{ fontWeight: 500, color: 'grey.900' }}>
                       {startDate} 至 {endDate}
                     </p>
                   </div>
@@ -697,7 +698,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
         <div
           style={{
             padding: 24,
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid border.default',
             display: 'flex',
             justifyContent: 'space-between',
           }}
@@ -707,7 +708,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             style={{
               padding: '8px 16px',
               color: '#334155',
-              backgroundColor: '#f1f5f9',
+              backgroundColor: 'grey.100',
               borderRadius: 8,
               border: 'none',
               cursor: 'pointer',
@@ -720,8 +721,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             disabled={creating || (step === 2 && selectedColumns.length === 0)}
             style={{
               padding: '8px 24px',
-              backgroundColor: '#2563eb',
-              color: '#ffffff',
+              backgroundColor: 'primary.dark',
+              color: 'white',
               borderRadius: 8,
               border: 'none',
               cursor: 'pointer',

@@ -39,7 +39,7 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface InvoiceListItem extends SalesInvoice {
   tax_rate: number;
@@ -107,7 +107,7 @@ const FinanceInvoicePage: React.FC = () => {
             total: response.data.total || 0,
           });
         }
-      } catch (err) {
+      } catch (err: unknown) {
         apiLogger.error('获取发票列表失败:', err);
         error('获取发票列表失败');
       } finally {
@@ -237,7 +237,7 @@ const FinanceInvoicePage: React.FC = () => {
       } else {
         error((response as any).message || '开具失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('开具发票失败:', err);
       error('开具发票失败');
     }
@@ -255,7 +255,7 @@ const FinanceInvoicePage: React.FC = () => {
       } else {
         error((response as any).message || '认证失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('认证发票失败:', err);
       error('认证发票失败');
     }
@@ -277,7 +277,7 @@ const FinanceInvoicePage: React.FC = () => {
       } else {
         error((response as any).message || '删除失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('删除发票失败:', err);
       error('删除发票失败');
     }

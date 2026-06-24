@@ -7,7 +7,7 @@ import {
   Box,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import type {
   PurchaseOrder,
@@ -56,7 +56,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         setOrders(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载采购订单失败:', error);
       addNotification({
         type: 'error',
@@ -96,7 +96,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadOrders();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -132,7 +132,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         message: '采购订单已删除',
       });
       loadOrders();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('删除失败:', error);
       addNotification({
         type: 'error',

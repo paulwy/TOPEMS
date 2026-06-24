@@ -23,7 +23,7 @@ import {
   Snackbar,
   CircularProgress,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type {
   DevicePoint,
   Pipeline,
@@ -85,14 +85,14 @@ const GisContent: React.FC = () => {
   ];
 
   const getStatusStyle = (status: string) => {
-    if (!status) return { bgcolor: '#f1f5f9', color: '#475569' };
+    if (!status) return { bgcolor: 'grey.100', color: '#475569' };
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用')) return { bgcolor: '#dcfce7', color: '#15803d' };
+    if (s.includes('active') || s.includes('启用')) return { bgcolor: 'success.lighter', color: '#15803d' };
     if (s.includes('pending') || s.includes('待处理'))
-      return { bgcolor: '#fef3c7', color: '#b45309' };
+      return { bgcolor: 'warning.light', color: '#b45309' };
     if (s.includes('inactive') || s.includes('禁用'))
-      return { bgcolor: '#fee2e2', color: '#b91c1c' };
-    return { bgcolor: '#f1f5f9', color: '#475569' };
+      return { bgcolor: 'error.lighter', color: 'error.darker' };
+    return { bgcolor: 'grey.100', color: '#475569' };
   };
 
   const StatusChip: React.FC<{ status: string }> = ({ status }) => {
@@ -119,7 +119,7 @@ const GisContent: React.FC = () => {
       <Box sx={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', fontSize: '0.875rem' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f9fafb' }}>
+            <tr style={{ backgroundColor: 'grey.50' }}>
               {type === 'devicePoints' && (
                 <>
                   <th
@@ -127,7 +127,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     名称
@@ -137,7 +137,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     类型
@@ -147,7 +147,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     坐标
@@ -157,7 +157,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     状态
@@ -171,7 +171,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     名称
@@ -181,7 +181,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     类型
@@ -191,7 +191,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     起点
@@ -201,7 +201,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     终点
@@ -211,7 +211,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     状态
@@ -225,7 +225,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     名称
@@ -235,7 +235,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     类型
@@ -245,7 +245,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     容量
@@ -255,7 +255,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     坐标
@@ -269,7 +269,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     标题
@@ -279,7 +279,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     类型
@@ -289,7 +289,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     记录人
@@ -299,7 +299,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     时间
@@ -313,7 +313,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     名称
@@ -323,7 +323,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     编号
@@ -333,7 +333,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     类型
@@ -343,7 +343,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     创建时间
@@ -357,7 +357,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     名称
@@ -367,7 +367,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     类型
@@ -377,7 +377,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     地址
@@ -387,7 +387,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     联系人
@@ -397,7 +397,7 @@ const GisContent: React.FC = () => {
                       padding: '12px 16px',
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: '#374151',
+                      color: 'grey.700',
                     }}
                   >
                     状态
@@ -411,7 +411,7 @@ const GisContent: React.FC = () => {
               (data as DevicePoint[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid #e5e7eb' }}
+                  style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: '12px 16px' }}>{item.name}</td>
                   <td style={{ padding: '12px 16px' }}>{item.device_type}</td>
@@ -431,7 +431,7 @@ const GisContent: React.FC = () => {
               (data as Pipeline[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid #e5e7eb' }}
+                  style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: '12px 16px' }}>{item.name}</td>
                   <td style={{ padding: '12px 16px' }}>{item.pipeline_type}</td>
@@ -464,7 +464,7 @@ const GisContent: React.FC = () => {
               (data as StorageLocation[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid #e5e7eb' }}
+                  style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: '12px 16px' }}>{item.name}</td>
                   <td style={{ padding: '12px 16px' }}>{item.location_type}</td>
@@ -484,7 +484,7 @@ const GisContent: React.FC = () => {
               (data as EvidenceRecord[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid #e5e7eb' }}
+                  style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: '12px 16px' }}>{item.title}</td>
                   <td style={{ padding: '12px 16px' }}>{item.evidence_type}</td>
@@ -498,7 +498,7 @@ const GisContent: React.FC = () => {
               (data as FactoryMap[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid #e5e7eb' }}
+                  style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: '12px 16px' }}>{item.name}</td>
                   <td style={{ padding: '12px 16px' }}>{item.code}</td>
@@ -512,7 +512,7 @@ const GisContent: React.FC = () => {
               (data as BusinessLocation[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid #e5e7eb' }}
+                  style={{ borderTop: '1px solid grey.200' }}
                 >
                   <td style={{ padding: '12px 16px' }}>{item.business_name}</td>
                   <td style={{ padding: '12px 16px' }}>{item.business_type}</td>
@@ -597,9 +597,9 @@ const GisContent: React.FC = () => {
               sx={{
                 bgcolor: 'white',
                 border: 1,
-                borderColor: '#e5e7eb',
+                borderColor: 'grey.200',
                 borderRadius: 2,
-                '&:hover': { bgcolor: '#f9fafb' },
+                '&:hover': { bgcolor: 'grey.50' },
                 textTransform: 'none',
               }}
             >
@@ -657,7 +657,7 @@ const GisContent: React.FC = () => {
               p: 4,
               boxShadow: 1,
               border: 1,
-              borderColor: '#f3f4f6',
+              borderColor: 'grey.100',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -666,7 +666,7 @@ const GisContent: React.FC = () => {
                   width: 40,
                   height: 40,
                   borderRadius: 2,
-                  bgcolor: '#dcfce7',
+                  bgcolor: 'success.lighter',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -674,19 +674,19 @@ const GisContent: React.FC = () => {
               >
                 <MapPin
                   size={20}
-                  style={{ color: '#16a34a' }}
+                  style={{ color: 'success.dark' }}
                 />
               </Box>
               <Box>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 700, color: '#111827' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {statistics?.device_points || devicePoints.length}
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: '#6b7280' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   设备点位
                 </Typography>
@@ -699,7 +699,7 @@ const GisContent: React.FC = () => {
               p: 4,
               boxShadow: 1,
               border: 1,
-              borderColor: '#f3f4f6',
+              borderColor: 'grey.100',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -716,19 +716,19 @@ const GisContent: React.FC = () => {
               >
                 <ArrowRight
                   size={20}
-                  style={{ color: '#6366f1' }}
+                  style={{ color: 'primary.light' }}
                 />
               </Box>
               <Box>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 700, color: '#111827' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {statistics?.pipelines || pipelines.length}
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: '#6b7280' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   管线管理
                 </Typography>
@@ -741,7 +741,7 @@ const GisContent: React.FC = () => {
               p: 4,
               boxShadow: 1,
               border: 1,
-              borderColor: '#f3f4f6',
+              borderColor: 'grey.100',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -750,7 +750,7 @@ const GisContent: React.FC = () => {
                   width: 40,
                   height: 40,
                   borderRadius: 2,
-                  bgcolor: '#fef3c7',
+                  bgcolor: 'warning.light',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -758,19 +758,19 @@ const GisContent: React.FC = () => {
               >
                 <Warehouse
                   size={20}
-                  style={{ color: '#d97706' }}
+                  style={{ color: 'warning.dark' }}
                 />
               </Box>
               <Box>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 700, color: '#111827' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {statistics?.storage_locations || storageLocations.length}
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: '#6b7280' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   仓储位置
                 </Typography>
@@ -783,7 +783,7 @@ const GisContent: React.FC = () => {
               p: 4,
               boxShadow: 1,
               border: 1,
-              borderColor: '#f3f4f6',
+              borderColor: 'grey.100',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -806,13 +806,13 @@ const GisContent: React.FC = () => {
               <Box>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 700, color: '#111827' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {statistics?.evidence_records || evidenceRecords.length}
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: '#6b7280' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   现场取证
                 </Typography>
@@ -825,7 +825,7 @@ const GisContent: React.FC = () => {
               p: 4,
               boxShadow: 1,
               border: 1,
-              borderColor: '#f3f4f6',
+              borderColor: 'grey.100',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -848,13 +848,13 @@ const GisContent: React.FC = () => {
               <Box>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 700, color: '#111827' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {statistics?.factory_maps || factoryMaps.length}
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: '#6b7280' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   厂区地图
                 </Typography>
@@ -867,7 +867,7 @@ const GisContent: React.FC = () => {
               p: 4,
               boxShadow: 1,
               border: 1,
-              borderColor: '#f3f4f6',
+              borderColor: 'grey.100',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -890,13 +890,13 @@ const GisContent: React.FC = () => {
               <Box>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 700, color: '#111827' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {statistics?.business_locations || businessLocations.length}
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: '#6b7280' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   业务位置
                 </Typography>
@@ -910,7 +910,7 @@ const GisContent: React.FC = () => {
             borderRadius: 2,
             boxShadow: 1,
             border: 1,
-            borderColor: '#f3f4f6',
+            borderColor: 'grey.100',
             overflow: 'hidden',
           }}
         >
@@ -918,7 +918,7 @@ const GisContent: React.FC = () => {
             sx={{
               display: 'flex',
               borderBottom: 1,
-              borderColor: '#f3f4f6',
+              borderColor: 'grey.100',
               overflowX: 'auto',
             }}
           >
@@ -935,12 +935,12 @@ const GisContent: React.FC = () => {
                   fontSize: '0.875rem',
                   fontWeight: 500,
                   whiteSpace: 'nowrap',
-                  color: activeTab === tab.id ? '#0891b2' : '#4b5563',
+                  color: activeTab === tab.id ? '#0891b2' : 'text.secondary',
                   borderBottom: activeTab === tab.id ? 2 : 0,
                   borderColor: activeTab === tab.id ? '#0891b2' : 'transparent',
                   bgcolor: activeTab === tab.id ? '#ecfeff' : 'transparent',
                   '&:hover': {
-                    bgcolor: activeTab === tab.id ? '#ecfeff' : '#f9fafb',
+                    bgcolor: activeTab === tab.id ? '#ecfeff' : 'grey.50',
                   },
                   textTransform: 'none',
                 }}
@@ -961,14 +961,14 @@ const GisContent: React.FC = () => {
                   py: 12,
                 }}
               >
-                <CircularProgress sx={{ color: '#06b6d4' }} />
+                <CircularProgress sx={{ color: 'info.main' }} />
               </Box>
             ) : activeTab === 'map' ? (
               <Box
                 sx={{
                   height: 600,
                   border: 1,
-                  borderColor: '#e5e7eb',
+                  borderColor: 'grey.200',
                   borderRadius: 3,
                   overflow: 'hidden',
                 }}

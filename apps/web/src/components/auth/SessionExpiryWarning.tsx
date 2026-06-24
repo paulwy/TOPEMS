@@ -1,5 +1,5 @@
 import { Box, Typography, Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Clock, RefreshCw, AlertCircle } from 'lucide-react';
@@ -48,7 +48,7 @@ const SessionExpiryWarning: React.FC = () => {
       if (success) {
         setIsOpen(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to refresh session:', error);
     }
   };
@@ -80,7 +80,7 @@ const SessionExpiryWarning: React.FC = () => {
             justifyContent: 'center',
           }}
         >
-          <AlertCircle style={{ width: 32, height: 32, color: '#ed6c02' }} />
+          <AlertCircle style={{ width: 32, height: 32, color: 'warning.dark' }} />
         </Box>
         <DialogTitle sx={{ fontSize: 20, fontWeight: 600, textAlign: 'center' }}>
           会话即将过期
@@ -135,8 +135,8 @@ const SessionExpiryWarning: React.FC = () => {
               onClick={handleRefresh}
               startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               sx={{
-                backgroundColor: '#ed6c02',
-                '&:hover': { backgroundColor: '#e65100' },
+                backgroundColor: 'warning.dark',
+                '&:hover': { backgroundColor: 'warning.darker' },
               }}
             >
               继续使用

@@ -43,7 +43,7 @@ import {
   DialogActions,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 const TemplateManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -80,7 +80,7 @@ const TemplateManagementPage: React.FC = () => {
       if (categoriesRes.success && categoriesRes.data) {
         setCategories(categoriesRes.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('Error loading templates:', err);
     } finally {
       setLoading(false);
@@ -97,8 +97,8 @@ const TemplateManagementPage: React.FC = () => {
       } else {
         error(res.message || '创建失败');
       }
-    } catch (err: any) {
-      error(err.message || '创建失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '创建失败');
     }
   };
 
@@ -113,8 +113,8 @@ const TemplateManagementPage: React.FC = () => {
       } else {
         error(res.message || '更新失败');
       }
-    } catch (err: any) {
-      error(err.message || '更新失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '更新失败');
     }
   };
 
@@ -129,8 +129,8 @@ const TemplateManagementPage: React.FC = () => {
       } else {
         error(res.message || '删除失败');
       }
-    } catch (err: any) {
-      error(err.message || '删除失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '删除失败');
     }
   };
 
@@ -143,8 +143,8 @@ const TemplateManagementPage: React.FC = () => {
       } else {
         error(res.message || '复制失败');
       }
-    } catch (err: any) {
-      error(err.message || '复制失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '复制失败');
     }
   };
 
@@ -157,8 +157,8 @@ const TemplateManagementPage: React.FC = () => {
       } else {
         error(res.message || '更新失败');
       }
-    } catch (err: any) {
-      error(err.message || '更新失败');
+    } catch (err: unknown) {
+      error((err as { message?: string }).message || '更新失败');
     }
   };
 

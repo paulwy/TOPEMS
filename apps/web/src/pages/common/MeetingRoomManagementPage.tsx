@@ -17,7 +17,7 @@ import {
   TextField,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Calendar,
@@ -90,8 +90,8 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
       if (bookingsRes.success && bookingsRes.data) {
         setBookings(bookingsRes.data.items || []);
       }
-    } catch (err: any) {
-      setError(err.message || '加载数据失败');
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || '加载数据失败');
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -130,10 +130,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建会议室失败',
+        message: (err as { message?: string }).message || '创建会议室失败',
         type: 'error',
       });
     }
@@ -157,10 +157,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除会议室失败',
+        message: (err as { message?: string }).message || '删除会议室失败',
         type: 'error',
       });
     }
@@ -187,10 +187,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新会议室失败',
+        message: (err as { message?: string }).message || '更新会议室失败',
         type: 'error',
       });
     }
@@ -216,10 +216,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '预约失败',
+        message: (err as { message?: string }).message || '预约失败',
         type: 'error',
       });
     }

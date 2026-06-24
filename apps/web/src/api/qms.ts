@@ -828,7 +828,7 @@ export const qmsApi = {
         code: 200,
         timestamp: new Date().toISOString(),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to calculate QMS statistics:', error);
       const fallbackStats: QmsStatistics = {
         total_standards: 0,

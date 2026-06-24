@@ -51,8 +51,8 @@ describe('TOPEMS 系统集成测试', () => {
           purchase_order_id: '00000000-0000-0000-0000-000000000001',
         });
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -62,8 +62,8 @@ describe('TOPEMS 系统集成测试', () => {
           outbound_order_id: '00000000-0000-0000-0000-000000000001',
         });
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -73,8 +73,8 @@ describe('TOPEMS 系统集成测试', () => {
           supplier_id: '00000000-0000-0000-0000-000000000001',
         });
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -84,8 +84,8 @@ describe('TOPEMS 系统集成测试', () => {
           supplier_id: '00000000-0000-0000-0000-000000000001',
         });
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -93,8 +93,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await scmClient.get('/api/scm/suppliers');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -102,8 +102,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await wmsClient.get('/api/wms/inbound-orders');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -111,8 +111,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await srmClient.get('/api/srm/suppliers');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
   });
@@ -141,8 +141,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await qmsClient.get('/api/qms/standards');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -150,8 +150,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await qmsClient.get('/api/qms/inspections');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -159,8 +159,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await qmsClient.get('/api/qms/issues');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -168,8 +168,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await limsClient.get('/api/lims/samples');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -177,8 +177,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await limsClient.get('/api/lims/tasks');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -186,8 +186,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await limsClient.get('/api/lims/instruments');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -195,8 +195,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await ehsClient.get('/api/ehs/hazards');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -204,8 +204,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await ehsClient.get('/api/ehs/accidents');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
   });
@@ -222,8 +222,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await crmClient.get('/api/crm/customers');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -231,8 +231,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await crmClient.get('/api/crm/contacts');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -240,8 +240,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await crmClient.get('/api/crm/opportunities');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -249,8 +249,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await crmClient.get('/api/crm/opportunities/funnel');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -258,8 +258,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await crmClient.get('/api/crm/opportunities/stats');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
   });
@@ -276,8 +276,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await biClient.get('/api/bi/dashboard');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -285,8 +285,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await biClient.get('/api/bi/analytics/summary');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -294,8 +294,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await biClient.get('/api/bi/analytics/quality');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -303,8 +303,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await biClient.get('/api/bi/analytics/overview');
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
   });
@@ -324,8 +324,8 @@ describe('TOPEMS 系统集成测试', () => {
           password: 'test',
         });
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
   });
@@ -339,8 +339,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await scmClient.post('/api/scm/sync/sync-logs', {});
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -348,8 +348,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await wmsClient.post('/api/wms/sync/sync-logs', {});
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
 
@@ -357,8 +357,8 @@ describe('TOPEMS 系统集成测试', () => {
       try {
         const response = await srmClient.post('/api/srm/sync/sync-logs', {});
         expect(response.data).toBeDefined();
-      } catch (error: any) {
-        expect(error.response?.status).toBeDefined();
+      } catch (error: unknown) {
+        expect((error as { response?: { status?: number } }).response?.status).toBeDefined();
       }
     });
   });

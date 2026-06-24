@@ -11,7 +11,7 @@ import {
   ListItemText,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
   File as FileIcon,

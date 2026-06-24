@@ -14,7 +14,7 @@ import {
   DialogActions,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface EditEmployeeFormProps {
   open: boolean;
@@ -56,10 +56,10 @@ const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新员工失败',
+        message: (err as { message?: string }).message || '更新员工失败',
         type: 'error',
       });
     }

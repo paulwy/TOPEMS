@@ -13,7 +13,7 @@ import {
   CardHeader,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Plus,
   Eye,
@@ -127,9 +127,9 @@ const EhsAccidentPage: React.FC = () => {
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
       轻微: { bg: '#fef9c3', color: '#ca8a04' },
-      严重: { bg: '#fee2e2', color: '#dc2626' },
+      严重: { bg: 'error.lighter', color: 'error.dark' },
     };
-    const colors = severityMap[severity] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = severityMap[severity] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={severity}
@@ -145,11 +145,11 @@ const EhsAccidentPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      处理中: { bg: '#dbeafe', color: '#2563eb' },
+      处理中: { bg: '#dbeafe', color: 'primary.dark' },
       调查中: { bg: '#fef9c3', color: '#ca8a04' },
-      已结案: { bg: '#dcfce7', color: '#16a34a' },
+      已结案: { bg: 'success.lighter', color: 'success.dark' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -254,7 +254,7 @@ const EhsAccidentPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #fef2f2 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, error.light 0%, #f8fafc 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -263,8 +263,8 @@ const EhsAccidentPage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#ef4444',
-              borderTopColor: '#dc2626',
+              borderColor: 'error.main',
+              borderTopColor: 'error.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -281,7 +281,7 @@ const EhsAccidentPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #fef2f2 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, error.light 0%, #f8fafc 100%)',
       }}
     >
       <Box
@@ -310,7 +310,7 @@ const EhsAccidentPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  background: 'linear-gradient(135deg, error.main 0%, error.dark 100%)',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -342,7 +342,7 @@ const EhsAccidentPage: React.FC = () => {
               variant='contained'
               startIcon={<Plus style={{ width: 18, height: 18 }} />}
               onClick={handleCreate}
-              sx={{ bgcolor: '#ef4444', '&:hover': { bgcolor: '#dc2626' } }}
+              sx={{ bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}
             >
               事故上报
             </Button>
@@ -362,21 +362,21 @@ const EhsAccidentPage: React.FC = () => {
             mb: 4,
           }}
         >
-          <Card sx={{ bgcolor: '#fef2f2' }}>
+          <Card sx={{ bgcolor: 'error.light' }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fee2e2',
+                    bgcolor: 'error.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <AlertCircle sx={{ width: 20, height: 20, color: '#ef4444' }} />
+                  <AlertCircle sx={{ width: 20, height: 20, color: 'error.main' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -409,7 +409,7 @@ const EhsAccidentPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: '#2563eb' }} />
+                  <FileText sx={{ width: 20, height: 20, color: 'primary.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -435,7 +435,7 @@ const EhsAccidentPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fef3c7',
+                    bgcolor: 'warning.light',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
@@ -468,14 +468,14 @@ const EhsAccidentPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dcfce7',
+                    bgcolor: 'success.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                  <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -501,14 +501,14 @@ const EhsAccidentPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#fee2e2',
+                    bgcolor: 'error.lighter',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: '#dc2626' }} />
+                  <AlertTriangle sx={{ width: 20, height: 20, color: 'error.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -543,7 +543,7 @@ const EhsAccidentPage: React.FC = () => {
               variant='h6'
               sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
             >
-              <AlertCircle style={{ width: 20, height: 20, color: '#ef4444' }} />
+              <AlertCircle style={{ width: 20, height: 20, color: 'error.main' }} />
               事故列表
             </Typography>
           </CardHeader>
@@ -686,7 +686,7 @@ const EhsAccidentPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#ef4444' }}
+            sx={{ bgcolor: 'error.main' }}
           >
             上报
           </Button>

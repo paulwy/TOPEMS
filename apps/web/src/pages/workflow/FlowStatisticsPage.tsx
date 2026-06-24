@@ -9,7 +9,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
@@ -89,7 +89,7 @@ const FlowStatisticsPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载统计数据失败:', err);
       addNotification({
         title: '错误',
@@ -137,7 +137,7 @@ const FlowStatisticsPage: React.FC = () => {
               >
                 <BarChart3
                   size={24}
-                  style={{ color: '#7c3aed' }}
+                  style={{ color: 'secondary.dark' }}
                 />
               </Box>
               <Box>
@@ -257,7 +257,7 @@ const FlowStatisticsPage: React.FC = () => {
               >
                 <GitBranch
                   size={24}
-                  style={{ color: '#6366f1' }}
+                  style={{ color: 'primary.light' }}
                 />
               </Box>
             </Stack>
@@ -303,7 +303,7 @@ const FlowStatisticsPage: React.FC = () => {
               >
                 <Activity
                   size={24}
-                  style={{ color: '#16a34a' }}
+                  style={{ color: 'success.dark' }}
                 />
               </Box>
             </Stack>
@@ -349,7 +349,7 @@ const FlowStatisticsPage: React.FC = () => {
               >
                 <Users
                   size={24}
-                  style={{ color: '#2563eb' }}
+                  style={{ color: 'primary.dark' }}
                 />
               </Box>
             </Stack>
@@ -610,7 +610,7 @@ const FlowStatisticsPage: React.FC = () => {
                     cy='50'
                     r='40'
                     fill='none'
-                    stroke='#e5e7eb'
+                    stroke='grey.200'
                     strokeWidth='12'
                   />
                   <circle
@@ -618,7 +618,7 @@ const FlowStatisticsPage: React.FC = () => {
                     cy='50'
                     r='40'
                     fill='none'
-                    stroke='#3b82f6'
+                    stroke='primary.main'
                     strokeWidth='12'
                     strokeDasharray={`${((stats?.running_instances || 0) / (stats?.total_instances || 1)) * 251.2} 251.2`}
                   />
@@ -627,7 +627,7 @@ const FlowStatisticsPage: React.FC = () => {
                     cy='50'
                     r='40'
                     fill='none'
-                    stroke='#10b981'
+                    stroke='success.main'
                     strokeWidth='12'
                     strokeDasharray={`${((stats?.completed_instances || 0) / (stats?.total_instances || 1)) * 251.2} 251.2`}
                     strokeDashoffset={
@@ -639,7 +639,7 @@ const FlowStatisticsPage: React.FC = () => {
                     cy='50'
                     r='40'
                     fill='none'
-                    stroke='#ef4444'
+                    stroke='error.main'
                     strokeWidth='12'
                     strokeDasharray={`${((stats?.rejected_instances || 0) / (stats?.total_instances || 1)) * 251.2} 251.2`}
                     strokeDashoffset={
@@ -1049,7 +1049,7 @@ const FlowStatisticsPage: React.FC = () => {
                 >
                   <CheckCircle
                     size={20}
-                    style={{ color: '#16a34a' }}
+                    style={{ color: 'success.dark' }}
                   />
                   <Typography
                     variant='body2'
@@ -1090,7 +1090,7 @@ const FlowStatisticsPage: React.FC = () => {
                 >
                   <XCircle
                     size={20}
-                    style={{ color: '#dc2626' }}
+                    style={{ color: 'error.dark' }}
                   />
                   <Typography
                     variant='body2'
@@ -1131,7 +1131,7 @@ const FlowStatisticsPage: React.FC = () => {
                 >
                   <Clock
                     size={20}
-                    style={{ color: '#2563eb' }}
+                    style={{ color: 'primary.dark' }}
                   />
                   <Typography
                     variant='body2'
@@ -1232,7 +1232,7 @@ const FlowStatisticsPage: React.FC = () => {
                 <CheckCircle
                   size={48}
                   style={{
-                    color: '#d1d5db',
+                    color: 'grey.300',
                     margin: '0 auto',
                     marginBottom: 8,
                   }}

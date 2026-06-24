@@ -59,10 +59,14 @@ export const AlertCard = ({ title, message, level, onClick }: AlertCardProps) =>
         border: '1px solid',
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s',
-        ...(level === 'success' ? { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' } : {}),
-        ...(level === 'warning' ? { backgroundColor: '#fffbeb', borderColor: '#fde68a' } : {}),
-        ...(level === 'error' ? { backgroundColor: '#fef2f2', borderColor: '#fecaca' } : {}),
-        ...(level === 'info' ? { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' } : {}),
+        ...(level === 'success'
+          ? { backgroundColor: 'success.light', borderColor: 'success.light' }
+          : {}),
+        ...(level === 'warning'
+          ? { backgroundColor: 'warning.light', borderColor: 'warning.light' }
+          : {}),
+        ...(level === 'error' ? { backgroundColor: 'error.light', borderColor: 'error.light' } : {}),
+        ...(level === 'info' ? { backgroundColor: 'primary.light', borderColor: 'primary.light' } : {}),
       }}
       onClick={onClick}
     >
@@ -72,10 +76,10 @@ export const AlertCard = ({ title, message, level, onClick }: AlertCardProps) =>
           height: 20,
           flexShrink: 0,
           marginTop: '2px',
-          ...(level === 'success' ? { color: '#22c55e' } : {}),
-          ...(level === 'warning' ? { color: '#f59e0b' } : {}),
-          ...(level === 'error' ? { color: '#ef4444' } : {}),
-          ...(level === 'info' ? { color: '#3b82f6' } : {}),
+          ...(level === 'success' ? { color: 'success.dark' } : {}),
+          ...(level === 'warning' ? { color: 'warning.main' } : {}),
+          ...(level === 'error' ? { color: 'error.main' } : {}),
+          ...(level === 'info' ? { color: 'primary.main' } : {}),
         }}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -98,8 +102,8 @@ export const AlertCard = ({ title, message, level, onClick }: AlertCardProps) =>
             fontSize: '14px',
             ...(level === 'success' ? { color: '#15803d' } : {}),
             ...(level === 'warning' ? { color: '#b45309' } : {}),
-            ...(level === 'error' ? { color: '#b91c1c' } : {}),
-            ...(level === 'info' ? { color: '#1d4ed8' } : {}),
+            ...(level === 'error' ? { color: 'error.darker' } : {}),
+            ...(level === 'info' ? { color: 'primary.dark' } : {}),
             marginTop: '4px',
           }}
         >

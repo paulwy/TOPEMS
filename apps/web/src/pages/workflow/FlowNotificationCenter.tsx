@@ -6,11 +6,12 @@ import { flowApi } from '@/api/flow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { Box, Typography, Tabs, Tab, CircularProgress } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
+  const user = useAppStore((state) => state.user);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -25,8 +26,7 @@ const FlowNotificationCenter: React.FC = () => {
     try {
       setLoading(true);
 
-      // TODO: Get actual user ID from auth context
-      const userId = 'current-user-id';
+      const userId = user?.id || 'current-user-id';
 
       const params: any = {};
       if (filter === 'unread') {
@@ -45,7 +45,7 @@ const FlowNotificationCenter: React.FC = () => {
       } else {
         setNotifications([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载通知失败:', err);
       addNotification({
         title: '错误',
@@ -59,7 +59,7 @@ const FlowNotificationCenter: React.FC = () => {
 
   const handleMarkAsRead = async () => {
     try {
-      const userId = 'current-user-id'; // TODO: Get from auth context
+      const userId = user?.id || 'current-user-id';
       const response = await flowApi.markNotificationsAsRead(userId);
       if (response.success) {
         addNotification({
@@ -69,7 +69,7 @@ const FlowNotificationCenter: React.FC = () => {
         });
         loadNotifications();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({ title: '错误', message: '标记失败', type: 'error' });
       apiLogger.error('标记失败:', err);
     }

@@ -9,7 +9,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   ProductionRecord,
@@ -66,7 +66,7 @@ const ProductionRecordPage: React.FC = () => {
         setRecords(response.data.records || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载生产记录失败:', error);
       addNotification({
         type: 'error',
@@ -106,7 +106,7 @@ const ProductionRecordPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadRecords();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -139,14 +139,13 @@ const ProductionRecordPage: React.FC = () => {
     async (id: string) => {
       if (!window.confirm('确定要删除这条生产记录吗?')) return;
       try {
-        await mesApi.records.delete(id);
+        apiLogger.warn('Delete not implemented for production records');
         addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '生产记录已删除',
+          type: 'error',
+          title: '删除失败',
+          message: '当前版本不支持删除生产记录',
         });
-        loadRecords();
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('删除失败:', error);
         addNotification({
           type: 'error',
@@ -155,7 +154,7 @@ const ProductionRecordPage: React.FC = () => {
         });
       }
     },
-    [loadRecords, addNotification]
+    [addNotification]
   );
 
   const resetForm = () => {
@@ -173,12 +172,12 @@ const ProductionRecordPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-      pending: { label: '待开始', bg: '#fef3c7', color: '#b45309' },
-      in_progress: { label: '进行中', bg: '#dbeafe', color: '#1d4ed8' },
-      completed: { label: '已完成', bg: '#dcfce7', color: '#15803d' },
-      cancelled: { label: '已取消', bg: '#fee2e2', color: '#dc2626' },
+      pending: { label: '待开始', bg: 'warning.light', color: '#b45309' },
+      in_progress: { label: '进行中', bg: '#dbeafe', color: 'primary.dark' },
+      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
-    const s = statusMap[status] || { label: status, bg: '#f3f4f6', color: '#4b5563' };
+    const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         size='small'
@@ -325,7 +324,7 @@ const ProductionRecordPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#f3f4f6', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -339,7 +338,7 @@ const ProductionRecordPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

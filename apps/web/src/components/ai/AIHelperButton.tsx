@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Sparkles, Loader2 } from 'lucide-react';
 
 import type { ButtonProps } from '@mui/material/Button';

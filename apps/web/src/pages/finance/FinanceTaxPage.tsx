@@ -27,7 +27,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface TaxEntry {
   id: string;

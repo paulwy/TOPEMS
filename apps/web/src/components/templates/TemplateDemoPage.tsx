@@ -11,7 +11,7 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import { Download, Play, RefreshCw, FileText, Settings, Sparkles, Search } from 'lucide-react';

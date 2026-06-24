@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Sparkles, ChevronRight, Activity } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -52,7 +52,7 @@ export const HeroSection: React.FC = () => {
                 width: 10,
                 height: 10,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #60a5fa, #a78bfa)',
+                background: 'linear-gradient(135deg, #60a5fa, secondary.light)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -80,7 +80,7 @@ export const HeroSection: React.FC = () => {
             sx={{
               fontSize: { xs: '2rem', md: '3rem' },
               fontWeight: 800,
-              color: '#f8fafc',
+              color: 'grey.50',
               mb: 3,
               lineHeight: 1.2,
             }}

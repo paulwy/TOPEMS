@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React from 'react';
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -73,8 +73,8 @@ const Pagination: React.FC<PaginationProps> = ({
               ? {
                   minWidth: '36px',
                   height: '32px',
-                  backgroundColor: '#2563eb',
-                  '&:hover': { backgroundColor: '#2563eb' },
+                  backgroundColor: 'primary.dark',
+                  '&:hover': { backgroundColor: 'primary.dark' },
                   color: 'white',
                 }
               : { minWidth: '36px', height: '32px' }

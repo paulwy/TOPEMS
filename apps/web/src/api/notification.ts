@@ -130,9 +130,10 @@ export const getNotifications = async (
     );
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 处理 401 错误
-    if (error.response?.status === 401) {
+    const err = error as { response?: { status?: number } };
+    if (err.response?.status === 401) {
       apiLogger.debug('Notification list request returned 401, returning empty');
       return {
         code: 0,
@@ -162,12 +163,9 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
   try {
     const response = await apiClient.notification.get<number>('/api/notifications/unread-count');
     return response;
-  } catch (error: any) {
-    if (
-      error.code === 'ERR_CANCELED' ||
-      error.code === 'ECONNABORTED' ||
-      error.name === 'AbortError'
-    ) {
+  } catch (error: unknown) {
+    const err = error as { code?: string; name?: string; response?: { status?: number } };
+    if (err.code === 'ERR_CANCELED' || err.code === 'ECONNABORTED' || err.name === 'AbortError') {
       apiLogger.debug('Notification count request was canceled or aborted');
       return {
         code: 0,
@@ -178,7 +176,7 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
       };
     }
     // 401 errors are handled by the API client interceptor, suppress them here
-    if (error.response?.status === 401) {
+    if (err.response?.status === 401) {
       apiLogger.debug('Notification count request returned 401, skipping');
       return {
         code: 0,

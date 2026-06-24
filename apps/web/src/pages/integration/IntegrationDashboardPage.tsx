@@ -31,7 +31,7 @@ const IntegrationDashboardPage: React.FC = () => {
 
       if (statsRes.success && statsRes.data !== undefined) setStats(statsRes.data);
       if (eventsRes.success && eventsRes.data !== undefined) setEvents(eventsRes.data);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error loading data:', error);
     } finally {
       setLoading(false);
@@ -178,32 +178,32 @@ const IntegrationDashboardPage: React.FC = () => {
         {
           name: 'LIMS-QMS 已同步',
           value: stats.lims_qms_synced,
-          color: '#22c55e',
+          color: 'success.dark',
         },
         {
           name: 'LIMS-QMS 失败',
           value: stats.lims_qms_failed,
-          color: '#ef4444',
+          color: 'error.main',
         },
         {
           name: 'MES-ERP 已同步',
           value: stats.mes_erp_synced,
-          color: '#3b82f6',
+          color: 'primary.main',
         },
         {
           name: 'MES-ERP 失败',
           value: stats.mes_erp_failed,
-          color: '#f59e0b',
+          color: 'warning.main',
         },
         {
           name: 'WMS-SCM 已同步',
           value: stats.wms_scm_synced,
-          color: '#8b5cf6',
+          color: 'secondary.main',
         },
         {
           name: 'WMS-SCM 失败',
           value: stats.wms_scm_failed,
-          color: '#06b6d4',
+          color: 'info.main',
         },
       ]
     : [];
@@ -271,8 +271,8 @@ const IntegrationDashboardPage: React.FC = () => {
               data={syncComparisonData}
               xKey='name'
               yKeys={[
-                { key: '已同步', name: '已同步', color: '#22c55e' },
-                { key: '失败', name: '失败', color: '#ef4444' },
+                { key: '已同步', name: '已同步', color: 'success.dark' },
+                { key: '失败', name: '失败', color: 'error.main' },
               ]}
               height={280}
             />

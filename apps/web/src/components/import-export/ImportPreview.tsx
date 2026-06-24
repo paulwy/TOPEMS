@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
@@ -28,7 +28,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           style={{
             width: 48,
             height: 48,
-            color: '#eab308',
+            color: 'warning.main',
             margin: '0 auto 8px',
           }}
         />
@@ -43,7 +43,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box
         sx={{
-          backgroundColor: '#eff6ff',
+          backgroundColor: 'primary.light',
           border: '1px solid #bfdbfe',
           borderRadius: 2,
           p: 2,
@@ -57,14 +57,14 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
 
       <Box
         sx={{
-          border: '1px solid #e2e8f0',
+          border: '1px solid border.default',
           borderRadius: 2,
           overflow: 'hidden',
         }}
       >
         <Box sx={{ overflowX: 'auto' }}>
           <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ backgroundColor: '#f8fafc' }}>
+            <thead style={{ backgroundColor: 'grey.50' }}>
               <tr>
                 <th
                   style={{
@@ -72,7 +72,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                     textAlign: 'left',
                     fontSize: 12,
                     fontWeight: 500,
-                    color: '#64748b',
+                    color: 'grey.600',
                     textTransform: 'uppercase',
                   }}
                 >
@@ -86,7 +86,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                       textAlign: 'left',
                       fontSize: 12,
                       fontWeight: 500,
-                      color: '#64748b',
+                      color: 'grey.600',
                       textTransform: 'uppercase',
                     }}
                   >
@@ -101,7 +101,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                 return (
                   <tr
                     key={idx}
-                    style={rowErrors.length > 0 ? { backgroundColor: '#fef2f2' } : {}}
+                    style={rowErrors.length > 0 ? { backgroundColor: 'error.light' } : {}}
                   >
                     <td
                       style={{
@@ -118,7 +118,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                         style={{
                           padding: '8px 16px',
                           fontSize: 14,
-                          color: '#0f172a',
+                          color: 'grey.900',
                         }}
                       >
                         {String(row[col] || '')}
@@ -134,7 +134,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           <Box
             sx={{
               p: 2,
-              backgroundColor: '#f8fafc',
+              backgroundColor: 'grey.50',
               fontSize: 14,
               color: '#475569',
               textAlign: 'center',
@@ -161,14 +161,14 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                 width: 16,
                 height: 16,
                 marginRight: 4,
-                color: '#ef4444',
+                color: 'error.main',
               }}
             />
             验证错误:
           </h4>
           <Box
             sx={{
-              backgroundColor: '#fef2f2',
+              backgroundColor: 'error.light',
               border: '1px solid #fecaca',
               borderRadius: 2,
               p: 2,
@@ -181,7 +181,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                 key={idx}
                 sx={{
                   fontSize: 14,
-                  color: '#b91c1c',
+                  color: 'error.darker',
                   mb: 1,
                   '&:last-child': { mb: 0 },
                 }}
@@ -193,7 +193,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
               </Box>
             ))}
             {errors.length > 20 && (
-              <p style={{ fontSize: 14, color: '#dc2626', marginTop: 8 }}>
+              <p style={{ fontSize: 14, color: 'error.dark', marginTop: 8 }}>
                 ... 还有 {errors.length - 20} 个错误
               </p>
             )}
@@ -207,7 +207,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           justifyContent: 'flex-end',
           gap: 1.5,
           pt: 2,
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1px solid border.default',
         }}
       >
         <Button
@@ -215,9 +215,9 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           sx={{
             padding: '8px 16px',
             color: '#334155',
-            backgroundColor: '#f1f5f9',
+            backgroundColor: 'grey.100',
             borderRadius: 2,
-            '&:hover': { backgroundColor: '#e2e8f0' },
+            '&:hover': { backgroundColor: 'border.default' },
             transition: 'colors 0.2s',
           }}
         >
@@ -228,10 +228,10 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           disabled={errors.length > 0}
           sx={{
             padding: '8px 16px',
-            backgroundColor: '#2563eb',
+            backgroundColor: 'primary.dark',
             color: 'white',
             borderRadius: 2,
-            '&:hover': { backgroundColor: '#1d4ed8' },
+            '&:hover': { backgroundColor: 'primary.dark' },
             '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
             transition: 'colors 0.2s',
           }}

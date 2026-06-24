@@ -1,5 +1,6 @@
 import { Grid } from '@/components/Grid';
 import { apiLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 import { QuickSearch } from '@/components/common';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
@@ -44,7 +45,7 @@ import {
   LinearProgress,
   Checkbox,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Package2 as Package,
   Calendar,
@@ -165,7 +166,7 @@ const AdministrationPage: React.FC = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [currentModalType, setCurrentModalType] = useState<ModalType>('create');
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
 
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -235,34 +236,40 @@ const AdministrationPage: React.FC = () => {
 
       const results = await Promise.allSettled(promises);
 
-      const setIfFulfilled = (idx: number, setter: (data: any[]) => void) => {
-        if (
-          results[idx].status === 'fulfilled' &&
-          (results[idx] as any).value.code === 200 &&
-          (results[idx] as any).value.data
-        ) {
-          const data = (results[idx] as any).value.data;
-          setter(data.items || []);
+      const setIfFulfilled = (idx: number, setter: (data: unknown[]) => void) => {
+        const result = results[idx] as PromiseFulfilledResult<{
+          code: number;
+          data?: { items?: unknown[] };
+        }>;
+        if (result.status === 'fulfilled' && result.value.code === 200 && result.value.data) {
+          setter(result.value.data.items || []);
         }
       };
 
-      setIfFulfilled(0, setEmployees);
-      setIfFulfilled(1, setLeaveRequests);
-      setIfFulfilled(2, setAttendanceRecords);
-      setIfFulfilled(3, setOfficeSupplies);
-      setIfFulfilled(4, setMeetingRooms);
-      setIfFulfilled(5, setMeetingBookings);
-      setIfFulfilled(6, setVehicles);
-      setIfFulfilled(7, setAnnouncements);
-    } catch (err: any) {
+      setIfFulfilled(0, setEmployees as (data: unknown[]) => void);
+      setIfFulfilled(1, setLeaveRequests as (data: unknown[]) => void);
+      setIfFulfilled(2, setAttendanceRecords as (data: unknown[]) => void);
+      setIfFulfilled(3, setOfficeSupplies as (data: unknown[]) => void);
+      setIfFulfilled(4, setMeetingRooms as (data: unknown[]) => void);
+      setIfFulfilled(5, setMeetingBookings as (data: unknown[]) => void);
+      setIfFulfilled(6, setVehicles as (data: unknown[]) => void);
+      setIfFulfilled(7, setAnnouncements as (data: unknown[]) => void);
+    } catch (err: unknown) {
       apiLogger.error('加载数据失败:', err);
-      if (err.response?.status === 401) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
         addNotification({
           title: '认证失败',
-          message: '请先登录后再访问行政管理系统',
+          message: extractErrorMessage(err, '请先登录后再访问行政管理系统'),
           type: 'error',
         });
         navigate('/login');
+      } else {
+        addNotification({
+          title: '加载失败',
+          message: extractErrorMessage(err, '加载数据失败'),
+          type: 'error',
+        });
       }
     } finally {
       setLoading(false);
@@ -284,7 +291,7 @@ const AdministrationPage: React.FC = () => {
     setSelectedIds([]);
   };
 
-  const handleExport = (data: any[], type: string) => {
+  const handleExport = (data: unknown[], type: string) => {
     addNotification({
       title: '导出成功',
       message: `已导出 ${data.length} 条${type}数据`,
@@ -307,9 +314,9 @@ const AdministrationPage: React.FC = () => {
     );
   };
 
-  const handleOpenModal = (type: ModalType, item?: any) => {
+  const handleOpenModal = (type: ModalType, item?: unknown) => {
     setCurrentModalType(type);
-    setFormData(item ? { ...item } : {});
+    setFormData(item ? ({ ...(item as object) } as Record<string, unknown>) : {});
     setShowModal(true);
   };
 
@@ -380,7 +387,7 @@ const AdministrationPage: React.FC = () => {
             value: stats.pendingExpenses,
             color: 'indigo',
             icon: <AttachMoney />,
-            bg: '#e0e7ff',
+            bg: 'secondary.light',
           },
           {
             label: '会议室',
@@ -394,7 +401,7 @@ const AdministrationPage: React.FC = () => {
             value: stats.vehicles,
             color: 'red',
             icon: <Car />,
-            bg: '#fee2e2',
+            bg: 'error.lighter',
           },
         ].map((stat) => (
           <Grid
@@ -1521,11 +1528,11 @@ const AdministrationPage: React.FC = () => {
                     sx={{
                       flex: 1,
                       height: `${Math.random() * 80 + 20}%`,
-                      background: 'linear-gradient(to top, #3b82f6, #93c5fd)',
+                      background: 'linear-gradient(to top, primary.main, #93c5fd)',
                       borderRadius: '4px 4px 0 0',
                       transition: 'background 0.2s',
                       '&:hover': {
-                        background: 'linear-gradient(to top, #2563eb, #60a5fa)',
+                        background: 'linear-gradient(to top, primary.dark, #60a5fa)',
                       },
                     }}
                   />

@@ -24,7 +24,7 @@ interface AreaChartProps {
   showGrid?: boolean;
   strokeType?: 'solid' | 'dashed';
   fillOpacity?: number;
-  onAreaClick?: (data: any) => void;
+  onAreaClick?: (data: unknown) => void;
 }
 
 export const AreaChart: React.FC<AreaChartProps> = ({
@@ -40,7 +40,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   fillOpacity = 0.3,
   onAreaClick,
 }) => {
-  const handleClick = (data: any) => {
+  const handleClick = (data: unknown) => {
     onAreaClick?.(data);
   };
 

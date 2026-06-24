@@ -54,7 +54,7 @@ import {
   Typography,
   FormLabel,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ImageUpload } from '@/components/common';
 import { StatCardGroup } from '@/components/mui';
 
@@ -110,7 +110,7 @@ const HrmTrainingPage: React.FC = () => {
           break;
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to load data:', err);
       error('加载数据失败');
     } finally {
@@ -124,7 +124,7 @@ const HrmTrainingPage: React.FC = () => {
       if (res.code === 200) {
         setEmployees(res.data?.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to load employees:', err);
     }
   };
@@ -191,7 +191,7 @@ const HrmTrainingPage: React.FC = () => {
         setShowModal(false);
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to save:', err);
       error('保存失败');
     }
@@ -214,7 +214,7 @@ const HrmTrainingPage: React.FC = () => {
         success('删除成功');
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to delete:', err);
       error('删除失败');
     }
@@ -229,7 +229,7 @@ const HrmTrainingPage: React.FC = () => {
         success(activate ? '已启用' : '已停用');
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to update status:', err);
       error('操作失败');
     }
@@ -246,7 +246,7 @@ const HrmTrainingPage: React.FC = () => {
         setSelectedCourse(null);
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to enroll:', err);
       error('报名失败');
     }
@@ -513,7 +513,7 @@ const HrmTrainingPage: React.FC = () => {
                               paddingTop: 32,
                               paddingBottom: 32,
                               textAlign: 'center',
-                              color: '#6b7280',
+                              color: 'text.secondary',
                             }}
                           >
                             <Typography

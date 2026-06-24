@@ -10,7 +10,7 @@ export const usePermissionCheck = () => {
     try {
       const response = await authApi.checkPermission(permission);
       return response.success && response.data?.allowed;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Permission check error:', error);
       return false;
     }
@@ -32,7 +32,7 @@ export const usePermissionCheck = () => {
             {} as Record<string, boolean>
           ),
         };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Batch permission check error:', error);
         return {
           allowed: false,
@@ -64,7 +64,7 @@ export const usePermissionCheck = () => {
           user_agent: navigator.userAgent,
           resource_id: undefined,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Failed to log access:', error);
       }
     },

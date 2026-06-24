@@ -224,9 +224,9 @@ function Scene({
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
     if (s.includes('active') || s.includes('启用')) return '#00C897';
-    if (s.includes('pending') || s.includes('待处理')) return '#F59E0B';
-    if (s.includes('inactive') || s.includes('禁用')) return '#EF4444';
-    return '#6b7280';
+    if (s.includes('pending') || s.includes('待处理')) return 'warning.main';
+    if (s.includes('inactive') || s.includes('禁用')) return 'error.main';
+    return 'text.secondary';
   };
 
   return (
@@ -274,7 +274,7 @@ function Scene({
           key={location.id}
           position={latLngToWorld(location.latitude, location.longitude, 1.02)}
           name={location.name}
-          color='#F59E0B'
+          color='warning.main'
         />
       ))}
 
@@ -315,7 +315,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           justifyContent: 'space-between',
           px: 4,
           py: 3,
-          background: 'linear-gradient(to right, #6366f1, #9333ea)',
+          background: 'linear-gradient(to right, primary.light, #9333ea)',
           color: 'white',
         }}
       >
@@ -391,7 +391,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
                   width: 12,
                   height: 12,
                   borderRadius: '50%',
-                  bgcolor: '#22c55e',
+                  bgcolor: 'success.dark',
                 }}
               />
               <Typography variant='caption'>设备点位</Typography>
@@ -402,13 +402,13 @@ const Map3DView: React.FC<Map3DViewProps> = ({
                   width: 12,
                   height: 12,
                   borderRadius: 1,
-                  bgcolor: '#f59e0b',
+                  bgcolor: 'warning.main',
                 }}
               />
               <Typography variant='caption'>仓储位置</Typography>
             </MuiBox>
             <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <MuiBox sx={{ width: 24, height: 2, bgcolor: '#6366f1' }} />
+              <MuiBox sx={{ width: 24, height: 2, bgcolor: 'primary.light' }} />
               <Typography variant='caption'>管线</Typography>
             </MuiBox>
             <MuiBox
@@ -417,7 +417,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
                 borderColor: 'rgba(255,255,255,0.2)',
                 pt: 2,
                 mt: 2,
-                color: '#d1d5db',
+                color: 'grey.300',
               }}
             >
               <Typography variant='caption'>左键拖拽: 旋转视角</Typography>

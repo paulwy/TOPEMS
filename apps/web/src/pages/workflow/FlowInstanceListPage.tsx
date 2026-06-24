@@ -19,7 +19,7 @@ import {
   DialogActions,
   InputAdornment,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Play,
@@ -94,7 +94,7 @@ const FlowInstanceListPage: React.FC = () => {
         const workflowList = Array.isArray(data) ? data : data.items || [];
         setWorkflows(workflowList);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载数据失败:', err);
       addNotification({
         title: '加载失败',
@@ -136,7 +136,7 @@ const FlowInstanceListPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
         message: '启动工作流实例失败',
@@ -181,21 +181,21 @@ const FlowInstanceListPage: React.FC = () => {
         return (
           <CheckCircle
             size={20}
-            style={{ color: '#16a34a' }}
+            style={{ color: 'success.dark' }}
           />
         );
       case 'rejected':
         return (
           <XCircle
             size={20}
-            style={{ color: '#dc2626' }}
+            style={{ color: 'error.dark' }}
           />
         );
       case 'running':
         return (
           <Play
             size={20}
-            style={{ color: '#2563eb' }}
+            style={{ color: 'primary.dark' }}
           />
         );
       case 'pending':
@@ -209,7 +209,7 @@ const FlowInstanceListPage: React.FC = () => {
         return (
           <AlertCircle
             size={20}
-            style={{ color: '#4b5563' }}
+            style={{ color: 'text.secondary' }}
           />
         );
     }
@@ -365,7 +365,7 @@ const FlowInstanceListPage: React.FC = () => {
               >
                 <GitBranch
                   size={24}
-                  style={{ color: '#6366f1' }}
+                  style={{ color: 'primary.light' }}
                 />
               </Box>
               <Box>

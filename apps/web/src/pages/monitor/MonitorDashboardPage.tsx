@@ -56,7 +56,7 @@ const alertSeverityData = [
   { name: '信息', value: 15 },
 ];
 
-const COLORS = ['#ef4444', '#f59e0b', '#3b82f6'];
+const COLORS = ['error.main', 'warning.main', 'primary.main'];
 
 interface AlertItem {
   id: string;
@@ -199,9 +199,7 @@ export const MonitorDashboardPage: React.FC = () => {
       >
         {stats.map((stat) => (
           <Grid
-            item
-            xs={6}
-            sm={3}
+            size={{ xs: 6, sm: 3 }}
             key={stat.label}
           >
             <Card>
@@ -224,7 +222,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   {stat.trend !== 0 && (
                     <TrendingUp
                       size={14}
-                      color={stat.trend > 0 ? '#ef4444' : '#22c55e'}
+                      color={stat.trend > 0 ? 'error.main' : 'success.dark'}
                       style={{
                         transform: stat.trend < 0 ? 'rotate(180deg)' : 'none',
                       }}
@@ -247,11 +245,7 @@ export const MonitorDashboardPage: React.FC = () => {
         container
         spacing={3}
       >
-        <Grid
-          item
-          xs={12}
-          lg={8}
-        >
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card>
             <CardHeader title='性能趋势' />
             <CardContent>
@@ -303,11 +297,7 @@ export const MonitorDashboardPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid
-          item
-          xs={12}
-          lg={4}
-        >
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card>
             <CardHeader title='告警分布' />
             <CardContent>

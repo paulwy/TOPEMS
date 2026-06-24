@@ -22,7 +22,7 @@ import {
   Box,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { logger } from '@/utils/logger';
@@ -80,6 +80,8 @@ interface AccountFormData {
   description?: string;
 }
 
+type AccountNode = Account & { children?: AccountNode[] };
+
 export default function AccountManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -136,9 +138,9 @@ export default function AccountManagementPage() {
 
   // 构键树形结构
   const treeData = useMemo(() => {
-    if (!accountTree?.data) return [];
+    if (!accountTree?.data) return [] as AccountNode[];
 
-    const buildTree = (items: any[], parentId: string | null = null): any[] => {
+    const buildTree = (items: Account[], parentId: string | null = null): AccountNode[] => {
       return items
         .filter((item) => item.parent_id === parentId)
         .map((item) => ({
@@ -165,9 +167,9 @@ export default function AccountManagementPage() {
   // 展开所有
   const expandAll = () => {
     const allIds = new Set<string>();
-    const collectIds = (items: any[]) => {
+    const collectIds = (items: AccountNode[]) => {
       items.forEach((item) => {
-        if (item.children?.length > 0) {
+        if (item.children && item.children.length > 0) {
           allIds.add(item.id);
           collectIds(item.children);
         }
@@ -187,7 +189,7 @@ export default function AccountManagementPage() {
     try {
       await createAccount.mutateAsync(data as any);
       setIsCreating(false);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('创建科目失败:', error);
     }
   };
@@ -199,7 +201,7 @@ export default function AccountManagementPage() {
       await updateAccount.mutateAsync({ id: selectedAccount.id, data });
       setIsEditing(false);
       setSelectedAccount(null);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('更新科目失败:', error);
     }
   };
@@ -210,7 +212,7 @@ export default function AccountManagementPage() {
     try {
       await deleteAccount.mutateAsync(deletingId);
       setDeletingId(null);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('删除科目失败:', error);
     }
   };
@@ -218,7 +220,7 @@ export default function AccountManagementPage() {
   // 获取余额
   const getBalance = (accountId: string) => {
     if (!balancesData?.data) return null;
-    return balancesData.data.find((b: any) => b.account_id === accountId);
+    return balancesData.data.find((b: { account_id: string }) => b.account_id === accountId);
   };
 
   // 表格列定义
@@ -362,11 +364,12 @@ export default function AccountManagementPage() {
   ];
 
   // 渲染树节点
-  const renderTreeNode = (account: any, level: number = 0) => {
-    const hasChildren = account.children?.length > 0;
+  const renderTreeNode = (account: AccountNode, level: number = 0) => {
+    const children = account.children || [];
+    const hasChildren = children.length > 0;
     const isExpanded = expandedIds.has(account.id);
     const balance = getBalance(account.id);
-    const typeConfig = ACCOUNT_TYPE_CONFIG[account.type] || {
+    const typeConfig = ACCOUNT_TYPE_CONFIG[account.type ?? 'other'] || {
       label: account.type,
       color: 'default' as const,
     };
@@ -502,7 +505,7 @@ export default function AccountManagementPage() {
 
         {/* 子节点 */}
         {hasChildren && isExpanded && (
-          <Box>{account.children.map((child: any) => renderTreeNode(child, level + 1))}</Box>
+          <Box>{children.map((child: AccountNode) => renderTreeNode(child, level + 1))}</Box>
         )}
       </Box>
     );
@@ -532,7 +535,7 @@ export default function AccountManagementPage() {
                 justifyContent: 'center',
               }}
             >
-              <Building2 sx={{ width: 24, height: 24, color: '#ffffff' }} />
+              <Building2 sx={{ width: 24, height: 24, color: 'white' }} />
             </Box>
             <Box>
               <Typography
@@ -675,7 +678,7 @@ export default function AccountManagementPage() {
                     input: {
                       startAdornment: (
                         <Box sx={{ mr: 1, display: 'flex' }}>
-                          <Search sx={{ width: 16, height: 16, color: '#6b7280' }} />
+                          <Search sx={{ width: 16, height: 16, color: 'text.secondary' }} />
                         </Box>
                       ),
                     },
@@ -780,7 +783,7 @@ export default function AccountManagementPage() {
                     width: 32,
                     height: 32,
                     animation: 'spin 1s linear infinite',
-                    color: '#6b7280',
+                    color: 'text.secondary',
                   }}
                 />
               </Box>
@@ -836,7 +839,7 @@ export default function AccountManagementPage() {
                         width: 48,
                         height: 48,
                         marginBottom: 16,
-                        color: '#d1d5db',
+                        color: 'grey.300',
                       }}
                     />
                     <Typography>暂无科目数据</Typography>

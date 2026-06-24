@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Clock, LogOut, Zap } from 'lucide-react';
 import { NotificationBell } from '../notifications';
 import { ModeToggle } from '../ModeToggle';
@@ -56,7 +56,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -71,7 +71,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   sx={{
                     fontSize: '1.25rem',
                     fontWeight: 700,
-                    background: 'linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%)',
+                    background: 'linear-gradient(90deg, #60a5fa 0%, secondary.light 100%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -130,7 +130,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 sx={{
                   width: 36,
                   height: 36,
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -158,11 +158,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               sx={{
                 p: 2.5,
                 borderRadius: 2,
-                color: '#cbd5e1',
+                color: 'grey.400',
                 transition: 'all',
                 '&:hover': {
                   backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  color: '#f87171',
+                  color: 'error.light',
                 },
               }}
               title='退出登录'

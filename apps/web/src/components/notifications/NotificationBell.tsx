@@ -81,7 +81,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
         onClick={handleBellClick}
         style={{
           padding: 8,
-          color: '#4b5563',
+          color: 'text.secondary',
           backgroundColor: 'transparent',
           border: 'none',
           borderRadius: 8,
@@ -97,8 +97,8 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
               position: 'absolute',
               top: -4,
               right: -4,
-              backgroundColor: '#ef4444',
-              color: '#ffffff',
+              backgroundColor: 'error.main',
+              color: 'white',
               fontSize: 12,
               fontWeight: 'bold',
               borderRadius: 9999,
@@ -121,7 +121,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
               right: -4,
               width: 12,
               height: 12,
-              backgroundColor: '#22c55e',
+              backgroundColor: 'success.dark',
               borderRadius: '9999px',
               animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1)',
             }}
@@ -135,7 +135,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
               right: 4,
               width: 8,
               height: 8,
-              backgroundColor: '#22c55e',
+              backgroundColor: 'success.dark',
               borderRadius: '9999px',
             }}
             title='已连接'

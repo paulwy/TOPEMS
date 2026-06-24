@@ -11,7 +11,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   InboundOrder,
@@ -92,7 +92,7 @@ const InboundOrderPage: React.FC = () => {
         setOrders(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载入库订单失败:', error);
       addNotification({
         type: 'error',
@@ -130,7 +130,7 @@ const InboundOrderPage: React.FC = () => {
         resetForm();
         loadOrders();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('创建入库订单失败:', error);
       addNotification({
         type: 'error',
@@ -154,7 +154,7 @@ const InboundOrderPage: React.FC = () => {
         setShowEditDialog(false);
         loadOrders();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('更新入库订单失败:', error);
       addNotification({
         type: 'error',
@@ -180,7 +180,7 @@ const InboundOrderPage: React.FC = () => {
           });
           loadOrders();
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('删除入库订单失败:', error);
         addNotification({
           type: 'error',

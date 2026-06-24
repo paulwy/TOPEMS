@@ -6,7 +6,14 @@ interface PieChartProps {
   title?: string;
 }
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+const COLORS = [
+  'primary.main',
+  'secondary.main',
+  'success.main',
+  'warning.main',
+  'error.main',
+  'info.main',
+];
 
 export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
   return (
@@ -28,7 +35,7 @@ export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
             paddingAngle={2}
             dataKey='value'
             label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-            labelLine={{ stroke: '#cbd5e1' }}
+            labelLine={{ stroke: 'grey.400' }}
           >
             {data.map((entry, index) => (
               <Cell
@@ -40,7 +47,7 @@ export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
           <Tooltip
             contentStyle={{
               backgroundColor: 'white',
-              border: '1px solid #e2e8f0',
+              border: '1px solid border.default',
               borderRadius: '8px',
               padding: '12px',
             }}

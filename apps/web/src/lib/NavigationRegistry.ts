@@ -1,3 +1,52 @@
+// 浏览器兼容的简单事件发射器（避免依赖 Node.js events 模块）
+type EventListener = (...args: unknown[]) => void;
+class SimpleEventEmitter {
+  private listeners: Map<string, EventListener[]> = new Map();
+  private maxListeners = 100;
+
+  setMaxListeners(n: number): void {
+    this.maxListeners = n;
+  }
+
+  on(event: string, listener: EventListener): void {
+    const arr = this.listeners.get(event) || [];
+    if (arr.length >= this.maxListeners) {
+      console.warn(
+        `MaxListenersExceededWarning: Possible memory leak detected. ${arr.length + 1} ${event} listeners added.`
+      );
+    }
+    arr.push(listener);
+    this.listeners.set(event, arr);
+  }
+
+  off(event: string, listener: EventListener): void {
+    const arr = this.listeners.get(event);
+    if (!arr) return;
+    const idx = arr.indexOf(listener);
+    if (idx !== -1) arr.splice(idx, 1);
+  }
+
+  emit(event: string, ...args: unknown[]): void {
+    const arr = this.listeners.get(event);
+    if (!arr) return;
+    for (const listener of [...arr]) {
+      try {
+        listener(...args);
+      } catch (e: unknown) {
+        console.error(`Error in event listener for "${event}":`, e);
+      }
+    }
+  }
+
+  removeAllListeners(event?: string): void {
+    if (event) {
+      this.listeners.delete(event);
+    } else {
+      this.listeners.clear();
+    }
+  }
+}
+
 export interface NavItem {
   code: string;
   label: string;
@@ -6,6 +55,8 @@ export interface NavItem {
   permission?: string;
   order?: number;
   children?: NavItem[];
+  badge?: number | string;
+  badgeColor?: 'primary' | 'success' | 'warning' | 'error';
 }
 
 export interface ModuleCardConfig {
@@ -20,6 +71,7 @@ export interface ModuleCardConfig {
 
 export interface PluginNavConfig {
   top_nav?: NavItem[];
+  sidebar_nav?: NavItem[];
   module_tabs?: NavItem[];
   module_card?: ModuleCardConfig;
 }
@@ -28,8 +80,13 @@ class NavigationRegistry {
   private static instance: NavigationRegistry;
   private navItems: Map<string, NavItem[]> = new Map();
   private moduleCards: Map<string, ModuleCardConfig> = new Map();
+  private moduleStatuses: Map<string, string> = new Map();
+  public emitter: SimpleEventEmitter;
 
-  private constructor() {}
+  private constructor() {
+    this.emitter = new SimpleEventEmitter();
+    this.emitter.setMaxListeners(100);
+  }
 
   static getInstance(): NavigationRegistry {
     if (!NavigationRegistry.instance) {
@@ -40,20 +97,28 @@ class NavigationRegistry {
 
   register(pluginCode: string, config: PluginNavConfig): void {
     if (config.top_nav) {
-      this.navItems.set(pluginCode + ':top', config.top_nav);
+      this.navItems.set(`${pluginCode}:top`, config.top_nav);
+    }
+    if (config.sidebar_nav) {
+      this.navItems.set(`${pluginCode}:sidebar`, config.sidebar_nav);
     }
     if (config.module_tabs) {
-      this.navItems.set(pluginCode + ':tabs', config.module_tabs);
+      this.navItems.set(`${pluginCode}:tabs`, config.module_tabs);
     }
     if (config.module_card) {
       this.moduleCards.set(pluginCode, config.module_card);
+      this.moduleStatuses.set(pluginCode, config.module_card.status || 'online');
     }
+    this.emitter.emit('navigationUpdated', pluginCode);
   }
 
   unregister(pluginCode: string): void {
-    this.navItems.delete(pluginCode + ':top');
-    this.navItems.delete(pluginCode + ':tabs');
+    this.navItems.delete(`${pluginCode}:top`);
+    this.navItems.delete(`${pluginCode}:sidebar`);
+    this.navItems.delete(`${pluginCode}:tabs`);
     this.moduleCards.delete(pluginCode);
+    this.moduleStatuses.delete(pluginCode);
+    this.emitter.emit('navigationUpdated', pluginCode);
   }
 
   getTopNavItems(): NavItem[] {
@@ -66,14 +131,29 @@ class NavigationRegistry {
     return items.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
 
+  getSidebarNavItems(pluginCode: string): NavItem[] {
+    const items = this.navItems.get(`${pluginCode}:sidebar`) || [];
+    return items.sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
   getModuleTabs(pluginCode: string): NavItem[] | undefined {
-    return this.navItems.get(pluginCode + ':tabs');
+    return this.navItems.get(`${pluginCode}:tabs`);
   }
 
   getModuleCards(): ModuleCardConfig[] {
     const cards: ModuleCardConfig[] = [];
     this.moduleCards.forEach((card) => {
       cards.push(card);
+    });
+    return cards.sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  getModuleCardsByPermission(hasPermission: (permission: string) => boolean): ModuleCardConfig[] {
+    const cards: ModuleCardConfig[] = [];
+    this.moduleCards.forEach((card) => {
+      if (!card.permission || hasPermission(card.permission)) {
+        cards.push(card);
+      }
     });
     return cards.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
@@ -105,21 +185,13 @@ class NavigationRegistry {
     return items.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
 
-  getModuleCardsByPermission(hasPermission: (permission: string) => boolean): ModuleCardConfig[] {
-    const cards: ModuleCardConfig[] = [];
-    this.moduleCards.forEach((card) => {
-      if (!card.permission || hasPermission(card.permission)) {
-        cards.push(card);
-      }
-    });
-    return cards.sort((a, b) => (a.order || 0) - (b.order || 0));
-  }
-
   updateModuleStatus(pluginCode: string, status: 'online' | 'beta' | 'plan' | 'new'): void {
+    this.moduleStatuses.set(pluginCode, status);
     const card = this.moduleCards.get(pluginCode);
     if (card) {
       card.status = status;
     }
+    this.emitter.emit('navigationUpdated', pluginCode);
   }
 }
 
@@ -134,6 +206,40 @@ const registerDefaultModules = () => {
         icon: 'Building',
         path: '/erp',
         order: 1,
+        permission: 'erp:read',
+      },
+    ],
+    sidebar_nav: [
+      {
+        code: 'erp-dashboard',
+        label: '仪表盘',
+        icon: 'LayoutDashboard',
+        path: '/erp/dashboard',
+        order: 0,
+        permission: 'erp:read',
+      },
+      {
+        code: 'erp-finance',
+        label: '财务管理',
+        icon: 'DollarSign',
+        path: '/erp/finance',
+        order: 1,
+        permission: 'erp:read',
+      },
+      {
+        code: 'erp-inventory',
+        label: '库存管理',
+        icon: 'Package',
+        path: '/erp/inventory',
+        order: 2,
+        permission: 'erp:read',
+      },
+      {
+        code: 'erp-sales',
+        label: '销售管理',
+        icon: 'ShoppingCart',
+        path: '/erp/sales',
+        order: 3,
         permission: 'erp:read',
       },
     ],
@@ -185,6 +291,40 @@ const registerDefaultModules = () => {
         permission: 'pm:read',
       },
     ],
+    sidebar_nav: [
+      {
+        code: 'pm-projects',
+        label: '项目列表',
+        icon: 'FolderKanban',
+        path: '/pm/projects',
+        order: 0,
+        permission: 'pm:read',
+      },
+      {
+        code: 'pm-tasks',
+        label: '任务管理',
+        icon: 'ListTodo',
+        path: '/pm/tasks',
+        order: 1,
+        permission: 'pm:read',
+      },
+      {
+        code: 'pm-timeline',
+        label: '时间线',
+        icon: 'Calendar',
+        path: '/pm/timeline',
+        order: 2,
+        permission: 'pm:read',
+      },
+      {
+        code: 'pm-reports',
+        label: '报表分析',
+        icon: 'BarChart3',
+        path: '/pm/reports',
+        order: 3,
+        permission: 'pm:read',
+      },
+    ],
     module_tabs: [
       {
         code: 'pm-projects',
@@ -229,6 +369,40 @@ const registerDefaultModules = () => {
         label: '研发管理',
         icon: 'FlaskConical',
         path: '/rs',
+        order: 3,
+        permission: 'rs:read',
+      },
+    ],
+    sidebar_nav: [
+      {
+        code: 'rs-projects',
+        label: '研发项目',
+        icon: 'FlaskConical',
+        path: '/rs/projects',
+        order: 0,
+        permission: 'rs:read',
+      },
+      {
+        code: 'rs-documents',
+        label: '文档管理',
+        icon: 'FileText',
+        path: '/rs/documents',
+        order: 1,
+        permission: 'rs:read',
+      },
+      {
+        code: 'rs-tests',
+        label: '测试管理',
+        icon: 'CheckSquare',
+        path: '/rs/tests',
+        order: 2,
+        permission: 'rs:read',
+      },
+      {
+        code: 'rs-releases',
+        label: '版本发布',
+        icon: 'Rocket',
+        path: '/rs/releases',
         order: 3,
         permission: 'rs:read',
       },
@@ -281,6 +455,40 @@ const registerDefaultModules = () => {
         permission: 'scm:read',
       },
     ],
+    sidebar_nav: [
+      {
+        code: 'scm-suppliers',
+        label: '供应商',
+        icon: 'Users',
+        path: '/scm/suppliers',
+        order: 0,
+        permission: 'scm:read',
+      },
+      {
+        code: 'scm-purchasing',
+        label: '采购管理',
+        icon: 'ShoppingCart',
+        path: '/scm/purchasing',
+        order: 1,
+        permission: 'scm:read',
+      },
+      {
+        code: 'scm-warehouse',
+        label: '仓储管理',
+        icon: 'Warehouse',
+        path: '/scm/warehouse',
+        order: 2,
+        permission: 'scm:read',
+      },
+      {
+        code: 'scm-logistics',
+        label: '物流追踪',
+        icon: 'Truck',
+        path: '/scm/logistics',
+        order: 3,
+        permission: 'scm:read',
+      },
+    ],
     module_tabs: [
       {
         code: 'scm-suppliers',
@@ -326,6 +534,40 @@ const registerDefaultModules = () => {
         icon: 'Users',
         path: '/crm',
         order: 5,
+        permission: 'crm:read',
+      },
+    ],
+    sidebar_nav: [
+      {
+        code: 'crm-customers',
+        label: '客户管理',
+        icon: 'Users',
+        path: '/crm/customers',
+        order: 0,
+        permission: 'crm:read',
+      },
+      {
+        code: 'crm-opportunities',
+        label: '商机管理',
+        icon: 'Target',
+        path: '/crm/opportunities',
+        order: 1,
+        permission: 'crm:read',
+      },
+      {
+        code: 'crm-activities',
+        label: '活动管理',
+        icon: 'Calendar',
+        path: '/crm/activities',
+        order: 2,
+        permission: 'crm:read',
+      },
+      {
+        code: 'crm-reports',
+        label: '销售报表',
+        icon: 'BarChart3',
+        path: '/crm/reports',
+        order: 3,
         permission: 'crm:read',
       },
     ],
@@ -377,6 +619,32 @@ const registerDefaultModules = () => {
         permission: 'ai:read',
       },
     ],
+    sidebar_nav: [
+      {
+        code: 'ai-chat',
+        label: '智能对话',
+        icon: 'MessageSquare',
+        path: '/ai/chat',
+        order: 0,
+        permission: 'ai:read',
+      },
+      {
+        code: 'ai-analytics',
+        label: '数据分析',
+        icon: 'BarChart3',
+        path: '/ai/analytics',
+        order: 1,
+        permission: 'ai:read',
+      },
+      {
+        code: 'ai-workflows',
+        label: '自动化工作流',
+        icon: 'GitBranch',
+        path: '/ai/workflows',
+        order: 2,
+        permission: 'ai:read',
+      },
+    ],
     module_tabs: [
       {
         code: 'ai-chat',
@@ -419,6 +687,32 @@ const registerDefaultModules = () => {
         permission: 'gis:read',
       },
     ],
+    sidebar_nav: [
+      {
+        code: 'gis-map',
+        label: '地图视图',
+        icon: 'Map',
+        path: '/gis/map',
+        order: 0,
+        permission: 'gis:read',
+      },
+      {
+        code: 'gis-layers',
+        label: '图层管理',
+        icon: 'Layers',
+        path: '/gis/layers',
+        order: 1,
+        permission: 'gis:read',
+      },
+      {
+        code: 'gis-analysis',
+        label: '空间分析',
+        icon: 'TrendingUp',
+        path: '/gis/analysis',
+        order: 2,
+        permission: 'gis:read',
+      },
+    ],
     module_tabs: [
       {
         code: 'gis-map',
@@ -458,6 +752,40 @@ const registerDefaultModules = () => {
         icon: 'Users',
         path: '/hrm',
         order: 8,
+        permission: 'hrm:read',
+      },
+    ],
+    sidebar_nav: [
+      {
+        code: 'hrm-employees',
+        label: '员工管理',
+        icon: 'Users',
+        path: '/hrm/employees',
+        order: 0,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-recruitment',
+        label: '招聘管理',
+        icon: 'UserPlus',
+        path: '/hrm/recruitment',
+        order: 1,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-training',
+        label: '培训管理',
+        icon: 'GraduationCap',
+        path: '/hrm/training',
+        order: 2,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-performance',
+        label: '绩效考核',
+        icon: 'Award',
+        path: '/hrm/performance',
+        order: 3,
         permission: 'hrm:read',
       },
     ],
@@ -506,6 +834,32 @@ const registerDefaultModules = () => {
         icon: 'MessageCircle',
         path: '/im',
         order: 9,
+        permission: 'im:read',
+      },
+    ],
+    sidebar_nav: [
+      {
+        code: 'im-chats',
+        label: '消息',
+        icon: 'MessageCircle',
+        path: '/im/chats',
+        order: 0,
+        permission: 'im:read',
+      },
+      {
+        code: 'im-contacts',
+        label: '联系人',
+        icon: 'Users',
+        path: '/im/contacts',
+        order: 1,
+        permission: 'im:read',
+      },
+      {
+        code: 'im-groups',
+        label: '群组',
+        icon: 'Users',
+        path: '/im/groups',
+        order: 2,
         permission: 'im:read',
       },
     ],

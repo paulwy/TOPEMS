@@ -10,8 +10,11 @@ import {
   TextField,
   FormControlLabel,
   Typography,
+  FormLabel,
+  TextField as Input,
+  Button,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+
 import {
   AIHelperButton,
   AICodeGenerator,
@@ -20,14 +23,6 @@ import {
   AIDataCompleter,
 } from '@/components/ai';
 import type { CompletionItem } from '@/types/ai';
-import {
-  CardTitle,
-  Label,
-  Input,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@/components/ui/shadcn';
 import { ImageUpload } from '@/components/common';
 
 type ProjectType = 'RESEARCH' | 'PRODUCTION' | 'CONSTRUCTION' | 'DESIGN' | 'SERVICE';
@@ -120,7 +115,7 @@ const PmProjectCreatePage: React.FC = () => {
       if (response.success) {
         navigate(`/pm/projects/${response.data?.id}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to create project:', error);
     } finally {
       setSubmitting(false);
@@ -166,7 +161,7 @@ const PmProjectCreatePage: React.FC = () => {
       style={{
         display: 'flex',
         minHeight: '100vh',
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'grey.50',
       }}
     >
       <div style={{ flex: 1, padding: 24 }}>
@@ -190,8 +185,13 @@ const PmProjectCreatePage: React.FC = () => {
 
         <Card sx={{ maxWidth: 768, margin: '0 auto' }}>
           <CardHeader>
-            <CardTitle sx={{ fontSize: '1.25rem' }}>创建项目</CardTitle>
-            <p style={{ color: '#6b7280', marginTop: 4 }}>填写项目基本信息</p>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.25rem' }}
+            >
+              创建项目
+            </Typography>
+            <p style={{ color: 'text.secondary', marginTop: 4 }}>填写项目基本信息</p>
           </CardHeader>
           <CardContent>
             <form style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -203,10 +203,10 @@ const PmProjectCreatePage: React.FC = () => {
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Label htmlFor='project-name'>
-                    项目名称 <span style={{ color: '#ef4444' }}>*</span>
-                  </Label>
-                  <Input
+                  <FormLabel htmlFor='project-name'>
+                    项目名称 <span style={{ color: 'error.main' }}>*</span>
+                  </FormLabel>
+                  <TextField
                     id='project-name'
                     value={formData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
@@ -214,15 +214,15 @@ const PmProjectCreatePage: React.FC = () => {
                     className={errors.name ? 'border-red-500 focus:ring-red-500' : ''}
                   />
                   {errors.name && (
-                    <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.name}</p>
+                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.name}</p>
                   )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Label htmlFor='project-code'>
-                    项目编号 <span style={{ color: '#ef4444' }}>*</span>
-                  </Label>
-                  <Input
+                  <FormLabel htmlFor='project-code'>
+                    项目编号 <span style={{ color: 'error.main' }}>*</span>
+                  </FormLabel>
+                  <TextField
                     id='project-code'
                     value={formData.code}
                     onChange={(e) => handleChange('code', e.target.value)}
@@ -230,15 +230,15 @@ const PmProjectCreatePage: React.FC = () => {
                     className={errors.code ? 'border-red-500 focus:ring-red-500' : ''}
                   />
                   {errors.code && (
-                    <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.code}</p>
+                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.code}</p>
                   )}
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Label>
-                  项目类型 <span style={{ color: '#ef4444' }}>*</span>
-                </Label>
+                <FormLabel>
+                  项目类型 <span style={{ color: 'error.main' }}>*</span>
+                </FormLabel>
                 <div
                   style={{
                     display: 'grid',
@@ -253,18 +253,18 @@ const PmProjectCreatePage: React.FC = () => {
                       onClick={() => handleChange('project_type', type.value)}
                       style={{
                         padding: 16,
-                        border: `1px solid ${formData.project_type === type.value ? '#3b82f6' : '#d1d5db'}`,
+                        border: `1px solid ${formData.project_type === type.value ? 'primary.main' : 'grey.300'}`,
                         borderRadius: 8,
                         textAlign: 'left',
                         backgroundColor:
-                          formData.project_type === type.value ? '#eff6ff' : 'transparent',
+                          formData.project_type === type.value ? 'primary.light' : 'transparent',
                       }}
                     >
-                      <div style={{ fontWeight: 500, color: '#111827' }}>{type.label}</div>
+                      <div style={{ fontWeight: 500, color: 'text.primary' }}>{type.label}</div>
                       <div
                         style={{
                           fontSize: '0.75rem',
-                          color: '#6b7280',
+                          color: 'text.secondary',
                           marginTop: 4,
                         }}
                       >
@@ -274,7 +274,7 @@ const PmProjectCreatePage: React.FC = () => {
                   ))}
                 </div>
                 {errors.project_type && (
-                  <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.project_type}</p>
+                  <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.project_type}</p>
                 )}
               </div>
 
@@ -286,10 +286,10 @@ const PmProjectCreatePage: React.FC = () => {
                     justifyContent: 'space-between',
                   }}
                 >
-                  <Label sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <FileText sx={{ width: 16, height: 16 }} />
                     项目描述
-                  </Label>
+                  </FormLabel>
                   <AIHelperButton
                     type='optimize'
                     onClick={() => setShowAITextOptimizer(true)}
@@ -306,7 +306,7 @@ const PmProjectCreatePage: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    border: '1px solid #d1d5db',
+                    border: '1px solid grey.300',
                     borderRadius: 8,
                     outline: 'none',
                     resize: 'none',
@@ -322,10 +322,10 @@ const PmProjectCreatePage: React.FC = () => {
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Label sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <DollarSign sx={{ width: 16, height: 16 }} />
-                    项目预算 <span style={{ color: '#ef4444' }}>*</span>
-                  </Label>
+                    项目预算 <span style={{ color: 'error.main' }}>*</span>
+                  </FormLabel>
                   <div style={{ position: 'relative' }}>
                     <span
                       style={{
@@ -333,12 +333,12 @@ const PmProjectCreatePage: React.FC = () => {
                         left: 12,
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        color: '#6b7280',
+                        color: 'text.secondary',
                       }}
                     >
                       ¥
                     </span>
-                    <Input
+                    <TextField
                       type='number'
                       value={formData.budget}
                       onChange={(e) => handleChange('budget', e.target.value)}
@@ -348,16 +348,16 @@ const PmProjectCreatePage: React.FC = () => {
                     />
                   </div>
                   {errors.budget && (
-                    <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.budget}</p>
+                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.budget}</p>
                   )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Label sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Users sx={{ width: 16, height: 16 }} />
                     项目负责人
-                  </Label>
-                  <Input
+                  </FormLabel>
+                  <TextField
                     type='text'
                     value={formData.leader}
                     onChange={(e) => handleChange('leader', e.target.value)}
@@ -374,44 +374,44 @@ const PmProjectCreatePage: React.FC = () => {
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Label sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Calendar sx={{ width: 16, height: 16 }} />
-                    开始日期 <span style={{ color: '#ef4444' }}>*</span>
-                  </Label>
-                  <Input
+                    开始日期 <span style={{ color: 'error.main' }}>*</span>
+                  </FormLabel>
+                  <TextField
                     type='date'
                     value={formData.start_date}
                     onChange={(e) => handleChange('start_date', e.target.value)}
                     className={errors.start_date ? 'border-red-500 focus:ring-red-500' : ''}
                   />
                   {errors.start_date && (
-                    <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.start_date}</p>
+                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.start_date}</p>
                   )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Label sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Calendar sx={{ width: 16, height: 16 }} />
-                    结束日期 <span style={{ color: '#ef4444' }}>*</span>
-                  </Label>
-                  <Input
+                    结束日期 <span style={{ color: 'error.main' }}>*</span>
+                  </FormLabel>
+                  <TextField
                     type='date'
                     value={formData.end_date}
                     onChange={(e) => handleChange('end_date', e.target.value)}
                     className={errors.end_date ? 'border-red-500 focus:ring-red-500' : ''}
                   />
                   {errors.end_date && (
-                    <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{errors.end_date}</p>
+                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.end_date}</p>
                   )}
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Label sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Tag sx={{ width: 16, height: 16 }} />
                   标签
-                </Label>
-                <Input
+                </FormLabel>
+                <TextField
                   type='text'
                   value={formData.tags}
                   onChange={(e) => handleChange('tags', e.target.value)}
@@ -420,7 +420,9 @@ const PmProjectCreatePage: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Label sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>项目封面图片</Label>
+                <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  项目封面图片
+                </FormLabel>
                 <ImageUpload
                   value={formData.images}
                   onChange={(files) => setFormData((prev) => ({ ...prev, images: files }))}
@@ -437,7 +439,7 @@ const PmProjectCreatePage: React.FC = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   paddingTop: 16,
-                  borderTop: '1px solid #e5e7eb',
+                  borderTop: '1px solid grey.200',
                 }}
               >
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -476,9 +478,9 @@ const PmProjectCreatePage: React.FC = () => {
                     sx={{
                       gap: 8,
                       padding: '8px 16px',
-                      backgroundColor: '#2563eb',
-                      color: '#fff',
-                      '&:hover': { backgroundColor: '#1d4ed8' },
+                      backgroundColor: 'primary.dark',
+                      color: 'white',
+                      '&:hover': { backgroundColor: 'primary.dark' },
                     }}
                   >
                     <Save sx={{ width: 16, height: 16 }} />

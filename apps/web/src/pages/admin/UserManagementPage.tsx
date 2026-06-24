@@ -11,13 +11,14 @@ import {
   Typography,
   FormControlLabel,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from 'lucide-react';
 import { authApi, type User, type Role } from '@/api/iam';
 import { useAppStore } from '../../store';
 import { RoleBadge } from '@/components/PermissionGate';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { extractErrorMessage } from '@/utils/errors';
 
 interface UserManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -81,8 +82,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       if (rolesRes.success && rolesRes.data) {
         setRoles(rolesRes.data);
       }
-    } catch (_err: any) {
-      const errorMsg = _err.response?.data?.message || _err.message || '加载数据失败';
+    } catch (_err: unknown) {
+      const errorMsg = extractErrorMessage(_err, '加载数据失败');
       setError(errorMsg);
       addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
     } finally {
@@ -121,10 +122,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '操作失败',
+        message: extractErrorMessage(_err, '操作失败'),
         type: 'error',
       });
     }
@@ -164,10 +165,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '删除失败',
+        message: extractErrorMessage(_err, '删除失败'),
         type: 'error',
       });
     }
@@ -191,10 +192,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '删除用户失败',
+        message: extractErrorMessage(_err, '删除用户失败'),
         type: 'error',
       });
     }
@@ -212,7 +213,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       if (res.success && res.data) {
         setUserRoles(res.data);
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '加载失败',
         message: '加载用户角色失败',
@@ -238,10 +239,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '添加角色失败',
+        message: extractErrorMessage(_err, '添加角色失败'),
         type: 'error',
       });
     }
@@ -264,10 +265,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '移除角色失败',
+        message: extractErrorMessage(_err, '移除角色失败'),
         type: 'error',
       });
     }
@@ -457,8 +458,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
-      const errorMsg = _err.response?.data?.message || _err.message || '创建用户失败';
+    } catch (_err: unknown) {
+      const errorMsg = extractErrorMessage(_err, '创建用户失败');
       addNotification({ title: '失败', message: errorMsg, type: 'error' });
     }
   };
@@ -488,10 +489,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           type: 'error',
         });
       }
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       addNotification({
         title: '失败',
-        message: _err.message || '更新用户失败',
+        message: extractErrorMessage(_err, '更新用户失败'),
         type: 'error',
       });
     }
@@ -747,7 +748,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Shield
                         size={16}
-                        color='#2e7d32'
+                        color='success.dark'
                       />
                       <Typography sx={{ fontWeight: 500, color: 'success.main' }}>
                         {role.name}

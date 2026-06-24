@@ -12,7 +12,7 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import type { CustomerScore, ScoreFactor } from '@/api/modules/crm/crm';
 import { crmApi } from '@/api/modules/crm/crm';
@@ -39,7 +39,7 @@ const CRMCustomerScoringPage: React.FC = () => {
       setLoading(true);
       const response = await crmApi.customerScoring.list();
       setScores(response.data?.items || []);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载客户评分失败:', error);
       addNotification({
         type: 'error',
@@ -76,7 +76,7 @@ const CRMCustomerScoringPage: React.FC = () => {
         message: '已批量计算客户评分',
       });
       loadCustomerScores();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('批量计算评分失败:', error);
       addNotification({
         type: 'error',

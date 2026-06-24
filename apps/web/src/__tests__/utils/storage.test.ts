@@ -9,23 +9,23 @@ describe('storage utils', () => {
     localStorageMock = {};
     sessionStorageMock = {};
     
-    const localStorageObj: Storage & { [key: string]: string } = {
+    const localStorageObj: Storage = {
       getItem: (key: string) => localStorageMock[key] || null,
       setItem: (key: string, value: string) => { localStorageMock[key] = value; },
       removeItem: (key: string) => { delete localStorageMock[key]; },
       clear: () => { localStorageMock = {}; },
       get length() { return Object.keys(localStorageMock).length; },
       key: (index: number) => Object.keys(localStorageMock)[index] || null,
-    };
+    } as Storage;
 
-    const sessionStorageObj: Storage & { [key: string]: string } = {
+    const sessionStorageObj: Storage = {
       getItem: (key: string) => sessionStorageMock[key] || null,
       setItem: (key: string, value: string) => { sessionStorageMock[key] = value; },
       removeItem: (key: string) => { delete sessionStorageMock[key]; },
       clear: () => { sessionStorageMock = {}; },
       get length() { return Object.keys(sessionStorageMock).length; },
       key: (index: number) => Object.keys(sessionStorageMock)[index] || null,
-    };
+    } as Storage;
 
     vi.stubGlobal('localStorage', new Proxy(localStorageObj, {
       ownKeys: () => Object.keys(localStorageMock),

@@ -15,7 +15,7 @@ import {
   Tab,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Plus,
   Edit2,
@@ -75,7 +75,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       if (payableRes.success && payableRes.data) {
         setPayables(payableRes.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载数据失败:', err);
       addNotification({
         title: '错误',
@@ -109,7 +109,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         resetForm();
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('创建应收账款失败:', err);
       addNotification({
         title: '错误',
@@ -141,7 +141,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         resetForm();
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('创建应付账款失败:', err);
       addNotification({
         title: '错误',
@@ -175,7 +175,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         resetForm();
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('更新应收账款失败:', err);
       addNotification({
         title: '错误',
@@ -209,7 +209,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         resetForm();
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('更新应付账款失败:', err);
       addNotification({
         title: '错误',
@@ -231,7 +231,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         });
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('删除应收账款失败:', err);
       addNotification({
         title: '错误',
@@ -253,7 +253,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         });
         loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('删除应付账款失败:', err);
       addNotification({
         title: '错误',
@@ -1042,7 +1042,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
               <Box
                 sx={{
                   p: 3,
-                  bgcolor: 'linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%)',
+                  bgcolor: 'linear-gradient(135deg, primary.light 0%, #eef2ff 100%)',
                   borderRadius: 2,
                 }}
               >

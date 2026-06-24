@@ -17,7 +17,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { toast } from 'react-toastify';
 import * as z from 'zod';
 import {
@@ -166,9 +166,9 @@ const QmsQualityControlPage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const colors = {
-      high: { bg: '#fee2e2', color: '#dc2626' },
+      high: { bg: 'error.lighter', color: 'error.dark' },
       medium: { bg: '#fef9c3', color: '#ca8a04' },
-      low: { bg: '#dcfce7', color: '#16a34a' },
+      low: { bg: 'success.lighter', color: 'success.dark' },
     };
     const labels = { high: '严重', medium: '中等', low: '轻微' };
     return (
@@ -186,9 +186,9 @@ const QmsQualityControlPage: React.FC = () => {
   const getStatusBadge = (status: string, type: string) => {
     if (type === 'audit') {
       const colors = {
-        scheduled: { bg: '#dbeafe', color: '#2563eb' },
+        scheduled: { bg: '#dbeafe', color: 'primary.dark' },
         in_progress: { bg: '#fef9c3', color: '#ca8a04' },
-        completed: { bg: '#dcfce7', color: '#16a34a' },
+        completed: { bg: 'success.lighter', color: 'success.dark' },
       };
       const labels = {
         scheduled: '已计划',
@@ -207,9 +207,9 @@ const QmsQualityControlPage: React.FC = () => {
       );
     }
     const colors = {
-      open: { bg: '#fee2e2', color: '#dc2626' },
+      open: { bg: 'error.lighter', color: 'error.dark' },
       in_progress: { bg: '#fef9c3', color: '#ca8a04' },
-      closed: { bg: '#dcfce7', color: '#16a34a' },
+      closed: { bg: 'success.lighter', color: 'success.dark' },
     };
     const labels = { open: '待处理', in_progress: '处理中', closed: '已关闭' };
     return (
@@ -394,14 +394,14 @@ const QmsQualityControlPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fee2e2',
+                bgcolor: 'error.lighter',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20, color: '#dc2626' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -460,14 +460,14 @@ const QmsQualityControlPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dcfce7',
+                bgcolor: 'success.lighter',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color: '#16a34a' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -500,7 +500,7 @@ const QmsQualityControlPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color: '#2563eb' }} />
+              <FileText sx={{ width: 20, height: 20, color: 'primary.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -533,7 +533,7 @@ const QmsQualityControlPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color: '#7c3aed' }} />
+              <FileText sx={{ width: 20, height: 20, color: 'secondary.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -559,14 +559,14 @@ const QmsQualityControlPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dcfce7',
+                bgcolor: 'success.lighter',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color: '#16a34a' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -597,7 +597,7 @@ const QmsQualityControlPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, grey.100 0%, #f8fafc 100%)',
       }}
     >
       <PageHeader

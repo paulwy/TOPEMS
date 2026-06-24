@@ -40,7 +40,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             style={{
               width: '48px',
               height: '48px',
-              border: '4px solid #2563eb',
+              border: '4px solid primary.dark',
               borderBottom: '4px solid transparent',
               borderRadius: '9999px',
               animation: 'spin 1s linear infinite',
@@ -48,7 +48,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               marginBottom: '16px',
             }}
           ></div>
-          <p style={{ color: '#64748b' }}>加载中...</p>
+          <p style={{ color: 'grey.500' }}>加载中...</p>
         </div>
       </div>
     );
@@ -85,21 +85,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               style={{
                 fontSize: '24px',
                 fontWeight: 700,
-                color: '#0f172a',
+                color: 'grey.900',
                 marginBottom: '8px',
               }}
             >
               权限不足
             </h2>
-            <p style={{ color: '#64748b', marginBottom: '16px' }}>
+            <p style={{ color: 'grey.500', marginBottom: '16px' }}>
               您没有访问此页面的权限。请联系管理员获取相应权限。
             </p>
             <button
               onClick={() => window.history.back()}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
+                backgroundColor: 'primary.dark',
+                color: 'white',
                 borderRadius: '8px',
                 border: 'none',
                 cursor: 'pointer',
@@ -132,21 +132,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               style={{
                 fontSize: '24px',
                 fontWeight: 700,
-                color: '#0f172a',
+                color: 'grey.900',
                 marginBottom: '8px',
               }}
             >
               角色权限不足
             </h2>
-            <p style={{ color: '#64748b', marginBottom: '16px' }}>
+            <p style={{ color: 'grey.500', marginBottom: '16px' }}>
               您没有访问此页面的角色权限。请联系管理员分配相应角色。
             </p>
             <button
               onClick={() => window.history.back()}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
+                backgroundColor: 'primary.dark',
+                color: 'white',
                 borderRadius: '8px',
                 border: 'none',
                 cursor: 'pointer',
@@ -201,8 +201,8 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
       <div style={{ padding: '24px' }}>
         <div
           style={{
-            backgroundColor: '#fefce8',
-            border: '1px solid #fde68a',
+            backgroundColor: 'yellow.100',
+            border: '1px solid warning.light',
             borderRadius: '8px',
             padding: '16px',
           }}
@@ -210,7 +210,7 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <div style={{ flexShrink: 0 }}>
               <svg
-                style={{ height: 20, width: 20, color: '#f59e0b' }}
+                style={{ height: 20, width: 20, color: 'warning.main' }}
                 viewBox='0 0 20 20'
                 fill='currentColor'
               >
@@ -222,8 +222,8 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
               </svg>
             </div>
             <div style={{ marginLeft: '12px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, color: '#a16207' }}>权限提示</h3>
-              <div style={{ marginTop: '8px', fontSize: '14px', color: '#a16207' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'yellow.700' }}>权限提示</h3>
+              <div style={{ marginTop: '8px', fontSize: '14px', color: 'yellow.700' }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。
                 </p>

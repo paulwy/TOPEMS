@@ -295,6 +295,7 @@ async fn crm_auth_middleware(
         "/",
         "/health",
         "/api/plugins/info",
+        "/api/plugins/health",
         "/api/v1/health/detailed",
         "/api/v1/metrics",
     ];

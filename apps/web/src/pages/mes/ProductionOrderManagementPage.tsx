@@ -15,7 +15,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   ProductionOrder,
@@ -82,7 +82,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         setOrders(response.data.orders || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载生产订单列表失败:', error);
       addNotification({
         type: 'error',
@@ -108,7 +108,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         message: `订单状态已更新为"${getStatusText(newStatus)}"`,
       });
       loadOrders();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('状态更新失败:', error);
       addNotification({
         type: 'error',
@@ -197,7 +197,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadOrders();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -218,7 +218,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           message: '生产订单已删除',
         });
         loadOrders();
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('删除失败:', error);
         addNotification({
           type: 'error',
@@ -267,13 +267,13 @@ const ProductionOrderManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待生产', bg: '#fef3c7', color: '#b45309' },
-      in_progress: { label: '生产中', bg: '#dbeafe', color: '#1d4ed8' },
-      completed: { label: '已完成', bg: '#dcfce7', color: '#15803d' },
-      cancelled: { label: '已取消', bg: '#fee2e2', color: '#dc2626' },
-      paused: { label: '已暂停', bg: '#f3f4f6', color: '#4b5563' },
+      pending: { label: '待生产', bg: 'warning.light', color: '#b45309' },
+      in_progress: { label: '生产中', bg: '#dbeafe', color: 'primary.dark' },
+      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
+      paused: { label: '已暂停', bg: 'grey.100', color: 'text.secondary' },
     };
-    const s = statusMap[status] || { label: status, bg: '#f3f4f6', color: '#4b5563' };
+    const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         size='small'
@@ -424,7 +424,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -452,7 +452,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           {stats.in_progress}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -466,7 +466,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           {stats.completed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#f3f4f6', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

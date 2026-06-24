@@ -1,19 +1,17 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Box,
-  Tabs,
-  Tab,
   IconButton,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
 import { Pin, PinOff, X, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
 
 export interface TabItem {
   label: string;
@@ -24,16 +22,33 @@ export interface TabItem {
 
 interface ModuleTabsProps {
   tabs: TabItem[];
+  pluginCode?: string;
   onTabsChange?: (tabs: TabItem[]) => void;
 }
 
-export const ModuleTabs: React.FC<ModuleTabsProps> = ({ tabs, onTabsChange }) => {
+export const ModuleTabs: React.FC<ModuleTabsProps> = ({ tabs, pluginCode, onTabsChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [localTabs, setLocalTabs] = useState<TabItem[]>(tabs);
+
+  useEffect(() => {
+    if (pluginCode) {
+      const registryTabs = navigationRegistry.getModuleTabs(pluginCode);
+      if (registryTabs) {
+        setLocalTabs(
+          registryTabs.map((tab: NavItem) => ({
+            label: tab.label,
+            path: tab.path,
+            closable: true,
+            pinned: false,
+          }))
+        );
+      }
+    }
+  }, [pluginCode]);
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;

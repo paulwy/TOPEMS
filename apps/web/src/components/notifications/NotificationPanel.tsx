@@ -33,7 +33,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         setTotalUnread(response.data.unread_count);
         onUnreadCountChange(response.data.unread_count);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to fetch notifications:', error);
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         setTotalUnread(response.data);
         onUnreadCountChange(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to fetch unread count:', error);
     }
   };
@@ -59,7 +59,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         await fetchNotifications();
         await fetchUnreadCount();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to mark all as read:', error);
     }
   };
@@ -85,10 +85,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         top: '100%',
         marginTop: 8,
         width: 384,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'white',
         borderRadius: 8,
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        border: '1px solid #e5e7eb',
+        border: '1px solid grey.200',
         zIndex: 50,
       }}
     >
@@ -98,16 +98,16 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: 16,
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid grey.200',
         }}
       >
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>通知中心</h3>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: 'text.primary' }}>通知中心</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => setShowSettings(!showSettings)}
             style={{
               padding: 6,
-              color: '#6b7280',
+              color: 'text.secondary',
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -122,7 +122,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             onClick={fetchNotifications}
             style={{
               padding: 6,
-              color: '#6b7280',
+              color: 'text.secondary',
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -137,7 +137,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             onClick={onClose}
             style={{
               padding: 6,
-              color: '#6b7280',
+              color: 'text.secondary',
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -164,7 +164,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
 
       {showSettings && <NotificationSettings />}
 
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
         <button
           onClick={() => setActiveTab('all')}
           style={{
@@ -176,8 +176,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: activeTab === 'all' ? '#2563eb' : '#4b5563',
-            borderBottom: activeTab === 'all' ? '2px solid #2563eb' : '2px solid transparent',
+            color: activeTab === 'all' ? 'primary.dark' : 'text.secondary',
+            borderBottom: activeTab === 'all' ? '2px solid primary.dark' : '2px solid transparent',
           }}
         >
           全部通知
@@ -193,8 +193,9 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: activeTab === 'unread' ? '#2563eb' : '#4b5563',
-            borderBottom: activeTab === 'unread' ? '2px solid #2563eb' : '2px solid transparent',
+            color: activeTab === 'unread' ? 'primary.dark' : 'text.secondary',
+            borderBottom:
+              activeTab === 'unread' ? '2px solid primary.dark' : '2px solid transparent',
             position: 'relative',
           }}
         >
@@ -203,8 +204,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             <span
               style={{
                 marginLeft: 6,
-                backgroundColor: '#ef4444',
-                color: '#ffffff',
+                backgroundColor: 'error.main',
+                color: 'white',
                 fontSize: 12,
                 borderRadius: 9999,
                 padding: '2px 6px',
@@ -220,7 +221,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         <div
           style={{
             padding: '8px 16px',
-            backgroundColor: '#eff6ff',
+            backgroundColor: 'primary.light',
             borderBottom: '1px solid #dbeafe',
           }}
         >
@@ -231,7 +232,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               alignItems: 'center',
               gap: 8,
               fontSize: 14,
-              color: '#2563eb',
+              color: 'primary.dark',
               fontWeight: 500,
               backgroundColor: 'transparent',
               border: 'none',
@@ -259,8 +260,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 width: 32,
                 height: 32,
                 borderRadius: '9999px',
-                border: '2px solid #e5e7eb',
-                borderTopColor: '#2563eb',
+                border: '2px solid grey.200',
+                borderTopColor: 'primary.dark',
                 animation: 'spin 1s linear infinite',
               }}
             />
@@ -273,7 +274,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               alignItems: 'center',
               justifyContent: 'center',
               padding: 48,
-              color: '#6b7280',
+              color: 'text.secondary',
             }}
           >
             <svg
@@ -281,7 +282,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 width: 64,
                 height: 64,
                 marginBottom: 16,
-                color: '#d1d5db',
+                color: 'grey.300',
               }}
               fill='none'
               stroke='currentColor'
@@ -297,7 +298,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             <p style={{ fontSize: 14 }}>{activeTab === 'unread' ? '暂无未读通知' : '暂无通知'}</p>
           </div>
         ) : (
-          <div style={{ borderTop: '1px solid #f3f4f6' }}>
+          <div style={{ borderTop: '1px solid grey.100' }}>
             {displayedNotifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
@@ -314,8 +315,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         <div
           style={{
             padding: 12,
-            borderTop: '1px solid #e5e7eb',
-            backgroundColor: '#f9fafb',
+            borderTop: '1px solid grey.200',
+            backgroundColor: 'grey.50',
           }}
         >
           <a
@@ -324,7 +325,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               display: 'block',
               textAlign: 'center',
               fontSize: 14,
-              color: '#2563eb',
+              color: 'primary.dark',
               fontWeight: 500,
             }}
           >

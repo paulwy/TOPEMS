@@ -114,12 +114,12 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
               {expanded ? (
                 <ChevronUp
                   size={18}
-                  color='#64748b'
+                  color='grey.600'
                 />
               ) : (
                 <ChevronDown
                   size={18}
-                  color='#64748b'
+                  color='grey.600'
                 />
               )}
             </IconButton>

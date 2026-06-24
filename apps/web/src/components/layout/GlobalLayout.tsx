@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { logger } from '@/utils/logger';
 import {
   Box,
+  Button,
   IconButton,
   Typography,
   Tabs,
@@ -16,7 +17,6 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
 import {
   Home,
   Users,
@@ -32,21 +32,28 @@ import {
   Sparkles,
   User,
   LogOut,
+  FileText,
+  Calendar,
+  DollarSign,
+  Box as BoxIcon,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import {
-  topNavItems,
-  getModuleFromPath,
-  getModuleTabs,
-  type TabItem,
-} from '../../config/navigation';
-import type { NavigationItem } from '../../config/navigation-v2';
+import { usePermission } from '../../hooks/usePermission';
+import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import type { TabItem } from '@/types/navigation';
 import { ModeToggle } from '../ModeToggle';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
 import { ModuleTabs } from './ModuleTabs';
 import { MobileNav } from './MobileNav';
 import { Sidebar } from './Sidebar';
+
+// 从路径解析模块名的辅助函数
+function getModuleFromPath(pathname: string): string | null {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length === 0) return null;
+  return segments[0];
+}
 
 // 模块图标映射
 const moduleIcons: Record<string, React.ReactNode> = {
@@ -54,6 +61,32 @@ const moduleIcons: Record<string, React.ReactNode> = {
   crm: <Building2 style={{ width: 20, height: 20 }} />,
   pm: <Briefcase style={{ width: 20, height: 20 }} />,
   bi: <BarChart3 style={{ width: 20, height: 20 }} />,
+};
+
+// Lucide 图标名称映射
+const lucideIcons: Record<string, React.ComponentType<{ style?: React.CSSProperties }> | null> = {
+  Users,
+  Building2,
+  Briefcase,
+  BarChart3,
+  Home,
+  Settings,
+  Bell,
+  User,
+  BoxIcon,
+  FileText,
+  Calendar,
+  DollarSign,
+  ChevronRight,
+  ChevronDown,
+};
+
+// 渲染图标
+const renderIcon = (iconName?: string, size = 16) => {
+  if (!iconName) return null;
+  const IconComponent = lucideIcons[iconName];
+  if (!IconComponent) return null;
+  return <IconComponent style={{ width: size, height: size, color: 'primary.main' }} />;
 };
 
 interface GlobalLayoutProps {
@@ -67,9 +100,26 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const { logout } = useAuth();
+  const { checkPermission } = usePermission();
+
+  // 从 NavigationRegistry 动态获取导航项（带权限过滤）
+  const [topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
+    return navigationRegistry.getNavItemsByPermission(checkPermission);
+  });
+
+  // 监听 NavigationRegistry 更新事件
+  useEffect(() => {
+    const updateNavItems = () => {
+      setTopNavItems(navigationRegistry.getNavItemsByPermission(checkPermission));
+    };
+    navigationRegistry.emitter.on('navigationUpdated', updateNavItems);
+    return function cleanup() {
+      navigationRegistry.emitter.off('navigationUpdated', updateNavItems);
+    };
+  }, [checkPermission]);
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [openMenu, setOpenMenu] = useState<NavigationItem | null>(null);
+  const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState<HTMLElement | null>(null);
@@ -91,10 +141,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
 
   // 获取当前模块和Tab
   const currentModule = getModuleFromPath(location.pathname);
-  const moduleTabs = currentModule ? getModuleTabs(currentModule) : [];
+  const moduleTabs = currentModule ? navigationRegistry.getModuleTabs(currentModule) || [] : [];
 
   const handleNavHover = useCallback(
-    (event: React.MouseEvent<HTMLElement>, item: NavigationItem) => {
+    (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
       if (item.children) {
         setAnchorEl(event.currentTarget);
         setOpenMenu(item);
@@ -119,7 +169,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   }, []);
 
   const handleMenuItemClick = useCallback(
-    (item: NavigationItem) => {
+    (item: NavItem) => {
       if (item.path) {
         navigate(item.path);
       }
@@ -131,10 +181,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const isMenuOpen = Boolean(anchorEl) && Boolean(openMenu?.children);
 
   // 渲染下拉菜单内容
-  const renderDropdownContent = (item: NavigationItem) => {
+  const renderDropdownContent = (item: NavItem) => {
     if (!item.children) return null;
 
-    const menuItems = item.children as NavigationItem[];
+    const menuItems = item.children as NavItem[];
     return (
       <Box
         sx={{
@@ -149,9 +199,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         }}
         onMouseLeave={handleCloseMenu}
       >
-        {menuItems.map((child: NavigationItem) => (
+        {menuItems.map((child: NavItem) => (
           <Box
-            key={child.id}
+            key={child.code}
             onClick={() => handleMenuItemClick(child)}
             sx={{
               display: 'flex',
@@ -178,13 +228,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               }}
             >
               {child.icon ? (
-                <child.icon style={{ width: 16, height: 16, color: 'primary.main' }} />
+                renderIcon(child.icon, 16)
               ) : (
                 <Typography
                   variant='caption'
                   sx={{ color: 'primary.main', fontWeight: 600 }}
                 >
-                  {child.title.charAt(0)}
+                  {child.label.charAt(0)}
                 </Typography>
               )}
             </Box>
@@ -193,7 +243,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 variant='body2'
                 sx={{ fontWeight: 500 }}
               >
-                {child.title}
+                {child.label}
               </Typography>
             </Box>
           </Box>
@@ -203,14 +253,14 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   };
 
   // 渲染顶部导航项
-  const renderNavigationItem = (item: NavigationItem, index: number) => {
+  const renderNavItem = (item: NavItem, index: number) => {
     const isActive =
       item.path === location.pathname ||
       (item.path && location.pathname.startsWith(item.path + '/'));
 
     return (
       <Box
-        key={item.title + index}
+        key={item.label + index}
         onMouseEnter={(e) => handleNavHover(e, item)}
         onMouseLeave={handleNavLeave}
         sx={{
@@ -239,7 +289,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             cursor: item.path ? 'pointer' : 'default',
           }}
         >
-          {item.title}
+          {item.label}
         </Button>
       </Box>
     );
@@ -301,7 +351,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 width: 36,
                 height: 36,
                 borderRadius: 1.5,
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -313,7 +363,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               variant='h6'
               sx={{
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                background: 'linear-gradient(135deg, primary.main, secondary.main)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -334,7 +384,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               overflow: 'auto',
             }}
           >
-            {topNavItems.map((item, index) => renderNavigationItem(item, index))}
+            {topNavItems.map((item, index) => renderNavItem(item, index))}
           </Box>
 
           {/* 右侧工具 */}
@@ -366,7 +416,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                     width: 32,
                     height: 32,
                     fontSize: 14,
-                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    background: 'linear-gradient(135deg, primary.main, secondary.main)',
                   }}
                 >
                   陈
@@ -397,7 +447,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             </Menu>
             {/* 移动端汉堡菜单 */}
             <MobileNav
-              navItems={topNavItems}
               open={mobileMenuOpen}
               onClose={() => setMobileMenuOpen(false)}
               onOpen={() => setMobileMenuOpen(true)}

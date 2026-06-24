@@ -23,11 +23,16 @@ interface RecentActivitiesProps {
 }
 
 const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg: string }> = {
-  系统: { bg: '#eff6ff', text: '#2563eb', bar: '#3b82f6', iconBg: '#dbeafe' },
-  文档: { bg: '#faf5ff', text: '#7c3aed', bar: '#8b5cf6', iconBg: '#ede9fe' },
-  工作流: { bg: '#f0fdf4', text: '#16a34a', bar: '#22c55e', iconBg: '#dcfce7' },
-  培训: { bg: '#fefce8', text: '#ca8a04', bar: '#eab308', iconBg: '#fef9c3' },
-  默认: { bg: '#f8fafc', text: '#64748b', bar: '#94a3b8', iconBg: '#f1f5f9' },
+  系统: { bg: 'primary.light', text: 'primary.dark', bar: 'primary.main', iconBg: '#dbeafe' },
+  文档: {
+    bg: 'secondary.light',
+    text: 'secondary.dark',
+    bar: 'secondary.main',
+    iconBg: 'secondary.light',
+  },
+  工作流: { bg: 'success.light', text: 'success.dark', bar: 'success.dark', iconBg: 'success.lighter' },
+  培训: { bg: 'warning.lighter', text: '#ca8a04', bar: 'warning.main', iconBg: '#fef9c3' },
+  默认: { bg: 'grey.50', text: 'grey.600', bar: '#94a3b8', iconBg: 'grey.100' },
 };
 
 const generateMockActivities = (): ActivityItem[] => [
@@ -39,7 +44,7 @@ const generateMockActivities = (): ActivityItem[] => [
     icon: (
       <AlertCircle
         size={20}
-        color='#22c55e'
+        color='success.dark'
       />
     ),
   },
@@ -51,7 +56,7 @@ const generateMockActivities = (): ActivityItem[] => [
     icon: (
       <FileText
         size={20}
-        color='#8b5cf6'
+        color='secondary.main'
       />
     ),
   },
@@ -63,7 +68,7 @@ const generateMockActivities = (): ActivityItem[] => [
     icon: (
       <CheckCircle2
         size={20}
-        color='#3b82f6'
+        color='primary.main'
       />
     ),
   },
@@ -75,7 +80,7 @@ const generateMockActivities = (): ActivityItem[] => [
     icon: (
       <Users
         size={20}
-        color='#eab308'
+        color='warning.main'
       />
     ),
   },
@@ -87,7 +92,7 @@ const generateMockActivities = (): ActivityItem[] => [
     icon: (
       <AlertTriangle
         size={20}
-        color='#ef4444'
+        color='error.main'
       />
     ),
   },
@@ -99,7 +104,7 @@ const generateMockActivities = (): ActivityItem[] => [
     icon: (
       <Clock
         size={20}
-        color='#22c55e'
+        color='success.dark'
       />
     ),
   },
@@ -133,7 +138,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
               alignItems: 'flex-start',
               padding: 2,
               borderRadius: 2,
-              '&:hover': { backgroundColor: '#f8fafc' },
+              '&:hover': { backgroundColor: 'grey.50' },
               transition: 'backgroundColor 0.2s ease',
               cursor: 'pointer',
             }}
@@ -166,7 +171,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                     position: 'relative',
                     width: 4,
                     height: 32,
-                    backgroundColor: '#e2e8f0',
+                    backgroundColor: 'border.default',
                     borderRadius: 2,
                     marginTop: 1,
                   }}
@@ -213,7 +218,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                 <Typography sx={{ fontSize: 12, color: '#94a3b8' }}>{activity.time}</Typography>
               </Box>
             </Box>
-            <ChevronRight sx={{ width: 16, height: 16, color: '#cbd5e1', marginLeft: 1 }} />
+            <ChevronRight sx={{ width: 16, height: 16, color: 'grey.400', marginLeft: 1 }} />
           </Box>
         );
       })}

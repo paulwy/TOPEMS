@@ -5,7 +5,7 @@
 import React from 'react';
 import { FileText, Inbox, Search, Folder, AlertTriangle } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 interface EmptyStateProps {
   icon?: 'file' | 'folder' | 'search' | 'inbox';
@@ -57,7 +57,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           mb: 2,
         }}
       >
-        <Icon style={{ width: 32, height: 32, color: '#9ca3af' }} />
+        <Icon style={{ width: 32, height: 32, color: 'text.disabled' }} />
       </Box>
       <Typography
         variant='h6'
@@ -114,7 +114,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           mb: 2,
         }}
       >
-        <AlertTriangle style={{ width: 32, height: 32, color: '#dc2626' }} />
+        <AlertTriangle style={{ width: 32, height: 32, color: 'error.dark' }} />
       </Box>
       <Typography
         variant='h6'

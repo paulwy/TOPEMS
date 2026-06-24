@@ -21,7 +21,7 @@ export const MobileSettingsPage: React.FC = () => {
       title: '离线数据同步',
       description: '管理离线数据缓存和同步策略',
       icon: <Cloud size={28} />,
-      color: '#3B82F6',
+      color: 'primary.main',
       path: '/mobile/offline-sync',
     },
     {
@@ -29,7 +29,7 @@ export const MobileSettingsPage: React.FC = () => {
       title: '扫码功能',
       description: '配置扫码识别和数据关联',
       icon: <QrCode size={28} />,
-      color: '#10B981',
+      color: 'success.main',
       path: '/mobile/scan',
     },
     {
@@ -37,7 +37,7 @@ export const MobileSettingsPage: React.FC = () => {
       title: '通知推送',
       description: '管理移动端消息推送设置',
       icon: <Bell size={28} />,
-      color: '#F59E0B',
+      color: 'warning.main',
       path: '/mobile/notifications',
     },
     {
@@ -90,9 +90,7 @@ export const MobileSettingsPage: React.FC = () => {
       >
         {stats.map((stat) => (
           <Grid
-            item
-            xs={6}
-            sm={3}
+            size={{ xs: 6, sm: 3 }}
             key={stat.label}
           >
             <Card>
@@ -131,10 +129,7 @@ export const MobileSettingsPage: React.FC = () => {
       >
         {menuItems.map((item) => (
           <Grid
-            item
-            xs={12}
-            sm={6}
-            lg={3}
+            size={{ xs: 12, sm: 6, lg: 3 }}
             key={item.id}
           >
             <Card

@@ -11,7 +11,7 @@ import {
   Chip,
   Box,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -94,7 +94,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       if (response.success && response.data) {
         setTemplates(response.data.items);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to load templates:', error);
     }
   };
@@ -105,7 +105,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       if (response.success && response.data) {
         setCategories(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to load categories:', error);
     }
   };
@@ -136,7 +136,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         } else {
           onSelect(selectedTemplate, selectedTemplate.content);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         apiLogger.error('Failed to render template:', error);
         onSelect(selectedTemplate, selectedTemplate.content);
       } finally {
@@ -191,7 +191,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   transform: 'translateY(-50%)',
                   width: 16,
                   height: 16,
-                  color: '#9ca3af',
+                  color: 'text.disabled',
                 }}
               />
               <TextField
@@ -276,7 +276,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                             size='small'
                             icon={<Sparkles style={{ width: 12, height: 12 }} />}
                             label='AI'
-                            sx={{ bgcolor: '#fef3c7', color: '#b45309' }}
+                            sx={{ bgcolor: 'warning.light', color: '#b45309' }}
                           />
                         )}
                       </Box>
@@ -396,7 +396,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                               size='small'
                               icon={<Sparkles style={{ width: 12, height: 12 }} />}
                               label='AI 辅助'
-                              sx={{ bgcolor: '#fef3c7', color: '#b45309' }}
+                              sx={{ bgcolor: 'warning.light', color: '#b45309' }}
                             />
                           )}
                         </Box>
@@ -458,7 +458,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 {variable.label}
                               </span>
                               {variable.required && (
-                                <span style={{ fontSize: 12, color: '#ef4444' }}>必填</span>
+                                <span style={{ fontSize: 12, color: 'error.main' }}>必填</span>
                               )}
                             </Box>
                             <TextField

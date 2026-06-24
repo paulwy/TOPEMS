@@ -43,7 +43,7 @@ const IntegrationEventsPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setEvents(res.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error loading events:', error);
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ const IntegrationEventsPage: React.FC = () => {
           />
           <ArrowRight
             size={16}
-            style={{ color: '#9ca3af' }}
+            style={{ color: 'text.disabled' }}
           />
           <Chip
             label={row.target_system.toUpperCase()}

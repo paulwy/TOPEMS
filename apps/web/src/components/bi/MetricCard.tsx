@@ -14,7 +14,7 @@ interface SparklineProps {
 
 const Sparkline: React.FC<SparklineProps> = ({
   data,
-  color = '#3B82F6',
+  color = 'primary.main',
   width = 80,
   height = 32,
   strokeWidth = 2,
@@ -133,22 +133,22 @@ interface MetricCardProps {
 
 const colorMap: Record<string, { bg: string; gradient: string }> = {
   green: {
-    bg: '#10B981',
-    gradient: 'linear-gradient(135deg, #10B981, #059669)',
+    bg: 'success.main',
+    gradient: 'linear-gradient(135deg, success.main, success.dark)',
   },
   purple: {
     bg: '#8B5CF6',
     gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
   },
   blue: {
-    bg: '#3B82F6',
+    bg: 'primary.main',
     gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
   },
   orange: {
-    bg: '#F59E0B',
+    bg: 'warning.main',
     gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
   },
-  red: { bg: '#EF4444', gradient: 'linear-gradient(135deg, #EF4444, #DC2626)' },
+  red: { bg: 'error.main', gradient: 'linear-gradient(135deg, error.main, #DC2626)' },
   cyan: {
     bg: '#06B6D4',
     gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
@@ -239,7 +239,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const getTrendColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable')
       return '#64748B';
-    return computedTrend === 'up' ? '#10B981' : '#EF4444';
+    return computedTrend === 'up' ? 'success.main' : 'error.main';
   };
 
   const renderIcon = () => {
@@ -277,7 +277,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const getSparklineColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable')
       return '#64748B';
-    return computedTrend === 'up' ? '#10B981' : '#EF4444';
+    return computedTrend === 'up' ? 'success.main' : 'error.main';
   };
 
   return (

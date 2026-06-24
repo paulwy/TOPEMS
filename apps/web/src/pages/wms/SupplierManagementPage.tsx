@@ -13,7 +13,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/modules/scm/scm';
 import { scmApi } from '@/api/modules/scm/scm';
@@ -69,7 +69,7 @@ const SupplierManagementPage: React.FC = () => {
         setSuppliers(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载供应商列表失败:', error);
       addNotification({
         type: 'error',
@@ -102,7 +102,7 @@ const SupplierManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadSuppliers();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -122,7 +122,7 @@ const SupplierManagementPage: React.FC = () => {
         message: '供应商已删除',
       });
       loadSuppliers();
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('删除失败:', error);
       addNotification({
         type: 'error',

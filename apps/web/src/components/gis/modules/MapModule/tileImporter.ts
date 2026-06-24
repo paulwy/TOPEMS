@@ -86,7 +86,7 @@ export async function importTilesFromManifest(
       } else {
         failed++;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       failed++;
       logger.warn(`Failed to import tile ${key}:`, error);
     }

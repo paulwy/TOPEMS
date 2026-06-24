@@ -281,7 +281,7 @@ describe("HrmDepartmentPage 部门管理页面", () => {
     });
 
     it("应该验证必填字段", () => {
-      const validateForm = (data: any) => {
+      const validateForm = (data: { name?: string; code?: string }) => {
         const errors: string[] = [];
         if (!data.name) errors.push("部门名称不能为空");
         if (!data.code) errors.push("部门编码不能为空");

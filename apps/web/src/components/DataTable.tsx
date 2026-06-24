@@ -10,9 +10,9 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Button,
 } from '@mui/material';
 import React from 'react';
-import { Button } from './ui/Button';
 import type {
   ColumnDef,
   SortingState,

@@ -23,7 +23,7 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
           height: 256,
         }}
       >
-        <div style={{ color: '#64748b' }}>加载中...</div>
+        <div style={{ color: 'grey.600' }}>加载中...</div>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export const AddressbookList: React.FC<AddressbookListProps> = ({
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <p style={{ color: '#64748b' }}>没有找到联系人</p>
+          <p style={{ color: 'grey.600' }}>没有找到联系人</p>
         </div>
       </div>
     );

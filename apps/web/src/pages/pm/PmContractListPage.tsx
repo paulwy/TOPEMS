@@ -58,7 +58,7 @@ const PmContractListPage: React.FC = () => {
         });
         setContracts(filtered);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to load contracts:', error);
     } finally {
       setLoading(false);
@@ -164,7 +164,7 @@ const PmContractListPage: React.FC = () => {
             <Box sx={{ position: 'relative' }}>
               <Search
                 size={20}
-                color='#9ca3af'
+                color='text.disabled'
                 style={{
                   position: 'absolute',
                   left: 12,
@@ -183,7 +183,7 @@ const PmContractListPage: React.FC = () => {
                   paddingRight: 16,
                   paddingTop: 8,
                   paddingBottom: 8,
-                  border: '1px solid #d1d5db',
+                  border: '1px solid grey.300',
                   borderRadius: 8,
                   outline: 'none',
                 }}
@@ -199,7 +199,7 @@ const PmContractListPage: React.FC = () => {
                 paddingRight: 16,
                 paddingTop: 8,
                 paddingBottom: 8,
-                border: '1px solid #d1d5db',
+                border: '1px solid grey.300',
                 borderRadius: 8,
                 outline: 'none',
               }}
@@ -221,7 +221,7 @@ const PmContractListPage: React.FC = () => {
                 paddingRight: 16,
                 paddingTop: 8,
                 paddingBottom: 8,
-                border: '1px solid #d1d5db',
+                border: '1px solid grey.300',
                 borderRadius: 8,
                 outline: 'none',
               }}
@@ -245,7 +245,7 @@ const PmContractListPage: React.FC = () => {
                 paddingRight: 16,
                 paddingTop: 8,
                 paddingBottom: 8,
-                backgroundColor: '#2563eb',
+                backgroundColor: 'primary.dark',
                 color: 'white',
                 borderRadius: 8,
                 border: 'none',
@@ -302,7 +302,7 @@ const PmContractListPage: React.FC = () => {
             <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
               <FileText
                 size={24}
-                color='#2563eb'
+                color='primary.dark'
               />
             </Box>
           </Box>
@@ -339,7 +339,7 @@ const PmContractListPage: React.FC = () => {
             <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
               <CheckCircle
                 size={24}
-                color='#16a34a'
+                color='success.dark'
               />
             </Box>
           </Box>
@@ -544,7 +544,7 @@ const PmContractListPage: React.FC = () => {
                         width: 48,
                         height: 48,
                         borderRadius: '50%',
-                        border: '2px solid #2563eb',
+                        border: '2px solid primary.dark',
                         borderTopColor: 'transparent',
                         animation: 'spin 1s linear infinite',
                         mx: 'auto',
@@ -666,7 +666,7 @@ const PmContractListPage: React.FC = () => {
                         >
                           <Calendar
                             size={16}
-                            color='#9ca3af'
+                            color='text.disabled'
                           />
                           {formatDate(contract.signing_date)}
                         </Box>
@@ -685,7 +685,7 @@ const PmContractListPage: React.FC = () => {
                       <button
                         onClick={() => navigate(`/pm/contracts/${contract.id}`)}
                         style={{
-                          color: '#2563eb',
+                          color: 'primary.dark',
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',

@@ -49,13 +49,13 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             fontSize: 14,
             cursor: 'pointer',
             borderRadius: 4,
-            backgroundColor: isSelected ? '#eff6ff' : 'transparent',
-            color: isSelected ? '#1d4ed8' : '#334155',
+            backgroundColor: isSelected ? 'primary.light' : 'transparent',
+            color: isSelected ? 'primary.dark' : '#334155',
           }}
           onClick={() => onDepartmentSelect(isSelected ? null : node.id)}
           onMouseEnter={(e) => {
             if (!isSelected) {
-              e.currentTarget.style.backgroundColor = '#f1f5f9';
+              e.currentTarget.style.backgroundColor = 'grey.100';
             }
           }}
           onMouseLeave={(e) => {
@@ -78,7 +78,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
                 cursor: 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e2e8f0';
+                e.currentTarget.style.backgroundColor = 'border.default';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -123,23 +123,23 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
       style={{
         width: 256,
         backgroundColor: 'white',
-        borderRight: '1px solid #e2e8f0',
+        borderRight: '1px solid border.default',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      <div style={{ padding: 16, borderBottom: '1px solid #e2e8f0' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', margin: 0 }}>通讯录</h2>
+      <div style={{ padding: 16, borderBottom: '1px solid border.default' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'grey.900', margin: 0 }}>通讯录</h2>
       </div>
 
       {/* 类型筛选 */}
-      <div style={{ padding: 16, borderBottom: '1px solid #e2e8f0' }}>
+      <div style={{ padding: 16, borderBottom: '1px solid border.default' }}>
         <h3
           style={{
             fontSize: 14,
             fontWeight: 500,
-            color: '#64748b',
+            color: 'grey.600',
             marginBottom: 12,
           }}
         >
@@ -159,15 +159,15 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
                 borderRadius: 6,
                 border: 'none',
                 cursor: 'pointer',
-                backgroundColor: selectedType === id ? '#eff6ff' : 'transparent',
-                color: selectedType === id ? '#1d4ed8' : '#334155',
+                backgroundColor: selectedType === id ? 'primary.light' : 'transparent',
+                color: selectedType === id ? 'primary.dark' : '#334155',
                 transition: 'colors 0.2s',
                 width: '100%',
                 textAlign: 'left',
               }}
               onMouseEnter={(e) => {
                 if (selectedType !== id) {
-                  e.currentTarget.style.backgroundColor = '#f1f5f9';
+                  e.currentTarget.style.backgroundColor = 'grey.100';
                 }
               }}
               onMouseLeave={(e) => {
@@ -189,7 +189,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
           style={{
             fontSize: 14,
             fontWeight: 500,
-            color: '#64748b',
+            color: 'grey.600',
             marginBottom: 12,
           }}
         >
@@ -207,15 +207,15 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
               borderRadius: 6,
               border: 'none',
               cursor: 'pointer',
-              backgroundColor: selectedDepartment === null ? '#eff6ff' : 'transparent',
-              color: selectedDepartment === null ? '#1d4ed8' : '#334155',
+              backgroundColor: selectedDepartment === null ? 'primary.light' : 'transparent',
+              color: selectedDepartment === null ? 'primary.dark' : '#334155',
               transition: 'colors 0.2s',
               width: '100%',
               textAlign: 'left',
             }}
             onMouseEnter={(e) => {
               if (selectedDepartment !== null) {
-                e.currentTarget.style.backgroundColor = '#f1f5f9';
+                e.currentTarget.style.backgroundColor = 'grey.100';
               }
             }}
             onMouseLeave={(e) => {

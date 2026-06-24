@@ -23,7 +23,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Search, RefreshCw, Filter, Plus, ChevronDown, ChevronUp, Grid, List } from 'lucide-react';
 import { EmptyState } from '@/components/mui';
 
@@ -62,9 +62,9 @@ export interface FilterConfig {
 export interface CardAction {
   label: string;
   icon?: React.ReactNode;
-  onClick: (item: any) => void;
+  onClick: (item: unknown) => void;
   color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
-  disabled?: (item: any) => boolean;
+  disabled?: (item: unknown) => boolean;
   variant?: 'contained' | 'outlined' | 'text';
   divider?: boolean;
 }
@@ -74,9 +74,9 @@ export interface CardAction {
  */
 export interface CardRenderConfig {
   /** 标题字段或渲染函数 */
-  title: string | ((item: any) => React.ReactNode);
+  title: string | ((item: unknown) => React.ReactNode);
   /** 描述字段或渲染函数 */
-  description?: string | ((item: any) => React.ReactNode);
+  description?: string | ((item: unknown) => React.ReactNode);
   /** 状态字段和配置 */
   status?: {
     field: string;
@@ -95,9 +95,9 @@ export interface CardRenderConfig {
     options?: Record<string, { label: string; color?: string }>;
   }>;
   /** 左侧图标 */
-  icon?: React.ReactNode | ((item: any) => React.ReactNode);
+  icon?: React.ReactNode | ((item: unknown) => React.ReactNode);
   /** 左侧图标背景色 */
-  iconBgColor?: string | ((item: any) => string);
+  iconBgColor?: string | ((item: unknown) => string);
 }
 
 /**
@@ -161,7 +161,7 @@ export interface CardListTemplateProps {
   /** 卡片操作按钮列表 */
   cardActions?: CardAction[];
   /** 卡片点击回调 */
-  onCardClick?: (item: any) => void;
+  onCardClick?: (item: unknown) => void;
   /** 是否显示统计概览 */
   showStatsOverview?: boolean;
   /** 统计概览展开状态 */

@@ -22,7 +22,7 @@ const SrmDashboardPage: React.FC = () => {
       if (response.success && response.data) {
         setStatistics(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载统计数据失败:', err);
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ const SrmDashboardPage: React.FC = () => {
             data={(statistics.supplier_by_status ?? []).map((s) => ({
               name: mapStatusToChinese(s.status),
               value: s.count,
-              color: s.status === 'active' ? '#10B981' : '#6B7280',
+              color: s.status === 'active' ? 'success.main' : 'grey.500',
             }))}
             yKey='value'
             xKey='name'

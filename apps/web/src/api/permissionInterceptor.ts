@@ -74,13 +74,14 @@ export const withPermissionCheck = async <T>(
   try {
     const result = await apiCall();
     return { success: true, data: result };
-  } catch (error: any) {
-    if (error.response?.status === 403) {
+  } catch (error: unknown) {
+    const err = error as { response?: { status?: number; data?: { message?: string } } };
+    if (err.response?.status === 403) {
       return {
         success: false,
         error: {
           code: 403,
-          message: error.response?.data?.message || '权限不足',
+          message: err.response?.data?.message || '权限不足',
           requiredPermission: permission,
         },
       };
@@ -114,7 +115,7 @@ export const logPermissionAccess = async (
       user_agent: navigator.userAgent,
       resource_id: undefined,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     apiLogger.error('Failed to log permission access:', error);
   }
 };

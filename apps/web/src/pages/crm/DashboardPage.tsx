@@ -57,8 +57,16 @@ export const DashboardPage: React.FC = () => {
       if (funnelResponse.success && funnelResponse.data) {
         setFunnelData(funnelResponse.data);
       }
-    } catch (error) {
-      logger.error('加载仪表盘数据失败:', error);
+    } catch (error: unknown) {
+      // 后端服务未运行（503）或未认证（401）时，优雅降级为 warn
+      const status = (error as { response?: { status?: number } }).response?.status;
+      if (status === 401) {
+        logger.warn('CRM 服务需要认证，请先登录');
+      } else if (status === 503) {
+        logger.warn('CRM 服务暂不可用，显示示例数据');
+      } else {
+        logger.error('加载仪表盘数据失败:', error);
+      }
     } finally {
       setTimeout(() => setLoading(false), 500);
     }
@@ -169,28 +177,28 @@ export const DashboardPage: React.FC = () => {
       label: '新增客户',
       icon: <ArrowRight size={20} />,
       href: '/crm/customers/create',
-      color: '#3b82f6',
+      color: 'primary.main',
     },
     {
       id: 'create-opportunity',
       label: '创建商机',
       icon: <ArrowRight size={20} />,
       href: '/crm/opportunities',
-      color: '#10b981',
+      color: 'success.main',
     },
     {
       id: 'customer-scoring',
       label: '客户评分',
       icon: <ArrowRight size={20} />,
       href: '/crm/customer-scoring',
-      color: '#8b5cf6',
+      color: 'secondary.main',
     },
     {
       id: 'sales-report',
       label: '销售预测',
       icon: <ArrowRight size={20} />,
       href: '/crm/sales-forecast',
-      color: '#f59e0b',
+      color: 'warning.main',
     },
   ];
 
@@ -240,17 +248,16 @@ export const DashboardPage: React.FC = () => {
             {funnelData.map((item, index) => {
               const widthPercent = 100 - index * 10;
               const stageColors: Record<string, string> = {
-                prospecting: '#9CA3AF',
-                qualified: '#3B82F6',
+                prospecting: 'text.disabled',
+                qualified: 'primary.main',
                 proposal: '#8B5CF6',
-                negotiation: '#F59E0B',
-                closed_won: '#10B981',
-                closed_lost: '#EF4444',
+                negotiation: 'warning.main',
+                closed_won: 'success.main',
+                closed_lost: 'error.main',
               };
               return (
                 <Grid
-                  item
-                  xs={12}
+                  size={{ xs: 12 }}
                   key={item.stage}
                 >
                   <Box
@@ -273,7 +280,7 @@ export const DashboardPage: React.FC = () => {
                       <div
                         style={{
                           height: 24,
-                          backgroundColor: '#f3f4f6',
+                          backgroundColor: 'grey.100',
                           borderRadius: 4,
                           overflow: 'hidden',
                         }}
@@ -281,7 +288,7 @@ export const DashboardPage: React.FC = () => {
                         <div
                           style={{
                             height: '100%',
-                            backgroundColor: stageColors[item.stage] || '#6B7280',
+                            backgroundColor: stageColors[item.stage] || 'grey.500',
                             width: `${widthPercent}%`,
                             display: 'flex',
                             alignItems: 'center',

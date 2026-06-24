@@ -1,3 +1,18 @@
+/**
+ * @deprecated This file is deprecated and will be removed in a future version.
+ * Use `NavigationRegistry` from `@/lib/NavigationRegistry` instead.
+ *
+ * Migration guide:
+ * - Static navigation items: Use `navigationRegistry.register()` instead
+ * - `topNavItems`: Use `navigationRegistry.getTopNavItems()` instead
+ * - `coreNavigation`: Register as separate plugin nav config
+ * - `suiteNavigation`: Register as separate plugin nav config
+ * - `adminNavigation`: Register as separate plugin nav config
+ * - `getNavigationForPlugin`: Use `navigationRegistry.getSidebarNavItems()` instead
+ *
+ * See: docs/guides/ui/ui-navigation-design.md for more details.
+ */
+
 import {
   LayoutDashboard,
   Users,
@@ -48,6 +63,7 @@ export interface NavigationItem {
   pluginCode?: string;
   suiteCode?: string;
   permissions?: string[];
+  isGroup?: boolean;
 }
 
 export interface NavigationGroup {

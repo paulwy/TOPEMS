@@ -33,7 +33,7 @@ const StepIconContainer = styled('div')<{
   const getBackgroundColor = () => {
     if (status === 'completed') {
       return variant === 'gradient'
-        ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
+        ? 'linear-gradient(135deg, primary.main, primary.dark)'
         : theme.palette.success.main;
     }
     if (status === 'error') {
@@ -41,7 +41,7 @@ const StepIconContainer = styled('div')<{
     }
     if (status === 'active') {
       return variant === 'gradient'
-        ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
+        ? 'linear-gradient(135deg, primary.main, primary.dark)'
         : theme.palette.primary.main;
     }
     return variant === 'outlined' ? 'transparent' : theme.palette.grey[300];

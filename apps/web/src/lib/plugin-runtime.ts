@@ -164,7 +164,7 @@ class PluginRuntimeManager {
 
       this.loadedModules.set(code, loadedModule);
       return loadedModule;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Failed to load plugin ${code}:`, error);
       return null;
     }
@@ -190,7 +190,7 @@ class PluginRuntimeManager {
       URL.revokeObjectURL(blobUrl);
 
       return module;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error importing remote module:', error);
       throw error;
     }

@@ -19,7 +19,7 @@ import {
   Tooltip,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Plus, Search, Edit, Trash2, Eye, FileText } from 'lucide-react';
 
 interface Formula {
@@ -140,14 +140,14 @@ const RsFormulaListPage: React.FC = () => {
               管理研发配方、版本控制、配方发布
             </Typography>
           </div>
-          <Button
-            variant='contained'
-            startIcon={<Plus />}
-            component={Link}
-            to='/rs/formulas/create'
-          >
-            新增配方
-          </Button>
+          <Link to='/rs/formulas/create'>
+            <Button
+              variant='contained'
+              startIcon={<Plus />}
+            >
+              新增配方
+            </Button>
+          </Link>
         </Stack>
       </div>
 

@@ -2,14 +2,14 @@ import { Chip } from '@mui/material';
 import React from 'react';
 
 const colorMap: Record<string, { bg: string; color: string }> = {
-  'bg-red-100': { bg: '#fee2e2', color: '#dc2626' },
+  'bg-red-100': { bg: 'error.lighter', color: 'error.dark' },
   'bg-yellow-100': { bg: '#fef9c3', color: '#ca8a04' },
-  'bg-green-100': { bg: '#dcfce7', color: '#16a34a' },
-  'bg-gray-100': { bg: '#f3f4f6', color: '#4b5563' },
-  'bg-blue-100': { bg: '#dbeafe', color: '#2563eb' },
+  'bg-green-100': { bg: 'success.lighter', color: 'success.dark' },
+  'bg-gray-100': { bg: 'grey.100', color: 'text.secondary' },
+  'bg-blue-100': { bg: '#dbeafe', color: 'primary.dark' },
   'bg-orange-100': { bg: '#ffedd5', color: '#ea580c' },
-  'bg-purple-100': { bg: '#f3e8ff', color: '#7c3aed' },
-  'bg-emerald-100': { bg: '#d1fae5', color: '#059669' },
+  'bg-purple-100': { bg: '#f3e8ff', color: 'secondary.dark' },
+  'bg-emerald-100': { bg: 'success.lighter', color: 'success.dark' },
 };
 
 // EHS Hazard Status Types
@@ -168,8 +168,8 @@ export const EHSStatusBadge: React.FC<EHSStatusBadgeProps> = ({
   };
 
   const colors = colorMap[item.color.split(' ')[0]] || {
-    bg: '#f3f4f6',
-    color: '#4b5563',
+    bg: 'grey.100',
+    color: 'text.secondary',
   };
 
   return (
@@ -246,8 +246,8 @@ export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({ severity, cl
   };
 
   const colors = colorMap[item.color.split(' ')[0]] || {
-    bg: '#f3f4f6',
-    color: '#4b5563',
+    bg: 'grey.100',
+    color: 'text.secondary',
   };
 
   return (
@@ -301,8 +301,8 @@ export const EHSRiskLevelBadge: React.FC<EHSRiskLevelBadgeProps> = ({
   };
 
   const colors = colorMap[item.color.split(' ')[0]] || {
-    bg: '#f3f4f6',
-    color: '#4b5563',
+    bg: 'grey.100',
+    color: 'text.secondary',
   };
 
   return (
@@ -366,8 +366,8 @@ export const EHSMeasureTypeBadge: React.FC<EHSMeasureTypeBadgeProps> = ({
   };
 
   const colors = colorMap[item.color.split(' ')[0]] || {
-    bg: '#f3f4f6',
-    color: '#4b5563',
+    bg: 'grey.100',
+    color: 'text.secondary',
   };
 
   return (
@@ -445,8 +445,8 @@ export const EHSIncidentTypeBadge: React.FC<EHSIncidentTypeBadgeProps> = ({
   };
 
   const colors = colorMap[item.color.split(' ')[0]] || {
-    bg: '#f3f4f6',
-    color: '#4b5563',
+    bg: 'grey.100',
+    color: 'text.secondary',
   };
 
   return (

@@ -29,19 +29,12 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Button,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+
 import GanttChart from '@/components/pm/GanttChart';
 import { pmApi } from '@/api/pm';
 import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
-import {
-  CardTitle,
-  Progress,
-  TableHeader,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@/components/ui/shadcn';
 
 const PmProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,6 +43,7 @@ const PmProjectDetailPage: React.FC = () => {
   const [phases, setPhases] = useState<ProjectPhase[]>([]);
   const [milestones, setMilestones] = useState<ProjectMilestone[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     if (id) {
@@ -77,7 +71,7 @@ const PmProjectDetailPage: React.FC = () => {
       if (milestonesResponse.success && milestonesResponse.data) {
         setMilestones(milestonesResponse.data.milestones || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load project data:', error);
     } finally {
       setLoading(false);
@@ -101,19 +95,19 @@ const PmProjectDetailPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'active':
-        return { bgcolor: '#dcfce7', color: '#166534' };
+        return { bgcolor: 'success.lighter', color: '#166534' };
       case 'completed':
         return { bgcolor: '#dbeafe', color: '#1e40af' };
       case 'pending':
         return { bgcolor: '#fef9c3', color: '#a16207' };
       case 'approved':
-        return { bgcolor: '#f3e8ff', color: '#7c3aed' };
+        return { bgcolor: '#f3e8ff', color: 'secondary.dark' };
       case 'cancelled':
-        return { bgcolor: '#f3f4f6', color: '#374151' };
+        return { bgcolor: 'grey.100', color: 'grey.700' };
       case 'draft':
-        return { bgcolor: '#f3f4f6', color: '#4b5563' };
+        return { bgcolor: 'grey.100', color: 'text.secondary' };
       default:
-        return { bgcolor: '#f3f4f6', color: '#374151' };
+        return { bgcolor: 'grey.100', color: 'grey.700' };
     }
   };
 
@@ -139,13 +133,13 @@ const PmProjectDetailPage: React.FC = () => {
   const getRiskColor = (level?: string) => {
     switch (level?.toLowerCase()) {
       case 'high':
-        return { bgcolor: '#fee2e2', color: '#991b1b' };
+        return { bgcolor: 'error.lighter', color: '#991b1b' };
       case 'medium':
         return { bgcolor: '#fef9c3', color: '#a16207' };
       case 'low':
-        return { bgcolor: '#dcfce7', color: '#166534' };
+        return { bgcolor: 'success.lighter', color: '#166534' };
       default:
-        return { bgcolor: '#f3f4f6', color: '#374151' };
+        return { bgcolor: 'grey.100', color: 'grey.700' };
     }
   };
 
@@ -200,7 +194,7 @@ const PmProjectDetailPage: React.FC = () => {
             width: 48,
             height: 48,
             border: '3px solid',
-            borderColor: '#2563eb',
+            borderColor: 'primary.dark',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
@@ -309,7 +303,7 @@ const PmProjectDetailPage: React.FC = () => {
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ p: 1, borderRadius: '50%', bgcolor: '#dbeafe' }}>
-                  <Clock sx={{ width: 20, height: 20, color: '#2563eb' }} />
+                  <Clock sx={{ width: 20, height: 20, color: 'primary.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -326,7 +320,7 @@ const PmProjectDetailPage: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-              <Progress
+              <LinearProgress
                 value={project.progress}
                 sx={{ mt: 1.5, height: 8 }}
               />
@@ -336,8 +330,8 @@ const PmProjectDetailPage: React.FC = () => {
           <Card sx={{ '&:hover': { boxShadow: 6 } }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: '#dcfce7' }}>
-                  <CheckCircle2 sx={{ width: 20, height: 20, color: '#16a34a' }} />
+                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'success.lighter' }}>
+                  <CheckCircle2 sx={{ width: 20, height: 20, color: 'success.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -348,7 +342,7 @@ const PmProjectDetailPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h5'
-                    sx={{ fontWeight: 700, color: '#16a34a' }}
+                    sx={{ fontWeight: 700, color: 'success.dark' }}
                   >
                     {completedPhases}/{phases.length}
                   </Typography>
@@ -360,8 +354,8 @@ const PmProjectDetailPage: React.FC = () => {
           <Card sx={{ '&:hover': { boxShadow: 6 } }}>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: '#fef3c7' }}>
-                  <DollarSign sx={{ width: 20, height: 20, color: '#d97706' }} />
+                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'warning.light' }}>
+                  <DollarSign sx={{ width: 20, height: 20, color: 'warning.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -372,7 +366,7 @@ const PmProjectDetailPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h5'
-                    sx={{ fontWeight: 700, color: '#d97706' }}
+                    sx={{ fontWeight: 700, color: 'warning.dark' }}
                   >
                     {formatCurrency(project.budget)}
                   </Typography>
@@ -385,7 +379,7 @@ const PmProjectDetailPage: React.FC = () => {
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ p: 1, borderRadius: '50%', bgcolor: '#f3e8ff' }}>
-                  <TrendingUp sx={{ width: 20, height: 20, color: '#7c3aed' }} />
+                  <TrendingUp sx={{ width: 20, height: 20, color: 'secondary.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -396,7 +390,7 @@ const PmProjectDetailPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h5'
-                    sx={{ fontWeight: 700, color: '#7c3aed' }}
+                    sx={{ fontWeight: 700, color: 'secondary.dark' }}
                   >
                     {completedMilestones}/{milestones.length}
                   </Typography>
@@ -406,47 +400,58 @@ const PmProjectDetailPage: React.FC = () => {
           </Card>
         </Box>
 
-        <Tabs
-          defaultValue='overview'
-          sx={{ mb: 3 }}
-        >
-          <TabsList sx={{ bgcolor: 'slate.100', p: 0.5 }}>
-            <TabsTrigger
-              value='overview'
-              sx={{ '&[data-state=active]': { bgcolor: 'white' } }}
-            >
-              项目概览
-            </TabsTrigger>
-            <TabsTrigger
-              value='gantt'
-              sx={{ '&[data-state=active]': { bgcolor: 'white' } }}
-            >
-              甘特图
-            </TabsTrigger>
-            <TabsTrigger
-              value='phases'
-              sx={{ '&[data-state=active]': { bgcolor: 'white' } }}
-            >
-              阶段管理
-            </TabsTrigger>
-            <TabsTrigger
-              value='milestones'
-              sx={{ '&[data-state=active]': { bgcolor: 'white' } }}
-            >
-              里程碑
-            </TabsTrigger>
-            <TabsTrigger
-              value='finance'
-              sx={{ '&[data-state=active]': { bgcolor: 'white' } }}
-            >
-              财务
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent
-            value='overview'
-            sx={{ mt: 0 }}
+        <Box sx={{ mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            sx={{ bgcolor: 'grey.100', p: 0.5, borderRadius: 1 }}
+            slotProps={{ indicator: { style: { display: 'none' } } }}
           >
+            <Tab
+              value='overview'
+              label='项目概览'
+              sx={{
+                '&.Mui-selected': { bgcolor: 'white', fontWeight: 500 },
+                borderRadius: 0.75,
+              }}
+            />
+            <Tab
+              value='gantt'
+              label='甘特图'
+              sx={{
+                '&.Mui-selected': { bgcolor: 'white', fontWeight: 500 },
+                borderRadius: 0.75,
+              }}
+            />
+            <Tab
+              value='phases'
+              label='阶段管理'
+              sx={{
+                '&.Mui-selected': { bgcolor: 'white', fontWeight: 500 },
+                borderRadius: 0.75,
+              }}
+            />
+            <Tab
+              value='milestones'
+              label='里程碑'
+              sx={{
+                '&.Mui-selected': { bgcolor: 'white', fontWeight: 500 },
+                borderRadius: 0.75,
+              }}
+            />
+            <Tab
+              value='finance'
+              label='财务'
+              sx={{
+                '&.Mui-selected': { bgcolor: 'white', fontWeight: 500 },
+                borderRadius: 0.75,
+              }}
+            />
+          </Tabs>
+        </Box>
+
+        {activeTab === 'overview' && (
+          <Box>
             <Box
               sx={{
                 display: 'grid',
@@ -456,7 +461,12 @@ const PmProjectDetailPage: React.FC = () => {
             >
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <CardTitle sx={{ fontSize: '1.125rem' }}>基本信息</CardTitle>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    基本信息
+                  </Typography>
                 </CardHeader>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box
@@ -552,7 +562,12 @@ const PmProjectDetailPage: React.FC = () => {
 
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <CardTitle sx={{ fontSize: '1.125rem' }}>关键指标</CardTitle>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    关键指标
+                  </Typography>
                 </CardHeader>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <Box>
@@ -577,7 +592,7 @@ const PmProjectDetailPage: React.FC = () => {
                         {project.progress}%
                       </Typography>
                     </Box>
-                    <Progress
+                    <LinearProgress
                       value={project.progress}
                       sx={{ height: 12 }}
                     />
@@ -608,7 +623,7 @@ const PmProjectDetailPage: React.FC = () => {
                         %
                       </Typography>
                     </Box>
-                    <Progress
+                    <LinearProgress
                       value={
                         phases.length > 0 ? Math.round((completedPhases / phases.length) * 100) : 0
                       }
@@ -641,7 +656,7 @@ const PmProjectDetailPage: React.FC = () => {
                         %
                       </Typography>
                     </Box>
-                    <Progress
+                    <LinearProgress
                       value={
                         milestones.length > 0
                           ? Math.round((completedMilestones / milestones.length) * 100)
@@ -653,15 +668,19 @@ const PmProjectDetailPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Box>
-          </TabsContent>
+          </Box>
+        )}
 
-          <TabsContent
-            value='gantt'
-            sx={{ mt: 0 }}
-          >
+        {activeTab === 'gantt' && (
+          <Box>
             <Card>
               <CardHeader sx={{ pb: 2 }}>
-                <CardTitle sx={{ fontSize: '1.125rem' }}>项目甘特图</CardTitle>
+                <Typography
+                  variant='h6'
+                  sx={{ fontSize: '1.125rem' }}
+                >
+                  项目甘特图
+                </Typography>
               </CardHeader>
               <CardContent>
                 <GanttChart
@@ -672,12 +691,11 @@ const PmProjectDetailPage: React.FC = () => {
                 />
               </CardContent>
             </Card>
-          </TabsContent>
+          </Box>
+        )}
 
-          <TabsContent
-            value='phases'
-            sx={{ mt: 0 }}
-          >
+        {activeTab === 'phases' && (
+          <Box>
             <Card>
               <CardHeader
                 sx={{
@@ -688,7 +706,12 @@ const PmProjectDetailPage: React.FC = () => {
                   justifyContent: 'space-between',
                 }}
               >
-                <CardTitle sx={{ fontSize: '1.125rem' }}>阶段列表</CardTitle>
+                <Typography
+                  variant='h6'
+                  sx={{ fontSize: '1.125rem' }}
+                >
+                  阶段列表
+                </Typography>
                 <Button
                   variant='outlined'
                   size='small'
@@ -699,7 +722,7 @@ const PmProjectDetailPage: React.FC = () => {
               <CardContent sx={{ p: 0 }}>
                 <Box sx={{ overflowX: 'auto' }}>
                   <Table>
-                    <TableHeader>
+                    <TableHead>
                       <TableRow>
                         <TableHead sx={{ width: 200 }}>阶段名称</TableHead>
                         <TableHead>状态</TableHead>
@@ -707,7 +730,7 @@ const PmProjectDetailPage: React.FC = () => {
                         <TableHead sx={{ width: 150 }}>时间</TableHead>
                         <TableHead sx={{ width: 120 }}>操作</TableHead>
                       </TableRow>
-                    </TableHeader>
+                    </TableHead>
                     <TableBody>
                       {phases.length === 0 ? (
                         <TableRow>
@@ -752,10 +775,10 @@ const PmProjectDetailPage: React.FC = () => {
                               <Badge
                                 sx={
                                   phase.status === 'completed'
-                                    ? { bgcolor: '#dcfce7', color: '#166534' }
+                                    ? { bgcolor: 'success.lighter', color: '#166534' }
                                     : phase.status === 'active'
                                       ? { bgcolor: '#dbeafe', color: '#1e40af' }
-                                      : { bgcolor: '#f3f4f6', color: '#374151' }
+                                      : { bgcolor: 'grey.100', color: 'grey.700' }
                                 }
                               >
                                 {phase.status === 'completed'
@@ -774,7 +797,7 @@ const PmProjectDetailPage: React.FC = () => {
                                 }}
                               >
                                 <Box sx={{ width: 96 }}>
-                                  <Progress
+                                  <LinearProgress
                                     value={phase.progress}
                                     sx={{ height: 8 }}
                                   />
@@ -821,12 +844,11 @@ const PmProjectDetailPage: React.FC = () => {
                 </Box>
               </CardContent>
             </Card>
-          </TabsContent>
+          </Box>
+        )}
 
-          <TabsContent
-            value='milestones'
-            sx={{ mt: 0 }}
-          >
+        {activeTab === 'milestones' && (
+          <Box>
             <Card>
               <CardHeader
                 sx={{
@@ -837,7 +859,12 @@ const PmProjectDetailPage: React.FC = () => {
                   justifyContent: 'space-between',
                 }}
               >
-                <CardTitle sx={{ fontSize: '1.125rem' }}>里程碑列表</CardTitle>
+                <Typography
+                  variant='h6'
+                  sx={{ fontSize: '1.125rem' }}
+                >
+                  里程碑列表
+                </Typography>
                 <Button
                   variant='outlined'
                   size='small'
@@ -848,7 +875,7 @@ const PmProjectDetailPage: React.FC = () => {
               <CardContent sx={{ p: 0 }}>
                 <Box sx={{ overflowX: 'auto' }}>
                   <Table>
-                    <TableHeader>
+                    <TableHead>
                       <TableRow>
                         <TableHead sx={{ width: 200 }}>里程碑名称</TableHead>
                         <TableHead sx={{ width: 150 }}>目标日期</TableHead>
@@ -856,7 +883,7 @@ const PmProjectDetailPage: React.FC = () => {
                         <TableHead>所属阶段</TableHead>
                         <TableHead sx={{ width: 120 }}>操作</TableHead>
                       </TableRow>
-                    </TableHeader>
+                    </TableHead>
                     <TableBody>
                       {milestones.length === 0 ? (
                         <TableRow>
@@ -904,10 +931,10 @@ const PmProjectDetailPage: React.FC = () => {
                               <Badge
                                 sx={
                                   milestone.status === 'completed'
-                                    ? { bgcolor: '#dcfce7', color: '#166534' }
+                                    ? { bgcolor: 'success.lighter', color: '#166534' }
                                     : milestone.status === 'active'
                                       ? { bgcolor: '#dbeafe', color: '#1e40af' }
-                                      : { bgcolor: '#f3f4f6', color: '#374151' }
+                                      : { bgcolor: 'grey.100', color: 'grey.700' }
                                 }
                               >
                                 {milestone.status === 'completed'
@@ -940,12 +967,11 @@ const PmProjectDetailPage: React.FC = () => {
                 </Box>
               </CardContent>
             </Card>
-          </TabsContent>
+          </Box>
+        )}
 
-          <TabsContent
-            value='finance'
-            sx={{ mt: 0 }}
-          >
+        {activeTab === 'finance' && (
+          <Box>
             <Box
               sx={{
                 display: 'grid',
@@ -956,7 +982,12 @@ const PmProjectDetailPage: React.FC = () => {
               {/* 预算执行概览 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <CardTitle sx={{ fontSize: '1.125rem' }}>预算执行概览</CardTitle>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    预算执行概览
+                  </Typography>
                 </CardHeader>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box
@@ -985,7 +1016,7 @@ const PmProjectDetailPage: React.FC = () => {
                     }}
                   >
                     <Typography sx={{ color: 'grey.500' }}>实际成本</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#d97706' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
                       {formatCurrency(project.actual_cost)}
                     </Typography>
                   </Box>
@@ -1000,7 +1031,7 @@ const PmProjectDetailPage: React.FC = () => {
                     }}
                   >
                     <Typography sx={{ color: 'grey.500' }}>已承诺成本</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#2563eb' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
                       {formatCurrency(project.committed_cost)}
                     </Typography>
                   </Box>
@@ -1015,7 +1046,7 @@ const PmProjectDetailPage: React.FC = () => {
                     }}
                   >
                     <Typography sx={{ color: 'grey.500' }}>剩余预算</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#16a34a' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
                       {formatCurrency(project.remaining_budget)}
                     </Typography>
                   </Box>
@@ -1033,7 +1064,7 @@ const PmProjectDetailPage: React.FC = () => {
                     <Typography
                       sx={{
                         fontWeight: 500,
-                        color: (project.cost_variance || 0) >= 0 ? '#16a34a' : '#dc2626',
+                        color: (project.cost_variance || 0) >= 0 ? 'success.dark' : 'error.dark',
                       }}
                     >
                       {formatCurrency(project.cost_variance)}
@@ -1058,7 +1089,12 @@ const PmProjectDetailPage: React.FC = () => {
               {/* 收入与利润 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <CardTitle sx={{ fontSize: '1.125rem' }}>收入与利润</CardTitle>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    收入与利润
+                  </Typography>
                 </CardHeader>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box
@@ -1087,7 +1123,7 @@ const PmProjectDetailPage: React.FC = () => {
                     }}
                   >
                     <Typography sx={{ color: 'grey.500' }}>应收账款</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#d97706' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
                       {formatCurrency(project.accounts_receivable)}
                     </Typography>
                   </Box>
@@ -1102,7 +1138,7 @@ const PmProjectDetailPage: React.FC = () => {
                     }}
                   >
                     <Typography sx={{ color: 'grey.500' }}>已开票金额</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#2563eb' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
                       {formatCurrency(
                         (project.revenue_recognized || 0) - (project.accounts_receivable || 0)
                       )}
@@ -1119,7 +1155,7 @@ const PmProjectDetailPage: React.FC = () => {
                     }}
                   >
                     <Typography sx={{ color: 'grey.500' }}>毛利润</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#16a34a' }}>
+                    <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
                       {formatCurrency(project.gross_profit)}
                     </Typography>
                   </Box>
@@ -1150,7 +1186,12 @@ const PmProjectDetailPage: React.FC = () => {
                     justifyContent: 'space-between',
                   }}
                 >
-                  <CardTitle sx={{ fontSize: '1.125rem' }}>成本构成分析</CardTitle>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    成本构成分析
+                  </Typography>
                   <Button
                     variant='outlined'
                     size='small'
@@ -1169,7 +1210,7 @@ const PmProjectDetailPage: React.FC = () => {
                       gap: 2,
                     }}
                   >
-                    <Box sx={{ p: 2, bgcolor: '#eff6ff', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.500', mb: 0.5 }}
@@ -1178,12 +1219,12 @@ const PmProjectDetailPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='h6'
-                        sx={{ fontWeight: 600, color: '#2563eb' }}
+                        sx={{ fontWeight: 600, color: 'primary.dark' }}
                       >
                         -
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 2, bgcolor: '#f0fdf4', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.500', mb: 0.5 }}
@@ -1192,12 +1233,12 @@ const PmProjectDetailPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='h6'
-                        sx={{ fontWeight: 600, color: '#16a34a' }}
+                        sx={{ fontWeight: 600, color: 'success.dark' }}
                       >
                         -
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 2, bgcolor: '#fffbeb', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.500', mb: 0.5 }}
@@ -1206,12 +1247,12 @@ const PmProjectDetailPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='h6'
-                        sx={{ fontWeight: 600, color: '#d97706' }}
+                        sx={{ fontWeight: 600, color: 'warning.dark' }}
                       >
                         -
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 2, bgcolor: '#faf5ff', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 2 }}>
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.500', mb: 0.5 }}
@@ -1220,12 +1261,12 @@ const PmProjectDetailPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='h6'
-                        sx={{ fontWeight: 600, color: '#7c3aed' }}
+                        sx={{ fontWeight: 600, color: 'secondary.dark' }}
                       >
                         -
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 2, bgcolor: '#f9fafb', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.500', mb: 0.5 }}
@@ -1234,7 +1275,7 @@ const PmProjectDetailPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='h6'
-                        sx={{ fontWeight: 600, color: '#4b5563' }}
+                        sx={{ fontWeight: 600, color: 'text.secondary' }}
                       >
                         -
                       </Typography>
@@ -1246,7 +1287,12 @@ const PmProjectDetailPage: React.FC = () => {
               {/* 成本中心信息 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <CardTitle sx={{ fontSize: '1.125rem' }}>成本中心信息</CardTitle>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    成本中心信息
+                  </Typography>
                 </CardHeader>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box
@@ -1291,10 +1337,10 @@ const PmProjectDetailPage: React.FC = () => {
                     <Badge
                       sx={
                         project.budget_utilization_rate && project.budget_utilization_rate > 100
-                          ? { bgcolor: '#fee2e2', color: '#991b1b' }
+                          ? { bgcolor: 'error.lighter', color: '#991b1b' }
                           : project.budget_utilization_rate && project.budget_utilization_rate > 80
                             ? { bgcolor: '#fef9c3', color: '#a16207' }
-                            : { bgcolor: '#dcfce7', color: '#166534' }
+                            : { bgcolor: 'success.lighter', color: '#166534' }
                       }
                     >
                       {project.budget_utilization_rate && project.budget_utilization_rate > 100
@@ -1310,7 +1356,12 @@ const PmProjectDetailPage: React.FC = () => {
               {/* 快速操作 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <CardTitle sx={{ fontSize: '1.125rem' }}>快速操作</CardTitle>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    快速操作
+                  </Typography>
                 </CardHeader>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Button
@@ -1341,8 +1392,8 @@ const PmProjectDetailPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Box>
-          </TabsContent>
-        </Tabs>
+          </Box>
+        )}
       </Box>
     </Box>
   );

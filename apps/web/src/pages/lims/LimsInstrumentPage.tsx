@@ -39,7 +39,7 @@ import {
   Avatar,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type {
   Instrument,
   CreateInstrumentRequest,
@@ -162,7 +162,7 @@ const LimsInstrumentPage: React.FC = () => {
       if (response.success && response.data) {
         setStats(response.data);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载统计数据失败:', err);
     }
   }, []);
@@ -184,7 +184,7 @@ const LimsInstrumentPage: React.FC = () => {
       } else {
         setInstruments([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载仪器失败:', err);
       setInstruments([]);
     }
@@ -224,15 +224,15 @@ const LimsInstrumentPage: React.FC = () => {
     color: string;
   } => {
     const colorMap: Record<string, { bgcolor: string; color: string }> = {
-      正常: { bgcolor: '#dcfce7', color: '#15803d' },
-      校准中: { bgcolor: '#fef3c7', color: '#b45309' },
-      维修中: { bgcolor: '#fee2e2', color: '#b91c1c' },
-      停用: { bgcolor: '#f1f5f9', color: '#475569' },
-      报废: { bgcolor: '#f1f5f9', color: '#475569' },
-      normal: { bgcolor: '#dcfce7', color: '#15803d' },
-      calibration: { bgcolor: '#fef3c7', color: '#b45309' },
-      maintenance: { bgcolor: '#fee2e2', color: '#b91c1c' },
-      disabled: { bgcolor: '#f1f5f9', color: '#475569' },
+      正常: { bgcolor: 'success.lighter', color: '#15803d' },
+      校准中: { bgcolor: 'warning.light', color: '#b45309' },
+      维修中: { bgcolor: 'error.lighter', color: 'error.darker' },
+      停用: { bgcolor: 'grey.100', color: '#475569' },
+      报废: { bgcolor: 'grey.100', color: '#475569' },
+      normal: { bgcolor: 'success.lighter', color: '#15803d' },
+      calibration: { bgcolor: 'warning.light', color: '#b45309' },
+      maintenance: { bgcolor: 'error.lighter', color: 'error.darker' },
+      disabled: { bgcolor: 'grey.100', color: '#475569' },
     };
     return colorMap[status] || colorMap['normal'];
   };
@@ -244,7 +244,7 @@ const LimsInstrumentPage: React.FC = () => {
         const data = response.data as any;
         setInstrumentMaintenanceRecords(Array.isArray(data) ? data : data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载维护记录失败:', err);
       setInstrumentMaintenanceRecords([]);
     }
@@ -335,7 +335,7 @@ const LimsInstrumentPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '创建失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '创建仪器失败');
     } finally {
       setCreating(false);
@@ -354,7 +354,7 @@ const LimsInstrumentPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '更新失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '更新仪器失败');
     } finally {
       setCreating(false);
@@ -372,7 +372,7 @@ const LimsInstrumentPage: React.FC = () => {
         } else {
           showNotification('error', response.message || '删除失败');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         showNotification('error', '删除仪器失败');
       }
     },
@@ -392,7 +392,7 @@ const LimsInstrumentPage: React.FC = () => {
       } else {
         showNotification('error', response.message || '创建失败');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       showNotification('error', '创建维护记录失败');
     } finally {
       setCreating(false);
@@ -445,7 +445,7 @@ const LimsInstrumentPage: React.FC = () => {
         title: '检验流程',
         value: stats.total_processes,
         icon: <ClipboardList size={24} />,
-        gradient: ['#F59E0B', '#D97706'] as [string, string],
+        gradient: ['warning.main', '#D97706'] as [string, string],
       },
       {
         id: 'total-instruments',
@@ -477,24 +477,26 @@ const LimsInstrumentPage: React.FC = () => {
   const cardConfig = useMemo(
     () => ({
       title: 'name' as const,
-      description: (item: Instrument) => {
-        if (item.manufacturer && item.model) {
-          return `${item.manufacturer} - ${item.model}`;
+      description: (item: unknown) => {
+        const instrument = item as Instrument;
+        if (instrument.manufacturer && instrument.model) {
+          return `${instrument.manufacturer} - ${instrument.model}`;
         }
-        return item.manufacturer || item.model || '暂无型号信息';
+        return instrument.manufacturer || instrument.model || '暂无型号信息';
       },
       status: {
         field: 'status',
         options: {
           正常: { label: '正常', color: '#15803d' },
           校准中: { label: '校准中', color: '#b45309' },
-          维修中: { label: '维修中', color: '#b91c1c' },
+          维修中: { label: '维修中', color: 'error.darker' },
           停用: { label: '停用', color: '#475569' },
           报废: { label: '报废', color: '#475569' },
         },
       },
-      icon: (item: Instrument) => {
-        const TypeIcon = getInstrumentTypeIcon(item.type);
+      icon: (item: unknown) => {
+        const instrument = item as Instrument;
+        const TypeIcon = getInstrumentTypeIcon(instrument.type);
         return <TypeIcon size={24} />;
       },
       iconBgColor: '#ccfbf1',
@@ -513,26 +515,26 @@ const LimsInstrumentPage: React.FC = () => {
     () => [
       {
         label: '查看详情',
-        onClick: openInstrumentDetailModal,
+        onClick: (item: unknown) => openInstrumentDetailModal(item as Instrument),
         color: 'primary' as const,
       },
       {
         label: '维护记录',
         icon: <Wrench size={16} />,
-        onClick: openMaintenanceModal,
+        onClick: (item: unknown) => openMaintenanceModal(item as Instrument),
         color: 'info' as const,
       },
       {
         label: '编辑',
         icon: <Edit size={16} />,
-        onClick: openInstrumentModal,
+        onClick: (item: unknown) => openInstrumentModal(item as Instrument),
         color: 'primary' as const,
         variant: 'outlined' as const,
       },
       {
         label: '删除',
         icon: <Trash2 size={16} />,
-        onClick: (item: Instrument) => handleDeleteInstrument(item.id),
+        onClick: (item: unknown) => handleDeleteInstrument((item as Instrument).id),
         color: 'error' as const,
       },
     ],
@@ -585,7 +587,7 @@ const LimsInstrumentPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -607,7 +609,7 @@ const LimsInstrumentPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
           p: 2,
         }}
       >
@@ -663,7 +665,7 @@ const LimsInstrumentPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
     >
       <Snackbar
@@ -730,7 +732,7 @@ const LimsInstrumentPage: React.FC = () => {
           }}
           onRefresh={loadAllData}
           cardActions={cardActions}
-          onCardClick={openInstrumentDetailModal}
+          onCardClick={(item) => openInstrumentDetailModal(item as Instrument)}
           showStatsOverview={true}
           gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
         />

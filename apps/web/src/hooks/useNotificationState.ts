@@ -30,7 +30,7 @@ export const useNotificationState = (enabled = true) => {
           loading: false,
         }));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setState((prev) => ({
         ...prev,
         loading: false,
@@ -48,12 +48,13 @@ export const useNotificationState = (enabled = true) => {
           unreadCount: response.data!,
         }));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { code?: string; name?: string; response?: { status?: number } };
       if (
-        error.code !== 'ERR_CANCELED' &&
-        error.code !== 'ECONNABORTED' &&
-        error.name !== 'AbortError' &&
-        error.response?.status !== 401
+        err.code !== 'ERR_CANCELED' &&
+        err.code !== 'ECONNABORTED' &&
+        err.name !== 'AbortError' &&
+        err.response?.status !== 401
       ) {
         logger.error('Failed to fetch unread count:', error);
       }

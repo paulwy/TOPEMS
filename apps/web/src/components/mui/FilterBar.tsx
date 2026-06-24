@@ -15,7 +15,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Filter, X, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -59,8 +59,11 @@ const FilterControl: React.FC<{
   variant?: 'standard' | 'outlined' | 'filled';
 }> = ({ filter, onChange, dense, variant }) => {
   const handleChange = useCallback(
-    (e: any) => {
-      const value = e.target?.value ?? e;
+    (e: { target?: { value?: unknown } } | unknown) => {
+      const value =
+        'target' in (e as object)
+          ? ((e as { target?: { value?: unknown } }).target?.value ?? e)
+          : e;
       onChange(value, filter);
     },
     [filter, onChange]

@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { CircularProgress, Box, Typography, Alert, AlertTitle } from '@mui/material';
+import { EventEmitter } from 'eventemitter3';
 
 export interface PluginManifest {
   pluginCode: string;
@@ -38,9 +39,12 @@ export interface PluginInfo {
   code: string;
   name: string;
   version: string;
-  status: 'installed' | 'running' | 'error' | 'disabled';
+  status: 'installing' | 'installed' | 'running' | 'error' | 'disabled' | 'uninstalling';
   manifest?: PluginManifest;
   error?: string;
+  loadedAt?: Date;
+  lastErrorAt?: Date;
+  retryCount?: number;
 }
 
 export interface PluginLoaderOptions {
@@ -120,6 +124,7 @@ export class PluginLoader {
   private options: PluginLoaderOptions;
   private systemJS?: { import: (modulePath: string) => Promise<any> };
   private maxRetries = 3;
+  public readonly emitter: EventEmitter = new EventEmitter();
 
   constructor(options: PluginLoaderOptions = {}) {
     this.options = {
@@ -156,36 +161,44 @@ export class PluginLoader {
       return existing;
     }
 
+    const pluginInfo: PluginInfo = {
+      code: pluginCode,
+      name: manifest.name,
+      version: manifest.version,
+      status: 'installing',
+      manifest,
+      retryCount: existing?.retryCount || 0,
+    };
+    this.loadedPlugins.set(pluginCode, pluginInfo);
+    this.emitter.emit('pluginInstalling', pluginCode, pluginInfo);
+
     try {
       await this.validateManifest(manifest);
       await this.checkDependencies(manifest);
 
-      const pluginInfo: PluginInfo = {
-        code: pluginCode,
-        name: manifest.name,
-        version: manifest.version,
-        status: 'installed',
-        manifest,
-      };
+      pluginInfo.status = 'installed';
+      this.emitter.emit('pluginInstalled', pluginCode, pluginInfo);
 
       if (manifest.frontend) {
         await this.loadFrontendBundle(pluginCode, manifest.frontend);
       }
 
       pluginInfo.status = 'running';
+      pluginInfo.loadedAt = new Date();
+      pluginInfo.lastErrorAt = undefined;
+      pluginInfo.retryCount = 0;
       this.loadedPlugins.set(pluginCode, pluginInfo);
+      this.emitter.emit('pluginRunning', pluginCode, pluginInfo);
 
       return pluginInfo;
-    } catch (error) {
-      const errorInfo: PluginInfo = {
-        code: pluginCode,
-        name: manifest.name,
-        version: manifest.version,
-        status: 'error',
-        manifest,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-      this.loadedPlugins.set(pluginCode, errorInfo);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? (error as { message?: string }).message : 'Unknown error';
+      pluginInfo.status = 'error';
+      pluginInfo.error = errorMessage;
+      pluginInfo.lastErrorAt = new Date();
+      pluginInfo.retryCount = (pluginInfo.retryCount || 0) + 1;
+      this.loadedPlugins.set(pluginCode, pluginInfo);
+      this.emitter.emit('pluginError', pluginCode, pluginInfo);
       throw error;
     }
   }
@@ -224,7 +237,7 @@ export class PluginLoader {
       const module = await this.loadBundle(frontend);
       this.cache.set(cacheKey, module);
       this.retryCount.delete(cacheKey);
-    } catch (error) {
+    } catch (error: unknown) {
       if (retries < (this.options.maxRetries || DEFAULT_MAX_RETRIES)) {
         this.retryCount.set(cacheKey, retries + 1);
         await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
@@ -283,7 +296,7 @@ export class PluginLoader {
       this.cache.set(cacheKey, module);
       this.retryCount.delete(retryKey);
       return module;
-    } catch (error) {
+    } catch (error: unknown) {
       if (retries < this.maxRetries) {
         this.retryCount.set(retryKey, retries + 1);
         await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
@@ -302,12 +315,53 @@ export class PluginLoader {
   }
 
   unloadPlugin(pluginCode: string): void {
+    const existing = this.loadedPlugins.get(pluginCode);
+    if (existing) {
+      existing.status = 'uninstalling';
+      this.emitter.emit('pluginUninstalling', pluginCode, existing);
+    }
+    
     this.loadedPlugins.delete(pluginCode);
     this.cache.forEach((_, key) => {
       if (key.startsWith(pluginCode)) {
         this.cache.delete(key);
       }
     });
+    
+    this.emitter.emit('pluginUninstalled', pluginCode);
+  }
+
+  async loadAllPlugins(manifests: PluginManifest[]): Promise<PluginInfo[]> {
+    const results: PluginInfo[] = [];
+    
+    for (const manifest of manifests) {
+      try {
+        const pluginInfo = await this.loadPlugin(manifest.pluginCode, manifest);
+        results.push(pluginInfo);
+      } catch {
+        continue;
+      }
+    }
+    
+    return results;
+  }
+
+  async reloadPlugin(pluginCode: string): Promise<PluginInfo> {
+    const existing = this.loadedPlugins.get(pluginCode);
+    if (!existing || !existing.manifest) {
+      throw new Error(`Plugin ${pluginCode} not found or has no manifest`);
+    }
+    
+    this.unloadPlugin(pluginCode);
+    return this.loadPlugin(pluginCode, existing.manifest);
+  }
+
+  getLoadingStatus(): Record<string, PluginInfo> {
+    const status: Record<string, PluginInfo> = {};
+    this.loadedPlugins.forEach((info, code) => {
+      status[code] = info;
+    });
+    return status;
   }
 
   clearCache(): void {
@@ -382,7 +436,7 @@ export const PluginRouteWrapper: React.FC<PluginRouteWrapperProps> = ({
           setModuleComponent(() => mod.default || mod);
           setError(null);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (mounted) {
           setError(err as Error);
         }
@@ -439,10 +493,11 @@ export const PluginLoaderProvider: React.FC<PluginLoaderProviderProps> = ({
       try {
         const pluginInfo = await pluginLoader.loadPlugin(manifest.pluginCode, manifest);
         results.push(pluginInfo);
-      } catch (error) {
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
         setErrors((prev) => ({
           ...prev,
-          [manifest.pluginCode]: error instanceof Error ? error.message : 'Unknown error',
+          [manifest.pluginCode]: msg,
         }));
       }
     }

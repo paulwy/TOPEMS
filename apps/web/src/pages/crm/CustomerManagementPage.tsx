@@ -15,7 +15,7 @@ import {
   MenuItem,
   OutlinedInput,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type {
   Customer,
   CreateCustomerRequest,
@@ -160,7 +160,7 @@ const CustomerManagementPage: React.FC = () => {
           total: response.data?.total || 0,
         }));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载客户列表失败:', error);
       addNotification({
         type: 'error',
@@ -178,7 +178,7 @@ const CustomerManagementPage: React.FC = () => {
       if (response.success && response.data) {
         setAllTags(response.data.items || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载标签列表失败:', error);
     }
   };
@@ -189,7 +189,7 @@ const CustomerManagementPage: React.FC = () => {
       if (response.success) {
         setCustomerTags(response.data || []);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('加载客户标签失败:', error);
     }
   };
@@ -215,7 +215,7 @@ const CustomerManagementPage: React.FC = () => {
       setShowDialog(false);
       resetForm();
       loadCustomers();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('操作失败:', error);
       addNotification({
         type: 'error',
@@ -235,7 +235,7 @@ const CustomerManagementPage: React.FC = () => {
         message: '客户已删除',
       });
       loadCustomers();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('删除失败:', error);
       addNotification({
         type: 'error',
@@ -291,7 +291,7 @@ const CustomerManagementPage: React.FC = () => {
         title: '添加成功',
         message: '标签已添加',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('添加标签失败:', error);
       addNotification({
         type: 'error',
@@ -311,7 +311,7 @@ const CustomerManagementPage: React.FC = () => {
         title: '移除成功',
         message: '标签已移除',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('移除标签失败:', error);
       addNotification({
         type: 'error',
@@ -647,11 +647,7 @@ const CustomerManagementPage: React.FC = () => {
               container
               spacing={3}
             >
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='客户名称'
                   value={formData.name}
@@ -661,11 +657,7 @@ const CustomerManagementPage: React.FC = () => {
                   required
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='客户代码'
                   value={formData.code}
@@ -675,11 +667,7 @@ const CustomerManagementPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl
                   fullWidth
                   margin='normal'
@@ -706,11 +694,7 @@ const CustomerManagementPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl
                   fullWidth
                   margin='normal'
@@ -738,11 +722,7 @@ const CustomerManagementPage: React.FC = () => {
                 </FormControl>
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='行业'
                   value={formData.industry}
@@ -756,11 +736,7 @@ const CustomerManagementPage: React.FC = () => {
                   margin='normal'
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl
                   fullWidth
                   margin='normal'
@@ -788,11 +764,7 @@ const CustomerManagementPage: React.FC = () => {
                 </FormControl>
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='客户来源'
                   value={formData.source}
@@ -801,11 +773,7 @@ const CustomerManagementPage: React.FC = () => {
                   margin='normal'
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='员工数量'
                   type='number'
@@ -821,11 +789,7 @@ const CustomerManagementPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='年营收(元)'
                   type='number'
@@ -840,11 +804,7 @@ const CustomerManagementPage: React.FC = () => {
                   margin='normal'
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='网站'
                   value={formData.website}
@@ -859,11 +819,7 @@ const CustomerManagementPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='邮箱'
                   type='email'
@@ -873,11 +829,7 @@ const CustomerManagementPage: React.FC = () => {
                   margin='normal'
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='电话'
                   value={formData.phone}
@@ -887,11 +839,7 @@ const CustomerManagementPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='传真'
                   value={formData.fax}
@@ -900,11 +848,7 @@ const CustomerManagementPage: React.FC = () => {
                   margin='normal'
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={6}
-              >
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label='邮编'
                   value={formData.postal_code}
@@ -919,11 +863,7 @@ const CustomerManagementPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-                md={4}
-              >
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label='国家'
                   value={formData.country}
@@ -937,11 +877,7 @@ const CustomerManagementPage: React.FC = () => {
                   margin='normal'
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={4}
-              >
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label='省份'
                   value={formData.province}
@@ -955,11 +891,7 @@ const CustomerManagementPage: React.FC = () => {
                   margin='normal'
                 />
               </Grid>
-              <Grid
-                item
-                xs={12}
-                md={4}
-              >
+              <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label='城市'
                   value={formData.city}
@@ -969,10 +901,7 @@ const CustomerManagementPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-              >
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   label='详细地址'
                   value={formData.address}
@@ -987,10 +916,7 @@ const CustomerManagementPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid
-                item
-                xs={12}
-              >
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   label='备注'
                   multiline

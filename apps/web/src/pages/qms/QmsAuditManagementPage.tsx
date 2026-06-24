@@ -29,7 +29,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { qmsApi } from '@/api/qms';
@@ -67,7 +67,7 @@ const QmsAuditManagementPage: React.FC = () => {
         const plansArray = Array.isArray(plansData) ? plansData : plansData.plans || [];
         setPlans(plansArray);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载审核计划失败:', error);
     } finally {
       setLoading(false);
@@ -94,7 +94,7 @@ const QmsAuditManagementPage: React.FC = () => {
           : findingsData.findings || [];
         setFindings(findingsArray);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载审核详情失败:', error);
     }
   };
@@ -132,7 +132,7 @@ const QmsAuditManagementPage: React.FC = () => {
         loadAuditPlans();
         resetForm();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('创建审核计划失败:', error);
     }
   };
@@ -143,7 +143,7 @@ const QmsAuditManagementPage: React.FC = () => {
       if (response.success && selectedPlan) {
         loadPlanDetails(selectedPlan.id);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('完成审核任务失败:', error);
     }
   };
@@ -162,18 +162,18 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      planning: { bg: '#dbeafe', color: '#2563eb', label: '计划中' },
-      计划中: { bg: '#dbeafe', color: '#2563eb', label: '计划中' },
+      planning: { bg: '#dbeafe', color: 'primary.dark', label: '计划中' },
+      计划中: { bg: '#dbeafe', color: 'primary.dark', label: '计划中' },
       in_progress: { bg: '#fef9c3', color: '#ca8a04', label: '进行中' },
       进行中: { bg: '#fef9c3', color: '#ca8a04', label: '进行中' },
-      completed: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
-      已完成: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
-      cancelled: { bg: '#fee2e2', color: '#dc2626', label: '已取消' },
-      已取消: { bg: '#fee2e2', color: '#dc2626', label: '已取消' },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
+      已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
+      cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已取消' },
+      已取消: { bg: 'error.lighter', color: 'error.dark', label: '已取消' },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: status,
     };
     return (
@@ -187,13 +187,13 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const getPriorityBadge = (priority: string) => {
     const priorityMap: Record<string, { bg: string; color: string; label: string }> = {
-      high: { bg: '#fee2e2', color: '#dc2626', label: '高' },
+      high: { bg: 'error.lighter', color: 'error.dark', label: '高' },
       medium: { bg: '#fef9c3', color: '#ca8a04', label: '中' },
-      low: { bg: '#dcfce7', color: '#16a34a', label: '低' },
+      low: { bg: 'success.lighter', color: 'success.dark', label: '低' },
     };
     const item = priorityMap[priority] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: priority,
     };
     return (
@@ -220,7 +220,7 @@ const QmsAuditManagementPage: React.FC = () => {
         <Chip
           label={row.audit_type === 'internal' ? '内部审核' : '外部审核'}
           size='small'
-          sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }}
+          sx={{ backgroundColor: '#f3e8ff', color: 'secondary.dark' }}
         />
       ),
     },
@@ -298,7 +298,7 @@ const QmsAuditManagementPage: React.FC = () => {
             <Button
               variant='text'
               size='small'
-              sx={{ color: '#16a34a' }}
+              sx={{ color: 'success.dark' }}
               onClick={() => handleCompleteTask(row.id)}
               startIcon={
                 <Box
@@ -376,7 +376,7 @@ const QmsAuditManagementPage: React.FC = () => {
           >
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
                 color: 'white',
               }}
             >
@@ -406,7 +406,7 @@ const QmsAuditManagementPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+                background: 'linear-gradient(135deg, warning.main 0%, #ea580c 100%)',
                 color: 'white',
               }}
             >
@@ -419,7 +419,7 @@ const QmsAuditManagementPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#fde68a', fontSize: '0.875rem' }}>
+                    <Typography sx={{ color: 'warning.light', fontSize: '0.875rem' }}>
                       进行中审核
                     </Typography>
                     <Typography
@@ -429,14 +429,14 @@ const QmsAuditManagementPage: React.FC = () => {
                       {stats.inProgress}
                     </Typography>
                   </Box>
-                  <Clock sx={{ width: 48, height: 48, color: '#fde68a' }} />
+                  <Clock sx={{ width: 48, height: 48, color: 'warning.light' }} />
                 </Box>
               </CardContent>
             </Card>
 
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #22c55e 0%, #10b981 100%)',
+                background: 'linear-gradient(135deg, #22c55e 0%, success.main 100%)',
                 color: 'white',
               }}
             >
@@ -449,7 +449,7 @@ const QmsAuditManagementPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#bbf7d0', fontSize: '0.875rem' }}>
+                    <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>
                       已完成审核
                     </Typography>
                     <Typography
@@ -459,7 +459,7 @@ const QmsAuditManagementPage: React.FC = () => {
                       {stats.completed}
                     </Typography>
                   </Box>
-                  <CheckCircle sx={{ width: 48, height: 48, color: '#bbf7d0' }} />
+                  <CheckCircle sx={{ width: 48, height: 48, color: 'success.light' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -654,7 +654,7 @@ const QmsAuditManagementPage: React.FC = () => {
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box
             component={ClipboardCheck}
-            sx={{ fontSize: 20, color: '#2563eb' }}
+            sx={{ fontSize: 20, color: 'primary.dark' }}
           />
           {selectedPlan?.title}
         </DialogTitle>
@@ -668,10 +668,10 @@ const QmsAuditManagementPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: '#eff6ff', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
-                    sx={{ color: '#2563eb' }}
+                    sx={{ color: 'primary.dark' }}
                   >
                     审核类型
                   </Typography>
@@ -682,7 +682,7 @@ const QmsAuditManagementPage: React.FC = () => {
                     {selectedPlan.audit_type === 'internal' ? '内部审核' : '外部审核'}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#fefce8', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     sx={{ color: '#ca8a04' }}
@@ -691,10 +691,10 @@ const QmsAuditManagementPage: React.FC = () => {
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedPlan.status)}</Box>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#f0fdf4', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
-                    sx={{ color: '#16a34a' }}
+                    sx={{ color: 'success.dark' }}
                   >
                     任务进度
                   </Typography>
@@ -810,7 +810,7 @@ const QmsAuditManagementPage: React.FC = () => {
               </Box>
 
               {selectedPlan.description && (
-                <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary' }}

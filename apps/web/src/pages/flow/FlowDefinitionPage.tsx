@@ -9,7 +9,7 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileUpload } from '@/components/common';
 import { Eye, Plus, Edit, Send, Ban, Upload, GitBranch } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
@@ -424,7 +424,7 @@ const FlowDefinitionPage: React.FC = () => {
           <Button onClick={() => setShowUploadModal(false)}>关闭</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#8b5cf6' }}
+            sx={{ bgcolor: 'secondary.main' }}
             onClick={() => {
               apiLogger.info('上传的流程文件:', attachments);
               setShowUploadModal(false);

@@ -48,7 +48,7 @@ export const migrationApi = {
         return res.data;
       }
       throw new Error((res && res.message) || '获取服务列表失败');
-    } catch (err: any) {
+    } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
   },
@@ -66,7 +66,7 @@ export const migrationApi = {
         return res.data;
       }
       throw new Error((res && res.message) || `执行 ${serviceName} 迁移失败`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
   },
@@ -81,7 +81,7 @@ export const migrationApi = {
         return res.data;
       }
       throw new Error((res && res.message) || `回滚 ${serviceName} 迁移失败`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
   },
@@ -98,7 +98,7 @@ export const migrationApi = {
         };
       }
       throw new Error((res && res.message) || `获取 ${serviceName} 迁移状态失败`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       throw new Error(extractMessage(err));
     }
   },

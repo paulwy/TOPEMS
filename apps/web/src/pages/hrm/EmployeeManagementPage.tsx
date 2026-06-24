@@ -39,8 +39,8 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
       } else {
         setEmployees([]);
       }
-    } catch (err: any) {
-      setError(err.message || '加载员工列表失败');
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || '加载员工列表失败');
       addNotification({
         title: '加载失败',
         message: '加载员工列表失败',
@@ -70,10 +70,10 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({ onNavig
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '删除员工失败',
+        message: (err as { message?: string }).message || '删除员工失败',
         type: 'error',
       });
     }

@@ -21,7 +21,7 @@ import {
   StepLabel,
   Button as MuiButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   Plus,
   Eye,
@@ -42,11 +42,11 @@ import {
 import { qmsApi, type QualityCheck, type CreateQualityCheckRequest } from '@/api/qms';
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  pending: { label: '待分配', bg: '#fef3c7', color: '#d97706' },
-  in_progress: { label: '进行中', bg: '#dbeafe', color: '#2563eb' },
-  pending_audit: { label: '待审核', bg: '#f3e8ff', color: '#7c3aed' },
-  completed: { label: '已完成', bg: '#dcfce7', color: '#16a34a' },
-  rejected: { label: '已驳回', bg: '#fee2e2', color: '#dc2626' },
+  pending: { label: '待分配', bg: 'warning.light', color: 'warning.dark' },
+  in_progress: { label: '进行中', bg: '#dbeafe', color: 'primary.dark' },
+  pending_audit: { label: '待审核', bg: '#f3e8ff', color: 'secondary.dark' },
+  completed: { label: '已完成', bg: 'success.lighter', color: 'success.dark' },
+  rejected: { label: '已驳回', bg: 'error.lighter', color: 'error.dark' },
 };
 
 const INSPECTION_TYPE_MAP: Record<string, string> = {
@@ -109,7 +109,7 @@ const QmsInspectionPage: React.FC = () => {
       if (response.success && response.data) {
         setInspections(response.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load inspections:', error);
     }
     setLoading(false);
@@ -117,8 +117,8 @@ const QmsInspectionPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const config = STATUS_MAP[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: status,
     };
     return (
@@ -158,10 +158,10 @@ const QmsInspectionPage: React.FC = () => {
           sx={{
             color:
               (row.qualification_rate || 0) >= 95
-                ? '#16a34a'
+                ? 'success.dark'
                 : (row.qualification_rate || 0) >= 90
                   ? '#ca8a04'
-                  : '#dc2626',
+                  : 'error.dark',
             fontWeight: 500,
           }}
         >
@@ -316,7 +316,7 @@ const QmsInspectionPage: React.FC = () => {
         loadInspections();
         setShowCreateModal(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to create inspection:', error);
     }
   };
@@ -332,7 +332,7 @@ const QmsInspectionPage: React.FC = () => {
         loadInspections();
         setShowAssignModal(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to assign inspection:', error);
     }
   };
@@ -354,7 +354,7 @@ const QmsInspectionPage: React.FC = () => {
         loadInspections();
         setShowSubmitModal(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to submit inspection result:', error);
     }
   };
@@ -377,7 +377,7 @@ const QmsInspectionPage: React.FC = () => {
       }
       loadInspections();
       setShowAuditModal(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to audit inspection:', error);
     }
   };
@@ -428,21 +428,21 @@ const QmsInspectionPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: '#eff6ff' }}>
+      <Card sx={{ bgcolor: 'primary.light' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#bfdbfe',
+                bgcolor: 'primary.light',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <ClipboardCheck sx={{ width: 20, height: 20, color: '#3b82f6' }} />
+              <ClipboardCheck sx={{ width: 20, height: 20, color: 'primary.main' }} />
             </Box>
             <Box>
               <Typography
@@ -508,7 +508,7 @@ const QmsInspectionPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <ClipboardCheck sx={{ width: 20, height: 20, color: '#2563eb' }} />
+              <ClipboardCheck sx={{ width: 20, height: 20, color: 'primary.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -541,7 +541,7 @@ const QmsInspectionPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Send sx={{ width: 20, height: 20, color: '#7c3aed' }} />
+              <Send sx={{ width: 20, height: 20, color: 'secondary.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -560,7 +560,7 @@ const QmsInspectionPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-      <Card sx={{ bgcolor: '#dcfce7' }}>
+      <Card sx={{ bgcolor: 'success.lighter' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -574,7 +574,7 @@ const QmsInspectionPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color: '#16a34a' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -593,7 +593,7 @@ const QmsInspectionPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-      <Card sx={{ bgcolor: '#fee2e2' }}>
+      <Card sx={{ bgcolor: 'error.lighter' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -607,7 +607,7 @@ const QmsInspectionPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <XCircle sx={{ width: 20, height: 20, color: '#dc2626' }} />
+              <XCircle sx={{ width: 20, height: 20, color: 'error.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -637,7 +637,7 @@ const QmsInspectionPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -646,8 +646,8 @@ const QmsInspectionPage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#3b82f6',
-              borderTopColor: '#2563eb',
+              borderColor: 'primary.main',
+              borderTopColor: 'primary.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -664,7 +664,7 @@ const QmsInspectionPage: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
       }}
     >
       <ListPageTemplate
@@ -757,7 +757,7 @@ const QmsInspectionPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             保存
           </Button>
@@ -799,7 +799,7 @@ const QmsInspectionPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleAssignSubmit}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             确认分配
           </Button>
@@ -888,7 +888,7 @@ const QmsInspectionPage: React.FC = () => {
                   flexDirection: 'column',
                   gap: 1.5,
                   p: 2,
-                  bgcolor: '#f9fafb',
+                  bgcolor: 'grey.50',
                   borderRadius: 1,
                 }}
               >
@@ -950,7 +950,7 @@ const QmsInspectionPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSubmitResult}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             提交结果
           </Button>
@@ -1003,10 +1003,10 @@ const QmsInspectionPage: React.FC = () => {
             sx={{
               bgcolor:
                 auditData.action === 'approve'
-                  ? '#16a34a'
+                  ? 'success.dark'
                   : auditData.action === 'rework'
                     ? '#ca8a04'
-                    : '#dc2626',
+                    : 'error.dark',
             }}
           >
             {auditData.action === 'rework'
@@ -1126,7 +1126,7 @@ const QmsInspectionPage: React.FC = () => {
                   >
                     合格率
                   </Box>
-                  <Box sx={{ fontWeight: 500, color: '#3b82f6' }}>
+                  <Box sx={{ fontWeight: 500, color: 'primary.main' }}>
                     {selectedInspection.qualification_rate !== undefined
                       ? `${selectedInspection.qualification_rate.toFixed(1)}%`
                       : '-'}

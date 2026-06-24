@@ -289,12 +289,12 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
   size = 'medium',
 }) => {
   const colorMap: Record<string, string> = {
-    primary: '#3b82f6',
-    secondary: '#8b5cf6',
-    success: '#22c55e',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    info: '#06b6d4',
+    primary: 'primary.main',
+    secondary: 'secondary.main',
+    success: 'success.dark',
+    warning: 'warning.main',
+    error: 'error.main',
+    info: 'info.main',
   };
 
   const bgColor = colorMap[color] || colorMap.primary;
@@ -423,11 +423,11 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                     }}
                   >
                     {change > 0 ? (
-                      <TrendingUp style={{ width: 14, height: 14, color: '#22c55e' }} />
+                      <TrendingUp style={{ width: 14, height: 14, color: 'success.dark' }} />
                     ) : change < 0 ? (
-                      <TrendingDown style={{ width: 14, height: 14, color: '#ef4444' }} />
+                      <TrendingDown style={{ width: 14, height: 14, color: 'error.main' }} />
                     ) : (
-                      <Minus style={{ width: 14, height: 14, color: '#9ca3af' }} />
+                      <Minus style={{ width: 14, height: 14, color: 'text.disabled' }} />
                     )}
                     <Typography
                       variant='caption'
@@ -883,7 +883,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
           };
           if (config.statsLayout) setStatsLayout(config.statsLayout);
           if (config.chartsLayout) setChartsLayout(config.chartsLayout);
-        } catch (e) {
+        } catch (e: unknown) {
           logger.error('Failed to load dashboard config:', e);
         }
       }

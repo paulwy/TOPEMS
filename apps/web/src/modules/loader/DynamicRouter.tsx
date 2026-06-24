@@ -38,7 +38,7 @@ async function loadRemoteModule(
     remoteModuleCache.set(cacheKey, resolvedModule);
 
     return resolvedModule;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error(`[DynamicRouter] Failed to load remote module ${remoteName}:${modulePath}`, error);
     throw error;
   }
@@ -55,7 +55,7 @@ function createRemoteLazyComponent(
       const Component = await loadRemoteModule(remoteName, modulePath);
       onLoad?.();
       return { default: Component };
-    } catch (error) {
+    } catch (error: unknown) {
       onError?.(error as Error);
       throw error;
     }
@@ -94,7 +94,7 @@ export const DynamicRouter: React.FC = () => {
               </Suspense>
             ),
           });
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`[DynamicRouter] Failed to create route for ${route.path}`, error);
           setErrors((prev) => ({
             ...prev,
@@ -143,7 +143,7 @@ export const DynamicRouter: React.FC = () => {
               path: route.path,
             });
             return { default: Component };
-          } catch (error) {
+          } catch (error: unknown) {
             eventBus.emit(ModuleEvents.MODULE_ERROR, {
               moduleId: manifest.pluginCode,
               error: error as Error,
@@ -162,7 +162,7 @@ export const DynamicRouter: React.FC = () => {
               path: route.path,
             });
             return { default: Component };
-          } catch (error) {
+          } catch (error: unknown) {
             eventBus.emit(ModuleEvents.MODULE_ERROR, {
               moduleId: manifest.pluginCode,
               error: error as Error,
@@ -316,7 +316,7 @@ export async function preloadRemoteModules(): Promise<void> {
       try {
         await loadRemoteModule(remote.name, './store');
         logger.info(`[DynamicRouter] Preloaded remote: ${remote.name}`);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.warn(`[DynamicRouter] Failed to preload remote: ${remote.name}`, error);
       }
     })

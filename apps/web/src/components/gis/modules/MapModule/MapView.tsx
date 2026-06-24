@@ -93,12 +93,12 @@ const formatArea = (squareMeters: number): string => {
 };
 
 const getStatusColor = (status: string) => {
-  if (!status) return '#6b7280';
+  if (!status) return 'text.secondary';
   const s = status.toLowerCase();
   if (s.includes('active') || s.includes('启用')) return '#00C897';
-  if (s.includes('pending') || s.includes('待处理')) return '#F59E0B';
-  if (s.includes('inactive') || s.includes('禁用')) return '#EF4444';
-  return '#6b7280';
+  if (s.includes('pending') || s.includes('待处理')) return 'warning.main';
+  if (s.includes('inactive') || s.includes('禁用')) return 'error.main';
+  return 'text.secondary';
 };
 
 // Icons
@@ -126,7 +126,7 @@ const MeasureTooltip: React.FC<{
   <div
     style={{
       position: 'absolute',
-      backgroundColor: '#1f2937',
+      backgroundColor: 'grey.800',
       color: 'white',
       fontSize: '0.75rem',
       padding: '0.25rem 0.5rem',
@@ -156,18 +156,18 @@ const DetailsPanel: React.FC<{
     const s = status.toLowerCase();
     if (s.includes('active') || s.includes('启用')) {
       return {
-        backgroundColor: '#dcfce7',
+        backgroundColor: 'success.lighter',
         color: '#166534',
       };
     }
     if (s.includes('pending') || s.includes('待处理')) {
       return {
-        backgroundColor: '#fef3c7',
+        backgroundColor: 'warning.light',
         color: '#92400e',
       };
     }
     return {
-      backgroundColor: '#fee2e2',
+      backgroundColor: 'error.lighter',
       color: '#991b1b',
     };
   };
@@ -183,7 +183,7 @@ const DetailsPanel: React.FC<{
         borderRadius: '0.75rem',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         overflow: 'hidden',
-        border: '1px solid #e5e7eb',
+        border: '1px solid grey.200',
       }}
     >
       <div
@@ -192,7 +192,7 @@ const DetailsPanel: React.FC<{
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0.75rem 1rem',
-          background: 'linear-gradient(to right, #06b6d4, #3b82f6)',
+          background: 'linear-gradient(to right, #06b6d4, primary.main)',
         }}
       >
         <h3 style={{ fontWeight: 600, color: 'white', margin: 0 }}>详情信息</h3>
@@ -221,26 +221,26 @@ const DetailsPanel: React.FC<{
           <div
             style={{
               fontSize: '0.875rem',
-              color: '#6b7280',
+              color: 'text.secondary',
               marginBottom: '0.25rem',
             }}
           >
             名称
           </div>
-          <div style={{ fontWeight: 500, color: '#111827' }}>{selectedItem.name}</div>
+          <div style={{ fontWeight: 500, color: 'text.primary' }}>{selectedItem.name}</div>
         </div>
         {'device_type' in selectedItem && (
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: 'text.secondary',
                 marginBottom: '0.25rem',
               }}
             >
               设备类型
             </div>
-            <div style={{ color: '#374151' }}>{selectedItem.device_type}</div>
+            <div style={{ color: 'grey.700' }}>{selectedItem.device_type}</div>
           </div>
         )}
         {'location_type' in selectedItem && (
@@ -248,13 +248,13 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: 'text.secondary',
                 marginBottom: '0.25rem',
               }}
             >
               位置类型
             </div>
-            <div style={{ color: '#374151' }}>{selectedItem.location_type}</div>
+            <div style={{ color: 'grey.700' }}>{selectedItem.location_type}</div>
           </div>
         )}
         {'status' in selectedItem && (
@@ -262,7 +262,7 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: 'text.secondary',
                 marginBottom: '0.25rem',
               }}
             >
@@ -286,13 +286,13 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: 'text.secondary',
                 marginBottom: '0.25rem',
               }}
             >
               容量
             </div>
-            <div style={{ color: '#374151' }}>{selectedItem.capacity}</div>
+            <div style={{ color: 'grey.700' }}>{selectedItem.capacity}</div>
           </div>
         )}
         {'current_usage' in selectedItem && selectedItem.current_usage !== undefined && (
@@ -300,13 +300,13 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: 'text.secondary',
                 marginBottom: '0.25rem',
               }}
             >
               当前用量
             </div>
-            <div style={{ color: '#374151' }}>{selectedItem.current_usage}</div>
+            <div style={{ color: 'grey.700' }}>{selectedItem.current_usage}</div>
           </div>
         )}
         {'description' in selectedItem && selectedItem.description && (
@@ -314,25 +314,27 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: 'text.secondary',
                 marginBottom: '0.25rem',
               }}
             >
               描述
             </div>
-            <div style={{ color: '#4b5563', fontSize: '0.875rem' }}>{selectedItem.description}</div>
+            <div style={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              {selectedItem.description}
+            </div>
           </div>
         )}
         <div
           style={{
             paddingTop: '0.5rem',
-            borderTop: '1px solid #e5e7eb',
+            borderTop: '1px solid grey.200',
           }}
         >
           <div
             style={{
               fontSize: '0.875rem',
-              color: '#6b7280',
+              color: 'text.secondary',
               marginBottom: '0.25rem',
             }}
           >
@@ -340,7 +342,7 @@ const DetailsPanel: React.FC<{
           </div>
           <div
             style={{
-              color: '#374151',
+              color: 'grey.700',
               fontSize: '0.875rem',
               fontFamily: 'monospace',
             }}
@@ -697,8 +699,8 @@ const MapView: React.FC<MapViewProps> = ({
                         minWidth: '120px',
                       }}
                     >
-                      <div style={{ fontWeight: 500, color: '#111827' }}>{pipeline.name}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      <div style={{ fontWeight: 500, color: 'text.primary' }}>{pipeline.name}</div>
+                      <div style={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                         {pipeline.pipeline_type}
                       </div>
                     </div>
@@ -736,12 +738,14 @@ const MapView: React.FC<MapViewProps> = ({
                         style={{
                           width: '1.25rem',
                           height: '1.25rem',
-                          color: '#22c55e',
+                          color: 'success.dark',
                         }}
                       />
-                      <h4 style={{ fontWeight: 600, color: '#111827', margin: 0 }}>{point.name}</h4>
+                      <h4 style={{ fontWeight: 600, color: 'text.primary', margin: 0 }}>
+                        {point.name}
+                      </h4>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                    <div style={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                       <div>类型: {point.device_type}</div>
                       <div>
                         状态:{' '}
@@ -763,8 +767,8 @@ const MapView: React.FC<MapViewProps> = ({
                       <div
                         style={{
                           fontSize: '0.875rem',
-                          color: '#6b7280',
-                          borderTop: '1px solid #e5e7eb',
+                          color: 'text.secondary',
+                          borderTop: '1px solid grey.200',
                           paddingTop: '0.5rem',
                           marginTop: '0.5rem',
                         }}
@@ -829,14 +833,14 @@ const MapView: React.FC<MapViewProps> = ({
                         style={{
                           width: '1.25rem',
                           height: '1.25rem',
-                          color: '#f59e0b',
+                          color: 'warning.main',
                         }}
                       />
-                      <h4 style={{ fontWeight: 600, color: '#111827', margin: 0 }}>
+                      <h4 style={{ fontWeight: 600, color: 'text.primary', margin: 0 }}>
                         {location.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                    <div style={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                       <div>类型: {location.location_type}</div>
                       {location.capacity !== undefined && <div>容量: {location.capacity}</div>}
                       {location.current_usage !== undefined && (
@@ -886,7 +890,7 @@ const MapView: React.FC<MapViewProps> = ({
           {toolMode === 'measure-distance' && measurePoints.length > 0 && (
             <Polyline
               positions={measurePoints}
-              color='#EF4444'
+              color='error.main'
               weight={2}
               dashArray='5,5'
             />
@@ -905,7 +909,7 @@ const MapView: React.FC<MapViewProps> = ({
                   Math.max(...measurePoints.map((p) => p[1])),
                 ],
               ]}
-              color='#F59E0B'
+              color='warning.main'
               weight={2}
               fillOpacity={0.1}
             />
@@ -914,7 +918,7 @@ const MapView: React.FC<MapViewProps> = ({
           {toolMode === 'measure-area' && measurePoints.length > 1 && (
             <Polyline
               positions={[...measurePoints, measurePoints[0]]}
-              color='#F59E0B'
+              color='warning.main'
               weight={2}
               dashArray='5,5'
             />
@@ -1043,7 +1047,7 @@ const MapView: React.FC<MapViewProps> = ({
             padding: '0.5rem 1rem',
           }}
         >
-          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
             {measureResult}
           </span>
         </div>
@@ -1056,7 +1060,7 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             bottom: '1rem',
             left: '1rem',
-            backgroundColor: '#fefce8',
+            backgroundColor: 'warning.lighter',
             border: '1px solid #fde047',
             borderRadius: '0.5rem',
             padding: '0.5rem 1rem',

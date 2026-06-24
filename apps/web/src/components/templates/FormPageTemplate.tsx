@@ -25,7 +25,7 @@ import {
   Tab,
   Tabs,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { Grid } from '@/components/Grid';
 import {
   Save,
@@ -185,9 +185,9 @@ export interface FieldDependency {
     /** 更新选项（用于options类型） */
     options?:
       | Array<{ label: string; value: any }>
-      | ((value: any) => Array<{ label: string; value: any }>);
+      | ((value: unknown) => Array<{ label: string; value: any }>);
     /** 设置值（用于value类型） */
-    value?: any | ((value: any) => any);
+    value?: any | ((value: unknown) => any);
     /** 是否必填（用于required类型） */
     required?: boolean;
     /** 是否禁用（用于disabled类型） */
@@ -263,7 +263,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, 'onSubmit'> {
   success?: string;
 
   // 操作
-  onSubmit: (data: any) => Promise<void> | void;
+  onSubmit: (data: unknown) => Promise<void> | void;
   onCancel?: () => void;
   onReset?: () => void;
   submitText?: string;
@@ -692,13 +692,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
   // 处理提交
   const handleFormSubmit = useCallback(
-    async (data: any) => {
+    async (data: unknown) => {
       try {
         // 过滤掉不可见字段的数据
         const visibleData: Record<string, any> = {};
-        Object.keys(data).forEach((key) => {
+        Object.keys(data as object).forEach((key) => {
           if (fieldVisibility[key] !== false) {
-            visibleData[key] = data[key];
+            visibleData[key] = (data as Record<string, unknown>)[key];
           }
         });
 
@@ -717,7 +717,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           clearDrafts(draftConfig.storageKey);
           setDrafts([]);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         const errorToast = validationToasts.find((t) => t.type === 'error');
         if (errorToast) {
           displayValidationHint(errorToast);

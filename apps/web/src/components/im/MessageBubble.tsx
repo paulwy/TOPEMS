@@ -81,7 +81,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: isSent ? '#4f46e5' : '#d1d5db',
+            backgroundColor: isSent ? 'primary.main' : 'grey.300',
             marginLeft: isSent ? 8 : 0,
             marginRight: isSent ? 0 : 8,
           }}
@@ -90,7 +90,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             style={{
               width: 16,
               height: 16,
-              color: isSent ? '#ffffff' : '#4b5563',
+              color: isSent ? 'white' : 'text.secondary',
             }}
           />
         </div>
@@ -99,8 +99,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             position: 'relative',
             borderRadius: 8,
             padding: 12,
-            backgroundColor: isSent ? '#4f46e5' : '#f3f4f6',
-            color: isSent ? '#ffffff' : '#111827',
+            backgroundColor: isSent ? 'primary.main' : 'grey.100',
+            color: isSent ? 'white' : 'text.primary',
           }}
         >
           {isSent && (
@@ -119,8 +119,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 style={{
                   width: 16,
                   height: 16,
-                  color: '#9ca3af',
-                  backgroundColor: '#ffffff',
+                  color: 'text.disabled',
+                  backgroundColor: 'white',
                   borderRadius: '9999px',
                   padding: 2,
                 }}
@@ -134,10 +134,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 position: 'absolute',
                 top: -64,
                 right: -4,
-                backgroundColor: '#ffffff',
+                backgroundColor: 'white',
                 borderRadius: 8,
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                border: '1px solid #e5e7eb',
+                border: '1px solid grey.200',
                 padding: 4,
                 zIndex: 10,
               }}
@@ -150,7 +150,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   gap: 8,
                   padding: '8px 16px',
                   fontSize: 14,
-                  color: '#374151',
+                  color: 'grey.700',
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
@@ -168,7 +168,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   gap: 8,
                   padding: '8px 16px',
                   fontSize: 14,
-                  color: '#dc2626',
+                  color: 'error.dark',
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
@@ -204,9 +204,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   borderRadius: 4,
                   fontSize: 14,
                   resize: 'none',
-                  backgroundColor: isSent ? '#4338ca' : '#ffffff',
-                  color: isSent ? '#ffffff' : '#111827',
-                  border: `1px solid ${isSent ? '#6366f1' : '#d1d5db'}`,
+                  backgroundColor: isSent ? '#4338ca' : 'white',
+                  color: isSent ? 'white' : 'text.primary',
+                  border: `1px solid ${isSent ? 'primary.light' : 'grey.300'}`,
                 }}
                 rows={3}
                 autoFocus
@@ -218,8 +218,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     fontSize: 12,
                     padding: '4px 12px',
                     borderRadius: 4,
-                    backgroundColor: isSent ? '#6366f1' : '#e5e7eb',
-                    color: isSent ? '#ffffff' : '#374151',
+                    backgroundColor: isSent ? 'primary.light' : 'grey.200',
+                    color: isSent ? 'white' : 'grey.700',
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -232,8 +232,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     fontSize: 12,
                     padding: '4px 12px',
                     borderRadius: 4,
-                    backgroundColor: isSent ? '#ffffff' : '#4f46e5',
-                    color: isSent ? '#4f46e5' : '#ffffff',
+                    backgroundColor: isSent ? 'white' : 'primary.main',
+                    color: isSent ? 'primary.main' : 'white',
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -263,7 +263,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 rel='noopener noreferrer'
                 style={{
                   textDecoration: 'underline',
-                  color: isSent ? '#ffffff' : '#4f46e5',
+                  color: isSent ? 'white' : 'primary.main',
                 }}
               >
                 {message.file_name || message.content}
@@ -282,7 +282,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 gap: 4,
                 marginTop: 4,
                 fontSize: 12,
-                color: isSent ? '#c7d2fe' : '#6b7280',
+                color: isSent ? 'secondary.main' : 'text.secondary',
               }}
             >
               <span>{formatTime(message.created_at)}</span>

@@ -206,7 +206,7 @@ const HrmRecruitmentPage: React.FC = () => {
         };
       });
       setInterviews(transformedInterviews);
-    } catch (err) {
+    } catch (err: unknown) {
       error('加载数据失败');
       apiLogger.error('Failed to load recruitment data:', err);
     } finally {

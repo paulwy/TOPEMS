@@ -23,7 +23,7 @@ import {
   DialogActions,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import {
   GitBranch,
   Layers,
@@ -203,25 +203,25 @@ const RsSettingsPage: React.FC = () => {
           {activeTab === 'repo' && (
             <GitBranch
               size={16}
-              color='#3b82f6'
+              color='primary.main'
             />
           )}
           {activeTab === 'cicd' && (
             <Layers
               size={16}
-              color='#3b82f6'
+              color='primary.main'
             />
           )}
           {activeTab === 'quality' && (
             <Code2
               size={16}
-              color='#3b82f6'
+              color='primary.main'
             />
           )}
           {activeTab === 'integration' && (
             <Plug
               size={16}
-              color={row.enabled ? '#3b82f6' : '#9e9e9e'}
+              color={row.enabled ? 'primary.main' : '#9e9e9e'}
             />
           )}
           <Box>
@@ -301,7 +301,7 @@ const RsSettingsPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3 }}>
         {/* 页面头部 */}
         <Box
@@ -314,14 +314,14 @@ const RsSettingsPage: React.FC = () => {
         >
           <Typography
             variant='h5'
-            sx={{ color: '#3b82f6', fontWeight: 'bold' }}
+            sx={{ color: 'primary.main', fontWeight: 'bold' }}
           >
             研发设置
           </Typography>
           <Button
             variant='contained'
             startIcon={<Save size={18} />}
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             保存设置
           </Button>
@@ -340,7 +340,7 @@ const RsSettingsPage: React.FC = () => {
                     borderRadius: 1,
                     mb: 0.5,
                     '&.Mui-selected': {
-                      bgcolor: '#3b82f6',
+                      bgcolor: 'primary.main',
                       color: 'white',
                       '& .MuiListItemIcon-root': {
                         color: 'white',

@@ -26,7 +26,7 @@ import {
   Typography,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -93,7 +93,7 @@ const LimsTaskDetailPage: React.FC = () => {
           setProcess(matchedProcess);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载任务详情失败:', error);
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ const LimsTaskDetailPage: React.FC = () => {
         setShowRecordModal(false);
         loadTaskDetail(task.id);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('完成步骤失败:', error);
     }
   };
@@ -152,7 +152,7 @@ const LimsTaskDetailPage: React.FC = () => {
           >
             <Box
               component={CheckCircle}
-              sx={{ fontSize: 20, color: '#16a34a' }}
+              sx={{ fontSize: 20, color: 'success.dark' }}
             />
             检验进度
           </Typography>
@@ -167,14 +167,14 @@ const LimsTaskDetailPage: React.FC = () => {
               }}
             >
               <span style={{ color: '#475569' }}>完成进度</span>
-              <span style={{ fontWeight: 500, color: '#0f172a' }}>
+              <span style={{ fontWeight: 500, color: 'grey.900' }}>
                 {completedSteps} / {totalSteps} 步骤
               </span>
             </Box>
             <Box
               sx={{
                 height: 12,
-                backgroundColor: '#e2e8f0',
+                backgroundColor: 'border.default',
                 borderRadius: 999,
                 overflow: 'hidden',
               }}
@@ -219,7 +219,7 @@ const LimsTaskDetailPage: React.FC = () => {
                         gap: 1.5,
                         p: 1,
                         borderRadius: 1,
-                        bgcolor: isCompleted ? '#f0fdf4' : '#f8fafc',
+                        bgcolor: isCompleted ? 'success.light' : 'grey.50',
                       }}
                     >
                       <Box
@@ -232,8 +232,8 @@ const LimsTaskDetailPage: React.FC = () => {
                           justifyContent: 'center',
                           fontSize: '0.875rem',
                           fontWeight: 500,
-                          bgcolor: isCompleted ? '#22c55e' : '#cbd5e1',
-                          color: isCompleted ? '#ffffff' : '#475569',
+                          bgcolor: isCompleted ? 'success.dark' : 'grey.400',
+                          color: isCompleted ? 'white' : '#475569',
                         }}
                       >
                         {isCompleted ? <CheckCircle sx={{ width: 16, height: 16 }} /> : index + 1}
@@ -302,7 +302,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -331,7 +331,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -339,7 +339,7 @@ const LimsTaskDetailPage: React.FC = () => {
             sx={{
               width: 64,
               height: 64,
-              color: '#ef4444',
+              color: 'error.main',
               margin: '0 auto 16px auto',
             }}
           />
@@ -359,16 +359,16 @@ const LimsTaskDetailPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       pending: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
       待测试: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
-      in_progress: { bg: '#dbeafe', color: '#2563eb', label: '进行中' },
-      进行中: { bg: '#dbeafe', color: '#2563eb', label: '进行中' },
-      completed: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
-      已完成: { bg: '#dcfce7', color: '#16a34a', label: '已完成' },
-      cancelled: { bg: '#fee2e2', color: '#dc2626', label: '已终止' },
-      已终止: { bg: '#fee2e2', color: '#dc2626', label: '已终止' },
+      in_progress: { bg: '#dbeafe', color: 'primary.dark', label: '进行中' },
+      进行中: { bg: '#dbeafe', color: 'primary.dark', label: '进行中' },
+      completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
+      已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
+      cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
+      已终止: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: status,
     };
     return (
@@ -394,7 +394,7 @@ const LimsTaskDetailPage: React.FC = () => {
       backHref='/lims'
       loading={loading}
       infoCard={{
-        avatar: <ClipboardCheck sx={{ fontSize: 40, color: '#7c3aed' }} />,
+        avatar: <ClipboardCheck sx={{ fontSize: 40, color: 'secondary.dark' }} />,
         title: task.task_no || task.id,
         subtitle: task.sample_name || '未关联样品',
         tags: [task.status],
@@ -521,7 +521,7 @@ const LimsTaskDetailPage: React.FC = () => {
               sx={{
                 mt: 2,
                 p: 2,
-                backgroundColor: '#fefce8',
+                backgroundColor: 'warning.lighter',
                 borderRadius: 1,
                 display: 'flex',
                 alignItems: 'center',
@@ -545,7 +545,7 @@ const LimsTaskDetailPage: React.FC = () => {
             variant='contained'
             onClick={() => setShowCompleteModal(false)}
             sx={{
-              backgroundColor: '#16a34a',
+              backgroundColor: 'success.dark',
               '&:hover': { backgroundColor: '#15803d' },
             }}
           >

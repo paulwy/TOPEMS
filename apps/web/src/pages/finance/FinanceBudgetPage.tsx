@@ -36,7 +36,7 @@ import {
   CardContent,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import OrganizationFilter, {
   type OrganizationFilterValue,
@@ -80,7 +80,7 @@ const FinanceBudgetPage: React.FC = () => {
       if (response.success && response.data) {
         setBudgets(response.data.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载预算数据失败:', err);
       addNotification({
         title: '错误',
@@ -109,7 +109,7 @@ const FinanceBudgetPage: React.FC = () => {
         resetForm();
         loadBudgets();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('创建预算失败:', err);
       addNotification({
         title: '错误',
@@ -138,7 +138,7 @@ const FinanceBudgetPage: React.FC = () => {
         resetForm();
         loadBudgets();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('更新预算失败:', err);
       addNotification({
         title: '错误',
@@ -160,7 +160,7 @@ const FinanceBudgetPage: React.FC = () => {
         });
         loadBudgets();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('删除预算失败:', err);
       addNotification({
         title: '错误',
@@ -296,35 +296,35 @@ const FinanceBudgetPage: React.FC = () => {
         value: budgets
           .filter((b) => b.budget_type === 'operating')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: '#3b82f6',
+        color: 'primary.main',
       },
       {
         name: '资本预算',
         value: budgets
           .filter((b) => b.budget_type === 'capital')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: '#22c55e',
+        color: 'success.dark',
       },
       {
         name: '项目预算',
         value: budgets
           .filter((b) => b.budget_type === 'project')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: '#f59e0b',
+        color: 'warning.main',
       },
       {
         name: '市场预算',
         value: budgets
           .filter((b) => b.budget_type === 'marketing')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: '#ef4444',
+        color: 'error.main',
       },
       {
         name: '人事预算',
         value: budgets
           .filter((b) => b.budget_type === 'personnel')
           .reduce((sum, b) => sum + b.total_budget, 0),
-        color: '#8b5cf6',
+        color: 'secondary.main',
       },
     ],
     [budgets]
@@ -336,12 +336,12 @@ const FinanceBudgetPage: React.FC = () => {
       {
         name: '执行中',
         value: budgets.filter((b) => b.status === 'active').length,
-        color: '#22c55e',
+        color: 'success.dark',
       },
       {
         name: '已完成',
         value: budgets.filter((b) => b.status === 'completed').length,
-        color: '#3b82f6',
+        color: 'primary.main',
       },
       {
         name: '已冻结',
@@ -351,7 +351,7 @@ const FinanceBudgetPage: React.FC = () => {
       {
         name: '已过期',
         value: budgets.filter((b) => b.status === 'expired').length,
-        color: '#ef4444',
+        color: 'error.main',
       },
     ],
     [budgets]
@@ -794,7 +794,7 @@ const FinanceBudgetPage: React.FC = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: 'linear-gradient(to right, #eff6ff, #eef2ff)',
+                  bgcolor: 'linear-gradient(to right, primary.light, #eef2ff)',
                   borderRadius: 1,
                 }}
               >

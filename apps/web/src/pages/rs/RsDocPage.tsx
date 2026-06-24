@@ -12,7 +12,7 @@ import {
   Stack,
   Paper,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { FileUpload } from '@/components/common';
 import {
   Plus,
@@ -124,28 +124,28 @@ const RsDocPage: React.FC = () => {
         return (
           <File
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
         );
       case '接口文档':
         return (
           <FileText
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
         );
       case '用户文档':
         return (
           <BookOpen
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
         );
       default:
         return (
           <Folder
             size={16}
-            color='#3b82f6'
+            color='primary.main'
           />
         );
     }
@@ -308,7 +308,7 @@ const RsDocPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', py: 3 }}>
+    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
       <ListPageTemplate
         title='文档管理'
         columns={columns}
@@ -402,7 +402,7 @@ const RsDocPage: React.FC = () => {
           <Button onClick={() => setNewDocDialogOpen(false)}>取消</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
             onClick={handleCreateDoc}
           >
             创建
@@ -511,7 +511,7 @@ const RsDocPage: React.FC = () => {
           <Button onClick={() => setUploadDialogOpen(false)}>关闭</Button>
           <Button
             variant='contained'
-            sx={{ bgcolor: '#3b82f6' }}
+            sx={{ bgcolor: 'primary.main' }}
             onClick={() => {
               apiLogger.info('上传的文件:', attachments);
               setUploadDialogOpen(false);

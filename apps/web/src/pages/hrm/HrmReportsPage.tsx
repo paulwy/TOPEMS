@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   Users,
@@ -113,7 +113,7 @@ const HrmReportsPage: React.FC = () => {
       if (results[3].code === 200) setTrainingSummary(results[3].data);
       if (results[4].code === 200) setAttendanceSummary(results[4].data);
       if (results[5].code === 200) setPayrollSummary(results[5].data);
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to load reports:', err);
       error('加载报表数据失败');
     } finally {
@@ -839,7 +839,7 @@ const HrmReportsPage: React.FC = () => {
                           cy='50'
                           r='40'
                           fill='none'
-                          stroke='#e5e7eb'
+                          stroke='grey.200'
                           strokeWidth='12'
                         />
                         <circle
@@ -847,7 +847,7 @@ const HrmReportsPage: React.FC = () => {
                           cy='50'
                           r='40'
                           fill='none'
-                          stroke='#3b82f6'
+                          stroke='primary.main'
                           strokeWidth='12'
                           strokeLinecap='round'
                           strokeDasharray={`${((employeeSummary?.male_count || 0) / ((employeeSummary?.male_count || 0) + (employeeSummary?.female_count || 0) || 1)) * 251.2} 251.2`}
@@ -1294,13 +1294,13 @@ const HrmReportsPage: React.FC = () => {
                         <Box
                           sx={{
                             width: '100%',
-                            background: 'linear-gradient(to top, #3b82f6, #60a5fa)',
+                            background: 'linear-gradient(to top, primary.main, #60a5fa)',
                             borderTopLeftRadius: 8,
                             borderTopRightRadius: 8,
                             transition: 'all 0.3s',
                             height: `${height}%`,
                             '&:hover': {
-                              background: 'linear-gradient(to top, #2563eb, #3b82f6)',
+                              background: 'linear-gradient(to top, primary.dark, primary.main)',
                             },
                           }}
                         />
@@ -1428,7 +1428,7 @@ const HrmReportsPage: React.FC = () => {
                         cy='50'
                         r='40'
                         fill='none'
-                        stroke='#e5e7eb'
+                        stroke='grey.200'
                         strokeWidth='16'
                       />
                       <circle
@@ -1436,7 +1436,7 @@ const HrmReportsPage: React.FC = () => {
                         cy='50'
                         r='40'
                         fill='none'
-                        stroke='#3b82f6'
+                        stroke='primary.main'
                         strokeWidth='16'
                         strokeLinecap='round'
                         strokeDasharray='150.72 251.2'
@@ -1446,7 +1446,7 @@ const HrmReportsPage: React.FC = () => {
                         cy='50'
                         r='40'
                         fill='none'
-                        stroke='#10b981'
+                        stroke='success.main'
                         strokeWidth='16'
                         strokeLinecap='round'
                         strokeDasharray='62.8 251.2'
@@ -1457,7 +1457,7 @@ const HrmReportsPage: React.FC = () => {
                         cy='50'
                         r='40'
                         fill='none'
-                        stroke='#f59e0b'
+                        stroke='warning.main'
                         strokeWidth='16'
                         strokeLinecap='round'
                         strokeDasharray='37.68 251.2'

@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Calendar, MapPin } from 'lucide-react';
 import { Box, Typography, Paper, TextField, IconButton, Grid, Divider } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { DevicePoint } from '../../../../api/gis';
 import type { TrackRecord, TrackStatistics, TrackPoint } from './types';
 import TrackPlayer from './TrackPlayer';
@@ -143,24 +143,24 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
           px: 4,
           py: 3,
           borderBottom: 1,
-          borderColor: '#e5e7eb',
+          borderColor: 'grey.200',
         }}
       >
         <Typography
           variant='subtitle1'
-          sx={{ fontWeight: 600, color: '#111827' }}
+          sx={{ fontWeight: 600, color: 'text.primary' }}
         >
           设备轨迹追踪
         </Typography>
         <IconButton
           onClick={onClose}
-          sx={{ p: 1, '&:hover': { bgcolor: '#f3f4f6' } }}
+          sx={{ p: 1, '&:hover': { bgcolor: 'grey.100' } }}
         >
           <svg
             width={20}
             height={20}
             fill='none'
-            stroke='#6b7280'
+            stroke='text.secondary'
             viewBox='0 0 24 24'
           >
             <path
@@ -179,13 +179,13 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
           sx={{
             width: '33.33%',
             borderRight: 1,
-            borderColor: '#e5e7eb',
+            borderColor: 'grey.200',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
           {/* Search */}
-          <Box sx={{ p: 3, borderBottom: 1, borderColor: '#e5e7eb' }}>
+          <Box sx={{ p: 3, borderBottom: 1, borderColor: 'grey.200' }}>
             <Box sx={{ position: 'relative' }}>
               <Search
                 size={16}
@@ -194,7 +194,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   left: 12,
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: '#9ca3af',
+                  color: 'text.disabled',
                 }}
               />
               <TextField
@@ -220,24 +220,24 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   py: 3,
                   textAlign: 'left',
                   borderBottom: 1,
-                  borderColor: '#e5e7eb',
-                  bgcolor: selectedDevice?.id === device.id ? '#eff6ff' : 'transparent',
-                  '&:hover': { bgcolor: '#f9fafb' },
+                  borderColor: 'grey.200',
+                  bgcolor: selectedDevice?.id === device.id ? 'primary.light' : 'transparent',
+                  '&:hover': { bgcolor: 'grey.50' },
                   textTransform: 'none',
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: '50%' }}>
+                  <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: '50%' }}>
                     <MapPin
                       size={16}
-                      style={{ color: '#16a34a' }}
+                      style={{ color: 'success.dark' }}
                     />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       sx={{
                         fontWeight: 500,
-                        color: '#111827',
+                        color: 'text.primary',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -247,7 +247,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                     </Typography>
                     <Typography
                       variant='caption'
-                      sx={{ color: '#6b7280' }}
+                      sx={{ color: 'text.secondary' }}
                     >
                       {device.device_type}
                     </Typography>
@@ -261,7 +261,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   px: 4,
                   py: 8,
                   textAlign: 'center',
-                  color: '#6b7280',
+                  color: 'text.secondary',
                   fontSize: '0.875rem',
                 }}
               >
@@ -289,7 +289,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
 
               {/* Track Points List */}
               <Box sx={{ mt: 4 }}>
-                <Typography sx={{ fontWeight: 500, color: '#111827', mb: 2 }}>
+                <Typography sx={{ fontWeight: 500, color: 'text.primary', mb: 2 }}>
                   轨迹点列表
                 </Typography>
                 <Box
@@ -297,14 +297,14 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                     maxHeight: 256,
                     overflowY: 'auto',
                     border: 1,
-                    borderColor: '#e5e7eb',
+                    borderColor: 'grey.200',
                     borderRadius: 2,
                   }}
                 >
                   <table style={{ width: '100%', fontSize: '0.875rem' }}>
                     <thead
                       style={{
-                        backgroundColor: '#f9fafb',
+                        backgroundColor: 'grey.50',
                         position: 'sticky',
                         top: 0,
                       }}
@@ -314,7 +314,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: '#6b7280',
+                            color: 'text.secondary',
                             fontWeight: 500,
                           }}
                         >
@@ -324,7 +324,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: '#6b7280',
+                            color: 'text.secondary',
                             fontWeight: 500,
                           }}
                         >
@@ -334,7 +334,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: '#6b7280',
+                            color: 'text.secondary',
                             fontWeight: 500,
                           }}
                         >
@@ -344,7 +344,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: '#6b7280',
+                            color: 'text.secondary',
                             fontWeight: 500,
                           }}
                         >
@@ -356,10 +356,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                       {currentTrack.points.slice(0, 50).map((point, index) => (
                         <tr
                           key={index}
-                          style={{ borderBottom: '1px solid #f3f4f6' }}
+                          style={{ borderBottom: '1px solid grey.100' }}
                         >
-                          <td style={{ padding: '8px 12px', color: '#6b7280' }}>{index + 1}</td>
-                          <td style={{ padding: '8px 12px', color: '#374151' }}>
+                          <td style={{ padding: '8px 12px', color: 'text.secondary' }}>
+                            {index + 1}
+                          </td>
+                          <td style={{ padding: '8px 12px', color: 'grey.700' }}>
                             {new Date(point.timestamp).toLocaleTimeString()}
                           </td>
                           <td
@@ -367,12 +369,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                               padding: '8px 12px',
                               fontFamily: 'monospace',
                               fontSize: '0.75rem',
-                              color: '#4b5563',
+                              color: 'text.secondary',
                             }}
                           >
                             {point.position[0].toFixed(5)}, {point.position[1].toFixed(5)}
                           </td>
-                          <td style={{ padding: '8px 12px', color: '#374151' }}>
+                          <td style={{ padding: '8px 12px', color: 'grey.700' }}>
                             {point.speed?.toFixed(1) || '-'} km/h
                           </td>
                         </tr>
@@ -386,8 +388,8 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                         py: 2,
                         textAlign: 'center',
                         fontSize: '0.75rem',
-                        color: '#6b7280',
-                        bgcolor: '#f9fafb',
+                        color: 'text.secondary',
+                        bgcolor: 'grey.50',
                       }}
                     >
                       显示前 50 个点，共 {currentTrack.points.length} 个点
@@ -408,9 +410,9 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
               <Box sx={{ textAlign: 'center' }}>
                 <Calendar
                   size={48}
-                  style={{ color: '#d1d5db', margin: '0 auto 12px' }}
+                  style={{ color: 'grey.300', margin: '0 auto 12px' }}
                 />
-                <Typography sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                   从左侧列表选择设备以查看轨迹
                 </Typography>
               </Box>

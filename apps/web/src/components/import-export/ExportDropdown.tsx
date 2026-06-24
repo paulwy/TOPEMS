@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import React from 'react';
 import { Download } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 export interface ExportDropdownProps {
   onExport: (format: string, columns?: string[]) => void;
@@ -34,10 +34,10 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
           display: 'inline-flex',
           alignItems: 'center',
           padding: '8px 16px',
-          backgroundColor: '#2563eb',
+          backgroundColor: 'primary.dark',
           color: 'white',
           borderRadius: 2,
-          '&:hover': { backgroundColor: '#1d4ed8' },
+          '&:hover': { backgroundColor: 'primary.dark' },
           '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
           transition: 'colors 0.2s',
         }}
@@ -60,7 +60,7 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
               backgroundColor: 'white',
               borderRadius: 2,
               boxShadow: 3,
-              border: '1px solid #e2e8f0',
+              border: '1px solid border.default',
               padding: 0.5,
               zIndex: 10,
             }}
@@ -78,7 +78,7 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
                   textAlign: 'left',
                   fontSize: 14,
                   color: '#334155',
-                  '&:hover': { backgroundColor: '#f1f5f9' },
+                  '&:hover': { backgroundColor: 'grey.100' },
                   transition: 'colors 0.2s',
                 }}
               >

@@ -2,7 +2,7 @@
 
 use axum::{extract::{Path, State}, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::Row;
+use sqlx::{Row, types::chrono::Utc};
 use std::fmt;
 use std::str::FromStr;
 use tracing::info;
@@ -331,8 +331,8 @@ pub async fn execute_schedule(
 ) -> Json<serde_json::Value> {
     info!("Executing schedule: {}", id);
     
-    let now = chrono::Utc::now();
-    
+    let now = Utc::now().naive_utc();
+
     let result = sqlx::query!(
         r#"
         UPDATE report_schedules

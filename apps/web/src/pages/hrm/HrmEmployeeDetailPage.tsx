@@ -19,7 +19,7 @@ import {
   Avatar,
   Container,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -87,7 +87,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         setEmployee(res.data);
         setEditData({ ...res.data });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to load employee:', err);
       error('加载员工信息失败');
     } finally {
@@ -101,7 +101,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
       if (res.code === 200) {
         setDepartments(res.data?.items || []);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to load departments:', err);
     }
   };
@@ -121,7 +121,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         setIsEditing(false);
         loadEmployee(id);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('Failed to save:', err);
       error('保存失败');
     }

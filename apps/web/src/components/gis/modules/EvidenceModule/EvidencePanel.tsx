@@ -11,7 +11,7 @@ import {
   Grid as MuiGrid,
   Stack,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import type { EvidenceRecord, EvidenceType } from './types';
 import PhotoCapture from './PhotoCapture';
 import AudioCapture from './AudioCapture';
@@ -177,19 +177,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           px: 16,
           py: 12,
           borderBottom: 1,
-          borderColor: '#e5e7eb',
+          borderColor: 'grey.200',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>
+        <Typography sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}>
           取证记录
         </Typography>
         <IconButton
           onClick={onClose}
-          sx={{ borderRadius: 4, '&:hover': { bgcolor: '#f3f4f6' } }}
+          sx={{ borderRadius: 4, '&:hover': { bgcolor: 'grey.100' } }}
         >
           <X
             size={20}
-            style={{ color: '#6b7280' }}
+            style={{ color: 'text.secondary' }}
           />
         </IconButton>
       </Box>
@@ -199,11 +199,13 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         sx={{
           p: 16,
           borderBottom: 1,
-          borderColor: '#e5e7eb',
-          bgcolor: '#f9fafb',
+          borderColor: 'grey.200',
+          bgcolor: 'grey.50',
         }}
       >
-        <Typography sx={{ fontSize: '0.875rem', color: '#6b7280', mb: 12 }}>采集取证</Typography>
+        <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary', mb: 12 }}>
+          采集取证
+        </Typography>
         <Box sx={{ display: 'flex', gap: 12 }}>
           <Button
             onClick={() => setCaptureMode('photo')}
@@ -216,19 +218,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               p: 16,
               bgcolor: 'white',
               border: 1,
-              borderColor: '#e5e7eb',
+              borderColor: 'grey.200',
               borderRadius: 8,
-              '&:hover': { bgcolor: '#eff6ff', borderColor: '#93c5fd' },
+              '&:hover': { bgcolor: 'primary.light', borderColor: '#93c5fd' },
               textTransform: 'none',
             }}
           >
             <Box sx={{ p: 12, bgcolor: '#dbeafe', borderRadius: '9999px' }}>
               <Camera
                 size={24}
-                style={{ color: '#2563eb' }}
+                style={{ color: 'primary.dark' }}
               />
             </Box>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
               拍照
             </Typography>
           </Button>
@@ -243,19 +245,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               p: 16,
               bgcolor: 'white',
               border: 1,
-              borderColor: '#e5e7eb',
+              borderColor: 'grey.200',
               borderRadius: 8,
-              '&:hover': { bgcolor: '#f0fdf4', borderColor: '#86efac' },
+              '&:hover': { bgcolor: 'success.light', borderColor: '#86efac' },
               textTransform: 'none',
             }}
           >
-            <Box sx={{ p: 12, bgcolor: '#dcfce7', borderRadius: '9999px' }}>
+            <Box sx={{ p: 12, bgcolor: 'success.lighter', borderRadius: '9999px' }}>
               <Mic
                 size={24}
-                style={{ color: '#16a34a' }}
+                style={{ color: 'success.dark' }}
               />
             </Box>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
               录音
             </Typography>
           </Button>
@@ -270,9 +272,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               p: 16,
               bgcolor: 'white',
               border: 1,
-              borderColor: '#e5e7eb',
+              borderColor: 'grey.200',
               borderRadius: 8,
-              '&:hover': { bgcolor: '#faf5ff', borderColor: '#c4b5fd' },
+              '&:hover': { bgcolor: 'secondary.light', borderColor: '#c4b5fd' },
               textTransform: 'none',
             }}
           >
@@ -282,7 +284,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 style={{ color: '#9333ea' }}
               />
             </Box>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
               录像
             </Typography>
           </Button>
@@ -290,7 +292,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
       </Box>
 
       {/* Filters */}
-      <Box sx={{ p: 16, borderBottom: 1, borderColor: '#e5e7eb' }}>
+      <Box sx={{ p: 16, borderBottom: 1, borderColor: 'grey.200' }}>
         <Box sx={{ position: 'relative', mb: 12 }}>
           <Box
             sx={{
@@ -298,7 +300,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               left: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              color: '#9ca3af',
+              color: 'text.disabled',
             }}
           >
             <Search size={16} />
@@ -313,9 +315,9 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               '& .MuiOutlinedInput-root': {
                 pl: 36,
                 fontSize: '0.875rem',
-                '& fieldset': { borderColor: '#e5e7eb' },
-                '&:hover fieldset': { borderColor: '#d1d5db' },
-                '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+                '& fieldset': { borderColor: 'grey.200' },
+                '&:hover fieldset': { borderColor: 'grey.300' },
+                '&.Mui-focused fieldset': { borderColor: 'primary.main' },
               },
             }}
           />
@@ -336,10 +338,10 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               onClick={() => setFilterType(type)}
               sx={{
                 fontSize: '0.875rem',
-                bgcolor: filterType === type ? '#3b82f6' : '#f3f4f6',
-                color: filterType === type ? 'white' : '#4b5563',
+                bgcolor: filterType === type ? 'primary.main' : 'grey.100',
+                color: filterType === type ? 'white' : 'text.secondary',
                 '&:hover': {
-                  bgcolor: filterType === type ? '#3b82f6' : '#e5e7eb',
+                  bgcolor: filterType === type ? 'primary.main' : 'grey.200',
                 },
               }}
             />
@@ -353,7 +355,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           px: 16,
           py: 8,
           borderBottom: 1,
-          borderColor: '#e5e7eb',
+          borderColor: 'grey.200',
           display: 'flex',
           justifyContent: 'flex-end',
         }}
@@ -362,7 +364,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           sx={{
             display: 'flex',
             gap: 4,
-            bgcolor: '#f3f4f6',
+            bgcolor: 'grey.100',
             borderRadius: 8,
             p: 4,
           }}
@@ -373,12 +375,12 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               borderRadius: 4,
               bgcolor: viewMode === 'grid' ? 'white' : 'transparent',
               boxShadow: viewMode === 'grid' ? 1 : 0,
-              '&:hover': { bgcolor: viewMode === 'grid' ? 'white' : '#e5e7eb' },
+              '&:hover': { bgcolor: viewMode === 'grid' ? 'white' : 'grey.200' },
             }}
           >
             <Grid
               size={16}
-              style={{ color: '#4b5563' }}
+              style={{ color: 'text.secondary' }}
             />
           </IconButton>
           <IconButton
@@ -387,12 +389,12 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               borderRadius: 4,
               bgcolor: viewMode === 'list' ? 'white' : 'transparent',
               boxShadow: viewMode === 'list' ? 1 : 0,
-              '&:hover': { bgcolor: viewMode === 'list' ? 'white' : '#e5e7eb' },
+              '&:hover': { bgcolor: viewMode === 'list' ? 'white' : 'grey.200' },
             }}
           >
             <List
               size={16}
-              style={{ color: '#4b5563' }}
+              style={{ color: 'text.secondary' }}
             />
           </IconButton>
         </Box>
@@ -408,12 +410,12 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               height: '100%',
-              color: '#6b7280',
+              color: 'text.secondary',
             }}
           >
             <Tag
               size={48}
-              style={{ color: '#d1d5db', marginBottom: 12 }}
+              style={{ color: 'grey.300', marginBottom: 12 }}
             />
             <Typography sx={{ fontSize: '0.875rem' }}>暂无取证记录</Typography>
           </Box>
@@ -430,7 +432,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 <Paper
                   sx={{
                     border: 1,
-                    borderColor: '#e5e7eb',
+                    borderColor: 'grey.200',
                     borderRadius: 8,
                     overflow: 'hidden',
                     cursor: 'pointer',
@@ -449,7 +451,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                       sx={{
                         width: '100%',
                         height: 96,
-                        bgcolor: '#f3f4f6',
+                        bgcolor: 'grey.100',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -458,19 +460,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                       {record.evidence_type === 'photo' && (
                         <Camera
                           size={32}
-                          style={{ color: '#9ca3af' }}
+                          style={{ color: 'text.disabled' }}
                         />
                       )}
                       {record.evidence_type === 'audio' && (
                         <Mic
                           size={32}
-                          style={{ color: '#9ca3af' }}
+                          style={{ color: 'text.disabled' }}
                         />
                       )}
                       {record.evidence_type === 'video' && (
                         <Video
                           size={32}
-                          style={{ color: '#9ca3af' }}
+                          style={{ color: 'text.disabled' }}
                         />
                       )}
                     </Box>
@@ -480,7 +482,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                       sx={{
                         fontSize: '0.75rem',
                         fontWeight: 500,
-                        color: '#111827',
+                        color: 'text.primary',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -488,7 +490,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     >
                       {record.title}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                       {record.evidence_type === 'photo'
                         ? '照片'
                         : record.evidence_type === 'audio'
@@ -512,10 +514,10 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   gap: 12,
                   p: 12,
                   border: 1,
-                  borderColor: '#e5e7eb',
+                  borderColor: 'grey.200',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  '&:hover': { bgcolor: '#f9fafb' },
+                  '&:hover': { bgcolor: 'grey.50' },
                 }}
               >
                 {record.thumbnail_url ? (
@@ -535,7 +537,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     sx={{
                       width: 48,
                       height: 48,
-                      bgcolor: '#f3f4f6',
+                      bgcolor: 'grey.100',
                       borderRadius: 4,
                       display: 'flex',
                       alignItems: 'center',
@@ -545,19 +547,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     {record.evidence_type === 'photo' && (
                       <Camera
                         size={20}
-                        style={{ color: '#9ca3af' }}
+                        style={{ color: 'text.disabled' }}
                       />
                     )}
                     {record.evidence_type === 'audio' && (
                       <Mic
                         size={20}
-                        style={{ color: '#9ca3af' }}
+                        style={{ color: 'text.disabled' }}
                       />
                     )}
                     {record.evidence_type === 'video' && (
                       <Video
                         size={20}
-                        style={{ color: '#9ca3af' }}
+                        style={{ color: 'text.disabled' }}
                       />
                     )}
                   </Box>
@@ -566,7 +568,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   <Typography
                     sx={{
                       fontWeight: 500,
-                      color: '#111827',
+                      color: 'text.primary',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -574,7 +576,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   >
                     {record.title}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                  <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                     {new Date(record.recorded_at).toLocaleString()}
                   </Typography>
                 </Box>
@@ -582,14 +584,14 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   sx={{
                     textAlign: 'right',
                     fontSize: '0.75rem',
-                    color: '#6b7280',
+                    color: 'text.secondary',
                   }}
                 >
-                  <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                  <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                     {formatFileSize(record.file_size)}
                   </Typography>
                   {record.duration && (
-                    <Typography sx={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                       {formatDuration(record.duration)}
                     </Typography>
                   )}

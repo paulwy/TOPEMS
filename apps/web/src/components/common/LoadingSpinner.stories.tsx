@@ -58,7 +58,7 @@ export const OverlayWithToggle: Story = {
         </button>
         <div style={{ marginTop: '16px', position: 'relative', width: '200px', height: '100px' }}>
           <LoadingOverlay isLoading={isLoading} message="加载中...">
-            <div style={{ padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
+            <div style={{ padding: '16px', background: 'grey.100', borderRadius: '8px' }}>
               内容区域
             </div>
           </LoadingOverlay>
@@ -84,7 +84,7 @@ export const CardSkeleton: Story = {
       style={{
         width: '300px',
         padding: '16px',
-        border: '1px solid #e5e7eb',
+        border: '1px solid grey.200',
         borderRadius: '8px',
       }}
     >

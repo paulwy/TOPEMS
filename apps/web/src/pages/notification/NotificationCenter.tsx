@@ -62,7 +62,7 @@ const NotificationCenter: React.FC = () => {
         setTotal(response.data.total);
         setUnreadCount(response.data.unread_count);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to fetch notifications:', error);
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ const NotificationCenter: React.FC = () => {
           setUnreadCount((prev) => Math.max(0, prev - 1));
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to mark as read:', error);
     }
   };
@@ -99,7 +99,7 @@ const NotificationCenter: React.FC = () => {
       if (response.success) {
         await fetchNotifications();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to mark all as read:', error);
     }
   };
@@ -120,7 +120,7 @@ const NotificationCenter: React.FC = () => {
         }
         setTotal((prev) => prev - 1);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to delete notification:', error);
     }
   };
@@ -133,7 +133,7 @@ const NotificationCenter: React.FC = () => {
         await fetchNotifications();
         setSelectedNotifications(new Set());
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to bulk delete:', error);
     }
   };
@@ -146,7 +146,7 @@ const NotificationCenter: React.FC = () => {
         await fetchNotifications();
         setSelectedNotifications(new Set());
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('Failed to bulk mark as read:', error);
     }
   };

@@ -3,6 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { extractErrorMessage } from '@/utils/errors';
 import type { Account } from '@/types/finance';
 import { accountApi } from '@/api/finance';
 import { useNotification } from './useNotification';
@@ -100,8 +101,8 @@ export const useCreateAccount = () => {
       queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
       success('科目创建成功');
     },
-    onError: (error: any) => {
-      notifyError(error.message || '科目创建失败');
+    onError: (error) => {
+      notifyError(extractErrorMessage(error, '科目创建失败'));
     },
   });
 };
@@ -121,8 +122,8 @@ export const useUpdateAccount = () => {
       queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
       success('科目更新成功');
     },
-    onError: (error: any) => {
-      notifyError(error.message || '科目更新失败');
+    onError: (error) => {
+      notifyError(extractErrorMessage(error, '科目更新失败'));
     },
   });
 };
@@ -141,8 +142,8 @@ export const useDeleteAccount = () => {
       queryClient.invalidateQueries({ queryKey: ['accounts-tree'] });
       success('科目删除成功');
     },
-    onError: (error: any) => {
-      notifyError(error.message || '科目删除失败');
+    onError: (error) => {
+      notifyError(extractErrorMessage(error, '科目删除失败'));
     },
   });
 };
@@ -172,8 +173,8 @@ export const useSetOpeningBalance = () => {
       queryClient.invalidateQueries({ queryKey: ['account-balances'] });
       success('期初余额设置成功');
     },
-    onError: (error: any) => {
-      notifyError(error.message || '期初余额设置失败');
+    onError: (error) => {
+      notifyError(extractErrorMessage(error, '期初余额设置失败'));
     },
   });
 };
@@ -193,8 +194,8 @@ export const useCarryForwardOpeningBalance = () => {
       queryClient.invalidateQueries({ queryKey: ['account-balances'] });
       success('期初余额结转成功');
     },
-    onError: (error: any) => {
-      notifyError(error.message || '期初余额结转失败');
+    onError: (error) => {
+      notifyError(extractErrorMessage(error, '期初余额结转失败'));
     },
   });
 };

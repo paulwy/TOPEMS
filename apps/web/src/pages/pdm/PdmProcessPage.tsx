@@ -9,7 +9,7 @@ import {
   Chip,
   Typography,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -42,7 +42,7 @@ const PdmProcessPage: React.FC = () => {
       setLoading(true);
       const response = await pdmApi.listProcesses();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: any) => ({
+        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
           ...item,
           status:
             item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
@@ -51,7 +51,7 @@ const PdmProcessPage: React.FC = () => {
       } else {
         setProcesses([]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       apiLogger.error('加载生产工艺数据失败:', err);
       setProcesses([]);
     } finally {
@@ -61,10 +61,10 @@ const PdmProcessPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: '#dcfce7', color: '#16a34a' },
-      禁用: { bg: '#fee2e2', color: '#dc2626' },
+      启用: { bg: 'success.lighter', color: 'success.dark' },
+      禁用: { bg: 'error.lighter', color: 'error.dark' },
     };
-    const colors = statusMap[status] || { bg: '#f3f4f6', color: '#4b5563' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
       <Chip
         label={status}
@@ -156,7 +156,7 @@ const PdmProcessPage: React.FC = () => {
       toast.success('生产工艺创建成功');
       setShowCreateModal(false);
       loadProcesses();
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('创建失败');
       apiLogger.error('创建生产工艺失败:', err);
     }
@@ -191,7 +191,7 @@ const PdmProcessPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -205,7 +205,7 @@ const PdmProcessPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fee2e2', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -300,7 +300,7 @@ const PdmProcessPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#06b6d4' }}
+            sx={{ bgcolor: 'info.main' }}
           >
             保存
           </Button>

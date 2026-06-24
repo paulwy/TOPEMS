@@ -13,7 +13,7 @@ import {
   Chip,
   IconButton,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Package,
@@ -72,10 +72,10 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
 
       setSelectedIds([]);
       loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '批量删除失败',
-        message: err.message || '批量删除失败',
+        message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
     }
@@ -101,8 +101,8 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
       } else {
         setSupplies([]);
       }
-    } catch (err: any) {
-      setError(err.message || '加载数据失败');
+    } catch (err: unknown) {
+      setError((err as { message?: string }).message || '加载数据失败');
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -146,10 +146,10 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '创建办公用品失败',
+        message: (err as { message?: string }).message || '创建办公用品失败',
         type: 'error',
       });
     }
@@ -174,10 +174,10 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
             type: 'error',
           });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         addNotification({
           title: '失败',
-          message: err.message || '删除办公用品失败',
+          message: (err as { message?: string }).message || '删除办公用品失败',
           type: 'error',
         });
       }
@@ -206,10 +206,10 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '失败',
-        message: err.message || '更新办公用品失败',
+        message: (err as { message?: string }).message || '更新办公用品失败',
         type: 'error',
       });
     }

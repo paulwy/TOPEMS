@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, InputBase, Typography } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { NotificationContainer } from '@/components/notification/NotificationContainer';
@@ -89,7 +89,7 @@ const HrmPayrollPage: React.FC = () => {
       if (adjustmentRes.success && adjustmentRes.data) {
         setAdjustments(adjustmentRes.data.items);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       error('加载数据失败');
       apiLogger.error(err);
     } finally {
@@ -105,7 +105,7 @@ const HrmPayrollPage: React.FC = () => {
       if (res.success && res.data) {
         setPayrollItems(res.data.items);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       error('加载工资条明细失败');
     } finally {
       setLoading(false);
@@ -121,7 +121,7 @@ const HrmPayrollPage: React.FC = () => {
         success('工资发放批次创建成功');
         await loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       error('创建工资发放批次失败');
     } finally {
       setLoading(false);
@@ -137,7 +137,7 @@ const HrmPayrollPage: React.FC = () => {
         success('薪资计算完成');
         await loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       error('薪资计算失败');
     } finally {
       setCalculating(false);
@@ -153,7 +153,7 @@ const HrmPayrollPage: React.FC = () => {
         success('薪资发放完成');
         await loadData();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       error('薪资发放失败');
     } finally {
       setPaying(false);
@@ -209,11 +209,11 @@ const HrmPayrollPage: React.FC = () => {
   // 薪资构成数据
   const salaryCompositionData = useMemo(
     () => [
-      { name: '基本工资', value: 60, color: '#3b82f6' },
-      { name: '奖金', value: 15, color: '#22c55e' },
-      { name: '补贴', value: 10, color: '#f59e0b' },
-      { name: '社保公积金（个人）', value: 8, color: '#ef4444' },
-      { name: '个人所得税', value: 7, color: '#8b5cf6' },
+      { name: '基本工资', value: 60, color: 'primary.main' },
+      { name: '奖金', value: 15, color: 'success.dark' },
+      { name: '补贴', value: 10, color: 'warning.main' },
+      { name: '社保公积金（个人）', value: 8, color: 'error.main' },
+      { name: '个人所得税', value: 7, color: 'secondary.main' },
     ],
     []
   );
@@ -224,17 +224,17 @@ const HrmPayrollPage: React.FC = () => {
       {
         name: '待计算',
         value: payrollRuns.filter((r) => r.status === 'draft').length,
-        color: '#eab308',
+        color: 'warning.main',
       },
       {
         name: '已计算',
         value: payrollRuns.filter((r) => r.status === 'calculated').length,
-        color: '#3b82f6',
+        color: 'primary.main',
       },
       {
         name: '已发放',
         value: payrollRuns.filter((r) => r.status === 'paid').length,
-        color: '#22c55e',
+        color: 'success.dark',
       },
     ],
     [payrollRuns]

@@ -7,6 +7,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
+use serde_json;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -287,7 +288,7 @@ async fn export_audit_logs(
             tracing::error!("导出审计日志失败: {}", e);
             Err((
                 [("Content-Type", "application/json")],
-                serde_json::to_string(&ApiResponse::error(500, "导出审计日志失败")).unwrap(),
+                serde_json::to_string(&ApiResponse::<serde_json::Value>::error(500, "导出审计日志失败")).unwrap(),
             ))
         }
     }

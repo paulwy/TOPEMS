@@ -15,7 +15,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -52,12 +52,12 @@ import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolida
 const getChipSx = (colorClass: string): object => {
   const colorMap: Record<string, { backgroundColor: string; color: string }> = {
     'bg-green-100 text-green-800': {
-      backgroundColor: '#dcfce7',
+      backgroundColor: 'success.lighter',
       color: '#166534',
     },
     'bg-gray-100 text-gray-800': {
-      backgroundColor: '#f3f4f6',
-      color: '#374151',
+      backgroundColor: 'grey.100',
+      color: 'grey.700',
     },
     'bg-yellow-100 text-yellow-800': {
       backgroundColor: '#fef9c3',
@@ -68,7 +68,7 @@ const getChipSx = (colorClass: string): object => {
       color: '#1e40af',
     },
     'bg-purple-100 text-purple-800': {
-      backgroundColor: '#ede9fe',
+      backgroundColor: 'secondary.light',
       color: '#6b21a8',
     },
     'bg-teal-100 text-teal-800': {
@@ -80,7 +80,7 @@ const getChipSx = (colorClass: string): object => {
       color: '#9a3412',
     },
   };
-  return colorMap[colorClass] || { backgroundColor: '#f3f4f6', color: '#374151' };
+  return colorMap[colorClass] || { backgroundColor: 'grey.100', color: 'grey.700' };
 };
 
 // 状态配置
@@ -198,7 +198,7 @@ export default function ConsolidationScopePage() {
       accessorKey: 'code',
       cell: ({ row }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Network sx={{ width: 16, height: 16, color: '#2563eb' }} />
+          <Network sx={{ width: 16, height: 16, color: 'primary.dark' }} />
           <span style={{ fontFamily: 'monospace', fontSize: 14 }}>{row.getValue('code')}</span>
         </div>
       ),
@@ -235,7 +235,9 @@ export default function ConsolidationScopePage() {
       header: '说明',
       accessorKey: 'description',
       cell: ({ row }) => (
-        <span style={{ color: '#6b7280', fontSize: 14 }}>{row.getValue('description') || '-'}</span>
+        <span style={{ color: 'text.secondary', fontSize: 14 }}>
+          {row.getValue('description') || '-'}
+        </span>
       ),
     },
     {
@@ -258,7 +260,7 @@ export default function ConsolidationScopePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Chip
               size='small'
-              sx={{ backgroundColor: '#f3f4f6', color: '#374151' }}
+              sx={{ backgroundColor: 'grey.100', color: 'grey.700' }}
               label={config.label}
             />
           </div>
@@ -283,7 +285,7 @@ export default function ConsolidationScopePage() {
             size='small'
             onClick={() => handleDeleteScope(row.original.id)}
           >
-            <Trash2 sx={{ width: 16, height: 16, color: '#ef4444' }} />
+            <Trash2 sx={{ width: 16, height: 16, color: 'error.main' }} />
           </Button>
         </div>
       ),
@@ -298,7 +300,7 @@ export default function ConsolidationScopePage() {
       accessorKey: 'company_code',
       cell: ({ row }) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Building2 sx={{ width: 16, height: 16, color: '#9ca3af' }} />
+          <Building2 sx={{ width: 16, height: 16, color: 'text.disabled' }} />
           <span style={{ fontFamily: 'monospace', fontSize: 14 }}>
             {row.getValue('company_code')}
           </span>
@@ -381,7 +383,7 @@ export default function ConsolidationScopePage() {
           onClick={() => removeCompany.mutate(row.original.id)}
           disabled={row.original.is_parent}
         >
-          <Trash2 sx={{ width: 16, height: 16, color: '#ef4444' }} />
+          <Trash2 sx={{ width: 16, height: 16, color: 'error.main' }} />
         </Button>
       ),
     },
@@ -408,7 +410,7 @@ export default function ConsolidationScopePage() {
               gap: 1,
             }}
           >
-            <GitMerge sx={{ width: 24, height: 24, color: '#2563eb' }} />
+            <GitMerge sx={{ width: 24, height: 24, color: 'primary.dark' }} />
             合并范围管理
           </Typography>
           <Typography
@@ -440,7 +442,7 @@ export default function ConsolidationScopePage() {
                   transform: 'translateY(-50%)',
                   width: 16,
                   height: 16,
-                  color: '#9ca3af',
+                  color: 'text.disabled',
                 }}
               />
               <TextField
@@ -486,7 +488,7 @@ export default function ConsolidationScopePage() {
                   gap: 1,
                 }}
               >
-                <Network sx={{ width: 20, height: 20, color: '#2563eb' }} />
+                <Network sx={{ width: 20, height: 20, color: 'primary.dark' }} />
                 合并范围列表
               </Typography>
             </CardHeader>
@@ -531,7 +533,7 @@ export default function ConsolidationScopePage() {
                       gap: 1,
                     }}
                   >
-                    <Users sx={{ width: 20, height: 20, color: '#2563eb' }} />
+                    <Users sx={{ width: 20, height: 20, color: 'primary.dark' }} />
                     {selectedScope.name}
                   </Typography>
                   <Button
@@ -678,7 +680,7 @@ export default function ConsolidationScopePage() {
                     height: 48,
                     margin: 'auto',
                     marginBottom: 8,
-                    color: '#d1d5db',
+                    color: 'grey.300',
                   }}
                 />
                 <Typography>请从左侧选择一个合并范围</Typography>

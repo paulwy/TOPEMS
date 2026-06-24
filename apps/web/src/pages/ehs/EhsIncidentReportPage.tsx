@@ -32,7 +32,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
@@ -78,7 +78,7 @@ const EhsIncidentReportPage: React.FC = () => {
           : incidentsData.data || incidentsData.incidents || [];
         setIncidents(incidentsArray);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载事件报告失败:', error);
       toast.error('加载事件报告失败');
     } finally {
@@ -99,7 +99,7 @@ const EhsIncidentReportPage: React.FC = () => {
         const actionsArray = Array.isArray(actionsData) ? actionsData : actionsData.data || [];
         setActions(actionsArray);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('加载事件详情失败:', error);
       toast.error('加载事件详情失败');
     }
@@ -130,7 +130,7 @@ const EhsIncidentReportPage: React.FC = () => {
       } else {
         toast.error('创建失败，请稍后重试');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('创建事件报告失败:', error);
       toast.error('创建失败，请稍后重试');
     }
@@ -146,7 +146,7 @@ const EhsIncidentReportPage: React.FC = () => {
       } else {
         toast.error('删除失败，请稍后重试');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       apiLogger.error('删除事件报告失败:', error);
       toast.error('删除失败，请稍后重试');
     }
@@ -167,14 +167,14 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string; label: string }> = {
-      fatal: { bg: '#fee2e2', color: '#dc2626', label: '致命' },
+      fatal: { bg: 'error.lighter', color: 'error.dark', label: '致命' },
       serious: { bg: '#fed7aa', color: '#ea580c', label: '严重' },
       minor: { bg: '#fef9c3', color: '#ca8a04', label: '轻微' },
-      near_miss: { bg: '#dbeafe', color: '#2563eb', label: '未遂' },
+      near_miss: { bg: '#dbeafe', color: 'primary.dark', label: '未遂' },
     };
     const item = severityMap[severity] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: severity,
     };
     return (
@@ -190,16 +190,16 @@ const EhsIncidentReportPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       pending: { bg: '#fef9c3', color: '#ca8a04', label: '待处理' },
       待处理: { bg: '#fef9c3', color: '#ca8a04', label: '待处理' },
-      investigating: { bg: '#dbeafe', color: '#2563eb', label: '调查中' },
-      调查中: { bg: '#dbeafe', color: '#2563eb', label: '调查中' },
-      resolved: { bg: '#dcfce7', color: '#16a34a', label: '已解决' },
-      已解决: { bg: '#dcfce7', color: '#16a34a', label: '已解决' },
-      closed: { bg: '#f3f4f6', color: '#4b5563', label: '已关闭' },
-      已关闭: { bg: '#f3f4f6', color: '#4b5563', label: '已关闭' },
+      investigating: { bg: '#dbeafe', color: 'primary.dark', label: '调查中' },
+      调查中: { bg: '#dbeafe', color: 'primary.dark', label: '调查中' },
+      resolved: { bg: 'success.lighter', color: 'success.dark', label: '已解决' },
+      已解决: { bg: 'success.lighter', color: 'success.dark', label: '已解决' },
+      closed: { bg: 'grey.100', color: 'text.secondary', label: '已关闭' },
+      已关闭: { bg: 'grey.100', color: 'text.secondary', label: '已关闭' },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: 'grey.100',
+      color: 'text.secondary',
       label: status,
     };
     return (
@@ -237,7 +237,7 @@ const EhsIncidentReportPage: React.FC = () => {
         <Chip
           label={getTypeLabel(row.incident_type)}
           size='small'
-          sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }}
+          sx={{ backgroundColor: '#f3e8ff', color: 'secondary.dark' }}
         />
       ),
     },
@@ -280,7 +280,7 @@ const EhsIncidentReportPage: React.FC = () => {
             variant='text'
             size='small'
             onClick={() => handleDeleteIncident(row.id)}
-            sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
+            sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
             startIcon={
               <Box
                 component={Trash2}
@@ -300,7 +300,7 @@ const EhsIncidentReportPage: React.FC = () => {
       render: (row) => (
         <Chip
           size='small'
-          sx={{ backgroundColor: '#dbeafe', color: '#2563eb' }}
+          sx={{ backgroundColor: '#dbeafe', color: 'primary.dark' }}
           label={
             row.action_type === 'investigation'
               ? '调查'
@@ -386,7 +386,7 @@ const EhsIncidentReportPage: React.FC = () => {
           >
             <Card
               sx={{
-                background: 'linear-gradient(to bottom right, #f97316, #ef4444)',
+                background: 'linear-gradient(to bottom right, #f97316, error.main)',
                 color: 'white',
               }}
             >
@@ -442,7 +442,7 @@ const EhsIncidentReportPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(to bottom right, #22c55e, #10b981)',
+                background: 'linear-gradient(to bottom right, #22c55e, success.main)',
                 color: 'white',
               }}
             >
@@ -455,7 +455,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#dcfce7', fontSize: 14 }}>已解决</Typography>
+                    <Typography sx={{ color: 'success.lighter', fontSize: 14 }}>已解决</Typography>
                     <Typography
                       variant='h3'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -463,14 +463,14 @@ const EhsIncidentReportPage: React.FC = () => {
                       {stats.resolved}
                     </Typography>
                   </Box>
-                  <CheckCircle sx={{ fontSize: 48, color: '#dcfce7' }} />
+                  <CheckCircle sx={{ fontSize: 48, color: 'success.lighter' }} />
                 </Box>
               </CardContent>
             </Card>
 
             <Card
               sx={{
-                background: 'linear-gradient(to bottom right, #ef4444, #ec4899)',
+                background: 'linear-gradient(to bottom right, error.main, #ec4899)',
                 color: 'white',
               }}
             >
@@ -483,7 +483,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#fee2e2', fontSize: 14 }}>严重事件</Typography>
+                    <Typography sx={{ color: 'error.lighter', fontSize: 14 }}>严重事件</Typography>
                     <Typography
                       variant='h3'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -491,7 +491,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       {stats.serious}
                     </Typography>
                   </Box>
-                  <AlertTriangle sx={{ fontSize: 48, color: '#fee2e2' }} />
+                  <AlertTriangle sx={{ fontSize: 48, color: 'error.lighter' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -721,7 +721,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: '#fff7ed', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'white7ed', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     sx={{ color: '#c2410c' }}
@@ -735,16 +735,16 @@ const EhsIncidentReportPage: React.FC = () => {
                     {getTypeLabel(selectedIncident.incident_type)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
-                    sx={{ color: '#dc2626' }}
+                    sx={{ color: 'error.dark' }}
                   >
                     严重程度
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedIncident.severity)}</Box>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#fefce8', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     sx={{ color: '#ca8a04' }}
@@ -753,10 +753,10 @@ const EhsIncidentReportPage: React.FC = () => {
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedIncident.status)}</Box>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#eff6ff', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
-                    sx={{ color: '#2563eb' }}
+                    sx={{ color: 'primary.dark' }}
                   >
                     报告人
                   </Typography>
@@ -832,7 +832,7 @@ const EhsIncidentReportPage: React.FC = () => {
                 </Box>
               </Box>
 
-              <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 1 }}>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}

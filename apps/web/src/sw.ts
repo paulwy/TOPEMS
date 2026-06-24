@@ -84,7 +84,7 @@ async function syncData() {
       if (response.ok) {
         await queue.delete(request);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Sync failed:', error);
     }
   }

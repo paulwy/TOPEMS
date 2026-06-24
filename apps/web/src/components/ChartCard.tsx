@@ -26,7 +26,7 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@mui/material';
 
 type ChartType = 'bar' | 'line' | 'area' | 'pie';
 
@@ -105,13 +105,13 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const getTrendIcon = () => {
     if (!trend || trend === 'stable') return null;
     return trend === 'up' ? (
-      <TrendingUp style={{ width: 16, height: 16, color: '#10B981' }} />
+      <TrendingUp style={{ width: 16, height: 16, color: 'success.main' }} />
     ) : (
       <TrendingUp
         style={{
           width: 16,
           height: 16,
-          color: '#EF4444',
+          color: 'error.main',
           transform: 'rotate(180deg)',
         }}
       />
@@ -120,7 +120,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
   const getTrendColor = () => {
     if (!trend || trend === 'stable') return 'text.secondary';
-    return trend === 'up' ? '#10B981' : '#EF4444';
+    return trend === 'up' ? 'success.main' : 'error.main';
   };
 
   return (
@@ -253,7 +253,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 marginBottom: 12,
               }}
             >
-              <AlertCircle style={{ width: 24, height: 24, color: '#EF4444' }} />
+              <AlertCircle style={{ width: 24, height: 24, color: 'error.main' }} />
             </div>
             <Typography
               variant='body1'

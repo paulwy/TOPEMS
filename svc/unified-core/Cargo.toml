@@ -1,7 +1,7 @@
 [package]
 name = "unified-core-service"
 version.workspace = true
-edition.workspace = true
+edition = "2021"
 authors.workspace = true
 description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing + AI"
 
@@ -29,6 +29,10 @@ rust_decimal = { workspace = true, features = ["db-postgres"] }
 futures-util.workspace = true
 bcrypt.workspace = true
 reqwest.workspace = true
+lettre.workspace = true
+handlebars.workspace = true
+dashmap.workspace = true
+lazy_static.workspace = true
 
 [[bin]]
 name = "unified-core-service"

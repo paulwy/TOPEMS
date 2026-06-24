@@ -394,7 +394,7 @@ export function useOfflineManager(options: UseOfflineManagerOptions): UseOffline
       }
 
       onSyncComplete?.();
-    } catch (error) {
+    } catch (error: unknown) {
       onSyncError?.(error as Error);
     } finally {
       setIsSyncing(false);
