@@ -34,7 +34,7 @@ import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { limsApi } from '@/api/lims';
 import type { Sample, InspectionTask, InspectionRecord } from '@/api/lims';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   DetailPageTemplate,
@@ -77,6 +77,7 @@ const LimsSampleDetailPage: React.FC = () => {
     description: '',
     status: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {
@@ -160,21 +161,21 @@ const LimsSampleDetailPage: React.FC = () => {
   const handleEdit = async () => {
     if (!sample) return;
     if (!formData.name.trim()) {
-      toast.error('请输入样品名称');
+      addNotification({ title: '错误', message: '请输入样品名称', type: 'error' });
       return;
     }
     try {
       const response = await limsApi.updateSample(sample.id, formData);
       if (response.success) {
-        toast.success('样品信息更新成功');
+        addNotification({ title: '成功', message: '样品信息更新成功', type: 'success' });
         setShowEditModal(false);
         loadSampleDetail(sample.id);
       } else {
-        toast.error('更新失败，请稍后重试');
+        addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
       }
     } catch (error: unknown) {
       logger.error('更新样品失败:', error);
-      toast.error('更新失败，请稍后重试');
+      addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
     }
   };
 
@@ -184,14 +185,14 @@ const LimsSampleDetailPage: React.FC = () => {
     try {
       const response = await limsApi.deleteSample(sample.id);
       if (response.success) {
-        toast.success('样品删除成功');
+        addNotification({ title: '成功', message: '样品删除成功', type: 'success' });
         navigate('/lims');
       } else {
-        toast.error('删除失败，请稍后重试');
+        addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
       }
     } catch (error: unknown) {
       logger.error('删除样品失败:', error);
-      toast.error('删除失败，请稍后重试');
+      addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
     }
   };
 

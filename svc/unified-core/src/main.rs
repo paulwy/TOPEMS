@@ -36,8 +36,12 @@ use reqwest::Client;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_logging,
+    auth_middleware, create_cors_layer, get_api_info_handler,
     simple_health_check, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
+    RateLimitConfig, RateLimitMiddleware,
+    SecurityHeadersConfig, SecurityHeadersLayer,
+    security_headers_middleware,
+    CompressionConfig, CompressionMiddleware,
 };
 
 use crate::middleware::permission::{require_permission, require_superuser};
@@ -54,6 +58,9 @@ pub struct AppState {
     pub ws_state: std::sync::Arc<modules::communication::ws::WsState>,
     pub http_client: Client,
     pub ai_service: modules::ai::AIService,
+    pub rate_limit_middleware: std::sync::Arc<RateLimitMiddleware>,
+    pub security_headers_layer: std::sync::Arc<SecurityHeadersLayer>,
+    pub compression_middleware: std::sync::Arc<CompressionMiddleware>,
 }
 
 impl axum::extract::FromRef<AppState> for AuthState {
@@ -65,6 +72,24 @@ impl axum::extract::FromRef<AppState> for AuthState {
 impl axum::extract::FromRef<AppState> for std::sync::Arc<modules::communication::ws::WsState> {
     fn from_ref(state: &AppState) -> Self {
         state.ws_state.clone()
+    }
+}
+
+impl axum::extract::FromRef<AppState> for std::sync::Arc<RateLimitMiddleware> {
+    fn from_ref(state: &AppState) -> Self {
+        state.rate_limit_middleware.clone()
+    }
+}
+
+impl axum::extract::FromRef<AppState> for std::sync::Arc<SecurityHeadersLayer> {
+    fn from_ref(state: &AppState) -> Self {
+        state.security_headers_layer.clone()
+    }
+}
+
+impl axum::extract::FromRef<AppState> for std::sync::Arc<CompressionMiddleware> {
+    fn from_ref(state: &AppState) -> Self {
+        state.compression_middleware.clone()
     }
 }
 
@@ -120,6 +145,19 @@ async fn main() {
     let ai_config = modules::ai::AIConfig::default();
     let ai_service = modules::ai::AIService::new(pool.clone(), ai_config);
 
+    let rate_limit_config = RateLimitConfig {
+        enabled: true,
+        requests: 100,
+        window_secs: 60,
+    };
+    let rate_limit_middleware = std::sync::Arc::new(RateLimitMiddleware::new(rate_limit_config));
+
+    let security_headers_config = SecurityHeadersConfig::lenient();
+    let security_headers_layer = std::sync::Arc::new(SecurityHeadersLayer::new(security_headers_config));
+
+    let compression_config = CompressionConfig::default();
+    let compression_middleware = std::sync::Arc::new(CompressionMiddleware::new(compression_config));
+
     let state = AppState {
         auth_state,
         pool,
@@ -127,6 +165,9 @@ async fn main() {
         ws_state: ws_state.clone(),
         http_client,
         ai_service,
+        rate_limit_middleware,
+        security_headers_layer,
+        compression_middleware,
     };
 
     // Spawn background task to cleanup timeout WebSocket connections
@@ -520,6 +561,18 @@ async fn main() {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            security_headers_middleware_fn,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            compression_middleware_fn,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            rate_limit_middleware_fn,
+        ))
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
@@ -661,4 +714,28 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
     });
 
     Json(ApiResponse::success(response, "Detailed health check"))
+}
+
+async fn rate_limit_middleware_fn(
+    State(state): State<AppState>,
+    req: Request<Body>,
+    next: axum::middleware::Next,
+) -> Response {
+    state.rate_limit_middleware.clone().middleware(req, next).await
+}
+
+async fn security_headers_middleware_fn(
+    State(state): State<AppState>,
+    req: Request<Body>,
+    next: axum::middleware::Next,
+) -> Response {
+    security_headers_middleware(state.security_headers_layer.clone(), req, next).await
+}
+
+async fn compression_middleware_fn(
+    State(state): State<AppState>,
+    req: Request<Body>,
+    next: axum::middleware::Next,
+) -> Response {
+    state.compression_middleware.clone().middleware(req, next).await
 }

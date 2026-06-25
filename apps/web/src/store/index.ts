@@ -22,6 +22,7 @@ export interface Notification {
   message: string;
   type: 'info' | 'success' | 'error' | 'warning';
   timestamp: number;
+  duration?: number;
 }
 
 // 通知设置类型

@@ -23,7 +23,6 @@ import type {
 } from '@/api/notification';
 import { getTemplates, createTemplate, updateTemplate, deleteTemplate } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/NotificationContainer';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -440,11 +439,6 @@ const NotificationTemplatesPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       <ListPageTemplate
         title='通知模板管理'
         subtitle='管理和配置通知消息模板'

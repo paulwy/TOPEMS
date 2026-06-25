@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "../../components/ThemeProvider";
-import { ToastProvider } from "../../components/notification/ToastProvider";
+import { NotificationProvider } from "../../components/notification/NotificationProvider";
 import { LoadingProvider } from "../../components/LoadingProvider";
 import ErrorBoundary from "../../components/ErrorBoundary";
 
@@ -38,11 +38,11 @@ const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <ErrorBoundary>
       <ThemeProvider>
-        <ToastProvider>
+        <NotificationProvider>
           <LoadingProvider>
             <BrowserRouter>{ui}</BrowserRouter>
           </LoadingProvider>
-        </ToastProvider>
+        </NotificationProvider>
       </ThemeProvider>
     </ErrorBoundary>,
   );

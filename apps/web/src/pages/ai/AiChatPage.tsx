@@ -36,8 +36,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { aiApi, type QAHistoryItem } from '../../api/ai';
-import { useNotification } from '../../hooks';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 
 interface ChatMessage {
   id: string;
@@ -72,7 +72,7 @@ const CONFIDENCE_COLORS: Record<string, string> = {
 
 export const AiChatPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useNotification();
+  const addNotification = useAppStore((state) => state.addNotification);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');

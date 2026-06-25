@@ -22,7 +22,6 @@ import {
   type CreateTemplateRequest,
 } from '@/api/template';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/NotificationContainer';
 import { apiLogger } from '@/utils/logger';
 import {
   Box,
@@ -171,11 +170,6 @@ const TemplateManagementPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       {/* Header */}
       <Box
         sx={{

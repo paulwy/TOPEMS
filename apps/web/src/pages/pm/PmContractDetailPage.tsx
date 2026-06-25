@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import {
-  ArrowLeft,
   Edit,
   FileText,
   Calendar,
@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import type { Contract, ContractMilestone, ContractPaymentSchedule } from '@/api/pm';
 import { pmApi } from '@/api/pm';
+import { BackButton } from '@/components/common';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '草稿',
@@ -163,20 +164,7 @@ const PmContractDetailPage: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <button
-              onClick={() => navigate('/pm/contracts')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                color: 'text.secondary',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <ArrowLeft size={20} />
-            </button>
+            <BackButton href='/pm/contracts' />
             <Box>
               <Typography
                 variant='h4'

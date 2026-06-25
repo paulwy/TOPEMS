@@ -12,11 +12,21 @@ import {
   Typography,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, ClipboardList, ShoppingCart, Eye } from 'lucide-react';
+import {
+  Plus,
+  ClipboardList,
+  ShoppingCart,
+  Eye,
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  Play,
+} from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { srmApi } from '@/api/srm';
-import type { PurchaseOrder } from '@/api/srm';
-import { toast } from 'react-toastify';
+import type { PurchaseOrder, CreatePurchaseOrderRequest } from '@/api/srm';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 const SrmOrderPage: React.FC = () => {
@@ -24,14 +34,16 @@ const SrmOrderPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
-    order_no: '',
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Partial<CreatePurchaseOrderRequest>>({
+    po_no: '',
     supplier_id: '',
-    supplier_name: '',
-    items: '',
-    total_amount: '',
+    total_amount: 0,
     status: 'pending',
+    currency: 'CNY',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadOrders();
@@ -128,6 +140,35 @@ const SrmOrderPage: React.FC = () => {
         icon: <Eye style={{ width: 16, height: 16 }} />,
         onClick: () => {},
       },
+      {
+        label: '编辑',
+        icon: <Edit2 style={{ width: 16, height: 16 }} />,
+        onClick: handleEdit,
+      },
+      {
+        label: '删除',
+        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        onClick: handleDelete,
+        color: 'error',
+      },
+      {
+        label: '确认',
+        icon: <Check style={{ width: 16, height: 16 }} />,
+        onClick: handleConfirm,
+        color: 'success',
+      },
+      {
+        label: '处理中',
+        icon: <Play style={{ width: 16, height: 16 }} />,
+        onClick: handleProcess,
+        color: 'primary',
+      },
+      {
+        label: '关闭',
+        icon: <X style={{ width: 16, height: 16 }} />,
+        onClick: handleClose,
+        color: 'error',
+      },
     ],
     []
   );
@@ -143,12 +184,11 @@ const SrmOrderPage: React.FC = () => {
 
   const handleCreate = () => {
     setFormData({
-      order_no: '',
+      po_no: '',
       supplier_id: '',
-      supplier_name: '',
-      items: '',
-      total_amount: '',
+      total_amount: 0,
       status: 'pending',
+      currency: 'CNY',
     });
     setShowCreateModal(true);
   };
@@ -156,18 +196,132 @@ const SrmOrderPage: React.FC = () => {
   const handleSave = async () => {
     try {
       await srmApi.createPurchaseOrder({
-        po_no: formData.order_no,
-        supplier_id: formData.supplier_id,
-        total_amount: parseFloat(formData.total_amount),
-        status: formData.status,
-        currency: 'CNY',
+        po_no: formData.po_no || '',
+        supplier_id: formData.supplier_id || '',
+        total_amount: formData.total_amount || 0,
+        status: formData.status || 'pending',
+        currency: formData.currency || 'CNY',
       });
-      toast.success('订单创建成功');
+      addNotification({ title: '成功', message: '订单创建成功', type: 'success' });
       setShowCreateModal(false);
       loadOrders();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建订单失败:', err);
+    }
+  };
+
+  const handleEdit = (row: PurchaseOrder) => {
+    setEditingId(row.id);
+    setFormData({
+      po_no: row.po_no,
+      supplier_id: row.supplier_id,
+      total_amount: row.total_amount || 0,
+      status:
+        row.status === '待处理'
+          ? 'pending'
+          : row.status === '处理中'
+            ? 'processing'
+            : row.status === '已交付'
+              ? 'delivered'
+              : row.status === '已完成'
+                ? 'completed'
+                : row.status === '已取消'
+                  ? 'cancelled'
+                  : row.status,
+      currency: row.currency,
+      remarks: row.remarks,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId) return;
+    try {
+      await srmApi.updatePurchaseOrder(editingId, {
+        po_no: formData.po_no || '',
+        supplier_id: formData.supplier_id || '',
+        total_amount: formData.total_amount || 0,
+        status: formData.status || 'pending',
+        currency: formData.currency || 'CNY',
+        remarks: formData.remarks,
+      });
+      addNotification({ title: '成功', message: '订单更新成功', type: 'success' });
+      setShowEditModal(false);
+      setEditingId(null);
+      loadOrders();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+      apiLogger.error('更新订单失败:', err);
+    }
+  };
+
+  const handleDelete = async (row: PurchaseOrder) => {
+    try {
+      const response = await srmApi.deletePurchaseOrder(row.id);
+      if (response.success) {
+        addNotification({ title: '成功', message: '订单删除成功', type: 'success' });
+        loadOrders();
+      } else {
+        addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      }
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除订单失败:', err);
+    }
+  };
+
+  const handleConfirm = async (row: PurchaseOrder) => {
+    try {
+      await srmApi.updatePurchaseOrder(row.id, {
+        po_no: row.po_no,
+        supplier_id: row.supplier_id,
+        total_amount: row.total_amount || 0,
+        status: 'processing',
+        currency: row.currency,
+        remarks: row.remarks,
+      });
+      addNotification({ title: '成功', message: '订单已确认', type: 'success' });
+      loadOrders();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '确认失败', type: 'error' });
+      apiLogger.error('确认订单失败:', err);
+    }
+  };
+
+  const handleProcess = async (row: PurchaseOrder) => {
+    try {
+      await srmApi.updatePurchaseOrder(row.id, {
+        po_no: row.po_no,
+        supplier_id: row.supplier_id,
+        total_amount: row.total_amount || 0,
+        status: 'delivered',
+        currency: row.currency,
+        remarks: row.remarks,
+      });
+      addNotification({ title: '成功', message: '订单已交付', type: 'success' });
+      loadOrders();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+      apiLogger.error('更新订单状态失败:', err);
+    }
+  };
+
+  const handleClose = async (row: PurchaseOrder) => {
+    try {
+      await srmApi.updatePurchaseOrder(row.id, {
+        po_no: row.po_no,
+        supplier_id: row.supplier_id,
+        total_amount: row.total_amount || 0,
+        status: 'completed',
+        currency: row.currency,
+        remarks: row.remarks,
+      });
+      addNotification({ title: '成功', message: '订单已关闭', type: 'success' });
+      loadOrders();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '关闭失败', type: 'error' });
+      apiLogger.error('关闭订单失败:', err);
     }
   };
 
@@ -412,16 +566,9 @@ const SrmOrderPage: React.FC = () => {
               <TextField
                 fullWidth
                 label='订单编号 *'
-                value={formData.order_no}
-                onChange={(e) => setFormData({ ...formData, order_no: e.target.value })}
+                value={formData.po_no}
+                onChange={(e) => setFormData({ ...formData, po_no: e.target.value })}
                 placeholder='请输入订单编号'
-              />
-              <TextField
-                fullWidth
-                label='供应商名称'
-                value={formData.supplier_name}
-                onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
-                placeholder='请输入供应商名称'
               />
               <TextField
                 fullWidth
@@ -435,7 +582,9 @@ const SrmOrderPage: React.FC = () => {
                 label='订单金额'
                 type='number'
                 value={formData.total_amount}
-                onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
+                }
                 placeholder='请输入订单金额'
               />
             </Box>
@@ -454,12 +603,12 @@ const SrmOrderPage: React.FC = () => {
             </TextField>
             <TextField
               fullWidth
-              label='订单明细(JSON)'
-              value={formData.items}
-              onChange={(e) => setFormData({ ...formData, items: e.target.value })}
-              placeholder='[{"product_name": "物料A", "quantity": 100, "price": 10}]'
+              label='备注'
+              value={formData.remarks}
+              onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+              placeholder='请输入备注'
               multiline
-              rows={3}
+              rows={2}
             />
           </Box>
         </DialogContent>
@@ -476,6 +625,88 @@ const SrmOrderPage: React.FC = () => {
             sx={{ bgcolor: 'primary.main' }}
           >
             保存
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingId(null);
+        }}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>编辑订单</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='订单编号 *'
+                value={formData.po_no}
+                onChange={(e) => setFormData({ ...formData, po_no: e.target.value })}
+                placeholder='请输入订单编号'
+              />
+              <TextField
+                fullWidth
+                label='供应商ID'
+                value={formData.supplier_id}
+                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                placeholder='请输入供应商ID'
+              />
+              <TextField
+                fullWidth
+                label='订单金额'
+                type='number'
+                value={formData.total_amount}
+                onChange={(e) =>
+                  setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='请输入订单金额'
+              />
+              <TextField
+                fullWidth
+                select
+                label='状态'
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value='pending'>待处理</option>
+                <option value='processing'>处理中</option>
+                <option value='delivered'>已交付</option>
+                <option value='completed'>已完成</option>
+                <option value='cancelled'>已取消</option>
+              </TextField>
+            </Box>
+            <TextField
+              fullWidth
+              label='备注'
+              value={formData.remarks}
+              onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+              placeholder='请输入备注'
+              multiline
+              rows={2}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => {
+              setShowEditModal(false);
+              setEditingId(null);
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdate}
+            sx={{ bgcolor: 'primary.main' }}
+          >
+            更新
           </Button>
         </DialogActions>
       </Dialog>

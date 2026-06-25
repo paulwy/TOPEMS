@@ -15,8 +15,8 @@ import type {
   ProductionRecord,
   CreateProductionRecordRequest,
   UpdateProductionRecordRequest,
-} from '@/api/professional/mes/mes';
-import { mesApi } from '@/api/professional/mes/mes';
+} from '@/api/mes';
+import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {

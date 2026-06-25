@@ -5,6 +5,8 @@ export { default as createLogger, type LoggerOptions, type LogLevel } from './lo
 export * from './format';
 export { default as session, type SessionUser } from './session';
 export * from './errors';
+export { lazyImport, default as lazyImportDefault } from './lazyImport';
+export type { LazyImportOptions } from './lazyImport';
 
 export const utils = {
   createLogger: createLogger,

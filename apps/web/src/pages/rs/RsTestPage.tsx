@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Chip,
@@ -29,67 +29,17 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
-
-interface TestCase {
-  id: string;
-  case_no: string;
-  case_name: string;
-  case_type: string;
-  priority: string;
-  status: string;
-  related_requirement: string;
-}
-
-const mockTestCases: TestCase[] = [
-  {
-    id: '1',
-    case_no: 'TC-001',
-    case_name: '用户登录功能测试',
-    case_type: '功能测试',
-    priority: 'high',
-    status: 'passed',
-    related_requirement: 'REQ-001',
-  },
-  {
-    id: '2',
-    case_no: 'TC-002',
-    case_name: '用户注册流程测试',
-    case_type: '功能测试',
-    priority: 'high',
-    status: 'passed',
-    related_requirement: 'REQ-002',
-  },
-  {
-    id: '3',
-    case_no: 'TC-003',
-    case_name: '数据导出性能测试',
-    case_type: '性能测试',
-    priority: 'medium',
-    status: 'failed',
-    related_requirement: 'REQ-003',
-  },
-  {
-    id: '4',
-    case_no: 'TC-004',
-    case_name: '界面兼容性测试',
-    case_type: 'UI测试',
-    priority: 'medium',
-    status: 'pending',
-    related_requirement: 'REQ-004',
-  },
-  {
-    id: '5',
-    case_no: 'TC-005',
-    case_name: '压力测试',
-    case_type: '压力测试',
-    priority: 'low',
-    status: 'pending',
-    related_requirement: 'REQ-005',
-  },
-];
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/api/rs';
 
 const RsTestPage: React.FC = () => {
-  const [testCases, setTestCases] = useState<TestCase[]>(mockTestCases);
+  const { addNotification } = useAppStore();
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [caseTypeFilter, setCaseTypeFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
@@ -105,16 +55,39 @@ const RsTestPage: React.FC = () => {
   });
   const [testReportAttachments, setTestReportAttachments] = useState<string[]>([]);
 
-  const filteredTestCases = testCases.filter((tc) => {
-    const matchesSearch =
-      tc.case_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tc.case_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tc.related_requirement.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !caseTypeFilter || tc.case_type === caseTypeFilter;
-    const matchesPriority = !priorityFilter || tc.priority === priorityFilter;
-    const matchesStatus = !statusFilter || tc.status === statusFilter;
-    return matchesSearch && matchesType && matchesPriority && matchesStatus;
-  });
+  useEffect(() => {
+    loadTestCases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, caseTypeFilter, priorityFilter, statusFilter, page, rowsPerPage]);
+
+  const loadTestCases = async () => {
+    try {
+      setLoading(true);
+      const params: any = {
+        page: page + 1,
+        page_size: rowsPerPage,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (caseTypeFilter) params.case_type = caseTypeFilter;
+      if (priorityFilter) params.priority = priorityFilter;
+      if (statusFilter) params.status = statusFilter;
+
+      const response = await rsApi.listTests(params);
+      if (response.success && response.data) {
+        setTestCases(response.data.test_cases || []);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error: unknown) {
+      console.error('加载测试用例失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载测试用例',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const uniqueCaseTypes = useMemo(
     () => [...new Set(testCases.map((tc) => tc.case_type))],
@@ -189,30 +162,57 @@ const RsTestPage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
-  const handleExecuteTest = (tc: TestCase) => {
-    setTestCases(
-      testCases.map((item) => (item.id === tc.id ? { ...item, status: 'passed' } : item))
-    );
+  const handleExecuteTest = async (tc: TestCase) => {
+    try {
+      const updateData: UpdateTestCaseRequest = { status: 'passed' };
+      await rsApi.updateTest(tc.id, updateData);
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '测试用例已执行',
+      });
+      loadTestCases();
+    } catch (error: unknown) {
+      console.error('执行测试失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '执行测试失败',
+      });
+    }
   };
 
-  const handleCreateCase = () => {
-    const newCase: TestCase = {
-      id: String(Date.now()),
-      case_no: `TC-${String(testCases.length + 1).padStart(3, '0')}`,
-      case_name: newCaseForm.case_name,
-      case_type: newCaseForm.case_type,
-      priority: newCaseForm.priority,
-      status: 'pending',
-      related_requirement: newCaseForm.related_requirement,
-    };
-    setTestCases([newCase, ...testCases]);
-    setNewCaseDialogOpen(false);
-    setNewCaseForm({
-      case_name: '',
-      case_type: '功能测试',
-      priority: 'medium',
-      related_requirement: '',
-    });
+  const handleCreateCase = async () => {
+    try {
+      const createData: CreateTestCaseRequest = {
+        case_name: newCaseForm.case_name,
+        case_type: newCaseForm.case_type,
+        priority: newCaseForm.priority,
+        related_requirement: newCaseForm.related_requirement,
+      };
+      await rsApi.createTest(createData);
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新测试用例已创建',
+      });
+      setNewCaseDialogOpen(false);
+      setNewCaseForm({
+        case_name: '',
+        case_type: '功能测试',
+        priority: 'medium',
+        related_requirement: '',
+      });
+      setTestReportAttachments([]);
+      loadTestCases();
+    } catch (error: unknown) {
+      console.error('创建测试用例失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建测试用例',
+      });
+    }
   };
 
   const columns = useMemo<ColumnDef<TestCase>[]>(
@@ -319,7 +319,6 @@ const RsTestPage: React.FC = () => {
         onClick: () => {},
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -378,13 +377,21 @@ const RsTestPage: React.FC = () => {
           href: '/dashboard',
         }}
         columns={columns}
-        data={filteredTestCases}
+        data={testCases}
+        loading={loading}
         searchable
         searchPlaceholder='搜索用例编号、名称...'
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
         rowActions={rowActions}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
         actions={[
           {
             label: '新建用例',

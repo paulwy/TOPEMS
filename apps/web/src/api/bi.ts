@@ -146,6 +146,70 @@ export interface ModuleAnalytics {
   [key: string]: any;
 }
 
+export interface DataSource {
+  id: string;
+  name: string;
+  type: string;
+  status: 'active' | 'inactive' | 'error';
+  host: string;
+  database: string;
+  port?: number;
+  username?: string;
+  connection_string?: string;
+  last_sync?: string;
+  data_volume?: number;
+  sync_frequency?: string;
+  description?: string;
+  is_enabled?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ComparisonAnalysis {
+  id: string;
+  name: string;
+  description?: string;
+  comparison_type: string;
+  dimension_a: string;
+  dimension_b: string;
+  indicators: string[];
+  filters?: Record<string, any>;
+  status: 'draft' | 'running' | 'completed' | 'failed';
+  last_run_at?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ComparisonResult {
+  id: string;
+  comparison_id: string;
+  status: 'success' | 'failed';
+  data: Array<{
+    indicator: string;
+    value_a: number;
+    value_b: number;
+    difference: number;
+    change_rate: number;
+  }>;
+  summary?: Record<string, any>;
+  generated_at: string;
+}
+
+export interface SyncRecord {
+  id: string;
+  data_source_id: string;
+  data_source_name: string;
+  status: 'pending' | 'running' | 'success' | 'failed';
+  sync_type: string;
+  records_count?: number;
+  affected_records?: number;
+  error_message?: string;
+  started_at: string;
+  completed_at?: string;
+  duration_ms?: number;
+}
+
 export async function fetchDashboards() {
   return await apiClient.bi.get('/api/bi/dashboard');
 }
@@ -384,5 +448,182 @@ export async function fetchPdmBatchStatusDistribution() {
 export async function fetchModuleDetailData(moduleId: string) {
   return await apiClient.bi.get(`/api/bi/${moduleId}`);
 }
+
+// 数据源管理API
+export async function listDataSources(params?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  type?: string;
+  status?: string;
+}) {
+  return await apiClient.bi.get('/api/bi/data-sources', { params });
+}
+
+export async function getDataSource(id: string) {
+  return await apiClient.bi.get(`/api/bi/data-sources/${id}`);
+}
+
+export async function createDataSource(data: Partial<DataSource>) {
+  return await apiClient.bi.post('/api/bi/data-sources', data);
+}
+
+export async function updateDataSource(id: string, data: Partial<DataSource>) {
+  return await apiClient.bi.put(`/api/bi/data-sources/${id}`, data);
+}
+
+export async function deleteDataSource(id: string) {
+  return await apiClient.bi.delete(`/api/bi/data-sources/${id}`);
+}
+
+export async function testDataSource(id: string) {
+  return await apiClient.bi.post(`/api/bi/data-sources/${id}/test`);
+}
+
+export async function refreshDataSource(id: string) {
+  return await apiClient.bi.post(`/api/bi/data-sources/${id}/refresh`);
+}
+
+// 对比分析API
+export async function listComparisons(params?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+}) {
+  return await apiClient.bi.get('/api/bi/comparison-analysis', { params });
+}
+
+export async function getComparison(id: string) {
+  return await apiClient.bi.get(`/api/bi/comparison-analysis/${id}`);
+}
+
+export async function createComparison(data: Partial<ComparisonAnalysis>) {
+  return await apiClient.bi.post('/api/bi/comparison-analysis', data);
+}
+
+export async function updateComparison(id: string, data: Partial<ComparisonAnalysis>) {
+  return await apiClient.bi.put(`/api/bi/comparison-analysis/${id}`, data);
+}
+
+export async function deleteComparison(id: string) {
+  return await apiClient.bi.delete(`/api/bi/comparison-analysis/${id}`);
+}
+
+export async function runComparison(id: string) {
+  return await apiClient.bi.post(`/api/bi/comparison-analysis/${id}/run`);
+}
+
+export async function getComparisonResult(id: string) {
+  return await apiClient.bi.get(`/api/bi/comparison-analysis/${id}/result`);
+}
+
+// 数据同步API
+export async function listSyncRecords(params?: {
+  page?: number;
+  pageSize?: number;
+  dataSourceId?: string;
+  status?: string;
+}) {
+  return await apiClient.bi.get('/api/bi/sync-records', { params });
+}
+
+export async function getSyncRecord(id: string) {
+  return await apiClient.bi.get(`/api/bi/sync-records/${id}`);
+}
+
+export async function deleteSyncRecord(id: string) {
+  return await apiClient.bi.delete(`/api/bi/sync-records/${id}`);
+}
+
+export async function retrySync(id: string) {
+  return await apiClient.bi.post(`/api/bi/sync-records/${id}/retry`);
+}
+
+export const biApi = {
+  // Dashboard API
+  fetchDashboards,
+  fetchDashboard,
+  createDashboard,
+  updateDashboard,
+  deleteDashboard,
+  cloneDashboard,
+  fetchPublicDashboards,
+  fetchUserDashboards,
+  fetchDashboardTemplates,
+  fetchDashboardTemplate,
+  createDashboardTemplate,
+  updateDashboardTemplate,
+  deleteDashboardTemplate,
+  createDashboardFromTemplate,
+  // Widget API
+  fetchWidgets,
+  fetchWidgetsByDashboard,
+  fetchWidget,
+  createWidget,
+  updateWidget,
+  deleteWidget,
+  fetchWidgetData,
+  // Report API
+  fetchReports,
+  fetchReport,
+  createReport,
+  updateReport,
+  deleteReport,
+  // Analytics API
+  fetchSummaryDashboard,
+  fetchDevelopmentAnalytics,
+  fetchQualityAnalytics,
+  fetchProductionAnalytics,
+  fetchLaboratoryAnalytics,
+  fetchAnalyticsOverview,
+  fetchModuleAnalytics,
+  fetchModuleData,
+  fetchModuleDetailData,
+  // Module Detail API
+  fetchRsSummary,
+  fetchRsProjectTimeline,
+  fetchRsExperimentSuccessRate,
+  fetchRsMaterialUsage,
+  fetchRsProjectRanking,
+  fetchLimsSummary,
+  fetchLimsSampleTimeline,
+  fetchLimsTestPassRate,
+  fetchLimsInstrumentUsage,
+  fetchLimsSampleStatusDistribution,
+  fetchQmsSummary,
+  fetchQmsQualityTrend,
+  fetchQmsIssueDistribution,
+  fetchEhsSummary,
+  fetchEhsRiskDistribution,
+  fetchEhsIncidentTrend,
+  fetchSrmSummary,
+  fetchSrmSupplierRanking,
+  fetchSrmOrderTimeline,
+  fetchPdmSummary,
+  fetchPdmProductionTrend,
+  fetchPdmBatchStatusDistribution,
+  // Data Source API
+  listDataSources,
+  getDataSource,
+  createDataSource,
+  updateDataSource,
+  deleteDataSource,
+  testDataSource,
+  refreshDataSource,
+  // Comparison Analysis API
+  listComparisons,
+  getComparison,
+  createComparison,
+  updateComparison,
+  deleteComparison,
+  runComparison,
+  getComparisonResult,
+  // Sync Records API
+  listSyncRecords,
+  getSyncRecord,
+  deleteSyncRecord,
+  retrySync,
+};
 
 export default apiClient.bi;

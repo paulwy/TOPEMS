@@ -13,12 +13,12 @@ import {
   Typography,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, ScrollText, Search, FileText } from 'lucide-react';
+import { Plus, ScrollText, Search, FileText, Edit2, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { srmApi } from '@/api/srm';
 import type { SupplierContract, CreateSupplierContractRequest } from '@/api/srm';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 interface ContractWithAmount extends SupplierContract {
@@ -30,18 +30,21 @@ const SrmContractPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Partial<CreateSupplierContractRequest>>({
     contract_no: '',
     supplier_id: '',
     supplier_name: '',
     title: '',
-    total_amount: '',
-    contract_type: '',
+    total_amount: 0,
+    contract_type: 'purchase',
     currency: 'CNY',
     start_date: '',
     end_date: '',
     status: 'active',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadContracts();
@@ -147,8 +150,8 @@ const SrmContractPage: React.FC = () => {
       supplier_id: '',
       supplier_name: '',
       title: '',
-      total_amount: '',
-      contract_type: '',
+      total_amount: 0,
+      contract_type: 'purchase',
       currency: 'CNY',
       start_date: '',
       end_date: '',
@@ -160,23 +163,89 @@ const SrmContractPage: React.FC = () => {
   const handleSave = async () => {
     try {
       await srmApi.createContract({
-        contract_no: formData.contract_no,
-        supplier_id: formData.supplier_id,
+        contract_no: formData.contract_no || '',
+        supplier_id: formData.supplier_id || '',
         supplier_name: formData.supplier_name,
-        title: formData.title,
+        title: formData.title || '',
         contract_type: formData.contract_type || 'purchase',
-        total_amount: parseFloat(formData.total_amount),
-        currency: formData.currency,
+        total_amount: formData.total_amount || 0,
+        currency: formData.currency || 'CNY',
         start_date: formData.start_date,
         end_date: formData.end_date,
-        status: formData.status,
+        status: formData.status || 'active',
       });
-      toast.success('合同创建成功');
+      addNotification({ title: '成功', message: '合同创建成功', type: 'success' });
       setShowCreateModal(false);
       loadContracts();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建合同失败:', err);
+    }
+  };
+
+  const handleEdit = (row: ContractWithAmount) => {
+    setEditingId(row.id);
+    setFormData({
+      contract_no: row.contract_no,
+      supplier_id: row.supplier_id,
+      supplier_name: row.supplier_name,
+      title: row.title,
+      total_amount: row.total_amount || 0,
+      contract_type: row.contract_type || 'purchase',
+      currency: row.currency,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      status:
+        row.status === '有效'
+          ? 'active'
+          : row.status === '已过期'
+            ? 'expired'
+            : row.status === '草稿'
+              ? 'draft'
+              : row.status === '已终止'
+                ? 'terminated'
+                : row.status,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId) return;
+    try {
+      await srmApi.updateContract(editingId, {
+        contract_no: formData.contract_no || '',
+        supplier_id: formData.supplier_id || '',
+        supplier_name: formData.supplier_name,
+        title: formData.title || '',
+        contract_type: formData.contract_type || 'purchase',
+        total_amount: formData.total_amount || 0,
+        currency: formData.currency || 'CNY',
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        status: formData.status || 'active',
+      });
+      addNotification({ title: '成功', message: '合同更新成功', type: 'success' });
+      setShowEditModal(false);
+      setEditingId(null);
+      loadContracts();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+      apiLogger.error('更新合同失败:', err);
+    }
+  };
+
+  const handleDelete = async (row: ContractWithAmount) => {
+    try {
+      const response = await srmApi.deleteContract(row.id);
+      if (response.success) {
+        addNotification({ title: '成功', message: '合同删除成功', type: 'success' });
+        loadContracts();
+      } else {
+        addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      }
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除合同失败:', err);
     }
   };
 
@@ -560,7 +629,9 @@ const SrmContractPage: React.FC = () => {
                 label='合同金额'
                 type='number'
                 value={formData.total_amount}
-                onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
+                }
                 placeholder='请输入合同金额'
               />
               <TextField
@@ -605,6 +676,106 @@ const SrmContractPage: React.FC = () => {
             sx={{ bgcolor: '#ec4899' }}
           >
             保存
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingId(null);
+        }}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>编辑合同</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='合同编号 *'
+                value={formData.contract_no}
+                onChange={(e) => setFormData({ ...formData, contract_no: e.target.value })}
+                placeholder='请输入合同编号'
+              />
+              <TextField
+                fullWidth
+                label='合同名称 *'
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder='请输入合同名称'
+              />
+              <TextField
+                fullWidth
+                label='供应商名称'
+                value={formData.supplier_name}
+                onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+                placeholder='请输入供应商名称'
+              />
+              <TextField
+                fullWidth
+                label='供应商ID'
+                value={formData.supplier_id}
+                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                placeholder='请输入供应商ID'
+              />
+              <TextField
+                fullWidth
+                label='合同金额'
+                type='number'
+                value={formData.total_amount}
+                onChange={(e) =>
+                  setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='请输入合同金额'
+              />
+              <TextField
+                fullWidth
+                select
+                label='状态'
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value='active'>有效</option>
+                <option value='draft'>草稿</option>
+                <option value='expired'>已过期</option>
+                <option value='terminated'>已终止</option>
+              </TextField>
+              <TextField
+                fullWidth
+                label='开始日期'
+                type='date'
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              />
+              <TextField
+                fullWidth
+                label='结束日期'
+                type='date'
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => {
+              setShowEditModal(false);
+              setEditingId(null);
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdate}
+            sx={{ bgcolor: '#ec4899' }}
+          >
+            更新
           </Button>
         </DialogActions>
       </Dialog>

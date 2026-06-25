@@ -8,26 +8,33 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Rating,
+  Grid,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, TrendingUp, Award, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { scmApi } from '@/api/scm';
-import type { Supplier } from '@/api/scm';
-import { toast } from 'react-toastify';
+import type { Supplier, SupplierPerformance } from '@/api/scm';
+import { useAppStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
 const ScmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supplierPerformance, setSupplierPerformance] = useState<SupplierPerformance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [performanceLoading, setPerformanceLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedPerformance, setSelectedPerformance] = useState<SupplierPerformance | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     short_name: '',
@@ -39,9 +46,11 @@ const ScmSupplierPage: React.FC = () => {
     tax_number: '',
     status: 'active',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadSuppliers();
+    loadSupplierPerformance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, searchTerm]);
 
@@ -57,23 +66,41 @@ const ScmSupplierPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      toast.error('加载供应商失败');
+      addNotification({ title: '错误', message: '加载供应商失败', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
+  const loadSupplierPerformance = useCallback(async () => {
+    try {
+      setPerformanceLoading(true);
+      const response = await scmApi.supplyChainDashboard.supplierPerformance({
+        page: 1,
+        pageSize: 20,
+      });
+      if (response.success && response.data) {
+        setSupplierPerformance(response.data.items || []);
+      }
+    } catch (error: unknown) {
+      apiLogger.error('加载供应商绩效失败:', error);
+      addNotification({ title: '错误', message: '加载供应商绩效失败', type: 'error' });
+    } finally {
+      setPerformanceLoading(false);
+    }
+  }, [addNotification]);
+
   const handleCreate = async () => {
     try {
       const response = await scmApi.suppliers.create(formData);
       if (response.success) {
-        toast.success('创建成功');
+        addNotification({ title: '成功', message: '创建成功', type: 'success' });
         setShowCreateModal(false);
         // 重置分页到第一页，确保新数据显示在列表中
         setCurrentPage(1);
       }
     } catch (error: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
     }
   };
 
@@ -119,7 +146,88 @@ const ScmSupplierPage: React.FC = () => {
         />
       ),
     },
+    {
+      id: 'performance',
+      label: '绩效评分',
+      align: 'center',
+      render: (row) => {
+        const performance = supplierPerformance.find(
+          (p) => p.supplier_id === row.id
+        );
+        if (!performance) {
+          return <Box>-</Box>;
+        }
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Rating
+              value={performance.overall_score || 0}
+              precision={0.5}
+              max={100}
+              readOnly
+              size='small'
+              sx={{
+                '& .MuiRating-iconFilled': {
+                  color:
+                    performance.overall_score >= 80
+                      ? '#10B981'
+                      : performance.overall_score >= 60
+                      ? '#F59E0B'
+                      : '#EF4444',
+                },
+              }}
+            />
+            <Box sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+              {performance.overall_score || '-'}
+            </Box>
+          </Box>
+        );
+      },
+    },
+    {
+      id: 'grade',
+      label: '评级',
+      align: 'center',
+      render: (row) => {
+        const performance = supplierPerformance.find(
+          (p) => p.supplier_id === row.id
+        );
+        if (!performance?.grade) {
+          return <Box>-</Box>;
+        }
+        return (
+          <Chip
+            label={performance.grade}
+            color={
+              performance.grade === 'A'
+                ? 'success'
+                : performance.grade === 'B'
+                ? 'primary'
+                : performance.grade === 'C'
+                ? 'warning'
+                : 'error'
+            }
+            size='small'
+          />
+        );
+      },
+    },
   ];
+
+  const handleViewPerformance = (supplier: Supplier) => {
+    const performance = supplierPerformance.find(
+      (p) => p.supplier_id === supplier.id
+    );
+    if (performance) {
+      setSelectedPerformance(performance);
+      setShowPerformanceModal(true);
+    } else {
+      addNotification({
+        title: '提示',
+        message: '暂无该供应商绩效数据',
+        type: 'info',
+      });
+    }
+  };
 
   // 行操作
   const rowActions = [
@@ -127,6 +235,11 @@ const ScmSupplierPage: React.FC = () => {
       label: '查看',
       icon: <Eye size={14} />,
       onClick: (row: Supplier) => handleViewDetail(row),
+    },
+    {
+      label: '绩效',
+      icon: <TrendingUp size={14} />,
+      onClick: (row: Supplier) => handleViewPerformance(row),
     },
     {
       label: '详情',
@@ -309,6 +422,120 @@ const ScmSupplierPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 供应商绩效详情模态框 */}
+      <Dialog
+        open={showPerformanceModal}
+        onClose={() => setShowPerformanceModal(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>供应商绩效详情</DialogTitle>
+        <DialogContent>
+          {selectedPerformance && (
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
+                供应商名称
+              </Typography>
+              <Typography sx={{ fontSize: '1.125rem', fontWeight: 500 }}>
+                {selectedPerformance.supplier_name}
+              </Typography>
+
+              <Grid container spacing={3} sx={{ mt: 3 }}>
+                <Grid size={{ xs: 6, sm: 6 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Award size={20} color='primary' />
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                      综合评级
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mt: 1 }}>
+                    <Chip
+                      label={selectedPerformance.grade || '-'}
+                      color={
+                        selectedPerformance.grade === 'A'
+                          ? 'success'
+                          : selectedPerformance.grade === 'B'
+                          ? 'primary'
+                          : selectedPerformance.grade === 'C'
+                          ? 'warning'
+                          : 'error'
+                      }
+                      sx={{ fontSize: '1.25rem', padding: '8px 16px' }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 6, sm: 6 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Target size={20} color='primary' />
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                      排名
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ mt: 1, fontSize: '1.5rem', fontWeight: 600 }}>
+                    {selectedPerformance.rank ? `第 ${selectedPerformance.rank} 名` : '-'}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mt: 4 }}
+              >
+                绩效评分详情
+              </Typography>
+
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>综合得分</Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {selectedPerformance.overall_score}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>准时交付率</Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {selectedPerformance.on_time_delivery_rate}%
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>质量合格率</Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {selectedPerformance.quality_pass_rate}%
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>价格稳定性</Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {selectedPerformance.price_stability_score}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>服务评分</Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {selectedPerformance.service_score}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>合作订单数</Typography>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {selectedPerformance.order_count}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPerformanceModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
     </>

@@ -18,7 +18,7 @@ import {
 import type { Plugin, PluginReview, PluginVersion } from '@/api/plugin';
 import { getPluginReviews, getPluginVersions, submitPluginReview } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useToast } from '@/hooks/use-toast';
+import { useAppStore } from '@/store';
 
 interface PluginDetailModalProps {
   plugin: Plugin;
@@ -33,7 +33,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
   const [reviewContent, setReviewContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isPluginInstalled, installPlugin, loading } = usePluginStore();
-  const { toast } = useToast();
+  const addNotification = useAppStore((state) => state.addNotification);
 
   const installed = isPluginInstalled(plugin.code);
 
@@ -59,9 +59,10 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
         title: reviewTitle || undefined,
         content: reviewContent || undefined,
       });
-      toast({
+      addNotification({
         title: '评价成功',
-        description: '感谢您的评价',
+        message: '感谢您的评价',
+        type: 'success',
       });
       setRating(0);
       setReviewTitle('');
@@ -79,9 +80,10 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
   const handleInstall = async () => {
     const success = await installPlugin(plugin.code);
     if (success) {
-      toast({
+      addNotification({
         title: '安装成功',
-        description: `${plugin.name} 插件已安装`,
+        message: `${plugin.name} 插件已安装`,
+        type: 'success',
       });
       onClose();
     }

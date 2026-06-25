@@ -26,6 +26,7 @@ import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import {
   Plus,
   Edit,
@@ -84,6 +85,7 @@ type AccountNode = Account & { children?: AccountNode[] };
 
 export default function AccountManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const addNotification = useAppStore((state) => state.addNotification);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isDetailFilter, setIsDetailFilter] = useState<string>('all');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());

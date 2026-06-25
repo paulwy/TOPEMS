@@ -38,7 +38,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ehsApi } from '@/api/ehs';
 import type { Hazard, RiskAssessment, ControlMeasure } from '@/api/ehs';
 import { EHSStatusBadge, EHSMeasureTypeBadge, calculateRiskLevel } from '@/components/ehs';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';
@@ -57,6 +57,7 @@ const EhsHazardDetailPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showControlModal, setShowControlModal] = useState(false);
   const [formData, setFormData] = useState({
+
     name: '',
     description: '',
     category: '',
@@ -66,6 +67,7 @@ const EhsHazardDetailPage: React.FC = () => {
     likelihood: 'medium' as 'high' | 'medium' | 'low',
     status: 'active' as 'active' | 'controlled' | 'eliminated' | 'archived',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
   const [controlFormData, setControlFormData] = useState<ControlFormData>({
     measure_type: 'engineering',
     description: '',
@@ -147,7 +149,7 @@ const EhsHazardDetailPage: React.FC = () => {
       }
     } catch (error: unknown) {
       apiLogger.error('加载危险源详情失败:', error);
-      toast.error('加载危险源详情失败');
+      addNotification({ title: '错误', message: '加载危险源详情失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -165,7 +167,7 @@ const EhsHazardDetailPage: React.FC = () => {
   const handleUpdateHazard = async () => {
     if (!hazard) return;
     if (!formData.name.trim()) {
-      toast.error('请输入危险源名称');
+      addNotification({ title: '错误', message: '请输入危险源名称', type: 'error' });
       return;
     }
     try {
@@ -178,22 +180,22 @@ const EhsHazardDetailPage: React.FC = () => {
         status: formData.status,
       });
       if (response.success) {
-        toast.success('危险源更新成功');
+        addNotification({ title: '成功', message: '危险源更新成功', type: 'success' });
         setShowEditModal(false);
         loadHazardDetail(hazard.id);
       } else {
-        toast.error('更新失败，请稍后重试');
+        addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
       }
     } catch (error: unknown) {
       apiLogger.error('更新危险源失败:', error);
-      toast.error('更新失败，请稍后重试');
+      addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
     }
   };
 
   const handleAddControl = async () => {
     if (!hazard) return;
     if (!controlFormData.description.trim()) {
-      toast.error('请输入措施描述');
+      addNotification({ title: '错误', message: '请输入措施描述', type: 'error' });
       return;
     }
     try {
@@ -205,7 +207,7 @@ const EhsHazardDetailPage: React.FC = () => {
         status: 'pending',
       });
       if (response.success) {
-        toast.success('控制措施添加成功');
+        addNotification({ title: '成功', message: '控制措施添加成功', type: 'success' });
         setShowControlModal(false);
         setControlFormData({
           measure_type: 'engineering',
@@ -215,11 +217,11 @@ const EhsHazardDetailPage: React.FC = () => {
         });
         loadHazardDetail(hazard.id);
       } else {
-        toast.error('添加失败，请稍后重试');
+        addNotification({ title: '错误', message: '添加失败，请稍后重试', type: 'error' });
       }
     } catch (error: unknown) {
       apiLogger.error('添加控制措施失败:', error);
-      toast.error('添加失败，请稍后重试');
+      addNotification({ title: '错误', message: '添加失败，请稍后重试', type: 'error' });
     }
   };
 
@@ -229,14 +231,14 @@ const EhsHazardDetailPage: React.FC = () => {
     try {
       const response = await ehsApi.deleteControlMeasure(hazard.id, measureId);
       if (response.success) {
-        toast.success('控制措施删除成功');
+        addNotification({ title: '成功', message: '控制措施删除成功', type: 'success' });
         loadHazardDetail(hazard.id);
       } else {
-        toast.error('删除失败，请稍后重试');
+        addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
       }
     } catch (error: unknown) {
       apiLogger.error('删除控制措施失败:', error);
-      toast.error('删除失败，请稍后重试');
+      addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
     }
   };
 

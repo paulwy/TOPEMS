@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
   ChevronLeft,
@@ -10,7 +10,12 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
+import { useAppStore } from '@/store';
 import { DataExport } from '@/components/common';
+import { financeApi } from '@/api/finance';
+import type { Account, AccountBalance } from '@/types/finance';
+import type { AccountingSubject } from '@/api/erp';
+import { apiLogger } from '@/utils/logger';
 
 import {
   Dialog,
@@ -25,129 +30,53 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 
-interface LedgerEntry {
-  id: string;
-  account_code: string;
-  account_name: string;
-  category: string;
-  opening_balance: number;
-  debit_amount: number;
-  credit_amount: number;
-  closing_balance: number;
-}
-
-const mockLedgerData: LedgerEntry[] = [
-  {
-    id: '1',
-    account_code: '1001',
-    account_name: '库存现金',
-    category: '资产类',
-    opening_balance: 5000,
-    debit_amount: 8000,
-    credit_amount: 6000,
-    closing_balance: 7000,
-  },
-  {
-    id: '2',
-    account_code: '1002',
-    account_name: '银行存款',
-    category: '资产类',
-    opening_balance: 500000,
-    debit_amount: 300000,
-    credit_amount: 200000,
-    closing_balance: 600000,
-  },
-  {
-    id: '3',
-    account_code: '1122',
-    account_name: '应收账款',
-    category: '资产类',
-    opening_balance: 80000,
-    debit_amount: 50000,
-    credit_amount: 30000,
-    closing_balance: 100000,
-  },
-  {
-    id: '4',
-    account_code: '1405',
-    account_name: '原材料',
-    category: '资产类',
-    opening_balance: 200000,
-    debit_amount: 100000,
-    credit_amount: 80000,
-    closing_balance: 220000,
-  },
-  {
-    id: '5',
-    account_code: '1601',
-    account_name: '固定资产',
-    category: '资产类',
-    opening_balance: 1000000,
-    debit_amount: 0,
-    credit_amount: 50000,
-    closing_balance: 950000,
-  },
-  {
-    id: '6',
-    account_code: '2001',
-    account_name: '短期借款',
-    category: '负债类',
-    opening_balance: 200000,
-    debit_amount: 100000,
-    credit_amount: 150000,
-    closing_balance: 250000,
-  },
-  {
-    id: '7',
-    account_code: '2201',
-    account_name: '应付票据',
-    category: '负债类',
-    opening_balance: 50000,
-    debit_amount: 20000,
-    credit_amount: 30000,
-    closing_balance: 60000,
-  },
-  {
-    id: '8',
-    account_code: '4001',
-    account_name: '实收资本',
-    category: '权益类',
-    opening_balance: 800000,
-    debit_amount: 0,
-    credit_amount: 0,
-    closing_balance: 800000,
-  },
-  {
-    id: '9',
-    account_code: '5001',
-    account_name: '主营业务收入',
-    category: '损益类',
-    opening_balance: 0,
-    debit_amount: 0,
-    credit_amount: 500000,
-    closing_balance: 500000,
-  },
-  {
-    id: '10',
-    account_code: '6401',
-    account_name: '主营业务成本',
-    category: '损益类',
-    opening_balance: 0,
-    debit_amount: 300000,
-    credit_amount: 10000,
-    closing_balance: 290000,
-  },
-];
-
 const FinanceLedgerPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [ledgerData] = useState<LedgerEntry[]>(mockLedgerData);
+  const [ledgerData, setLedgerData] = useState<Account[]>([]);
+  const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [filterPeriod, setFilterPeriod] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<LedgerEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<Account | null>(null);
+
+  useEffect(() => {
+    loadLedger();
+  }, []);
+
+  const loadLedger = async () => {
+    setLoading(true);
+    setError(undefined);
+    try {
+      const [accountRes, periodRes] = await Promise.all([
+        financeApi.account.list({
+          keyword: searchQuery || undefined,
+        }),
+        financeApi.period.getCurrent(),
+      ]);
+
+      if (accountRes.success && accountRes.data) {
+        setLedgerData(accountRes.data.items || []);
+      }
+
+      if (periodRes.success && periodRes.data) {
+        const balancesRes = await financeApi.account.getBalances({
+          period: periodRes.data.period,
+        });
+        if (balancesRes.success && balancesRes.data) {
+          setAccountBalances(balancesRes.data);
+        }
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载总账数据失败:', err);
+      setError('加载总账数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredData = useMemo(() => {
     return ledgerData.filter((entry) => {
@@ -155,8 +84,8 @@ const FinanceLedgerPage: React.FC = () => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         if (
-          !entry.account_code.toLowerCase().includes(query) &&
-          !entry.account_name.toLowerCase().includes(query)
+          !entry.code.toLowerCase().includes(query) &&
+          !entry.name.toLowerCase().includes(query)
         ) {
           return false;
         }
@@ -165,13 +94,25 @@ const FinanceLedgerPage: React.FC = () => {
     });
   }, [ledgerData, filterCategory, searchQuery]);
 
-  // 统计卡片数据
+  const getCategoryLabel = (category?: string) => {
+    const labels: Record<string, string> = {
+      asset: '资产类',
+      liability: '负债类',
+      equity: '权益类',
+      cost: '成本类',
+      expense: '费用类',
+      income: '收入类',
+    };
+    return labels[category || ''] || '其他';
+  };
+
   const statCards = useMemo(() => {
     const totalAccounts = ledgerData.length;
-    const totalOpeningBalance = ledgerData.reduce((sum, entry) => sum + entry.opening_balance, 0);
-    const totalDebitAmount = ledgerData.reduce((sum, entry) => sum + entry.debit_amount, 0);
-    const totalCreditAmount = ledgerData.reduce((sum, entry) => sum + entry.credit_amount, 0);
-    const totalClosingBalance = ledgerData.reduce((sum, entry) => sum + entry.closing_balance, 0);
+    const assetCount = ledgerData.filter((e) => e.category === 'asset').length;
+    const liabilityCount = ledgerData.filter((e) => e.category === 'liability').length;
+    const equityCount = ledgerData.filter((e) => e.category === 'equity').length;
+    const expenseCount = ledgerData.filter((e) => e.category === 'expense').length;
+    const incomeCount = ledgerData.filter((e) => e.category === 'income').length;
 
     return [
       {
@@ -181,33 +122,33 @@ const FinanceLedgerPage: React.FC = () => {
         color: 'primary' as const,
       },
       {
-        title: '总期初余额',
-        value: `¥${totalOpeningBalance.toLocaleString()}`,
+        title: '资产类科目',
+        value: assetCount,
         icon: <Wallet size={24} />,
         color: 'secondary' as const,
       },
       {
-        title: '总借方发生额',
-        value: `¥${totalDebitAmount.toLocaleString()}`,
+        title: '负债类科目',
+        value: liabilityCount,
         icon: <TrendingUp size={24} />,
         color: 'error' as const,
       },
       {
-        title: '总贷方发生额',
-        value: `¥${totalCreditAmount.toLocaleString()}`,
+        title: '权益类科目',
+        value: equityCount,
         icon: <TrendingDown size={24} />,
         color: 'success' as const,
       },
       {
-        title: '总期末余额',
-        value: `¥${totalClosingBalance.toLocaleString()}`,
+        title: '损益类科目',
+        value: expenseCount + incomeCount,
         icon: <FileText size={24} />,
         color: 'info' as const,
       },
     ];
   }, [ledgerData]);
 
-  const handleViewDetail = (entry: LedgerEntry) => {
+  const handleViewDetail = (entry: Account) => {
     setSelectedEntry(entry);
     setShowDetailModal(true);
   };
@@ -215,67 +156,68 @@ const FinanceLedgerPage: React.FC = () => {
   const columns = useMemo(
     () => [
       {
-        id: 'account_code',
+        id: 'code',
         label: '科目编码',
-        render: (row: LedgerEntry) => (
-          <Box sx={{ fontWeight: 600, color: 'success.main' }}>{row.account_code}</Box>
+        render: (row: Account) => (
+          <Box sx={{ fontWeight: 600, color: 'success.main' }}>{row.code}</Box>
         ),
       },
       {
-        id: 'account_name',
+        id: 'name',
         label: '科目名称',
-        render: (row: LedgerEntry) => <Box sx={{ fontWeight: 500 }}>{row.account_name}</Box>,
+        render: (row: Account) => <Box sx={{ fontWeight: 500 }}>{row.name}</Box>,
       },
       {
         id: 'category',
         label: '科目类别',
-        render: (row: LedgerEntry) => (
+        render: (row: Account) => (
           <Chip
-            label={row.category}
+            label={getCategoryLabel(row.category)}
             size='small'
             color='success'
           />
         ),
       },
       {
-        id: 'opening_balance',
-        label: '期初余额',
-        render: (row: LedgerEntry) => (
-          <Box sx={{ fontFamily: 'monospace' }}>¥{row.opening_balance.toLocaleString()}</Box>
+        id: 'level',
+        label: '科目级别',
+        render: (row: Account) => (
+          <Chip
+            label={`第${row.level}级`}
+            size='small'
+            variant='outlined'
+          />
         ),
       },
       {
-        id: 'debit_amount',
-        label: '借方发生额',
-        render: (row: LedgerEntry) => (
-          <Box sx={{ color: 'error.main', fontFamily: 'monospace' }}>
-            ¥{row.debit_amount.toLocaleString()}
+        id: 'parent_code',
+        label: '上级科目',
+        render: (row: Account) => (
+          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+            {row.parent_code || '-'}
           </Box>
         ),
       },
       {
-        id: 'credit_amount',
-        label: '贷方发生额',
-        render: (row: LedgerEntry) => (
-          <Box sx={{ color: 'success.main', fontFamily: 'monospace' }}>
-            ¥{row.credit_amount.toLocaleString()}
-          </Box>
-        ),
-      },
-      {
-        id: 'closing_balance',
-        label: '期末余额',
-        render: (row: LedgerEntry) => (
-          <Box
-            sx={{
-              fontWeight: 700,
-              color: 'primary.main',
-              fontFamily: 'monospace',
-            }}
-          >
-            ¥{row.closing_balance.toLocaleString()}
-          </Box>
-        ),
+        id: 'status',
+        label: '状态',
+        render: (row: Account) => {
+          const statusColors: Record<string, 'success' | 'error' | 'default'> = {
+            active: 'success',
+            disabled: 'error',
+          };
+          const statusLabels: Record<string, string> = {
+            active: '启用',
+            disabled: '禁用',
+          };
+          return (
+            <Chip
+              label={statusLabels[row.status] || row.status}
+              size='small'
+              color={statusColors[row.status] || 'default'}
+            />
+          );
+        },
       },
     ],
     []
@@ -284,9 +226,9 @@ const FinanceLedgerPage: React.FC = () => {
   const rowActions = useMemo(
     () => [
       {
-        label: '查看明细账',
+        label: '查看详情',
         icon: <Eye sx={{ width: 16, height: 16 }} />,
-        onClick: (row: LedgerEntry) => handleViewDetail(row),
+        onClick: (row: Account) => handleViewDetail(row),
       },
     ],
     []
@@ -314,11 +256,12 @@ const FinanceLedgerPage: React.FC = () => {
         type: 'select' as const,
         options: [
           { value: '', label: '全部类别' },
-          { value: '资产类', label: '资产类' },
-          { value: '负债类', label: '负债类' },
-          { value: '权益类', label: '权益类' },
-          { value: '损益类', label: '损益类' },
-          { value: '成本类', label: '成本类' },
+          { value: 'asset', label: '资产类' },
+          { value: 'liability', label: '负债类' },
+          { value: 'equity', label: '权益类' },
+          { value: 'expense', label: '费用类' },
+          { value: 'income', label: '收入类' },
+          { value: 'cost', label: '成本类' },
         ],
         value: filterCategory,
         onChange: setFilterCategory,
@@ -329,13 +272,12 @@ const FinanceLedgerPage: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'account_code', title: '科目编码' },
-      { key: 'account_name', title: '科目名称' },
+      { key: 'code', title: '科目编码' },
+      { key: 'name', title: '科目名称' },
       { key: 'category', title: '类别' },
-      { key: 'opening_balance', title: '期初余额' },
-      { key: 'debit_amount', title: '借方发生额' },
-      { key: 'credit_amount', title: '贷方发生额' },
-      { key: 'closing_balance', title: '期末余额' },
+      { key: 'level', title: '级别' },
+      { key: 'parent_code', title: '上级科目' },
+      { key: 'status', title: '状态' },
     ],
     []
   );
@@ -418,7 +360,6 @@ const FinanceLedgerPage: React.FC = () => {
       </Box>
 
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        {/* 统计卡片 */}
         <StatCardGroup
           stats={statCards}
           columns={5}
@@ -427,6 +368,8 @@ const FinanceLedgerPage: React.FC = () => {
         <ListPageTemplate
           columns={columns}
           data={filteredData}
+          loading={loading}
+          error={error}
           searchable
           searchPlaceholder='搜索科目编码、名称...'
           searchValue={searchQuery}
@@ -441,17 +384,17 @@ const FinanceLedgerPage: React.FC = () => {
             if (filters.category !== undefined) setFilterCategory(filters.category as string);
           }}
           rowActions={rowActions}
+          onRefresh={loadLedger}
         />
       </Box>
 
-      {/* Detail Modal */}
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>明细账 - {selectedEntry?.account_name}</DialogTitle>
+        <DialogTitle>科目详情 - {selectedEntry?.name}</DialogTitle>
         <DialogContent>
           {selectedEntry && (
             <Stack
@@ -476,7 +419,7 @@ const FinanceLedgerPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 500 }}
                   >
-                    {selectedEntry.account_code}
+                    {selectedEntry.code}
                   </Typography>
                 </Box>
                 <Box>
@@ -490,7 +433,7 @@ const FinanceLedgerPage: React.FC = () => {
                     variant='body1'
                     sx={{ fontWeight: 500 }}
                   >
-                    {selectedEntry.account_name}
+                    {selectedEntry.name}
                   </Typography>
                 </Box>
                 <Box>
@@ -501,7 +444,7 @@ const FinanceLedgerPage: React.FC = () => {
                     科目类别
                   </Typography>
                   <Chip
-                    label={selectedEntry.category}
+                    label={selectedEntry.category || '未分类'}
                     size='small'
                     color='success'
                   />
@@ -510,7 +453,7 @@ const FinanceLedgerPage: React.FC = () => {
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
                   gap: 2,
                 }}
               >
@@ -519,58 +462,60 @@ const FinanceLedgerPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    期初余额
+                    科目级别
                   </Typography>
                   <Typography
                     variant='h6'
                     sx={{ fontWeight: 700, color: 'primary.main' }}
                   >
-                    ¥{selectedEntry.opening_balance.toLocaleString()}
+                    第{selectedEntry.level}级
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    借方发生额
+                    上级科目
                   </Typography>
                   <Typography
                     variant='h6'
-                    sx={{ fontWeight: 700, color: 'error.main' }}
+                    sx={{ fontWeight: 700 }}
                   >
-                    ¥{selectedEntry.debit_amount.toLocaleString()}
+                    {selectedEntry.parent_code || '-'}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    贷方发生额
+                    是否现金流量科目
                   </Typography>
                   <Typography
                     variant='h6'
-                    sx={{ fontWeight: 700, color: 'success.main' }}
+                    sx={{ fontWeight: 700, color: selectedEntry.is_cash_flow ? 'success.main' : 'text.secondary' }}
                   >
-                    ¥{selectedEntry.credit_amount.toLocaleString()}
-                  </Typography>
-                </Box>
-                <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    期末余额
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 700, color: 'primary.main' }}
-                  >
-                    ¥{selectedEntry.closing_balance.toLocaleString()}
+                    {selectedEntry.is_cash_flow ? '是' : '否'}
                   </Typography>
                 </Box>
               </Box>
+              {selectedEntry.description && (
+                <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    备注
+                  </Typography>
+                  <Typography
+                    variant='body1'
+                    sx={{ mt: 1 }}
+                  >
+                    {selectedEntry.description}
+                  </Typography>
+                </Box>
+              )}
             </Stack>
           )}
         </DialogContent>

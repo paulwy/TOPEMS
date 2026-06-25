@@ -13,12 +13,17 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, Eye, Users, TrendingUp, Award } from 'lucide-react';
+import { Plus, Eye, Users, TrendingUp, Award, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { srmApi } from '@/api/srm';
-import type { Supplier, PerformanceSummary, ScoreLevelDistribution } from '@/api/srm';
-import { toast } from 'react-toastify';
+import type {
+  Supplier,
+  PerformanceSummary,
+  ScoreLevelDistribution,
+  CreateSupplierRequest,
+} from '@/api/srm';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 const SrmSupplierPage: React.FC = () => {
@@ -27,9 +32,11 @@ const SrmSupplierPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [performanceSummary, setPerformanceSummary] = useState<PerformanceSummary | null>(null);
   const [scoreDistribution, setScoreDistribution] = useState<ScoreLevelDistribution[]>([]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Partial<CreateSupplierRequest>>({
     supplier_no: '',
     name: '',
     contact_person: '',
@@ -40,6 +47,7 @@ const SrmSupplierPage: React.FC = () => {
     risk_level: 'medium',
     status: 'active',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadSuppliers();
@@ -157,6 +165,17 @@ const SrmSupplierPage: React.FC = () => {
         onClick: (row) => navigate(`/srm/suppliers/${row.id}`),
       },
       {
+        label: '编辑',
+        icon: <Edit2 style={{ width: 16, height: 16 }} />,
+        onClick: handleEdit,
+      },
+      {
+        label: '删除',
+        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        onClick: handleDelete,
+        color: 'error',
+      },
+      {
         label: '评估',
         icon: <Award style={{ width: 16, height: 16 }} />,
         onClick: (row) =>
@@ -194,24 +213,83 @@ const SrmSupplierPage: React.FC = () => {
   const handleSave = async () => {
     try {
       await srmApi.createSupplier({
-        supplier_no: formData.supplier_no,
-        name: formData.name,
+        supplier_no: formData.supplier_no || '',
+        name: formData.name || '',
         contact_person: formData.contact_person,
         phone: formData.phone,
         email: formData.email,
         address: formData.address,
-        category: formData.category,
-        risk_level: formData.risk_level,
-        status: formData.status,
+        category: formData.category || '',
+        risk_level: formData.risk_level || 'medium',
+        status: formData.status || 'active',
         legal_name: formData.name,
       });
-      toast.success('供应商创建成功');
+      addNotification({ title: '成功', message: '供应商创建成功', type: 'success' });
       setShowCreateModal(false);
       loadSuppliers();
       loadPerformanceSummary();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建供应商失败:', err);
+    }
+  };
+
+  const handleEdit = (row: Supplier) => {
+    setEditingId(row.id);
+    setFormData({
+      supplier_no: row.supplier_no,
+      name: row.name,
+      contact_person: row.contact_person,
+      phone: row.phone,
+      email: row.email,
+      address: row.address,
+      category: row.category,
+      risk_level: row.risk_level,
+      status: row.status === '启用' ? 'active' : 'inactive',
+      legal_name: row.legal_name,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId) return;
+    try {
+      await srmApi.updateSupplier(editingId, {
+        supplier_no: formData.supplier_no || '',
+        name: formData.name || '',
+        contact_person: formData.contact_person,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        category: formData.category || '',
+        risk_level: formData.risk_level || 'medium',
+        status: formData.status || 'active',
+        legal_name: formData.name,
+      });
+      addNotification({ title: '成功', message: '供应商更新成功', type: 'success' });
+      setShowEditModal(false);
+      setEditingId(null);
+      loadSuppliers();
+      loadPerformanceSummary();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+      apiLogger.error('更新供应商失败:', err);
+    }
+  };
+
+  const handleDelete = async (row: Supplier) => {
+    try {
+      const response = await srmApi.deleteSupplier(row.id);
+      if (response.success) {
+        addNotification({ title: '成功', message: '供应商删除成功', type: 'success' });
+        loadSuppliers();
+        loadPerformanceSummary();
+      } else {
+        addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      }
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除供应商失败:', err);
     }
   };
 
@@ -669,6 +747,114 @@ const SrmSupplierPage: React.FC = () => {
             sx={{ bgcolor: '#a855f7' }}
           >
             保存
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingId(null);
+        }}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>编辑供应商</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='编号 *'
+                value={formData.supplier_no}
+                onChange={(e) => setFormData({ ...formData, supplier_no: e.target.value })}
+                placeholder='请输入供应商编号'
+              />
+              <TextField
+                fullWidth
+                label='名称 *'
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder='请输入供应商名称'
+              />
+              <TextField
+                fullWidth
+                label='联系人'
+                value={formData.contact_person}
+                onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+                placeholder='请输入联系人'
+              />
+              <TextField
+                fullWidth
+                label='电话'
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder='请输入联系电话'
+              />
+              <TextField
+                fullWidth
+                label='邮箱'
+                type='email'
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder='请输入邮箱'
+              />
+              <TextField
+                fullWidth
+                label='类别'
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                placeholder='请输入类别'
+              />
+              <TextField
+                fullWidth
+                select
+                label='风险等级'
+                value={formData.risk_level}
+                onChange={(e) => setFormData({ ...formData, risk_level: e.target.value })}
+              >
+                <option value='low'>低风险</option>
+                <option value='medium'>中风险</option>
+                <option value='high'>高风险</option>
+              </TextField>
+              <TextField
+                fullWidth
+                select
+                label='状态'
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value='active'>启用</option>
+                <option value='inactive'>禁用</option>
+              </TextField>
+            </Box>
+            <TextField
+              fullWidth
+              label='地址'
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder='请输入地址'
+              multiline
+              rows={2}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => {
+              setShowEditModal(false);
+              setEditingId(null);
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdate}
+            sx={{ bgcolor: '#a855f7' }}
+          >
+            更新
           </Button>
         </DialogActions>
       </Dialog>{' '}

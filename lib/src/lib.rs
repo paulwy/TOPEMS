@@ -1,9 +1,11 @@
+pub mod api;
 pub mod api_version;
 pub mod audit;
 pub mod auth;
 pub mod backup;
 pub mod cache;
 pub mod cluster;
+pub mod compression;
 pub mod config;
 pub mod cors;
 pub mod database;
@@ -26,6 +28,7 @@ pub mod redis;
 pub mod repository;
 pub mod response;
 pub mod schema;
+pub mod security;
 pub mod service_bootstrap;
 pub mod service_client;
 pub mod service_discovery;
@@ -89,7 +92,8 @@ pub use health::{
 };
 pub use hrm::{AppState, PaginatedResult, PaginationQuery};
 pub use logging::{
-    create_log_filter, init_logging, LogAggregator, LogEntry, LogQuery, LogStats, TraceContext,
+    create_log_filter, generate_request_id, generate_span_id, generate_trace_id, init_logging,
+    JsonEventFormatter, LogAggregator, LogEntry, LogFormat, LogQuery, LogStats, TraceContext,
 };
 pub use messaging::{
     InMemoryMessageBroker, Message, MessageConsumer, MessageProducer, RedisMessageBroker,
@@ -118,7 +122,11 @@ pub use query_optimizer::{
     NPlusOneWarning, PaginationOptimizer, QueryOptimizationSuggestion,
 };
 pub use rate_limit::{RateLimitConfig, RateLimitMiddleware};
-pub use redis::{CacheService, RedisCacheService, RedisPool};
+pub use redis::{
+    BloomFilter, CacheKeyGenerator, CacheProtectionConfig, CacheService,
+    CacheStatisticsCollector, RedisCacheService, RedisPool, UnifiedCacheManager,
+};
+pub use security::*;
 pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
 };
@@ -182,4 +190,15 @@ pub use ai_client::{
     AIClient, AIClientError, AIModelConfig, AIProviderType, ChatCompletionRequest, 
     ChatCompletionResponse, ChatMessage, EmbeddingRequest, EmbeddingResponse, 
     UnifiedAIClient, create_client, get_supported_models,
+};
+
+// 批量请求模块导出
+pub use api::{
+    BatchRequest, BatchRequestHandler, BatchResponse, RequestPriority, SingleRequest,
+    SingleResponse,
+};
+
+// 数据压缩中间件模块导出
+pub use compression::{
+    CompressionAlgorithm, CompressionConfig, CompressionMiddleware,
 };

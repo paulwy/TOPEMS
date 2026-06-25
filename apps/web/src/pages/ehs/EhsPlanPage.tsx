@@ -18,7 +18,7 @@ import { ListPageTemplate } from '@/components/mui';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
 import { ehsApi } from '@/api/ehs';
 import type { EmergencyPlan } from '@/api/ehs';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 const EhsPlanPage: React.FC = () => {
@@ -31,7 +31,9 @@ const EhsPlanPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
+
     plan_no: '',
     name: '',
     plan_type: '',
@@ -41,6 +43,7 @@ const EhsPlanPage: React.FC = () => {
     responsible_persons: '',
     contact_info: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadPlans();
@@ -51,7 +54,9 @@ const EhsPlanPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listPlans();
       if (response.success && response.data) {
-        const adapted = (response.data as any).data.map((item: { [key: string]: unknown }) => ({
+        const data = response.data as any;
+        const plansData = Array.isArray(data) ? data : data.data || [];
+        const adapted = plansData.map((item: { [key: string]: unknown }) => ({
           ...item,
           status:
             item.status === 'active' ? '有效' : item.status === 'inactive' ? '无效' : item.status,
@@ -62,9 +67,31 @@ const EhsPlanPage: React.FC = () => {
       }
     } catch (err: unknown) {
       apiLogger.error('加载应急预案数据失败:', err);
+      addNotification({ title: '错误', message: '加载应急预案失败', type: 'error' });
       setPlans([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPlanDetail = async (planId: string) => {
+    try {
+      setDetailLoading(true);
+      const response = await ehsApi.getPlan(planId);
+      if (response.success && response.data) {
+        const planData = response.data as any;
+        const adapted = {
+          ...planData,
+          status:
+            planData.status === 'active' ? '有效' : planData.status === 'inactive' ? '无效' : planData.status,
+        };
+        setSelectedPlan(adapted);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载应急预案详情失败:', err);
+      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
+    } finally {
+      setDetailLoading(false);
     }
   };
 
@@ -145,15 +172,18 @@ const EhsPlanPage: React.FC = () => {
     []
   );
 
+  const handleViewDetail = async (plan: EmergencyPlan) => {
+    setSelectedPlan(plan);
+    setShowDetailModal(true);
+    await loadPlanDetail(plan.id);
+  };
+
   const rowActions = useMemo<RowAction<EmergencyPlan>[]>(
     () => [
       {
         label: '详情',
         icon: <Eye size={16} />,
-        onClick: (row) => {
-          setSelectedPlan(row);
-          setShowDetailModal(true);
-        },
+        onClick: (row) => handleViewDetail(row),
       },
     ],
     []
@@ -232,11 +262,11 @@ const EhsPlanPage: React.FC = () => {
         contact_info: formData.contact_info || null,
         status: 'active',
       });
-      toast.success('应急预案创建成功');
+      addNotification({ title: '成功', message: '应急预案创建成功', type: 'success' });
       setShowCreateModal(false);
       loadPlans();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建应急预案失败:', err);
     }
   };
@@ -559,7 +589,24 @@ const EhsPlanPage: React.FC = () => {
       >
         <DialogTitle>应急预案详情</DialogTitle>
         <DialogContent>
-          {selectedPlan && (
+          {detailLoading ? (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: 3,
+                  borderColor: 'success.main',
+                  borderTopColor: 'success.dark',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  mx: 'auto',
+                  mb: 2,
+                }}
+              />
+              <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+            </Box>
+          ) : selectedPlan && (
             <Box
               sx={{
                 pt: 2,

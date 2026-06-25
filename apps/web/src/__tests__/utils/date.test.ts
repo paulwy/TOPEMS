@@ -27,8 +27,9 @@ describe("date utils", () => {
     });
 
     it("should return true for today string", () => {
-      const today = new Date().toISOString().split('T')[0];
-      expect(isToday(today)).toBe(true);
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      expect(isToday(todayStr)).toBe(true);
     });
 
     it("should return false for yesterday", () => {

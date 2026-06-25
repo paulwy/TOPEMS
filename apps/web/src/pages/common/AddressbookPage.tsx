@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import { AddressbookSidebar } from '@/components/addressbook/AddressbookSidebar';
 import { AddressbookHeader } from '@/components/addressbook/AddressbookHeader';
 import { AddressbookFilters } from '@/components/addressbook/AddressbookFilters';

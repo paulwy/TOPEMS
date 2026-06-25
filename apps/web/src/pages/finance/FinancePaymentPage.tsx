@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -9,6 +9,7 @@ import {
   XCircle,
   Send,
   Eye,
+  RefreshCw,
 } from 'lucide-react';
 import { Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +17,9 @@ import { useAppStore } from '../../store';
 import type { ColumnDef } from '@/components/mui';
 import { ListPageTemplate, StatCard } from '@/components/mui';
 import { DataExport } from '@/components/common';
+import { financeApi } from '@/api/finance';
+import { apiLogger } from '@/utils/logger';
+import type { PaymentRecord } from '@/types/finance';
 
 import {
   TextField,
@@ -47,94 +51,13 @@ interface Payment {
   status: string;
 }
 
-const mockPaymentData: Payment[] = [
-  {
-    id: '1',
-    payment_number: 'FK202401001',
-    payment_date: '2024-01-15',
-    supplier: '广州电子有限公司',
-    payment_method: '银行转账',
-    amount: 113000,
-    bank_account: '招商银行 ****1234',
-    status: '已付款',
-  },
-  {
-    id: '2',
-    payment_number: 'FK202401002',
-    payment_date: '2024-01-18',
-    supplier: '东莞制造有限公司',
-    payment_method: '银行承兑汇票',
-    amount: 56500,
-    bank_account: '工商银行 ****5678',
-    status: '审批中',
-  },
-  {
-    id: '3',
-    payment_number: 'FK202401003',
-    payment_date: '2024-01-20',
-    supplier: '惠州材料有限公司',
-    payment_method: '银行转账',
-    amount: 226000,
-    bank_account: '建设银行 ****9012',
-    status: '已付款',
-  },
-  {
-    id: '4',
-    payment_number: 'FK202401004',
-    payment_date: '2024-01-22',
-    supplier: '深圳物流公司',
-    payment_method: '现金',
-    amount: 5000,
-    bank_account: '库存现金',
-    status: '已付款',
-  },
-  {
-    id: '5',
-    payment_number: 'FK202401005',
-    payment_date: '2024-01-25',
-    supplier: '广州电子有限公司',
-    payment_method: '银行转账',
-    amount: 50000,
-    bank_account: '招商银行 ****1234',
-    status: '待审批',
-  },
-  {
-    id: '6',
-    payment_number: 'FK202402001',
-    payment_date: '2024-02-05',
-    supplier: '佛山配件厂',
-    payment_method: '银行转账',
-    amount: 85000,
-    bank_account: '农业银行 ****3456',
-    status: '已付款',
-  },
-  {
-    id: '7',
-    payment_number: 'FK202402002',
-    payment_date: '2024-02-10',
-    supplier: '东莞制造有限公司',
-    payment_method: '商业承兑汇票',
-    amount: 100000,
-    bank_account: '中国银行 ****7890',
-    status: '审批中',
-  },
-  {
-    id: '8',
-    payment_number: 'FK202402003',
-    payment_date: '2024-02-15',
-    supplier: '广州电子有限公司',
-    payment_method: '银行转账',
-    amount: 30000,
-    bank_account: '招商银行 ****1234',
-    status: '已付款',
-  },
-];
-
 const FinancePaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [paymentData, setPaymentData] = useState<Payment[]>(mockPaymentData);
+  const [paymentData, setPaymentData] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
   const [filterMethod, setFilterMethod] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,6 +71,65 @@ const FinancePaymentPage: React.FC = () => {
     amount: 0,
     bank_account: '',
   });
+
+  const mapPaymentRecordToPayment = (record: PaymentRecord): Payment => {
+    const bankAccount = record.bank_name
+      ? `${record.bank_name} ${record.bank_account_no}`
+      : record.bank_account_no;
+    
+    let statusText = '';
+    switch (record.status) {
+      case 'recorded':
+        statusText = '待审批';
+        break;
+      case 'matched':
+        statusText = '已付款';
+        break;
+      case 'cancelled':
+        statusText = '已拒绝';
+        break;
+      default:
+        statusText = record.status;
+    }
+
+    return {
+      id: record.id,
+      payment_number: record.payment_no,
+      payment_date: record.payment_date,
+      supplier: record.supplier_name,
+      payment_method: '银行转账',
+      amount: record.amount,
+      bank_account: bankAccount,
+      status: statusText,
+    };
+  };
+
+  const fetchPayments = async () => {
+    setLoading(true);
+    try {
+      const response = await financeApi.receivablePayable.listPayments({
+        page: 1,
+        page_size: 100,
+      });
+      if (response.success && response.data) {
+        const payments = response.data.items.map(mapPaymentRecordToPayment);
+        setPaymentData(payments);
+      }
+    } catch (err) {
+      addNotification({
+        title: '错误',
+        message: '获取付款记录失败',
+        type: 'error',
+      });
+      apiLogger.error('Failed to fetch payments', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
 
   const filteredData = useMemo(() => {
     return paymentData.filter((payment) => {
@@ -182,30 +164,62 @@ const FinancePaymentPage: React.FC = () => {
     return configs[status] || { color: 'default', icon: null };
   };
 
-  const handleCreate = () => {
-    const newEntry: Payment = {
-      id: String(paymentData.length + 1),
-      payment_number: `FK${Date.now()}`,
-      payment_date: new Date().toISOString().split('T')[0],
-      supplier: newPayment.supplier,
-      payment_method: newPayment.payment_method,
-      amount: newPayment.amount,
-      bank_account: newPayment.bank_account || '默认账户',
-      status: '待审批',
-    };
-    setPaymentData([...paymentData, newEntry]);
-    addNotification({
-      title: '成功',
-      message: '付款申请已提交',
-      type: 'success',
-    });
-    setShowCreateModal(false);
-    setNewPayment({
-      supplier: '',
-      payment_method: '银行转账',
-      amount: 0,
-      bank_account: '',
-    });
+  const handleCreate = async () => {
+    if (!newPayment.supplier || !newPayment.amount) {
+      addNotification({
+        title: '错误',
+        message: '请填写供应商和付款金额',
+        type: 'error',
+      });
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      const response = await financeApi.receivablePayable.createPayment({
+        supplier_id: '',
+        supplier_name: newPayment.supplier,
+        amount: newPayment.amount,
+        payment_date: new Date().toISOString().split('T')[0],
+        bank_account_id: '',
+        bank_account_no: newPayment.bank_account || '默认账户',
+        bank_name: '',
+        invoice_ids: [],
+        status: 'recorded',
+      });
+
+      if (response.success && response.data) {
+        const newEntry = mapPaymentRecordToPayment(response.data);
+        setPaymentData([newEntry, ...paymentData]);
+        addNotification({
+          title: '成功',
+          message: '付款申请已提交',
+          type: 'success',
+        });
+        setShowCreateModal(false);
+        setNewPayment({
+          supplier: '',
+          payment_method: '银行转账',
+          amount: 0,
+          bank_account: '',
+        });
+      } else {
+        addNotification({
+          title: '错误',
+          message: response.error?.message || '付款申请提交失败',
+          type: 'error',
+        });
+      }
+    } catch (err) {
+      addNotification({
+        title: '错误',
+        message: '付款申请提交失败',
+        type: 'error',
+      });
+      apiLogger.error('Failed to create payment', err);
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   const handleApprove = (payment: Payment) => {
@@ -250,7 +264,10 @@ const FinancePaymentPage: React.FC = () => {
     });
   };
 
-  // 统计卡片数据
+  const handleRefresh = () => {
+    fetchPayments();
+  };
+
   const statsData = useMemo(() => {
     const totalPayments = paymentData.length;
     const paidAmount = paymentData
@@ -287,7 +304,6 @@ const FinancePaymentPage: React.FC = () => {
     ];
   }, [paymentData]);
 
-  // 列定义 - ListPageTemplate 格式
   const columns = useMemo<ColumnDef<Payment>[]>(
     () => [
       {
@@ -361,7 +377,6 @@ const FinancePaymentPage: React.FC = () => {
     []
   );
 
-  // 行操作渲染
   const renderRowActions = (row: Payment) => (
     <Stack
       direction='row'
@@ -440,7 +455,6 @@ const FinancePaymentPage: React.FC = () => {
     [filterMethod, filterStatus]
   );
 
-  // 导出字段配置
   const exportFields = useMemo(
     () => [
       { key: 'payment_number', title: '付款单号' },
@@ -488,6 +502,12 @@ const FinancePaymentPage: React.FC = () => {
         }
         actions={[
           {
+            label: '刷新',
+            variant: 'outlined',
+            icon: <RefreshCw sx={{ width: 20, height: 20 }} />,
+            onClick: handleRefresh,
+          },
+          {
             label: '导出',
             variant: 'outlined',
             icon: <Download sx={{ width: 20, height: 20 }} />,
@@ -500,9 +520,9 @@ const FinancePaymentPage: React.FC = () => {
             onClick: () => setShowCreateModal(true),
           },
         ]}
+        loading={loading}
       />
 
-      {/* DataExport 组件 */}
       <DataExport
         data={paymentData as unknown as Record<string, unknown>[]}
         fields={exportFields}
@@ -510,7 +530,6 @@ const FinancePaymentPage: React.FC = () => {
         buttonText='数据导出'
       />
 
-      {/* Create Modal */}
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -578,13 +597,13 @@ const FinancePaymentPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleCreate}
+            disabled={createLoading}
           >
-            提交申请
+            {createLoading ? '提交中...' : '提交申请'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Approve Modal */}
       <Dialog
         open={showApproveModal}
         onClose={() => setShowApproveModal(false)}

@@ -34,9 +34,8 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components/mui';
-import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/notification/NotificationContainer';
 import { StatusBadge } from '@/components/hrm/StatusBadge';
+import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   leaveApi,
@@ -47,8 +46,8 @@ import {
 } from '@/api/hrm';
 
 const LeaveManagementPage: React.FC = () => {
-  const { success, error, notifications, hideNotification } = useNotification();
   const [loading, setLoading] = useState(false);
+  const addNotification = useAppStore((state) => state.addNotification);
   const [data, setData] = useState<PaginatedResult<LeaveRequest>>({
     items: [],
     total: 0,
@@ -350,10 +349,6 @@ const LeaveManagementPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
       <Box sx={{ p: 3 }}>
         {/* 面包屑导航 */}
         <Box sx={{ mb: 2 }}>

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import { ToastProvider } from '@/components/notification/ToastProvider';
+import { NotificationProvider } from '@/components/notification/NotificationProvider';
 import MigrationAdminPage from '@/pages/system/MigrationAdminPage';
 import type { MigrationService, MigrationStatus } from '@/api/migration';
 
@@ -44,7 +44,7 @@ const mockServices: MigrationService[] = [
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <BrowserRouter>
-      <ToastProvider>{ui}</ToastProvider>
+      <NotificationProvider>{ui}</NotificationProvider>
     </BrowserRouter>
   );
 };

@@ -15,8 +15,6 @@ const QmsIssuePage = lazy(() => import('../pages/qms/QmsNonconformancePage'));
 const QmsAuditPage = lazy(() => import('../pages/qms/QmsAuditManagementPage'));
 const EhsHazardPage = lazy(() => import('../pages/ehs/EhsHazardPage'));
 const EhsCheckPage = lazy(() => import('../pages/ehs/EhsCheckPage'));
-const EhsPlanPage = lazy(() => import('../pages/ehs/EhsPlanPage'));
-const EhsDrillPage = lazy(() => import('../pages/ehs/EhsDrillPage'));
 const SrmDashboardPage = lazy(() => import('../pages/srm/SrmDashboardPage'));
 const SrmSupplierPage = lazy(() => import('../pages/srm/SrmSupplierPage'));
 const SrmEvaluationPage = lazy(() => import('../pages/srm/SrmEvaluationPage'));
@@ -24,14 +22,6 @@ const SrmOrderPage = lazy(() => import('../pages/srm/SrmOrderPage'));
 const SrmContractPage = lazy(() => import('../pages/srm/SrmContractPage'));
 const SrmFinancePage = lazy(() => import('../pages/srm/SrmFinancePage'));
 const SupplierDetailPage = lazy(() => import('../pages/wms/SupplierDetailPage'));
-const PdmProcessPage = lazy(() => import('../pages/pdm/PdmProcessPage'));
-const PdmStepPage = lazy(() => import('../pages/pdm/PdmStepPage'));
-const PdmFormulaPage = lazy(() => import('../pages/pdm/PdmFormulaPage'));
-const PdmBatchPage = lazy(() => import('../pages/pdm/PdmBatchPage'));
-const PdmStatsPage = lazy(() => import('../pages/pdm/PdmStatsPage'));
-const Gispage = lazy(() => import('../pages/bi/Gispage'));
-const Impage = lazy(() => import('../pages/shared/Impage'));
-const MailPage = lazy(() => import('../pages/common/MailPage'));
 const IntegrationDashboardPage = lazy(
   () => import('../pages/integration/IntegrationDashboardPage')
 );
@@ -199,20 +189,6 @@ export const professionalRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
-    path: '/ehs/plans',
-    element: EhsPlanPage,
-    requiredPermissions: ['ehs:read'],
-    module: 'ehs',
-    action: 'read',
-  },
-  {
-    path: '/ehs/drills',
-    element: EhsDrillPage,
-    requiredPermissions: ['ehs:read'],
-    module: 'ehs',
-    action: 'read',
-  },
-  {
     path: '/ehs/hazard/:id',
     element: EhsHazardDetailPage,
     requiredPermissions: ['ehs:read'],
@@ -283,72 +259,6 @@ export const professionalRoutes: RouteConfig[] = [
     element: SrmFinancePage,
     requiredPermissions: ['srm:read'],
     module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/pdm',
-    element: React.createElement(Navigate, {
-      to: '/pdm/processes',
-      replace: true,
-    }),
-    requiredPermissions: ['pdm:read'],
-    module: 'pdm',
-    action: 'read',
-  },
-  {
-    path: '/pdm/processes',
-    element: PdmProcessPage,
-    requiredPermissions: ['pdm:read'],
-    module: 'pdm',
-    action: 'read',
-  },
-  {
-    path: '/pdm/steps',
-    element: PdmStepPage,
-    requiredPermissions: ['pdm:read'],
-    module: 'pdm',
-    action: 'read',
-  },
-  {
-    path: '/pdm/formulas',
-    element: PdmFormulaPage,
-    requiredPermissions: ['pdm:read'],
-    module: 'pdm',
-    action: 'read',
-  },
-  {
-    path: '/pdm/batches',
-    element: PdmBatchPage,
-    requiredPermissions: ['pdm:read'],
-    module: 'pdm',
-    action: 'read',
-  },
-  {
-    path: '/pdm/stats',
-    element: PdmStatsPage,
-    requiredPermissions: ['pdm:read'],
-    module: 'pdm',
-    action: 'read',
-  },
-  {
-    path: '/gis',
-    element: Gispage,
-    requiredPermissions: ['gis:read'],
-    module: 'gis',
-    action: 'read',
-  },
-  {
-    path: '/im',
-    element: Impage,
-    requiredPermissions: ['im:read'],
-    module: 'im',
-    action: 'read',
-  },
-  {
-    path: '/mail',
-    element: MailPage,
-    requiredPermissions: ['mail:read'],
-    module: 'mail',
     action: 'read',
   },
   {

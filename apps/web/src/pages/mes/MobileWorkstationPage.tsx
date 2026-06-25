@@ -1,4 +1,5 @@
 import { Grid } from '@/components/Grid';
+import { useAppStore } from '@/store';
 import React, { useState, useEffect } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { mobileApi } from '@/api/mobile';

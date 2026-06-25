@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ChevronLeft,
   Plus,
@@ -18,6 +18,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { DataExport } from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
+import { financeApi, accountApi } from '@/api/finance';
+import type { Account } from '@/types/finance';
+import { apiLogger } from '@/utils/logger';
 
 import {
   Box,
@@ -36,134 +39,80 @@ import {
   Stack,
   IconButton,
   Tooltip,
-  InputAdornment,
 } from '@mui/material';
 import { Button } from '@mui/material';
-
-interface Asset {
-  id: string;
-  asset_code: string;
-  asset_name: string;
-  asset_category: string;
-  original_value: number;
-  accumulated_depreciation: number;
-  net_value: number;
-  usage_status: string;
-}
-
-const mockAssetData: Asset[] = [
-  {
-    id: '1',
-    asset_code: 'A001',
-    asset_name: '生产设备A',
-    asset_category: '生产设备',
-    original_value: 500000,
-    accumulated_depreciation: 150000,
-    net_value: 350000,
-    usage_status: '使用中',
-  },
-  {
-    id: '2',
-    asset_code: 'A002',
-    asset_name: '办公电脑',
-    asset_category: '办公设备',
-    original_value: 30000,
-    accumulated_depreciation: 18000,
-    net_value: 12000,
-    usage_status: '使用中',
-  },
-  {
-    id: '3',
-    asset_code: 'A003',
-    asset_name: '运输车辆',
-    asset_category: '运输设备',
-    original_value: 200000,
-    accumulated_depreciation: 80000,
-    net_value: 120000,
-    usage_status: '使用中',
-  },
-  {
-    id: '4',
-    asset_code: 'A004',
-    asset_name: '厂房建筑',
-    asset_category: '房屋建筑',
-    original_value: 2000000,
-    accumulated_depreciation: 400000,
-    net_value: 1600000,
-    usage_status: '使用中',
-  },
-  {
-    id: '5',
-    asset_code: 'A005',
-    asset_name: '检测仪器',
-    asset_category: '检测设备',
-    original_value: 150000,
-    accumulated_depreciation: 45000,
-    net_value: 105000,
-    usage_status: '闲置',
-  },
-  {
-    id: '6',
-    asset_code: 'A006',
-    asset_name: '空调系统',
-    asset_category: '办公设备',
-    original_value: 80000,
-    accumulated_depreciation: 32000,
-    net_value: 48000,
-    usage_status: '使用中',
-  },
-  {
-    id: '7',
-    asset_code: 'A007',
-    asset_name: '旧打印机',
-    asset_category: '办公设备',
-    original_value: 5000,
-    accumulated_depreciation: 5000,
-    net_value: 0,
-    usage_status: '已报废',
-  },
-  {
-    id: '8',
-    asset_code: 'A008',
-    asset_name: '研发设备',
-    asset_category: '研发设备',
-    original_value: 800000,
-    accumulated_depreciation: 160000,
-    net_value: 640000,
-    usage_status: '使用中',
-  },
-];
 
 const FinanceAssetPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [assetData, setAssetData] = useState<Asset[]>(mockAssetData);
+  const [assetData, setAssetData] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDepreciationModal, setShowDepreciationModal] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [editingAsset, setEditingAsset] = useState<Account | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<Account | null>(null);
 
-  const [newAsset, setNewAsset] = useState({
-    asset_code: '',
-    asset_name: '',
-    asset_category: '',
-    original_value: 0,
-    usage_status: '使用中',
+  const [newAsset, setNewAsset] = useState<{
+    code: string;
+    name: string;
+    category: 'asset' | 'liability' | 'equity' | 'cost' | 'expense' | 'income';
+    balance_direction: 'debit' | 'credit';
+    level: number;
+    status: 'active' | 'disabled';
+    description: string;
+  }>({
+    code: '',
+    name: '',
+    category: 'asset',
+    balance_direction: 'debit',
+    level: 1,
+    status: 'active',
+    description: '',
   });
+
+  useEffect(() => {
+    loadAssets();
+  }, []);
+
+  const loadAssets = async () => {
+    setLoading(true);
+    setError(undefined);
+    try {
+      const response = await financeApi.account.list({
+        category: 'asset',
+        keyword: searchQuery || undefined,
+        status: filterStatus || undefined,
+      });
+      if (response.success && response.data) {
+        setAssetData(response.data.items || []);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载资产数据失败:', err);
+      setError('加载资产数据失败');
+      addNotification({
+        title: '错误',
+        message: '加载资产数据失败',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredData = useMemo(() => {
     return assetData.filter((asset) => {
-      if (filterCategory && asset.asset_category !== filterCategory) return false;
-      if (filterStatus && asset.usage_status !== filterStatus) return false;
+      if (filterCategory && asset.category !== filterCategory) return false;
+      if (filterStatus && asset.status !== filterStatus) return false;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         if (
-          !asset.asset_code.toLowerCase().includes(query) &&
-          !asset.asset_name.toLowerCase().includes(query)
+          !asset.code.toLowerCase().includes(query) &&
+          !asset.name.toLowerCase().includes(query)
         ) {
           return false;
         }
@@ -172,49 +121,47 @@ const FinanceAssetPage: React.FC = () => {
     });
   }, [assetData, filterCategory, filterStatus, searchQuery]);
 
-  // 统计卡片数据
   const statCards = useMemo(() => {
     const totalCount = assetData.length;
-    const inUseCount = assetData.filter((a) => a.usage_status === '使用中').length;
-    const idleCount = assetData.filter((a) => a.usage_status === '闲置').length;
-    const scrappedCount = assetData.filter((a) => a.usage_status === '已报废').length;
-    const totalOriginalValue = assetData.reduce((sum, a) => sum + a.original_value, 0);
-    const totalNetValue = assetData.reduce((sum, a) => sum + a.net_value, 0);
+    const activeCount = assetData.filter((a) => a.status === 'active').length;
+    const disabledCount = assetData.filter((a) => a.status === 'disabled').length;
+    const hasChildrenCount = assetData.filter((a) => a.has_children).length;
+    const leafCount = assetData.filter((a) => !a.has_children).length;
 
     return [
       {
-        title: '总资产数',
+        title: '资产科目总数',
         value: totalCount,
         icon: <Package size={24} />,
         color: 'primary' as const,
       },
       {
-        title: '使用中',
-        value: inUseCount,
+        title: '启用',
+        value: activeCount,
         icon: <CheckCircle size={24} />,
         color: 'success' as const,
       },
       {
-        title: '闲置',
-        value: idleCount,
-        icon: <PauseCircle size={24} />,
-        color: 'warning' as const,
-      },
-      {
-        title: '已报废',
-        value: scrappedCount,
+        title: '停用',
+        value: disabledCount,
         icon: <XCircle size={24} />,
         color: 'error' as const,
       },
       {
-        title: '总原值',
-        value: `¥${totalOriginalValue.toLocaleString()}`,
+        title: '上级科目',
+        value: hasChildrenCount,
+        icon: <PauseCircle size={24} />,
+        color: 'warning' as const,
+      },
+      {
+        title: '明细科目',
+        value: leafCount,
         icon: <DollarSign size={24} />,
         color: 'secondary' as const,
       },
       {
-        title: '总净值',
-        value: `¥${totalNetValue.toLocaleString()}`,
+        title: '层级深度',
+        value: Math.max(...assetData.map((a) => a.level), 0),
         icon: <DollarSign size={24} />,
         color: 'info' as const,
       },
@@ -223,97 +170,162 @@ const FinanceAssetPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
-      使用中: 'success',
-      闲置: 'warning',
-      已报废: 'error',
+      active: 'success',
+      disabled: 'error',
     };
     return colors[status] || 'default';
   };
 
-  const handleCreate = () => {
-    const newEntry: Asset = {
-      id: String(assetData.length + 1),
-      ...newAsset,
-      accumulated_depreciation: 0,
-      net_value: newAsset.original_value,
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      active: '启用',
+      disabled: '停用',
     };
-    setAssetData([...assetData, newEntry]);
-    addNotification({
-      title: '成功',
-      message: '资产新增成功',
-      type: 'success',
-    });
-    setShowCreateModal(false);
-    setNewAsset({
-      asset_code: '',
-      asset_name: '',
-      asset_category: '',
-      original_value: 0,
-      usage_status: '使用中',
-    });
+    return labels[status] || status;
   };
 
-  const handleEdit = (asset: Asset) => {
+  const handleCreate = async () => {
+    try {
+      const response = await financeApi.account.create(newAsset);
+      if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '资产科目新增成功',
+          type: 'success',
+        });
+        setShowCreateModal(false);
+        setNewAsset({
+          code: '',
+          name: '',
+          category: 'asset' as const,
+          balance_direction: 'debit' as const,
+          level: 1,
+          status: 'active' as const,
+          description: '',
+        });
+        loadAssets();
+      }
+    } catch (err: unknown) {
+      apiLogger.error('创建资产科目失败:', err);
+      addNotification({
+        title: '错误',
+        message: '创建资产科目失败',
+        type: 'error',
+      });
+    }
+  };
+
+  const handleEdit = (asset: Account) => {
     setEditingAsset({ ...asset });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editingAsset) return;
-    setAssetData(assetData.map((a) => (a.id === editingAsset.id ? editingAsset : a)));
-    addNotification({
-      title: '成功',
-      message: '资产更新成功',
-      type: 'success',
-    });
-    setEditingAsset(null);
+    try {
+      const response = await financeApi.account.update(editingAsset.id, editingAsset);
+      if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '资产科目更新成功',
+          type: 'success',
+        });
+        setEditingAsset(null);
+        loadAssets();
+      }
+    } catch (err: unknown) {
+      apiLogger.error('更新资产科目失败:', err);
+      addNotification({
+        title: '错误',
+        message: '更新资产科目失败',
+        type: 'error',
+      });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('确定要删除该资产吗？')) return;
-    setAssetData(assetData.filter((a) => a.id !== id));
-    addNotification({
-      title: '成功',
-      message: '资产删除成功',
-      type: 'success',
-    });
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定要删除该资产科目吗？')) return;
+    try {
+      const response = await financeApi.account.delete(id);
+      if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '资产科目删除成功',
+          type: 'success',
+        });
+        loadAssets();
+      }
+    } catch (err: unknown) {
+      apiLogger.error('删除资产科目失败:', err);
+      addNotification({
+        title: '错误',
+        message: '删除资产科目失败',
+        type: 'error',
+      });
+    }
   };
 
-  const handleDepreciation = (asset: Asset) => {
+  const handleDepreciation = (asset: Account) => {
     setSelectedAsset(asset);
     setShowDepreciationModal(true);
   };
 
-  const confirmDepreciation = () => {
+  const confirmDepreciation = async () => {
     if (!selectedAsset) return;
-    const depreciation = selectedAsset.original_value * 0.1;
-    const newAccumulated = selectedAsset.accumulated_depreciation + depreciation;
-    const newNetValue = selectedAsset.original_value - newAccumulated;
-
-    setAssetData(
-      assetData.map((a) =>
-        a.id === selectedAsset.id
-          ? {
-              ...a,
-              accumulated_depreciation: newAccumulated,
-              net_value: Math.max(0, newNetValue),
-            }
-          : a
-      )
-    );
-    addNotification({
-      title: '成功',
-      message: '计提折旧完成',
-      type: 'success',
-    });
-    setShowDepreciationModal(false);
+    try {
+      const currentPeriod = new Date().toISOString().slice(0, 7);
+      const response = await financeApi.voucher.create({
+        voucher_date: new Date().toISOString().split('T')[0],
+        period: currentPeriod,
+        summary: `计提折旧 - ${selectedAsset.name}`,
+        entries: [
+          {
+            account_id: '1602',
+            debit_amount: 1000,
+            summary: `计提折旧`,
+          },
+          {
+            account_id: selectedAsset.id,
+            credit_amount: 1000,
+            summary: `累计折旧`,
+          },
+        ],
+      });
+      if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '计提折旧凭证创建完成',
+          type: 'success',
+        });
+        loadAssets();
+      }
+    } catch (err: unknown) {
+      apiLogger.error('计提折旧失败:', err);
+      addNotification({
+        title: '错误',
+        message: '计提折旧失败',
+        type: 'error',
+      });
+    } finally {
+      setShowDepreciationModal(false);
+    }
   };
 
-  const handleScrap = (asset: Asset) => {
-    if (!confirm(`确定要报废资产 "${asset.asset_name}" 吗？`)) return;
-    setAssetData(
-      assetData.map((a) => (a.id === asset.id ? { ...a, usage_status: '已报废', net_value: 0 } : a))
-    );
-    addNotification({ title: '成功', message: '资产已报废', type: 'success' });
+  const handleScrap = async (asset: Account) => {
+    if (!confirm(`确定要停用科目 "${asset.name}" 吗？`)) return;
+    try {
+      await financeApi.account.update(asset.id, {
+        status: 'disabled',
+      });
+      addNotification({ title: '成功', message: '科目已停用', type: 'success' });
+      loadAssets();
+    } catch (err: unknown) {
+      apiLogger.error('停用科目失败:', err);
+      addNotification({
+        title: '错误',
+        message: '停用科目失败',
+        type: 'error',
+      });
+    }
   };
 
   const handleExport = () => {
@@ -327,66 +339,67 @@ const FinanceAssetPage: React.FC = () => {
   const columns = useMemo(
     () => [
       {
-        id: 'asset_code',
-        label: '资产编号',
-        render: (row: Asset) => (
-          <MuiBox sx={{ fontWeight: 600, color: 'success.main' }}>{row.asset_code}</MuiBox>
+        id: 'code',
+        label: '科目编码',
+        render: (row: Account) => (
+          <MuiBox sx={{ fontWeight: 600, color: 'success.main' }}>{row.code}</MuiBox>
         ),
       },
       {
-        id: 'asset_name',
-        label: '资产名称',
-        render: (row: Asset) => <MuiBox sx={{ fontWeight: 500 }}>{row.asset_name}</MuiBox>,
+        id: 'name',
+        label: '科目名称',
+        render: (row: Account) => <MuiBox sx={{ fontWeight: 500 }}>{row.name}</MuiBox>,
       },
       {
-        id: 'asset_category',
-        label: '资产类别',
-        render: (row: Asset) => (
+        id: 'category',
+        label: '科目类别',
+        render: (row: Account) => (
           <Chip
-            label={row.asset_category}
+            label={row.category === 'asset' ? '资产类' : row.category}
             size='small'
           />
         ),
       },
       {
-        id: 'original_value',
-        label: '原值',
-        render: (row: Asset) => (
-          <MuiBox sx={{ fontFamily: 'monospace' }}>¥{row.original_value.toLocaleString()}</MuiBox>
-        ),
-      },
-      {
-        id: 'accumulated_depreciation',
-        label: '累计折旧',
-        render: (row: Asset) => (
-          <MuiBox sx={{ color: 'warning.main', fontFamily: 'monospace' }}>
-            ¥{row.accumulated_depreciation.toLocaleString()}
+        id: 'balance_direction',
+        label: '余额方向',
+        render: (row: Account) => (
+          <MuiBox sx={{ fontFamily: 'monospace', color: 'primary.main' }}>
+            {row.balance_direction === 'debit' ? '借方' : '贷方'}
           </MuiBox>
         ),
       },
       {
-        id: 'net_value',
-        label: '净值',
-        render: (row: Asset) => (
+        id: 'level',
+        label: '层级',
+        render: (row: Account) => (
+          <MuiBox sx={{ color: 'warning.main', fontFamily: 'monospace' }}>
+            {row.level}
+          </MuiBox>
+        ),
+      },
+      {
+        id: 'has_children',
+        label: '是否有下级',
+        render: (row: Account) => (
           <MuiBox
             sx={{
               fontWeight: 700,
-              color: 'primary.main',
-              fontFamily: 'monospace',
+              color: row.has_children ? 'success.main' : 'text.secondary',
             }}
           >
-            ¥{row.net_value.toLocaleString()}
+            {row.has_children ? '是' : '否'}
           </MuiBox>
         ),
       },
       {
-        id: 'usage_status',
-        label: '使用状态',
-        render: (row: Asset) => (
+        id: 'status',
+        label: '状态',
+        render: (row: Account) => (
           <Chip
-            label={row.usage_status}
+            label={getStatusLabel(row.status)}
             size='small'
-            color={getStatusColor(row.usage_status)}
+            color={getStatusColor(row.status)}
           />
         ),
       },
@@ -400,55 +413,48 @@ const FinanceAssetPage: React.FC = () => {
         label: '计提折旧',
         icon: <Calculator sx={{ width: 16, height: 16 }} />,
         color: 'success' as const,
-        onClick: (row: Asset) => handleDepreciation(row),
+        onClick: (row: Account) => handleDepreciation(row),
       },
       {
         label: '编辑',
         icon: <Edit sx={{ width: 16, height: 16 }} />,
-        onClick: (row: Asset) => handleEdit(row),
+        onClick: (row: Account) => handleEdit(row),
       },
       {
-        label: '报废',
+        label: '停用',
         icon: <AlertTriangle sx={{ width: 16, height: 16 }} />,
         color: 'warning' as const,
-        onClick: (row: Asset) => handleScrap(row),
+        onClick: (row: Account) => handleScrap(row),
       },
       {
         label: '删除',
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error' as const,
-        onClick: (row: Asset) => handleDelete(row.id),
+        onClick: (row: Account) => handleDelete(row.id),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
   const advancedFilters = useMemo(
     () => [
       {
-        id: 'asset_category',
-        label: '资产类别',
+        id: 'category',
+        label: '科目类别',
         type: 'select' as const,
         options: [
-          { value: '生产设备', label: '生产设备' },
-          { value: '办公设备', label: '办公设备' },
-          { value: '运输设备', label: '运输设备' },
-          { value: '房屋建筑', label: '房屋建筑' },
-          { value: '研发设备', label: '研发设备' },
-          { value: '检测设备', label: '检测设备' },
+          { value: 'asset', label: '资产类' },
         ],
         value: filterCategory,
         onChange: setFilterCategory,
       },
       {
-        id: 'usage_status',
-        label: '使用状态',
+        id: 'status',
+        label: '状态',
         type: 'select' as const,
         options: [
-          { value: '使用中', label: '使用中' },
-          { value: '闲置', label: '闲置' },
-          { value: '已报废', label: '已报废' },
+          { value: 'active', label: '启用' },
+          { value: 'disabled', label: '停用' },
         ],
         value: filterStatus,
         onChange: setFilterStatus,
@@ -457,16 +463,15 @@ const FinanceAssetPage: React.FC = () => {
     [filterCategory, filterStatus]
   );
 
-  // 导出字段配置
   const exportFields = useMemo(
     () => [
-      { key: 'asset_code', title: '资产编码' },
-      { key: 'asset_name', title: '资产名称' },
-      { key: 'asset_category', title: '资产类别' },
-      { key: 'original_value', title: '原值' },
-      { key: 'accumulated_depreciation', title: '累计折旧' },
-      { key: 'net_value', title: '净值' },
-      { key: 'usage_status', title: '使用状态' },
+      { key: 'code', title: '科目编码' },
+      { key: 'name', title: '科目名称' },
+      { key: 'category', title: '科目类别' },
+      { key: 'balance_direction', title: '余额方向' },
+      { key: 'level', title: '层级' },
+      { key: 'has_children', title: '是否有下级' },
+      { key: 'status', title: '状态' },
     ],
     []
   );
@@ -563,7 +568,6 @@ const FinanceAssetPage: React.FC = () => {
       </MuiBox>
 
       <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        {/* 统计卡片 */}
         <StatCardGroup
           stats={statCards}
           columns={6}
@@ -572,6 +576,8 @@ const FinanceAssetPage: React.FC = () => {
         <ListPageTemplate
           columns={columns}
           data={filteredData}
+          loading={loading}
+          error={error}
           searchable
           searchPlaceholder='搜索资产编号、名称...'
           searchValue={searchQuery}
@@ -579,25 +585,25 @@ const FinanceAssetPage: React.FC = () => {
           filters={advancedFilters}
           filtersValue={{
             asset_category: filterCategory,
-            usage_status: filterStatus,
+            status: filterStatus,
           }}
           onFilterChange={(filters) => {
             if (filters.asset_category !== undefined)
               setFilterCategory(filters.asset_category as string);
-            if (filters.usage_status !== undefined) setFilterStatus(filters.usage_status as string);
+            if (filters.status !== undefined) setFilterStatus(filters.status as string);
           }}
           rowActions={rowActions}
+          onRefresh={loadAssets}
         />
       </MuiBox>
 
-      {/* Create Modal */}
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>新增资产</DialogTitle>
+        <DialogTitle>新增资产科目</DialogTitle>
         <DialogContent>
           <Stack
             spacing={3}
@@ -608,16 +614,18 @@ const FinanceAssetPage: React.FC = () => {
               spacing={2}
             >
               <TextField
-                label='资产编号 *'
+                label='科目编码 *'
                 fullWidth
-                value={newAsset.asset_code}
-                onChange={(e) => setNewAsset({ ...newAsset, asset_code: e.target.value })}
+                required
+                value={newAsset.code}
+                onChange={(e) => setNewAsset({ ...newAsset, code: e.target.value })}
               />
               <TextField
-                label='资产名称 *'
+                label='科目名称 *'
                 fullWidth
-                value={newAsset.asset_name}
-                onChange={(e) => setNewAsset({ ...newAsset, asset_name: e.target.value })}
+                required
+                value={newAsset.name}
+                onChange={(e) => setNewAsset({ ...newAsset, name: e.target.value })}
               />
             </Stack>
             <Stack
@@ -625,34 +633,49 @@ const FinanceAssetPage: React.FC = () => {
               spacing={2}
             >
               <FormControl fullWidth>
-                <InputLabel>资产类别</InputLabel>
+                <InputLabel>余额方向</InputLabel>
                 <Select
-                  value={newAsset.asset_category}
-                  label='资产类别'
-                  onChange={(e) => setNewAsset({ ...newAsset, asset_category: e.target.value })}
+                  value={newAsset.balance_direction}
+                  label='余额方向'
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      balance_direction: e.target.value as 'debit' | 'credit',
+                    })
+                  }
                 >
-                  <MenuItem value=''>请选择</MenuItem>
-                  <MenuItem value='生产设备'>生产设备</MenuItem>
-                  <MenuItem value='办公设备'>办公设备</MenuItem>
-                  <MenuItem value='运输设备'>运输设备</MenuItem>
-                  <MenuItem value='房屋建筑'>房屋建筑</MenuItem>
-                  <MenuItem value='研发设备'>研发设备</MenuItem>
-                  <MenuItem value='检测设备'>检测设备</MenuItem>
+                  <MenuItem value='debit'>借方</MenuItem>
+                  <MenuItem value='credit'>贷方</MenuItem>
                 </Select>
               </FormControl>
-              <TextField
-                label='原值 *'
-                type='number'
-                fullWidth
-                value={newAsset.original_value}
-                onChange={(e) =>
-                  setNewAsset({
-                    ...newAsset,
-                    original_value: parseFloat(e.target.value) || 0,
-                  })
-                }
-              />
+              <FormControl fullWidth>
+                <InputLabel>层级</InputLabel>
+                <Select
+                  value={newAsset.level}
+                  label='层级'
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      level: Number(e.target.value) || 1,
+                    })
+                  }
+                >
+                  <MenuItem value={1}>1级</MenuItem>
+                  <MenuItem value={2}>2级</MenuItem>
+                  <MenuItem value={3}>3级</MenuItem>
+                  <MenuItem value={4}>4级</MenuItem>
+                </Select>
+              </FormControl>
             </Stack>
+            <TextField
+              label='科目描述'
+              fullWidth
+              multiline
+              rows={3}
+              value={newAsset.description || ''}
+              onChange={(e) => setNewAsset({ ...newAsset, description: e.target.value })}
+              placeholder='请输入科目描述...'
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -666,14 +689,13 @@ const FinanceAssetPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Modal */}
       <Dialog
         open={!!editingAsset}
         onClose={() => setEditingAsset(null)}
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>编辑资产</DialogTitle>
+        <DialogTitle>编辑资产科目</DialogTitle>
         <DialogContent>
           {editingAsset && (
             <Stack
@@ -685,19 +707,19 @@ const FinanceAssetPage: React.FC = () => {
                 spacing={2}
               >
                 <TextField
-                  label='资产编号'
+                  label='科目编码'
                   fullWidth
-                  value={editingAsset.asset_code}
+                  value={editingAsset.code}
                   slotProps={{ input: { readOnly: true } }}
                 />
                 <TextField
-                  label='资产名称'
+                  label='科目名称'
                   fullWidth
-                  value={editingAsset.asset_name}
+                  value={editingAsset.name}
                   onChange={(e) =>
                     setEditingAsset({
                       ...editingAsset,
-                      asset_name: e.target.value,
+                      name: e.target.value,
                     })
                   }
                 />
@@ -707,37 +729,52 @@ const FinanceAssetPage: React.FC = () => {
                 spacing={2}
               >
                 <FormControl fullWidth>
-                  <InputLabel>资产类别</InputLabel>
+                  <InputLabel>余额方向</InputLabel>
                   <Select
-                    value={editingAsset.asset_category}
-                    label='资产类别'
+                    value={editingAsset.balance_direction}
+                    label='余额方向'
                     onChange={(e) =>
                       setEditingAsset({
                         ...editingAsset,
-                        asset_category: e.target.value,
+                        balance_direction: e.target.value as 'debit' | 'credit',
                       })
                     }
                   >
-                    <MenuItem value='生产设备'>生产设备</MenuItem>
-                    <MenuItem value='办公设备'>办公设备</MenuItem>
-                    <MenuItem value='运输设备'>运输设备</MenuItem>
-                    <MenuItem value='房屋建筑'>房屋建筑</MenuItem>
-                    <MenuItem value='研发设备'>研发设备</MenuItem>
-                    <MenuItem value='检测设备'>检测设备</MenuItem>
+                    <MenuItem value='debit'>借方</MenuItem>
+                    <MenuItem value='credit'>贷方</MenuItem>
                   </Select>
                 </FormControl>
-                <TextField
-                  label='使用状态'
-                  fullWidth
-                  value={editingAsset.usage_status}
-                  onChange={(e) =>
-                    setEditingAsset({
-                      ...editingAsset,
-                      usage_status: e.target.value,
-                    })
-                  }
-                />
+                <FormControl fullWidth>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={editingAsset.status}
+                    label='状态'
+                    onChange={(e) =>
+                      setEditingAsset({
+                        ...editingAsset,
+                        status: e.target.value as 'active' | 'disabled',
+                      })
+                    }
+                  >
+                    <MenuItem value='active'>启用</MenuItem>
+                    <MenuItem value='disabled'>停用</MenuItem>
+                  </Select>
+                </FormControl>
               </Stack>
+              <TextField
+                label='科目描述'
+                fullWidth
+                multiline
+                rows={3}
+                value={editingAsset.description || ''}
+                onChange={(e) =>
+                  setEditingAsset({
+                    ...editingAsset,
+                    description: e.target.value,
+                  })
+                }
+                placeholder='请输入科目描述...'
+              />
             </Stack>
           )}
         </DialogContent>
@@ -752,7 +789,6 @@ const FinanceAssetPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Depreciation Modal */}
       <Dialog
         open={showDepreciationModal}
         onClose={() => setShowDepreciationModal(false)}
@@ -771,50 +807,28 @@ const FinanceAssetPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  资产名称
+                  科目名称
                 </Typography>
                 <Typography
                   variant='body1'
                   sx={{ fontWeight: 500 }}
                 >
-                  {selectedAsset.asset_name}
+                  {selectedAsset.name}
                 </Typography>
               </MuiBox>
-              <MuiBox
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
-                }}
-              >
-                <MuiBox sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    原值
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 700 }}
-                  >
-                    ¥{selectedAsset.original_value.toLocaleString()}
-                  </Typography>
-                </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    当前累计折旧
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 700 }}
-                  >
-                    ¥{selectedAsset.accumulated_depreciation.toLocaleString()}
-                  </Typography>
-                </MuiBox>
+              <MuiBox sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  科目编码
+                </Typography>
+                <Typography
+                  variant='body1'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {selectedAsset.code}
+                </Typography>
               </MuiBox>
               <MuiBox
                 sx={{
@@ -828,15 +842,18 @@ const FinanceAssetPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  本次计提折旧（10%）
+                  折旧金额
                 </Typography>
                 <Typography
                   variant='h5'
                   sx={{ fontWeight: 700, color: 'success.main' }}
                 >
-                  ¥{(selectedAsset.original_value * 0.1).toLocaleString()}
+                  ¥1,000.00
                 </Typography>
               </MuiBox>
+              <Typography variant='body2' color='text.secondary'>
+                此操作将创建一张计提折旧凭证，借方为累计折旧科目，贷方为该资产科目。
+              </Typography>
             </Stack>
           )}
         </DialogContent>

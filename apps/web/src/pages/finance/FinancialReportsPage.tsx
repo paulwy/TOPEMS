@@ -2,20 +2,13 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Chip,
   Typography,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Box,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import { Button } from '@mui/material';
-/**
- * 财务报表页面
- * 查看资产负债表、利润表、现金流量表
- */
 
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -36,18 +29,15 @@ import {
   PiggyBank,
 } from 'lucide-react';
 import { StatCardGroup } from '@/components/mui';
-import {
-  useBalanceSheet,
-  useIncomeStatement,
-  useCashFlowStatement,
-  useGenerateBalanceSheet,
-  useGenerateIncomeStatement,
-  useGenerateCashFlowStatement,
-  useExportFinancialReport,
-} from '@/hooks/useFinancialReport';
+import { financeApi } from '@/api/finance';
+import type {
+  BalanceSheet,
+  IncomeStatement,
+  CashFlowStatement,
+  ReportQueryParams,
+} from '@/types/finance';
 import { apiLogger } from '@/utils/logger';
 
-// 报表类型配置
 const REPORT_TYPE_CONFIG = {
   balance_sheet: {
     name: '资产负债表',
@@ -69,178 +59,230 @@ const REPORT_TYPE_CONFIG = {
   },
 };
 
+type ReportType = 'balance_sheet' | 'income_statement' | 'cash_flow';
+
+type ReportData = BalanceSheet | IncomeStatement | CashFlowStatement | null;
+
 type ColorType = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 
 export default function FinancialReportsPage() {
   const navigate = useNavigate();
 
-  // 状态
   const [companyId, setCompanyId] = useState('');
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
-  const [reportType, setReportType] = useState<'balance_sheet' | 'income_statement' | 'cash_flow'>(
-    'balance_sheet'
-  );
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [reportType, setReportType] = useState<ReportType>('balance_sheet');
 
-  // 查询报表数据
-  const balanceSheet = useBalanceSheet({ company_id: companyId, period });
-  const incomeStatement = useIncomeStatement({ company_id: companyId, period });
-  const cashFlowStatement = useCashFlowStatement({
-    company_id: companyId,
-    period,
-  });
+  const [balanceSheetData, setBalanceSheetData] = useState<BalanceSheet | null>(null);
+  const [incomeStatementData, setIncomeStatementData] = useState<IncomeStatement | null>(null);
+  const [cashFlowStatementData, setCashFlowStatementData] = useState<CashFlowStatement | null>(null);
 
-  // mutations
-  const generateBalanceSheet = useGenerateBalanceSheet();
-  const generateIncomeStatement = useGenerateIncomeStatement();
-  const generateCashFlowStatement = useGenerateCashFlowStatement();
-  const exportReport = useExportFinancialReport();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 当前报表数据
-  const currentReport =
+  const currentReport: ReportData =
     reportType === 'balance_sheet'
-      ? balanceSheet.data?.data
+      ? balanceSheetData
       : reportType === 'income_statement'
-        ? incomeStatement.data?.data
-        : cashFlowStatement.data?.data;
+        ? incomeStatementData
+        : cashFlowStatementData;
 
-  const currentQuery =
-    reportType === 'balance_sheet'
-      ? balanceSheet
-      : reportType === 'income_statement'
-        ? incomeStatement
-        : cashFlowStatement;
-
-  // 统计卡片数据
   const statCards = useMemo(() => {
     if (!currentReport) return [];
 
     const getColor = (condition: boolean): ColorType => (condition ? 'success' : 'error');
 
     if (reportType === 'balance_sheet') {
+      const data = currentReport as BalanceSheet;
       return [
         {
           title: '总资产',
-          value: formatCurrency(currentReport?.assets?.total),
+          value: formatCurrency(data?.assets?.total),
           icon: <Wallet size={24} />,
           color: 'primary' as ColorType,
         },
         {
           title: '总负债',
-          value: formatCurrency(currentReport?.liabilities?.total),
+          value: formatCurrency(data?.liabilities?.total),
           icon: <Briefcase size={24} />,
           color: 'warning' as ColorType,
         },
         {
           title: '所有者权益',
-          value: formatCurrency(currentReport?.equity?.total),
+          value: formatCurrency(data?.equity?.total),
           icon: <PiggyBank size={24} />,
           color: 'success' as ColorType,
         },
         {
           title: '流动资产',
-          value: formatCurrency(currentReport?.assets?.current?.total),
+          value: formatCurrency(data?.assets?.current?.total),
           icon: <DollarSign size={24} />,
           color: 'info' as ColorType,
         },
       ];
     } else if (reportType === 'income_statement') {
+      const data = currentReport as IncomeStatement;
       return [
         {
           title: '营业收入',
-          value: formatCurrency(currentReport?.revenue?.total),
+          value: formatCurrency(data?.revenue?.total),
           icon: <TrendingUp size={24} />,
           color: 'success' as ColorType,
         },
         {
           title: '营业成本',
-          value: formatCurrency(currentReport?.cost_of_sales?.total),
+          value: formatCurrency(data?.cost_of_sales?.total),
           icon: <TrendingDown size={24} />,
           color: 'error' as ColorType,
         },
         {
           title: '毛利润',
-          value: formatCurrency(currentReport?.gross_profit),
+          value: formatCurrency(data?.gross_profit),
           icon: <Wallet size={24} />,
           color: 'primary' as ColorType,
         },
         {
           title: '净利润',
-          value: formatCurrency(currentReport?.net_profit),
+          value: formatCurrency(data?.net_profit),
           icon: <PiggyBank size={24} />,
-          color: getColor(currentReport?.net_profit >= 0),
+          color: getColor(data?.net_profit >= 0),
         },
       ];
     } else {
+      const data = currentReport as CashFlowStatement;
       return [
         {
           title: '经营活动净流量',
-          value: formatCurrency(currentReport?.operating?.net_flow),
+          value: formatCurrency(data?.operating?.net_flow),
           icon: <TrendingUp size={24} />,
-          color: getColor(currentReport?.operating?.net_flow >= 0),
+          color: getColor(data?.operating?.net_flow >= 0),
         },
         {
           title: '投资活动净流量',
-          value: formatCurrency(currentReport?.investing?.net_flow),
+          value: formatCurrency(data?.investing?.net_flow),
           icon: <Briefcase size={24} />,
-          color: getColor(currentReport?.investing?.net_flow >= 0),
+          color: getColor(data?.investing?.net_flow >= 0),
         },
         {
           title: '筹资活动净流量',
-          value: formatCurrency(currentReport?.financing?.net_flow),
+          value: formatCurrency(data?.financing?.net_flow),
           icon: <DollarSign size={24} />,
-          color: getColor(currentReport?.financing?.net_flow >= 0),
+          color: getColor(data?.financing?.net_flow >= 0),
         },
         {
           title: '现金净增加额',
-          value: formatCurrency(currentReport?.cash_equivalent_change),
+          value: formatCurrency(data?.cash_equivalent_change),
           icon: <Wallet size={24} />,
-          color: getColor(currentReport?.cash_equivalent_change >= 0),
+          color: getColor(data?.cash_equivalent_change >= 0),
         },
       ];
     }
   }, [currentReport, reportType]);
 
-  // 处理生成报表
-  const handleGenerate = async () => {
-    const generateFn =
-      reportType === 'balance_sheet'
-        ? generateBalanceSheet
-        : reportType === 'income_statement'
-          ? generateIncomeStatement
-          : generateCashFlowStatement;
+  const loadReport = async () => {
+    if (!companyId) return;
+
+    setLoading(true);
+    setError(null);
+
+    const params: ReportQueryParams = {
+      company_id: companyId,
+      period,
+    };
 
     try {
-      await generateFn.mutateAsync({
-        company_id: companyId,
-        period,
-      });
-      setShowGenerateModal(false);
-    } catch (error: unknown) {
-      apiLogger.error('Generate report failed:', error);
+      switch (reportType) {
+        case 'balance_sheet': {
+          const response = await financeApi.report.getBalanceSheet(params);
+          if (response.success && response.data) {
+            setBalanceSheetData(response.data);
+          } else {
+            setError(response.error?.message || '获取资产负债表失败');
+          }
+          break;
+        }
+        case 'income_statement': {
+          const response = await financeApi.report.getIncomeStatement(params);
+          if (response.success && response.data) {
+            setIncomeStatementData(response.data);
+          } else {
+            setError(response.error?.message || '获取利润表失败');
+          }
+          break;
+        }
+        case 'cash_flow': {
+          const response = await financeApi.report.getCashFlowStatement(params);
+          if (response.success && response.data) {
+            setCashFlowStatementData(response.data);
+          } else {
+            setError(response.error?.message || '获取现金流量表失败');
+          }
+          break;
+        }
+      }
+    } catch (err: unknown) {
+      apiLogger.error('Load report failed:', err);
+      setError('加载报表数据失败，请稍后重试');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 处理导出
-  const handleExport = async (format: 'pdf' | 'xlsx') => {
+  const handleExport = async (format: 'xlsx' | 'pdf') => {
+    if (!companyId) return;
+
+    const params: ReportQueryParams = {
+      company_id: companyId,
+      period,
+    };
+
     try {
-      await exportReport.mutateAsync({
-        report_type: reportType,
-        company_id: companyId,
-        period,
-        format,
-      });
-    } catch (error: unknown) {
-      apiLogger.error('Export report failed:', error);
+      let blob: Blob;
+      let fileName: string;
+
+      switch (reportType) {
+        case 'balance_sheet':
+          blob = await financeApi.report.exportBalanceSheet(params);
+          fileName = `balance_sheet_${period}.${format}`;
+          break;
+        case 'income_statement':
+          blob = await financeApi.report.exportIncomeStatement(params);
+          fileName = `income_statement_${period}.${format}`;
+          break;
+        case 'cash_flow':
+          blob = await financeApi.report.exportCashFlowStatement(params);
+          fileName = `cash_flow_${period}.${format}`;
+          break;
+        default:
+          return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      apiLogger.error('Export report failed:', err);
+      setError('导出报表失败，请稍后重试');
     }
   };
 
-  // 获取报表类型配置
+  const handleRefresh = () => {
+    loadReport();
+  };
+
   const typeConfig = REPORT_TYPE_CONFIG[reportType];
+
+  const handleReportTypeChange = (newType: ReportType) => {
+    setReportType(newType);
+    setError(null);
+  };
 
   return (
     <Box sx={{ mx: 'auto', py: 3, px: 2 }}>
-      {/* 页面标题 */}
       <Box
         sx={{
           display: 'flex',
@@ -250,67 +292,43 @@ export default function FinancialReportsPage() {
         }}
       >
         <Box>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold' }}
-          >
+          <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
             财务报表
           </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mt: 0.5 }}
-          >
+          <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
             查看和生成资产负债表、利润表、现金流量表
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Button
-            variant='outlined'
-            onClick={() => currentQuery.refetch()}
-            disabled={currentQuery.isFetching}
-          >
-            <RefreshCw
-              size={16}
-              style={{ marginRight: 8 }}
-            />
+          <Button variant='outlined' onClick={handleRefresh} disabled={loading}>
+            <RefreshCw size={16} style={{ marginRight: 8 }} />
             刷新
           </Button>
-          <FormControl
-            size='small'
-            sx={{ minWidth: 160 }}
-          >
-            <Select
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value as any)}
-            >
-              <MenuItem value='balance_sheet'>资产负债表</MenuItem>
-              <MenuItem value='income_statement'>利润表</MenuItem>
-              <MenuItem value='cash_flow'>现金流量表</MenuItem>
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {(['balance_sheet', 'income_statement', 'cash_flow'] as ReportType[]).map((type) => (
+              <Button
+                key={type}
+                variant={reportType === type ? 'contained' : 'outlined'}
+                onClick={() => handleReportTypeChange(type)}
+              >
+                {REPORT_TYPE_CONFIG[type].name}
+              </Button>
+            ))}
+          </Box>
         </Box>
       </Box>
 
-      {/* 统计卡片 */}
       {currentReport && (
         <Box sx={{ mb: 3 }}>
-          <StatCardGroup
-            stats={statCards}
-            columns={4}
-          />
+          <StatCardGroup stats={statCards} columns={4} />
         </Box>
       )}
 
-      {/* 筛选条件 */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ py: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
             <Box sx={{ flex: 1 }}>
-              <Typography
-                variant='body2'
-                sx={{ mb: 0.5 }}
-              >
+              <Typography variant='body2' sx={{ mb: 0.5 }}>
                 公司
               </Typography>
               <TextField
@@ -322,10 +340,7 @@ export default function FinancialReportsPage() {
               />
             </Box>
             <Box>
-              <Typography
-                variant='body2'
-                sx={{ mb: 0.5 }}
-              >
+              <Typography variant='body2' sx={{ mb: 0.5 }}>
                 会计期间
               </Typography>
               <TextField
@@ -336,22 +351,22 @@ export default function FinancialReportsPage() {
                 slotProps={{ inputLabel: { shrink: true } }}
               />
             </Box>
-            <Button
-              variant='contained'
-              onClick={handleGenerate}
-              disabled={!companyId}
-            >
-              <RefreshCw
-                size={16}
-                style={{ marginRight: 8 }}
-              />
-              生成报表
+            <Button variant='contained' onClick={loadReport} disabled={!companyId || loading}>
+              <RefreshCw size={16} style={{ marginRight: 8 }} />
+              {loading ? '加载中...' : '生成报表'}
             </Button>
           </Box>
         </CardContent>
       </Card>
 
-      {/* 报表内容 */}
+      {error && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Alert severity='error'>{error}</Alert>
+          </CardContent>
+        </Card>
+      )}
+
       <Card sx={{ mb: 3 }}>
         <CardHeader
           sx={{
@@ -376,48 +391,28 @@ export default function FinancialReportsPage() {
               <typeConfig.icon size={20} />
             </Box>
             <Box>
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
+              <Typography variant='h6' sx={{ fontWeight: 600 }}>
                 {typeConfig.name}
               </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
+              <Typography variant='body2' color='text.secondary'>
                 {companyId ? `公司: ${companyId}` : '请选择公司'} | 期间: {period}
               </Typography>
             </Box>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button
-              variant='outlined'
-              size='small'
-              onClick={() => handleExport('xlsx')}
-            >
-              <Download
-                size={16}
-                style={{ marginRight: 8 }}
-              />
+            <Button variant='outlined' size='small' onClick={() => handleExport('xlsx')}>
+              <Download size={16} style={{ marginRight: 8 }} />
               导出Excel
             </Button>
-            <Button
-              variant='outlined'
-              size='small'
-              onClick={() => handleExport('pdf')}
-            >
-              <Download
-                size={16}
-                style={{ marginRight: 8 }}
-              />
+            <Button variant='outlined' size='small' onClick={() => handleExport('pdf')}>
+              <Download size={16} style={{ marginRight: 8 }} />
               导出PDF
             </Button>
           </Box>
         </CardHeader>
 
         <CardContent>
-          {currentQuery.isLoading ? (
+          {loading ? (
             <Box
               sx={{
                 display: 'flex',
@@ -426,7 +421,7 @@ export default function FinancialReportsPage() {
                 py: 6,
               }}
             >
-              <RefreshCw size={32} />
+              <CircularProgress />
             </Box>
           ) : !currentReport ? (
             <Box
@@ -439,30 +434,19 @@ export default function FinancialReportsPage() {
               }}
             >
               <FileText size={48} />
-              <Typography
-                color='text.secondary'
-                sx={{ mt: 2 }}
-              >
+              <Typography color='text.secondary' sx={{ mt: 2 }}>
                 暂无报表数据
               </Typography>
-              <Typography
-                variant='body2'
-                color='text.disabled'
-                sx={{ mt: 0.5 }}
-              >
+              <Typography variant='body2' color='text.disabled' sx={{ mt: 0.5 }}>
                 请输入公司ID和期间后点击"生成报表"
               </Typography>
             </Box>
           ) : (
-            <ReportContent
-              reportType={reportType}
-              data={currentReport}
-            />
+            <ReportContent reportType={reportType} data={currentReport} />
           )}
         </CardContent>
       </Card>
 
-      {/* 报表对比入口 */}
       <Box
         sx={{
           display: 'grid',
@@ -493,16 +477,10 @@ export default function FinancialReportsPage() {
               <BarChart3 size={24} />
             </Box>
             <Box>
-              <Typography
-                variant='body1'
-                sx={{ fontWeight: 500 }}
-              >
+              <Typography variant='body1' sx={{ fontWeight: 500 }}>
                 报表对比
               </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
+              <Typography variant='body2' color='text.secondary'>
                 多期间、多公司对比分析
               </Typography>
             </Box>
@@ -532,16 +510,10 @@ export default function FinancialReportsPage() {
               <TrendingUp size={24} />
             </Box>
             <Box>
-              <Typography
-                variant='body1'
-                sx={{ fontWeight: 500 }}
-              >
+              <Typography variant='body1' sx={{ fontWeight: 500 }}>
                 趋势分析
               </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
+              <Typography variant='body2' color='text.secondary'>
                 报表项目趋势变化
               </Typography>
             </Box>
@@ -571,16 +543,10 @@ export default function FinancialReportsPage() {
               <Building2 size={24} />
             </Box>
             <Box>
-              <Typography
-                variant='body1'
-                sx={{ fontWeight: 500 }}
-              >
+              <Typography variant='body1' sx={{ fontWeight: 500 }}>
                 合并报表
               </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
+              <Typography variant='body2' color='text.secondary'>
                 多公司报表合并
               </Typography>
             </Box>
@@ -591,7 +557,6 @@ export default function FinancialReportsPage() {
   );
 }
 
-// 报表内容组件
 function ReportContent({ reportType, data }: { reportType: string; data: any }) {
   if (reportType === 'balance_sheet') {
     return <BalanceSheetContent data={data} />;
@@ -602,11 +567,9 @@ function ReportContent({ reportType, data }: { reportType: string; data: any }) 
   }
 }
 
-// 资产负债表内容
-function BalanceSheetContent({ data }: { data: any }) {
+function BalanceSheetContent({ data }: { data: BalanceSheet }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {/* 资产 */}
       <Box>
         <Typography
           variant='h6'
@@ -619,10 +582,7 @@ function BalanceSheetContent({ data }: { data: any }) {
             gap: 1,
           }}
         >
-          <ArrowUpRight
-            size={20}
-            color='primary.dark'
-          />
+          <ArrowUpRight size={20} color='primary.dark' />
           资产
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -636,96 +596,30 @@ function BalanceSheetContent({ data }: { data: any }) {
             }}
           >
             <Typography component='span'>流动资产</Typography>
-            <Typography
-              component='span'
-              sx={{ fontWeight: 500 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 500 }}>
               {formatCurrency(data?.assets?.current?.total)}
             </Typography>
           </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              py: 1,
-              borderBottom: 1,
-              borderColor: 'divider',
-              pl: 2,
-            }}
-          >
-            <Typography
-              component='span'
-              variant='body2'
-              sx={{ color: 'grey.600' }}
+          {data?.assets?.current?.items?.map((item) => (
+            <Box
+              key={item.account_code}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                py: 1,
+                borderBottom: 1,
+                borderColor: 'divider',
+                pl: 2,
+              }}
             >
-              货币资金
-            </Typography>
-            <Typography
-              component='span'
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              {formatCurrency(
-                data?.assets?.current?.items?.find((i: any) => i.account_name === '货币资金')
-                  ?.amount
-              )}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              py: 1,
-              borderBottom: 1,
-              borderColor: 'divider',
-              pl: 2,
-            }}
-          >
-            <Typography
-              component='span'
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              应收账款
-            </Typography>
-            <Typography
-              component='span'
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              {formatCurrency(
-                data?.assets?.current?.items?.find((i: any) => i.account_name === '应收账款')
-                  ?.amount
-              )}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              py: 1,
-              borderBottom: 1,
-              borderColor: 'divider',
-              pl: 2,
-            }}
-          >
-            <Typography
-              component='span'
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              存货
-            </Typography>
-            <Typography
-              component='span'
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              {formatCurrency(
-                data?.assets?.current?.items?.find((i: any) => i.account_name === '存货')?.amount
-              )}
-            </Typography>
-          </Box>
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {item.account_name}
+              </Typography>
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {formatCurrency(item.amount)}
+              </Typography>
+            </Box>
+          ))}
           <Box
             sx={{
               display: 'flex',
@@ -735,19 +629,33 @@ function BalanceSheetContent({ data }: { data: any }) {
               borderColor: 'divider',
             }}
           >
-            <Typography
-              component='span'
-              sx={{ fontWeight: 500 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 500 }}>
               非流动资产
             </Typography>
-            <Typography
-              component='span'
-              sx={{ fontWeight: 500 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 500 }}>
               {formatCurrency(data?.assets?.non_current?.total)}
             </Typography>
           </Box>
+          {data?.assets?.non_current?.items?.map((item) => (
+            <Box
+              key={item.account_code}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                py: 1,
+                borderBottom: 1,
+                borderColor: 'divider',
+                pl: 2,
+              }}
+            >
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {item.account_name}
+              </Typography>
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {formatCurrency(item.amount)}
+              </Typography>
+            </Box>
+          ))}
           <Box
             sx={{
               display: 'flex',
@@ -760,23 +668,16 @@ function BalanceSheetContent({ data }: { data: any }) {
               borderRadius: 1,
             }}
           >
-            <Typography
-              component='span'
-              sx={{ fontWeight: 700 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 700 }}>
               资产合计
             </Typography>
-            <Typography
-              component='span'
-              sx={{ fontWeight: 700 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 700 }}>
               {formatCurrency(data?.assets?.total)}
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      {/* 负债 */}
       <Box>
         <Typography
           variant='h6'
@@ -789,10 +690,7 @@ function BalanceSheetContent({ data }: { data: any }) {
             gap: 1,
           }}
         >
-          <ArrowDownRight
-            size={20}
-            color='error.dark'
-          />
+          <ArrowDownRight size={20} color='error.dark' />
           负债
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -806,13 +704,30 @@ function BalanceSheetContent({ data }: { data: any }) {
             }}
           >
             <Typography component='span'>流动负债</Typography>
-            <Typography
-              component='span'
-              sx={{ fontWeight: 500 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 500 }}>
               {formatCurrency(data?.liabilities?.current?.total)}
             </Typography>
           </Box>
+          {data?.liabilities?.current?.items?.map((item) => (
+            <Box
+              key={item.account_code}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                py: 1,
+                borderBottom: 1,
+                borderColor: 'divider',
+                pl: 2,
+              }}
+            >
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {item.account_name}
+              </Typography>
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {formatCurrency(item.amount)}
+              </Typography>
+            </Box>
+          ))}
           <Box
             sx={{
               display: 'flex',
@@ -822,19 +737,33 @@ function BalanceSheetContent({ data }: { data: any }) {
               borderColor: 'divider',
             }}
           >
-            <Typography
-              component='span'
-              sx={{ fontWeight: 500 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 500 }}>
               非流动负债
             </Typography>
-            <Typography
-              component='span'
-              sx={{ fontWeight: 500 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 500 }}>
               {formatCurrency(data?.liabilities?.non_current?.total)}
             </Typography>
           </Box>
+          {data?.liabilities?.non_current?.items?.map((item) => (
+            <Box
+              key={item.account_code}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                py: 1,
+                borderBottom: 1,
+                borderColor: 'divider',
+                pl: 2,
+              }}
+            >
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {item.account_name}
+              </Typography>
+              <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+                {formatCurrency(item.amount)}
+              </Typography>
+            </Box>
+          ))}
           <Box
             sx={{
               display: 'flex',
@@ -847,23 +776,16 @@ function BalanceSheetContent({ data }: { data: any }) {
               borderRadius: 1,
             }}
           >
-            <Typography
-              component='span'
-              sx={{ fontWeight: 700 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 700 }}>
               负债合计
             </Typography>
-            <Typography
-              component='span'
-              sx={{ fontWeight: 700 }}
-            >
+            <Typography component='span' sx={{ fontWeight: 700 }}>
               {formatCurrency(data?.liabilities?.total)}
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      {/* 所有者权益 */}
       <Box>
         <Typography
           variant='h6'
@@ -876,12 +798,54 @@ function BalanceSheetContent({ data }: { data: any }) {
             gap: 1,
           }}
         >
-          <DollarSign
-            size={20}
-            color='success.dark'
-          />
+          <DollarSign size={20} color='success.dark' />
           所有者权益
         </Typography>
+        {data?.equity?.paid_in?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography component='span'>{item.account_name}</Typography>
+            <Typography component='span'>{formatCurrency(item.amount)}</Typography>
+          </Box>
+        ))}
+        {data?.equity?.reserves?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography component='span'>{item.account_name}</Typography>
+            <Typography component='span'>{formatCurrency(item.amount)}</Typography>
+          </Box>
+        ))}
+        {data?.equity?.retained_earnings?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Typography component='span'>{item.account_name}</Typography>
+            <Typography component='span'>{formatCurrency(item.amount)}</Typography>
+          </Box>
+        ))}
         <Box
           sx={{
             display: 'flex',
@@ -894,22 +858,15 @@ function BalanceSheetContent({ data }: { data: any }) {
             borderRadius: 1,
           }}
         >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 700 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 700 }}>
             所有者权益合计
           </Typography>
-          <Typography
-            component='span'
-            sx={{ fontWeight: 700 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 700 }}>
             {formatCurrency(data?.equity?.total)}
           </Typography>
         </Box>
       </Box>
 
-      {/* 平衡检查 */}
       <Box
         sx={{
           p: 2,
@@ -917,23 +874,11 @@ function BalanceSheetContent({ data }: { data: any }) {
           bgcolor: data?.balance_check ? 'success.light' : 'error.light',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 500 }}
-          >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography component='span' sx={{ fontWeight: 500 }}>
             {data?.balance_check ? '✓ 资产负债表平衡' : '✗ 资产负债表不平衡'}
           </Typography>
-          <Typography
-            component='span'
-            sx={{ fontFamily: 'monospace' }}
-          >
+          <Typography component='span' sx={{ fontFamily: 'monospace' }}>
             资产: {formatCurrency(data?.assets?.total)} = 负债+权益:{' '}
             {formatCurrency(data?.total_liabilities_equity)}
           </Typography>
@@ -943,8 +888,7 @@ function BalanceSheetContent({ data }: { data: any }) {
   );
 }
 
-// 利润表内容
-function IncomeStatementContent({ data }: { data: any }) {
+function IncomeStatementContent({ data }: { data: IncomeStatement }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -957,69 +901,53 @@ function IncomeStatementContent({ data }: { data: any }) {
             borderColor: 'divider',
           }}
         >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 500 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 500 }}>
             营业收入
           </Typography>
-          <Typography
-            component='span'
-            sx={{ fontWeight: 500 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 500 }}>
             {formatCurrency(data?.revenue?.total)}
           </Typography>
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-            pl: 2,
-          }}
-        >
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
+        {data?.revenue?.main_revenue?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+              pl: 2,
+            }}
           >
-            主营业务收入
-          </Typography>
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {item.account_name}
+            </Typography>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
+        {data?.revenue?.other_revenue?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+              pl: 2,
+            }}
           >
-            {formatCurrency(data?.revenue?.main_revenue?.total)}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-            pl: 2,
-          }}
-        >
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
-          >
-            其他业务收入
-          </Typography>
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
-          >
-            {formatCurrency(data?.revenue?.other_revenue?.total)}
-          </Typography>
-        </Box>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {item.account_name}
+            </Typography>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -1032,19 +960,33 @@ function IncomeStatementContent({ data }: { data: any }) {
             borderColor: 'divider',
           }}
         >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 500 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 500 }}>
             营业成本
           </Typography>
-          <Typography
-            component='span'
-            sx={{ fontWeight: 500, color: 'error.main' }}
-          >
+          <Typography component='span' sx={{ fontWeight: 500, color: 'error.main' }}>
             -{formatCurrency(data?.cost_of_sales?.total)}
           </Typography>
         </Box>
+        {data?.cost_of_sales?.main_cost?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+              pl: 2,
+            }}
+          >
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {item.account_name}
+            </Typography>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              -{formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
       </Box>
 
       <Box
@@ -1059,10 +1001,7 @@ function IncomeStatementContent({ data }: { data: any }) {
           borderRadius: 1,
         }}
       >
-        <Typography
-          component='span'
-          sx={{ fontWeight: 700 }}
-        >
+        <Typography component='span' sx={{ fontWeight: 700 }}>
           毛利润
         </Typography>
         <Typography
@@ -1072,8 +1011,7 @@ function IncomeStatementContent({ data }: { data: any }) {
             color: data?.gross_profit >= 0 ? 'success.main' : 'error.main',
           }}
         >
-          {formatCurrency(data?.gross_profit)} ({data?.gross_margin?.toFixed(2)}
-          %)
+          {formatCurrency(data?.gross_profit)} ({data?.gross_margin?.toFixed(2)}%)
         </Typography>
       </Box>
 
@@ -1087,119 +1025,93 @@ function IncomeStatementContent({ data }: { data: any }) {
             borderColor: 'divider',
           }}
         >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 500 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 500 }}>
             期间费用
           </Typography>
-          <Typography
-            component='span'
-            sx={{ fontWeight: 500, color: 'error.main' }}
-          >
+          <Typography component='span' sx={{ fontWeight: 500, color: 'error.main' }}>
             -{formatCurrency(data?.operating_expenses?.total)}
           </Typography>
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-            pl: 2,
-          }}
-        >
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
+        {data?.operating_expenses?.selling_expense?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+              pl: 2,
+            }}
           >
-            销售费用
-          </Typography>
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {item.account_name}
+            </Typography>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
+        {data?.operating_expenses?.administrative_expense?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+              pl: 2,
+            }}
           >
-            {formatCurrency(data?.operating_expenses?.selling_expense?.total)}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-            pl: 2,
-          }}
-        >
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {item.account_name}
+            </Typography>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
+        {data?.operating_expenses?.rd_expense?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+              pl: 2,
+            }}
           >
-            管理费用
-          </Typography>
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {item.account_name}
+            </Typography>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
+        {data?.operating_expenses?.financial_expense?.items?.map((item) => (
+          <Box
+            key={item.account_code}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+              pl: 2,
+            }}
           >
-            {formatCurrency(data?.operating_expenses?.administrative_expense?.total)}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-            pl: 2,
-          }}
-        >
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
-          >
-            研发费用
-          </Typography>
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
-          >
-            {formatCurrency(data?.operating_expenses?.rd_expense?.total)}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-            pl: 2,
-          }}
-        >
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
-          >
-            财务费用
-          </Typography>
-          <Typography
-            component='span'
-            variant='body2'
-            sx={{ color: 'grey.600' }}
-          >
-            {formatCurrency(data?.operating_expenses?.financial_expense?.total)}
-          </Typography>
-        </Box>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {item.account_name}
+            </Typography>
+            <Typography component='span' variant='body2' sx={{ color: 'grey.600' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
       </Box>
 
       <Box
@@ -1214,10 +1126,7 @@ function IncomeStatementContent({ data }: { data: any }) {
           borderRadius: 1,
         }}
       >
-        <Typography
-          component='span'
-          sx={{ fontWeight: 700 }}
-        >
+        <Typography component='span' sx={{ fontWeight: 700 }}>
           净利润
         </Typography>
         <Typography
@@ -1234,8 +1143,7 @@ function IncomeStatementContent({ data }: { data: any }) {
   );
 }
 
-// 现金流量表内容
-function CashFlowContent({ data }: { data: any }) {
+function CashFlowContent({ data }: { data: CashFlowStatement }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -1250,46 +1158,43 @@ function CashFlowContent({ data }: { data: any }) {
             gap: 1,
           }}
         >
-          <TrendingUp
-            size={20}
-            color='success.dark'
-          />
+          <TrendingUp size={20} color='success.dark' />
           经营活动现金流量
         </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography component='span'>流入</Typography>
-          <Typography
-            component='span'
-            sx={{ color: 'success.main' }}
+        {data?.operating?.inflows?.items?.map((item) => (
+          <Box
+            key={item.description}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            {formatCurrency(data?.operating?.inflows?.total)}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography component='span'>流出</Typography>
-          <Typography
-            component='span'
-            sx={{ color: 'error.main' }}
+            <Typography component='span'>{item.description}</Typography>
+            <Typography component='span' sx={{ color: 'success.main' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
+        {data?.operating?.outflows?.items?.map((item) => (
+          <Box
+            key={item.description}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            -{formatCurrency(data?.operating?.outflows?.total)}
-          </Typography>
-        </Box>
+            <Typography component='span'>{item.description}</Typography>
+            <Typography component='span' sx={{ color: 'error.main' }}>
+              -{formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
         <Box
           sx={{
             display: 'flex',
@@ -1301,10 +1206,7 @@ function CashFlowContent({ data }: { data: any }) {
             borderRadius: 1,
           }}
         >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 700 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 700 }}>
             经营活动净流量
           </Typography>
           <Typography
@@ -1331,46 +1233,43 @@ function CashFlowContent({ data }: { data: any }) {
             gap: 1,
           }}
         >
-          <TrendingDown
-            size={20}
-            color='primary.dark'
-          />
+          <TrendingDown size={20} color='primary.dark' />
           投资活动现金流量
         </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography component='span'>流入</Typography>
-          <Typography
-            component='span'
-            sx={{ color: 'success.main' }}
+        {data?.investing?.inflows?.items?.map((item) => (
+          <Box
+            key={item.description}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            {formatCurrency(data?.investing?.inflows?.total)}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography component='span'>流出</Typography>
-          <Typography
-            component='span'
-            sx={{ color: 'error.main' }}
+            <Typography component='span'>{item.description}</Typography>
+            <Typography component='span' sx={{ color: 'success.main' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
+        {data?.investing?.outflows?.items?.map((item) => (
+          <Box
+            key={item.description}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            -{formatCurrency(data?.investing?.outflows?.total)}
-          </Typography>
-        </Box>
+            <Typography component='span'>{item.description}</Typography>
+            <Typography component='span' sx={{ color: 'error.main' }}>
+              -{formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
         <Box
           sx={{
             display: 'flex',
@@ -1382,10 +1281,7 @@ function CashFlowContent({ data }: { data: any }) {
             borderRadius: 1,
           }}
         >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 700 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 700 }}>
             投资活动净流量
           </Typography>
           <Typography
@@ -1412,46 +1308,43 @@ function CashFlowContent({ data }: { data: any }) {
             gap: 1,
           }}
         >
-          <DollarSign
-            size={20}
-            color='#9333ea'
-          />
+          <DollarSign size={20} color='#9333ea' />
           筹资活动现金流量
         </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography component='span'>流入</Typography>
-          <Typography
-            component='span'
-            sx={{ color: 'success.main' }}
+        {data?.financing?.inflows?.items?.map((item) => (
+          <Box
+            key={item.description}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            {formatCurrency(data?.financing?.inflows?.total)}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography component='span'>流出</Typography>
-          <Typography
-            component='span'
-            sx={{ color: 'error.main' }}
+            <Typography component='span'>{item.description}</Typography>
+            <Typography component='span' sx={{ color: 'success.main' }}>
+              {formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
+        {data?.financing?.outflows?.items?.map((item) => (
+          <Box
+            key={item.description}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            -{formatCurrency(data?.financing?.outflows?.total)}
-          </Typography>
-        </Box>
+            <Typography component='span'>{item.description}</Typography>
+            <Typography component='span' sx={{ color: 'error.main' }}>
+              -{formatCurrency(item.amount)}
+            </Typography>
+          </Box>
+        ))}
         <Box
           sx={{
             display: 'flex',
@@ -1463,10 +1356,7 @@ function CashFlowContent({ data }: { data: any }) {
             borderRadius: 1,
           }}
         >
-          <Typography
-            component='span'
-            sx={{ fontWeight: 700 }}
-          >
+          <Typography component='span' sx={{ fontWeight: 700 }}>
             筹资活动净流量
           </Typography>
           <Typography
@@ -1493,10 +1383,7 @@ function CashFlowContent({ data }: { data: any }) {
           borderRadius: 1,
         }}
       >
-        <Typography
-          component='span'
-          sx={{ fontWeight: 700 }}
-        >
+        <Typography component='span' sx={{ fontWeight: 700 }}>
           现金及现金等价物净增加额
         </Typography>
         <Typography
@@ -1510,45 +1397,19 @@ function CashFlowContent({ data }: { data: any }) {
         </Typography>
       </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          py: 1,
-          color: 'grey.600',
-        }}
-      >
-        <Typography
-          component='span'
-          sx={{ color: 'grey.600' }}
-        >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, color: 'grey.600' }}>
+        <Typography component='span' sx={{ color: 'grey.600' }}>
           期初现金
         </Typography>
-        <Typography
-          component='span'
-          sx={{ color: 'grey.600' }}
-        >
+        <Typography component='span' sx={{ color: 'grey.600' }}>
           {formatCurrency(data?.beginning_cash)}
         </Typography>
       </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          py: 1,
-          color: 'grey.600',
-        }}
-      >
-        <Typography
-          component='span'
-          sx={{ color: 'grey.600' }}
-        >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, color: 'grey.600' }}>
+        <Typography component='span' sx={{ color: 'grey.600' }}>
           期末现金
         </Typography>
-        <Typography
-          component='span'
-          sx={{ color: 'grey.600', fontWeight: 500 }}
-        >
+        <Typography component='span' sx={{ color: 'grey.600', fontWeight: 500 }}>
           {formatCurrency(data?.ending_cash)}
         </Typography>
       </Box>
@@ -1556,7 +1417,6 @@ function CashFlowContent({ data }: { data: any }) {
   );
 }
 
-// 格式化金额
 function formatCurrency(amount: number | undefined): string {
   if (amount === undefined || amount === null) return '-';
   return new Intl.NumberFormat('zh-CN', {

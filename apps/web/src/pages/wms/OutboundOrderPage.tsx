@@ -13,8 +13,8 @@ import type {
   OutboundOrder,
   CreateOutboundOrderRequest,
   UpdateOutboundOrderRequest,
-} from '@/api/shared/wms';
-import { wmsApi } from '@/api/shared/wms';
+} from '@/api/wms';
+import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import {
   ListPageTemplate,
@@ -24,6 +24,7 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { ConfirmDialog } from '@/components/common';
 
 const statusConfig: Record<
   string,
@@ -53,7 +54,9 @@ const OutboundOrderPage: React.FC = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OutboundOrder | null>(null);
+  const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
 
   // Form states
   const [formData, setFormData] = useState<CreateOutboundOrderRequest>({
@@ -158,33 +161,33 @@ const OutboundOrderPage: React.FC = () => {
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个出库订单吗？此操作不可撤销。')) {
-        return;
-      }
+  const handleDeleteClick = (id: string) => {
+    setDeleteOrderId(id);
+    setShowDeleteConfirm(true);
+  };
 
-      try {
-        const response = await wmsApi.outboundOrders.delete(id);
-        if (response.success) {
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '出库订单已删除',
-          });
-          loadOrders();
-        }
-      } catch (error: unknown) {
-        apiLogger.error('删除出库订单失败:', error);
+  const handleDelete = useCallback(async () => {
+    if (!deleteOrderId) return;
+
+    try {
+      const response = await wmsApi.outboundOrders.delete(deleteOrderId);
+      if (response.success) {
         addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '删除出库订单失败',
+          type: 'success',
+          title: '删除成功',
+          message: '出库订单已删除',
         });
+        loadOrders();
       }
-    },
-    [addNotification, loadOrders]
-  );
+    } catch (error: unknown) {
+      apiLogger.error('删除出库订单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除出库订单失败',
+      });
+    }
+  }, [addNotification, loadOrders, deleteOrderId]);
 
   const handleEdit = (order: OutboundOrder) => {
     setSelectedOrder(order);
@@ -302,9 +305,7 @@ const OutboundOrderPage: React.FC = () => {
         label: '删除',
         icon: <Trash2 size={16} />,
         color: 'error',
-        onClick: (row) => handleDelete(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这个出库订单吗？',
+        onClick: (row) => handleDeleteClick(row.id),
       },
     ],
     [handleDelete]
@@ -664,6 +665,16 @@ const OutboundOrderPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除这个出库订单吗？此操作不可撤销。'
+        danger
+      />
     </>
   );
 };

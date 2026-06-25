@@ -1,127 +1,92 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
-  Typography,
   Chip,
-  Paper,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
+  TextField,
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, Play, FileText, Package, Clock, CheckCircle, XCircle, Loader } from 'lucide-react';
 import {
-  ListPageTemplate,
-  type ColumnDef,
-  type FilterConfig,
-  type RowAction,
-} from '@/components/templates';
-
-interface Build {
-  id: string;
-  build_no: string;
-  build_task: string;
-  trigger_type: string;
-  status: string;
-  duration: number;
-  build_time: string;
-}
+  Play,
+  FileText,
+  RotateCcw,
+  GitBranch,
+  CheckCircle,
+  XCircle,
+  Clock,
+} from 'lucide-react';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import type { RowAction, FilterConfig } from '@/components/templates';
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Build, CreateBuildRequest } from '@/api/rs';
 
 const RsBuildPage: React.FC = () => {
+  const { addNotification } = useAppStore();
   const [builds, setBuilds] = useState<Build[]>([]);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [taskTypeFilter, setTaskTypeFilter] = useState<string | null>(null);
-  const [logDialogOpen, setLogDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [projectFilter, setProjectFilter] = useState<string>('');
+  const [newBuildDialogOpen, setNewBuildDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedBuild, setSelectedBuild] = useState<Build | null>(null);
+  const [newBuildForm, setNewBuildForm] = useState({
+    project_id: '',
+    branch: '',
+    commit_hash: '',
+    build_type: 'manual',
+  });
 
   useEffect(() => {
-    const mockBuilds: Build[] = [
-      {
-        id: '1',
-        build_no: 'BUILD-20240615-001',
-        build_task: 'frontend-main',
-        trigger_type: 'push',
-        status: 'success',
-        duration: 320,
-        build_time: '2024-06-15 14:30:00',
-      },
-      {
-        id: '2',
-        build_no: 'BUILD-20240615-002',
-        build_task: 'backend-api',
-        trigger_type: 'manual',
-        status: 'running',
-        duration: 0,
-        build_time: '2024-06-15 14:25:00',
-      },
-      {
-        id: '3',
-        build_no: 'BUILD-20240614-003',
-        build_task: 'mobile-app',
-        trigger_type: 'tag',
-        status: 'failed',
-        duration: 180,
-        build_time: '2024-06-14 16:20:00',
-      },
-      {
-        id: '4',
-        build_no: 'BUILD-20240614-002',
-        build_task: 'shared-utils',
-        trigger_type: 'pr',
-        status: 'success',
-        duration: 145,
-        build_time: '2024-06-14 10:15:00',
-      },
-      {
-        id: '5',
-        build_no: 'BUILD-20240614-001',
-        build_task: 'data-service',
-        trigger_type: 'schedule',
-        status: 'success',
-        duration: 420,
-        build_time: '2024-06-14 02:00:00',
-      },
-    ];
-    setBuilds(mockBuilds);
-  }, []);
+    loadBuilds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, projectFilter, page, rowsPerPage]);
 
-  const getStatusColor = (status: string): 'success' | 'error' | 'primary' | 'default' => {
-    switch (status) {
-      case 'success':
-        return 'success';
-      case 'failed':
-        return 'error';
-      case 'running':
-        return 'primary';
-      default:
-        return 'default';
+  const loadBuilds = async () => {
+    try {
+      setLoading(true);
+      const params: any = {
+        page: page + 1,
+        page_size: rowsPerPage,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter) params.status = statusFilter;
+      if (projectFilter) params.project_id = projectFilter;
+
+      const response = await rsApi.listBuilds(params);
+      if (response.success && response.data) {
+        setBuilds(response.data.builds || []);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error: unknown) {
+      console.error('加载构建记录失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载构建记录',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success':
-        return <CheckCircle size={14} />;
-      case 'failed':
-        return <XCircle size={14} />;
-      case 'running':
-        return (
-          <Loader
-            size={14}
-            className='animate-spin'
-          />
-        );
-      default:
-        return <Clock size={14} />;
-    }
-  };
+  const uniqueProjects = useMemo(
+    () => [...new Set(builds.map((b) => b.project_name))],
+    [builds]
+  );
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
@@ -130,256 +95,443 @@ const RsBuildPage: React.FC = () => {
       case 'failed':
         return '失败';
       case 'running':
-        return '运行中';
+        return '进行中';
       case 'pending':
-        return '等待中';
+        return '待构建';
       default:
         return status;
     }
   };
 
-  const getTriggerTypeLabel = (type: string): string => {
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'default' => {
+    switch (status) {
+      case 'success':
+        return 'success';
+      case 'failed':
+        return 'error';
+      case 'running':
+        return 'warning';
+      case 'pending':
+        return 'default';
+      default:
+        return 'default';
+    }
+  };
+
+  const getBuildTypeLabel = (type: string): string => {
     switch (type) {
-      case 'push':
-        return '代码推送';
       case 'manual':
-        return '手动触发';
-      case 'tag':
-        return '标签发布';
-      case 'pr':
-        return '合并请求';
-      case 'schedule':
-        return '定时任务';
+        return '手动';
+      case 'auto':
+        return '自动';
+      case 'scheduled':
+        return '定时';
       default:
         return type;
     }
   };
 
-  const formatDuration = (seconds: number): string => {
-    if (seconds === 0) return '-';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}分${secs}秒`;
-  };
-
-  const uniqueTaskTypes = useMemo(() => [...new Set(builds.map((b) => b.build_task))], [builds]);
-
-  const filteredBuilds = useMemo(() => {
-    return builds.filter((build) => {
-      const matchesSearch =
-        build.build_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        build.build_task.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = !statusFilter || build.status === statusFilter;
-      const matchesTaskType = !taskTypeFilter || build.build_task.includes(taskTypeFilter);
-      return matchesSearch && matchesStatus && matchesTaskType;
-    });
-  }, [builds, searchTerm, statusFilter, taskTypeFilter]);
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleTriggerBuild = () => {
-    const newBuild: Build = {
-      id: String(Date.now()),
-      build_no: `BUILD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(builds.length + 1).padStart(3, '0')}`,
-      build_task: 'new-task',
-      trigger_type: 'manual',
-      status: 'running',
-      duration: 0,
-      build_time: new Date().toLocaleString(),
-    };
-    setBuilds([newBuild, ...builds]);
-  };
-
-  const handleViewLog = (build: Build) => {
+  const handleViewDetail = (build: Build) => {
     setSelectedBuild(build);
-    setLogDialogOpen(true);
+    setDetailDialogOpen(true);
   };
 
-  // 表格列定义
-  const columns: ColumnDef<Build>[] = [
-    {
-      id: 'build_no',
-      label: '构建编号',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Package
-            size={16}
-            color='primary.main'
+  const handleRebuild = async (build: Build) => {
+    try {
+      const createData: CreateBuildRequest = {
+        project_id: build.project_id,
+        branch: build.branch,
+        commit_hash: build.commit_hash,
+        build_type: 'manual',
+      };
+      await rsApi.createBuild(createData);
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '构建任务已提交',
+      });
+      loadBuilds();
+    } catch (error: unknown) {
+      console.error('重新构建失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '重新构建失败',
+      });
+    }
+  };
+
+  const handleCreateBuild = async () => {
+    try {
+      const createData: CreateBuildRequest = {
+        project_id: newBuildForm.project_id,
+        branch: newBuildForm.branch,
+        commit_hash: newBuildForm.commit_hash,
+        build_type: newBuildForm.build_type,
+      };
+      await rsApi.createBuild(createData);
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '构建任务已创建',
+      });
+      setNewBuildDialogOpen(false);
+      setNewBuildForm({
+        project_id: '',
+        branch: '',
+        commit_hash: '',
+        build_type: 'manual',
+      });
+      loadBuilds();
+    } catch (error: unknown) {
+      console.error('创建构建失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建构建任务',
+      });
+    }
+  };
+
+  const columns = useMemo<ColumnDef<Build>[]>(
+    () => [
+      {
+        id: 'build_no',
+        label: '构建编号',
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <GitBranch
+              size={16}
+              color='primary.main'
+            />
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              {row.build_no}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'project_name',
+        label: '项目',
+        render: (row) => row.project_name,
+      },
+      {
+        id: 'branch',
+        label: '分支',
+        render: (row) => (
+          <Chip
+            label={row.branch}
+            size='small'
+            variant='outlined'
           />
-          {row.build_no}
-        </Box>
-      ),
-    },
-    { id: 'build_task', label: '构建任务' },
-    {
-      id: 'trigger_type',
-      label: '触发方式',
-      render: (row) => (
-        <Chip
-          label={getTriggerTypeLabel(row.trigger_type)}
-          size='small'
-          variant='outlined'
-        />
-      ),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => (
-        <Chip
-          icon={getStatusIcon(row.status)}
-          label={getStatusLabel(row.status)}
-          size='small'
-          color={getStatusColor(row.status)}
-        />
-      ),
-    },
-    {
-      id: 'duration',
-      label: '耗时',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Clock size={14} />
-          {formatDuration(row.duration)}
-        </Box>
-      ),
-    },
-    { id: 'build_time', label: '构建时间' },
-  ];
+        ),
+      },
+      {
+        id: 'commit_hash',
+        label: '提交',
+        render: (row) => (
+          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            {row.commit_hash?.slice(0, 8)}...
+          </Typography>
+        ),
+      },
+      {
+        id: 'build_type',
+        label: '类型',
+        render: (row) => (
+          <Chip
+            label={getBuildTypeLabel(row.build_type)}
+            size='small'
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {row.status === 'success' ? (
+              <CheckCircle
+                size={14}
+                color='green'
+              />
+            ) : row.status === 'failed' ? (
+              <XCircle
+                size={14}
+                color='red'
+              />
+            ) : row.status === 'running' ? (
+              <Clock
+                size={14}
+                color='orange'
+              />
+            ) : null}
+            <Chip
+              label={getStatusLabel(row.status)}
+              size='small'
+              color={getStatusColor(row.status)}
+            />
+          </Box>
+        ),
+      },
+      {
+        id: 'duration',
+        label: '耗时',
+        render: (row) => row.duration || '-',
+      },
+    ],
+    []
+  );
 
-  // 筛选器定义
-  const filters: FilterConfig[] = [
-    {
-      id: 'status',
-      label: '构建状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: '' },
-        { label: '成功', value: 'success' },
-        { label: '失败', value: 'failed' },
-        { label: '运行中', value: 'running' },
-        { label: '等待中', value: 'pending' },
-      ],
-      value: statusFilter || '',
-      onChange: (value) => setStatusFilter(value || null),
-    },
-    {
-      id: 'taskType',
-      label: '任务类型',
-      type: 'select',
-      options: [
-        { label: '全部', value: '' },
-        ...uniqueTaskTypes.map((task) => ({ label: task, value: task })),
-      ],
-      value: taskTypeFilter || '',
-      onChange: (value) => setTaskTypeFilter(value || null),
-    },
-  ];
+  const rowActions = useMemo<RowAction<Build>[]>(
+    () => [
+      {
+        label: '详情',
+        icon: <FileText size={16} />,
+        onClick: (row) => handleViewDetail(row),
+      },
+      {
+        label: '重新构建',
+        icon: <RotateCcw size={16} />,
+        color: 'primary',
+        onClick: (row) => handleRebuild(row),
+      },
+    ],
+    []
+  );
 
-  // 行操作定义
-  const rowActions: RowAction<Build>[] = [
-    {
-      label: '查看日志',
-      icon: <FileText size={16} />,
-      onClick: handleViewLog,
-    },
-    {
-      label: '制品管理',
-      icon: <Package size={16} />,
-    },
-  ];
-
-  // 分页配置
-  const pagination = {
-    page,
-    pageSize: rowsPerPage,
-    total: filteredBuilds.length,
-    onPageChange: setPage,
-    onPageSizeChange: setRowsPerPage,
-  };
-
-  // 操作按钮
-  const actions = [
-    {
-      label: '触发构建',
-      icon: <Play size={18} />,
-      onClick: handleTriggerBuild,
-    },
-  ];
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'project',
+        label: '项目',
+        type: 'select',
+        options: [
+          { value: '', label: '全部' },
+          ...uniqueProjects.map((project) => ({
+            value: project,
+            label: project,
+          })),
+        ],
+        value: projectFilter,
+        onChange: (value) => setProjectFilter(value as string),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { value: '', label: '全部' },
+          { value: 'success', label: '成功' },
+          { value: 'failed', label: '失败' },
+          { value: 'running', label: '进行中' },
+          { value: 'pending', label: '待构建' },
+        ],
+        value: statusFilter,
+        onChange: (value) => setStatusFilter(value as string),
+      },
+    ],
+    [projectFilter, statusFilter, uniqueProjects]
+  );
 
   return (
-    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
-      <ListPageTemplate
+    <>
+      <ListPageTemplate<Build>
         title='构建管理'
-        columns={columns}
-        data={filteredBuilds}
-        loading={loading}
-        filters={filters}
-        globalSearch={{
-          fields: ['build_no', 'build_task'],
-          placeholder: '搜索构建编号、任务...',
+        subtitle='管理代码构建和构建流水线'
+        backButton={{
+          href: '/dashboard',
         }}
-        pagination={pagination}
-        actions={actions}
+        columns={columns}
+        data={builds}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索构建编号、项目...'
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
         rowActions={rowActions}
-        onSearch={setSearchTerm}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
+        actions={[
+          {
+            label: '手动构建',
+            icon: <Play size={18} />,
+            onClick: () => setNewBuildDialogOpen(true),
+            variant: 'contained',
+          },
+        ]}
       />
 
       <Dialog
-        open={logDialogOpen}
-        onClose={() => setLogDialogOpen(false)}
+        open={newBuildDialogOpen}
+        onClose={() => setNewBuildDialogOpen(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>手动构建</DialogTitle>
+        <DialogContent>
+          <Stack
+            spacing={2}
+            sx={{ mt: 2 }}
+          >
+            <TextField
+              label='项目ID'
+              fullWidth
+              value={newBuildForm.project_id}
+              onChange={(e) =>
+                setNewBuildForm({ ...newBuildForm, project_id: e.target.value })
+              }
+            />
+            <TextField
+              label='分支'
+              fullWidth
+              value={newBuildForm.branch}
+              onChange={(e) => setNewBuildForm({ ...newBuildForm, branch: e.target.value })}
+            />
+            <TextField
+              label='提交哈希'
+              fullWidth
+              value={newBuildForm.commit_hash}
+              onChange={(e) =>
+                setNewBuildForm({ ...newBuildForm, commit_hash: e.target.value })
+              }
+            />
+            <FormControl fullWidth>
+              <InputLabel>构建类型</InputLabel>
+              <Select
+                value={newBuildForm.build_type}
+                label='构建类型'
+                onChange={(e) =>
+                  setNewBuildForm({ ...newBuildForm, build_type: e.target.value })
+                }
+              >
+                <MenuItem value='manual'>手动</MenuItem>
+                <MenuItem value='auto'>自动</MenuItem>
+                <MenuItem value='scheduled'>定时</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNewBuildDialogOpen(false)}>取消</Button>
+          <Button
+            variant='contained'
+            sx={{ bgcolor: 'primary.main' }}
+            onClick={handleCreateBuild}
+          >
+            提交构建
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>构建日志</DialogTitle>
+        <DialogTitle>构建详情</DialogTitle>
         <DialogContent>
           {selectedBuild && (
             <Box sx={{ py: 2 }}>
               <Typography
-                variant='subtitle1'
+                variant='h6'
                 sx={{ fontWeight: 'bold' }}
               >
-                {selectedBuild.build_no} - {selectedBuild.build_task}
+                {selectedBuild.build_no}
               </Typography>
-              <Paper
-                sx={{
-                  p: 2,
-                  mt: 2,
-                  bgcolor: '#1e1e1e',
-                  color: '#d4d4d4',
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                }}
+              <Stack
+                direction='row'
+                spacing={2}
+                sx={{ mt: 2 }}
               >
-                <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                  {`[14:30:00] Starting build...
-[14:30:01] Cloning repository...
-[14:30:05] Installing dependencies...
-[14:30:15] Dependencies installed successfully
-[14:30:16] Running tests...
-[14:30:45] All tests passed
-[14:30:46] Building application...
-[14:31:20] Build completed successfully
-[14:31:21] Generating artifacts...
-[14:31:25] Artifacts generated: app.tar.gz
-[14:31:26] Build finished with status: SUCCESS`}
-                </pre>
-              </Paper>
+                <Chip
+                  label={selectedBuild.project_name}
+                  size='small'
+                  variant='outlined'
+                />
+                <Chip
+                  label={selectedBuild.branch}
+                  size='small'
+                  variant='outlined'
+                />
+                <Chip
+                  label={getStatusLabel(selectedBuild.status)}
+                  size='small'
+                  color={getStatusColor(selectedBuild.status)}
+                />
+              </Stack>
+              <Box sx={{ mt: 3 }}>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                >
+                  提交: {selectedBuild.commit_hash}
+                </Typography>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  sx={{ mt: 1 }}
+                >
+                  耗时: {selectedBuild.duration}
+                </Typography>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  sx={{ mt: 1 }}
+                >
+                  创建时间: {selectedBuild.created_at}
+                </Typography>
+              </Box>
+              {selectedBuild.logs && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                  >
+                    构建日志
+                  </Typography>
+                  <Box
+                    sx={{
+                      mt: 1,
+                      p: 2,
+                      bgcolor: '#f5f5f5',
+                      borderRadius: 1,
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      maxHeight: 200,
+                      overflow: 'auto',
+                    }}
+                  >
+                    {selectedBuild.logs}
+                  </Box>
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLogDialogOpen(false)}>关闭</Button>
+          <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
+          <Button
+            variant='contained'
+            sx={{ bgcolor: 'primary.main' }}
+            onClick={() => handleRebuild(selectedBuild!)}
+          >
+            重新构建
+          </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

@@ -20,7 +20,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ehsApi } from '@/api/ehs';
 import { apiLogger } from '@/utils/logger';
 import type { DrillRecord } from '@/api/ehs';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 const EhsDrillPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,7 +32,9 @@ const EhsDrillPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedDrill, setSelectedDrill] = useState<DrillRecord | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
+
     drill_no: '',
     name: '',
     drill_type: '',
@@ -43,6 +45,7 @@ const EhsDrillPage: React.FC = () => {
     evaluation: '',
     issues: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadDrills();
@@ -53,7 +56,9 @@ const EhsDrillPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listDrills();
       if (response.success && response.data) {
-        const adapted = (response.data as any).data.map((item: { [key: string]: unknown }) => ({
+        const data = response.data as any;
+        const drillsData = Array.isArray(data) ? data : data.data || [];
+        const adapted = drillsData.map((item: { [key: string]: unknown }) => ({
           ...item,
           status:
             item.status === 'completed'
@@ -70,9 +75,37 @@ const EhsDrillPage: React.FC = () => {
       }
     } catch (err: unknown) {
       apiLogger.error('加载演练记录数据失败:', err);
+      addNotification({ title: '错误', message: '加载演练记录失败', type: 'error' });
       setDrills([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDrillDetail = async (drillId: string) => {
+    try {
+      setDetailLoading(true);
+      const response = await ehsApi.getDrill(drillId);
+      if (response.success && response.data) {
+        const drillData = response.data as any;
+        const adapted = {
+          ...drillData,
+          status:
+            drillData.status === 'completed'
+              ? '已完成'
+              : drillData.status === 'scheduled'
+                ? '已计划'
+                : drillData.status === 'in_progress'
+                  ? '进行中'
+                  : drillData.status,
+        };
+        setSelectedDrill(adapted);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载演练记录详情失败:', err);
+      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
+    } finally {
+      setDetailLoading(false);
     }
   };
 
@@ -149,9 +182,10 @@ const EhsDrillPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleView = (drill: DrillRecord) => {
+  const handleView = async (drill: DrillRecord) => {
     setSelectedDrill(drill);
     setShowDetailModal(true);
+    await loadDrillDetail(drill.id);
   };
 
   const handleCreate = () => {
@@ -184,11 +218,11 @@ const EhsDrillPage: React.FC = () => {
         summary: formData.evaluation || null,
         issues_found: formData.issues || null,
       });
-      toast.success('演练记录创建成功');
+      addNotification({ title: '成功', message: '演练记录创建成功', type: 'success' });
       setShowCreateModal(false);
       loadDrills();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建演练记录失败:', err);
     }
   };
@@ -621,7 +655,24 @@ const EhsDrillPage: React.FC = () => {
       >
         <DialogTitle>演练记录详情</DialogTitle>
         <DialogContent>
-          {selectedDrill && (
+          {detailLoading ? (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: 3,
+                  borderColor: 'warning.main',
+                  borderTopColor: 'warning.dark',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  mx: 'auto',
+                  mb: 2,
+                }}
+              />
+              <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+            </Box>
+          ) : selectedDrill && (
             <Box
               sx={{
                 pt: 2,

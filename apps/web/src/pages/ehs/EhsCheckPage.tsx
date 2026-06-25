@@ -35,7 +35,7 @@ import {
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import type { InspectionPlan, InspectionItem, InspectionRecord, RecordItem } from '@/api/ehs';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 const EhsCheckPage: React.FC = () => {
   const navigate = useNavigate();
@@ -54,6 +54,7 @@ const EhsCheckPage: React.FC = () => {
   const [recordItems, setRecordItems] = useState<RecordItem[]>([]);
   const [planItems, setPlanItems] = useState<InspectionItem[]>([]);
   const [formData, setFormData] = useState({
+
     title: '',
     description: '',
     inspection_type: 'daily',
@@ -62,6 +63,7 @@ const EhsCheckPage: React.FC = () => {
     end_date: '',
     inspector: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
   const [recordFormData, setRecordFormData] = useState({
     plan_id: '',
     title: '',
@@ -401,11 +403,11 @@ const EhsCheckPage: React.FC = () => {
         end_date: formData.end_date || null,
         inspector: formData.inspector || null,
       });
-      toast.success('检查计划创建成功');
+      addNotification({ title: '成功', message: '检查计划创建成功', type: 'success' });
       setShowCreatePlanModal(false);
       loadPlans();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建检查计划失败:', err);
     }
   };
@@ -427,11 +429,11 @@ const EhsCheckPage: React.FC = () => {
           remarks: item.remarks || null,
         })),
       });
-      toast.success('检查记录创建成功');
+      addNotification({ title: '成功', message: '检查记录创建成功', type: 'success' });
       setShowCreateRecordModal(false);
       loadRecords();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建检查记录失败:', err);
     }
   };

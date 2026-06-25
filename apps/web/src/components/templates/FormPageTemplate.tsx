@@ -250,6 +250,8 @@ export interface FormPageTemplateProps extends Omit<BoxProps, 'onSubmit'> {
   title: string;
   subtitle?: string;
   breadcrumbs?: BreadcrumbItem[];
+  /** 是否启用自动面包屑（默认启用） */
+  autoBreadcrumbs?: boolean;
 
   // 表单配置
   sections: FormSection[];
@@ -391,6 +393,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   title,
   subtitle,
   breadcrumbs,
+  autoBreadcrumbs = true,
   sections,
   schema,
   defaultValues,
@@ -1412,6 +1415,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           title={title}
           subtitle={subtitle}
           breadcrumbs={breadcrumbs}
+          autoBreadcrumbs={autoBreadcrumbs}
           loading={loading}
         >
           {headerContent}

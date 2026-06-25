@@ -81,6 +81,16 @@ export interface Workflow {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  data?: WorkflowData;
+}
+
+export interface WorkflowData {
+  type?: string;
+  scope?: string;
+  usageCount?: number;
+  applicant?: string;
+  name?: string;
+  [key: string]: any;
 }
 
 export interface CreateWorkflowRequest {
@@ -129,6 +139,30 @@ export interface Approval {
   approved_at?: string;
   timeout_at?: string;
   created_at: string;
+}
+
+export interface ApprovalTask {
+  id: string;
+  workflow_instance_id?: string;
+  workflow_id?: string;
+  workflow_name?: string;
+  node_id?: string;
+  node_name?: string;
+  task_name: string;
+  assignee_id?: string;
+  assignee_name?: string;
+  initiator_id?: string;
+  initiator_name?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'delegated' | 'completed' | string;
+  approval_type?: string;
+  comment?: string;
+  approved_by?: string;
+  approved_at?: string;
+  timeout_at?: string;
+  priority?: 'low' | 'medium' | 'high';
+  data?: any;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface CreateApprovalRequest {
@@ -194,6 +228,47 @@ export interface Notification {
   workflow_instance_id?: string;
   approval_id?: string;
   is_read: boolean;
+  created_at: string;
+}
+
+export interface WorkflowTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  type?: string;
+  scope?: string;
+  definition?: WorkflowDefinition | any;
+  usage_count?: number;
+  is_active?: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface WorkflowSetting {
+  id: string;
+  key: string;
+  value: string;
+  description: string;
+  category: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface WorkflowHistory {
+  id: string;
+  workflow_instance_id?: string;
+  workflow_id?: string;
+  workflow_name?: string;
+  action: string;
+  actor_id?: string;
+  actor_name?: string;
+  node_id?: string;
+  node_name?: string;
+  status_before?: string;
+  status_after?: string;
+  comment?: string;
+  data?: any;
   created_at: string;
 }
 
@@ -293,6 +368,18 @@ export const workflowApi = {
 
   deleteWorkflow: (id: string) => createCrudApi<Workflow>('/api/flow/workflows').delete(id),
 
+  deploy: (id: string) => {
+    return apiClient.flow.post(`/api/flow/workflows/${id}/deploy`);
+  },
+
+  activate: (id: string) => {
+    return apiClient.flow.post(`/api/flow/workflows/${id}/activate`);
+  },
+
+  deactivate: (id: string) => {
+    return apiClient.flow.post(`/api/flow/workflows/${id}/deactivate`);
+  },
+
   getVersions: (workflowId: string, params?: ListParams) => {
     return apiClient.flow.get(`/api/flow/workflows/${workflowId}/versions`, {
       params,
@@ -346,6 +433,26 @@ export const instanceApi = {
   listInstances: (params?: ListParams) => {
     return apiClient.flow.get(`/api/flow/instances`, { params });
   },
+
+  getInstance: (id: string) => {
+    return apiClient.flow.get(`/api/flow/instances/${id}`);
+  },
+
+  cancelInstance: (id: string) => {
+    return apiClient.flow.post(`/api/flow/instances/${id}/cancel`);
+  },
+
+  suspendInstance: (id: string) => {
+    return apiClient.flow.post(`/api/flow/instances/${id}/suspend`);
+  },
+
+  resumeInstance: (id: string) => {
+    return apiClient.flow.post(`/api/flow/instances/${id}/resume`);
+  },
+
+  delete: (id: string) => {
+    return apiClient.flow.delete(`/api/flow/instances/${id}`);
+  },
 };
 
 // ========== 审批 API ==========
@@ -380,6 +487,40 @@ export const approvalApi = {
   },
 };
 
+export const approvalTaskApi = {
+  listApprovalTasks: (params?: ListParams) => {
+    return apiClient.flow.get(`/api/flow/approval-tasks`, { params });
+  },
+
+  getApprovalTask: (id: string) => {
+    return apiClient.flow.get(`/api/flow/approval-tasks/${id}`);
+  },
+
+  approveTask: (id: string, data?: { comment?: string; actor_id?: string }) => {
+    return apiClient.flow.post(`/api/flow/approval-tasks/${id}/approve`, data);
+  },
+
+  rejectTask: (id: string, data?: { comment?: string; actor_id?: string }) => {
+    return apiClient.flow.post(`/api/flow/approval-tasks/${id}/reject`, data);
+  },
+
+  delegateTask: (id: string, data: { delegate_to: string; delegate_to_name?: string }) => {
+    return apiClient.flow.post(`/api/flow/approval-tasks/${id}/delegate`, data);
+  },
+
+  reassignTask: (id: string, data: { assignee_id: string; assignee_name?: string }) => {
+    return apiClient.flow.post(`/api/flow/approval-tasks/${id}/reassign`, data);
+  },
+
+  claimTask: (id: string) => {
+    return apiClient.flow.post(`/api/flow/approval-tasks/${id}/claim`);
+  },
+
+  unclaimTask: (id: string) => {
+    return apiClient.flow.post(`/api/flow/approval-tasks/${id}/unclaim`);
+  },
+};
+
 // ========== 通知 API ==========
 
 export const notificationApi = {
@@ -404,34 +545,142 @@ export const notificationApi = {
   },
 };
 
+export const templateApi = {
+  listTemplates: (params?: ListParams) => {
+    return apiClient.flow.get(`/api/flow/templates`, { params });
+  },
+
+  getTemplate: (id: string) => {
+    return apiClient.flow.get(`/api/flow/templates/${id}`);
+  },
+
+  createTemplate: (data: Partial<WorkflowTemplate>) => {
+    return apiClient.flow.post('/api/flow/templates', data);
+  },
+
+  updateTemplate: (id: string, data: Partial<WorkflowTemplate>) => {
+    return apiClient.flow.put(`/api/flow/templates/${id}`, data);
+  },
+
+  deleteTemplate: (id: string) => {
+    return apiClient.flow.delete(`/api/flow/templates/${id}`);
+  },
+
+  copyTemplate: (id: string, data?: { name?: string }) => {
+    return apiClient.flow.post(`/api/flow/templates/${id}/copy`, data);
+  },
+
+  exportTemplate: (id: string) => {
+    return apiClient.flow.get(`/api/flow/templates/${id}/export`);
+  },
+
+  importTemplate: (data: { file: File | any; name?: string }) => {
+    return apiClient.flow.post('/api/flow/templates/import', data);
+  },
+};
+
+export const settingApi = {
+  listSettings: (params?: ListParams) => {
+    return apiClient.flow.get(`/api/flow/settings`, { params });
+  },
+
+  getSetting: (id: string) => {
+    return apiClient.flow.get(`/api/flow/settings/${id}`);
+  },
+
+  updateSetting: (id: string, data: { value?: string }) => {
+    return apiClient.flow.put(`/api/flow/settings/${id}`, data);
+  },
+
+  getSettingByKey: (key: string) => {
+    return apiClient.flow.get(`/api/flow/settings/key/${key}`);
+  },
+
+  batchUpdateSettings: (data: { settings: { id: string; value: string }[] }) => {
+    return apiClient.flow.post('/api/flow/settings/batch', data);
+  },
+
+  resetSetting: (id: string) => {
+    return apiClient.flow.post(`/api/flow/settings/${id}/reset`);
+  },
+};
+
+export const historyApi = {
+  listHistory: (params?: ListParams) => {
+    return apiClient.flow.get(`/api/flow/history`, { params });
+  },
+
+  getHistory: (id: string) => {
+    return apiClient.flow.get(`/api/flow/history/${id}`);
+  },
+
+  getHistoryByInstance: (instanceId: string) => {
+    return apiClient.flow.get(`/api/flow/history/instance/${instanceId}`);
+  },
+
+  getHistoryByWorkflow: (workflowId: string) => {
+    return apiClient.flow.get(`/api/flow/history/workflow/${workflowId}`);
+  },
+};
+
 // ========== 统一导出 ==========
 
 export const flowApi = {
   workflows: workflowApi,
   instances: instanceApi,
   approvals: approvalApi,
+  approvalTasks: approvalTaskApi,
   notifications: notificationApi,
+  templates: templateApi,
+  settings: settingApi,
+  history: historyApi,
 
   listWorkflows: workflowApi.listWorkflows,
   getWorkflow: workflowApi.getWorkflow,
   createWorkflow: workflowApi.createWorkflow,
   updateWorkflow: workflowApi.updateWorkflow,
   deleteWorkflow: workflowApi.deleteWorkflow,
+  deployWorkflow: workflowApi.deploy,
+  activateWorkflow: workflowApi.activate,
+  deactivateWorkflow: workflowApi.deactivate,
 
   listInstances: instanceApi.listInstances,
   startInstance: instanceApi.start,
-  getInstance: instanceApi.get,
+  getInstance: instanceApi.getInstance,
   getInstanceDetails: instanceApi.getDetails,
+  cancelInstance: instanceApi.cancelInstance,
+  suspendInstance: instanceApi.suspendInstance,
+  resumeInstance: instanceApi.resumeInstance,
 
   listApprovals: approvalApi.listApprovals,
   createApproval: approvalApi.create,
   getApproval: approvalApi.get,
   processApproval: approvalApi.process,
 
+  listApprovalTasks: approvalTaskApi.listApprovalTasks,
+  getApprovalTask: approvalTaskApi.getApprovalTask,
+  approveTask: approvalTaskApi.approveTask,
+  rejectTask: approvalTaskApi.rejectTask,
+  delegateTask: approvalTaskApi.delegateTask,
+  reassignTask: approvalTaskApi.reassignTask,
+
   listNotifications: notificationApi.listNotifications,
   getNotificationCount: notificationApi.getCount,
   markNotificationsAsRead: notificationApi.markAsRead,
   createNotification: notificationApi.create,
+
+  listTemplates: templateApi.listTemplates,
+  getTemplate: templateApi.getTemplate,
+  createTemplate: templateApi.createTemplate,
+  updateTemplate: templateApi.updateTemplate,
+  deleteTemplate: templateApi.deleteTemplate,
+
+  listSettings: settingApi.listSettings,
+  getSetting: settingApi.getSetting,
+  updateSetting: settingApi.updateSetting,
+
+  listHistory: historyApi.listHistory,
+  getHistory: historyApi.getHistory,
 
   getRecords: approvalApi.getRecords,
   getRecordsByApproval: approvalApi.getRecordsByApproval,

@@ -27,9 +27,11 @@ import {
   FormControl,
   InputLabel,
   TablePagination,
+  Alert,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { useAppStore } from '@/store';
 import ExportButton from '@/components/export/ExportButton';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import {
@@ -43,6 +45,11 @@ import {
   Legend,
 } from 'recharts';
 import { BIChartColors } from '@/components/charts/chartTheme';
+import {
+  getComparisonResult,
+  runComparison,
+  type ComparisonResult,
+} from '@/api/bi';
 
 interface ComparisonRow {
   id: string;
@@ -53,115 +60,66 @@ interface ComparisonRow {
   changeRate: number;
 }
 
-const mockComparisonData: ComparisonRow[] = [
-  {
-    id: '1',
-    comparisonItem: '研发项目数',
-    indicatorA: 120,
-    indicatorB: 145,
-    difference: 25,
-    changeRate: 20.83,
-  },
-  {
-    id: '2',
-    comparisonItem: '实验室样品数',
-    indicatorA: 2450,
-    indicatorB: 2800,
-    difference: 350,
-    changeRate: 14.29,
-  },
-  {
-    id: '3',
-    comparisonItem: '质量合格率(%)',
-    indicatorA: 97.8,
-    indicatorB: 98.5,
-    difference: 0.7,
-    changeRate: 0.72,
-  },
-  {
-    id: '4',
-    comparisonItem: '安全风险数',
-    indicatorA: 125,
-    indicatorB: 98,
-    difference: -27,
-    changeRate: -21.6,
-  },
-  {
-    id: '5',
-    comparisonItem: '供应商数量',
-    indicatorA: 280,
-    indicatorB: 310,
-    difference: 30,
-    changeRate: 10.71,
-  },
-  {
-    id: '6',
-    comparisonItem: '生产批次',
-    indicatorA: 450,
-    indicatorB: 520,
-    difference: 70,
-    changeRate: 15.56,
-  },
-  {
-    id: '7',
-    comparisonItem: '检验完成率(%)',
-    indicatorA: 92.5,
-    indicatorB: 95.8,
-    difference: 3.3,
-    changeRate: 3.57,
-  },
-  {
-    id: '8',
-    comparisonItem: '成本支出(万元)',
-    indicatorA: 850,
-    indicatorB: 780,
-    difference: -70,
-    changeRate: -8.24,
-  },
-];
-
 const BIComparisonPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ComparisonRow[]>([]);
   const [filteredData, setFilteredData] = useState<ComparisonRow[]>([]);
   const [timeRange, setTimeRange] = useState<string>('2024H1');
   const [comparisonDimension, setComparisonDimension] = useState<string>('halfYear');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentComparisonId, setCurrentComparisonId] = useState<string>('1');
 
-  const loadData = useCallback(async (showRefreshing = false) => {
+  const loadComparisonResult = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setIsRefreshing(true);
     else setLoading(true);
+    setError(null);
     try {
-      setTimeout(() => {
-        setData(mockComparisonData);
-        setFilteredData(mockComparisonData);
-        setLoading(false);
-        setIsRefreshing(false);
-      }, 500);
-    } catch (error: unknown) {
-      console.error('Failed to load comparison data:', error);
+      const res = await getComparisonResult(currentComparisonId);
+      if (res.success && res.data) {
+        const result: ComparisonResult = res.data;
+        const rows: ComparisonRow[] = result.data.map((item, index) => ({
+          id: `${index + 1}`,
+          comparisonItem: item.indicator,
+          indicatorA: item.value_a,
+          indicatorB: item.value_b,
+          difference: item.difference,
+          changeRate: item.change_rate,
+        }));
+        setData(rows);
+        setFilteredData(rows);
+      }
+    } catch (e: unknown) {
+      console.error('Failed to load comparison data:', e);
+      setError('加载对比分析数据失败，请稍后重试');
+    } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [currentComparisonId]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadComparisonResult();
+  }, [loadComparisonResult]);
 
-  const handleRefresh = () => {
-    loadData(true);
+  const handleRefresh = async () => {
+    setError(null);
+    try {
+      const res = await runComparison(currentComparisonId);
+      if (res.success) {
+        loadComparisonResult(true);
+      }
+    } catch (e: unknown) {
+      console.error('Failed to run comparison:', e);
+      setError('执行对比分析失败');
+    }
   };
 
   useEffect(() => {
-    let filtered = [...data];
-    if (timeRange !== 'all') {
-      filtered = filtered;
-    }
-    setFilteredData(filtered);
+    setFilteredData(data);
     setPage(0);
   }, [timeRange, comparisonDimension, data]);
 
@@ -239,6 +197,11 @@ const BIComparisonPage = () => {
       loading={loading}
       onRefresh={handleRefresh}
     >
+      {error && (
+        <Alert severity='error' sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
       {/* 筛选条件 */}
       <Card sx={{ mb: 3 }}>
         <CardContent>

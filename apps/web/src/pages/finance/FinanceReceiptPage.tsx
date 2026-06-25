@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ChevronLeft,
   Plus,
@@ -14,8 +14,9 @@ import { useNavigate } from 'react-router-dom';
 import { DataExport } from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/notification/NotificationContainer';
 import { apiLogger } from '@/utils/logger';
+import { financeApi } from '@/api/finance';
+import type { CollectionRecord } from '@/types/finance';
 
 import {
   TextField,
@@ -46,94 +47,13 @@ interface Receipt {
   status: string;
 }
 
-const mockReceiptData: Receipt[] = [
-  {
-    id: '1',
-    receipt_number: 'SK202401001',
-    receipt_date: '2024-01-15',
-    customer: '深圳市贸易公司',
-    receipt_method: '银行转账',
-    amount: 113000,
-    bank_account: '招商银行 ****1234',
-    status: '已到账',
-  },
-  {
-    id: '2',
-    receipt_number: 'SK202401002',
-    receipt_date: '2024-01-18',
-    customer: '广州商贸公司',
-    receipt_method: '银行承兑汇票',
-    amount: 56500,
-    bank_account: '工商银行 ****5678',
-    status: '待核销',
-  },
-  {
-    id: '3',
-    receipt_number: 'SK202401003',
-    receipt_date: '2024-01-20',
-    customer: '东莞实业公司',
-    receipt_method: '银行转账',
-    amount: 226000,
-    bank_account: '建设银行 ****9012',
-    status: '已到账',
-  },
-  {
-    id: '4',
-    receipt_number: 'SK202401004',
-    receipt_date: '2024-01-22',
-    customer: '佛山贸易公司',
-    receipt_method: '现金',
-    amount: 5000,
-    bank_account: '库存现金',
-    status: '已核销',
-  },
-  {
-    id: '5',
-    receipt_number: 'SK202401005',
-    receipt_date: '2024-01-25',
-    customer: '惠州商贸公司',
-    receipt_method: '银行转账',
-    amount: 80000,
-    bank_account: '农业银行 ****3456',
-    status: '待到账',
-  },
-  {
-    id: '6',
-    receipt_number: 'SK202402001',
-    receipt_date: '2024-02-05',
-    customer: '深圳科技有限公司',
-    receipt_method: '银行转账',
-    amount: 150000,
-    bank_account: '中国银行 ****7890',
-    status: '已到账',
-  },
-  {
-    id: '7',
-    receipt_number: 'SK202402002',
-    receipt_date: '2024-02-10',
-    customer: '广州电子公司',
-    receipt_method: '商业承兑汇票',
-    amount: 100000,
-    bank_account: '招商银行 ****1234',
-    status: '待核销',
-  },
-  {
-    id: '8',
-    receipt_number: 'SK202402003',
-    receipt_date: '2024-02-15',
-    customer: '东莞制造公司',
-    receipt_method: '银行转账',
-    amount: 75000,
-    bank_account: '建设银行 ****9012',
-    status: '已核销',
-  },
-];
-
 const FinanceReceiptPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
 
-  const [receiptData, setReceiptData] = useState<Receipt[]>(mockReceiptData);
+  const [receiptData, setReceiptData] = useState<Receipt[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
   const [filterMethod, setFilterMethod] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -148,6 +68,61 @@ const FinanceReceiptPage: React.FC = () => {
     amount: 0,
     bank_account: '',
   });
+
+  const mapCollectionRecordToReceipt = (record: CollectionRecord): Receipt => {
+    const bankAccount = record.bank_name
+      ? `${record.bank_name} ${record.bank_account_no}`
+      : record.bank_account_no;
+    
+    let statusText = '';
+    switch (record.status) {
+      case 'recorded':
+        statusText = '已到账';
+        break;
+      case 'matched':
+        statusText = '已核销';
+        break;
+      case 'cancelled':
+        statusText = '已取消';
+        break;
+      default:
+        statusText = record.status;
+    }
+
+    return {
+      id: record.id,
+      receipt_number: record.collection_no,
+      receipt_date: record.collection_date,
+      customer: record.customer_name,
+      receipt_method: '银行转账',
+      amount: record.amount,
+      bank_account: bankAccount,
+      status: statusText,
+    };
+  };
+
+  const fetchCollections = async () => {
+    setLoading(true);
+    try {
+      const response = await financeApi.receivablePayable.listCollections({
+        page: 1,
+        page_size: 100,
+      });
+      if (response.success && response.data) {
+        const receipts = response.data.items.map(mapCollectionRecordToReceipt);
+        setReceiptData(receipts);
+      }
+    } catch (err) {
+      error('获取收款记录失败');
+      apiLogger.error('Failed to fetch collections', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCollections();
+  }, []);
 
   const filteredData = useMemo(() => {
     return receiptData.filter((receipt) => {
@@ -166,7 +141,6 @@ const FinanceReceiptPage: React.FC = () => {
     });
   }, [receiptData, filterMethod, filterStatus, searchQuery]);
 
-  // 统计卡片数据
   const statCards = useMemo(() => {
     const totalCount = receiptData.length;
     const receivedCount = receiptData.filter((r) => r.status === '已到账').length;
@@ -220,30 +194,51 @@ const FinanceReceiptPage: React.FC = () => {
       已核销: { color: 'success', icon: <Check size={12} /> },
       待核销: { color: 'warning', icon: <Clock size={12} /> },
       待到账: { color: 'default', icon: <Clock size={12} /> },
+      已取消: { color: 'error', icon: <Clock size={12} /> },
     };
     return configs[status] || { color: 'default', icon: null };
   };
 
-  const handleCreate = () => {
-    const newEntry: Receipt = {
-      id: String(receiptData.length + 1),
-      receipt_number: `SK${Date.now()}`,
-      receipt_date: new Date().toISOString().split('T')[0],
-      customer: newReceipt.customer,
-      receipt_method: newReceipt.receipt_method,
-      amount: newReceipt.amount,
-      bank_account: newReceipt.bank_account || '默认账户',
-      status: '待到账',
-    };
-    setReceiptData([...receiptData, newEntry]);
-    success('收款登记成功');
-    setShowCreateModal(false);
-    setNewReceipt({
-      customer: '',
-      receipt_method: '银行转账',
-      amount: 0,
-      bank_account: '',
-    });
+  const handleCreate = async () => {
+    if (!newReceipt.customer || !newReceipt.amount) {
+      error('请填写客户和收款金额');
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      const response = await financeApi.receivablePayable.createCollection({
+        customer_id: '',
+        customer_name: newReceipt.customer,
+        amount: newReceipt.amount,
+        collection_date: new Date().toISOString().split('T')[0],
+        bank_account_id: '',
+        bank_account_no: newReceipt.bank_account || '默认账户',
+        bank_name: '',
+        invoice_ids: [],
+        status: 'recorded',
+      });
+
+      if (response.success && response.data) {
+        const newEntry = mapCollectionRecordToReceipt(response.data);
+        setReceiptData([newEntry, ...receiptData]);
+        success('收款登记成功');
+        setShowCreateModal(false);
+        setNewReceipt({
+          customer: '',
+          receipt_method: '银行转账',
+          amount: 0,
+          bank_account: '',
+        });
+      } else {
+        error(response.error?.message || '收款登记失败');
+      }
+    } catch (err) {
+      error('收款登记失败');
+      apiLogger.error('Failed to create collection', err);
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   const handleConfirm = (receipt: Receipt) => {
@@ -272,13 +267,16 @@ const FinanceReceiptPage: React.FC = () => {
   };
 
   const handleSearch = () => {
-    // 搜索逻辑已在 filteredData 中处理
   };
 
   const handleReset = () => {
     setSearchQuery('');
     setFilterMethod('');
     setFilterStatus('');
+  };
+
+  const handleRefresh = () => {
+    fetchCollections();
   };
 
   const columns = useMemo(
@@ -381,7 +379,6 @@ const FinanceReceiptPage: React.FC = () => {
         onClick: (row: Receipt) => handleDelete(row.id),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -409,6 +406,7 @@ const FinanceReceiptPage: React.FC = () => {
           { value: '已核销', label: '已核销' },
           { value: '待核销', label: '待核销' },
           { value: '待到账', label: '待到账' },
+          { value: '已取消', label: '已取消' },
         ],
         value: filterStatus,
         onChange: setFilterStatus,
@@ -432,10 +430,6 @@ const FinanceReceiptPage: React.FC = () => {
 
   return (
     <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
       <MuiBox
         sx={{
           bgcolor: 'background.paper',
@@ -500,7 +494,7 @@ const FinanceReceiptPage: React.FC = () => {
               direction='row'
               spacing={1}
             >
-              <IconButton onClick={() => window.location.reload()}>
+              <IconButton onClick={handleRefresh}>
                 <RefreshCw sx={{ width: 20, height: 20 }} />
               </IconButton>
               <DataExport
@@ -522,7 +516,6 @@ const FinanceReceiptPage: React.FC = () => {
       </MuiBox>
 
       <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        {/* 统计卡片 */}
         <StatCardGroup
           stats={statCards}
           columns={5}
@@ -552,10 +545,10 @@ const FinanceReceiptPage: React.FC = () => {
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           rowActions={rowActions}
+          loading={loading}
         />
       </MuiBox>
 
-      {/* Create Modal */}
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -623,13 +616,13 @@ const FinanceReceiptPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleCreate}
+            disabled={createLoading}
           >
-            登记
+            {createLoading ? '登记中...' : '登记'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Confirm Modal */}
       <Dialog
         open={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

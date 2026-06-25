@@ -6,10 +6,12 @@ import { srmApi } from '@/api/srm';
 import type { SrmDetailedStatistics } from '@/api/srm';
 import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
+import { useAppStore } from '@/store';
 
 const SrmDashboardPage: React.FC = () => {
   const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(null);
   const [loading, setLoading] = useState(true);
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadStatistics();
@@ -21,9 +23,12 @@ const SrmDashboardPage: React.FC = () => {
       const response = await srmApi.getDetailedStatistics();
       if (response.success && response.data) {
         setStatistics(response.data);
+      } else {
+        addNotification({ title: '错误', message: '获取统计数据失败', type: 'error' });
       }
     } catch (err: unknown) {
       apiLogger.error('加载统计数据失败:', err);
+      addNotification({ title: '错误', message: '加载统计数据失败', type: 'error' });
     } finally {
       setLoading(false);
     }

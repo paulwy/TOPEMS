@@ -51,6 +51,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
+import { useBackNavigation } from '@/hooks';
 
 const iconMap: Record<string, React.ReactNode> = {
   Home: <Home style={{ width: 20, height: 20 }} />,
@@ -138,7 +139,9 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
   const renderNavItem = (item: NavItem, depth: number = 0) => {
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.has(item.code);
-    const isActive = item.path === location.pathname;
+    const isActive =
+      item.path === location.pathname ||
+      (item.path && location.pathname.startsWith(item.path + '/'));
     const icon = iconMap[item.icon || 'Home'] || <Home style={{ width: 20, height: 20 }} />;
 
     return (
@@ -151,20 +154,41 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             onClick={() => handleItemClick(item)}
             sx={{
               pl: 2 + depth * 2,
-              py: 1.5,
-              backgroundColor: isActive ? 'primary.light' : 'transparent',
+              py: 1.75,
+              backgroundColor: isActive ? 'primary.50' : 'transparent',
               borderLeft: isActive ? '3px solid' : '3px solid transparent',
               borderColor: isActive ? 'primary.main' : 'transparent',
+              transition: 'all 0.2s ease-in-out',
+              position: 'relative',
               '&:hover': {
-                backgroundColor: isActive ? 'primary.light' : 'action.hover',
+                backgroundColor: isActive ? 'primary.50' : 'action.hover',
+                transform: 'translateX(2px)',
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>{icon}</ListItemIcon>
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 1.5,
+                  backgroundColor: isActive ? 'primary.main' : 'grey.100',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease-in-out',
+                  color: isActive ? 'common.white' : 'text.secondary',
+                }}
+              >
+                {icon}
+              </Box>
+            </ListItemIcon>
             <Typography
               sx={{
-                fontWeight: isActive ? 600 : 400,
+                fontWeight: isActive ? 600 : 500,
                 color: isActive ? 'primary.main' : 'text.primary',
+                fontSize: '0.95rem',
+                flex: 1,
               }}
             >
               {item.label}
@@ -175,7 +199,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                   display: 'flex',
                   alignItems: 'center',
                   transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
+                  transition: 'transform 0.25s ease-in-out',
+                  color: 'text.secondary',
                 }}
               >
                 <ChevronRight style={{ width: 18, height: 18 }} />
@@ -267,7 +292,58 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
         </Box>
 
         <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-          <List component='nav'>{navItems.map((item) => renderNavItem(item))}</List>
+          <List component='nav'>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => {
+                  navigate('/dashboard');
+                  onClose();
+                }}
+                sx={{
+                  pl: 2,
+                  py: 1.75,
+                  backgroundColor: location.pathname === '/dashboard' ? 'primary.50' : 'transparent',
+                  borderLeft: location.pathname === '/dashboard' ? '3px solid' : '3px solid transparent',
+                  borderColor: 'primary.main',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                    transform: 'translateX(2px)',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1.5,
+                      backgroundColor: location.pathname === '/dashboard' ? 'primary.main' : 'grey.100',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease-in-out',
+                      color: location.pathname === '/dashboard' ? 'common.white' : 'text.secondary',
+                    }}
+                  >
+                    <Home style={{ width: 18, height: 18 }} />
+                  </Box>
+                </ListItemIcon>
+                <Typography
+                  sx={{
+                    fontWeight: location.pathname === '/dashboard' ? 600 : 500,
+                    color: location.pathname === '/dashboard' ? 'primary.main' : 'text.primary',
+                    fontSize: '0.95rem',
+                    flex: 1,
+                  }}
+                >
+                  首页
+                </Typography>
+              </ListItemButton>
+            </ListItem>
+            <Divider sx={{ my: 1 }} />
+            {navItems.map((item) => renderNavItem(item))}
+          </List>
         </Box>
 
         <Box

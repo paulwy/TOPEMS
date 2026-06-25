@@ -349,7 +349,7 @@ export default defineConfig({
         ws: true,
       },
       
-      '/iam/api/iam/auth/login': {
+      '/iam/api/iam/auth/': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\/auth\//, '/api/v1/auth/'),

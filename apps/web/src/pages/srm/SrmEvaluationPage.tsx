@@ -13,12 +13,12 @@ import {
   Typography,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, Award, Search, Star } from 'lucide-react';
+import { Plus, Award, Search, Star, Edit2, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { srmApi } from '@/api/srm';
-import type { SupplierEvaluation } from '@/api/srm';
-import { toast } from 'react-toastify';
+import type { SupplierEvaluation, CreateSupplierEvaluationRequest } from '@/api/srm';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 const SrmEvaluationPage: React.FC = () => {
@@ -26,14 +26,20 @@ const SrmEvaluationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Partial<CreateSupplierEvaluationRequest>>({
     supplier_id: '',
-    supplier_name: '',
-    score: '50',
-    dimension_scores: '',
-    comment: '',
     evaluator: '',
+    overall_score: 50,
+    quality_score: 0,
+    delivery_score: 0,
+    service_score: 0,
+    price_score: 0,
+    comments: '',
+    status: 'completed',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadEvaluations();
@@ -130,11 +136,15 @@ const SrmEvaluationPage: React.FC = () => {
   const handleCreate = () => {
     setFormData({
       supplier_id: '',
-      supplier_name: '',
-      score: '50',
-      dimension_scores: '',
-      comment: '',
+      evaluation_no: `EVAL-${Date.now()}`,
       evaluator: '',
+      overall_score: 50,
+      quality_score: 0,
+      delivery_score: 0,
+      service_score: 0,
+      price_score: 0,
+      comments: '',
+      status: 'completed',
     });
     setShowCreateModal(true);
   };
@@ -142,19 +152,79 @@ const SrmEvaluationPage: React.FC = () => {
   const handleSave = async () => {
     try {
       await srmApi.createEvaluation({
-        supplier_id: formData.supplier_id,
+        supplier_id: formData.supplier_id || '',
         evaluation_no: `EVAL-${Date.now()}`,
-        overall_score: parseFloat(formData.score),
-        comments: formData.comment,
+        overall_score: formData.overall_score || 0,
+        quality_score: formData.quality_score,
+        delivery_score: formData.delivery_score,
+        service_score: formData.service_score,
+        price_score: formData.price_score,
+        comments: formData.comments,
         evaluator: formData.evaluator,
-        status: 'completed',
+        status: formData.status || 'completed',
       });
-      toast.success('评估创建成功');
+      addNotification({ title: '成功', message: '评估创建成功', type: 'success' });
       setShowCreateModal(false);
       loadEvaluations();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建评估失败:', err);
+    }
+  };
+
+  const handleEdit = (row: SupplierEvaluation) => {
+    setEditingId(row.id);
+    setFormData({
+      supplier_id: row.supplier_id,
+      evaluator: row.evaluator,
+      overall_score: row.overall_score || 0,
+      quality_score: row.quality_score,
+      delivery_score: row.delivery_score,
+      service_score: row.service_score,
+      price_score: row.price_score,
+      comments: row.comments,
+      status: row.status,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId) return;
+    try {
+      await srmApi.updateEvaluation(editingId, {
+        supplier_id: formData.supplier_id || '',
+        evaluation_no: `EVAL-${Date.now()}`,
+        overall_score: formData.overall_score || 0,
+        quality_score: formData.quality_score,
+        delivery_score: formData.delivery_score,
+        service_score: formData.service_score,
+        price_score: formData.price_score,
+        comments: formData.comments,
+        evaluator: formData.evaluator,
+        status: formData.status || 'completed',
+      });
+      addNotification({ title: '成功', message: '评估更新成功', type: 'success' });
+      setShowEditModal(false);
+      setEditingId(null);
+      loadEvaluations();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+      apiLogger.error('更新评估失败:', err);
+    }
+  };
+
+  const handleDelete = async (row: SupplierEvaluation) => {
+    try {
+      const response = await srmApi.deleteEvaluation(row.id);
+      if (response.success) {
+        addNotification({ title: '成功', message: '评估删除成功', type: 'success' });
+        loadEvaluations();
+      } else {
+        addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      }
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除评估失败:', err);
     }
   };
 
@@ -473,13 +543,6 @@ const SrmEvaluationPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label='供应商名称 *'
-              value={formData.supplier_name}
-              onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
-              placeholder='请输入供应商名称'
-            />
-            <TextField
-              fullWidth
               label='供应商ID'
               value={formData.supplier_id}
               onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
@@ -489,20 +552,59 @@ const SrmEvaluationPage: React.FC = () => {
               fullWidth
               label='综合评分'
               type='number'
-              value={formData.score}
-              onChange={(e) => setFormData({ ...formData, score: e.target.value })}
+              value={formData.overall_score}
+              onChange={(e) =>
+                setFormData({ ...formData, overall_score: parseFloat(e.target.value) || 0 })
+              }
               placeholder='请输入评分(0-100)'
               slotProps={{ htmlInput: { min: 0, max: 100 } }}
             />
-            <TextField
-              fullWidth
-              label='维度评分(JSON)'
-              value={formData.dimension_scores}
-              onChange={(e) => setFormData({ ...formData, dimension_scores: e.target.value })}
-              placeholder='{"quality": 80, "delivery": 70, "service": 90}'
-              multiline
-              rows={3}
-            />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='质量评分'
+                type='number'
+                value={formData.quality_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, quality_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+              <TextField
+                fullWidth
+                label='交付评分'
+                type='number'
+                value={formData.delivery_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, delivery_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+              <TextField
+                fullWidth
+                label='服务评分'
+                type='number'
+                value={formData.service_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, service_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+              <TextField
+                fullWidth
+                label='价格评分'
+                type='number'
+                value={formData.price_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, price_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+            </Box>
             <TextField
               fullWidth
               label='评估人'
@@ -513,8 +615,8 @@ const SrmEvaluationPage: React.FC = () => {
             <TextField
               fullWidth
               label='备注'
-              value={formData.comment}
-              onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+              value={formData.comments}
+              onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
               placeholder='请输入备注'
               multiline
               rows={2}
@@ -534,6 +636,120 @@ const SrmEvaluationPage: React.FC = () => {
             sx={{ bgcolor: 'warning.main' }}
           >
             保存
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingId(null);
+        }}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>编辑评估</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              label='供应商ID'
+              value={formData.supplier_id}
+              onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+              placeholder='请输入供应商ID'
+            />
+            <TextField
+              fullWidth
+              label='综合评分'
+              type='number'
+              value={formData.overall_score}
+              onChange={(e) =>
+                setFormData({ ...formData, overall_score: parseFloat(e.target.value) || 0 })
+              }
+              placeholder='请输入评分(0-100)'
+              slotProps={{ htmlInput: { min: 0, max: 100 } }}
+            />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='质量评分'
+                type='number'
+                value={formData.quality_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, quality_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+              <TextField
+                fullWidth
+                label='交付评分'
+                type='number'
+                value={formData.delivery_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, delivery_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+              <TextField
+                fullWidth
+                label='服务评分'
+                type='number'
+                value={formData.service_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, service_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+              <TextField
+                fullWidth
+                label='价格评分'
+                type='number'
+                value={formData.price_score}
+                onChange={(e) =>
+                  setFormData({ ...formData, price_score: parseFloat(e.target.value) || 0 })
+                }
+                placeholder='0-100'
+                slotProps={{ htmlInput: { min: 0, max: 100 } }}
+              />
+            </Box>
+            <TextField
+              fullWidth
+              label='评估人'
+              value={formData.evaluator}
+              onChange={(e) => setFormData({ ...formData, evaluator: e.target.value })}
+              placeholder='请输入评估人'
+            />
+            <TextField
+              fullWidth
+              label='备注'
+              value={formData.comments}
+              onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+              placeholder='请输入备注'
+              multiline
+              rows={2}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => {
+              setShowEditModal(false);
+              setEditingId(null);
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdate}
+            sx={{ bgcolor: 'warning.main' }}
+          >
+            更新
           </Button>
         </DialogActions>
       </Dialog>

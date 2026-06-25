@@ -17,6 +17,7 @@ import {
 import { Button } from '@mui/material';
 import { ArrowLeft, Edit, Delete, Share2, MoreHorizontal, Printer, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBackNavigation } from '@/hooks';
 import type { BreadcrumbItem, PageAction } from './PageHeader';
 import { PageHeader } from './PageHeader';
 
@@ -52,6 +53,8 @@ export interface DetailPageTemplateProps extends BoxProps {
   title: string;
   subtitle?: string;
   breadcrumbs?: BreadcrumbItem[];
+  /** 是否启用自动面包屑（默认启用） */
+  autoBreadcrumbs?: boolean;
 
   // 状态
   loading?: boolean;
@@ -100,6 +103,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   title,
   subtitle,
   breadcrumbs,
+  autoBreadcrumbs = true,
   loading,
   error,
   backHref,
@@ -123,8 +127,22 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
+  const { goBack, hasFrom } = useBackNavigation();
 
   const [activeTab, setActiveTab] = useState(defaultTab || tabs?.[0]?.id || '');
+
+  // 智能返回：优先使用来源页，其次使用 backHref，最后使用浏览器后退
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (hasFrom) {
+      goBack();
+    } else if (backHref) {
+      navigate(backHref, { replace: true });
+    } else {
+      navigate(-1);
+    }
+  };
 
   // 默认操作按钮
   const defaultActions: PageAction[] = [];
@@ -386,10 +404,11 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
         title={title}
         subtitle={subtitle}
         breadcrumbs={breadcrumbs}
+        autoBreadcrumbs={autoBreadcrumbs}
         actions={allActions}
         backButton={{
-          href: backHref,
-          onClick: onBack,
+          href: hasFrom ? undefined : backHref,
+          onClick: handleBack,
         }}
         loading={loading}
       >

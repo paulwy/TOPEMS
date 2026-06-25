@@ -28,8 +28,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
-
-// ============ 类型定义 ============
+import { useAutoBreadcrumbs } from '@/hooks';
 
 export interface BreadcrumbItem {
   label: string;
@@ -55,6 +54,7 @@ export interface PageHeaderProps {
   subtitle?: string;
   description?: string;
   breadcrumbs?: BreadcrumbItem[];
+  autoBreadcrumbs?: boolean;
   actions?: PageAction[];
   backButton?: {
     href?: string;
@@ -96,13 +96,12 @@ export interface PageHeaderProps {
   customToolbar?: React.ReactNode;
 }
 
-// ============ 页面头部组件 ============
-
 export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
   description,
-  breadcrumbs,
+  breadcrumbs: manualBreadcrumbs,
+  autoBreadcrumbs = true,
   actions,
   backButton,
   onRefresh,
@@ -122,6 +121,16 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const autoItems = useAutoBreadcrumbs({
+    includeHome: true,
+  });
+
+  const breadcrumbs = manualBreadcrumbs && manualBreadcrumbs.length > 0
+    ? manualBreadcrumbs
+    : autoBreadcrumbs
+    ? autoItems
+    : undefined;
 
   const renderBreadcrumbs = () => {
     if (!breadcrumbs || breadcrumbs.length === 0) return null;
@@ -464,7 +473,5 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     </Paper>
   );
 };
-
-// ============ 导出 ============
 
 export default PageHeader;

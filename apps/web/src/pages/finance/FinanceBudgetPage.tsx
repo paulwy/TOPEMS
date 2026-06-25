@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { budgetApi, type Budget, type PaginatedResult } from '@/api/erp';
+import { financeApi } from '@/api/finance';
+import type { AccountBalance } from '@/types/finance';
 import { useAppStore } from '../../store';
 import {
   Typography,
@@ -50,6 +52,7 @@ const FinanceBudgetPage: React.FC = () => {
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -59,6 +62,7 @@ const FinanceBudgetPage: React.FC = () => {
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
+  const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
 
   const [formData, setFormData] = useState({
     department_id: '',
@@ -75,13 +79,26 @@ const FinanceBudgetPage: React.FC = () => {
 
   const loadBudgets = async () => {
     setLoading(true);
+    setError(undefined);
     try {
-      const response = await budgetApi.list();
-      if (response.success && response.data) {
-        setBudgets(response.data.items || []);
+      const [budgetRes, periodRes] = await Promise.all([
+        budgetApi.list(),
+        financeApi.period.getCurrent(),
+      ]);
+      if (budgetRes.success && budgetRes.data) {
+        setBudgets(budgetRes.data.items || []);
+      }
+      if (periodRes.success && periodRes.data) {
+        const balancesRes = await financeApi.account.getBalances({
+          period: periodRes.data.period,
+        });
+        if (balancesRes.success && balancesRes.data) {
+          setAccountBalances(balancesRes.data);
+        }
       }
     } catch (err: unknown) {
       apiLogger.error('加载预算数据失败:', err);
+      setError('加载预算数据失败');
       addNotification({
         title: '错误',
         message: '加载预算数据失败',
@@ -634,6 +651,7 @@ const FinanceBudgetPage: React.FC = () => {
         columns={columns}
         data={filteredBudgets}
         loading={loading}
+        error={error}
         searchable
         searchPlaceholder='搜索预算类型或年度...'
         searchValue={searchTerm}

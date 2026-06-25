@@ -19,6 +19,7 @@ const HrmContractPage = lazy(() => import('../pages/hrm/HrmContractPage'));
 const HrmContractDetailPage = lazy(() => import('../pages/hrm/HrmContractDetailPage'));
 const HrmRecruitmentPage = lazy(() => import('../pages/hrm/HrmRecruitmentPage'));
 const HrmPayrollPage = lazy(() => import('../pages/hrm/HrmPayrollPage'));
+const HrmSalaryAdjustmentPage = lazy(() => import('../pages/hrm/HrmSalaryAdjustmentPage'));
 const HrmPerformancePage = lazy(() => import('../pages/hrm/HrmPerformancePage'));
 const HrmAttendancePage = lazy(() => import('../pages/hrm/HrmAttendancePage'));
 const HrmTrainingPage = lazy(() => import('../pages/hrm/HrmTrainingPage'));

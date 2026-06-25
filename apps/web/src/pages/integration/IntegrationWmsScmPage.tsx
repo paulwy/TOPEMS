@@ -16,8 +16,10 @@ import {
   type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
+import { useAppStore } from '@/store';
 import type { WmsScmSync, CreateWmsScmSyncRequest } from '@/api/integration';
 import { logger } from '@/utils/logger';
+import { useNotification } from '@/hooks/useNotification';
 
 // 状态配置
 const STATUS_CONFIG: Record<
@@ -66,6 +68,8 @@ const FORM_SECTIONS: FormSection[] = [
 ];
 
 const IntegrationWmsScmPage: React.FC = () => {
+  const { success, error } = useNotification();
+
   // 数据状态
   const [syncs, setSyncs] = useState<WmsScmSync[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,12 +89,13 @@ const IntegrationWmsScmPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setSyncs(res.data);
       }
-    } catch (error: unknown) {
-      logger.error('Error loading WMS-SCM syncs:', error);
+    } catch (err: unknown) {
+      logger.error('Error loading WMS-SCM syncs:', err);
+      error('加载 WMS-SCM 同步数据失败');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [error]);
 
   // 初始加载
   React.useEffect(() => {
@@ -207,12 +212,14 @@ const IntegrationWmsScmPage: React.FC = () => {
           unit: ((data as Record<string, unknown>).unit as string) || undefined,
         };
         await integrationApi.createWmsScmSync(request);
+        success('同步记录创建成功');
       }
       handleCloseModal();
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error saving sync:', error);
-      throw error;
+    } catch (err: unknown) {
+      logger.error('Error saving sync:', err);
+      error('保存同步记录失败');
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -222,9 +229,11 @@ const IntegrationWmsScmPage: React.FC = () => {
   const handleSync = async (id: string) => {
     try {
       await integrationApi.syncWmsScm(id);
+      success('同步成功');
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error syncing:', error);
+    } catch (err: unknown) {
+      logger.error('Error syncing:', err);
+      error('同步失败');
     }
   };
 

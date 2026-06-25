@@ -21,8 +21,8 @@ import type {
   ProductionOrder,
   CreateProductionOrderRequest,
   UpdateProductionOrderRequest,
-} from '@/api/professional/mes/mes';
-import { mesApi } from '@/api/professional/mes/mes';
+} from '@/api/mes';
+import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
@@ -98,15 +98,34 @@ const ProductionOrderManagementPage: React.FC = () => {
     loadOrders();
   }, [loadOrders]);
 
-  // 状态流转处理
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  // 状态流转处理 - 使用专门的状态流转 API
+  const handleStatusChange = async (id: string, action: string) => {
     try {
-      await mesApi.orders.update(id, { status: newStatus } as UpdateProductionOrderRequest);
-      addNotification({
-        type: 'success',
-        title: '状态更新成功',
-        message: `订单状态已更新为"${getStatusText(newStatus)}"`,
-      });
+      setLoading(true);
+      let response;
+      switch (action) {
+        case 'release':
+          response = await mesApi.orders.release(id);
+          break;
+        case 'start':
+          response = await mesApi.orders.start(id);
+          break;
+        case 'complete':
+          response = await mesApi.orders.complete(id);
+          break;
+        case 'cancel':
+          response = await mesApi.orders.cancel(id);
+          break;
+        default:
+          return;
+      }
+      if (response.success && response.data) {
+        addNotification({
+          type: 'success',
+          title: '状态更新成功',
+          message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
+        });
+      }
       loadOrders();
     } catch (error: unknown) {
       apiLogger.error('状态更新失败:', error);
@@ -115,12 +134,15 @@ const ProductionOrderManagementPage: React.FC = () => {
         title: '状态更新失败',
         message: '无法更新订单状态',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: '待生产',
+      pending: '待下达',
+      released: '已下达',
       in_progress: '生产中',
       completed: '已完成',
       cancelled: '已取消',
@@ -134,38 +156,44 @@ const ProductionOrderManagementPage: React.FC = () => {
       case 'pending':
         return [
           {
-            status: 'in_progress',
-            label: '开始生产',
+            action: 'release',
+            label: '下达订单',
             icon: <Play size={14} />,
             color: 'success' as const,
           },
           {
-            status: 'cancelled',
+            action: 'cancel',
             label: '取消',
             icon: <XCircle size={14} />,
             color: 'error' as const,
           },
         ];
+      case 'released':
       case 'in_progress':
         return [
           {
-            status: 'completed',
+            action: 'start',
+            label: '开始生产',
+            icon: <Play size={14} />,
+            color: 'success' as const,
+          },
+          {
+            action: 'complete',
             label: '完成生产',
             icon: <CheckCircle size={14} />,
             color: 'success' as const,
           },
-          { status: 'paused', label: '暂停', icon: <Pause size={14} />, color: 'warning' as const },
         ];
       case 'paused':
         return [
           {
-            status: 'in_progress',
+            action: 'start',
             label: '恢复生产',
             icon: <Play size={14} />,
             color: 'success' as const,
           },
           {
-            status: 'cancelled',
+            action: 'cancel',
             label: '取消',
             icon: <XCircle size={14} />,
             color: 'error' as const,
@@ -267,7 +295,8 @@ const ProductionOrderManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待生产', bg: 'warning.light', color: '#b45309' },
+      pending: { label: '待下达', bg: 'warning.light', color: '#b45309' },
+      released: { label: '已下达', bg: '#e0e7ff', color: '#4338ca' },
       in_progress: { label: '生产中', bg: '#dbeafe', color: 'primary.dark' },
       completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
@@ -321,7 +350,8 @@ const ProductionOrderManagementPage: React.FC = () => {
         type: 'select',
         options: [
           { label: '全部状态', value: 'all' },
-          { label: '待生产', value: 'pending' },
+          { label: '待下达', value: 'pending' },
+          { label: '已下达', value: 'released' },
           { label: '生产中', value: 'in_progress' },
           { label: '已完成', value: 'completed' },
           { label: '已取消', value: 'cancelled' },
@@ -374,7 +404,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       >
         {actions.map((action) => (
           <Tooltip
-            key={action.status}
+            key={action.action}
             title={action.label}
           >
             <IconButton
@@ -382,7 +412,7 @@ const ProductionOrderManagementPage: React.FC = () => {
               color={action.color}
               onClick={(e) => {
                 e.stopPropagation();
-                handleStatusChange(order.id, action.status);
+                handleStatusChange(order.id, action.action);
               }}
             >
               {action.icon}
@@ -408,6 +438,7 @@ const ProductionOrderManagementPage: React.FC = () => {
     return {
       total: orders.length,
       pending: orders.filter((o) => o.status === 'pending').length,
+      released: orders.filter((o) => o.status === 'released').length,
       in_progress: orders.filter((o) => o.status === 'in_progress').length,
       completed: orders.filter((o) => o.status === 'completed').length,
     };
@@ -419,7 +450,7 @@ const ProductionOrderManagementPage: React.FC = () => {
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' },
         gap: 2,
         mb: 3,
       }}
@@ -429,13 +460,27 @@ const ProductionOrderManagementPage: React.FC = () => {
           variant='body2'
           sx={{ color: 'text.secondary' }}
         >
-          待生产
+          待下达
         </Typography>
         <Typography
           variant='h5'
           sx={{ fontWeight: 700 }}
         >
           {stats.pending}
+        </Typography>
+      </Box>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          已下达
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#4338ca' }}
+        >
+          {stats.released}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>

@@ -10,11 +10,18 @@ export const getWeekday = (date?: Date): number => {
   return d.getDay();
 };
 
+const parseDate = (date: Date | string): Date => {
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return new Date(date + 'T00:00:00');
+  }
+  return new Date(date);
+};
+
 /**
  * 判断是否是今天
  */
 export const isToday = (date: Date | string): boolean => {
-  const d = new Date(date);
+  const d = parseDate(date);
   const today = new Date();
   return (
     d.getDate() === today.getDate() &&
@@ -27,7 +34,7 @@ export const isToday = (date: Date | string): boolean => {
  * 判断是否是昨天
  */
 export const isYesterday = (date: Date | string): boolean => {
-  const d = new Date(date);
+  const d = parseDate(date);
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   return (
@@ -41,7 +48,7 @@ export const isYesterday = (date: Date | string): boolean => {
  * 判断是否是明天
  */
 export const isTomorrow = (date: Date | string): boolean => {
-  const d = new Date(date);
+  const d = parseDate(date);
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   return (

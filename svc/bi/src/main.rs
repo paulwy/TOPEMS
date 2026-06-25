@@ -174,6 +174,52 @@ async fn main() {
         .route("/api/bi/analysis/{id}", get(modules::bi::analysis::get_analysis))
         .route("/api/bi/analysis/{id}/execute", post(modules::bi::analysis::execute_analysis))
 
+        // Self-Service Report
+        .route("/api/bi/report", get(modules::bi::self_service_report::list_reports))
+        .route("/api/bi/report", post(modules::bi::self_service_report::create_report))
+        .route("/api/bi/report/{id}", get(modules::bi::self_service_report::get_report))
+        .route("/api/bi/report/{id}", put(modules::bi::self_service_report::update_report))
+        .route("/api/bi/report/{id}", delete(modules::bi::self_service_report::delete_report))
+        .route("/api/bi/report/{id}/query", post(modules::bi::self_service_report::query_report_data))
+        .route("/api/bi/report/{id}/export", get(modules::bi::self_service_report::export_report))
+
+        // Data Drilldown
+        .route("/api/bi/drilldown/path", get(modules::bi::data_drilldown::list_drilldown_paths))
+        .route("/api/bi/drilldown/path", post(modules::bi::data_drilldown::create_drilldown_path))
+        .route("/api/bi/drilldown/path/{id}", get(modules::bi::data_drilldown::get_drilldown_path))
+        .route("/api/bi/drilldown/path/{id}", put(modules::bi::data_drilldown::update_drilldown_path))
+        .route("/api/bi/drilldown/path/{id}", delete(modules::bi::data_drilldown::delete_drilldown_path))
+        .route("/api/bi/drilldown/drill-down", post(modules::bi::data_drilldown::drill_down))
+        .route("/api/bi/drilldown/roll-up", post(modules::bi::data_drilldown::roll_up))
+        .route("/api/bi/drilldown/history", post(modules::bi::data_drilldown::get_drilldown_history))
+
+        // Multidimensional Analysis
+        .route("/api/bi/multidim/cube", post(modules::bi::multidimensional_analysis::query_cube))
+        .route("/api/bi/multidim/slice", post(modules::bi::multidimensional_analysis::slice_cube))
+        .route("/api/bi/multidim/dice", post(modules::bi::multidimensional_analysis::dice_cube))
+        .route("/api/bi/multidim/pivot", post(modules::bi::multidimensional_analysis::pivot_table))
+        .route("/api/bi/multidim/rank", post(modules::bi::multidimensional_analysis::rank_data))
+        .route("/api/bi/multidim/datasource/{datasource_id}/dimensions", get(modules::bi::multidimensional_analysis::get_available_dimensions))
+        .route("/api/bi/multidim/datasource/{datasource_id}/measures", get(modules::bi::multidimensional_analysis::get_available_measures))
+
+        // Predictive Analysis
+        .route("/api/bi/prediction/methods", get(modules::bi::predictive_analysis::get_prediction_methods))
+        .route("/api/bi/prediction/moving-average", post(modules::bi::predictive_analysis::moving_average_forecast))
+        .route("/api/bi/prediction/exponential-smoothing", post(modules::bi::predictive_analysis::exponential_smoothing_forecast))
+        .route("/api/bi/prediction/trend", post(modules::bi::predictive_analysis::trend_analysis))
+        .route("/api/bi/prediction/compare", post(modules::bi::predictive_analysis::prediction_comparison))
+
+        // Row-Level Permission
+        .route("/api/bi/permission/rule", get(modules::bi::row_level_permission::list_permission_rules))
+        .route("/api/bi/permission/rule", post(modules::bi::row_level_permission::create_permission_rule))
+        .route("/api/bi/permission/rule/{id}", get(modules::bi::row_level_permission::get_permission_rule))
+        .route("/api/bi/permission/rule/{id}", put(modules::bi::row_level_permission::update_permission_rule))
+        .route("/api/bi/permission/rule/{id}", delete(modules::bi::row_level_permission::delete_permission_rule))
+        .route("/api/bi/permission/validate", post(modules::bi::row_level_permission::validate_permission))
+        .route("/api/bi/permission/filter", post(modules::bi::row_level_permission::filter_data))
+        .route("/api/bi/permission/user/{user_id}", get(modules::bi::row_level_permission::get_user_permissions))
+        .route("/api/bi/permission/rule-types", get(modules::bi::row_level_permission::get_permission_rule_types))
+
         // Analytics Summary
         .route("/api/bi/analytics/summary", get(modules::bi::analytics::get_summary_analytics))
         .route("/api/bi/analytics/development", get(modules::bi::analytics::get_development_analytics))

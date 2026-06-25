@@ -5,10 +5,9 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import { ModuleGate } from './components/PermissionGate';
 import ErrorBoundary from './components/ErrorBoundary';
-import { ToastProvider } from './components/ToastProvider';
+import { NotificationProvider } from './components/notification/NotificationProvider';
 import { LoadingProvider } from './components/LoadingProvider';
 import { ThemeProvider } from './components/ThemeProvider';
-import { Toaster } from './components/Toaster';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { TemplateDemoPage } from './components/templates/index';
 import { GlobalLayout } from './components/layout';
@@ -23,6 +22,7 @@ const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federati
 import {
   authRoutes,
   dashboardRoutes,
+  commonRoutes,
   hrmRoutes,
   crmRoutes,
   financeRoutes,
@@ -203,6 +203,8 @@ const AppContent: React.FC = () => {
           );
         })}
 
+        {renderRoutes(dashboardRoutes)}
+        {renderRoutes(commonRoutes)}
         {renderRoutes(hrmRoutes)}
         {renderRoutes(crmRoutes)}
         {renderRoutes(financeRoutes)}
@@ -344,16 +346,15 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <ToastProvider>
+        <NotificationProvider>
           <LoadingProvider>
             <AuthProvider>
               <PluginProvider>
                 <AppContent />
-                <Toaster />
               </PluginProvider>
             </AuthProvider>
           </LoadingProvider>
-        </ToastProvider>
+        </NotificationProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

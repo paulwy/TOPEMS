@@ -1,10 +1,15 @@
 pub mod auth;
 pub mod auth_utils;
+pub mod barcode_scanner;
 pub mod device;
 pub mod media;
+pub mod mobile_approval;
 pub mod notification;
 pub mod offline;
+pub mod offline_sync;
 pub mod patrol;
+pub mod photo_upload;
+pub mod push_notification;
 pub mod scan;
 pub mod shortcut;
 pub mod stats;

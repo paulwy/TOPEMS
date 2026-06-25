@@ -67,6 +67,24 @@ if (typeof globalThis.fetch === "undefined") {
 }
 
 if (typeof window !== "undefined") {
+  Object.defineProperty(window, "IntersectionObserver", {
+    writable: true,
+    value: class IntersectionObserver {
+      constructor(callback: any) {
+        this.callback = callback;
+      }
+      callback: any;
+      observe() {
+        this.callback([{ isIntersecting: true }]);
+      }
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return [];
+      }
+    },
+  });
+
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: (query: string) => ({

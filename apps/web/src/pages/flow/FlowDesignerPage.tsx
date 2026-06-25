@@ -1,5 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { logger } from '@/utils/logger';
+import { flowApi } from '@/api/flow';
+import type { Workflow } from '@/api/flow';
+import { useNotification } from '@/hooks/useNotification';
 import {
   Box,
   Card,
@@ -43,26 +47,6 @@ interface FlowEdge {
   label?: string;
 }
 
-const mockNodes: FlowNode[] = [
-  { id: 'start-1', type: 'start', label: '开始', x: 100, y: 200 },
-  { id: 'task-1', type: 'task', label: '填写申请', x: 250, y: 200 },
-  { id: 'approval-1', type: 'approval', label: '部门审批', x: 400, y: 200 },
-  { id: 'condition-1', type: 'condition', label: '金额判断', x: 550, y: 200 },
-  { id: 'approval-2', type: 'approval', label: '经理审批', x: 700, y: 100 },
-  { id: 'approval-3', type: 'approval', label: '财务审批', x: 700, y: 300 },
-  { id: 'end-1', type: 'end', label: '结束', x: 850, y: 200 },
-];
-
-const mockEdges: FlowEdge[] = [
-  { id: 'e1', source: 'start-1', target: 'task-1' },
-  { id: 'e2', source: 'task-1', target: 'approval-1' },
-  { id: 'e3', source: 'approval-1', target: 'condition-1' },
-  { id: 'e4', source: 'condition-1', target: 'approval-2', label: '≤5000' },
-  { id: 'e5', source: 'condition-1', target: 'approval-3', label: '>5000' },
-  { id: 'e6', source: 'approval-2', target: 'end-1' },
-  { id: 'e7', source: 'approval-3', target: 'end-1' },
-];
-
 const nodeTypes = [
   { type: 'start', label: '开始', icon: Play, color: 'success.dark' },
   { type: 'end', label: '结束', icon: Square, color: 'error.dark' },
@@ -72,19 +56,98 @@ const nodeTypes = [
 ];
 
 const FlowDesignerPage: React.FC = () => {
-  const [nodes] = useState<FlowNode[]>(mockNodes);
-  const [edges] = useState<FlowEdge[]>(mockEdges);
+  const { success, error } = useNotification();
+  const { id: workflowId } = useParams<{ id: string }>();
+
+  const [nodes, setNodes] = useState<FlowNode[]>([]);
+  const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<FlowNode | null>(null);
   const [showProperties, setShowProperties] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [loading, setLoading] = useState(false);
+  const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const loadWorkflow = useCallback(async () => {
+    if (!workflowId) return;
+    try {
+      setLoading(true);
+      const res = await flowApi.getWorkflow(workflowId);
+      if (res.success && res.data) {
+        setWorkflow(res.data);
+        const definition = res.data.definition;
+        if (definition?.nodes) {
+          setNodes(definition.nodes);
+        }
+        if (definition?.edges) {
+          setEdges(definition.edges);
+        }
+      }
+    } catch (err: unknown) {
+      logger.error('Error loading workflow:', err);
+      error('加载流程失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [workflowId, error]);
+
+  useEffect(() => {
+    if (workflowId) {
+      loadWorkflow();
+    } else {
+      setNodes([
+        { id: 'start-1', type: 'start', label: '开始', x: 100, y: 200 },
+        { id: 'task-1', type: 'task', label: '填写申请', x: 250, y: 200 },
+        { id: 'approval-1', type: 'approval', label: '部门审批', x: 400, y: 200 },
+        { id: 'condition-1', type: 'condition', label: '金额判断', x: 550, y: 200 },
+        { id: 'approval-2', type: 'approval', label: '经理审批', x: 700, y: 100 },
+        { id: 'approval-3', type: 'approval', label: '财务审批', x: 700, y: 300 },
+        { id: 'end-1', type: 'end', label: '结束', x: 850, y: 200 },
+      ]);
+      setEdges([
+        { id: 'e1', source: 'start-1', target: 'task-1' },
+        { id: 'e2', source: 'task-1', target: 'approval-1' },
+        { id: 'e3', source: 'approval-1', target: 'condition-1' },
+        { id: 'e4', source: 'condition-1', target: 'approval-2', label: '≤5000' },
+        { id: 'e5', source: 'condition-1', target: 'approval-3', label: '>5000' },
+        { id: 'e6', source: 'approval-2', target: 'end-1' },
+        { id: 'e7', source: 'approval-3', target: 'end-1' },
+      ]);
+    }
+  }, [workflowId, loadWorkflow]);
 
   const handleNodeClick = (node: FlowNode) => {
     setSelectedNode(node);
     setShowProperties(true);
   };
 
-  const handleSave = () => {
-    logger.info('保存流程图', nodes, edges);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const definition = {
+        nodes,
+        edges,
+        start_node: nodes.find((n) => n.type === 'start')?.id,
+        end_nodes: nodes.filter((n) => n.type === 'end').map((n) => n.id),
+      };
+
+      if (workflowId) {
+        await flowApi.updateWorkflow(workflowId, { definition });
+        success('流程更新成功');
+      } else {
+        await flowApi.createWorkflow({
+          name: '新流程',
+          definition,
+          is_active: false,
+        });
+        success('流程创建成功');
+      }
+    } catch (err: unknown) {
+      logger.error('Error saving workflow:', err);
+      error('保存流程失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePreview = () => {
@@ -128,7 +191,7 @@ const FlowDesignerPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  设计工作流程和审批节点
+                  {workflow?.name || '设计工作流程和审批节点'}
                 </Typography>
               </Box>
             </Stack>
@@ -180,9 +243,10 @@ const FlowDesignerPage: React.FC = () => {
                 variant='contained'
                 startIcon={<Save size={16} />}
                 onClick={handleSave}
+                disabled={saving}
                 sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
               >
-                保存
+                {saving ? '保存中...' : '保存'}
               </Button>
             </Stack>
           </Stack>

@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::types::Uuid;
+use sqlx::{FromRow, types::Uuid};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -13,7 +13,7 @@ pub struct StandardQuery {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct QualityStandard {
     pub id: String,
     pub code: String,
@@ -51,7 +51,7 @@ pub struct UpdateStandardRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct StandardRevision {
     pub id: String,
     pub standard_id: Uuid,
@@ -75,32 +75,16 @@ pub async fn list_standards(
     let offset = (page - 1) * page_size;
 
     let standards = match (query.category.as_ref(), query.status.as_ref()) {
-        (Some(cat), Some(st)) => sqlx::query_as!(
-            QualityStandard,
-            r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE category = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            cat, st, page_size, offset
-        )
+        (Some(cat), Some(st)) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE category = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(cat).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(cat), None) => sqlx::query_as!(
-            QualityStandard,
-            r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE category = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            cat, page_size, offset
-        )
+        (Some(cat), None) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE category = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(cat).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(st)) => sqlx::query_as!(
-            QualityStandard,
-            r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            st, page_size, offset
-        )
+        (None, Some(st)) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as!(
-            QualityStandard,
-            r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
-            page_size, offset
-        )
+        (None, None) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -121,21 +105,15 @@ pub async fn create_standard(
     let code = format!("QS-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
     let version = req.version.unwrap_or_else(|| "1.0".to_string());
 
-    let standard = sqlx::query_as!(
-        QualityStandard,
-        r#"INSERT INTO qa_standards (code, name, category, level, specification, description, version, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8) RETURNING id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#,
-        code, req.name, req.category, req.level, req.specification, req.description, version, req.created_by
-    )
+    let standard = sqlx::query_as::<_, QualityStandard>(r#"INSERT INTO qa_standards (code, name, category, level, specification, description, version, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8) RETURNING id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(code).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(version).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
     match standard {
         Ok(data) => {
+            let created_by = data.created_by.clone();
             if let Ok(standard_id) = Uuid::parse_str(&data.id) {
-                let _ = sqlx::query!(
-                    r#"INSERT INTO qa_standard_revisions (standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#,
-                    standard_id, data.version, data.name, data.category, data.level, data.specification, data.description, data.status, data.created_by
-                )
+                let _ = sqlx::query(r#"INSERT INTO qa_standard_revisions (standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#).bind(standard_id).bind(data.version.clone()).bind(data.name.clone()).bind(data.category.clone()).bind(data.level.clone()).bind(data.specification.clone()).bind(data.description.clone()).bind(data.status.clone()).bind(created_by)
                 .execute(&state.pool)
                 .await;
             }
@@ -157,11 +135,7 @@ pub async fn get_standard(
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
 
-    let standard = sqlx::query_as!(
-        QualityStandard,
-        r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1"#,
-        id
-    )
+    let standard = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -184,30 +158,19 @@ pub async fn update_standard(
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
 
-    let current = sqlx::query_as!(
-        QualityStandard,
-        r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1"#,
-        id
-    )
+    let current = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
     if let Ok(current_data) = current {
         if let Ok(standard_id) = Uuid::parse_str(&current_data.id) {
-            let _ = sqlx::query!(
-                r#"INSERT INTO qa_standard_revisions (standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#,
-                standard_id, current_data.version, current_data.name, current_data.category, current_data.level, current_data.specification, current_data.description, current_data.status, current_data.created_by
-            )
+            let _ = sqlx::query(r#"INSERT INTO qa_standard_revisions (standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#).bind(standard_id).bind(current_data.version).bind(current_data.name).bind(current_data.category).bind(current_data.level).bind(current_data.specification).bind(current_data.description).bind(current_data.status).bind(current_data.created_by)
             .execute(&state.pool)
             .await;
         }
     }
 
-    let standard = sqlx::query_as!(
-        QualityStandard,
-        r#"UPDATE qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = COALESCE($7, version), status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 RETURNING id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#,
-        id, req.name, req.category, req.level, req.specification, req.description, req.version, req.status
-    )
+    let standard = sqlx::query_as::<_, QualityStandard>(r#"UPDATE qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = COALESCE($7, version), status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 RETURNING id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(req.version).bind(req.status)
     .fetch_one(&state.pool)
     .await;
 
@@ -229,10 +192,7 @@ pub async fn delete_standard(
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
 
-    let result = sqlx::query!(
-        r#"DELETE FROM qa_standards WHERE id = $1"#,
-        id
-    )
+    let result = sqlx::query(r#"DELETE FROM qa_standards WHERE id = $1"#).bind(id)
     .execute(&state.pool)
     .await;
 
@@ -254,11 +214,7 @@ pub async fn list_revisions(
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
 
-    let revisions = sqlx::query_as!(
-        StandardRevision,
-        r#"SELECT id, standard_id, version, name, category, level, specification, description, status, created_by, created_at::TEXT FROM qa_standard_revisions WHERE standard_id = $1 ORDER BY created_at DESC"#,
-        id
-    )
+    let revisions = sqlx::query_as::<_, StandardRevision>(r#"SELECT id, standard_id, version, name, category, level, specification, description, status, created_by, created_at::TEXT FROM qa_standard_revisions WHERE standard_id = $1 ORDER BY created_at DESC"#).bind(id)
     .fetch_all(&state.pool)
     .await;
 
@@ -281,27 +237,29 @@ pub async fn create_revision(
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
 
-    let current = sqlx::query_as!(
-        QualityStandard,
-        r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1"#,
-        id
-    )
+    let current = sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
     match current {
         Ok(current_data) => {
+            let version = current_data.version.clone();
+            let name = current_data.name.clone();
+            let category = current_data.category.clone();
+            let level = current_data.level.clone();
+            let specification = current_data.specification.clone();
+            let description = current_data.description.clone();
+            let status = current_data.status.clone();
+            let created_by = current_data.created_by.clone();
+            
             if let Ok(standard_id) = Uuid::parse_str(&current_data.id) {
-                let _ = sqlx::query!(
-                    r#"INSERT INTO qa_standard_revisions (standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#,
-                    standard_id, current_data.version, current_data.name, current_data.category, current_data.level, current_data.specification, current_data.description, current_data.status, current_data.created_by
-                )
-                .execute(&state.pool)
-                .await;
+                let _ = sqlx::query(r#"INSERT INTO qa_standard_revisions (standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#).bind(standard_id).bind(version.clone()).bind(name).bind(category).bind(level).bind(specification).bind(description).bind(status).bind(created_by)
+                    .execute(&state.pool)
+                    .await;
             }
 
             let new_version = req.version.unwrap_or_else(|| {
-                let current_version = current_data.version.as_deref().unwrap_or("1.0");
+                let current_version = version.as_deref().unwrap_or("1.0");
                 let parts: Vec<&str> = current_version.split('.').collect();
                 if parts.len() >= 2 {
                     let mut v: Vec<String> = parts.iter().map(|s| s.to_string()).collect();
@@ -314,11 +272,7 @@ pub async fn create_revision(
                 }
             });
 
-            let standard = sqlx::query_as!(
-                QualityStandard,
-                r#"UPDATE qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = $7, status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 RETURNING id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#,
-                id, req.name, req.category, req.level, req.specification, req.description, new_version, req.status
-            )
+            let standard = sqlx::query_as::<_, QualityStandard>(r#"UPDATE qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = $7, status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 RETURNING id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(new_version).bind(req.status)
             .fetch_one(&state.pool)
             .await;
 

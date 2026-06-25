@@ -2,23 +2,20 @@ import React from 'react';
 import { Box, Breadcrumbs, Link, Typography } from '@mui/material';
 import { Home, ChevronRight } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
-
-// ============ 类型定义 ============
+import { useAutoBreadcrumbs } from '@/hooks';
 
 export interface BreadcrumbItem {
-  /** 显示标签 */
   label: string;
-  /** 跳转链接 */
   href?: string;
-  /** 自定义图标 */
   icon?: React.ReactNode;
-  /** 点击回调 */
   onClick?: () => void;
 }
 
 export interface PageBreadcrumbProps {
-  /** 面包屑项列表 */
-  items: BreadcrumbItem[];
+  /** 面包屑项列表（手动配置） */
+  items?: BreadcrumbItem[];
+  /** 是否启用自动面包屑（默认启用） */
+  auto?: boolean;
   /** 是否显示首页图标 */
   showHome?: boolean;
   /** 首页链接 */
@@ -33,34 +30,43 @@ export interface PageBreadcrumbProps {
   sx?: object;
 }
 
-// ============ PageBreadcrumb 组件 ============
-
 export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
-  items,
+  items: manualItems,
+  auto = true,
   showHome = true,
-  homeHref = '/',
+  homeHref = '/dashboard',
   onHomeClick,
   separator,
   maxItems = 8,
   sx,
 }) => {
+  const autoItems = useAutoBreadcrumbs({
+    includeHome: !showHome,
+    homePath: homeHref,
+  });
+
+  const items = manualItems && manualItems.length > 0 ? manualItems : autoItems;
+
   const defaultSeparator = separator || (
     <ChevronRight style={{ width: 16, height: 16, opacity: 0.5 }} />
   );
 
   const renderBreadcrumbItem = (item: BreadcrumbItem, index: number, isLast: boolean) => {
-    // 最后一项不可点击
     if (isLast || (!item.href && !item.onClick)) {
       return (
         <Typography
           key={index}
-          color='text.primary'
+          color='primary.main'
           sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 0.5,
             fontSize: '0.875rem',
-            fontWeight: isLast ? 500 : 400,
+            fontWeight: 600,
+            py: 0.5,
+            px: 1,
+            borderRadius: 1,
+            backgroundColor: 'primary.light',
           }}
         >
           {item.icon}
@@ -69,7 +75,6 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
       );
     }
 
-    // 可点击项
     return (
       <Link
         key={index}
@@ -83,9 +88,15 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
           alignItems: 'center',
           gap: 0.5,
           fontSize: '0.875rem',
+          fontWeight: 400,
           cursor: 'pointer',
+          py: 0.5,
+          px: 1,
+          borderRadius: 1,
+          transition: 'all 0.15s ease-in-out',
           '&:hover': {
             color: 'primary.main',
+            backgroundColor: 'action.hover',
           },
         }}
       >
@@ -95,11 +106,9 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
     );
   };
 
-  // 构建面包屑项
   const breadcrumbItems = [];
 
-  // 添加首页
-  if (showHome) {
+  if (showHome && (!auto || !manualItems || manualItems.length === 0)) {
     breadcrumbItems.push(
       <Link
         key='home'
@@ -122,7 +131,6 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
     );
   }
 
-  // 添加其他项
   items.forEach((item, index) => {
     const isLast = index === items.length - 1;
     breadcrumbItems.push(renderBreadcrumbItem(item, index, isLast));

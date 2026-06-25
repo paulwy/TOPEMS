@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -11,73 +11,20 @@ import {
   Card,
   CardContent,
   Typography,
+  MenuItem,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, Edit, Eye, Download, Upload, FlaskConical, Filter } from 'lucide-react';
+import { Plus, Edit, Eye, Download, Upload, FlaskConical, Filter, Trash2 } from 'lucide-react';
 import {
   ListPageTemplate,
   type ColumnDef,
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
-
-interface Sample {
-  id: string;
-  sample_no: string;
-  name: string;
-  test_items: string;
-  status: string;
-  received_date: string;
-  test_result: string;
-}
-
-const mockSamples: Sample[] = [
-  {
-    id: '1',
-    sample_no: 'S202401001',
-    name: '水质样品A',
-    test_items: 'pH值、溶解氧',
-    status: '已完成',
-    received_date: '2024-01-15',
-    test_result: '合格',
-  },
-  {
-    id: '2',
-    sample_no: 'S202401002',
-    name: '土壤样品B',
-    test_items: '重金属含量',
-    status: '检测中',
-    received_date: '2024-01-16',
-    test_result: '-',
-  },
-  {
-    id: '3',
-    sample_no: 'S202401003',
-    name: '空气样品C',
-    test_items: 'PM2.5、PM10',
-    status: '待检测',
-    received_date: '2024-01-17',
-    test_result: '-',
-  },
-  {
-    id: '4',
-    sample_no: 'S202401004',
-    name: '食品样品D',
-    test_items: '添加剂、农药残留',
-    status: '已完成',
-    received_date: '2024-01-18',
-    test_result: '合格',
-  },
-  {
-    id: '5',
-    sample_no: 'S202401005',
-    name: '药品样品E',
-    test_items: '有效成分含量',
-    status: '待接收',
-    received_date: '2024-01-19',
-    test_result: '-',
-  },
-];
+import { limsApi } from '@/api/lims';
+import type { Sample, CreateSampleRequest, UpdateSampleRequest } from '@/api/lims';
+import { useAppStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
 const LimsSamplePage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,25 +35,59 @@ const LimsSamplePage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CreateSampleRequest>({
     name: '',
-    test_items: '',
+    description: '',
     status: '待接收',
+    sample_type: '',
+    source: '',
+    quantity: undefined,
+    unit: '',
+    storage_condition: '',
+    location: '',
+    responsible_person: '',
+    received_date: new Date().toISOString().split('T')[0],
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const addNotification = useAppStore((state) => state.addNotification);
+
+  const loadSamples = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await limsApi.listSamples();
+      if (response.success && response.data) {
+        const data = response.data as any;
+        let rawSamples: Sample[] = [];
+        if (Array.isArray(data)) {
+          rawSamples = data;
+        } else if (data.items && Array.isArray(data.items)) {
+          rawSamples = data.items;
+        } else if (data.samples && Array.isArray(data.samples)) {
+          rawSamples = data.samples;
+        }
+        setSamples(rawSamples);
+      } else {
+        setSamples([]);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载样品列表失败:', err);
+      setSamples([]);
+      addNotification({
+        title: '错误',
+        message: '加载样品列表失败，请稍后重试',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [addNotification]);
 
   useEffect(() => {
     loadSamples();
-  }, []);
-
-  const loadSamples = async () => {
-    setLoading(true);
-    setTimeout(() => {
-      setSamples(mockSamples);
-      setLoading(false);
-    }, 500);
-  };
+  }, [loadSamples]);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -114,6 +95,10 @@ const LimsSamplePage: React.FC = () => {
       待检测: { bg: '#fef9c3', color: '#ca8a04' },
       检测中: { bg: '#dbeafe', color: 'primary.dark' },
       已完成: { bg: 'success.lighter', color: 'success.dark' },
+      pending: { bg: 'grey.100', color: 'text.secondary' },
+      in_progress: { bg: '#dbeafe', color: 'primary.dark' },
+      completed: { bg: 'success.lighter', color: 'success.dark' },
+      cancelled: { bg: 'error.lighter', color: 'error.dark' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -129,17 +114,41 @@ const LimsSamplePage: React.FC = () => {
     );
   };
 
+  const getTestItems = (sample: Sample): string => {
+    return sample.description || '-';
+  };
+
+  const getTestResult = (sample: Sample): string => {
+    if (sample.status === '已完成' || sample.status === 'completed') {
+      return '已完成';
+    }
+    return '-';
+  };
+
   const columns: ColumnDef<Sample>[] = [
     { id: 'sample_no', label: '样品编号' },
     { id: 'name', label: '样品名称' },
-    { id: 'test_items', label: '检测项目' },
+    {
+      id: 'description',
+      label: '检测项目',
+      render: (row) => getTestItems(row),
+    },
     {
       id: 'status',
       label: '状态',
       render: (row) => getStatusBadge(row.status),
     },
-    { id: 'received_date', label: '接收日期' },
-    { id: 'test_result', label: '检测结果' },
+    {
+      id: 'received_date',
+      label: '接收日期',
+      render: (row) =>
+        row.received_date ? new Date(row.received_date).toLocaleDateString('zh-CN') : '-',
+    },
+    {
+      id: 'test_result',
+      label: '检测结果',
+      render: (row) => getTestResult(row),
+    },
   ];
 
   const rowActions: RowAction<Sample>[] = [
@@ -175,7 +184,7 @@ const LimsSamplePage: React.FC = () => {
   const filteredSamples = samples.filter((sample) => {
     const matchesSearch =
       sample.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sample.sample_no.toLowerCase().includes(searchTerm.toLowerCase());
+      (sample.sample_no || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || sample.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -189,54 +198,137 @@ const LimsSamplePage: React.FC = () => {
 
   const handleEdit = (sample: Sample) => {
     setSelectedSample(sample);
+    setIsEditing(true);
     setFormData({
       name: sample.name,
-      test_items: sample.test_items,
+      description: sample.description || '',
       status: sample.status,
+      sample_type: sample.sample_type || '',
+      source: sample.source || '',
+      quantity: sample.quantity,
+      unit: sample.unit || '',
+      storage_condition: sample.storage_condition || '',
+      location: sample.location || '',
+      responsible_person: sample.responsible_person || '',
+      received_date: sample.received_date
+        ? new Date(sample.received_date).toISOString().split('T')[0]
+        : '',
     });
     setShowCreateModal(true);
   };
 
   const handleCreate = () => {
     setSelectedSample(null);
-    setFormData({ name: '', test_items: '', status: '待接收' });
+    setIsEditing(false);
+    setFormData({
+      name: '',
+      description: '',
+      status: '待接收',
+      sample_type: '',
+      source: '',
+      quantity: undefined,
+      unit: '',
+      storage_condition: '',
+      location: '',
+      responsible_person: '',
+      received_date: new Date().toISOString().split('T')[0],
+    });
     setShowCreateModal(true);
   };
 
-  const handleSave = () => {
-    if (selectedSample) {
-      setSamples((prev) =>
-        prev.map((s) =>
-          s.id === selectedSample.id
-            ? {
-                ...s,
-                name: formData.name,
-                test_items: formData.test_items,
-                status: formData.status,
-              }
-            : s
-        )
-      );
-    } else {
-      const newSample: Sample = {
-        id: String(Date.now()),
-        sample_no: `S${Date.now()}`,
-        name: formData.name,
-        test_items: formData.test_items,
-        status: formData.status,
-        received_date: new Date().toISOString().split('T')[0],
-        test_result: '-',
-      };
-      setSamples((prev) => [newSample, ...prev]);
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入样品名称',
+        type: 'error',
+      });
+      return;
     }
-    setShowCreateModal(false);
+
+    try {
+      setSaving(true);
+      if (isEditing && selectedSample) {
+        const response = await limsApi.updateSample(selectedSample.id, formData as UpdateSampleRequest);
+        if (response.success) {
+          addNotification({
+            title: '成功',
+            message: '样品更新成功',
+            type: 'success',
+          });
+          setShowCreateModal(false);
+          loadSamples();
+        } else {
+          addNotification({
+            title: '错误',
+            message: response.message || '更新失败，请稍后重试',
+            type: 'error',
+          });
+        }
+      } else {
+        const response = await limsApi.createSample(formData);
+        if (response.success) {
+          addNotification({
+            title: '成功',
+            message: '样品创建成功',
+            type: 'success',
+          });
+          setShowCreateModal(false);
+          loadSamples();
+        } else {
+          addNotification({
+            title: '错误',
+            message: response.message || '创建失败，请稍后重试',
+            type: 'error',
+          });
+        }
+      }
+    } catch (err: unknown) {
+      apiLogger.error('保存样品失败:', err);
+      addNotification({
+        title: '错误',
+        message: isEditing ? '更新样品失败，请稍后重试' : '创建样品失败，请稍后重试',
+        type: 'error',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (sample: Sample) => {
+    if (!confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
+    try {
+      const response = await limsApi.deleteSample(sample.id);
+      if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '样品删除成功',
+          type: 'success',
+        });
+        setShowDetailModal(false);
+        loadSamples();
+      } else {
+        addNotification({
+          title: '错误',
+          message: response.message || '删除失败，请稍后重试',
+          type: 'error',
+        });
+      }
+    } catch (err: unknown) {
+      apiLogger.error('删除样品失败:', err);
+      addNotification({
+        title: '错误',
+        message: '删除样品失败，请稍后重试',
+        type: 'error',
+      });
+    }
   };
 
   const stats = {
     total: samples.length,
-    pending: samples.filter((s) => s.status === '待接收' || s.status === '待检测').length,
-    inProgress: samples.filter((s) => s.status === '检测中').length,
-    completed: samples.filter((s) => s.status === '已完成').length,
+    pending: samples.filter((s) => s.status === '待接收' || s.status === '待检测' || s.status === 'pending').length,
+    inProgress: samples.filter((s) => s.status === '检测中' || s.status === 'in_progress').length,
+    completed: samples.filter((s) => s.status === '已完成' || s.status === 'completed').length,
   };
 
   const statsCards = (
@@ -474,7 +566,7 @@ const LimsSamplePage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{selectedSample ? '编辑样品' : '样品登记'}</DialogTitle>
+        <DialogTitle>{isEditing ? '编辑样品' : '样品登记'}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
@@ -487,22 +579,95 @@ const LimsSamplePage: React.FC = () => {
             <TextField
               fullWidth
               label='检测项目'
-              value={formData.test_items}
-              onChange={(e) => setFormData({ ...formData, test_items: e.target.value })}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder='请输入检测项目，多个用逗号分隔'
+              multiline
+              rows={2}
             />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                select
+                label='状态'
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <MenuItem value='待接收'>待接收</MenuItem>
+                <MenuItem value='待检测'>待检测</MenuItem>
+                <MenuItem value='检测中'>检测中</MenuItem>
+                <MenuItem value='已完成'>已完成</MenuItem>
+              </TextField>
+              <TextField
+                fullWidth
+                label='样品类型'
+                value={formData.sample_type}
+                onChange={(e) => setFormData({ ...formData, sample_type: e.target.value })}
+                placeholder='请输入样品类型'
+              />
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='来源'
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                placeholder='请输入样品来源'
+              />
+              <TextField
+                fullWidth
+                label='接收日期'
+                type='date'
+                value={formData.received_date}
+                onChange={(e) => setFormData({ ...formData, received_date: e.target.value })}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='数量'
+                type='number'
+                value={formData.quantity ?? ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    quantity: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                placeholder='请输入数量'
+              />
+              <TextField
+                fullWidth
+                label='单位'
+                value={formData.unit}
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                placeholder='请输入单位'
+              />
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='存放位置'
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder='请输入存放位置'
+              />
+              <TextField
+                fullWidth
+                label='负责人'
+                value={formData.responsible_person}
+                onChange={(e) => setFormData({ ...formData, responsible_person: e.target.value })}
+                placeholder='请输入负责人'
+              />
+            </Box>
             <TextField
               fullWidth
-              select
-              label='状态'
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            >
-              <option value='待接收'>待接收</option>
-              <option value='待检测'>待检测</option>
-              <option value='检测中'>检测中</option>
-              <option value='已完成'>已完成</option>
-            </TextField>
+              label='储存条件'
+              value={formData.storage_condition}
+              onChange={(e) => setFormData({ ...formData, storage_condition: e.target.value })}
+              placeholder='请输入储存条件'
+            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -515,9 +680,10 @@ const LimsSamplePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
+            disabled={saving}
             sx={{ bgcolor: 'info.main' }}
           >
-            保存
+            {saving ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -546,7 +712,7 @@ const LimsSamplePage: React.FC = () => {
                 >
                   样品编号
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedSample.sample_no}</Box>
+                <Box sx={{ fontWeight: 500 }}>{selectedSample.sample_no || selectedSample.id}</Box>
               </Box>
               <Box>
                 <Box
@@ -564,7 +730,7 @@ const LimsSamplePage: React.FC = () => {
                 >
                   检测项目
                 </Box>
-                <Box>{selectedSample.test_items}</Box>
+                <Box>{getTestItems(selectedSample)}</Box>
               </Box>
               <Box>
                 <Box
@@ -582,7 +748,11 @@ const LimsSamplePage: React.FC = () => {
                 >
                   接收日期
                 </Box>
-                <Box>{selectedSample.received_date}</Box>
+                <Box>
+                  {selectedSample.received_date
+                    ? new Date(selectedSample.received_date).toLocaleDateString('zh-CN')
+                    : '-'}
+                </Box>
               </Box>
               <Box>
                 <Box
@@ -591,18 +761,86 @@ const LimsSamplePage: React.FC = () => {
                 >
                   检测结果
                 </Box>
-                <Box>{selectedSample.test_result}</Box>
+                <Box>{getTestResult(selectedSample)}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  样品类型
+                </Box>
+                <Box>{selectedSample.sample_type || '-'}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  来源
+                </Box>
+                <Box>{selectedSample.source || '-'}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  数量
+                </Box>
+                <Box>
+                  {selectedSample.quantity !== undefined
+                    ? `${selectedSample.quantity} ${selectedSample.unit || ''}`
+                    : '-'}
+                </Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  存放位置
+                </Box>
+                <Box>{selectedSample.location || '-'}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  负责人
+                </Box>
+                <Box>{selectedSample.responsible_person || '-'}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  储存条件
+                </Box>
+                <Box>{selectedSample.storage_condition || '-'}</Box>
               </Box>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
+          <Button
+            variant='outlined'
+            color='error'
+            startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
+            onClick={() => selectedSample && handleDelete(selectedSample)}
+          >
+            删除
+          </Button>
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
           <Button
             variant='contained'
             onClick={() => {
               setShowDetailModal(false);
-              handleEdit(selectedSample!);
+              if (selectedSample) {
+                handleEdit(selectedSample);
+              }
             }}
             sx={{ bgcolor: 'info.main' }}
           >

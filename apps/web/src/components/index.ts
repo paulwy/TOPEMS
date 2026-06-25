@@ -58,12 +58,8 @@ export type {
   StatusMapConfig,
 } from './common/StatusBadge';
 
-// ===== Toast 通知系统 (规范版本: ui/toast.tsx) =====
-export { Toast } from './ui/toast';
-export type { ToastProps, ToastActionElement } from './ui/toast';
-export { ToastContainer } from './notification/Toast';
-export { ToastProvider, useToast } from './common/ToastNotification';
-export type { ToastOptions } from './common/ToastNotification';
+// ===== 统一通知系统 =====
+export { NotificationProvider } from './notification/NotificationProvider';
 
 // MUI enhanced components
 export {

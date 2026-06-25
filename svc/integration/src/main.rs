@@ -183,7 +183,7 @@ async fn main() {
     tracing::info!("🚀 TOPEMS Integration Service starting...");
 
     let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://xingzhai@localhost/topems_integration".to_string());
+        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
 
     let pool = match PgPoolOptions::new()
         .max_connections(5)

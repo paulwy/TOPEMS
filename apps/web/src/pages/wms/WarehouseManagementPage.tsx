@@ -9,8 +9,8 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '@/api/shared/wms';
-import { wmsApi } from '@/api/shared/wms';
+import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '@/api/wms';
+import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { EmptyState } from '@/components/mui/EmptyState';
@@ -22,6 +22,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { ConfirmDialog } from '@/components/common';
 
 const WarehouseManagementPage: React.FC = () => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -33,7 +34,9 @@ const WarehouseManagementPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
+  const [deleteWarehouseId, setDeleteWarehouseId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateWarehouseRequest>({
     name: '',
     code: '',
@@ -106,28 +109,30 @@ const WarehouseManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个仓库吗?')) return;
-      try {
-        await wmsApi.warehouses.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '仓库已删除',
-        });
-        loadWarehouses();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除仓库',
-        });
-      }
-    },
-    [addNotification, loadWarehouses]
-  );
+  const handleDeleteClick = (id: string) => {
+    setDeleteWarehouseId(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteWarehouseId) return;
+    try {
+      await wmsApi.warehouses.delete(deleteWarehouseId);
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '仓库已删除',
+      });
+      loadWarehouses();
+    } catch (error: unknown) {
+      apiLogger.error('删除失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除仓库',
+      });
+    }
+  }, [addNotification, loadWarehouses, deleteWarehouseId]);
 
   const handleEdit = (warehouse: Warehouse) => {
     setSelectedWarehouse(warehouse);
@@ -232,9 +237,7 @@ const WarehouseManagementPage: React.FC = () => {
         label: '删除',
         icon: <Trash2 size={16} />,
         color: 'error',
-        onClick: (row) => handleDelete(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这个仓库吗?',
+        onClick: (row) => handleDeleteClick(row.id),
       },
     ],
     [handleDelete]
@@ -489,6 +492,16 @@ const WarehouseManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除这个仓库吗？'
+        danger
+      />
     </>
   );
 };

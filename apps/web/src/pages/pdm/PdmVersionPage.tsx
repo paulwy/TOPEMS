@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -8,22 +8,16 @@ import {
   Button,
   Grid,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
   TextField,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import {
   GitBranch,
@@ -32,129 +26,80 @@ import {
   Clock,
   User,
   Tag,
-  Archive,
-  ArrowRight,
-  Save,
-  X,
 } from 'lucide-react';
+import { pdmApi } from '@/api/pdm';
+import type { DocumentVersion, Document } from '@/api/pdm';
+import { useAppStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
-interface Version {
-  id: string;
-  versionNumber: string;
+interface FormData {
+  document_id: string;
   title: string;
   description: string;
-  status: 'draft' | 'published' | 'deprecated';
-  type: 'major' | 'minor' | 'patch';
-  createdAt: string;
-  createdBy: string;
-  changes: string[];
-}
-
-interface Document {
-  id: string;
-  name: string;
   type: string;
-  currentVersion: string;
-  versions: number;
-  status: 'active' | 'archived';
+  changes: string;
 }
 
 export const PdmVersionPage: React.FC = () => {
-  const [selectedDocument, setSelectedDocument] = useState('DOC001');
+  const [selectedDocument, setSelectedDocument] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [versions, setVersions] = useState<DocumentVersion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<FormData>({
+    document_id: '',
+    title: '',
+    description: '',
+    type: 'minor',
+    changes: '',
+  });
+  const addNotification = useAppStore((state) => state.addNotification);
 
-  const documents: Document[] = [
-    {
-      id: 'DOC001',
-      name: '产品设计文档',
-      type: '设计文档',
-      currentVersion: 'V2.1',
-      versions: 5,
-      status: 'active',
-    },
-    {
-      id: 'DOC002',
-      name: '工艺流程图',
-      type: '流程图',
-      currentVersion: 'V1.3',
-      versions: 3,
-      status: 'active',
-    },
-    {
-      id: 'DOC003',
-      name: '质量标准文档',
-      type: '标准文档',
-      currentVersion: 'V1.0',
-      versions: 1,
-      status: 'active',
-    },
-    {
-      id: 'DOC004',
-      name: '旧版设计文档',
-      type: '设计文档',
-      currentVersion: 'V1.0',
-      versions: 2,
-      status: 'archived',
-    },
-  ];
+  useEffect(() => {
+    loadDocuments();
+    loadVersions();
+  }, []);
 
-  const versions: Version[] = [
-    {
-      id: '1',
-      versionNumber: 'V2.1',
-      title: '性能优化',
-      description: '优化产品性能参数，提升生产效率',
-      status: 'published',
-      type: 'minor',
-      createdAt: '2024-01-15 10:00:00',
-      createdBy: '张三',
-      changes: ['优化材料配比', '改进生产工艺', '更新质量标准'],
-    },
-    {
-      id: '2',
-      versionNumber: 'V2.0',
-      title: '重大升级',
-      description: '产品全面升级，新增多项功能',
-      status: 'published',
-      type: 'major',
-      createdAt: '2024-01-10 09:00:00',
-      createdBy: '李四',
-      changes: ['新增材料选项', '优化配方设计', '改进包装设计'],
-    },
-    {
-      id: '3',
-      versionNumber: 'V1.3',
-      title: 'Bug修复',
-      description: '修复已知问题',
-      status: 'deprecated',
-      type: 'patch',
-      createdAt: '2024-01-05 14:00:00',
-      createdBy: '王五',
-      changes: ['修复计算错误', '更新文档'],
-    },
-    {
-      id: '4',
-      versionNumber: 'V1.2',
-      title: '功能增强',
-      description: '增强现有功能',
-      status: 'deprecated',
-      type: 'minor',
-      createdAt: '2024-01-01 10:00:00',
-      createdBy: '赵六',
-      changes: ['增加材料规格', '优化界面'],
-    },
-    {
-      id: '5',
-      versionNumber: 'V1.1',
-      title: '初始版本',
-      description: '产品初始版本',
-      status: 'deprecated',
-      type: 'major',
-      createdAt: '2023-12-25 09:00:00',
-      createdBy: '张三',
-      changes: ['初始版本发布'],
-    },
-  ];
+  const loadDocuments = async () => {
+    try {
+      const response = await pdmApi.listDocuments();
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const items = Array.isArray(data) ? data : data.documents || [];
+        setDocuments(items);
+        if (items.length > 0 && !selectedDocument) {
+          setSelectedDocument(items[0].id);
+          setFormData({ ...formData, document_id: items[0].id });
+        }
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载文档数据失败:', err);
+      setDocuments([]);
+    }
+  };
+
+  const loadVersions = async () => {
+    try {
+      setLoading(true);
+      const response = await pdmApi.listVersions();
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const items = Array.isArray(data) ? data : data.versions || [];
+        const adapted = items.map((item: { [key: string]: unknown }) => ({
+          ...item,
+          versionNumber: item.version_number || item.versionNumber || '',
+        }));
+        setVersions(adapted as DocumentVersion[]);
+      } else {
+        setVersions([]);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载版本数据失败:', err);
+      setVersions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getVersionTypeColor = (type: string) => {
     switch (type) {
@@ -195,6 +140,61 @@ export const PdmVersionPage: React.FC = () => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'published':
+        return '已发布';
+      case 'draft':
+        return '草稿';
+      case 'deprecated':
+        return '已废弃';
+      default:
+        return status;
+    }
+  };
+
+  const handleCreate = () => {
+    setFormData({
+      document_id: selectedDocument,
+      title: '',
+      description: '',
+      type: 'minor',
+      changes: '',
+    });
+    setOpenDialog(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      const requestData = {
+        document_id: formData.document_id,
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        changes: formData.changes.split('\n').filter(Boolean),
+      };
+
+      await pdmApi.createVersion(requestData);
+      addNotification({ title: '成功', message: '版本创建成功', type: 'success' });
+      setOpenDialog(false);
+      loadVersions();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建版本失败:', err);
+    }
+  };
+
+  const handleDocumentChange = (value: string) => {
+    setSelectedDocument(value);
+    setFormData({ ...formData, document_id: value });
+  };
+
+  const filteredVersions = versions.filter(
+    (v) => !selectedDocument || v.document_id === selectedDocument
+  );
+
+  const currentVersion = filteredVersions.find((v) => v.status === 'published');
+
   return (
     <Box sx={{ flex: 1 }}>
       <Box
@@ -222,7 +222,8 @@ export const PdmVersionPage: React.FC = () => {
         <Button
           variant='contained'
           startIcon={<Plus />}
-          onClick={() => setOpenDialog(true)}
+          onClick={handleCreate}
+          sx={{ bgcolor: 'primary.main' }}
         >
           创建新版本
         </Button>
@@ -240,8 +241,9 @@ export const PdmVersionPage: React.FC = () => {
               <FormControl fullWidth>
                 <Select
                   value={selectedDocument}
-                  onChange={(e) => setSelectedDocument(e.target.value)}
+                  onChange={(e) => handleDocumentChange(e.target.value)}
                   sx={{ minHeight: 48 }}
+                  disabled={loading}
                 >
                   {documents.map((doc) => (
                     <MenuItem
@@ -261,7 +263,7 @@ export const PdmVersionPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            {doc.type} - 当前版本: {doc.currentVersion}
+                            {doc.type} - 当前版本: {doc.current_version}
                           </Typography>
                         </div>
                       </Box>
@@ -286,7 +288,7 @@ export const PdmVersionPage: React.FC = () => {
                 variant='h5'
                 sx={{ fontWeight: 'bold' }}
               >
-                {versions.length} 个
+                {loading ? <CircularProgress size={24} /> : `${filteredVersions.length} 个`}
               </Typography>
             </CardContent>
           </Card>
@@ -305,7 +307,7 @@ export const PdmVersionPage: React.FC = () => {
                 variant='h5'
                 sx={{ fontWeight: 'bold', color: 'primary.main' }}
               >
-                {versions[0]?.versionNumber}
+                {currentVersion?.version_number || '-'}
               </Typography>
             </CardContent>
           </Card>
@@ -315,151 +317,172 @@ export const PdmVersionPage: React.FC = () => {
       <Card>
         <CardHeader title='版本历史' />
         <CardContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {versions.map((version, index) => (
-              <Box
-                key={version.id}
-                sx={{
-                  p: 3,
-                  borderRadius: 1,
-                  backgroundColor: version.status === 'published' ? 'success.50' : 'grey.50',
-                  borderLeft:
-                    version.status === 'published' ? '3px solid' : '3px solid transparent',
-                  borderColor: version.status === 'published' ? 'success.main' : undefined,
-                }}
-              >
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {filteredVersions.map((version) => (
                 <Box
+                  key={version.id}
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mb: 2,
+                    p: 3,
+                    borderRadius: 1,
+                    backgroundColor: version.status === 'published' ? 'success.50' : 'grey.50',
+                    borderLeft:
+                      version.status === 'published' ? '3px solid' : '3px solid transparent',
+                    borderColor: version.status === 'published' ? 'success.main' : undefined,
                   }}
                 >
                   <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 2,
+                      justifyContent: 'space-between',
+                      mb: 2,
                     }}
                   >
-                    <GitBranch size={20} />
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 600 }}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
                     >
-                      {version.versionNumber}
-                    </Typography>
-                    <Chip
-                      size='small'
-                      label={getVersionTypeLabel(version.type)}
-                      color={getVersionTypeColor(version.type)}
-                    />
-                    {version.status === 'published' && (
+                      <GitBranch size={20} />
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {version.version_number}
+                      </Typography>
                       <Chip
                         size='small'
-                        label='当前版本'
-                        color='success'
-                        icon={<Check size={14} />}
+                        label={getVersionTypeLabel(version.type)}
+                        color={getVersionTypeColor(version.type)}
                       />
-                    )}
-                  </Box>
-                  <Chip
-                    size='small'
-                    label={
-                      version.status === 'published'
-                        ? '已发布'
-                        : version.status === 'draft'
-                          ? '草稿'
-                          : '已废弃'
-                    }
-                    color={getStatusColor(version.status)}
-                  />
-                </Box>
-                <Typography
-                  variant='body1'
-                  sx={{ fontWeight: 500, mb: 1 }}
-                >
-                  {version.title}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ mb: 2 }}
-                >
-                  {version.description}
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 1,
-                    mb: 2,
-                  }}
-                >
-                  {version.changes.map((change, idx) => (
+                      {version.status === 'published' && (
+                        <Chip
+                          size='small'
+                          label='当前版本'
+                          color='success'
+                          icon={<Check size={14} />}
+                        />
+                      )}
+                    </Box>
                     <Chip
-                      key={idx}
                       size='small'
-                      label={change}
-                      variant='outlined'
+                      label={getStatusLabel(version.status)}
+                      color={getStatusColor(version.status)}
                     />
-                  ))}
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
+                  </Box>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500, mb: 1 }}
+                  >
+                    {version.title}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2 }}
+                  >
+                    {version.description}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    {(version.changes || []).map((change, idx) => (
+                      <Chip
+                        key={idx}
+                        size='small'
+                        label={change}
+                        variant='outlined'
+                      />
+                    ))}
+                  </Box>
                   <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1,
+                      gap: 4,
                     }}
                   >
-                    <Clock size={14} />
-                    <Typography variant='caption'>{version.createdAt}</Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <Clock size={14} />
+                      <Typography variant='caption'>{version.created_at || '-'}</Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <User size={14} />
+                      <Typography variant='caption'>{version.created_by || '-'}</Typography>
+                    </Box>
                   </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    <User size={14} />
-                    <Typography variant='caption'>{version.createdBy}</Typography>
-                  </Box>
+                  {version.status !== 'published' && (
+                    <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                      <Button size='small'>查看详情</Button>
+                      <Button size='small'>对比差异</Button>
+                    </Box>
+                  )}
                 </Box>
-                {version.status !== 'published' && (
-                  <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-                    <Button size='small'>查看详情</Button>
-                    <Button size='small'>对比差异</Button>
-                  </Box>
-                )}
-              </Box>
-            ))}
-          </Box>
+              ))}
+            </Box>
+          )}
         </CardContent>
       </Card>
 
       <Dialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
+        maxWidth='sm'
+        fullWidth
       >
         <DialogTitle>创建新版本</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>关联文档</InputLabel>
+              <Select
+                value={formData.document_id}
+                label='关联文档'
+                onChange={(e) => setFormData({ ...formData, document_id: e.target.value })}
+              >
+                {documents.map((doc) => (
+                  <MenuItem key={doc.id} value={doc.id}>
+                    {doc.name} ({doc.type})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
-              label='版本标题'
+              label='版本标题 *'
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder='输入版本标题'
               fullWidth
+              required
             />
             <TextField
               label='版本描述'
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder='输入版本描述'
               multiline
               rows={3}
@@ -468,8 +491,9 @@ export const PdmVersionPage: React.FC = () => {
             <FormControl fullWidth>
               <InputLabel>版本类型</InputLabel>
               <Select
-                defaultValue='minor'
+                value={formData.type}
                 label='版本类型'
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
                 <MenuItem value='major'>重大版本 (Major)</MenuItem>
                 <MenuItem value='minor'>次要版本 (Minor)</MenuItem>
@@ -478,6 +502,8 @@ export const PdmVersionPage: React.FC = () => {
             </FormControl>
             <TextField
               label='变更内容'
+              value={formData.changes}
+              onChange={(e) => setFormData({ ...formData, changes: e.target.value })}
               placeholder='输入变更内容，每行一项'
               multiline
               rows={4}
@@ -487,7 +513,9 @@ export const PdmVersionPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button variant='contained'>创建版本</Button>
+          <Button variant='contained' onClick={handleSave} sx={{ bgcolor: 'primary.main' }}>
+            创建版本
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

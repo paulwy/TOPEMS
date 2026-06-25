@@ -17,7 +17,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { useToast } from '@/components/notification/ToastProvider';
+import { useAppStore } from '@/store';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
 
 interface ServiceStatusMap {
@@ -25,7 +25,7 @@ interface ServiceStatusMap {
 }
 
 const MigrationAdminPage: React.FC = () => {
-  const { showToast } = useToast();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [services, setServices] = useState<MigrationService[]>([]);
   const [loading, setLoading] = useState(true);
   const [applyingService, setApplyingService] = useState<string | null>(null);
@@ -41,7 +41,7 @@ const MigrationAdminPage: React.FC = () => {
     try {
       const data = await migrationApi.listServices();
       setServices(data);
-      showToast('success', `加载成功，共 ${data.length} 个服务`);
+      addNotification({ title: '成功', message: `加载成功，共 ${data.length} 个服务`, type: 'success' });
 
       if (data.length > 0) {
         const results = await Promise.all(
@@ -54,11 +54,11 @@ const MigrationAdminPage: React.FC = () => {
         setStatusMap((prev) => ({ ...prev, ...nextStatusMap }));
       }
     } catch (err: unknown) {
-      showToast('error', (err as { message?: string }).message || '加载服务列表失败');
+      addNotification({ title: '错误', message: (err as { message?: string }).message || '加载服务列表失败', type: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [addNotification]);
 
   useEffect(() => {
     fetchServices();
@@ -68,10 +68,10 @@ const MigrationAdminPage: React.FC = () => {
     setApplyingService(service.name);
     try {
       const result = await migrationApi.applyMigration(service.name, 'schema');
-      showToast('success', `${service.name} 迁移执行成功，共 ${result.files.length} 个文件`);
+      addNotification({ title: '成功', message: `${service.name} 迁移执行成功，共 ${result.files.length} 个文件`, type: 'success' });
       await fetchStatusFor(service.name, true);
     } catch (err: unknown) {
-      showToast('error', (err as { message?: string }).message || `${service.name} 迁移执行失败`);
+      addNotification({ title: '错误', message: (err as { message?: string }).message || `${service.name} 迁移执行失败`, type: 'error' });
     } finally {
       setApplyingService(null);
     }
@@ -84,13 +84,10 @@ const MigrationAdminPage: React.FC = () => {
     setRollingBackService(service.name);
     try {
       const result = await migrationApi.rollbackMigration(service.name);
-      showToast(
-        'success',
-        `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`
-      );
+      addNotification({ title: '成功', message: `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`, type: 'success' });
       await fetchStatusFor(service.name, true);
     } catch (err: unknown) {
-      showToast('error', (err as { message?: string }).message || `${service.name} 回滚失败`);
+      addNotification({ title: '错误', message: (err as { message?: string }).message || `${service.name} 回滚失败`, type: 'error' });
     } finally {
       setRollingBackService(null);
     }
@@ -103,7 +100,7 @@ const MigrationAdminPage: React.FC = () => {
       setStatusMap((prev) => ({ ...prev, [serviceName]: status }));
       return status;
     } catch (err: unknown) {
-      if (!silent) showToast('error', (err as { message?: string }).message || '获取迁移状态失败');
+      if (!silent) addNotification({ title: '错误', message: (err as { message?: string }).message || '获取迁移状态失败', type: 'error' });
       return null;
     } finally {
       if (!silent) setStatusLoading(null);
@@ -132,10 +129,7 @@ const MigrationAdminPage: React.FC = () => {
         succeeded += 1;
       } catch (err: unknown) {
         failed += 1;
-        showToast(
-          'error',
-          `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`
-        );
+        addNotification({ title: '错误', message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`, type: 'error' });
       }
     }
     try {
@@ -150,10 +144,7 @@ const MigrationAdminPage: React.FC = () => {
     } catch (err: unknown) {
       // ignore
     }
-    showToast(
-      failed === 0 ? 'success' : 'warning',
-      `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`
-    );
+    addNotification({ title: failed === 0 ? '成功' : '警告', message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`, type: failed === 0 ? 'success' : 'warning' });
     setBatchApplying(false);
   };
 

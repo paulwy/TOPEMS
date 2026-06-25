@@ -48,6 +48,7 @@ import {
   type DashboardTemplate,
 } from '@/api/bi';
 import { DashboardEditor } from '@/components/bi/DashboardEditor';
+import { useAppStore } from '@/store';
 import { DashboardTemplateManager } from '@/components/bi/DashboardTemplateManager';
 import { DashboardTemplate as DashboardLayout } from '@/components/templates';
 import { logger } from '@/utils/logger';

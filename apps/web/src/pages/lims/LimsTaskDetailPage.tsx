@@ -33,6 +33,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { limsApi } from '@/api/lims';
 import type { InspectionTask, InspectionRecord, InspectionProcess } from '@/api/lims';
 import { apiLogger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 
 interface TaskRecord extends InspectionRecord {
@@ -54,6 +55,7 @@ const LimsTaskDetailPage: React.FC = () => {
     conclusion: '',
     inspector: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {
@@ -102,6 +104,30 @@ const LimsTaskDetailPage: React.FC = () => {
 
   const handleCompleteStep = async () => {
     if (!task) return;
+    if (!recordForm.step_name.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入检验步骤名称',
+        type: 'error',
+      });
+      return;
+    }
+    if (!recordForm.result.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入检验结果',
+        type: 'error',
+      });
+      return;
+    }
+    if (!recordForm.inspector.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入检验员姓名',
+        type: 'error',
+      });
+      return;
+    }
     try {
       const response = await limsApi.completeStep(task.id, {
         step_id: '',
@@ -111,11 +137,27 @@ const LimsTaskDetailPage: React.FC = () => {
         inspector: recordForm.inspector,
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '检验步骤完成成功',
+          type: 'success',
+        });
         setShowRecordModal(false);
         loadTaskDetail(task.id);
+      } else {
+        addNotification({
+          title: '错误',
+          message: response.message || '操作失败，请稍后重试',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       apiLogger.error('完成步骤失败:', error);
+      addNotification({
+        title: '错误',
+        message: '完成检验步骤失败，请稍后重试',
+        type: 'error',
+      });
     }
   };
 

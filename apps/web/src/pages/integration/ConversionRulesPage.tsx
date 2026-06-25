@@ -48,6 +48,7 @@ import {
   type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
+import { useAppStore } from '@/store';
 import type {
   ConversionRule,
   CreateConversionRuleRequest,
@@ -58,6 +59,7 @@ import type {
   ConversionExecution,
 } from '@/api/integration';
 import { logger } from '@/utils/logger';
+import { useNotification } from '@/hooks/useNotification';
 
 // 系统列表
 const SYSTEMS = ['erp', 'hrm', 'mes', 'pm', 'iam', 'srm', 'wms', 'scm', 'qms', 'lims'];
@@ -213,6 +215,8 @@ const FORM_SECTIONS: FormSection[] = [
 ];
 
 const ConversionRulesPage: React.FC = () => {
+  const { success, error } = useNotification();
+
   // 数据状态
   const [rules, setRules] = useState<ConversionRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -236,12 +240,13 @@ const ConversionRulesPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setRules(res.data);
       }
-    } catch (error: unknown) {
-      logger.error('Error loading conversion rules:', error);
+    } catch (err: unknown) {
+      logger.error('Error loading conversion rules:', err);
+      error('加载转换规则失败');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [error]);
 
   useEffect(() => {
     loadData();
@@ -396,6 +401,7 @@ const ConversionRulesPage: React.FC = () => {
           stop_on_failure: (data as Record<string, unknown>).stop_on_failure as boolean as boolean,
         };
         await integrationApi.updateConversionRule(editingRule.id, updateData);
+        success('规则更新成功');
       } else {
         const createData: CreateConversionRuleRequest = {
           code: (data as Record<string, unknown>).code as string as string,
@@ -415,12 +421,14 @@ const ConversionRulesPage: React.FC = () => {
           stop_on_failure: (data as Record<string, unknown>).stop_on_failure as boolean as boolean,
         };
         await integrationApi.createConversionRule(createData);
+        success('规则创建成功');
       }
       handleCloseDialog();
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error saving conversion rule:', error);
-      throw error;
+    } catch (err: unknown) {
+      logger.error('Error saving conversion rule:', err);
+      error('保存规则失败');
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -430,9 +438,11 @@ const ConversionRulesPage: React.FC = () => {
   const handleEnableRule = async (rule: ConversionRule) => {
     try {
       await integrationApi.enableConversionRule(rule.id);
+      success('规则已启用');
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error enabling rule:', error);
+    } catch (err: unknown) {
+      logger.error('Error enabling rule:', err);
+      error('启用规则失败');
     }
   };
 
@@ -440,9 +450,11 @@ const ConversionRulesPage: React.FC = () => {
   const handleDisableRule = async (rule: ConversionRule) => {
     try {
       await integrationApi.disableConversionRule(rule.id);
+      success('规则已禁用');
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error disabling rule:', error);
+    } catch (err: unknown) {
+      logger.error('Error disabling rule:', err);
+      error('禁用规则失败');
     }
   };
 
@@ -451,9 +463,11 @@ const ConversionRulesPage: React.FC = () => {
     if (!confirm(`确定要删除规则 "${rule.name}" 吗？`)) return;
     try {
       await integrationApi.deleteConversionRule(rule.id);
+      success('规则已删除');
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error deleting rule:', error);
+    } catch (err: unknown) {
+      logger.error('Error deleting rule:', err);
+      error('删除规则失败');
     }
   };
 
@@ -469,8 +483,9 @@ const ConversionRulesPage: React.FC = () => {
         setExecutions({ ...executions, [ruleId]: res.data });
       }
       setShowExecutions(ruleId);
-    } catch (error: unknown) {
-      logger.error('Error loading executions:', error);
+    } catch (err: unknown) {
+      logger.error('Error loading executions:', err);
+      error('加载执行记录失败');
     }
   };
 

@@ -6,6 +6,7 @@ import config from '../config/runtime';
 export interface Project {
   id: string;
   name: string;
+  project_name: string;
   code: string;
   description?: string;
   project_type: string;
@@ -26,6 +27,8 @@ export interface Project {
   tags?: string[];
   parent_id?: string;
   workspace_id?: string;
+  repo_url?: string;
+  tech_stack?: string;
 }
 
 export interface CreateProjectRequest {
@@ -63,6 +66,8 @@ export interface UpdateProjectRequest {
   tags?: string[];
   parent_id?: string;
   workspace_id?: string;
+  repo_url?: string;
+  tech_stack?: string;
 }
 
 // 试验相关类型
@@ -520,6 +525,162 @@ export const rsApi = {
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.rs.get('/health');
   },
+
+  // Bug 相关
+  listBugs: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    severity?: string;
+    priority?: string;
+    status?: string;
+    assignee?: string;
+  }): Promise<
+    ApiResponse<{
+      bugs: Bug[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/rs/bugs?${queryParams}` : '/api/rs/bugs';
+    return apiClient.rs.get(url);
+  },
+
+  getBug: async (id: string): Promise<ApiResponse<Bug>> => {
+    return apiClient.rs.get(`/api/rs/bugs/${id}`);
+  },
+
+  createBug: async (data: CreateBugRequest): Promise<ApiResponse<Bug>> => {
+    return apiClient.rs.post('/api/rs/bugs', data);
+  },
+
+  updateBug: async (id: string, data: UpdateBugRequest): Promise<ApiResponse<Bug>> => {
+    return apiClient.rs.put(`/api/rs/bugs/${id}`, data);
+  },
+
+  deleteBug: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.rs.delete(`/api/rs/bugs/${id}`);
+  },
+
+  // 测试用例相关
+  listTests: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    case_type?: string;
+    priority?: string;
+    status?: string;
+  }): Promise<
+    ApiResponse<{
+      test_cases: TestCase[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/rs/tests?${queryParams}` : '/api/rs/tests';
+    return apiClient.rs.get(url);
+  },
+
+  getTest: async (id: string): Promise<ApiResponse<TestCase>> => {
+    return apiClient.rs.get(`/api/rs/tests/${id}`);
+  },
+
+  createTest: async (data: CreateTestCaseRequest): Promise<ApiResponse<TestCase>> => {
+    return apiClient.rs.post('/api/rs/tests', data);
+  },
+
+  updateTest: async (id: string, data: UpdateTestCaseRequest): Promise<ApiResponse<TestCase>> => {
+    return apiClient.rs.put(`/api/rs/tests/${id}`, data);
+  },
+
+  deleteTest: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.rs.delete(`/api/rs/tests/${id}`);
+  },
+
+  // 构建相关
+  listBuilds: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    status?: string;
+    build_task?: string;
+  }): Promise<
+    ApiResponse<{
+      builds: Build[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/rs/builds?${queryParams}` : '/api/rs/builds';
+    return apiClient.rs.get(url);
+  },
+
+  getBuild: async (id: string): Promise<ApiResponse<Build>> => {
+    return apiClient.rs.get(`/api/rs/builds/${id}`);
+  },
+
+  createBuild: async (data: CreateBuildRequest): Promise<ApiResponse<Build>> => {
+    return apiClient.rs.post('/api/rs/builds', data);
+  },
+
+  // 部署相关
+  listDeploys: async (params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    environment?: string;
+    app_name?: string;
+    status?: string;
+  }): Promise<
+    ApiResponse<{
+      deploys: Deploy[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)])
+        )
+      : '';
+    const url = queryParams ? `/api/rs/deploys?${queryParams}` : '/api/rs/deploys';
+    return apiClient.rs.get(url);
+  },
+
+  getDeploy: async (id: string): Promise<ApiResponse<Deploy>> => {
+    return apiClient.rs.get(`/api/rs/deploys/${id}`);
+  },
+
+  createDeploy: async (data: CreateDeployRequest): Promise<ApiResponse<Deploy>> => {
+    return apiClient.rs.post('/api/rs/deploys', data);
+  },
 };
 
 // 配方 API 函数
@@ -587,7 +748,118 @@ export const formulaApi = {
   },
 };
 
-// 审计日志类型
+// Bug 相关类型
+export interface Bug {
+  id: string;
+  bug_no: string;
+  bug_title: string;
+  severity: string;
+  priority: string;
+  status: string;
+  assignee: string;
+  create_time: string;
+  description: string;
+}
+
+export interface CreateBugRequest {
+  bug_title: string;
+  severity: string;
+  priority: string;
+  description: string;
+}
+
+export interface UpdateBugRequest {
+  bug_title?: string;
+  severity?: string;
+  priority?: string;
+  status?: string;
+  assignee?: string;
+  description?: string;
+}
+
+// 测试用例相关类型
+export interface TestCase {
+  id: string;
+  case_no: string;
+  case_name: string;
+  case_type: string;
+  priority: string;
+  status: string;
+  related_requirement: string;
+}
+
+export interface CreateTestCaseRequest {
+  case_name: string;
+  case_type: string;
+  priority: string;
+  related_requirement?: string;
+}
+
+export interface UpdateTestCaseRequest {
+  case_name?: string;
+  case_type?: string;
+  priority?: string;
+  status?: string;
+  related_requirement?: string;
+}
+
+// 构建相关类型
+export interface Build {
+  id: string;
+  build_no: string;
+  project_id: string;
+  project_name: string;
+  branch: string;
+  commit_hash: string;
+  build_type: string;
+  trigger_type: string;
+  status: string;
+  duration: number;
+  build_time: string;
+  created_at: string;
+  logs?: string;
+}
+
+export interface CreateBuildRequest {
+  project_id: string;
+  branch: string;
+  commit_hash: string;
+  build_type?: string;
+  build_task?: string;
+  trigger_type?: string;
+}
+
+// 部署相关类型
+export interface Deploy {
+  id: string;
+  deploy_no: string;
+  project_id: string;
+  project_name: string;
+  build_id: string;
+  env: string;
+  deploy_type: string;
+  environment: string;
+  app_name: string;
+  version: string;
+  status: string;
+  deploy_time: string;
+  deployer: string;
+  operator: string;
+  target_url?: string;
+  created_at: string;
+  logs?: string;
+}
+
+export interface CreateDeployRequest {
+  project_id: string;
+  build_id: string;
+  env: string;
+  deploy_type?: string;
+  environment: string;
+  app_name: string;
+  version: string;
+}
+
 export interface AuditLog {
   id: string;
   action: string;

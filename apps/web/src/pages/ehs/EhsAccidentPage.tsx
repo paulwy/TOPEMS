@@ -12,6 +12,10 @@ import {
   CardContent,
   CardHeader,
   Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import {
@@ -21,113 +25,124 @@ import {
   AlertTriangle,
   FileText,
   Search,
-  Filter,
   MapPin,
   User,
+  Calendar,
+  Trash2,
+  Edit3,
 } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
-
-interface Accident {
-  id: string;
-  accident_no: string;
-  accident_type: string;
-  severity: string;
-  location: string;
-  occurred_at: string;
-  reporter: string;
-  status: string;
-}
-
-const mockAccidents: Accident[] = [
-  {
-    id: '1',
-    accident_no: 'AC2024001',
-    accident_type: '物体打击',
-    severity: '轻微',
-    location: 'A栋2层车间',
-    occurred_at: '2024-01-15 10:30',
-    reporter: '张三',
-    status: '处理中',
-  },
-  {
-    id: '2',
-    accident_no: 'AC2024002',
-    accident_type: '机械伤害',
-    severity: '严重',
-    location: 'B栋1层生产线',
-    occurred_at: '2024-01-16 14:20',
-    reporter: '李四',
-    status: '调查中',
-  },
-  {
-    id: '3',
-    accident_no: 'AC2024003',
-    accident_type: '高处坠落',
-    severity: '严重',
-    location: 'C栋维护通道',
-    occurred_at: '2024-01-17 09:15',
-    reporter: '王五',
-    status: '已结案',
-  },
-  {
-    id: '4',
-    accident_no: 'AC2024004',
-    accident_type: '触电事故',
-    severity: '轻微',
-    location: 'D栋配电室',
-    occurred_at: '2024-01-18 16:45',
-    reporter: '赵六',
-    status: '处理中',
-  },
-  {
-    id: '5',
-    accident_no: 'AC2024005',
-    accident_type: '火灾事故',
-    severity: '严重',
-    location: 'E栋仓库',
-    occurred_at: '2024-01-19 11:00',
-    reporter: '钱七',
-    status: '调查中',
-  },
-];
+import { ehsApi } from '@/api/ehs';
+import type { Accident, AccidentDetail } from '@/api/ehs';
+import { useAppStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
 const EhsAccidentPage: React.FC = () => {
   const navigate = useNavigate();
   const [accidents, setAccidents] = useState<Accident[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedAccident, setSelectedAccident] = useState<Accident | null>(null);
+  const [selectedAccident, setSelectedAccident] = useState<AccidentDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
-    accident_type: '物体打击',
-    severity: '轻微',
+
+    title: '',
+    description: '',
+    accident_type: '',
+    severity: 'minor',
     location: '',
     occurred_at: '',
-    reporter: '',
-    description: '',
+    reported_by: '',
+    casualties: 0,
+    economic_loss: 0,
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadAccidents();
   }, []);
 
   const loadAccidents = async () => {
-    setLoading(true);
-    setTimeout(() => {
-      setAccidents(mockAccidents);
+    try {
+      setLoading(true);
+      const response = await ehsApi.listAccidents({ page_size: 100 });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const accidentsData = Array.isArray(data) ? data : data.data || [];
+        const adapted = accidentsData.map((item: Accident) => ({
+          ...item,
+          status: translateStatus(item.status),
+          severity: translateSeverity(item.severity),
+        }));
+        setAccidents(adapted);
+      } else {
+        setAccidents([]);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载事故记录失败:', err);
+      addNotification({ title: '错误', message: '加载事故记录失败', type: 'error' });
+      setAccidents([]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  const loadAccidentDetail = async (accidentId: string) => {
+    try {
+      setDetailLoading(true);
+      const response = await ehsApi.getAccident(accidentId);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const detailData: AccidentDetail = {
+          ...data,
+          accident: {
+            ...data.accident,
+            status: translateStatus(data.accident.status),
+            severity: translateSeverity(data.accident.severity),
+          },
+        };
+        setSelectedAccident(detailData);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载事故详情失败:', err);
+      addNotification({ title: '错误', message: '加载事故详情失败', type: 'error' });
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const translateStatus = (status: string) => {
+    const statusMap: Record<string, string> = {
+      pending: '待处理',
+      investigating: '调查中',
+      processing: '处理中',
+      resolved: '已解决',
+      closed: '已结案',
+    };
+    return statusMap[status] || status;
+  };
+
+  const translateSeverity = (severity: string) => {
+    const severityMap: Record<string, string> = {
+      minor: '轻微',
+      moderate: '一般',
+      serious: '严重',
+      fatal: '致命',
+    };
+    return severityMap[severity] || severity;
   };
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
-      轻微: { bg: '#fef9c3', color: '#ca8a04' },
+      轻微: { bg: 'success.lighter', color: 'success.dark' },
+      一般: { bg: '#fef9c3', color: '#ca8a04' },
       严重: { bg: 'error.lighter', color: 'error.dark' },
+      致命: { bg: 'error.light', color: 'error.darker' },
     };
     const colors = severityMap[severity] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -145,9 +160,11 @@ const EhsAccidentPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      处理中: { bg: '#dbeafe', color: 'primary.dark' },
-      调查中: { bg: '#fef9c3', color: '#ca8a04' },
-      已结案: { bg: 'success.lighter', color: 'success.dark' },
+      待处理: { bg: '#fef9c3', color: '#ca8a04' },
+      调查中: { bg: '#dbeafe', color: 'primary.dark' },
+      处理中: { bg: 'warning.light', color: 'warning.dark' },
+      已解决: { bg: 'success.lighter', color: 'success.dark' },
+      已结案: { bg: 'grey.100', color: 'text.secondary' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -165,15 +182,53 @@ const EhsAccidentPage: React.FC = () => {
 
   const columns: ColumnDef<Accident>[] = [
     { accessorKey: 'accident_no', header: '事故编号' },
-    { accessorKey: 'accident_type', header: '事故类型' },
+    {
+      accessorKey: 'title',
+      header: '事故标题',
+      cell: ({ row }) => (
+        <Typography sx={{ fontWeight: 500, color: 'slate.900' }}>
+          {row.original.title}
+        </Typography>
+      ),
+    },
+    {
+      accessorKey: 'accident_type',
+      header: '事故类型',
+      cell: ({ row }) => row.original.accident_type || '-',
+    },
     {
       accessorKey: 'severity',
       header: '严重程度',
       cell: ({ row }) => getSeverityBadge(row.original.severity),
     },
-    { accessorKey: 'location', header: '地点' },
-    { accessorKey: 'occurred_at', header: '发生时间' },
-    { accessorKey: 'reporter', header: '报告人' },
+    {
+      accessorKey: 'location',
+      header: '地点',
+      cell: ({ row }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <MapPin style={{ width: 14, height: 14 }} />
+          {row.original.location || '-'}
+        </Box>
+      ),
+    },
+    {
+      accessorKey: 'occurred_at',
+      header: '发生时间',
+      cell: ({ row }) =>
+        row.original.occurred_at
+          ? new Date(row.original.occurred_at).toLocaleString('zh-CN')
+          : '-',
+    },
+    {
+      accessorKey: 'reported_by',
+      header: '报告人',
+      cell: ({ row }) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <User style={{ width: 14, height: 14 }} />
+          {row.original.reported_by || '-'}
+        </Box>
+      ),
+    },
     {
       accessorKey: 'status',
       header: '状态',
@@ -198,52 +253,80 @@ const EhsAccidentPage: React.FC = () => {
 
   const filteredAccidents = accidents.filter((accident) => {
     const matchesSearch =
-      accident.accident_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      accident.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || accident.accident_type === typeFilter;
+      accident.accident_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      accident.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (accident.location && accident.location.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesSeverity = severityFilter === 'all' || accident.severity === severityFilter;
     const matchesStatus = statusFilter === 'all' || accident.status === statusFilter;
-    return matchesSearch && matchesType && matchesSeverity && matchesStatus;
+    return matchesSearch && matchesSeverity && matchesStatus;
   });
 
-  const handleView = (accident: Accident) => {
-    setSelectedAccident(accident);
+  const handleView = async (accident: Accident) => {
+    await loadAccidentDetail(accident.id);
     setShowDetailModal(true);
   };
 
   const handleCreate = () => {
     setFormData({
-      accident_type: '物体打击',
-      severity: '轻微',
+      title: '',
+      description: '',
+      accident_type: '',
+      severity: 'minor',
       location: '',
       occurred_at: '',
-      reporter: '',
-      description: '',
+      reported_by: '',
+      casualties: 0,
+      economic_loss: 0,
     });
     setShowCreateModal(true);
   };
 
-  const handleSave = () => {
-    const newAccident: Accident = {
-      id: String(Date.now()),
-      accident_no: `AC${Date.now()}`,
-      accident_type: formData.accident_type,
-      severity: formData.severity,
-      location: formData.location,
-      occurred_at: formData.occurred_at || new Date().toLocaleString('zh-CN'),
-      reporter: formData.reporter,
-      status: '处理中',
-    };
-    setAccidents((prev) => [newAccident, ...prev]);
-    setShowCreateModal(false);
+  const handleSave = async () => {
+    if (!formData.title.trim()) {
+      addNotification({ title: '错误', message: '请输入事故标题', type: 'error' });
+      return;
+    }
+    try {
+      await ehsApi.createAccident({
+        title: formData.title,
+        description: formData.description || null,
+        accident_type: formData.accident_type || null,
+        severity: formData.severity,
+        location: formData.location || null,
+        occurred_at: formData.occurred_at || null,
+        casualties: formData.casualties || null,
+        economic_loss: formData.economic_loss || null,
+        reported_by: formData.reported_by || null,
+      });
+      addNotification({ title: '成功', message: '事故上报成功', type: 'success' });
+      setShowCreateModal(false);
+      loadAccidents();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '上报失败', type: 'error' });
+      apiLogger.error('创建事故记录失败:', err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定要删除此事故记录吗？')) return;
+    try {
+      await ehsApi.deleteAccident(id);
+      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      setShowDetailModal(false);
+      loadAccidents();
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除事故记录失败:', err);
+    }
   };
 
   const stats = {
     total: accidents.length,
-    inProgress: accidents.filter((a) => a.status === '处理中').length,
+    pending: accidents.filter((a) => a.status === '待处理').length,
     investigating: accidents.filter((a) => a.status === '调查中').length,
+    processing: accidents.filter((a) => a.status === '处理中').length,
     closed: accidents.filter((a) => a.status === '已结案').length,
-    serious: accidents.filter((a) => a.severity === '严重').length,
+    serious: accidents.filter((a) => a.severity === '严重' || a.severity === '致命').length,
   };
 
   if (loading) {
@@ -357,7 +440,7 @@ const EhsAccidentPage: React.FC = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(5, 1fr)' },
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' },
             gap: 2,
             mb: 4,
           }}
@@ -402,27 +485,27 @@ const EhsAccidentPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: '#dbeafe',
+                    bgcolor: '#fef9c3',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <FileText sx={{ width: 20, height: 20, color: 'primary.dark' }} />
+                  <FileText sx={{ width: 20, height: 20, color: '#ca8a04' }} />
                 </Box>
                 <Box>
                   <Typography
                     variant='body2'
                     sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                   >
-                    处理中
+                    待处理
                   </Typography>
                   <Typography
                     variant='h5'
                     sx={{ fontWeight: 700, color: 'slate.900' }}
                   >
-                    {stats.inProgress}
+                    {stats.pending}
                   </Typography>
                 </Box>
               </Box>
@@ -435,14 +518,14 @@ const EhsAccidentPage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    bgcolor: 'warning.light',
+                    bgcolor: '#dbeafe',
                     borderRadius: 2,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+                  <AlertTriangle sx={{ width: 20, height: 20, color: 'primary.dark' }} />
                 </Box>
                 <Box>
                   <Typography
@@ -551,7 +634,7 @@ const EhsAccidentPage: React.FC = () => {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
               <TextField
                 size='small'
-                placeholder='搜索事故编号或地点...'
+                placeholder='搜索事故编号、标题或地点...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 sx={{ minWidth: 250 }}
@@ -561,46 +644,42 @@ const EhsAccidentPage: React.FC = () => {
                   },
                 }}
               />
-              <TextField
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel>严重程度</InputLabel>
+                <Select
+                  value={severityFilter}
+                  label='严重程度'
+                  onChange={(e) => setSeverityFilter(e.target.value)}
+                >
+                  <MenuItem value='all'>全部</MenuItem>
+                  <MenuItem value='轻微'>轻微</MenuItem>
+                  <MenuItem value='一般'>一般</MenuItem>
+                  <MenuItem value='严重'>严重</MenuItem>
+                  <MenuItem value='致命'>致命</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={statusFilter}
+                  label='状态'
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <MenuItem value='all'>全部</MenuItem>
+                  <MenuItem value='待处理'>待处理</MenuItem>
+                  <MenuItem value='调查中'>调查中</MenuItem>
+                  <MenuItem value='处理中'>处理中</MenuItem>
+                  <MenuItem value='已结案'>已结案</MenuItem>
+                </Select>
+              </FormControl>
+              <Button
                 size='small'
-                select
-                label='事故类型'
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
+                variant='outlined'
+                onClick={loadAccidents}
+                startIcon={<FileText style={{ width: 16, height: 16 }} />}
               >
-                <option value='all'>全部</option>
-                <option value='物体打击'>物体打击</option>
-                <option value='机械伤害'>机械伤害</option>
-                <option value='高处坠落'>高处坠落</option>
-                <option value='触电事故'>触电事故</option>
-                <option value='火灾事故'>火灾事故</option>
-              </TextField>
-              <TextField
-                size='small'
-                select
-                label='严重程度'
-                value={severityFilter}
-                onChange={(e) => setSeverityFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value='all'>全部</option>
-                <option value='轻微'>轻微</option>
-                <option value='严重'>严重</option>
-              </TextField>
-              <TextField
-                size='small'
-                select
-                label='状态'
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value='all'>全部</option>
-                <option value='处理中'>处理中</option>
-                <option value='调查中'>调查中</option>
-                <option value='已结案'>已结案</option>
-              </TextField>
+                刷新
+              </Button>
             </Box>
             <DataTable
               columns={columns}
@@ -614,7 +693,7 @@ const EhsAccidentPage: React.FC = () => {
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        maxWidth='sm'
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>事故上报</DialogTitle>
@@ -622,27 +701,33 @@ const EhsAccidentPage: React.FC = () => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              select
-              label='事故类型'
-              value={formData.accident_type}
-              onChange={(e) => setFormData({ ...formData, accident_type: e.target.value })}
-            >
-              <option value='物体打击'>物体打击</option>
-              <option value='机械伤害'>机械伤害</option>
-              <option value='高处坠落'>高处坠落</option>
-              <option value='触电事故'>触电事故</option>
-              <option value='火灾事故'>火灾事故</option>
-            </TextField>
-            <TextField
-              fullWidth
-              select
-              label='严重程度'
-              value={formData.severity}
-              onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-            >
-              <option value='轻微'>轻微</option>
-              <option value='严重'>严重</option>
-            </TextField>
+              label='事故标题 *'
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder='请输入事故标题'
+            />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='事故类型'
+                value={formData.accident_type}
+                onChange={(e) => setFormData({ ...formData, accident_type: e.target.value })}
+                placeholder='如：物体打击、机械伤害等'
+              />
+              <FormControl fullWidth>
+                <InputLabel>严重程度 *</InputLabel>
+                <Select
+                  value={formData.severity}
+                  label='严重程度'
+                  onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+                >
+                  <MenuItem value='minor'>轻微</MenuItem>
+                  <MenuItem value='moderate'>一般</MenuItem>
+                  <MenuItem value='serious'>严重</MenuItem>
+                  <MenuItem value='fatal'>致命</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
             <TextField
               fullWidth
               label='发生地点'
@@ -650,21 +735,43 @@ const EhsAccidentPage: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               placeholder='请输入事故发生地点'
             />
-            <TextField
-              fullWidth
-              label='报告人'
-              value={formData.reporter}
-              onChange={(e) => setFormData({ ...formData, reporter: e.target.value })}
-              placeholder='请输入报告人姓名'
-            />
-            <TextField
-              fullWidth
-              type='datetime-local'
-              label='发生时间'
-              value={formData.occurred_at}
-              onChange={(e) => setFormData({ ...formData, occurred_at: e.target.value })}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='报告人'
+                value={formData.reported_by}
+                onChange={(e) => setFormData({ ...formData, reported_by: e.target.value })}
+                placeholder='请输入报告人姓名'
+              />
+              <TextField
+                fullWidth
+                type='datetime-local'
+                label='发生时间'
+                value={formData.occurred_at}
+                onChange={(e) => setFormData({ ...formData, occurred_at: e.target.value })}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                type='number'
+                label='伤亡人数'
+                value={formData.casualties}
+                onChange={(e) =>
+                  setFormData({ ...formData, casualties: parseInt(e.target.value) || 0 })
+                }
+              />
+              <TextField
+                fullWidth
+                type='number'
+                label='经济损失（万元）'
+                value={formData.economic_loss}
+                onChange={(e) =>
+                  setFormData({ ...formData, economic_loss: parseFloat(e.target.value) || 0 })
+                }
+              />
+            </Box>
             <TextField
               fullWidth
               label='事故描述'
@@ -696,93 +803,334 @@ const EhsAccidentPage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth='md'
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle>事故详情</DialogTitle>
         <DialogContent>
-          {selectedAccident && (
-            <Box
-              sx={{
-                pt: 2,
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  事故编号
+          {detailLoading ? (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: 3,
+                  borderColor: 'error.main',
+                  borderTopColor: 'error.dark',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  mx: 'auto',
+                  mb: 2,
+                }}
+              />
+              <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+            </Box>
+          ) : selectedAccident?.accident ? (
+            <Box sx={{ pt: 2 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 2,
+                  mb: 3,
+                }}
+              >
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    事故编号
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {selectedAccident.accident.accident_no}
+                  </Typography>
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedAccident.accident_no}</Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    事故标题
+                  </Typography>
+                  <Typography>{selectedAccident.accident.title}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    事故类型
+                  </Typography>
+                  <Typography>{selectedAccident.accident.accident_type || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    严重程度
+                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>
+                    {getSeverityBadge(selectedAccident.accident.severity)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    发生地点
+                  </Typography>
+                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <MapPin style={{ width: 16, height: 16 }} />
+                    {selectedAccident.accident.location || '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    发生时间
+                  </Typography>
+                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Calendar style={{ width: 16, height: 16 }} />
+                    {selectedAccident.accident.occurred_at
+                      ? new Date(selectedAccident.accident.occurred_at).toLocaleString('zh-CN')
+                      : '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    报告人
+                  </Typography>
+                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <User style={{ width: 16, height: 16 }} />
+                    {selectedAccident.accident.reported_by || '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    状态
+                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>
+                    {getStatusBadge(selectedAccident.accident.status)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    伤亡人数
+                  </Typography>
+                  <Typography>{selectedAccident.accident.casualties ?? 0} 人</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    经济损失
+                  </Typography>
+                  <Typography>{selectedAccident.accident.economic_loss ?? 0} 万元</Typography>
+                </Box>
               </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
                 >
-                  事故类型
-                </Box>
-                <Box>{selectedAccident.accident_type}</Box>
+                  事故描述
+                </Typography>
+                <Typography>{selectedAccident.accident.description || '暂无描述'}</Typography>
               </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  严重程度
-                </Box>
-                <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedAccident.severity)}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  状态
-                </Box>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedAccident.status)}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  发生地点
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <MapPin style={{ width: 16, height: 16 }} />
-                  {selectedAccident.location}
-                </Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  发生时间
-                </Box>
-                <Box>{selectedAccident.occurred_at}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  报告人
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <User style={{ width: 16, height: 16 }} />
-                  {selectedAccident.reporter}
-                </Box>
-              </Box>
+
+              {selectedAccident.investigation && (
+                <Card sx={{ mb: 3 }}>
+                  <CardContent>
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
+                      调查信息
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          调查状态
+                        </Typography>
+                        <Typography>{selectedAccident.investigation.status || '-'}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          调查团队
+                        </Typography>
+                        <Typography>
+                          {Array.isArray(selectedAccident.investigation.team)
+                            ? selectedAccident.investigation.team.join(', ')
+                            : '-'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ gridColumn: '1 / -1' }}>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          调查发现
+                        </Typography>
+                        <Typography>{selectedAccident.investigation.findings || '-'}</Typography>
+                      </Box>
+                      <Box sx={{ gridColumn: '1 / -1' }}>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          根本原因
+                        </Typography>
+                        <Typography>{selectedAccident.investigation.root_cause || '-'}</Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedAccident.treatment && (
+                <Card sx={{ mb: 3 }}>
+                  <CardContent>
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
+                      处理措施
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          处理状态
+                        </Typography>
+                        <Typography>{selectedAccident.treatment.status || '-'}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          负责人
+                        </Typography>
+                        <Typography>{selectedAccident.treatment.responsible || '-'}</Typography>
+                      </Box>
+                    </Box>
+                    {selectedAccident.treatment.actions &&
+                      selectedAccident.treatment.actions.length > 0 && (
+                        <Box>
+                          <Typography
+                            sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}
+                          >
+                            处理行动
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {selectedAccident.treatment.actions.map((action, index) => (
+                              <Box
+                                key={index}
+                                sx={{
+                                  p: 2,
+                                  border: 1,
+                                  borderColor: 'divider',
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <Typography sx={{ fontWeight: 500 }}>{action.description}</Typography>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    gap: 2,
+                                    mt: 1,
+                                    fontSize: '0.875rem',
+                                    color: 'text.secondary',
+                                  }}
+                                >
+                                  <span>负责人：{action.responsible || '-'}</span>
+                                  <span>期限：{action.deadline || '-'}</span>
+                                  <span>状态：{action.status || '-'}</span>
+                                </Box>
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedAccident.review && (
+                <Card>
+                  <CardContent>
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
+                      结案评审
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          评审人
+                        </Typography>
+                        <Typography>{selectedAccident.review.reviewer || '-'}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          评审时间
+                        </Typography>
+                        <Typography>
+                          {selectedAccident.review.reviewed_at
+                            ? new Date(selectedAccident.review.reviewed_at).toLocaleString('zh-CN')
+                            : '-'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ gridColumn: '1 / -1' }}>
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                          总结
+                        </Typography>
+                        <Typography>{selectedAccident.review.summary || '-'}</Typography>
+                      </Box>
+                      {selectedAccident.review.lessons_learned &&
+                        selectedAccident.review.lessons_learned.length > 0 && (
+                          <Box sx={{ gridColumn: '1 / -1' }}>
+                            <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                              经验教训
+                            </Typography>
+                            <Box component='ul' sx={{ m: 0, pl: 2 }}>
+                              {selectedAccident.review.lessons_learned.map((lesson, index) => (
+                                <li key={index}>{lesson}</li>
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+                      {selectedAccident.review.recommendations &&
+                        selectedAccident.review.recommendations.length > 0 && (
+                          <Box sx={{ gridColumn: '1 / -1' }}>
+                            <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                              改进建议
+                            </Typography>
+                            <Box component='ul' sx={{ m: 0, pl: 2 }}>
+                              {selectedAccident.review.recommendations.map((rec, index) => (
+                                <li key={index}>{rec}</li>
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+            </Box>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>
+              暂无详情数据
             </Box>
           )}
         </DialogContent>
         <DialogActions>
+          {selectedAccident?.accident && (
+            <Button
+              variant='text'
+              color='error'
+              onClick={() => handleDelete(selectedAccident.accident.id)}
+              startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
+            >
+              删除
+            </Button>
+          )}
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>

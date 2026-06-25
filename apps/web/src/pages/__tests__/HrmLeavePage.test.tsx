@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
-import { ToastProvider } from '@/components/notification/ToastProvider';
+import { NotificationProvider } from '@/components/notification/NotificationProvider';
 import LeaveManagementPage from '@/pages/hrm/HrmLeavePage';
 import type { LeaveRequest, PaginatedResult } from '@/api/hrm';
 
@@ -86,7 +86,7 @@ const mockEmployees = [
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(
     <BrowserRouter>
-      <ToastProvider>{ui}</ToastProvider>
+      <NotificationProvider>{ui}</NotificationProvider>
     </BrowserRouter>
   );
 };

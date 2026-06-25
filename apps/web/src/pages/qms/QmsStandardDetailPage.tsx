@@ -27,6 +27,7 @@ import { Button } from '@mui/material';
 import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision } from '@/api/qms';
+import { useAppStore } from '@/store';
 
 const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +37,7 @@ const QmsStandardDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     code: '',
@@ -45,6 +47,7 @@ const QmsStandardDetailPage: React.FC = () => {
     category: '',
     effective_date: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {
@@ -74,6 +77,12 @@ const QmsStandardDetailPage: React.FC = () => {
             ? new Date(data.effective_date).toISOString().split('T')[0]
             : '',
         });
+      } else if (!standardRes.success) {
+        addNotification({
+          title: '加载失败',
+          message: standardRes.message || '加载质量标准详情失败',
+          type: 'error',
+        });
       }
 
       if (revisionsRes.success && revisionsRes.data) {
@@ -85,6 +94,11 @@ const QmsStandardDetailPage: React.FC = () => {
       }
     } catch (error: unknown) {
       apiLogger.error('加载质量标准详情失败:', error);
+      addNotification({
+        title: '加载失败',
+        message: '加载质量标准详情失败',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -132,6 +146,7 @@ const QmsStandardDetailPage: React.FC = () => {
   const handleUpdateStandard = async () => {
     if (!standard) return;
     try {
+      setSubmitting(true);
       const response = await qmsApi.updateStandard(standard.id, {
         name: formData.title,
         code: formData.code,
@@ -143,17 +158,36 @@ const QmsStandardDetailPage: React.FC = () => {
         effective_date: formData.effective_date,
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '质量标准更新成功',
+          type: 'success',
+        });
         setShowEditModal(false);
         loadStandardDetail(standard.id);
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '更新质量标准失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       apiLogger.error('更新质量标准失败:', error);
+      addNotification({
+        title: '错误',
+        message: '更新质量标准时发生错误',
+        type: 'error',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleCreateRevision = async () => {
     if (!standard) return;
     try {
+      setSubmitting(true);
       const newVersion = formData.version || standard.version || '1.0';
       const [major, minor] = newVersion.split('.').map(Number);
       const nextVersion = `${major}.${minor + 1}`;
@@ -169,11 +203,29 @@ const QmsStandardDetailPage: React.FC = () => {
         effective_date: new Date().toISOString().split('T')[0],
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '新版本创建成功',
+          type: 'success',
+        });
         setShowRevisionModal(false);
         navigate('/qms/standards');
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '创建版本失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       apiLogger.error('创建版本失败:', error);
+      addNotification({
+        title: '错误',
+        message: '创建版本时发生错误',
+        type: 'error',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -650,14 +702,16 @@ const QmsStandardDetailPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowEditModal(false)}
+            disabled={submitting}
           >
             取消
           </Button>
           <Button
             variant='contained'
             onClick={handleUpdateStandard}
+            disabled={submitting}
           >
-            保存更改
+            {submitting ? '保存中...' : '保存更改'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -718,18 +772,20 @@ const QmsStandardDetailPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowRevisionModal(false)}
+            disabled={submitting}
           >
             取消
           </Button>
           <Button
             variant='contained'
             onClick={handleCreateRevision}
+            disabled={submitting}
             sx={{
               backgroundColor: 'secondary.dark',
               '&:hover': { backgroundColor: '#6d28d9' },
             }}
           >
-            创建版本
+            {submitting ? '创建中...' : '创建版本'}
           </Button>
         </DialogActions>
       </Dialog>

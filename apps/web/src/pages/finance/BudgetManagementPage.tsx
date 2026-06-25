@@ -12,6 +12,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { budgetApi, type Budget } from '@/api/erp';
 import { departmentApi, type Department } from '@/api/hrm';
+import { financeApi } from '@/api/finance';
+import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '../../store';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import type { ColumnDef, RowAction, BatchAction } from '@/components/mui';
@@ -46,6 +48,7 @@ const BudgetManagementPage: React.FC = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
@@ -124,8 +127,13 @@ const BudgetManagementPage: React.FC = () => {
 
   const loadData = async () => {
     setLoading(true);
+    setError(undefined);
     try {
-      const [budgetRes, deptRes] = await Promise.all([budgetApi.list(), departmentApi.list()]);
+      const [budgetRes, deptRes, periodRes] = await Promise.all([
+        budgetApi.list(),
+        departmentApi.list(),
+        financeApi.period.getCurrent(),
+      ]);
 
       if (budgetRes.success && budgetRes.data) {
         setBudgets(budgetRes.data.items || []);
@@ -134,6 +142,8 @@ const BudgetManagementPage: React.FC = () => {
         setDepartments(deptRes.data.items || []);
       }
     } catch (err: unknown) {
+      apiLogger.error('加载预算管理数据失败:', err);
+      setError('加载数据失败');
       addNotification({
         title: '加载失败',
         message: (err as { message?: string }).message || '加载数据失败',
@@ -614,6 +624,7 @@ const BudgetManagementPage: React.FC = () => {
           columns={columns}
           data={budgets}
           loading={loading}
+          error={error}
           searchable
           searchPlaceholder='搜索预算...'
           filters={filters}

@@ -1,23 +1,9 @@
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  TextField,
-  InputLabel,
-  FormControl,
-  Select,
-  MenuItem,
-  Grid,
-  Avatar,
-  Container,
-  CircularProgress,
-  Skeleton,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Save, X } from 'lucide-react';
+import { z } from 'zod';
+import { User, Mail, Phone, Calendar, MapPin, Briefcase } from 'lucide-react';
+import FormPageTemplate from '@/components/templates/FormPageTemplate';
+import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import {
   employeeApi,
   departmentApi,
@@ -28,6 +14,24 @@ import {
 } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
+
+const employeeSchema = z.object({
+  name: z.string().min(1, '姓名不能为空'),
+  employee_no: z.string().min(1, '工号不能为空'),
+  email: z.string().email('请输入有效的邮箱地址').optional(),
+  phone: z.string().optional(),
+  gender: z.enum(['male', 'female']).default('male'),
+  birth_date: z.string().optional(),
+  department_id: z.string().optional(),
+  position_id: z.string().optional(),
+  hire_date: z.string().optional(),
+  status: z.enum(['active', 'probation', 'resigned']).default('active'),
+  address: z.string().optional(),
+  emergency_contact_name: z.string().optional(),
+  emergency_contact_phone: z.string().optional(),
+});
+
+type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 const HrmEmployeeEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,22 +44,6 @@ const HrmEmployeeEditPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    employee_no: '',
-    email: '',
-    phone: '',
-    gender: 'male',
-    birth_date: '',
-    department_id: '',
-    position_id: '',
-    hire_date: '',
-    status: 'active',
-    address: '',
-    emergency_contact_name: '',
-    emergency_contact_phone: '',
-  });
-
   const loadEmployee = useCallback(
     async (employeeId: string) => {
       setLoading(true);
@@ -63,21 +51,6 @@ const HrmEmployeeEditPage: React.FC = () => {
         const res = await employeeApi.get(employeeId);
         if (res.code === 200 && res.data) {
           setEmployee(res.data);
-          setFormData({
-            name: res.data.name || '',
-            employee_no: res.data.employee_no || '',
-            email: res.data.email || '',
-            phone: res.data.phone || '',
-            gender: res.data.gender || 'male',
-            birth_date: res.data.birth_date || '',
-            department_id: res.data.department_id || '',
-            position_id: res.data.position_id || '',
-            hire_date: res.data.hire_date || '',
-            status: res.data.status || 'active',
-            address: res.data.address || '',
-            emergency_contact_name: res.data.emergency_contact_name || '',
-            emergency_contact_phone: res.data.emergency_contact_phone || '',
-          });
         }
       } catch (err: unknown) {
         logger.error('Failed to load employee:', err);
@@ -119,306 +92,223 @@ const HrmEmployeeEditPage: React.FC = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const defaultValues = useMemo(() => {
+    if (!employee) return {};
+    return {
+      name: employee.name || '',
+      employee_no: employee.employee_no || '',
+      email: employee.email || '',
+      phone: employee.phone || '',
+      gender: employee.gender || 'male',
+      birth_date: employee.birth_date || '',
+      department_id: employee.department_id || '',
+      position_id: employee.position_id || '',
+      hire_date: employee.hire_date || '',
+      status: employee.status || 'active',
+      address: employee.address || '',
+      emergency_contact_name: employee.emergency_contact_name || '',
+      emergency_contact_phone: employee.emergency_contact_phone || '',
+    };
+  }, [employee]);
 
-  const handleSubmit = async () => {
-    if (!id || !formData.name || !formData.employee_no) {
-      error('请填写必填字段');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await employeeApi.update(id, formData);
-      if (res.code === 200) {
-        success('员工信息更新成功');
-        navigate(`/hrm/employee/${id}`);
-      } else {
-        error(res.message || '更新失败');
+  const handleSubmit = useCallback(
+    async (data: unknown) => {
+      if (!id) {
+        error('员工ID无效');
+        return;
       }
-    } catch (err: unknown) {
-      logger.error('Failed to update employee:', err);
-      error('更新员工信息失败');
-    } finally {
-      setSubmitting(false);
+
+      const formData = data as EmployeeFormData;
+
+      if (!formData.name || !formData.employee_no) {
+        error('请填写必填字段');
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        const res = await employeeApi.update(id, formData);
+        if (res.code === 200) {
+          success('员工信息更新成功');
+          navigate(`/hrm/employee/${id}`);
+        } else {
+          error(res.message || '更新失败');
+        }
+      } catch (err: unknown) {
+        logger.error('Failed to update employee:', err);
+        error('更新员工信息失败');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [id, error, success, navigate]
+  );
+
+  const handleCancel = () => {
+    if (id) {
+      navigate(`/hrm/employee/${id}`);
+    } else {
+      navigate('/hrm/employees');
     }
   };
 
-  if (loading) {
-    return (
-      <Container
-        maxWidth='lg'
-        sx={{ py: 3 }}
-      >
-        <Skeleton
-          variant='rectangular'
-          height={400}
-          sx={{ borderRadius: 2 }}
-        />
-      </Container>
-    );
-  }
+  const sections: FormSection[] = [
+    {
+      id: 'basic',
+      title: '基本信息',
+      description: '员工基本个人信息',
+      icon: <User style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'name',
+          label: '姓名',
+          type: 'text',
+          required: true,
+          placeholder: '请输入姓名',
+        },
+        {
+          name: 'employee_no',
+          label: '工号',
+          type: 'text',
+          required: true,
+          placeholder: '请输入工号',
+        },
+        {
+          name: 'gender',
+          label: '性别',
+          type: 'select',
+          options: [
+            { label: '男', value: 'male' },
+            { label: '女', value: 'female' },
+          ],
+        },
+        {
+          name: 'birth_date',
+          label: '出生日期',
+          type: 'date',
+          placeholder: '请选择出生日期',
+        },
+      ],
+    },
+    {
+      id: 'contact',
+      title: '联系方式',
+      description: '员工联系信息',
+      icon: <Mail style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'email',
+          label: '邮箱',
+          type: 'email',
+          placeholder: '请输入邮箱地址',
+        },
+        {
+          name: 'phone',
+          label: '手机号',
+          type: 'text',
+          placeholder: '请输入手机号',
+        },
+        {
+          name: 'address',
+          label: '地址',
+          type: 'text',
+          placeholder: '请输入地址',
+          span: 2,
+        },
+      ],
+    },
+    {
+      id: 'work',
+      title: '工作信息',
+      description: '员工工作相关信息',
+      icon: <Briefcase style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'department_id',
+          label: '部门',
+          type: 'select',
+          options: departments.map((dept) => ({
+            label: dept.name,
+            value: dept.id,
+          })),
+          placeholder: '请选择部门',
+        },
+        {
+          name: 'position_id',
+          label: '岗位',
+          type: 'select',
+          options: positions.map((pos) => ({
+            label: pos.name,
+            value: pos.id,
+          })),
+          placeholder: '请选择岗位',
+        },
+        {
+          name: 'hire_date',
+          label: '入职日期',
+          type: 'date',
+          placeholder: '请选择入职日期',
+        },
+        {
+          name: 'status',
+          label: '状态',
+          type: 'select',
+          options: [
+            { label: '在职', value: 'active' },
+            { label: '试用期', value: 'probation' },
+            { label: '离职', value: 'resigned' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'emergency',
+      title: '紧急联系人',
+      description: '紧急情况下的联系人信息',
+      icon: <MapPin style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'emergency_contact_name',
+          label: '紧急联系人',
+          type: 'text',
+          placeholder: '请输入紧急联系人姓名',
+        },
+        {
+          name: 'emergency_contact_phone',
+          label: '紧急联系电话',
+          type: 'text',
+          placeholder: '请输入紧急联系电话',
+        },
+      ],
+    },
+  ];
 
   return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      {/* 页面头部 */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Button
-            variant='text'
-            onClick={() => navigate(`/hrm/employee/${id}`)}
-            startIcon={<ArrowLeft style={{ width: 20, height: 20 }} />}
-          >
-            返回
-          </Button>
-          <Box>
-            <Typography
-              variant='h5'
-              sx={{ fontWeight: 'bold' }}
-            >
-              编辑员工
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              修改员工档案信息
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* 表单内容 */}
-      <Card>
-        <CardContent sx={{ p: 3 }}>
-          {/* 基本信息 */}
-          <Typography
-            variant='h6'
-            sx={{ mb: 2, fontWeight: 600 }}
-          >
-            基本信息
-          </Typography>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='姓名'
-                required
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='工号'
-                required
-                value={formData.employee_no}
-                onChange={(e) => handleInputChange('employee_no', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>性别</InputLabel>
-                <Select
-                  value={formData.gender}
-                  label='性别'
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
-                >
-                  <MenuItem value='male'>男</MenuItem>
-                  <MenuItem value='female'>女</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='入职日期'
-                type='date'
-                slotProps={{ inputLabel: { shrink: true } }}
-                value={formData.hire_date}
-                onChange={(e) => handleInputChange('hire_date', e.target.value)}
-              />
-            </Grid>
-          </Grid>
-
-          {/* 联系方式 */}
-          <Typography
-            variant='h6'
-            sx={{ mb: 2, mt: 4, fontWeight: 600 }}
-          >
-            联系方式
-          </Typography>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='邮箱'
-                type='email'
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='手机号'
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='地址'
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-              />
-            </Grid>
-          </Grid>
-
-          {/* 工作信息 */}
-          <Typography
-            variant='h6'
-            sx={{ mb: 2, mt: 4, fontWeight: 600 }}
-          >
-            工作信息
-          </Typography>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>部门</InputLabel>
-                <Select
-                  value={formData.department_id}
-                  label='部门'
-                  onChange={(e) => handleInputChange('department_id', e.target.value)}
-                >
-                  {departments.map((dept) => (
-                    <MenuItem
-                      key={dept.id}
-                      value={dept.id}
-                    >
-                      {dept.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>岗位</InputLabel>
-                <Select
-                  value={formData.position_id}
-                  label='岗位'
-                  onChange={(e) => handleInputChange('position_id', e.target.value)}
-                >
-                  {positions.map((pos) => (
-                    <MenuItem
-                      key={pos.id}
-                      value={pos.id}
-                    >
-                      {pos.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='入职日期'
-                type='date'
-                slotProps={{ inputLabel: { shrink: true } }}
-                value={formData.hire_date}
-                onChange={(e) => handleInputChange('hire_date', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>状态</InputLabel>
-                <Select
-                  value={formData.status}
-                  label='状态'
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                >
-                  <MenuItem value='active'>在职</MenuItem>
-                  <MenuItem value='probation'>试用期</MenuItem>
-                  <MenuItem value='resigned'>离职</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          {/* 紧急联系人 */}
-          <Typography
-            variant='h6'
-            sx={{ mb: 2, mt: 4, fontWeight: 600 }}
-          >
-            紧急联系人
-          </Typography>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='紧急联系人'
-                value={formData.emergency_contact_name}
-                onChange={(e) => handleInputChange('emergency_contact_name', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='紧急联系电话'
-                value={formData.emergency_contact_phone}
-                onChange={(e) => handleInputChange('emergency_contact_phone', e.target.value)}
-              />
-            </Grid>
-          </Grid>
-
-          {/* 操作按钮 */}
-          <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
-            <Button
-              variant='outlined'
-              onClick={() => navigate(`/hrm/employee/${id}`)}
-              startIcon={<X style={{ width: 18, height: 18 }} />}
-            >
-              取消
-            </Button>
-            <Button
-              variant='contained'
-              onClick={handleSubmit}
-              disabled={submitting}
-              startIcon={
-                submitting ? (
-                  <CircularProgress size={18} />
-                ) : (
-                  <Save style={{ width: 18, height: 18 }} />
-                )
-              }
-            >
-              {submitting ? '保存中...' : '保存修改'}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Container>
+    <FormPageTemplate
+      title='编辑员工'
+      subtitle='修改员工档案信息'
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: '人力资源', href: '/hrm' },
+        { label: '员工管理', href: '/hrm/employees' },
+        { label: '编辑员工' },
+      ]}
+      sections={sections}
+      schema={employeeSchema}
+      defaultValues={defaultValues}
+      loading={loading}
+      submitting={submitting}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      submitText='保存修改'
+      cancelText='取消'
+      columns={3}
+      stickyFooter={true}
+    />
   );
 };
 

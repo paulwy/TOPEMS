@@ -1,9 +1,4 @@
-/**
- * 合并范围管理页面
- * 管理多公司合并报表的合并范围配置
- */
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -44,6 +39,7 @@ import {
   useAddCompanyToScope,
   useRemoveCompanyFromScope,
 } from '@/hooks/useConsolidation';
+import { useNotification } from '@/hooks/useNotification';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
 import { StatCardGroup } from '@/components/mui';
 import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolidation';
@@ -118,6 +114,7 @@ const CONTROL_TYPE_CONFIG = {
 
 export default function ConsolidationScopePage() {
   const navigate = useNavigate();
+  const { error: notifyError } = useNotification();
 
   // 状态
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -125,7 +122,7 @@ export default function ConsolidationScopePage() {
   const [activeTab, setActiveTab] = useState('companies');
 
   // 查询合并范围列表
-  const { data: scopesData, isLoading: scopesLoading } = useConsolidationScopes({
+  const { data: scopesData, isLoading: scopesLoading, error: scopesError } = useConsolidationScopes({
     keyword: searchKeyword,
   });
 
@@ -133,15 +130,26 @@ export default function ConsolidationScopePage() {
   const deleteScope = useDeleteConsolidationScope();
 
   // 查询选中合并范围的公司列表
-  const { data: companiesData, isLoading: companiesLoading } = useScopeCompanies(
-    selectedScope?.id || ''
-  );
+  const { data: companiesData, isLoading: companiesLoading, error: companiesError } =
+    useScopeCompanies(selectedScope?.id || '');
 
   // 添加公司到合并范围
   const addCompany = useAddCompanyToScope();
 
   // 从合并范围移除公司
   const removeCompany = useRemoveCompanyFromScope();
+
+  useEffect(() => {
+    if (scopesError) {
+      notifyError('获取合并范围列表失败');
+    }
+  }, [scopesError, notifyError]);
+
+  useEffect(() => {
+    if (companiesError) {
+      notifyError('获取公司列表失败');
+    }
+  }, [companiesError, notifyError]);
 
   // 统计数据
   const stats = useMemo(() => {

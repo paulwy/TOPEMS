@@ -13,17 +13,12 @@ import {
   Calendar,
   User,
   RefreshCw,
+  XCircle,
+  FolderOpen,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { expenseApi, type Expense } from '@/api/erp';
-import {
-  employeeApi,
-  departmentApi,
-  companyApi,
-  type Employee,
-  type Department,
-  type Company,
-} from '@/api/hrm';
+import { financeApi, accountApi, voucherApi, receivablePayableApi } from '@/api/finance';
+import type { Account } from '@/types/finance';
 import { useAppStore } from '../../store';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ListPageTemplate, type ColumnDef as ListColumnDef } from '@/components/mui';
@@ -31,6 +26,7 @@ import type { StatCard } from '@/components/templates/DashboardTemplate';
 import type { OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
 import OrganizationFilter from '@/components/ui/OrganizationFilter';
 import { StatsChart } from '@/components/StatsChart';
+import { apiLogger } from '@/utils/logger';
 
 import {
   TextField,
@@ -59,13 +55,10 @@ const FinanceExpensePage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [expenses, setExpenses] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Account | null>(null);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({
@@ -75,15 +68,14 @@ const FinanceExpensePage: React.FC = () => {
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const [newExpense, setNewExpense] = useState({
-    expense_number: '',
-    applicant_name: '',
-    department_id: '',
-    expense_type: '',
-    amount: 0,
+  const [newExpense, setNewExpense] = useState<Partial<Account>>({
+    code: '',
+    name: '',
+    category: 'expense',
+    balance_direction: 'debit',
+    level: 1,
+    status: 'active',
     description: '',
-    expense_date: new Date().toISOString().split('T')[0],
-    receipt_count: 0,
   });
 
   useEffect(() => {
@@ -94,37 +86,17 @@ const FinanceExpensePage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const params: Record<string, string> = {};
-      if (organizationFilter.companyId) {
-        params.company_id = organizationFilter.companyId;
-      }
-      if (organizationFilter.departmentId) {
-        params.department_id = organizationFilter.departmentId;
-      }
-      if (organizationFilter.employeeId) {
-        params.employee_id = organizationFilter.employeeId;
-      }
+      const response = await financeApi.account.list({
+        category: 'expense',
+        keyword: filterType || undefined,
+        status: filterStatus || undefined,
+      });
 
-      const [expenseRes, empRes, deptRes, companyRes] = await Promise.all([
-        expenseApi.list(params),
-        employeeApi.list(),
-        departmentApi.list(),
-        companyApi.list(),
-      ]);
-
-      if (expenseRes.success && expenseRes.data) {
-        setExpenses(expenseRes.data.items || []);
-      }
-      if (empRes.success && empRes.data) {
-        setEmployees(empRes.data.items || []);
-      }
-      if (deptRes.success && deptRes.data) {
-        setDepartments(deptRes.data.items || []);
-      }
-      if (companyRes.code === 200 && companyRes.data) {
-        setCompanies(companyRes.data.items || []);
+      if (response.success && response.data) {
+        setExpenses(response.data.items || []);
       }
     } catch (err: unknown) {
+      apiLogger.error('加载费用数据失败:', err);
       addNotification({
         title: '加载失败',
         message: (err as { message?: string }).message || '加载数据失败',
@@ -143,10 +115,8 @@ const FinanceExpensePage: React.FC = () => {
         label: string;
       }
     > = {
-      pending: { color: 'warning', label: '待审批' },
-      approved: { color: 'primary', label: '已审批' },
-      reimbursed: { color: 'success', label: '已报销' },
-      rejected: { color: 'error', label: '已拒绝' },
+      active: { color: 'success', label: '启用' },
+      disabled: { color: 'error', label: '停用' },
     };
 
     const config = configs[status] || {
@@ -162,67 +132,36 @@ const FinanceExpensePage: React.FC = () => {
     );
   };
 
-  const getEmployeeName = (name: string) => {
-    return name || '-';
-  };
-
-  const getDepartmentName = (id: string) => {
-    const dept = departments.find((d) => d.id === id);
-    return dept?.name || '-';
-  };
-
-  const getExpenseTypeName = (type: string) => {
-    const types: Record<string, string> = {
-      travel: '差旅费',
-      office: '办公费',
-      meal: '餐费',
-      transportation: '交通费',
-      communication: '通讯费',
-      training: '培训费',
-      other: '其他',
-    };
-    return types[type] || type;
-  };
-
   const handleCreate = async () => {
     try {
-      const res = await expenseApi.create({
-        expense_number: newExpense.expense_number,
-        applicant_name: newExpense.applicant_name || undefined,
-        department_id: newExpense.department_id || undefined,
-        expense_type: newExpense.expense_type || undefined,
-        amount: newExpense.amount,
-        description: newExpense.description || undefined,
-        expense_date: newExpense.expense_date || undefined,
-        receipt_count: newExpense.receipt_count,
-      });
+      const res = await financeApi.account.create(newExpense);
 
       if (res.success) {
         addNotification({
           title: '成功',
-          message: '费用报销创建成功',
+          message: '费用科目创建成功',
           type: 'success',
         });
         setShowCreateModal(false);
         setNewExpense({
-          expense_number: '',
-          applicant_name: '',
-          department_id: '',
-          expense_type: '',
-          amount: 0,
+          code: '',
+          name: '',
+          category: 'expense',
+          balance_direction: 'debit',
+          level: 1,
+          status: 'active',
           description: '',
-          expense_date: new Date().toISOString().split('T')[0],
-          receipt_count: 0,
         });
         loadData();
       } else {
         addNotification({
           title: '失败',
-          message: res.message || '创建失败',
+          message: (res as unknown as { error?: { message?: string } }).error?.message || '创建失败',
           type: 'error',
         });
       }
     } catch (err: unknown) {
+      apiLogger.error('创建费用科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '创建失败',
@@ -235,21 +174,12 @@ const FinanceExpensePage: React.FC = () => {
     if (!editingExpense) return;
 
     try {
-      const res = await expenseApi.update(editingExpense.id, {
-        applicant_name: editingExpense.applicant_name || undefined,
-        department_id: editingExpense.department_id || undefined,
-        expense_type: editingExpense.expense_type || undefined,
-        amount: editingExpense.amount,
-        description: editingExpense.description || undefined,
-        expense_date: editingExpense.expense_date || undefined,
-        receipt_count: editingExpense.receipt_count,
-        status: editingExpense.status,
-      });
+      const res = await financeApi.account.update(editingExpense.id, editingExpense);
 
       if (res.success) {
         addNotification({
           title: '成功',
-          message: '费用报销更新成功',
+          message: '费用科目更新成功',
           type: 'success',
         });
         setEditingExpense(null);
@@ -257,11 +187,12 @@ const FinanceExpensePage: React.FC = () => {
       } else {
         addNotification({
           title: '失败',
-          message: res.message || '更新失败',
+          message: (res as unknown as { error?: { message?: string } }).error?.message || '更新失败',
           type: 'error',
         });
       }
     } catch (err: unknown) {
+      apiLogger.error('更新费用科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '更新失败',
@@ -271,25 +202,26 @@ const FinanceExpensePage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这条费用报销记录吗？')) return;
+    if (!confirm('确定要删除这条费用科目吗？')) return;
 
     try {
-      const res = await expenseApi.delete(id);
+      const res = await financeApi.account.delete(id);
       if (res.success) {
         addNotification({
           title: '成功',
-          message: '费用报销删除成功',
+          message: '费用科目删除成功',
           type: 'success',
         });
         loadData();
       } else {
         addNotification({
           title: '失败',
-          message: res.message || '删除失败',
+          message: (res as unknown as { error?: { message?: string } }).error?.message || '删除失败',
           type: 'error',
         });
       }
     } catch (err: unknown) {
+      apiLogger.error('删除费用科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '删除失败',
@@ -298,30 +230,31 @@ const FinanceExpensePage: React.FC = () => {
     }
   };
 
-  const handleApprove = async (expense: Expense) => {
+  const handleApprove = async (expense: Account) => {
     try {
-      const res = await expenseApi.update(expense.id, {
-        status: 'approved',
+      const res = await financeApi.account.update(expense.id, {
+        status: 'active',
       });
 
       if (res.success) {
         addNotification({
           title: '成功',
-          message: '已审批通过',
+          message: '科目已启用',
           type: 'success',
         });
         loadData();
       } else {
         addNotification({
           title: '失败',
-          message: res.message || '审批失败',
+          message: (res as unknown as { error?: { message?: string } }).error?.message || '操作失败',
           type: 'error',
         });
       }
     } catch (err: unknown) {
+      apiLogger.error('启用科目失败:', err);
       addNotification({
         title: '错误',
-        message: (err as { message?: string }).message || '审批失败',
+        message: (err as { message?: string }).message || '操作失败',
         type: 'error',
       });
     }
@@ -331,20 +264,20 @@ const FinanceExpensePage: React.FC = () => {
     if (selectedIds.length === 0) return;
 
     try {
-      const promises = selectedIds.map((id) => expenseApi.update(id, { status: 'approved' }));
+      const promises = selectedIds.map((id) => financeApi.account.update(id, { status: 'active' }));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
 
       if (successCount === selectedIds.length) {
         addNotification({
           title: '成功',
-          message: `批量审批成功，共 ${successCount} 条记录`,
+          message: `批量启用成功，共 ${successCount} 条记录`,
           type: 'success',
         });
       } else {
         addNotification({
           title: '部分成功',
-          message: `成功审批 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
+          message: `成功启用 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
           type: 'warning',
         });
       }
@@ -352,9 +285,10 @@ const FinanceExpensePage: React.FC = () => {
       setSelectedIds([]);
       loadData();
     } catch (err: unknown) {
+      apiLogger.error('批量启用科目失败:', err);
       addNotification({
         title: '错误',
-        message: (err as { message?: string }).message || '批量审批失败',
+        message: (err as { message?: string }).message || '批量启用失败',
         type: 'error',
       });
     }
@@ -362,10 +296,10 @@ const FinanceExpensePage: React.FC = () => {
 
   const handleBatchDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`确定要删除选中的 ${selectedIds.length} 条费用报销记录吗？`)) return;
+    if (!confirm(`确定要删除选中的 ${selectedIds.length} 条费用科目吗？`)) return;
 
     try {
-      const promises = selectedIds.map((id) => expenseApi.delete(id));
+      const promises = selectedIds.map((id) => financeApi.account.delete(id));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
 
@@ -386,6 +320,7 @@ const FinanceExpensePage: React.FC = () => {
       setSelectedIds([]);
       loadData();
     } catch (err: unknown) {
+      apiLogger.error('批量删除科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '批量删除失败',
@@ -398,20 +333,20 @@ const FinanceExpensePage: React.FC = () => {
     if (selectedIds.length === 0) return;
 
     try {
-      const promises = selectedIds.map((id) => expenseApi.update(id, { status: 'rejected' }));
+      const promises = selectedIds.map((id) => financeApi.account.update(id, { status: 'disabled' }));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
 
       if (successCount === selectedIds.length) {
         addNotification({
           title: '成功',
-          message: `批量拒绝成功，共 ${successCount} 条记录`,
+          message: `批量停用成功，共 ${successCount} 条记录`,
           type: 'success',
         });
       } else {
         addNotification({
           title: '部分成功',
-          message: `成功拒绝 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
+          message: `成功停用 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
           type: 'warning',
         });
       }
@@ -419,9 +354,10 @@ const FinanceExpensePage: React.FC = () => {
       setSelectedIds([]);
       loadData();
     } catch (err: unknown) {
+      apiLogger.error('批量停用科目失败:', err);
       addNotification({
         title: '错误',
-        message: (err as { message?: string }).message || '批量拒绝失败',
+        message: (err as { message?: string }).message || '批量停用失败',
         type: 'error',
       });
     }
@@ -430,7 +366,6 @@ const FinanceExpensePage: React.FC = () => {
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {
       if (filterStatus && e.status !== filterStatus) return false;
-      if (filterType && e.expense_type !== filterType) return false;
       return true;
     });
   }, [expenses, filterStatus, filterType]);
@@ -442,46 +377,28 @@ const FinanceExpensePage: React.FC = () => {
         label: '状态',
         type: 'select' as const,
         options: [
-          { value: 'pending', label: '待审批' },
-          { value: 'approved', label: '已审批' },
-          { value: 'reimbursed', label: '已报销' },
-          { value: 'rejected', label: '已拒绝' },
+          { value: 'active', label: '启用' },
+          { value: 'disabled', label: '停用' },
         ],
         value: filterStatus,
         onChange: setFilterStatus,
-      },
-      {
-        id: 'expense_type',
-        label: '费用类型',
-        type: 'select' as const,
-        options: [
-          { value: 'travel', label: '差旅费' },
-          { value: 'office', label: '办公费' },
-          { value: 'meal', label: '餐费' },
-          { value: 'transportation', label: '交通费' },
-          { value: 'communication', label: '通讯费' },
-          { value: 'training', label: '培训费' },
-          { value: 'other', label: '其他' },
-        ],
-        value: filterType,
-        onChange: setFilterType,
       },
     ],
     [filterStatus, filterType]
   );
 
-  const columns = useMemo<ListColumnDef<Expense>[]>(
+  const columns = useMemo<ListColumnDef<Account>[]>(
     () => [
       {
-        id: 'expense_number',
-        label: '报销编号',
+        id: 'code',
+        label: '科目编码',
         render: (row) => (
-          <Box sx={{ fontWeight: 500, color: 'primary.main' }}>{row.expense_number}</Box>
+          <Box sx={{ fontWeight: 500, color: 'primary.main' }}>{row.code}</Box>
         ),
       },
       {
-        id: 'applicant_name',
-        label: '申请人',
+        id: 'name',
+        label: '科目名称',
         render: (row) => (
           <Box
             sx={{
@@ -491,34 +408,34 @@ const FinanceExpensePage: React.FC = () => {
             }}
           >
             <User sx={{ width: 16, height: 16, mr: 1, color: 'primary.main' }} />
-            {getEmployeeName(row.applicant_name || '')}
+            {row.name}
           </Box>
         ),
       },
       {
-        id: 'department_id',
-        label: '部门',
+        id: 'category',
+        label: '科目类别',
         render: (row) => (
-          <Box sx={{ color: 'text.primary' }}>{getDepartmentName(row.department_id || '')}</Box>
+          <Box sx={{ color: 'text.primary' }}>费用类</Box>
         ),
       },
       {
-        id: 'expense_type',
-        label: '费用类型',
+        id: 'balance_direction',
+        label: '余额方向',
         render: (row) => (
-          <Box sx={{ color: 'text.primary' }}>{getExpenseTypeName(row.expense_type || '')}</Box>
+          <Box sx={{ color: 'text.primary' }}>{row.balance_direction === 'debit' ? '借方' : '贷方'}</Box>
         ),
       },
       {
-        id: 'amount',
-        label: '金额',
+        id: 'level',
+        label: '层级',
         render: (row) => (
-          <Box sx={{ fontWeight: 700, color: 'success.main' }}>¥{row.amount.toLocaleString()}</Box>
+          <Box sx={{ fontWeight: 700, color: 'success.main' }}>{row.level}</Box>
         ),
       },
       {
-        id: 'expense_date',
-        label: '日期',
+        id: 'has_children',
+        label: '有下级',
         render: (row) => (
           <Box
             sx={{
@@ -528,15 +445,9 @@ const FinanceExpensePage: React.FC = () => {
               fontSize: '0.875rem',
             }}
           >
-            <Calendar sx={{ width: 12, height: 12, mr: 0.5 }} />
-            {row.expense_date?.split('T')[0] || '-'}
+            {row.has_children ? '是' : '否'}
           </Box>
         ),
-      },
-      {
-        id: 'receipt_count',
-        label: '票据数',
-        render: (row) => <Box sx={{ color: 'text.primary' }}>{row.receipt_count || 0} 张</Box>,
       },
       {
         id: 'status',
@@ -553,8 +464,8 @@ const FinanceExpensePage: React.FC = () => {
               direction='row'
               spacing={1}
             >
-              {expense.status === 'pending' && (
-                <Tooltip title='审批'>
+              {expense.status === 'disabled' && (
+                <Tooltip title='启用'>
                   <IconButton
                     size='small'
                     color='success'
@@ -586,122 +497,66 @@ const FinanceExpensePage: React.FC = () => {
         },
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [departments]
+    []
   );
 
-  const pendingCount = expenses.filter((e) => e.status === 'pending').length;
-  const approvedCount = expenses.filter((e) => e.status === 'approved').length;
-  const reimbursedCount = expenses.filter((e) => e.status === 'reimbursed').length;
-  const rejectedCount = expenses.filter((e) => e.status === 'rejected').length;
-  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
-
-  const expenseStats = useMemo(
-    () => ({
-      pendingCount,
-      approvedCount,
-      reimbursedCount,
-      rejectedCount,
-      totalAmount,
-      totalExpenses: expenses.length,
-      avgAmount: expenses.length > 0 ? totalAmount / expenses.length : 0,
-    }),
-    [expenses, pendingCount, approvedCount, reimbursedCount, rejectedCount, totalAmount]
-  );
+  const activeCount = expenses.filter((e) => e.status === 'active').length;
+  const disabledCount = expenses.filter((e) => e.status === 'disabled').length;
+  const hasChildrenCount = expenses.filter((e) => e.has_children).length;
+  const leafCount = expenses.filter((e) => !e.has_children).length;
 
   const expenseStatusData = useMemo(
     () => [
-      { name: '待审批', value: pendingCount, color: 'warning.main' },
-      { name: '已审批', value: approvedCount, color: 'primary.main' },
-      { name: '已报销', value: reimbursedCount, color: 'success.dark' },
-      { name: '已拒绝', value: rejectedCount, color: 'error.main' },
+      { name: '启用', value: activeCount, color: 'success.main' },
+      { name: '停用', value: disabledCount, color: 'error.main' },
     ],
-    [pendingCount, approvedCount, reimbursedCount, rejectedCount]
+    [activeCount, disabledCount]
   );
 
   const expenseTypeData = useMemo(
     () => [
       {
-        name: '差旅费',
-        value: expenses
-          .filter((e) => e.expense_type === 'travel')
-          .reduce((sum, e) => sum + e.amount, 0),
+        name: '上级科目',
+        value: hasChildrenCount,
         color: 'primary.main',
       },
       {
-        name: '办公费',
-        value: expenses
-          .filter((e) => e.expense_type === 'office')
-          .reduce((sum, e) => sum + e.amount, 0),
+        name: '明细科目',
+        value: leafCount,
         color: 'success.dark',
       },
-      {
-        name: '餐费',
-        value: expenses
-          .filter((e) => e.expense_type === 'meal')
-          .reduce((sum, e) => sum + e.amount, 0),
-        color: 'warning.main',
-      },
-      {
-        name: '交通费',
-        value: expenses
-          .filter((e) => e.expense_type === 'transportation')
-          .reduce((sum, e) => sum + e.amount, 0),
-        color: 'error.main',
-      },
-      {
-        name: '通讯费',
-        value: expenses
-          .filter((e) => e.expense_type === 'communication')
-          .reduce((sum, e) => sum + e.amount, 0),
-        color: 'secondary.main',
-      },
-      {
-        name: '培训费',
-        value: expenses
-          .filter((e) => e.expense_type === 'training')
-          .reduce((sum, e) => sum + e.amount, 0),
-        color: 'info.main',
-      },
-      {
-        name: '其他',
-        value: expenses
-          .filter((e) => e.expense_type === 'other')
-          .reduce((sum, e) => sum + e.amount, 0),
-        color: '#94a3b8',
-      },
     ],
-    [expenses]
+    [expenses, hasChildrenCount, leafCount]
   );
 
   const statsCards: StatCard[] = [
     {
-      id: 'pending',
-      title: '待审批',
-      value: pendingCount,
-      color: 'warning',
-      icon: <Clock size={20} />,
-    },
-    {
-      id: 'approved',
-      title: '已审批',
-      value: approvedCount,
-      color: 'primary',
+      id: 'active',
+      title: '启用',
+      value: activeCount,
+      color: 'success',
       icon: <Check size={20} />,
     },
     {
-      id: 'reimbursed',
-      title: '已报销',
-      value: reimbursedCount,
-      color: 'success',
-      icon: <DollarSign size={20} />,
+      id: 'disabled',
+      title: '停用',
+      value: disabledCount,
+      color: 'error',
+      icon: <XCircle size={20} />,
+    },
+    {
+      id: 'has_children',
+      title: '上级科目',
+      value: hasChildrenCount,
+      color: 'primary',
+      icon: <FolderOpen size={20} />,
     },
     {
       id: 'total',
-      title: '总金额',
-      value: `¥${totalAmount.toLocaleString()}`,
+      title: '费用科目总数',
+      value: expenses.length,
       color: 'secondary',
-      icon: <Send size={20} />,
+      icon: <FileText size={20} />,
     },
   ];
 
@@ -719,8 +574,8 @@ const FinanceExpensePage: React.FC = () => {
 
   return (
     <DashboardTemplate
-      title='费用报销'
-      subtitle='管理员工费用报销申请，审批报销流程'
+      title='费用科目'
+      subtitle='管理费用类会计科目，维护科目结构'
       stats={statsCards}
       onRefresh={loadData}
       headerContent={
@@ -734,7 +589,7 @@ const FinanceExpensePage: React.FC = () => {
             startIcon={<Plus sx={{ width: 20, height: 20 }} />}
             onClick={() => setShowCreateModal(true)}
           >
-            新建报销
+            新增科目
           </Button>
         </Stack>
       }
@@ -759,7 +614,7 @@ const FinanceExpensePage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2, fontWeight: 600 }}
             >
-              费用状态分布
+              科目状态分布
             </Typography>
             <StatsChart
               type='pie'
@@ -780,7 +635,7 @@ const FinanceExpensePage: React.FC = () => {
               variant='h6'
               sx={{ mb: 2, fontWeight: 600 }}
             >
-              费用类型分布
+              科目层级分布
             </Typography>
             <StatsChart
               type='bar'
@@ -847,7 +702,7 @@ const FinanceExpensePage: React.FC = () => {
                   startIcon={<Check sx={{ width: 16, height: 16 }} />}
                   onClick={handleBatchApprove}
                 >
-                  批量审批
+                  批量启用
                 </Button>
                 <Button
                   variant='outlined'
@@ -856,7 +711,7 @@ const FinanceExpensePage: React.FC = () => {
                   startIcon={<AlertCircle sx={{ width: 16, height: 16 }} />}
                   onClick={handleBatchReject}
                 >
-                  批量拒绝
+                  批量停用
                 </Button>
                 <Button
                   variant='outlined'
@@ -889,7 +744,7 @@ const FinanceExpensePage: React.FC = () => {
         onSelectionChange={(ids) => setSelectedIds(ids as string[])}
         getRowId={(row) => row.id}
         searchable
-        searchPlaceholder='搜索报销编号、申请人...'
+        searchPlaceholder='搜索科目编码、科目名称...'
         filters={advancedFilters}
         onFilterChange={(filters) => {
           if (filters.status) setFilterStatus(filters.status);
@@ -898,13 +753,13 @@ const FinanceExpensePage: React.FC = () => {
         onRefresh={loadData}
         batchActions={[
           {
-            label: '批量审批',
+            label: '批量启用',
             icon: <Check size={16} />,
             color: 'success',
             onClick: handleBatchApprove,
           },
           {
-            label: '批量拒绝',
+            label: '批量停用',
             icon: <AlertCircle size={16} />,
             color: 'warning',
             onClick: handleBatchReject,
@@ -914,7 +769,7 @@ const FinanceExpensePage: React.FC = () => {
             icon: <Trash2 size={16} />,
             color: 'error',
             confirm: true,
-            confirmMessage: `确定要删除选中的 ${selectedIds.length} 条费用报销记录吗？`,
+            confirmMessage: `确定要删除选中的 ${selectedIds.length} 条科目记录吗？`,
             onClick: handleBatchDelete,
           },
         ]}
@@ -927,7 +782,7 @@ const FinanceExpensePage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>新建费用报销</DialogTitle>
+        <DialogTitle>新建费用科目</DialogTitle>
         <DialogContent>
           <Stack
             spacing={3}
@@ -938,29 +793,30 @@ const FinanceExpensePage: React.FC = () => {
               spacing={2}
             >
               <TextField
-                label='报销编号 *'
+                label='科目编码 *'
                 required
                 fullWidth
-                value={newExpense.expense_number}
+                value={newExpense.code}
                 onChange={(e) =>
                   setNewExpense({
                     ...newExpense,
-                    expense_number: e.target.value,
+                    code: e.target.value,
                   })
                 }
-                placeholder='请输入报销编号'
+                placeholder='请输入科目编码'
               />
               <TextField
-                label='申请人'
+                label='科目名称 *'
+                required
                 fullWidth
-                value={newExpense.applicant_name}
+                value={newExpense.name}
                 onChange={(e) =>
                   setNewExpense({
                     ...newExpense,
-                    applicant_name: e.target.value,
+                    name: e.target.value,
                   })
                 }
-                placeholder='请输入申请人姓名'
+                placeholder='请输入科目名称'
               />
             </Stack>
 
@@ -969,109 +825,49 @@ const FinanceExpensePage: React.FC = () => {
               spacing={2}
             >
               <FormControl fullWidth>
-                <InputLabel>部门</InputLabel>
+                <InputLabel>余额方向</InputLabel>
                 <Select
-                  value={newExpense.department_id}
-                  label='部门'
+                  value={newExpense.balance_direction}
+                  label='余额方向'
                   onChange={(e) =>
                     setNewExpense({
                       ...newExpense,
-                      department_id: e.target.value,
+                      balance_direction: e.target.value as 'debit' | 'credit',
                     })
                   }
                 >
-                  <MenuItem value=''>请选择部门</MenuItem>
-                  {departments.map((dept) => (
-                    <MenuItem
-                      key={dept.id}
-                      value={dept.id}
-                    >
-                      {dept.name}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value='debit'>借方</MenuItem>
+                  <MenuItem value='credit'>贷方</MenuItem>
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>费用类型</InputLabel>
+                <InputLabel>层级</InputLabel>
                 <Select
-                  value={newExpense.expense_type}
-                  label='费用类型'
+                  value={newExpense.level}
+                  label='层级'
                   onChange={(e) =>
                     setNewExpense({
                       ...newExpense,
-                      expense_type: e.target.value,
+                      level: Number(e.target.value) || 1,
                     })
                   }
                 >
-                  <MenuItem value=''>请选择类型</MenuItem>
-                  <MenuItem value='travel'>差旅费</MenuItem>
-                  <MenuItem value='office'>办公费</MenuItem>
-                  <MenuItem value='meal'>餐费</MenuItem>
-                  <MenuItem value='transportation'>交通费</MenuItem>
-                  <MenuItem value='communication'>通讯费</MenuItem>
-                  <MenuItem value='training'>培训费</MenuItem>
-                  <MenuItem value='other'>其他</MenuItem>
+                  <MenuItem value={1}>1级</MenuItem>
+                  <MenuItem value={2}>2级</MenuItem>
+                  <MenuItem value={3}>3级</MenuItem>
+                  <MenuItem value={4}>4级</MenuItem>
                 </Select>
               </FormControl>
             </Stack>
 
-            <Stack
-              direction='row'
-              spacing={2}
-            >
-              <TextField
-                label='金额 *'
-                required
-                type='number'
-                fullWidth
-                value={newExpense.amount}
-                onChange={(e) =>
-                  setNewExpense({
-                    ...newExpense,
-                    amount: parseFloat(e.target.value) || 0,
-                  })
-                }
-                slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
-                placeholder='请输入金额'
-              />
-              <TextField
-                label='日期'
-                type='date'
-                fullWidth
-                value={newExpense.expense_date}
-                onChange={(e) =>
-                  setNewExpense({
-                    ...newExpense,
-                    expense_date: e.target.value,
-                  })
-                }
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </Stack>
-
             <TextField
-              label='票据数量'
-              type='number'
-              fullWidth
-              value={newExpense.receipt_count}
-              onChange={(e) =>
-                setNewExpense({
-                  ...newExpense,
-                  receipt_count: parseInt(e.target.value) || 0,
-                })
-              }
-              slotProps={{ input: { inputProps: { min: 0 } } }}
-              placeholder='请输入票据数量'
-            />
-
-            <TextField
-              label='备注'
+              label='科目描述'
               fullWidth
               multiline
               rows={3}
-              value={newExpense.description}
+              value={newExpense.description || ''}
               onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-              placeholder='请输入报销说明...'
+              placeholder='请输入科目描述...'
             />
           </Stack>
         </DialogContent>
@@ -1081,7 +877,7 @@ const FinanceExpensePage: React.FC = () => {
             variant='contained'
             onClick={handleCreate}
           >
-            提交申请
+            保存
           </Button>
         </DialogActions>
       </Dialog>
@@ -1093,7 +889,7 @@ const FinanceExpensePage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>编辑费用报销</DialogTitle>
+        <DialogTitle>编辑费用科目</DialogTitle>
         <DialogContent>
           {editingExpense && (
             <Stack
@@ -1105,19 +901,19 @@ const FinanceExpensePage: React.FC = () => {
                 spacing={2}
               >
                 <TextField
-                  label='报销编号'
+                  label='科目编码'
                   fullWidth
-                  value={editingExpense.expense_number}
+                  value={editingExpense.code}
                   slotProps={{ input: { readOnly: true } }}
                 />
                 <TextField
-                  label='申请人'
+                  label='科目名称'
                   fullWidth
-                  value={editingExpense.applicant_name || ''}
+                  value={editingExpense.name}
                   onChange={(e) =>
                     setEditingExpense({
                       ...editingExpense,
-                      applicant_name: e.target.value,
+                      name: e.target.value,
                     })
                   }
                 />
@@ -1128,101 +924,21 @@ const FinanceExpensePage: React.FC = () => {
                 spacing={2}
               >
                 <FormControl fullWidth>
-                  <InputLabel>部门</InputLabel>
+                  <InputLabel>余额方向</InputLabel>
                   <Select
-                    value={editingExpense.department_id || ''}
-                    label='部门'
+                    value={editingExpense.balance_direction}
+                    label='余额方向'
                     onChange={(e) =>
                       setEditingExpense({
                         ...editingExpense,
-                        department_id: e.target.value || undefined,
+                        balance_direction: e.target.value as 'debit' | 'credit',
                       })
                     }
                   >
-                    <MenuItem value=''>请选择部门</MenuItem>
-                    {departments.map((dept) => (
-                      <MenuItem
-                        key={dept.id}
-                        value={dept.id}
-                      >
-                        {dept.name}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value='debit'>借方</MenuItem>
+                    <MenuItem value='credit'>贷方</MenuItem>
                   </Select>
                 </FormControl>
-                <FormControl fullWidth>
-                  <InputLabel>费用类型</InputLabel>
-                  <Select
-                    value={editingExpense.expense_type || ''}
-                    label='费用类型'
-                    onChange={(e) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        expense_type: e.target.value,
-                      })
-                    }
-                  >
-                    <MenuItem value=''>请选择类型</MenuItem>
-                    <MenuItem value='travel'>差旅费</MenuItem>
-                    <MenuItem value='office'>办公费</MenuItem>
-                    <MenuItem value='meal'>餐费</MenuItem>
-                    <MenuItem value='transportation'>交通费</MenuItem>
-                    <MenuItem value='communication'>通讯费</MenuItem>
-                    <MenuItem value='training'>培训费</MenuItem>
-                    <MenuItem value='other'>其他</MenuItem>
-                  </Select>
-                </FormControl>
-              </Stack>
-
-              <Stack
-                direction='row'
-                spacing={2}
-              >
-                <TextField
-                  label='金额'
-                  type='number'
-                  fullWidth
-                  value={editingExpense.amount}
-                  onChange={(e) =>
-                    setEditingExpense({
-                      ...editingExpense,
-                      amount: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
-                />
-                <TextField
-                  label='日期'
-                  type='date'
-                  fullWidth
-                  value={editingExpense.expense_date?.split('T')[0] || ''}
-                  onChange={(e) =>
-                    setEditingExpense({
-                      ...editingExpense,
-                      expense_date: e.target.value || undefined,
-                    })
-                  }
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-              </Stack>
-
-              <Stack
-                direction='row'
-                spacing={2}
-              >
-                <TextField
-                  label='票据数量'
-                  type='number'
-                  fullWidth
-                  value={editingExpense.receipt_count || 0}
-                  onChange={(e) =>
-                    setEditingExpense({
-                      ...editingExpense,
-                      receipt_count: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  slotProps={{ input: { inputProps: { min: 0 } } }}
-                />
                 <FormControl fullWidth>
                   <InputLabel>状态</InputLabel>
                   <Select
@@ -1231,20 +947,18 @@ const FinanceExpensePage: React.FC = () => {
                     onChange={(e) =>
                       setEditingExpense({
                         ...editingExpense,
-                        status: e.target.value,
+                        status: e.target.value as 'active' | 'disabled',
                       })
                     }
                   >
-                    <MenuItem value='pending'>待审批</MenuItem>
-                    <MenuItem value='approved'>已审批</MenuItem>
-                    <MenuItem value='reimbursed'>已报销</MenuItem>
-                    <MenuItem value='rejected'>已拒绝</MenuItem>
+                    <MenuItem value='active'>启用</MenuItem>
+                    <MenuItem value='disabled'>停用</MenuItem>
                   </Select>
                 </FormControl>
               </Stack>
 
               <TextField
-                label='备注'
+                label='科目描述'
                 fullWidth
                 multiline
                 rows={3}
@@ -1252,10 +966,10 @@ const FinanceExpensePage: React.FC = () => {
                 onChange={(e) =>
                   setEditingExpense({
                     ...editingExpense,
-                    description: e.target.value || undefined,
+                    description: e.target.value,
                   })
                 }
-                placeholder='请输入报销说明...'
+                placeholder='请输入科目描述...'
               />
             </Stack>
           )}

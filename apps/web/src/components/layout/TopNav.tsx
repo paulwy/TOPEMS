@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Box, IconButton, Typography, Avatar, Badge, Tooltip } from '@mui/material';
 import { Button } from '@mui/material';
 import { Bell, ChevronDown } from 'lucide-react';
@@ -9,26 +9,6 @@ import LanguageSelector from '../LanguageSelector';
 import { NavDropdown } from './NavDropdown';
 import { MobileNav } from './MobileNav';
 import { useInstalledPlugins } from '../../context/PluginContext';
-
-const menuModuleMapping: Record<string, string> = {
-  '/finance': 'erp',
-  '/hrm': 'hrm',
-  '/crm': 'crm',
-  '/pm': 'pm',
-  '/scm': 'scm',
-  '/wms': 'wms',
-  '/mes': 'mes',
-  '/qms': 'qa',
-  '/bi': 'bi',
-  '/ai': 'ai',
-  '/mobile': 'mobile',
-  '/gis': 'gis',
-  '/integration': 'integration',
-  '/monitor': 'monitor',
-  '/portal': 'portal',
-  '/rs': 'rs',
-  '/srm': 'srm',
-};
 
 interface TopNavProps {
   onNavHover?: (event: React.MouseEvent<HTMLElement>, item: NavItem) => void;
@@ -49,7 +29,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
       const allItems = navigationRegistry.getTopNavItems();
       const filtered = allItems.filter((item) => {
         if (item.path === '/dashboard') return true;
-        const pluginCode = item.path ? menuModuleMapping[item.path] : null;
+        const pluginCode = item.code;
         if (!pluginCode) return true;
         return isPluginInstalled(pluginCode);
       });

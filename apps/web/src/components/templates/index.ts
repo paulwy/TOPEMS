@@ -82,4 +82,39 @@ export type {
   StatsPageTemplateProps,
 } from './StatsPageTemplate';
 
+export { WizardPageTemplate } from './WizardPageTemplate';
+export type {
+  WizardStep,
+  WizardAction,
+  WizardPageTemplateProps,
+} from './WizardPageTemplate';
+
+export { KanbanPageTemplate } from './KanbanPageTemplate';
+export type {
+  KanbanCard,
+  KanbanColumn,
+  KanbanAction,
+  KanbanStats,
+  KanbanPageTemplateProps,
+} from './KanbanPageTemplate';
+
+export { TimelinePageTemplate } from './TimelinePageTemplate';
+export type {
+  TimelineNode,
+  TimelineGroup,
+  TimelineAction,
+  TimeRange,
+  TimelinePageTemplateProps,
+} from './TimelinePageTemplate';
+
+export { SettingsPageTemplate } from './SettingsPageTemplate';
+export type {
+  SettingValueType,
+  SettingOption,
+  SettingField,
+  SettingSection,
+  SettingTab,
+  SettingsPageTemplateProps,
+} from './SettingsPageTemplate';
+
 export { default as TemplateDemoPage } from './TemplateDemoPage';

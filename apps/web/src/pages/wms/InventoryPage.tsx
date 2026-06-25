@@ -12,6 +12,7 @@ import {
   Select,
   MenuItem,
   Typography,
+  Stack,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import {
@@ -24,19 +25,14 @@ import type {
   InventoryItem,
   CreateInventoryItemRequest,
   UpdateInventoryItemRequest,
-} from '@/api/shared/wms';
-import {
-  listInventory,
-  createInventory,
-  updateInventory,
-  deleteInventory,
-  listLowStockInventory,
-} from '@/api/shared/wms';
-import type { Warehouse } from '@/api/shared/wms';
-import { listWarehouses } from '@/api/shared/wms';
+  Warehouse,
+  InventoryAlertStatistics,
+} from '@/api/wms';
+import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { ConfirmDialog } from '@/components/common';
 
 const statusConfig: Record<
   string,
@@ -59,12 +55,17 @@ const InventoryPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [alertStats, setAlertStats] = useState<InventoryAlertStatistics | null>(null);
+  const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
+  const [showLowStockDialog, setShowLowStockDialog] = useState(false);
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
   // Form states
   const [newItem, setNewItem] = useState<CreateInventoryItemRequest>({
@@ -92,8 +93,8 @@ const InventoryPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
-      const response = await listInventory(params);
-      if (response.code === 200 && response.data) {
+      const response = await wmsApi.inventory.list(params);
+      if (response.success && response.data) {
         setInventory(response.data.items || []);
         setTotal(response.data.total || 0);
       }
@@ -111,8 +112,8 @@ const InventoryPage: React.FC = () => {
 
   const fetchWarehouses = async () => {
     try {
-      const response = await listWarehouses({ page: 1, page_size: 100 });
-      if (response.code === 200 && response.data) {
+      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
+      if (response.success && response.data) {
         setWarehouses(response.data.items || []);
       }
     } catch (error: unknown) {
@@ -120,10 +121,36 @@ const InventoryPage: React.FC = () => {
     }
   };
 
+  const fetchAlertStats = useCallback(async () => {
+    try {
+      const params: any = {};
+      if (warehouseFilter) params.warehouse_id = warehouseFilter;
+      const response = await wmsApi.inventoryAlerts.getStatistics(params);
+      if (response.success && response.data) {
+        setAlertStats(response.data);
+      }
+    } catch (error: unknown) {
+      apiLogger.error('获取库存预警统计失败:', error);
+    }
+  }, [warehouseFilter]);
+
+  const fetchLowStockItems = async () => {
+    try {
+      const response = await wmsApi.inventory.listLowStock();
+      if (response.success && response.data) {
+        setLowStockItems(response.data.items || []);
+      }
+    } catch (error: unknown) {
+      apiLogger.error('获取低库存列表失败:', error);
+    }
+  };
+
   useEffect(() => {
     fetchInventory();
     fetchWarehouses();
-  }, [fetchInventory]);
+    fetchAlertStats();
+    fetchLowStockItems();
+  }, [fetchInventory, fetchAlertStats]);
 
   const handleCreate = async () => {
     if (!newItem.sku || !newItem.name || !newItem.warehouse_id) {
@@ -136,8 +163,8 @@ const InventoryPage: React.FC = () => {
     }
 
     try {
-      const response = await createInventory(newItem);
-      if (response.code === 200) {
+      const response = await wmsApi.inventory.create(newItem);
+      if (response.success) {
         addNotification({
           type: 'success',
           title: '创建成功',
@@ -146,6 +173,8 @@ const InventoryPage: React.FC = () => {
         setShowCreateDialog(false);
         resetNewItem();
         fetchInventory();
+        fetchAlertStats();
+        fetchLowStockItems();
       }
     } catch (error: unknown) {
       apiLogger.error('创建库存失败:', error);
@@ -161,8 +190,8 @@ const InventoryPage: React.FC = () => {
     if (!selectedItem) return;
 
     try {
-      const response = await updateInventory(selectedItem.id, editItem);
-      if (response.code === 200) {
+      const response = await wmsApi.inventory.update(selectedItem.id, editItem);
+      if (response.success) {
         addNotification({
           type: 'success',
           title: '更新成功',
@@ -170,6 +199,8 @@ const InventoryPage: React.FC = () => {
         });
         setShowEditDialog(false);
         fetchInventory();
+        fetchAlertStats();
+        fetchLowStockItems();
       }
     } catch (error: unknown) {
       apiLogger.error('更新库存失败:', error);
@@ -181,33 +212,35 @@ const InventoryPage: React.FC = () => {
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这条库存记录吗？此操作不可撤销。')) {
-        return;
-      }
+  const handleDeleteClick = (id: string) => {
+    setDeleteItemId(id);
+    setShowDeleteConfirm(true);
+  };
 
-      try {
-        const response = await deleteInventory(id);
-        if (response.code === 200) {
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '库存记录已删除',
-          });
-          fetchInventory();
-        }
-      } catch (error: unknown) {
-        apiLogger.error('删除库存失败:', error);
+  const handleDelete = useCallback(async () => {
+    if (!deleteItemId) return;
+
+    try {
+      const response = await wmsApi.inventory.delete(deleteItemId);
+      if (response.success) {
         addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '删除库存记录失败',
+          type: 'success',
+          title: '删除成功',
+          message: '库存记录已删除',
         });
+        fetchInventory();
+        fetchAlertStats();
+        fetchLowStockItems();
       }
-    },
-    [addNotification, fetchInventory]
-  );
+    } catch (error: unknown) {
+      apiLogger.error('删除库存失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除库存记录失败',
+      });
+    }
+  }, [addNotification, fetchInventory, fetchAlertStats, fetchLowStockItems, deleteItemId]);
 
   const handleEdit = (item: InventoryItem) => {
     setSelectedItem(item);
@@ -336,9 +369,7 @@ const InventoryPage: React.FC = () => {
         label: '删除',
         icon: <Trash2 size={16} />,
         color: 'error',
-        onClick: (row) => handleDelete(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这条库存记录吗？',
+        onClick: (row) => handleDeleteClick(row.id),
       },
     ],
     [handleDelete]
@@ -353,6 +384,89 @@ const InventoryPage: React.FC = () => {
     resetNewItem();
     setShowCreateDialog(true);
   };
+
+  const statsContent = (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          库存总数
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
+          {total}
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          p: 2,
+          bgcolor: 'warning.light',
+          borderRadius: 2,
+          cursor: 'pointer',
+          '&:hover': { opacity: 0.9 },
+        }}
+        onClick={() => {
+          fetchLowStockItems();
+          setShowLowStockDialog(true);
+        }}
+      >
+        <Stack direction='row' spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
+          <AlertTriangle size={16} color='#b45309' />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            低库存预警
+          </Typography>
+        </Stack>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#b45309' }}
+        >
+          {alertStats?.low_stock_count || 0}
+        </Typography>
+      </Box>
+      <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          待处理预警
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'error.main' }}
+        >
+          {alertStats?.pending_alerts || 0}
+        </Typography>
+      </Box>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          预警总数
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'success.dark' }}
+        >
+          {alertStats?.total_alerts || 0}
+        </Typography>
+      </Box>
+    </Box>
+  );
 
   return (
     <>
@@ -386,6 +500,7 @@ const InventoryPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
+        headerContent={statsContent}
         emptyMessage='暂无库存记录'
         getRowId={(row) => row.id}
       />
@@ -762,6 +877,80 @@ const InventoryPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowDetailDialog(false)}
+          >
+            关闭
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除这条库存记录吗？此操作不可撤销。'
+        danger
+      />
+
+      {/* 低库存预警对话框 */}
+      <Dialog
+        open={showLowStockDialog}
+        onClose={() => setShowLowStockDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
+            <AlertTriangle size={20} color='#b45309' />
+            低库存预警列表
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          {lowStockItems.length === 0 ? (
+            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
+              暂无低库存物品
+            </Box>
+          ) : (
+            <Box sx={{ mt: 1 }}>
+              {lowStockItems.map((item) => (
+                <Box
+                  key={item.id}
+                  sx={{
+                    p: 2,
+                    mb: 1,
+                    bgcolor: 'warning.lighter',
+                    borderRadius: 1,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Box>
+                    <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant='caption' color='text.secondary'>
+                      {item.sku}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant='body2' sx={{ color: 'error.main', fontWeight: 600 }}>
+                      当前库存: {item.quantity} {item.unit}
+                    </Typography>
+                    <Typography variant='caption' color='text.secondary'>
+                      最低库存: {item.min_quantity || 0} {item.unit}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowLowStockDialog(false)}
           >
             关闭
           </Button>
