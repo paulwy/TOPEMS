@@ -57,7 +57,7 @@ import {
   submitPluginReview,
 } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useToast } from '@/hooks/use-toast';
+import { useAppStore } from '@/store';
 
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
@@ -70,7 +70,7 @@ interface PluginCardProps {
 
 const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDetails }) => {
   const { installPlugin, isPluginInstalled } = usePluginStore();
-  const { toast } = useToast();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [isInstalling, setIsInstalling] = useState(false);
   const installed = isPluginInstalled(plugin.code);
 
@@ -79,23 +79,24 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
     try {
       const success = await installPlugin(plugin.code);
       if (success) {
-        toast({
+        addNotification({
           title: '安装成功',
-          description: `${plugin.name} 插件已安装`,
+          message: `${plugin.name} 插件已安装`,
+          type: 'success',
         });
       } else {
-        toast({
+        addNotification({
           title: '安装失败',
-          description: '无法安装插件，请稍后重试',
-          variant: 'destructive',
+          message: '无法安装插件，请稍后重试',
+          type: 'error',
         });
       }
     } catch (error: unknown) {
       const err = error as { message?: string };
-      toast({
+      addNotification({
         title: '安装失败',
-        description: err.message || '无法安装插件',
-        variant: 'destructive',
+        message: err.message || '无法安装插件',
+        type: 'error',
       });
     } finally {
       setIsInstalling(false);
@@ -254,7 +255,7 @@ const PluginDetailModal: React.FC<{
   onClose: () => void;
 }> = ({ plugin, onClose }) => {
   const { installPlugin, isPluginInstalled } = usePluginStore();
-  const { toast } = useToast();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [reviews, setReviews] = useState<PluginReview[]>([]);
   const [versions, setVersions] = useState<PluginVersion[]>([]);
   const [rating, setRating] = useState(0);
@@ -286,9 +287,10 @@ const PluginDetailModal: React.FC<{
         title: reviewTitle || undefined,
         content: reviewContent || undefined,
       });
-      toast({
+      addNotification({
         title: '评价成功',
-        description: '感谢您的评价',
+        message: '感谢您的评价',
+        type: 'success',
       });
       setRating(0);
       setReviewTitle('');
@@ -300,10 +302,10 @@ const PluginDetailModal: React.FC<{
       });
     } catch (error: unknown) {
       const err = error as { message?: string };
-      toast({
+      addNotification({
         title: '评价失败',
-        description: err.message || '无法提交评价',
-        variant: 'destructive',
+        message: err.message || '无法提交评价',
+        type: 'error',
       });
     } finally {
       setIsSubmitting(false);
@@ -315,24 +317,25 @@ const PluginDetailModal: React.FC<{
     try {
       const success = await installPlugin(plugin.code);
       if (success) {
-        toast({
-          title: '安装成功',
-          description: `${plugin.name} 插件已安装`,
-        });
+        addNotification({
+        title: '安装成功',
+        message: `${plugin.name} 插件已安装`,
+        type: 'success',
+      });
         onClose();
       } else {
-        toast({
+        addNotification({
           title: '安装失败',
-          description: '无法安装插件，请稍后重试',
-          variant: 'destructive',
+          message: '无法安装插件，请稍后重试',
+          type: 'error',
         });
       }
     } catch (error: unknown) {
       const err = error as { message?: string };
-      toast({
+      addNotification({
         title: '安装失败',
-        description: err.message || '无法安装插件',
-        variant: 'destructive',
+        message: err.message || '无法安装插件',
+        type: 'error',
       });
     } finally {
       setIsInstalling(false);
@@ -701,7 +704,7 @@ const PluginMarketplacePage: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
-  const { toast } = useToast();
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -717,9 +720,10 @@ const PluginMarketplacePage: React.FC = () => {
   const handleRefresh = () => {
     fetchMarketplacePlugins(true);
     fetchHealthStatus(true);
-    toast({
+    addNotification({
       title: '刷新成功',
-      description: '插件列表已更新',
+      message: '插件列表已更新',
+      type: 'success',
     });
   };
 

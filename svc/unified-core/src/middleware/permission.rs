@@ -463,13 +463,18 @@ mod tests {
 
     #[test]
     fn test_infrastructure_module_linkage() {
-        let claims = create_test_claims(false, vec!["iam:read", "iam:write"], vec!["user"]);
+        let claims_read = create_test_claims(false, vec!["iam:read"], vec!["user"]);
+        let claims_write = create_test_claims(false, vec!["iam:read", "iam:write"], vec!["user"]);
         
-        // IAM:read/write 应该隐式获得 doc:read, file:read 等
-        assert!(check_module_action(&claims, "doc", "read"));
-        assert!(check_module_action(&claims, "file", "read"));
-        assert!(!check_module_action(&claims, "doc", "write")); // IAM:read 不包含 doc:write
-        assert!(check_module_action(&claims, "doc", "write")); // IAM:write 应该包含 doc:write
+        // IAM:read 应该隐式获得 doc:read, file:read 等基础设施模块的 read 权限
+        assert!(check_module_action(&claims_read, "doc", "read"));
+        assert!(check_module_action(&claims_read, "file", "read"));
+        // IAM:read 不包含 doc:write
+        assert!(!check_module_action(&claims_read, "doc", "write"));
+        
+        // IAM:write 应该包含 doc:write
+        assert!(check_module_action(&claims_write, "doc", "write"));
+        assert!(check_module_action(&claims_write, "file", "write"));
     }
 
     #[test]

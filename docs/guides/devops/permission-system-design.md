@@ -1,7 +1,7 @@
 # TOPEMS 权限管理系统设计稿
 
-> **版本**: v1.4  
-> **日期**: 2026-06-21  
+> **版本**: v1.5  
+> **日期**: 2026-06-25  
 > **状态**: ✅ 已实施完成  
 > **适用范围**: TOPEMS 统一权限与导航系统  
 > **测试覆盖**: 18个模块、138+测试用例全部通过
@@ -666,21 +666,163 @@ function filterMenuByPermission(
 
 | 页面 | 文件路径 | 实现状态 | 权限控制 | 待完善 |
 |------|---------|---------|---------|--------|
-| UserManagementPage | admin/UserManagementPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| RoleManagementPage | admin/RoleManagementPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| PermissionManagementPage | admin/PermissionManagementPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| DepartmentManagementPage | admin/DepartmentManagementPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| CompanyStructurePage | admin/CompanyStructurePage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| SystemSettingsPage | admin/SystemSettingsPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 后端API |
-| DictionaryManagementPage | admin/DictionaryManagementPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| DatabaseStructurePage | admin/DatabaseStructurePage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| AuditLogPage | admin/AuditLogPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| MonitorPage | system/MonitorPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| PerformanceMonitorPage | system/PerformanceMonitorPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| PluginManagementPage | admin/PluginManagementPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| ConfigDebugPage | admin/ConfigDebugPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| SystemManagementPage | admin/SystemManagementPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
-| MigrationAdminPage | system/MigrationAdminPage.tsx | ✅ 已实现 | ⚠️ 需完善 | 权限检查 |
+| UserManagementPage | admin/UserManagementPage.tsx | ✅ 已实现 | ✅ iam:read/iam:write | ✅ 已完善 |
+| RoleManagementPage | admin/RoleManagementPage.tsx | ✅ 已实现 | ✅ iam:read/iam:write | ✅ 已完善 |
+| PermissionManagementPage | admin/PermissionManagementPage.tsx | ✅ 已实现 | ✅ iam:admin | ✅ 已完善 |
+| DepartmentManagementPage | admin/DepartmentManagementPage.tsx | ✅ 已实现 | ✅ hrm:write | ✅ 已完善 |
+| CompanyStructurePage | admin/CompanyStructurePage.tsx | ✅ 已实现 | ✅ hrm:admin | ✅ 已完善 |
+| SystemSettingsPage | admin/SystemSettingsPage.tsx | ✅ 已实现 | ✅ iam:admin | ✅ 已完善 |
+| DictionaryManagementPage | admin/DictionaryManagementPage.tsx | ✅ 已实现 | ✅ iam:read/iam:write | ✅ 已完善 |
+| DatabaseStructurePage | admin/DatabaseStructurePage.tsx | ✅ 已实现 | ✅ iam:admin | ✅ 已完善 |
+| AuditLogPage | admin/AuditLogPage.tsx | ✅ 已实现 | ✅ iam:read | ✅ 已完善 |
+| MonitorPage | system/MonitorPage.tsx | ✅ 已实现 | ✅ iam:read/system:monitor | ✅ 已完善 |
+| PerformanceMonitorPage | system/PerformanceMonitorPage.tsx | ✅ 已实现 | ✅ iam:read/system:monitor | ✅ 已完善 |
+| PluginManagementPage | admin/PluginManagementPage.tsx | ✅ 已实现 | ✅ iam:admin/system:plugin | ✅ 已完善 |
+| ConfigDebugPage | admin/ConfigDebugPage.tsx | ✅ 已实现 | ✅ iam:admin | ✅ 已完善 |
+| SystemManagementPage | admin/SystemManagementPage.tsx | ✅ 已实现 | ✅ iam:admin | ✅ 已完善 |
+| MigrationAdminPage | system/MigrationAdminPage.tsx | ✅ 已实现 | ✅ iam:admin/system:migration | ✅ 已完善 |
+
+### 12.4 系统设置页面权限检查逻辑
+
+#### 12.4.1 前端权限检查实现
+
+```typescript
+// apps/web/src/pages/admin/UserManagementPage.tsx
+import { usePermission } from '@/hooks/usePermission';
+import { PermissionGate } from '@/components/PermissionGate';
+
+export function UserManagementPage() {
+  const { hasPermission } = usePermission();
+  
+  return (
+    <PermissionGate required="iam:read">
+      <div>
+        {/* 查看用户列表 - 需要 iam:read */}
+        <UserList />
+        
+        {/* 创建用户按钮 - 需要 iam:write */}
+        <PermissionGate required="iam:write">
+          <Button onClick={handleCreate}>创建用户</Button>
+        </PermissionGate>
+        
+        {/* 删除用户按钮 - 需要 iam:delete */}
+        <PermissionGate required="iam:delete">
+          <Button onClick={handleDelete}>删除用户</Button>
+        </PermissionGate>
+      </div>
+    </PermissionGate>
+  );
+}
+```
+
+#### 12.4.2 权限检查规则矩阵
+
+| 页面 | 查看权限 | 创建/编辑权限 | 删除权限 | 特殊权限 |
+|------|---------|--------------|---------|---------|
+| 用户管理 | iam:read | iam:write | iam:delete | - |
+| 角色管理 | iam:read | iam:write | iam:delete | - |
+| 权限管理 | iam:admin | iam:admin | iam:admin | - |
+| 部门管理 | hrm:read | hrm:write | hrm:delete | - |
+| 公司架构 | hrm:read | hrm:admin | hrm:admin | - |
+| 系统设置 | iam:admin | iam:admin | iam:admin | - |
+| 字典管理 | iam:read | iam:write | iam:delete | - |
+| 数据库结构 | iam:admin | iam:admin | iam:admin | - |
+| 审计日志 | iam:read | - | - | system:audit |
+| 系统监控 | iam:read | - | - | system:monitor |
+| 性能监控 | iam:read | - | - | system:monitor |
+| 插件管理 | iam:read | iam:admin | iam:admin | system:plugin |
+| 配置诊断 | iam:admin | iam:admin | - | - |
+| 系统管理 | iam:admin | iam:admin | iam:admin | - |
+| 迁移管理 | iam:admin | iam:admin | - | system:migration |
+
+#### 12.4.3 权限继承规则
+
+```typescript
+// 系统设置页面权限继承逻辑
+const SYSTEM_SETTINGS_PERMISSIONS: Record<string, string[]> = {
+  'iam:admin': [
+    'iam:read', 'iam:write', 'iam:delete',
+    'system:settings', 'system:monitor', 'system:audit',
+    'system:dictionary', 'system:plugin', 'system:migration',
+  ],
+  'iam:write': ['iam:read'],
+  'iam:delete': ['iam:read', 'iam:write'],
+  'hrm:admin': ['hrm:read', 'hrm:write', 'hrm:delete'],
+};
+
+function checkSystemSettingsPermission(
+  userPermissions: string[],
+  required: string
+): boolean {
+  if (userPermissions.includes('iam:admin')) return true;
+  if (userPermissions.includes(required)) return true;
+  
+  const inherited = SYSTEM_SETTINGS_PERMISSIONS[required];
+  if (inherited && inherited.some(p => userPermissions.includes(p))) {
+    return true;
+  }
+  
+  return false;
+}
+```
+
+#### 12.4.4 路由级权限守卫
+
+```typescript
+// apps/web/src/routes/adminRoutes.ts
+import { PermissionGate } from '@/components/PermissionGate';
+
+export const adminRoutes = [
+  {
+    path: '/iam/users',
+    element: (
+      <PermissionGate required="iam:read">
+        <UserManagementPage />
+      </PermissionGate>
+    ),
+  },
+  {
+    path: '/iam/roles',
+    element: (
+      <PermissionGate required="iam:read">
+        <RoleManagementPage />
+      </PermissionGate>
+    ),
+  },
+  {
+    path: '/iam/permissions',
+    element: (
+      <PermissionGate required="iam:admin">
+        <PermissionManagementPage />
+      </PermissionGate>
+    ),
+  },
+  {
+    path: '/settings/system',
+    element: (
+      <PermissionGate required="iam:admin">
+        <SystemSettingsPage />
+      </PermissionGate>
+    ),
+  },
+  {
+    path: '/monitor',
+    element: (
+      <PermissionGate required="system:monitor">
+        <MonitorPage />
+      </PermissionGate>
+    ),
+  },
+  {
+    path: '/audit',
+    element: (
+      <PermissionGate required="system:audit">
+        <AuditLogPage />
+      </PermissionGate>
+    ),
+  },
+];
+```
 
 ---
 
@@ -1214,3 +1356,5 @@ data:read, data:write, data:delete
 | 2026-06-21 | v1.1 | 添加系统设置模块权限设计、实施方案、迭代计划 |
 | 2026-06-21 | v1.2 | 添加部署模式配置（SaaS/On-Premise），更新相关代码和配置文件 |
 | 2026-06-21 | v1.3 | 添加完整的数据库初始化脚本和迁移脚本 |
+| 2026-06-25 | v1.4 | 更新系统设置页面现状分析表格，标记所有页面权限控制已完善 |
+| 2026-06-25 | v1.5 | 添加 12.4 系统设置页面权限检查逻辑章节，包含前端实现、权限规则矩阵、继承规则、路由守卫 |

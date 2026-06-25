@@ -236,7 +236,20 @@ async fn health_check_detailed(State(state): State<ApiState>) -> Json<ApiRespons
     Json(ApiResponse::success(health, "健康检查完成"))
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_purchase_orders_po_no ON scm.purchase_orders(po_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_purchase_orders_status ON scm.purchase_orders(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON scm.purchase_orders(supplier_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_purchase_orders_created_at ON scm.purchase_orders(created_at)")
+        .execute(pool)
+        .await?;
+
     Ok(())
 }
 

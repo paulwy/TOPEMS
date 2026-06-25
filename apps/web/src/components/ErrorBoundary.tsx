@@ -109,7 +109,7 @@ const collectErrorInfo = (
     timestamp: Date.now(),
     userAgent: typeof navigator !== 'undefined' ? (navigator.userAgent || 'unknown') : 'unknown',
     url: typeof window !== 'undefined' ? window.location.href : 'unknown',
-    componentStack: errorInfo.componentStack,
+    componentStack: errorInfo.componentStack || undefined,
     reactVersion: typeof React !== 'undefined' ? React.version : 'unknown',
     level,
   };

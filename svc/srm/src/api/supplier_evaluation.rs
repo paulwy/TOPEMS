@@ -11,7 +11,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::{
-    CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
+    CreateSupplierEvaluationRequest, EvaluationScoreTrendRow, EvaluationSummaryRow,
+    SupplierEvaluation, UpdateSupplierEvaluationRequest,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -602,7 +603,7 @@ async fn get_performance_summary(
         Err(e) => return e,
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, EvaluationSummaryRow>(
         r#"
         SELECT 
             COUNT(*) as total_evaluations,
@@ -618,8 +619,8 @@ async fn get_performance_summary(
         FROM plugin_srm.supplier_evaluations
         WHERE supplier_id = $1 AND status = 'completed'
         "#,
-        id
     )
+    .bind(id)
     .fetch_optional(&state.db)
     .await;
 
@@ -691,7 +692,7 @@ async fn get_score_trend(
             .map(|d| d.with_timezone(&Utc))
     });
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, EvaluationScoreTrendRow>(
         r#"
         SELECT 
             evaluation_date,
@@ -708,10 +709,10 @@ async fn get_score_trend(
           AND ($3::timestamptz IS NULL OR evaluation_date <= $3)
         ORDER BY evaluation_date ASC
         "#,
-        id,
-        start_date,
-        end_date
     )
+    .bind(id)
+    .bind(start_date)
+    .bind(end_date)
     .fetch_all(&state.db)
     .await;
 

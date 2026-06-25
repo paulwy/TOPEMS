@@ -13,15 +13,19 @@ import {
   Typography,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, DollarSign, Search, CreditCard, Receipt, TrendingUp } from 'lucide-react';
+import { Plus, DollarSign, Search, CreditCard, Receipt, TrendingUp, RefreshCw } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import { MetricCard } from '@/components/MetricCard';
 import { StatsChart } from '@/components/StatsChart';
 import type { ColumnDef } from '@tanstack/react-table';
 import { srmApi } from '@/api/srm';
-import type { SupplierContract, PurchaseOrder } from '@/api/srm';
-import { toast } from 'react-toastify';
-import { CreatePurchaseOrderRequest, CreateSupplierContractRequest } from '@/api/srm';
+import type {
+  SupplierContract,
+  PurchaseOrder,
+  CreatePurchaseOrderRequest,
+  CreateSupplierContractRequest,
+} from '@/api/srm';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 interface FinanceRecord {
@@ -40,16 +44,26 @@ const SrmFinancePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    record_no: string;
+    supplier_id: string;
+    supplier_name: string;
+    type: 'order' | 'contract';
+    amount: string;
+    status: string;
+    date: string;
+    description: string;
+  }>({
     record_no: '',
     supplier_id: '',
     supplier_name: '',
-    type: 'payment',
+    type: 'order',
     amount: '',
     status: 'pending',
     date: '',
     description: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadRecords();
@@ -90,6 +104,8 @@ const SrmFinancePage: React.FC = () => {
             description: item.remarks || '',
           }))
         );
+      } else {
+        addNotification({ title: '警告', message: '获取合同数据失败', type: 'warning' });
       }
 
       if (ordersRes.success && ordersRes.data) {
@@ -118,11 +134,14 @@ const SrmFinancePage: React.FC = () => {
             description: item.remarks || '',
           }))
         );
+      } else {
+        addNotification({ title: '警告', message: '获取订单数据失败', type: 'warning' });
       }
 
       setRecords([...paymentRecords, ...invoiceRecords]);
     } catch (err: unknown) {
       apiLogger.error('加载财务数据失败:', err);
+      addNotification({ title: '错误', message: '加载财务数据失败', type: 'error' });
       setRecords([]);
     } finally {
       setLoading(false);
@@ -249,11 +268,15 @@ const SrmFinancePage: React.FC = () => {
           remarks: formData.description,
         });
       }
-      toast.success(`${formData.type === 'order' ? '订单' : '合同'}创建成功`);
+      addNotification({
+        title: '成功',
+        message: `${formData.type === 'order' ? '订单' : '合同'}创建成功`,
+        type: 'success',
+      });
       setShowCreateModal(false);
       loadRecords();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建财务记录失败:', err);
     }
   };
@@ -564,7 +587,9 @@ const SrmFinancePage: React.FC = () => {
                 select
                 label='单据类型'
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value as 'order' | 'contract' })
+                }
               >
                 <option value='order'>订单</option>
                 <option value='contract'>合同</option>

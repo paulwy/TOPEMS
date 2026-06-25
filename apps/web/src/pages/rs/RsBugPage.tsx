@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import {
   Box,
@@ -18,82 +18,20 @@ import {
   Paper,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, Eye, Edit, Bug, User, CheckCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Bug as BugIcon, User, CheckCircle } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
-
-interface Bug {
-  id: string;
-  bug_no: string;
-  bug_title: string;
-  severity: string;
-  priority: string;
-  status: string;
-  assignee: string;
-  create_time: string;
-  description: string;
-}
-
-const mockBugs: Bug[] = [
-  {
-    id: '1',
-    bug_no: 'BUG-001',
-    bug_title: '用户登录后页面空白',
-    severity: 'critical',
-    priority: 'high',
-    status: 'open',
-    assignee: '张三',
-    create_time: '2024-06-15 10:30:00',
-    description: '用户反馈登录成功后页面显示空白，需要刷新才能正常显示',
-  },
-  {
-    id: '2',
-    bug_no: 'BUG-002',
-    bug_title: '数据导出功能报错',
-    severity: 'major',
-    priority: 'high',
-    status: 'in_progress',
-    assignee: '李四',
-    create_time: '2024-06-14 14:20:00',
-    description: 'Excel导出时遇到大数据量会抛出内存溢出错误',
-  },
-  {
-    id: '3',
-    bug_no: 'BUG-003',
-    bug_title: '表单验证提示不准确',
-    severity: 'minor',
-    priority: 'medium',
-    status: 'resolved',
-    assignee: '王五',
-    create_time: '2024-06-13 09:00:00',
-    description: '邮箱格式验证未覆盖所有有效邮箱格式',
-  },
-  {
-    id: '4',
-    bug_no: 'BUG-004',
-    bug_title: '移动端显示错位',
-    severity: 'major',
-    priority: 'high',
-    status: 'open',
-    assignee: '赵六',
-    create_time: '2024-06-12 16:45:00',
-    description: '在iOS Safari上某些页面元素位置偏移',
-  },
-  {
-    id: '5',
-    bug_no: 'BUG-005',
-    bug_title: '权限验证绕过',
-    severity: 'critical',
-    priority: 'high',
-    status: 'in_progress',
-    assignee: '孙七',
-    create_time: '2024-06-11 11:20:00',
-    description: '普通用户可以访问管理员专属页面',
-  },
-];
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Bug, CreateBugRequest, UpdateBugRequest } from '@/api/rs';
 
 const RsBugPage: React.FC = () => {
-  const [bugs, setBugs] = useState<Bug[]>(mockBugs);
+  const { addNotification } = useAppStore();
+  const [bugs, setBugs] = useState<Bug[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
@@ -109,16 +47,40 @@ const RsBugPage: React.FC = () => {
     description: '',
   });
 
-  const filteredBugs = bugs.filter((bug) => {
-    const matchesSearch =
-      bug.bug_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bug.bug_title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSeverity = !severityFilter || bug.severity === severityFilter;
-    const matchesPriority = !priorityFilter || bug.priority === priorityFilter;
-    const matchesStatus = !statusFilter || bug.status === statusFilter;
-    const matchesAssignee = !assigneeFilter || bug.assignee === assigneeFilter;
-    return matchesSearch && matchesSeverity && matchesPriority && matchesStatus && matchesAssignee;
-  });
+  useEffect(() => {
+    loadBugs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, severityFilter, priorityFilter, statusFilter, assigneeFilter, page, rowsPerPage]);
+
+  const loadBugs = async () => {
+    try {
+      setLoading(true);
+      const params: any = {
+        page: page + 1,
+        page_size: rowsPerPage,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (severityFilter) params.severity = severityFilter;
+      if (priorityFilter) params.priority = priorityFilter;
+      if (statusFilter) params.status = statusFilter;
+      if (assigneeFilter) params.assignee = assigneeFilter;
+
+      const response = await rsApi.listBugs(params);
+      if (response.success && response.data) {
+        setBugs(response.data.bugs || []);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error: unknown) {
+      apiLogger.error('加载缺陷列表失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载缺陷列表',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const uniqueAssignees = useMemo(() => [...new Set(bugs.map((b) => b.assignee))], [bugs]);
 
@@ -200,30 +162,56 @@ const RsBugPage: React.FC = () => {
     apiLogger.info('编辑缺陷:', bug.id);
   };
 
-  const handleCloseBug = (bug: Bug) => {
-    setBugs(bugs.map((b) => (b.id === bug.id ? { ...b, status: 'closed' } : b)));
+  const handleCloseBug = async (bug: Bug) => {
+    try {
+      const updateData: UpdateBugRequest = { status: 'closed' };
+      await rsApi.updateBug(bug.id, updateData);
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '缺陷已关闭',
+      });
+      loadBugs();
+    } catch (error: unknown) {
+      apiLogger.error('关闭缺陷失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '关闭缺陷失败',
+      });
+    }
   };
 
-  const handleCreateBug = () => {
-    const newBug: Bug = {
-      id: String(Date.now()),
-      bug_no: `BUG-${String(bugs.length + 1).padStart(3, '0')}`,
-      bug_title: newBugForm.bug_title,
-      severity: newBugForm.severity,
-      priority: newBugForm.priority,
-      status: 'open',
-      assignee: '未分配',
-      create_time: new Date().toLocaleString(),
-      description: newBugForm.description,
-    };
-    setBugs([newBug, ...bugs]);
-    setNewBugDialogOpen(false);
-    setNewBugForm({
-      bug_title: '',
-      severity: 'medium',
-      priority: 'medium',
-      description: '',
-    });
+  const handleCreateBug = async () => {
+    try {
+      const createData: CreateBugRequest = {
+        bug_title: newBugForm.bug_title,
+        severity: newBugForm.severity,
+        priority: newBugForm.priority,
+        description: newBugForm.description,
+      };
+      await rsApi.createBug(createData);
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新缺陷已创建',
+      });
+      setNewBugDialogOpen(false);
+      setNewBugForm({
+        bug_title: '',
+        severity: 'medium',
+        priority: 'medium',
+        description: '',
+      });
+      loadBugs();
+    } catch (error: unknown) {
+      apiLogger.error('创建缺陷失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建缺陷',
+      });
+    }
   };
 
   const columns = useMemo<ColumnDef<Bug>[]>(
@@ -233,7 +221,7 @@ const RsBugPage: React.FC = () => {
         label: '缺陷编号',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Bug
+            <BugIcon
               size={16}
               color='primary.main'
             />
@@ -337,7 +325,6 @@ const RsBugPage: React.FC = () => {
         condition: (row: Bug) => row.status !== 'closed',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -410,13 +397,21 @@ const RsBugPage: React.FC = () => {
           href: '/dashboard',
         }}
         columns={columns}
-        data={filteredBugs}
+        data={bugs}
+        loading={loading}
         searchable
         searchPlaceholder='搜索缺陷编号、标题...'
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
         rowActions={rowActions}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total,
+          onPageChange: setPage,
+          onPageSizeChange: setRowsPerPage,
+        }}
         actions={[
           {
             label: '新建缺陷',

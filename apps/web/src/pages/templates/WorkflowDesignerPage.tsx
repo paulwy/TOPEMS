@@ -68,6 +68,7 @@ const WorkflowDesignerPage: React.FC = () => {
             y: 100 + Math.floor(index / 3) * 150,
             label: node.name || node.node_id,
             description: node.name,
+            approvers: node.approvers || [],
           }));
           const convertedEdges = approvalNodes.flatMap((node) =>
             (node.next_nodes || []).map((targetId: string) => ({
@@ -111,7 +112,8 @@ const WorkflowDesignerPage: React.FC = () => {
       .map((node, _index) => ({
         node_id: node.id,
         name: node.label,
-        approvers: ['system-user-id'], // TODO: Get from node data
+        approvers:
+          node.approvers && node.approvers.length > 0 ? node.approvers : ['system-user-id'],
         approval_type: node.type === 'approval' ? 'single' : 'single',
         conditions: undefined,
         timeout_hours: 24,

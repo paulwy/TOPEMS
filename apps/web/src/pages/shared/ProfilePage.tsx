@@ -17,6 +17,8 @@ import {
   Activity,
   MessageSquare,
   FileText,
+  GitBranch,
+  Bot,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -1084,6 +1086,7 @@ const ProfilePage: React.FC = () => {
                           id: '1',
                           title: '仪表盘',
                           icon: Activity,
+                          iconName: 'Activity',
                           path: '/dashboard',
                           color: 'primary.main',
                         },
@@ -1091,13 +1094,15 @@ const ProfilePage: React.FC = () => {
                           id: '2',
                           title: '文档中心',
                           icon: FileText,
+                          iconName: 'FileText',
                           path: '/documents',
                           color: 'success.dark',
                         },
                         {
                           id: '3',
                           title: '工作流',
-                          icon: Activity,
+                          icon: GitBranch,
+                          iconName: 'GitBranch',
                           path: '/flow/definitions',
                           color: '#a855f7',
                         },
@@ -1105,13 +1110,15 @@ const ProfilePage: React.FC = () => {
                           id: '4',
                           title: '通知中心',
                           icon: Bell,
+                          iconName: 'Bell',
                           path: '/notifications',
                           color: 'warning.main',
                         },
                         {
                           id: '5',
                           title: 'AI助手',
-                          icon: Activity,
+                          icon: Bot,
+                          iconName: 'Bot',
                           path: '/ai',
                           color: '#ec4899',
                         },
@@ -1119,6 +1126,7 @@ const ProfilePage: React.FC = () => {
                           id: '6',
                           title: '消息中心',
                           icon: MessageSquare,
+                          iconName: 'MessageSquare',
                           path: '/im',
                           color: 'primary.light',
                         },
@@ -1132,7 +1140,7 @@ const ProfilePage: React.FC = () => {
                               handleShortcutToggle({
                                 id: item.id,
                                 title: item.title,
-                                icon: String(item.icon),
+                                icon: item.iconName,
                                 path: item.path,
                               })
                             }

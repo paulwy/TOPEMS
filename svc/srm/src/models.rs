@@ -461,6 +461,33 @@ pub struct DimensionScore {
     pub weighted_score: f64,
 }
 
+// ==================== Evaluation Summary Models ====================
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct EvaluationSummaryRow {
+    pub total_evaluations: Option<i64>,
+    pub avg_overall_score: Option<f64>,
+    pub avg_quality_score: Option<f64>,
+    pub avg_delivery_score: Option<f64>,
+    pub avg_service_score: Option<f64>,
+    pub avg_price_score: Option<f64>,
+    pub max_overall_score: Option<f64>,
+    pub min_overall_score: Option<f64>,
+    pub latest_evaluation_date: Option<DateTime<Utc>>,
+    pub earliest_evaluation_date: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct EvaluationScoreTrendRow {
+    pub evaluation_date: DateTime<Utc>,
+    pub overall_score: Option<f64>,
+    pub quality_score: Option<f64>,
+    pub delivery_score: Option<f64>,
+    pub service_score: Option<f64>,
+    pub price_score: Option<f64>,
+    pub evaluation_no: String,
+}
+
 // ==================== Contract Terms Models ====================
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]

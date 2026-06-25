@@ -14,6 +14,7 @@ pub mod inventory_alert;
 pub mod openapi;
 pub mod outbound_order;
 pub mod plugin;
+pub mod smart_replenishment;
 pub mod stock_take;
 pub mod warehouse;
 
@@ -49,6 +50,7 @@ where
         .merge(inbound_order::create_routes())
         .merge(outbound_order::create_routes())
         .merge(stock_take::create_routes())
+        .merge(smart_replenishment::create_routes())
         // .merge(cycle_count::create_routes())
         // .merge(discrepancy::create_routes())
         .merge(audit::create_routes())

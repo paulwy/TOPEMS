@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::types::Uuid;
+use sqlx::{FromRow, Row, types::Uuid};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -30,7 +30,7 @@ pub struct AuditFindingQuery {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct AuditPlan {
     pub id: String,
     pub plan_no: String,
@@ -48,7 +48,7 @@ pub struct AuditPlan {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct AuditTask {
     pub id: String,
     pub task_no: String,
@@ -63,7 +63,7 @@ pub struct AuditTask {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct AuditFinding {
     pub id: String,
     pub finding_no: String,
@@ -122,32 +122,16 @@ pub async fn list_audit_plans(
     let offset = (page - 1) * page_size;
 
     let plans = match (query.status.as_ref(), query.audit_type.as_ref()) {
-        (Some(st), Some(at)) => sqlx::query_as!(
-            AuditPlan,
-            r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE status = $1 AND audit_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            st, at, page_size, offset
-        )
+        (Some(st), Some(at)) => sqlx::query_as::<_, AuditPlan>(r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE status = $1 AND audit_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(at).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None) => sqlx::query_as!(
-            AuditPlan,
-            r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            st, page_size, offset
-        )
+        (Some(st), None) => sqlx::query_as::<_, AuditPlan>(r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(at)) => sqlx::query_as!(
-            AuditPlan,
-            r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE audit_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            at, page_size, offset
-        )
+        (None, Some(at)) => sqlx::query_as::<_, AuditPlan>(r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE audit_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(at).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as!(
-            AuditPlan,
-            r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
-            page_size, offset
-        )
+        (None, None) => sqlx::query_as::<_, AuditPlan>(r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -168,11 +152,7 @@ pub async fn create_audit_plan(
     let plan_no = format!("AP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
     let standard_id = req.standard_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
-    let plan = sqlx::query_as!(
-        AuditPlan,
-        r#"INSERT INTO qa_audit_plans (plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8) RETURNING id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        plan_no, req.title, req.audit_type, req.scope, standard_id, req.scheduled_start, req.scheduled_end, req.created_by
-    )
+    let plan = sqlx::query_as::<_, AuditPlan>(r#"INSERT INTO qa_audit_plans (plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8) RETURNING id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -194,11 +174,7 @@ pub async fn get_audit_plan(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan = sqlx::query_as!(
-        AuditPlan,
-        r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE id = $1"#,
-        id
-    )
+    let plan = sqlx::query_as::<_, AuditPlan>(r#"SELECT id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_plans WHERE id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -220,11 +196,7 @@ pub async fn start_audit_plan(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan = sqlx::query_as!(
-        AuditPlan,
-        r#"UPDATE qa_audit_plans SET status = 'in_progress', actual_start = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        id
-    )
+    let plan = sqlx::query_as::<_, AuditPlan>(r#"UPDATE qa_audit_plans SET status = 'in_progress', actual_start = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -246,11 +218,7 @@ pub async fn complete_audit_plan(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan = sqlx::query_as!(
-        AuditPlan,
-        r#"UPDATE qa_audit_plans SET status = 'completed', actual_end = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        id
-    )
+    let plan = sqlx::query_as::<_, AuditPlan>(r#"UPDATE qa_audit_plans SET status = 'completed', actual_end = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -274,32 +242,16 @@ pub async fn list_audit_tasks(
     let plan_id = query.plan_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
     let tasks = match (plan_id, query.status.as_ref()) {
-        (Some(plan), Some(st)) => sqlx::query_as!(
-            AuditTask,
-            r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks WHERE plan_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            plan, st, page_size, offset
-        )
+        (Some(plan), Some(st)) => sqlx::query_as::<_, AuditTask>(r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks WHERE plan_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(plan).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), None) => sqlx::query_as!(
-            AuditTask,
-            r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks WHERE plan_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            plan, page_size, offset
-        )
+        (Some(plan), None) => sqlx::query_as::<_, AuditTask>(r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks WHERE plan_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(plan).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(st)) => sqlx::query_as!(
-            AuditTask,
-            r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            st, page_size, offset
-        )
+        (None, Some(st)) => sqlx::query_as::<_, AuditTask>(r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as!(
-            AuditTask,
-            r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
-            page_size, offset
-        )
+        (None, None) => sqlx::query_as::<_, AuditTask>(r#"SELECT id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qa_audit_tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -325,11 +277,7 @@ pub async fn create_audit_task(
 
     let task_no = format!("AT-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
 
-    let task = sqlx::query_as!(
-        AuditTask,
-        r#"INSERT INTO qa_audit_tasks (task_no, plan_id, title, description, auditor, status) VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT"#,
-        task_no, plan_id, req.title, req.description, req.auditor
-    )
+    let task = sqlx::query_as::<_, AuditTask>(r#"INSERT INTO qa_audit_tasks (task_no, plan_id, title, description, auditor, status) VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT"#).bind(task_no).bind(plan_id).bind(req.title).bind(req.description).bind(req.auditor)
     .fetch_one(&state.pool)
     .await;
 
@@ -351,11 +299,7 @@ pub async fn complete_audit_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let task = sqlx::query_as!(
-        AuditTask,
-        r#"UPDATE qa_audit_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT"#,
-        id
-    )
+    let task = sqlx::query_as::<_, AuditTask>(r#"UPDATE qa_audit_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -379,60 +323,28 @@ pub async fn list_audit_findings(
     let plan_id = query.plan_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
     let findings = match (plan_id, query.severity.as_ref(), query.status.as_ref()) {
-        (Some(plan), Some(sv), Some(st)) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 AND severity = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#,
-            plan, sv, st, page_size, offset
-        )
+        (Some(plan), Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 AND severity = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(plan).bind(sv).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), Some(sv), None) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            plan, sv, page_size, offset
-        )
+        (Some(plan), Some(sv), None) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(plan).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), None, Some(st)) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            plan, st, page_size, offset
-        )
+        (Some(plan), None, Some(st)) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(plan).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(sv), Some(st)) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE severity = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            sv, st, page_size, offset
-        )
+        (None, Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE severity = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(sv).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), None, None) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            plan, page_size, offset
-        )
+        (Some(plan), None, None) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE plan_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(plan).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(sv), None) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            sv, page_size, offset
-        )
+        (None, Some(sv), None) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None, Some(st)) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            st, page_size, offset
-        )
+        (None, None, Some(st)) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None, None) => sqlx::query_as!(
-            AuditFinding,
-            r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
-            page_size, offset
-        )
+        (None, None, None) => sqlx::query_as::<_, AuditFinding>(r#"SELECT id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_audit_findings ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -459,35 +371,25 @@ pub async fn create_audit_finding(
     let finding_no = format!("AF-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
     let severity = req.severity.unwrap_or_else(|| "minor".to_string());
 
-    let task = sqlx::query!(
-        r#"SELECT plan_id FROM qa_audit_tasks WHERE id = $1"#,
-        task_id
-    )
+    let task = sqlx::query(r#"SELECT plan_id FROM qa_audit_tasks WHERE id = $1"#).bind(task_id)
     .fetch_one(&state.pool)
     .await;
 
     let plan_id = match task {
-        Ok(row) => row.plan_id,
+        Ok(row) => row.get::<Uuid, _>("plan_id"),
         Err(_) => {
             tracing::error!("Task not found");
             return Json(ApiResponse::error(404, "审核任务不存在"));
         }
     };
 
-    let finding = sqlx::query_as!(
-        AuditFinding,
-        r#"INSERT INTO qa_audit_findings (finding_no, task_id, plan_id, title, description, severity, category, status, recommendation, responsible, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8, $9, $10, $11) RETURNING id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        finding_no, task_id, plan_id, req.title, req.description, severity, req.category, req.recommendation, req.responsible, req.target_date, req.created_by
-    )
+    let finding = sqlx::query_as::<_, AuditFinding>(r#"INSERT INTO qa_audit_findings (finding_no, task_id, plan_id, title, description, severity, category, status, recommendation, responsible, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8, $9, $10, $11) RETURNING id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(finding_no).bind(task_id).bind(plan_id).bind(req.title).bind(req.description).bind(severity).bind(req.category).bind(req.recommendation).bind(req.responsible).bind(req.target_date).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
     match finding {
         Ok(data) => {
-            let _ = sqlx::query!(
-                r#"UPDATE qa_audit_tasks SET finding_count = finding_count + 1 WHERE id = $1"#,
-                task_id
-            )
+            let _ = sqlx::query(r#"UPDATE qa_audit_tasks SET finding_count = finding_count + 1 WHERE id = $1"#).bind(task_id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "审核发现创建成功"))
@@ -508,11 +410,7 @@ pub async fn verify_audit_finding(
         Err(_) => return Json(ApiResponse::error(400, "无效的发现ID")),
     };
 
-    let finding = sqlx::query_as!(
-        AuditFinding,
-        r#"UPDATE qa_audit_findings SET status = 'verified', verified_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        id
-    )
+    let finding = sqlx::query_as::<_, AuditFinding>(r#"UPDATE qa_audit_findings SET status = 'verified', verified_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 

@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::types::Uuid;
+use sqlx::{FromRow, types::Uuid};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -14,7 +14,7 @@ pub struct ActionQuery {
     pub issue_id: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct CorrectiveAction {
     pub id: String,
     pub action_no: String,
@@ -33,7 +33,7 @@ pub struct CorrectiveAction {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct ActionItem {
     pub id: String,
     pub action_id: String,
@@ -91,60 +91,28 @@ pub async fn list_actions(
     let issue_id = query.issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
     let actions = match (query.status.as_ref(), query.priority.as_ref(), issue_id) {
-        (Some(st), Some(pr), Some(issue)) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND priority = $2 AND issue_id = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#,
-            st, pr, issue, page_size, offset
-        )
+        (Some(st), Some(pr), Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND priority = $2 AND issue_id = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(st).bind(pr).bind(issue).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), Some(pr), None) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND priority = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            st, pr, page_size, offset
-        )
+        (Some(st), Some(pr), None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND priority = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(pr).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None, Some(issue)) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND issue_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            st, issue, page_size, offset
-        )
+        (Some(st), None, Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND issue_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(issue).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(pr), Some(issue)) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE priority = $1 AND issue_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            pr, issue, page_size, offset
-        )
+        (None, Some(pr), Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE priority = $1 AND issue_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(pr).bind(issue).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None, None) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            st, page_size, offset
-        )
+        (Some(st), None, None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(pr), None) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE priority = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            pr, page_size, offset
-        )
+        (None, Some(pr), None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE priority = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(pr).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None, Some(issue)) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE issue_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            issue, page_size, offset
-        )
+        (None, None, Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE issue_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(issue).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None, None) => sqlx::query_as!(
-            CorrectiveAction,
-            r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
-            page_size, offset
-        )
+        (None, None, None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -166,11 +134,7 @@ pub async fn create_action(
     let issue_id = req.issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
 
-    let action = sqlx::query_as!(
-        CorrectiveAction,
-        r#"INSERT INTO qa_corrective_actions (action_no, issue_id, title, description, root_cause, action_type, status, priority, assignee, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        action_no, issue_id, req.title, req.description, req.root_cause, req.action_type, priority, req.assignee, req.target_date, req.created_by
-    )
+    let action = sqlx::query_as::<_, CorrectiveAction>(r#"INSERT INTO qa_corrective_actions (action_no, issue_id, title, description, root_cause, action_type, status, priority, assignee, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(action_no).bind(issue_id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(priority).bind(req.assignee).bind(req.target_date).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -179,10 +143,7 @@ pub async fn create_action(
             if let Some(items) = req.items {
                 if let Ok(action_id) = Uuid::parse_str(&data.id) {
                     for item in items {
-                        let _ = sqlx::query!(
-                            r#"INSERT INTO qa_corrective_action_items (action_id, item_name, responsible, due_date, remark) VALUES ($1, $2, $3, $4, $5)"#,
-                            action_id, item.item_name, item.responsible, item.due_date, item.remark
-                        )
+                        let _ = sqlx::query(r#"INSERT INTO qa_corrective_action_items (action_id, item_name, responsible, due_date, remark) VALUES ($1, $2, $3, $4, $5)"#).bind(action_id).bind(item.item_name).bind(item.responsible).bind(item.due_date).bind(item.remark)
                         .execute(&state.pool)
                         .await;
                     }
@@ -206,11 +167,7 @@ pub async fn get_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let action = sqlx::query_as!(
-        CorrectiveAction,
-        r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE id = $1"#,
-        id
-    )
+    let action = sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -232,11 +189,7 @@ pub async fn get_action_items(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let items = sqlx::query_as!(
-        ActionItem,
-        r#"SELECT id, action_id::TEXT, item_name, responsible, due_date::TEXT, status, completed_at::TEXT, remark, created_at::TEXT FROM qa_corrective_action_items WHERE action_id = $1 ORDER BY created_at"#,
-        id
-    )
+    let items = sqlx::query_as::<_, ActionItem>(r#"SELECT id, action_id::TEXT, item_name, responsible, due_date::TEXT, status, completed_at::TEXT, remark, created_at::TEXT FROM qa_corrective_action_items WHERE action_id = $1 ORDER BY created_at"#).bind(id)
     .fetch_all(&state.pool)
     .await;
 
@@ -259,11 +212,7 @@ pub async fn update_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let action = sqlx::query_as!(
-        CorrectiveAction,
-        r#"UPDATE qa_corrective_actions SET title = COALESCE($2, title), description = COALESCE($3, description), root_cause = COALESCE($4, root_cause), action_type = COALESCE($5, action_type), status = COALESCE($6, status), priority = COALESCE($7, priority), assignee = COALESCE($8, assignee), target_date = COALESCE($9, target_date), updated_at = NOW() WHERE id = $1 RETURNING id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        id, req.title, req.description, req.root_cause, req.action_type, req.status, req.priority, req.assignee, req.target_date
-    )
+    let action = sqlx::query_as::<_, CorrectiveAction>(r#"UPDATE qa_corrective_actions SET title = COALESCE($2, title), description = COALESCE($3, description), root_cause = COALESCE($4, root_cause), action_type = COALESCE($5, action_type), status = COALESCE($6, status), priority = COALESCE($7, priority), assignee = COALESCE($8, assignee), target_date = COALESCE($9, target_date), updated_at = NOW() WHERE id = $1 RETURNING id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(req.status).bind(req.priority).bind(req.assignee).bind(req.target_date)
     .fetch_one(&state.pool)
     .await;
 
@@ -285,11 +234,7 @@ pub async fn complete_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let action = sqlx::query_as!(
-        CorrectiveAction,
-        r#"UPDATE qa_corrective_actions SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#,
-        id
-    )
+    let action = sqlx::query_as::<_, CorrectiveAction>(r#"UPDATE qa_corrective_actions SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -311,10 +256,7 @@ pub async fn delete_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let result = sqlx::query!(
-        r#"DELETE FROM qa_corrective_actions WHERE id = $1"#,
-        id
-    )
+    let result = sqlx::query(r#"DELETE FROM qa_corrective_actions WHERE id = $1"#).bind(id)
     .execute(&state.pool)
     .await;
 

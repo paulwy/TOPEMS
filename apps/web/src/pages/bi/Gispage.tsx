@@ -1,4 +1,5 @@
 import { Grid } from '@/components/Grid';
+import { useAppStore } from '@/store';
 import React, { useState, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
 import {
@@ -108,6 +109,7 @@ const GisContent: React.FC = () => {
   } = useGis();
 
   const [activeTab, setActiveTab] = useState<TabType>('map');
+  const addNotification = useAppStore((state) => state.addNotification);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<any>(null);

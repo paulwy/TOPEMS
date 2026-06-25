@@ -20,7 +20,6 @@ import {
   runAutoArchive,
 } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/NotificationContainer';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -241,11 +240,6 @@ const NotificationArchivePage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       <ListPageTemplate
         title='通知归档管理'
         subtitle='查看和管理已归档的通知'

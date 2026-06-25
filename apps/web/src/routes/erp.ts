@@ -1,5 +1,4 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './utils';
 import { lazyWithRetry } from './utils';
 
@@ -10,13 +9,6 @@ const EquipmentManagementPage = lazy(() => import('../pages/fixed/EquipmentManag
 const EquipmentInspectionPage = lazy(() => import('../pages/fixed/EquipmentInspectionPage'));
 const EquipmentMaintenancePage = lazy(() => import('../pages/fixed/EquipmentMaintenancePage'));
 const EquipmentDetailPage = lazy(() => import('../pages/equipment/EquipmentDetailPage'));
-const FinanceExpensePage = lazy(() => import('../pages/finance/FinanceExpensePage'));
-const FinanceVoucherPage = lazy(() => import('../pages/finance/FinanceVoucherPage'));
-const FinanceReceivablePayablePage = lazy(
-  () => import('../pages/finance/FinanceReceivablePayablePage')
-);
-const FinanceReportsPage = lazy(() => import('../pages/finance/FinanceReportsPage'));
-const FinanceBudgetPage = lazy(() => import('../pages/finance/FinanceBudgetPage'));
 const AdministrationPage = lazy(() => import('../pages/admin/AdministrationPage'));
 const BudgetManagementPage = lazy(() => import('../pages/finance/BudgetManagementPage'));
 const OfficeSuppliesManagementPage = lazy(
@@ -26,7 +18,6 @@ const MeetingRoomManagementPage = lazy(() => import('../pages/common/MeetingRoom
 const VehicleManagementPage = lazy(() => import('../pages/fixed/VehicleManagementPage'));
 const AnnouncementManagementPage = lazy(() => import('../pages/common/AnnouncementManagementPage'));
 const VoucherTemplatePage = lazy(() => import('../pages/fixed/VoucherTemplatePage'));
-const FinancialReportsPage = lazy(() => import('../pages/finance/FinancialReportsPage'));
 const AccountManagementPage = lazy(() => import('../pages/admin/AccountManagementPage'));
 const BankAccountManagementPage = lazy(() => import('../pages/admin/BankAccountManagementPage'));
 const FixedAssetManagementPage = lazy(() => import('../pages/fixed/FixedAssetManagementPage'));
@@ -36,7 +27,6 @@ const CompanyStructurePage = lazy(() => import('../pages/admin/CompanyStructureP
 const OpeningBalancePage = lazy(() => import('../pages/finance/OpeningBalancePage'));
 const ERPHomePage = lazy(() => import('../pages/erp/DashboardPage'));
 
-// SRM/CRM 页面复用
 const SrmOrderPage = lazy(() => import('../pages/srm/SrmOrderPage'));
 const CrmOpportunityPage = lazy(() => import('../pages/crm/OpportunityManagementPage'));
 const CrmCustomerPage = lazy(() => import('../pages/crm/CustomerManagementPage'));
@@ -91,41 +81,6 @@ export const erpRoutes: RouteConfig[] = [
     action: 'admin',
   },
   {
-    path: '/finance',
-    element: FinanceExpensePage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/vouchers',
-    element: FinanceVoucherPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/receivable-payable',
-    element: FinanceReceivablePayablePage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/reports',
-    element: FinanceReportsPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/budget',
-    element: FinanceBudgetPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
     path: '/administration',
     element: AdministrationPage,
     requiredPermissions: ['erp:admin'],
@@ -168,70 +123,6 @@ export const erpRoutes: RouteConfig[] = [
     action: 'admin',
   },
   {
-    path: '/finance/voucher-templates',
-    element: VoucherTemplatePage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/financial-reports',
-    element: FinancialReportsPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/accounts',
-    element: AccountManagementPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/bank-accounts',
-    element: BankAccountManagementPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/fixed-assets',
-    element: FixedAssetManagementPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/consolidation/scopes',
-    element: ConsolidationScopePage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/consolidation/reports',
-    element: ConsolidationReportsPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/company-structure',
-    element: CompanyStructurePage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  {
-    path: '/finance/opening-balances',
-    element: OpeningBalancePage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
-  },
-  // 采购管理路由 (复用 SRM 采购订单页面)
-  {
     path: '/erp/purchase/order',
     element: SrmOrderPage,
     requiredPermissions: ['srm:read'],
@@ -245,7 +136,6 @@ export const erpRoutes: RouteConfig[] = [
     module: 'srm',
     action: 'read',
   },
-  // 销售管理路由 (复用 CRM 页面)
   {
     path: '/erp/sales/order',
     element: CrmOpportunityPage,
@@ -260,7 +150,6 @@ export const erpRoutes: RouteConfig[] = [
     module: 'crm',
     action: 'read',
   },
-  // 客户管理路由 (复用 CRM 页面)
   {
     path: '/erp/customer',
     element: CrmCustomerPage,

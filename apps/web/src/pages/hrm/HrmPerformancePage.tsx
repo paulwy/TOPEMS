@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/notification/NotificationContainer';
 import { StatusBadge } from '@/components/hrm/StatusBadge';
 import { PageHeader } from '@/components/templates';
 import { StatCardGroup } from '@/components/mui';
@@ -316,11 +315,6 @@ const HrmPerformancePage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       <Box
         sx={{
           maxWidth: 1536,

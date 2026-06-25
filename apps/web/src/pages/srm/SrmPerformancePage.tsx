@@ -4,6 +4,7 @@ import { Grid } from '@/components/Grid';
 import { TrendingUp, Award, BarChart3, Users, ArrowUp, ArrowDown } from 'lucide-react';
 import { srmApi } from '@/api/srm';
 import type { SupplierPerformance, PerformanceSummary, ScoreLevelDistribution } from '@/api/srm';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 const SrmPerformancePage: React.FC = () => {
@@ -14,6 +15,7 @@ const SrmPerformancePage: React.FC = () => {
     { category: string; avg_score: number; supplier_count: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadData();
@@ -31,17 +33,24 @@ const SrmPerformancePage: React.FC = () => {
       if (summaryRes.success && summaryRes.data) {
         setPerformanceSummary(summaryRes.data);
         setCategoryScores(summaryRes.data.category_scores);
+      } else {
+        addNotification({ title: '错误', message: '获取绩效汇总失败', type: 'error' });
       }
 
       if (topRes.success && topRes.data) {
         setTopSuppliers(topRes.data.top_by_score);
+      } else {
+        addNotification({ title: '错误', message: '获取TOP供应商失败', type: 'error' });
       }
 
       if (distributionRes.success && distributionRes.data) {
         setScoreDistribution(distributionRes.data.distribution);
+      } else {
+        addNotification({ title: '错误', message: '获取评分分布失败', type: 'error' });
       }
     } catch (err: unknown) {
       apiLogger.error('加载绩效数据失败:', err);
+      addNotification({ title: '错误', message: '加载绩效数据失败', type: 'error' });
     } finally {
       setLoading(false);
     }

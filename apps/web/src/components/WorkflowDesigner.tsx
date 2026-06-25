@@ -13,6 +13,7 @@ interface NodeData {
   y: number;
   label: string;
   description?: string;
+  approvers?: string[];
 }
 
 interface EdgeData {
@@ -513,6 +514,37 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     fullWidth
                   />
                 </Box>
+                {(selectedNode.type === 'approval' || selectedNode.type === 'task') && (
+                  <>
+                    <Divider />
+                    <Box>
+                      <FormLabel sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+                        审批人
+                      </FormLabel>
+                      <TextField
+                        value={(selectedNode.approvers || []).join(', ')}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                          const approvers = e.target.value
+                            .split(',')
+                            .map((s) => s.trim())
+                            .filter((s) => s.length > 0);
+                          updateNode(selectedNode.id, { approvers });
+                        }}
+                        sx={{ mt: 1 }}
+                        fullWidth
+                        placeholder='输入用户ID，多个用逗号分隔'
+                        size='small'
+                      />
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ mt: 0.5, display: 'block' }}
+                      >
+                        多个审批人用逗号分隔
+                      </Typography>
+                    </Box>
+                  </>
+                )}
                 <Divider />
                 <Button
                   variant='contained'

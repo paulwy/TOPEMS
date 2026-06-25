@@ -273,6 +273,16 @@ async fn check_iam_health() -> DependencyHealth {
     }
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
+async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_inventory_material_code ON wms.inventory(material_code)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_inventory_warehouse_id ON wms.inventory(warehouse_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_inventory_quality_status ON wms.inventory(quality_status)")
+        .execute(pool)
+        .await?;
+
     Ok(())
 }

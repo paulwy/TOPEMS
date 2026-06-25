@@ -8,9 +8,11 @@ import { RefreshCw, Eye, ArrowRight } from 'lucide-react';
 import { Box, Chip, Dialog, DialogTitle, DialogContent, Typography } from '@mui/material';
 
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { useAppStore } from '@/store';
 import { integrationApi } from '@/api/integration';
 import type { IntegrationEvent } from '@/api/integration';
 import { logger } from '@/utils/logger';
+import { useNotification } from '@/hooks/useNotification';
 
 // 状态配置
 const STATUS_CONFIG: Record<
@@ -23,6 +25,8 @@ const STATUS_CONFIG: Record<
 };
 
 const IntegrationEventsPage: React.FC = () => {
+  const { error } = useNotification();
+
   // 数据状态
   const [events, setEvents] = useState<IntegrationEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,12 +47,13 @@ const IntegrationEventsPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setEvents(res.data);
       }
-    } catch (error: unknown) {
-      logger.error('Error loading events:', error);
+    } catch (err: unknown) {
+      logger.error('Error loading events:', err);
+      error('加载事件数据失败');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [error]);
 
   // 初始加载
   React.useEffect(() => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import {
   Plus,
   RefreshCw,
@@ -13,7 +14,7 @@ import {
   Database,
   Server,
 } from 'lucide-react';
-import { Chip, Box, Typography, Tooltip, IconButton } from '@mui/material';
+import { Chip, Box, Typography, Tooltip, IconButton, Alert } from '@mui/material';
 import { Button } from '@mui/material';
 import {
   ListPageTemplate,
@@ -21,17 +22,13 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-
-interface DataSource {
-  id: string;
-  name: string;
-  type: string;
-  status: 'active' | 'inactive' | 'error';
-  host: string;
-  database: string;
-  last_sync?: string;
-  dataVolume?: number;
-}
+import {
+  listDataSources,
+  deleteDataSource,
+  testDataSource,
+  refreshDataSource,
+  type DataSource,
+} from '@/api/bi';
 
 const getStatusConfig = (status: string) => {
   switch (status) {
@@ -86,116 +83,40 @@ const getTypeConfig = (type: string) => {
 const BIDataSourcePage = () => {
   const [datasources, setDatasources] = useState<DataSource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     loadDatasources();
-  }, []);
+  }, [page, rowsPerPage, filterType, filterStatus]);
 
   const loadDatasources = async () => {
     setLoading(true);
+    setError(null);
     try {
-      setDatasources([
-        {
-          id: '1',
-          name: '研发数据库',
-          type: 'postgresql',
-          status: 'active',
-          host: 'localhost:5432',
-          database: 'topems_rs',
-          last_sync: new Date().toISOString(),
-          dataVolume: 1250000,
-        },
-        {
-          id: '2',
-          name: '实验室数据库',
-          type: 'postgresql',
-          status: 'active',
-          host: 'localhost:5432',
-          database: 'topems_lims',
-          last_sync: new Date().toISOString(),
-          dataVolume: 850000,
-        },
-        {
-          id: '3',
-          name: '质量数据库',
-          type: 'postgresql',
-          status: 'active',
-          host: 'localhost:5432',
-          database: 'topems_qms',
-          last_sync: new Date().toISOString(),
-          dataVolume: 620000,
-        },
-        {
-          id: '4',
-          name: '生产数据库',
-          type: 'postgresql',
-          status: 'inactive',
-          host: 'localhost:5432',
-          database: 'topems_pdm',
-          dataVolume: 2100000,
-        },
-        {
-          id: '5',
-          name: '缓存服务',
-          type: 'redis',
-          status: 'active',
-          host: 'localhost:6379',
-          database: 'default',
-          last_sync: new Date().toISOString(),
-          dataVolume: 15000,
-        },
-        {
-          id: '6',
-          name: '日志存储',
-          type: 'elasticsearch',
-          status: 'error',
-          host: 'localhost:9200',
-          database: 'logs',
-          dataVolume: 3500000,
-        },
-        {
-          id: '7',
-          name: 'ERP系统接口',
-          type: 'api',
-          status: 'active',
-          host: 'erp.company.com',
-          database: 'ERP',
-          last_sync: new Date().toISOString(),
-          dataVolume: 450000,
-        },
-        {
-          id: '8',
-          name: '财务数据文件',
-          type: 'file',
-          status: 'active',
-          host: '/data/finance',
-          database: 'Excel',
-          last_sync: new Date().toISOString(),
-          dataVolume: 8500,
-        },
-      ]);
-    } catch (error: unknown) {
-      logger.error('Failed to load datasources:', error);
+      const res = await listDataSources({
+        page: page + 1,
+        pageSize: rowsPerPage,
+        search: searchTerm || undefined,
+        type: filterType || undefined,
+        status: filterStatus || undefined,
+      });
+      if (res.success && res.data) {
+        setDatasources(res.data.items || []);
+        setTotal(res.data.total || 0);
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to load datasources:', e);
+      setError('加载数据源列表失败，请稍后重试');
     } finally {
       setLoading(false);
     }
   };
-
-  const filteredDatasources = useMemo(() => {
-    return datasources.filter((ds) => {
-      const matchesSearch =
-        ds.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ds.database.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = !filterType || ds.type === filterType;
-      const matchesStatus = !filterStatus || ds.status === filterStatus;
-      return matchesSearch && matchesType && matchesStatus;
-    });
-  }, [datasources, searchTerm, filterType, filterStatus]);
 
   const handleChangePage = (newPage: number) => {
     setPage(newPage);
@@ -206,12 +127,42 @@ const BIDataSourcePage = () => {
     setPage(0);
   };
 
-  const handleSync = (ds: DataSource) => {
-    logger.info('Sync:', ds.id);
+  const handleSync = async (ds: DataSource) => {
+    try {
+      const res = await refreshDataSource(ds.id);
+      if (res.success) {
+        logger.info('Sync successful:', ds.id);
+        loadDatasources();
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to sync datasource:', e);
+      setError('同步数据源失败');
+    }
   };
 
-  const handleTestConnection = (ds: DataSource) => {
-    logger.info('Test connection:', ds.id);
+  const handleTestConnection = async (ds: DataSource) => {
+    try {
+      const res = await testDataSource(ds.id);
+      if (res.success) {
+        logger.info('Connection test successful:', ds.id);
+      }
+    } catch (e: unknown) {
+      logger.error('Connection test failed:', e);
+      setError('连接测试失败');
+    }
+  };
+
+  const handleDelete = async (ds: DataSource) => {
+    try {
+      const res = await deleteDataSource(ds.id);
+      if (res.success) {
+        logger.info('Delete successful:', ds.id);
+        loadDatasources();
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to delete datasource:', e);
+      setError('删除数据源失败');
+    }
   };
 
   const columns = useMemo<ColumnDef<DataSource>[]>(
@@ -297,7 +248,7 @@ const BIDataSourcePage = () => {
         label: '数据量',
         render: (row) => (
           <Typography variant='body2'>
-            {row.dataVolume ? `${(row.dataVolume / 1000).toFixed(1)}K` : '-'}
+            {row.data_volume ? `${(row.data_volume / 1000).toFixed(1)}K` : '-'}
           </Typography>
         ),
       },
@@ -331,7 +282,7 @@ const BIDataSourcePage = () => {
         label: '删除',
         icon: <Trash2 size={16} />,
         color: 'error',
-        onClick: (row) => logger.info('Delete:', row.id),
+        onClick: (row) => handleDelete(row),
         confirm: true,
         confirmMessage: '确定要删除这个数据源吗?',
       },
@@ -379,11 +330,11 @@ const BIDataSourcePage = () => {
     () => ({
       page,
       pageSize: rowsPerPage,
-      total: filteredDatasources.length,
+      total,
       onPageChange: handleChangePage,
       onPageSizeChange: handleChangeRowsPerPage,
     }),
-    [page, rowsPerPage, filteredDatasources.length]
+    [page, rowsPerPage, total]
   );
 
   return (
@@ -391,7 +342,7 @@ const BIDataSourcePage = () => {
       title='数据源管理'
       subtitle='配置和管理BI数据源连接'
       columns={columns}
-      data={filteredDatasources}
+      data={datasources}
       loading={loading}
       searchable
       searchPlaceholder='搜索数据源名称...'

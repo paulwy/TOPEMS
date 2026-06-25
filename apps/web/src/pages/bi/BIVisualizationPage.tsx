@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Plus,
@@ -40,11 +40,15 @@ import {
   MenuItem,
   Tooltip,
   Divider,
+  Alert,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { EmptyState } from '@/components/mui/EmptyState';
+import { useAppStore } from '@/store';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { Grid } from '@/components/Grid';
+import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
+import { logger } from '@/utils/logger';
 
 interface VisualizationComponent {
   id: string;
@@ -123,39 +127,32 @@ const componentList: VisualizationComponent[] = [
   },
 ];
 
-const mockCanvasComponents: CanvasComponent[] = [
-  {
-    id: 'comp-1',
-    type: 'bar',
-    x: 20,
-    y: 20,
-    width: 300,
-    height: 200,
-    config: { title: '月度销售额', dataKey: 'sales' },
+const widgetToCanvasComponent = (widget: Widget): CanvasComponent => ({
+  id: widget.id,
+  type: widget.widget_type,
+  x: widget.position?.x || 50,
+  y: widget.position?.y || 50,
+  width: widget.position?.width || 200,
+  height: widget.position?.height || 150,
+  config: widget.config || {},
+});
+
+const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => ({
+  name: comp.config.title || comp.type,
+  widget_type: comp.type,
+  config: comp.config,
+  position: {
+    x: comp.x,
+    y: comp.y,
+    width: comp.width,
+    height: comp.height,
   },
-  {
-    id: 'comp-2',
-    type: 'line',
-    x: 340,
-    y: 20,
-    width: 300,
-    height: 200,
-    config: { title: '用户增长趋势', dataKey: 'users' },
-  },
-  {
-    id: 'comp-3',
-    type: 'metric',
-    x: 660,
-    y: 20,
-    width: 150,
-    height: 100,
-    config: { title: '今日订单', value: 1256, unit: '单' },
-  },
-];
+});
 
 const BIVisualizationPage = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -163,25 +160,29 @@ const BIVisualizationPage = () => {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async (showRefreshing = false) => {
+  const loadData = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setIsRefreshing(true);
     else setLoading(true);
+    setError(null);
     try {
-      setTimeout(() => {
-        setCanvasComponents(mockCanvasComponents);
-        setLoading(false);
-        setIsRefreshing(false);
-      }, 500);
-    } catch (error: unknown) {
-      console.error('Failed to load visualization data:', error);
+      const res = await fetchWidgets();
+      if (res.success && res.data) {
+        const widgets: Widget[] = res.data.items || res.data || [];
+        const components = widgets.map(widgetToCanvasComponent);
+        setCanvasComponents(components);
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to load widgets:', e);
+      setError('加载组件数据失败，请稍后重试');
+    } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleRefresh = () => {
     loadData(true);
@@ -202,28 +203,63 @@ const BIVisualizationPage = () => {
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     const componentType = e.dataTransfer.getData('componentType');
     if (componentType) {
-      const newComponent: CanvasComponent = {
-        id: `comp-${Date.now()}`,
-        type: componentType,
-        x: 50,
-        y: 50,
-        width: 200,
-        height: 150,
-        config: { title: '新组件' },
-      };
-      setCanvasComponents([...canvasComponents, newComponent]);
+      try {
+        const newComponentData: Partial<Widget> = {
+          name: '新组件',
+          widget_type: componentType,
+          config: { title: '新组件' },
+          position: {
+            x: 50,
+            y: 50,
+            width: 200,
+            height: 150,
+          },
+        };
+        const res = await createWidget(newComponentData);
+        if (res.success && res.data) {
+          const newWidget = res.data as Widget;
+          const newComponent = widgetToCanvasComponent(newWidget);
+          setCanvasComponents([...canvasComponents, newComponent]);
+        }
+      } catch (e: unknown) {
+        logger.error('Failed to create widget:', e);
+      }
     }
     setIsDragging(false);
   };
 
-  const handleDeleteComponent = (id: string) => {
-    setCanvasComponents(canvasComponents.filter((c) => c.id !== id));
-    if (selectedComponent === id) {
-      setSelectedComponent(null);
+  const handleDeleteComponent = async (id: string) => {
+    try {
+      const res = await deleteWidget(id);
+      if (res.success) {
+        setCanvasComponents(canvasComponents.filter((c) => c.id !== id));
+        if (selectedComponent === id) {
+          setSelectedComponent(null);
+        }
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to delete widget:', e);
+    }
+  };
+
+  const handleUpdateComponent = async (id: string, updates: Partial<CanvasComponent>) => {
+    const comp = canvasComponents.find((c) => c.id === id);
+    if (!comp) return;
+    try {
+      const updatedComp = { ...comp, ...updates };
+      const widgetData = canvasComponentToWidgetData(updatedComp);
+      const res = await updateWidget(id, widgetData);
+      if (res.success) {
+        setCanvasComponents(
+          canvasComponents.map((c) => (c.id === id ? updatedComp : c))
+        );
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to update widget:', e);
     }
   };
 

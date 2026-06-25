@@ -9,6 +9,11 @@ pub mod corrective_action;
 pub mod audit;
 pub mod data_sync;
 pub mod permission;
+pub mod spc;
+pub mod quality_cost;
+pub mod eight_d;
+pub mod fmea;
+pub mod quality_dashboard;
 
 use sqlx::PgPool;
 
@@ -151,6 +156,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_inspections_status ON qa_quality_inspections(status)")
         .execute(pool)
         .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_inspections_created_at ON qa_quality_inspections(created_at)")
+        .execute(pool)
+        .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_inspections_inspector ON qa_quality_inspections(inspector)")
         .execute(pool)
         .await?;
@@ -161,6 +169,12 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_issues_no ON qa_quality_issues(issue_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_issues_status ON qa_quality_issues(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_issues_created_at ON qa_quality_issues(created_at)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_standards_code ON qa_standards(code)")
@@ -349,6 +363,288 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_status ON qa_audit_findings(status)")
+        .execute(pool)
+        .await?;
+
+    // Create SPC charts table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_spc_charts (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            chart_no VARCHAR(64) NOT NULL UNIQUE,
+            chart_type VARCHAR(32) NOT NULL,
+            product_id UUID,
+            product_name VARCHAR(256),
+            parameter_name VARCHAR(256) NOT NULL,
+            ucl DECIMAL(12,4),
+            cl DECIMAL(12,4),
+            lcl DECIMAL(12,4),
+            cp DECIMAL(8,4),
+            cpk DECIMAL(8,4),
+            pp DECIMAL(8,4),
+            ppk DECIMAL(8,4),
+            sample_count INT DEFAULT 0,
+            status VARCHAR(32) DEFAULT 'active',
+            created_by VARCHAR(64),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create SPC data points table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_spc_data_points (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            chart_id UUID NOT NULL REFERENCES qa_spc_charts(id) ON DELETE CASCADE,
+            sample_no INT NOT NULL,
+            value DECIMAL(12,4) NOT NULL,
+            subgroup_size INT,
+            is_out_of_control BOOLEAN DEFAULT false,
+            trend_flag VARCHAR(32),
+            measured_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create quality costs table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_quality_costs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            cost_no VARCHAR(64) NOT NULL UNIQUE,
+            cost_category VARCHAR(32) NOT NULL,
+            cost_type VARCHAR(64),
+            amount DECIMAL(12,2) NOT NULL,
+            department VARCHAR(64),
+            description TEXT,
+            related_issue_id UUID,
+            incurred_date TIMESTAMP,
+            created_by VARCHAR(64),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create 8D reports table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_eightd_reports (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            report_no VARCHAR(64) NOT NULL UNIQUE,
+            title VARCHAR(256) NOT NULL,
+            status VARCHAR(32) DEFAULT 'new',
+            severity VARCHAR(32),
+            priority VARCHAR(32),
+            related_issue_id UUID,
+            d1_team TEXT,
+            d1_leader VARCHAR(64),
+            d2_problem_description TEXT,
+            d3_containment_action TEXT,
+            d3_implemented_at TIMESTAMP,
+            d4_root_cause TEXT,
+            d4_cause_analysis TEXT,
+            d5_permanent_action TEXT,
+            d6_verification_result TEXT,
+            d6_verified_at TIMESTAMP,
+            d7_preventive_action TEXT,
+            d8_congratulations TEXT,
+            d8_closed_at TIMESTAMP,
+            assignee VARCHAR(64),
+            due_date TIMESTAMP,
+            created_by VARCHAR(64),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create 8D audit logs table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_eightd_audit_logs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            report_id UUID NOT NULL REFERENCES qa_eightd_reports(id) ON DELETE CASCADE,
+            action VARCHAR(32) NOT NULL,
+            step VARCHAR(8),
+            operator VARCHAR(64),
+            comment TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create FMEA analyses table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_fmea_analyses (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            fmea_no VARCHAR(64) NOT NULL UNIQUE,
+            title VARCHAR(256) NOT NULL,
+            fmea_type VARCHAR(32) NOT NULL,
+            product_id UUID,
+            product_name VARCHAR(256),
+            process_id UUID,
+            process_name VARCHAR(256),
+            scope TEXT,
+            status VARCHAR(32) DEFAULT 'draft',
+            revision VARCHAR(16),
+            team TEXT,
+            leader VARCHAR(64),
+            description TEXT,
+            created_by VARCHAR(64),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create FMEA items table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_fmea_items (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            fmea_id UUID NOT NULL REFERENCES qa_fmea_analyses(id) ON DELETE CASCADE,
+            component VARCHAR(256) NOT NULL,
+            function VARCHAR(256),
+            failure_mode VARCHAR(256) NOT NULL,
+            failure_effect TEXT,
+            failure_cause TEXT,
+            severity INT NOT NULL DEFAULT 1,
+            occurrence INT NOT NULL DEFAULT 1,
+            detection INT NOT NULL DEFAULT 1,
+            rpn INT,
+            current_controls TEXT,
+            recommended_actions TEXT,
+            responsible VARCHAR(64),
+            target_date TIMESTAMP,
+            action_status VARCHAR(32) DEFAULT 'open',
+            revised_severity INT,
+            revised_occurrence INT,
+            revised_detection INT,
+            revised_rpn INT,
+            sort_order INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create alert rules table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_alert_rules (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            rule_name VARCHAR(256) NOT NULL,
+            alert_type VARCHAR(32) NOT NULL,
+            metric VARCHAR(64) NOT NULL,
+            condition VARCHAR(16) NOT NULL,
+            threshold DECIMAL(12,4) NOT NULL,
+            duration INT,
+            severity VARCHAR(32),
+            status VARCHAR(32) DEFAULT 'active',
+            notification_type VARCHAR(32),
+            recipients TEXT,
+            description TEXT,
+            created_by VARCHAR(64),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create alert messages table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_alert_messages (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            rule_id UUID,
+            rule_name VARCHAR(256),
+            alert_type VARCHAR(32) NOT NULL,
+            severity VARCHAR(32),
+            title VARCHAR(256) NOT NULL,
+            message TEXT,
+            metric_value DECIMAL(12,4),
+            threshold DECIMAL(12,4),
+            status VARCHAR(32) DEFAULT 'active',
+            acknowledged_by VARCHAR(64),
+            acknowledged_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create indexes for new tables
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_spc_charts_no ON qa_spc_charts(chart_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_spc_charts_type ON qa_spc_charts(chart_type)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_spc_data_points_chart ON qa_spc_data_points(chart_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_no ON qa_quality_costs(cost_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_category ON qa_quality_costs(cost_category)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_quality_costs_dept ON qa_quality_costs(department)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_eightd_reports_no ON qa_eightd_reports(report_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_eightd_reports_status ON qa_eightd_reports(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_eightd_audit_logs_report ON qa_eightd_audit_logs(report_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_fmea_analyses_no ON qa_fmea_analyses(fmea_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_fmea_analyses_status ON qa_fmea_analyses(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_fmea ON qa_fmea_items(fmea_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_rpn ON qa_fmea_items(rpn)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_alert_rules_type ON qa_alert_rules(alert_type)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_alert_rules_status ON qa_alert_rules(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_alert_messages_status ON qa_alert_messages(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_alert_messages_severity ON qa_alert_messages(severity)")
         .execute(pool)
         .await?;
 

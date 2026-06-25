@@ -38,8 +38,10 @@ import {
   type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
+import { useAppStore } from '@/store';
 import type { LimsQmsSync, CreateLimsQmsSyncRequest } from '@/api/integration';
 import { logger } from '@/utils/logger';
+import { useNotification } from '@/hooks/useNotification';
 
 // 状态配置
 const STATUS_CONFIG: Record<
@@ -90,6 +92,7 @@ const FORM_SECTIONS: FormSection[] = [
 
 const IntegrationLimsQmsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { success, error } = useNotification();
 
   // 数据状态
   const [syncs, setSyncs] = useState<LimsQmsSync[]>([]);
@@ -110,12 +113,13 @@ const IntegrationLimsQmsPage: React.FC = () => {
       if (res.success && res.data !== undefined) {
         setSyncs(res.data);
       }
-    } catch (error: unknown) {
-      logger.error('Error loading LIMS-QMS syncs:', error);
+    } catch (err: unknown) {
+      logger.error('Error loading LIMS-QMS syncs:', err);
+      error('加载 LIMS-QMS 同步数据失败');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [error]);
 
   // 初始加载
   React.useEffect(() => {
@@ -216,7 +220,6 @@ const IntegrationLimsQmsPage: React.FC = () => {
     try {
       setSubmitting(true);
       if (editingSync) {
-        // 编辑模式暂不支持更新（后端未实现）
         logger.warn('Update not implemented');
       } else {
         const request: CreateLimsQmsSyncRequest = {
@@ -228,13 +231,15 @@ const IntegrationLimsQmsPage: React.FC = () => {
             ((data as Record<string, unknown>).inspection_notes as string) || undefined,
         };
         await integrationApi.createLimsQmsSync(request);
+        success('同步记录创建成功');
       }
       setShowCreateModal(false);
       setEditingSync(null);
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error saving sync:', error);
-      throw error;
+    } catch (err: unknown) {
+      logger.error('Error saving sync:', err);
+      error('保存同步记录失败');
+      throw err;
     } finally {
       setSubmitting(false);
     }
@@ -244,9 +249,11 @@ const IntegrationLimsQmsPage: React.FC = () => {
   const handleSync = async (id: string) => {
     try {
       await integrationApi.syncLimsQms(id);
+      success('同步成功');
       loadData();
-    } catch (error: unknown) {
-      logger.error('Error syncing:', error);
+    } catch (err: unknown) {
+      logger.error('Error syncing:', err);
+      error('同步失败');
     }
   };
 

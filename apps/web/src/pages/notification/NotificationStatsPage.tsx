@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import {
   BarChart3,
   ChevronLeft,
@@ -16,12 +17,9 @@ import type { NotificationStats } from '@/api/notification';
 import { getMyNotificationStats, notificationServiceApi } from '@/api/notification';
 import { MetricCard } from '@/components/MetricCard';
 import { StatsChart } from '@/components/StatsChart';
-import { NotificationContainer } from '@/components/NotificationContainer';
-import { useNotification } from '@/hooks/useNotification';
 
 const NotificationStatsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { success, error, notifications, hideNotification } = useNotification();
 
   const [stats, setStats] = useState<NotificationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,10 +121,6 @@ const NotificationStatsPage: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
 
       {/* Header */}
       <div

@@ -1,5 +1,6 @@
 export { authRoutes } from './auth';
 export { dashboardRoutes } from './dashboard';
+export { commonRoutes } from './common';
 export { hrmRoutes } from './hrm';
 export { crmRoutes } from './crm';
 export { financeRoutes } from './finance';

@@ -40,6 +40,7 @@ import {
   type RowAction,
 } from '@/components/templates';
 import { qmsApi, type QualityCheck, type CreateQualityCheckRequest } from '@/api/qms';
+import { useAppStore } from '@/store';
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   pending: { label: '待分配', bg: 'warning.light', color: 'warning.dark' },
@@ -68,6 +69,7 @@ const QmsInspectionPage: React.FC = () => {
   const navigate = useNavigate();
   const [inspections, setInspections] = useState<QualityCheck[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -97,6 +99,7 @@ const QmsInspectionPage: React.FC = () => {
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadInspections();
@@ -108,9 +111,20 @@ const QmsInspectionPage: React.FC = () => {
       const response = await qmsApi.listChecks();
       if (response.success && response.data) {
         setInspections(response.data);
+      } else if (!response.success) {
+        addNotification({
+          title: '加载失败',
+          message: response.message || '加载检验数据失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       console.error('Failed to load inspections:', error);
+      addNotification({
+        title: '加载失败',
+        message: '加载检验数据失败',
+        type: 'error',
+      });
     }
     setLoading(false);
   };
@@ -311,35 +325,74 @@ const QmsInspectionPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
+      setSubmitting(true);
       const response = await qmsApi.createCheck(formData);
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '质检单创建成功',
+          type: 'success',
+        });
         loadInspections();
         setShowCreateModal(false);
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '创建质检单失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       console.error('Failed to create inspection:', error);
+      addNotification({
+        title: '错误',
+        message: '创建质检单时发生错误',
+        type: 'error',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleAssignSubmit = async () => {
     if (!selectedInspection) return;
     try {
+      setSubmitting(true);
       const response = await qmsApi.assignCheck(selectedInspection.id, {
         assignee: assignData.assignee,
         operator: assignData.operator,
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '检验分配成功',
+          type: 'success',
+        });
         loadInspections();
         setShowAssignModal(false);
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '分配失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       console.error('Failed to assign inspection:', error);
+      addNotification({
+        title: '错误',
+        message: '分配时发生错误',
+        type: 'error',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleSubmitResult = async () => {
     if (!selectedInspection) return;
     try {
+      setSubmitting(true);
       const total = submitData.qualified_quantity + submitData.unqualified_quantity;
       const rate = total > 0 ? (submitData.qualified_quantity / total) * 100 : 0;
       const response = await qmsApi.submitCheckResult(selectedInspection.id, {
@@ -351,34 +404,80 @@ const QmsInspectionPage: React.FC = () => {
         results: submitData.results.length > 0 ? submitData.results : undefined,
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '检验结果提交成功',
+          type: 'success',
+        });
         loadInspections();
         setShowSubmitModal(false);
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '提交失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       console.error('Failed to submit inspection result:', error);
+      addNotification({
+        title: '错误',
+        message: '提交结果时发生错误',
+        type: 'error',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleAuditSubmit = async () => {
     if (!selectedInspection) return;
     try {
+      setSubmitting(true);
+      let response;
       if (auditData.action === 'rework') {
-        await qmsApi.reworkCheck(selectedInspection.id, {
+        response = await qmsApi.reworkCheck(selectedInspection.id, {
           action: 'rework',
           operator: auditData.operator,
           comment: auditData.comment,
         });
       } else {
-        await qmsApi.auditCheck(selectedInspection.id, {
+        response = await qmsApi.auditCheck(selectedInspection.id, {
           action: auditData.action,
           operator: auditData.operator,
           comment: auditData.comment,
         });
       }
-      loadInspections();
-      setShowAuditModal(false);
+      if (response.success) {
+        const actionText =
+          auditData.action === 'approve'
+            ? '审核通过'
+            : auditData.action === 'reject'
+              ? '审核驳回'
+              : '返工';
+        addNotification({
+          title: '成功',
+          message: `${actionText}成功`,
+          type: 'success',
+        });
+        loadInspections();
+        setShowAuditModal(false);
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '操作失败',
+          type: 'error',
+        });
+      }
     } catch (error: unknown) {
       console.error('Failed to audit inspection:', error);
+      addNotification({
+        title: '错误',
+        message: '操作时发生错误',
+        type: 'error',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -751,6 +850,7 @@ const QmsInspectionPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowCreateModal(false)}
+            disabled={submitting}
           >
             取消
           </Button>
@@ -758,8 +858,9 @@ const QmsInspectionPage: React.FC = () => {
             variant='contained'
             onClick={handleSave}
             sx={{ bgcolor: 'primary.main' }}
+            disabled={submitting}
           >
-            保存
+            {submitting ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -793,6 +894,7 @@ const QmsInspectionPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowAssignModal(false)}
+            disabled={submitting}
           >
             取消
           </Button>
@@ -800,8 +902,9 @@ const QmsInspectionPage: React.FC = () => {
             variant='contained'
             onClick={handleAssignSubmit}
             sx={{ bgcolor: 'primary.main' }}
+            disabled={submitting}
           >
-            确认分配
+            {submitting ? '分配中...' : '确认分配'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -944,6 +1047,7 @@ const QmsInspectionPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowSubmitModal(false)}
+            disabled={submitting}
           >
             取消
           </Button>
@@ -951,8 +1055,9 @@ const QmsInspectionPage: React.FC = () => {
             variant='contained'
             onClick={handleSubmitResult}
             sx={{ bgcolor: 'primary.main' }}
+            disabled={submitting}
           >
-            提交结果
+            {submitting ? '提交中...' : '提交结果'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -994,12 +1099,14 @@ const QmsInspectionPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowAuditModal(false)}
+            disabled={submitting}
           >
             取消
           </Button>
           <Button
             variant='contained'
             onClick={handleAuditSubmit}
+            disabled={submitting}
             sx={{
               bgcolor:
                 auditData.action === 'approve'
@@ -1009,11 +1116,13 @@ const QmsInspectionPage: React.FC = () => {
                     : 'error.dark',
             }}
           >
-            {auditData.action === 'rework'
-              ? '确认返工'
-              : auditData.action === 'approve'
-                ? '审核通过'
-                : '审核驳回'}
+            {submitting
+              ? '处理中...'
+              : auditData.action === 'rework'
+                ? '确认返工'
+                : auditData.action === 'approve'
+                  ? '审核通过'
+                  : '审核驳回'}
           </Button>
         </DialogActions>
       </Dialog>

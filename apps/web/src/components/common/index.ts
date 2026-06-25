@@ -25,10 +25,6 @@ export {
 } from './ConfirmDialog';
 export type { ConfirmDialogConfig } from './ConfirmDialog';
 
-// ToastNotification - 保留原导出
-export { default as ToastNotification, ToastProvider, useToast } from './ToastNotification';
-export type { ToastOptions } from './ToastNotification';
-
 // PaginationComponent - 保留原导出
 export { default as PaginationComponent } from './Pagination';
 export type { PaginationConfig } from './Pagination';
@@ -115,3 +111,7 @@ export type { DepartmentSelectProps, Department } from './DepartmentSelect';
 
 // Grid - Grid2 兼容组件
 export { Grid } from './Grid';
+
+// BackButton - 统一返回按钮（支持智能返回）
+export { default as BackButton } from './BackButton';
+export type { BackButtonProps } from './BackButton';

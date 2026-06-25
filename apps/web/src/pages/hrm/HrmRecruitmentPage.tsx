@@ -22,7 +22,6 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Chip } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/notification/NotificationContainer';
 import { StatCardGroup } from '@/components/mui';
 import {
   jobOpeningApi,
@@ -357,11 +356,6 @@ const HrmRecruitmentPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       {/* Header */}
       <Box
         sx={{

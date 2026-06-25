@@ -33,6 +33,7 @@ import type { Instrument, MaintenanceRecord } from '@/api/lims';
 import { PageHeader } from '@/components/templates/PageHeader';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +53,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     cost: '',
     notes: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {
@@ -112,6 +114,30 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
 
   const handleCreateMaintenance = async () => {
     if (!instrument) return;
+    if (!formData.maintenance_type.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请选择维护类型',
+        type: 'error',
+      });
+      return;
+    }
+    if (!formData.description.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入维护描述',
+        type: 'error',
+      });
+      return;
+    }
+    if (!formData.performed_by.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入执行人',
+        type: 'error',
+      });
+      return;
+    }
     try {
       const response = await limsApi.createMaintenance({
         instrument_id: instrument.id,
@@ -124,17 +150,57 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         notes: formData.notes,
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '维护记录创建成功',
+          type: 'success',
+        });
         setShowAddModal(false);
         loadInstrumentDetail(instrument.id);
         resetForm();
+      } else {
+        addNotification({
+          title: '错误',
+          message: response.message || '创建失败，请稍后重试',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       logger.error('创建维护记录失败:', error);
+      addNotification({
+        title: '错误',
+        message: '创建维护记录失败，请稍后重试',
+        type: 'error',
+      });
     }
   };
 
   const handleUpdateMaintenance = async () => {
     if (!editingRecord || !instrument) return;
+    if (!formData.maintenance_type.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请选择维护类型',
+        type: 'error',
+      });
+      return;
+    }
+    if (!formData.description.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入维护描述',
+        type: 'error',
+      });
+      return;
+    }
+    if (!formData.performed_by.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入执行人',
+        type: 'error',
+      });
+      return;
+    }
     try {
       const response = await limsApi.updateMaintenance(editingRecord.id, {
         maintenance_type: formData.maintenance_type,
@@ -146,13 +212,29 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         notes: formData.notes,
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '维护记录更新成功',
+          type: 'success',
+        });
         setShowEditModal(false);
         loadInstrumentDetail(instrument.id);
         resetForm();
         setEditingRecord(null);
+      } else {
+        addNotification({
+          title: '错误',
+          message: response.message || '更新失败，请稍后重试',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       logger.error('更新维护记录失败:', error);
+      addNotification({
+        title: '错误',
+        message: '更新维护记录失败，请稍后重试',
+        type: 'error',
+      });
     }
   };
 
@@ -161,10 +243,26 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     try {
       const response = await limsApi.deleteMaintenance(recordId);
       if (response.success && instrument) {
+        addNotification({
+          title: '成功',
+          message: '维护记录删除成功',
+          type: 'success',
+        });
         loadInstrumentDetail(instrument.id);
+      } else {
+        addNotification({
+          title: '错误',
+          message: response.message || '删除失败，请稍后重试',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       logger.error('删除维护记录失败:', error);
+      addNotification({
+        title: '错误',
+        message: '删除维护记录失败，请稍后重试',
+        type: 'error',
+      });
     }
   };
 

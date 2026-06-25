@@ -38,7 +38,7 @@ import {
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import type { SafetyIssue, Rectification, Verification } from '@/api/ehs';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 const EhsHazardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,6 +55,7 @@ const EhsHazardPage: React.FC = () => {
   const [rectification, setRectification] = useState<Rectification | null>(null);
   const [verification, setVerification] = useState<Verification | null>(null);
   const [formData, setFormData] = useState({
+
     title: '',
     description: '',
     category: 'equipment',
@@ -63,6 +64,7 @@ const EhsHazardPage: React.FC = () => {
     location: '',
     reported_by: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
   const [rectificationFormData, setRectificationFormData] = useState({
     description: '',
     responsible: '',
@@ -305,11 +307,11 @@ const EhsHazardPage: React.FC = () => {
         location: formData.location || null,
         reported_by: formData.reported_by || null,
       });
-      toast.success('隐患上报成功');
+      addNotification({ title: '成功', message: '隐患上报成功', type: 'success' });
       setShowCreateModal(false);
       loadIssues();
     } catch (err: unknown) {
-      toast.error('上报失败');
+      addNotification({ title: '错误', message: '上报失败', type: 'error' });
       apiLogger.error('创建隐患失败:', err);
     }
   };
@@ -331,12 +333,12 @@ const EhsHazardPage: React.FC = () => {
         responsible: rectificationFormData.responsible || null,
         deadline: rectificationFormData.deadline || null,
       });
-      toast.success('整改任务创建成功');
+      addNotification({ title: '成功', message: '整改任务创建成功', type: 'success' });
       setShowRectificationModal(false);
       await loadIssueDetail(selectedIssue.id);
       loadIssues();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建整改任务失败:', err);
     }
   };
@@ -345,11 +347,11 @@ const EhsHazardPage: React.FC = () => {
     if (!selectedIssue) return;
     try {
       await ehsApi.submitRectification(selectedIssue.id);
-      toast.success('整改完成，等待验收');
+      addNotification({ title: '成功', message: '整改完成，等待验收', type: 'success' });
       await loadIssueDetail(selectedIssue.id);
       loadIssues();
     } catch (err: unknown) {
-      toast.error('提交失败');
+      addNotification({ title: '错误', message: '提交失败', type: 'error' });
       apiLogger.error('提交整改失败:', err);
     }
   };
@@ -371,12 +373,12 @@ const EhsHazardPage: React.FC = () => {
         result: verificationFormData.result,
         remarks: verificationFormData.remarks || null,
       });
-      toast.success('验收完成');
+      addNotification({ title: '成功', message: '验收完成', type: 'success' });
       setShowVerificationModal(false);
       await loadIssueDetail(selectedIssue.id);
       loadIssues();
     } catch (err: unknown) {
-      toast.error('验收失败');
+      addNotification({ title: '错误', message: '验收失败', type: 'error' });
       apiLogger.error('验收失败:', err);
     }
   };
@@ -385,11 +387,11 @@ const EhsHazardPage: React.FC = () => {
     if (!selectedIssue) return;
     try {
       await ehsApi.closeSafetyIssue(selectedIssue.id);
-      toast.success('隐患已闭环');
+      addNotification({ title: '成功', message: '隐患已闭环', type: 'success' });
       setShowDetailModal(false);
       loadIssues();
     } catch (err: unknown) {
-      toast.error('闭环失败');
+      addNotification({ title: '错误', message: '闭环失败', type: 'error' });
       apiLogger.error('闭环失败:', err);
     }
   };

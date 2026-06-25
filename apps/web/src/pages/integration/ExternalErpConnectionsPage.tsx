@@ -5,6 +5,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Settings, RefreshCw, Trash2, Edit, Power, TestTube, Eye } from 'lucide-react';
 

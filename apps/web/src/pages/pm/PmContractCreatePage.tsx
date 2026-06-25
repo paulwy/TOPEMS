@@ -1,19 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { apiLogger } from '@/utils/logger';
-import { ArrowLeft, Save } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
-import { Button } from '@mui/material';
-import { FileUpload } from '@/components/common';
-import type { Project } from '@/api/pm';
-import { pmApi } from '@/api/pm';
-import {
-  AICodeGenerator,
-  AITextOptimizer,
-  AIDataCompleter,
-  AIFormValidator,
-} from '@/components/ai';
-import type { CompleteRequest, ValidateRequest, CompletionItem } from '@/types/ai';
+import { z } from 'zod';
+import { FileText, Calendar, Users } from 'lucide-react';
+import FormPageTemplate from '@/components/templates/FormPageTemplate';
+import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import { pmApi, type Project } from '@/api/pm';
+import { useNotification } from '@/hooks/useNotification';
+import { logger } from '@/utils/logger';
+
+const contractSchema = z.object({
+  project_id: z.string().optional(),
+  contract_code: z.string().min(1, '合同编号不能为空'),
+  contract_name: z.string().min(1, '合同名称不能为空'),
+  contract_type: z.enum(['construction', 'service', 'purchase', 'sales']),
+  contract_category: z.enum(['main', 'supplement', 'service_level']),
+  party_a_name: z.string().optional(),
+  party_b_name: z.string().optional(),
+  amount: z.string().refine((val) => parseFloat(val) > 0, '合同金额必须大于0'),
+  currency: z.enum(['CNY', 'USD', 'EUR']),
+  tax_rate: z.string().refine((val) => parseFloat(val) >= 0 && parseFloat(val) <= 100, '税率必须在0-100之间'),
+  signing_date: z.string().optional(),
+  effective_date: z.string().optional(),
+  end_date: z.string().optional(),
+  description: z.string().optional(),
+});
+
+type ContractFormData = z.infer<typeof contractSchema>;
 
 const CONTRACT_TYPES = [
   { value: 'construction', label: '工程合同' },
@@ -28,950 +40,258 @@ const CONTRACT_CATEGORIES = [
   { value: 'service_level', label: '服务协议' },
 ];
 
+const CURRENCIES = [
+  { value: 'CNY', label: '人民币' },
+  { value: 'USD', label: '美元' },
+  { value: 'EUR', label: '欧元' },
+];
+
 const PmContractCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const { success, error } = useNotification();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showCodeGenerator, setShowCodeGenerator] = useState(false);
-  const [showTextOptimizer, setShowTextOptimizer] = useState(false);
-  const [showDataCompleter, setShowDataCompleter] = useState(false);
-  const [showValidator, setShowValidator] = useState(false);
-  const [contractAttachments, setContractAttachments] = useState<string[]>([]);
-
-  const [formData, setFormData] = useState({
-    project_id: '',
-    contract_code: '',
-    contract_name: '',
-    contract_type: 'construction',
-    contract_category: 'main',
-    party_a_name: '',
-    party_b_name: '',
-    amount: 0,
-    currency: 'CNY',
-    tax_rate: 13,
-    signing_date: '',
-    effective_date: '',
-    end_date: '',
-    description: '',
-  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadProjects();
   }, []);
 
   const loadProjects = async () => {
-    try {
-      const response = await pmApi.projects.list();
-      if (response.success && response.data) {
-        setProjects(response.data);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to load projects', error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     setLoading(true);
     try {
-      const response = await pmApi.contracts.create(formData);
-      if (response.success) {
-        navigate('/pm/contracts');
+      const response = await pmApi.projects.list();
+      if (response.code === 200 && response.data) {
+        setProjects(response.data.items || []);
       }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to create contract', error);
+    } catch (err: unknown) {
+      logger.error('Failed to load projects:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCodeSelected = (code: string) => {
-    setFormData((prev) => ({ ...prev, contract_code: code }));
+  const handleSubmit = useCallback(
+    async (data: unknown) => {
+      const formData = data as ContractFormData;
+
+      setSubmitting(true);
+      try {
+        const response = await pmApi.contracts.create({
+          project_id: formData.project_id || undefined,
+          contract_code: formData.contract_code.trim(),
+          contract_name: formData.contract_name.trim(),
+          contract_type: formData.contract_type,
+          contract_category: formData.contract_category,
+          party_a_name: formData.party_a_name?.trim() || undefined,
+          party_b_name: formData.party_b_name?.trim() || undefined,
+          amount: parseFloat(formData.amount),
+          currency: formData.currency,
+          tax_rate: parseFloat(formData.tax_rate),
+          signing_date: formData.signing_date || undefined,
+          effective_date: formData.effective_date || undefined,
+          end_date: formData.end_date || undefined,
+          description: formData.description?.trim() || undefined,
+        });
+
+        if (response.code === 200 || response.code === 201) {
+          success('合同创建成功');
+          navigate('/pm/contracts');
+        } else {
+          error(response.message || '创建失败');
+        }
+      } catch (err: unknown) {
+        logger.error('Failed to create contract:', err);
+        error('创建合同失败');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [error, success, navigate]
+  );
+
+  const handleCancel = () => {
+    navigate('/pm/contracts');
   };
 
-  const handleTextOptimized = (text: string) => {
-    setFormData((prev) => ({ ...prev, description: text }));
-    setShowTextOptimizer(false);
-  };
+  const projectOptions = useMemo(() => {
+    return projects.map((project) => ({
+      label: project.name,
+      value: project.id,
+    }));
+  }, [projects]);
 
-  const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
-    const dataToUpdate: Record<string, any> = {};
-    Object.entries(completions).forEach(([key, item]) => {
-      dataToUpdate[key] = item.value;
-    });
-    setFormData((prev) => ({ ...prev, ...dataToUpdate }));
-    setShowDataCompleter(false);
-  };
+  const sections: FormSection[] = [
+    {
+      id: 'basic',
+      title: '基本信息',
+      description: '合同基本信息',
+      icon: <FileText style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'project_id',
+          label: '关联项目',
+          type: 'select',
+          options: [{ label: '请选择项目', value: '' }, ...projectOptions],
+          placeholder: '请选择项目',
+        },
+        {
+          name: 'contract_code',
+          label: '合同编号',
+          type: 'text',
+          required: true,
+          placeholder: '请输入合同编号',
+        },
+        {
+          name: 'contract_name',
+          label: '合同名称',
+          type: 'text',
+          required: true,
+          placeholder: '请输入合同名称',
+        },
+        {
+          name: 'contract_type',
+          label: '合同类型',
+          type: 'select',
+          required: true,
+          options: CONTRACT_TYPES.map((type) => ({
+            label: type.label,
+            value: type.value,
+          })),
+          defaultValue: 'construction',
+        },
+        {
+          name: 'contract_category',
+          label: '合同类别',
+          type: 'select',
+          options: CONTRACT_CATEGORIES.map((category) => ({
+            label: category.label,
+            value: category.value,
+          })),
+          defaultValue: 'main',
+        },
+      ],
+    },
+    {
+      id: 'parties',
+      title: '合同双方',
+      description: '合同甲乙双方信息',
+      icon: <Users style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'party_a_name',
+          label: '甲方',
+          type: 'text',
+          placeholder: '请输入甲方名称',
+        },
+        {
+          name: 'party_b_name',
+          label: '乙方',
+          type: 'text',
+          placeholder: '请输入乙方名称',
+        },
+      ],
+    },
+    {
+      id: 'amount',
+      title: '金额与货币',
+      description: '合同金额信息',
+      collapsible: false,
+      fields: [
+        {
+          name: 'amount',
+          label: '合同金额',
+          type: 'number',
+          required: true,
+          placeholder: '请输入合同金额',
+        },
+        {
+          name: 'currency',
+          label: '货币',
+          type: 'select',
+          options: CURRENCIES.map((currency) => ({
+            label: currency.label,
+            value: currency.value,
+          })),
+          defaultValue: 'CNY',
+        },
+        {
+          name: 'tax_rate',
+          label: '税率 (%)',
+          type: 'number',
+          defaultValue: '13',
+          placeholder: '请输入税率',
+        },
+      ],
+    },
+    {
+      id: 'dates',
+      title: '日期信息',
+      description: '合同日期相关信息',
+      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'signing_date',
+          label: '签约日期',
+          type: 'date',
+          placeholder: '请选择签约日期',
+        },
+        {
+          name: 'effective_date',
+          label: '生效日期',
+          type: 'date',
+          placeholder: '请选择生效日期',
+        },
+        {
+          name: 'end_date',
+          label: '结束日期',
+          type: 'date',
+          placeholder: '请选择结束日期',
+        },
+      ],
+    },
+    {
+      id: 'description',
+      title: '合同描述',
+      description: '合同详细描述',
+      collapsible: false,
+      fields: [
+        {
+          name: 'description',
+          label: '描述',
+          type: 'textarea',
+          rows: 4,
+          placeholder: '请输入合同描述...',
+        },
+      ],
+    },
+  ];
 
   return (
-    <div
-      style={{
-        padding: '1.5rem',
-        backgroundColor: 'grey.50',
-        minHeight: '100vh',
-      }}
-    >
-      <div style={{ maxWidth: '56rem', marginLeft: 'auto', marginRight: 'auto' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            marginBottom: '1.5rem',
-          }}
-        >
-          <Button
-            onClick={() => navigate('/pm/contracts')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: 'text.secondary',
-              '&:hover': { color: 'text.primary' },
-              transition: 'color 0.15s',
-            }}
-          >
-            <ArrowLeft sx={{ width: '1.25rem', height: '1.25rem' }} />
-          </Button>
-          <div>
-            <h1
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                color: 'text.primary',
-              }}
-            >
-              创建合同
-            </h1>
-            <p style={{ color: 'text.secondary' }}>填写合同基本信息</p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '0.5rem',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-              padding: '1.5rem',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem',
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: 'text.primary',
-                  }}
-                >
-                  基本信息
-                </h2>
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
-                  gap: '1rem',
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    关联项目
-                  </label>
-                  <select
-                    value={formData.project_id}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        project_id: e.target.value,
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  >
-                    <option value=''>请选择项目</option>
-                    {projects.map((project) => (
-                      <option
-                        key={project.id}
-                        value={project.id}
-                      >
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    <label
-                      style={{
-                        display: 'block',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        color: 'grey.700',
-                      }}
-                    >
-                      合同编号
-                    </label>
-                    <button
-                      type='button'
-                      onClick={() => setShowCodeGenerator(true)}
-                      style={{
-                        color: 'primary.dark',
-                        fontSize: '0.875rem',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 0,
-                      }}
-                    >
-                      AI 生成
-                    </button>
-                  </div>
-                  <input
-                    type='text'
-                    value={formData.contract_code}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        contract_code: e.target.value,
-                      }))
-                    }
-                    placeholder='请输入合同编号'
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
-                  gap: '1rem',
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    合同名称
-                  </label>
-                  <input
-                    type='text'
-                    value={formData.contract_name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        contract_name: e.target.value,
-                      }))
-                    }
-                    placeholder='请输入合同名称'
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    合同类型
-                  </label>
-                  <select
-                    value={formData.contract_type}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        contract_type: e.target.value,
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  >
-                    {CONTRACT_TYPES.map((type) => (
-                      <option
-                        key={type.value}
-                        value={type.value}
-                      >
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: 'grey.700',
-                    marginBottom: '0.25rem',
-                  }}
-                >
-                  合同类别
-                </label>
-                <select
-                  value={formData.contract_category}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      contract_category: e.target.value,
-                    }))
-                  }
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    border: '1px solid grey.300',
-                    borderRadius: '0.5rem',
-                    outline: 'none',
-                    boxShadow: '0 0 0 2px primary.main',
-                  }}
-                >
-                  {CONTRACT_CATEGORIES.map((category) => (
-                    <option
-                      key={category.value}
-                      value={category.value}
-                    >
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div
-              style={{
-                borderTop: '1px solid grey.200',
-                paddingTop: '1rem',
-                marginTop: '1.5rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem',
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: 'text.primary',
-                  }}
-                >
-                  合同双方
-                </h2>
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
-                  gap: '1rem',
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    甲方
-                  </label>
-                  <input
-                    type='text'
-                    value={formData.party_a_name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        party_a_name: e.target.value,
-                      }))
-                    }
-                    placeholder='请输入甲方名称'
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    乙方
-                  </label>
-                  <input
-                    type='text'
-                    value={formData.party_b_name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        party_b_name: e.target.value,
-                      }))
-                    }
-                    placeholder='请输入乙方名称'
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                borderTop: '1px solid grey.200',
-                paddingTop: '1rem',
-                marginTop: '1.5rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem',
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: 'text.primary',
-                  }}
-                >
-                  金额与时间
-                </h2>
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
-                  gap: '1rem',
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    合同金额
-                  </label>
-                  <input
-                    type='number'
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        amount: Number(e.target.value),
-                      }))
-                    }
-                    placeholder='请输入合同金额'
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    税率 (%)
-                  </label>
-                  <input
-                    type='number'
-                    value={formData.tax_rate}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        tax_rate: Number(e.target.value),
-                      }))
-                    }
-                    placeholder='请输入税率'
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    货币
-                  </label>
-                  <select
-                    value={formData.currency}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        currency: e.target.value,
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  >
-                    <option value='CNY'>人民币</option>
-                    <option value='USD'>美元</option>
-                    <option value='EUR'>欧元</option>
-                  </select>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
-                  gap: '1rem',
-                  marginTop: '1rem',
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    签约日期
-                  </label>
-                  <input
-                    type='date'
-                    value={formData.signing_date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        signing_date: e.target.value,
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    生效日期
-                  </label>
-                  <input
-                    type='date'
-                    value={formData.effective_date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        effective_date: e.target.value,
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: 'grey.700',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    结束日期
-                  </label>
-                  <input
-                    type='date'
-                    value={formData.end_date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        end_date: e.target.value,
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid grey.300',
-                      borderRadius: '0.5rem',
-                      outline: 'none',
-                      boxShadow: '0 0 0 2px primary.main',
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                borderTop: '1px solid grey.200',
-                paddingTop: '1rem',
-                marginTop: '1.5rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem',
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: 'text.primary',
-                  }}
-                >
-                  合同描述
-                </h2>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                >
-                  <button
-                    type='button'
-                    onClick={() => setShowTextOptimizer(true)}
-                    style={{
-                      color: 'primary.dark',
-                      fontSize: '0.875rem',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                    }}
-                  >
-                    AI 优化
-                  </button>
-                  <button
-                    type='button'
-                    onClick={() => setShowDataCompleter(true)}
-                    style={{
-                      color: 'primary.dark',
-                      fontSize: '0.875rem',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                    }}
-                  >
-                    AI 补全
-                  </button>
-                  <button
-                    type='button'
-                    onClick={() => setShowValidator(true)}
-                    style={{
-                      color: 'primary.dark',
-                      fontSize: '0.875rem',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: 0,
-                    }}
-                  >
-                    AI 校验
-                  </button>
-                </div>
-              </div>
-
-              <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder='请输入合同描述...'
-                rows={6}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  border: '1px solid grey.300',
-                  borderRadius: '0.5rem',
-                  outline: 'none',
-                  boxShadow: '0 0 0 2px primary.main',
-                }}
-              />
-            </div>
-
-            <div
-              style={{
-                borderTop: '1px solid grey.200',
-                paddingTop: '1rem',
-                marginTop: '1.5rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '1rem',
-                }}
-              >
-                <h2
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: 'text.primary',
-                  }}
-                >
-                  合同附件
-                </h2>
-              </div>
-
-              <Box sx={{ mb: 2 }}>
-                <FileUpload
-                  value={contractAttachments}
-                  onChange={setContractAttachments}
-                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.xls', '.xlsx']}
-                  maxCount={10}
-                  maxSize={50}
-                  maxTotalSize={200}
-                  uploadText='上传合同附件'
-                />
-              </Box>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              type='submit'
-              disabled={loading}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                backgroundColor: 'primary.dark',
-                color: 'white',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: 'pointer',
-                opacity: loading ? 0.5 : 1,
-                transition: 'background-color 0.15s',
-              }}
-            >
-              <Save style={{ width: '1rem', height: '1rem' }} />
-              {loading ? '创建中...' : '创建合同'}
-            </button>
-            <button
-              type='button'
-              onClick={() => navigate('/pm/contracts')}
-              style={{
-                padding: '0.75rem 1.5rem',
-                border: '1px solid grey.300',
-                color: 'grey.700',
-                borderRadius: '0.5rem',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                transition: 'background-color 0.15s',
-              }}
-            >
-              取消
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {showCodeGenerator && (
-        <AICodeGenerator
-          isOpen={showCodeGenerator}
-          onClose={() => setShowCodeGenerator(false)}
-          context={{ entityType: 'contract', name: formData.contract_name }}
-          onSelect={handleCodeSelected}
-        />
-      )}
-
-      {showTextOptimizer && (
-        <AITextOptimizer
-          isOpen={showTextOptimizer}
-          onClose={() => setShowTextOptimizer(false)}
-          context={{ textType: 'clause', name: formData.contract_name }}
-          originalText={formData.description}
-          onOptimized={handleTextOptimized}
-        />
-      )}
-
-      {showDataCompleter && (
-        <AIDataCompleter
-          isOpen={showDataCompleter}
-          onClose={() => setShowDataCompleter(false)}
-          completeRequest={{
-            partialData: formData,
-            context: {
-              module: 'pm',
-              entityType: 'contract',
-            },
-          }}
-          onApplyCompletion={handleApplyCompletion}
-        />
-      )}
-
-      {showValidator && (
-        <AIFormValidator
-          isOpen={showValidator}
-          onClose={() => setShowValidator(false)}
-          validateRequest={{
-            data: formData,
-            context: {
-              module: 'pm',
-              entityType: 'contract',
-            },
-          }}
-        />
-      )}
-    </div>
+    <FormPageTemplate
+      title='创建合同'
+      subtitle='填写合同基本信息'
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: '项目管理', href: '/pm' },
+        { label: '合同管理', href: '/pm/contracts' },
+        { label: '创建合同' },
+      ]}
+      sections={sections}
+      schema={contractSchema}
+      loading={loading}
+      submitting={submitting}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      submitText='创建合同'
+      cancelText='取消'
+      columns={2}
+      stickyFooter={true}
+    />
   );
 };
 

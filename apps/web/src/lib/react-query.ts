@@ -1,22 +1,24 @@
 import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
-import { toast } from '../hooks/use-toast';
+import { useAppStore } from '../store';
 
 const queryCache = new QueryCache({
   onError: (error) => {
-    toast({
+    const addNotification = useAppStore.getState().addNotification;
+    addNotification({
       title: '数据加载失败',
-      description: error.message,
-      variant: 'destructive',
+      message: error.message,
+      type: 'error',
     });
   },
 });
 
 const mutationCache = new MutationCache({
   onError: (error) => {
-    toast({
+    const addNotification = useAppStore.getState().addNotification;
+    addNotification({
       title: '操作失败',
-      description: error.message,
-      variant: 'destructive',
+      message: error.message,
+      type: 'error',
     });
   },
 });

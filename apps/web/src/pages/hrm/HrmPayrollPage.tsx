@@ -19,7 +19,6 @@ import { Box, InputBase, Typography } from '@mui/material';
 import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/notification/NotificationContainer';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { StatusBadge } from '@/components/hrm/StatusBadge';
 import { ListPageTemplate, StatCard } from '@/components/mui';
@@ -618,11 +617,6 @@ const HrmPayrollPage: React.FC = () => {
 
   return (
     <Box>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       {/* StatCards */}
       <Box
         sx={{

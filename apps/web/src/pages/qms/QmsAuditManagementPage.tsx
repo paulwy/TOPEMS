@@ -34,6 +34,7 @@ import { Button } from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { qmsApi } from '@/api/qms';
 import type { AuditPlan, AuditTask, AuditFinding } from '@/api/qms';
+import { useAppStore } from '@/store';
 
 const QmsAuditManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ const QmsAuditManagementPage: React.FC = () => {
   const [tasks, setTasks] = useState<AuditTask[]>([]);
   const [findings, setFindings] = useState<AuditFinding[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,6 +55,7 @@ const QmsAuditManagementPage: React.FC = () => {
     auditors: '',
     departments: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadAuditPlans();
@@ -66,9 +69,20 @@ const QmsAuditManagementPage: React.FC = () => {
         const plansData = response.data as any;
         const plansArray = Array.isArray(plansData) ? plansData : plansData.plans || [];
         setPlans(plansArray);
+      } else if (!response.success) {
+        addNotification({
+          title: '加载失败',
+          message: response.message || '加载审核计划失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       apiLogger.error('加载审核计划失败:', error);
+      addNotification({
+        title: '加载失败',
+        message: '加载审核计划失败',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -96,6 +110,11 @@ const QmsAuditManagementPage: React.FC = () => {
       }
     } catch (error: unknown) {
       apiLogger.error('加载审核详情失败:', error);
+      addNotification({
+        title: '加载失败',
+        message: '加载审核详情失败',
+        type: 'error',
+      });
     }
   };
 
@@ -107,6 +126,7 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const handleCreatePlan = async () => {
     try {
+      setSubmitting(true);
       const auditorsArray = formData.auditors
         .split(',')
         .map((s) => s.trim())
@@ -128,12 +148,30 @@ const QmsAuditManagementPage: React.FC = () => {
         planned_date: formData.start_date,
       });
       if (response.success) {
+        addNotification({
+          title: '成功',
+          message: '审核计划创建成功',
+          type: 'success',
+        });
         setShowAddModal(false);
         loadAuditPlans();
         resetForm();
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '创建审核计划失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       apiLogger.error('创建审核计划失败:', error);
+      addNotification({
+        title: '错误',
+        message: '创建审核计划时发生错误',
+        type: 'error',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -141,10 +179,26 @@ const QmsAuditManagementPage: React.FC = () => {
     try {
       const response = await qmsApi.completeAuditTask(taskId);
       if (response.success && selectedPlan) {
+        addNotification({
+          title: '成功',
+          message: '任务完成成功',
+          type: 'success',
+        });
         loadPlanDetails(selectedPlan.id);
+      } else if (!response.success) {
+        addNotification({
+          title: '失败',
+          message: response.message || '完成任务失败',
+          type: 'error',
+        });
       }
     } catch (error: unknown) {
       apiLogger.error('完成审核任务失败:', error);
+      addNotification({
+        title: '错误',
+        message: '完成任务时发生错误',
+        type: 'error',
+      });
     }
   };
 
@@ -633,14 +687,16 @@ const QmsAuditManagementPage: React.FC = () => {
           <Button
             variant='outlined'
             onClick={() => setShowAddModal(false)}
+            disabled={submitting}
           >
             取消
           </Button>
           <Button
             variant='contained'
             onClick={handleCreatePlan}
+            disabled={submitting}
           >
-            创建计划
+            {submitting ? '创建中...' : '创建计划'}
           </Button>
         </DialogActions>
       </Dialog>

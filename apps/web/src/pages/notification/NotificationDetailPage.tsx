@@ -5,7 +5,6 @@ import { Box, Typography } from '@mui/material';
 import type { Notification, NotificationTypeEnum } from '@/api/notification';
 import { markAsRead, deleteNotification, getNotifications } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/NotificationContainer';
 import { apiLogger } from '@/utils/logger';
 
 const NotificationDetailPage: React.FC = () => {
@@ -151,11 +150,6 @@ const NotificationDetailPage: React.FC = () => {
   if (!notification) {
     return (
       <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-        <NotificationContainer
-          notifications={notifications}
-          onClose={hideNotification}
-        />
-
         {/* Header */}
         <Box
           sx={{
@@ -253,11 +247,6 @@ const NotificationDetailPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       {/* Header */}
       <Box
         sx={{

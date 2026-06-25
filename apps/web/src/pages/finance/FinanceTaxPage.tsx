@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Download,
   Receipt,
@@ -14,6 +14,9 @@ import { DataExport } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { StatCardGroup } from '@/components/mui';
 import type { StatCard } from '@/components/templates/DashboardTemplate';
+import { financeApi } from '@/api/finance';
+import type { SalesInvoice, PurchaseInvoice } from '@/types/finance';
+import { apiLogger } from '@/utils/logger';
 
 import {
   Dialog,
@@ -39,103 +42,15 @@ interface TaxEntry {
   paid_amount: number;
   owed_amount: number;
   status: string;
+  related_document?: string;
 }
-
-const mockTaxData: TaxEntry[] = [
-  {
-    id: '1',
-    tax_type: '增值税',
-    declaration_period: '2024-01',
-    taxable_income: 500000,
-    tax_rate: 13,
-    tax_amount: 65000,
-    paid_amount: 65000,
-    owed_amount: 0,
-    status: '已申报',
-  },
-  {
-    id: '2',
-    tax_type: '企业所得税',
-    declaration_period: '2024-01',
-    taxable_income: 200000,
-    tax_rate: 25,
-    tax_amount: 50000,
-    paid_amount: 50000,
-    owed_amount: 0,
-    status: '已申报',
-  },
-  {
-    id: '3',
-    tax_type: '个人所得税',
-    declaration_period: '2024-01',
-    taxable_income: 80000,
-    tax_rate: 20,
-    tax_amount: 16000,
-    paid_amount: 16000,
-    owed_amount: 0,
-    status: '已申报',
-  },
-  {
-    id: '4',
-    tax_type: '增值税',
-    declaration_period: '2024-02',
-    taxable_income: 600000,
-    tax_rate: 13,
-    tax_amount: 78000,
-    paid_amount: 50000,
-    owed_amount: 28000,
-    status: '待缴纳',
-  },
-  {
-    id: '5',
-    tax_type: '企业所得税',
-    declaration_period: '2024-02',
-    taxable_income: 180000,
-    tax_rate: 25,
-    tax_amount: 45000,
-    paid_amount: 0,
-    owed_amount: 45000,
-    status: '待申报',
-  },
-  {
-    id: '6',
-    tax_type: '个人所得税',
-    declaration_period: '2024-02',
-    taxable_income: 90000,
-    tax_rate: 20,
-    tax_amount: 18000,
-    paid_amount: 18000,
-    owed_amount: 0,
-    status: '已申报',
-  },
-  {
-    id: '7',
-    tax_type: '增值税',
-    declaration_period: '2024-03',
-    taxable_income: 450000,
-    tax_rate: 13,
-    tax_amount: 58500,
-    paid_amount: 0,
-    owed_amount: 58500,
-    status: '待申报',
-  },
-  {
-    id: '8',
-    tax_type: '企业所得税',
-    declaration_period: '2024-Q1',
-    taxable_income: 580000,
-    tax_rate: 25,
-    tax_amount: 145000,
-    paid_amount: 100000,
-    owed_amount: 45000,
-    status: '待缴纳',
-  },
-];
 
 const FinanceTaxPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const [taxData] = useState<TaxEntry[]>(mockTaxData);
+  const [taxData, setTaxData] = useState<TaxEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -143,6 +58,59 @@ const FinanceTaxPage: React.FC = () => {
   const [showPayModal, setShowPayModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxEntry | null>(null);
+
+  useEffect(() => {
+    loadTaxData();
+  }, []);
+
+  const loadTaxData = async () => {
+    setLoading(true);
+    setError(undefined);
+    try {
+      const [salesInvoicesRes, purchaseInvoicesRes] = await Promise.all([
+        financeApi.receivablePayable.listSalesInvoices(),
+        financeApi.receivablePayable.listPurchaseInvoices(),
+      ]);
+
+      const receivableTaxEntries: TaxEntry[] = (salesInvoicesRes.success && salesInvoicesRes.data?.items || []).map((r: SalesInvoice) => ({
+        id: r.id,
+        tax_type: '增值税',
+        declaration_period: r.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
+        taxable_income: r.amount,
+        tax_rate: 13,
+        tax_amount: r.tax_amount || Math.round(r.amount * 0.13),
+        paid_amount: r.received_amount || 0,
+        owed_amount: Math.max(0, (r.tax_amount || Math.round(r.amount * 0.13)) - (r.received_amount || 0)),
+        status: r.status === 'received' ? '已申报' : r.status === 'partial_received' ? '待缴纳' : '待申报',
+        related_document: r.invoice_no,
+      }));
+
+      const payableTaxEntries: TaxEntry[] = (purchaseInvoicesRes.success && purchaseInvoicesRes.data?.items || []).map((p: PurchaseInvoice) => ({
+        id: p.id,
+        tax_type: '企业所得税',
+        declaration_period: p.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
+        taxable_income: p.amount,
+        tax_rate: 25,
+        tax_amount: p.tax_amount || Math.round(p.amount * 0.25),
+        paid_amount: p.paid_amount || 0,
+        owed_amount: Math.max(0, (p.tax_amount || Math.round(p.amount * 0.25)) - (p.paid_amount || 0)),
+        status: p.status === 'received' ? '已申报' : '待缴纳',
+        related_document: p.invoice_no,
+      }));
+
+      setTaxData([...receivableTaxEntries, ...payableTaxEntries]);
+    } catch (err: unknown) {
+      apiLogger.error('加载税务数据失败:', err);
+      setError('加载税务数据失败');
+      addNotification({
+        title: '错误',
+        message: '加载税务数据失败',
+        type: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredData = useMemo(() => {
     return taxData.filter((tax) => {
@@ -196,6 +164,7 @@ const FinanceTaxPage: React.FC = () => {
       type: 'success',
     });
     setShowDeclareModal(false);
+    loadTaxData();
   };
 
   const handlePay = (tax: TaxEntry) => {
@@ -211,6 +180,7 @@ const FinanceTaxPage: React.FC = () => {
       type: 'success',
     });
     setShowPayModal(false);
+    loadTaxData();
   };
 
   const handleAnalysis = (tax: TaxEntry) => {
@@ -226,147 +196,6 @@ const FinanceTaxPage: React.FC = () => {
     });
   };
 
-  // ListPageTemplate 列定义
-  const columns = useMemo(
-    () => [
-      {
-        id: 'tax_type',
-        label: '税种',
-        render: (row: TaxEntry) => (
-          <Chip
-            label={row.tax_type}
-            size='small'
-            color='primary'
-          />
-        ),
-      },
-      {
-        id: 'declaration_period',
-        label: '申报期间',
-        render: (row: TaxEntry) => (
-          <MuiBox sx={{ fontWeight: 500 }}>{row.declaration_period}</MuiBox>
-        ),
-      },
-      {
-        id: 'taxable_income',
-        label: '应税收入',
-        render: (row: TaxEntry) => (
-          <MuiBox sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
-            ¥{row.taxable_income.toLocaleString()}
-          </MuiBox>
-        ),
-      },
-      {
-        id: 'tax_rate',
-        label: '税率',
-        render: (row: TaxEntry) => (
-          <Chip
-            label={`${row.tax_rate}%`}
-            size='small'
-            variant='outlined'
-          />
-        ),
-      },
-      {
-        id: 'tax_amount',
-        label: '应纳税额',
-        render: (row: TaxEntry) => (
-          <MuiBox
-            sx={{
-              fontWeight: 700,
-              color: 'primary.main',
-              fontFamily: 'monospace',
-            }}
-          >
-            ¥{row.tax_amount.toLocaleString()}
-          </MuiBox>
-        ),
-      },
-      {
-        id: 'paid_amount',
-        label: '已缴税额',
-        render: (row: TaxEntry) => (
-          <MuiBox sx={{ color: 'success.main', fontFamily: 'monospace' }}>
-            ¥{row.paid_amount.toLocaleString()}
-          </MuiBox>
-        ),
-      },
-      {
-        id: 'owed_amount',
-        label: '欠税金额',
-        render: (row: TaxEntry) => (
-          <MuiBox
-            sx={{
-              fontWeight: 600,
-              color: row.owed_amount > 0 ? 'error.main' : 'success.main',
-              fontFamily: 'monospace',
-            }}
-          >
-            ¥{row.owed_amount.toLocaleString()}
-          </MuiBox>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row: TaxEntry) => {
-          const config = getStatusConfig(row.status);
-          return (
-            <Chip
-              label={row.status}
-              size='small'
-              color={config.color}
-              icon={config.icon as React.ReactElement}
-            />
-          );
-        },
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        render: (row: TaxEntry) => (
-          <Stack
-            direction='row'
-            spacing={1}
-          >
-            {row.status === '待申报' && (
-              <Tooltip title='税务申报'>
-                <IconButton
-                  size='small'
-                  color='success'
-                  onClick={() => handleDeclare(row)}
-                >
-                  <FileText sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            {row.status === '待缴纳' && (
-              <Tooltip title='税款缴纳'>
-                <IconButton
-                  size='small'
-                  color='warning'
-                  onClick={() => handlePay(row)}
-                >
-                  <DollarSign sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title='税务分析'>
-              <IconButton
-                size='small'
-                onClick={() => handleAnalysis(row)}
-              >
-                <TrendingUp sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        ),
-      },
-    ],
-    []
-  );
-
-  // 统计卡片数据
   const totalTaxAmount = useMemo(
     () => taxData.reduce((sum, t) => sum + t.tax_amount, 0),
     [taxData]
@@ -396,7 +225,6 @@ const FinanceTaxPage: React.FC = () => {
     },
   ];
 
-  // ListPageTemplate filters
   const filters = useMemo(
     () => [
       {
@@ -429,7 +257,6 @@ const FinanceTaxPage: React.FC = () => {
     [filterType, filterStatus]
   );
 
-  // 导出字段配置
   const exportFields = useMemo(
     () => [
       { key: 'tax_type', title: '税种' },
@@ -446,7 +273,6 @@ const FinanceTaxPage: React.FC = () => {
 
   return (
     <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* 统计卡片区域 */}
       <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, pt: 3 }}>
         <StatCardGroup
           stats={statCards}
@@ -461,8 +287,103 @@ const FinanceTaxPage: React.FC = () => {
           backButton={{
             href: '/dashboard',
           }}
-          columns={columns}
+          columns={[
+            {
+              id: 'tax_type',
+              label: '税种',
+              render: (row: TaxEntry) => (
+                <Chip
+                  label={row.tax_type}
+                  size='small'
+                  color='primary'
+                />
+              ),
+            },
+            {
+              id: 'declaration_period',
+              label: '申报期间',
+              render: (row: TaxEntry) => (
+                <MuiBox sx={{ fontWeight: 500 }}>{row.declaration_period}</MuiBox>
+              ),
+            },
+            {
+              id: 'taxable_income',
+              label: '应税收入',
+              render: (row: TaxEntry) => (
+                <MuiBox sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+                  ¥{row.taxable_income.toLocaleString()}
+                </MuiBox>
+              ),
+            },
+            {
+              id: 'tax_rate',
+              label: '税率',
+              render: (row: TaxEntry) => (
+                <Chip
+                  label={`${row.tax_rate}%`}
+                  size='small'
+                  variant='outlined'
+                />
+              ),
+            },
+            {
+              id: 'tax_amount',
+              label: '应纳税额',
+              render: (row: TaxEntry) => (
+                <MuiBox
+                  sx={{
+                    fontWeight: 700,
+                    color: 'primary.main',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  ¥{row.tax_amount.toLocaleString()}
+                </MuiBox>
+              ),
+            },
+            {
+              id: 'paid_amount',
+              label: '已缴税额',
+              render: (row: TaxEntry) => (
+                <MuiBox sx={{ color: 'success.main', fontFamily: 'monospace' }}>
+                  ¥{row.paid_amount.toLocaleString()}
+                </MuiBox>
+              ),
+            },
+            {
+              id: 'owed_amount',
+              label: '欠税金额',
+              render: (row: TaxEntry) => (
+                <MuiBox
+                  sx={{
+                    fontWeight: 600,
+                    color: row.owed_amount > 0 ? 'error.main' : 'success.main',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  ¥{row.owed_amount.toLocaleString()}
+                </MuiBox>
+              ),
+            },
+            {
+              id: 'status',
+              label: '状态',
+              render: (row: TaxEntry) => {
+                const config = getStatusConfig(row.status);
+                return (
+                  <Chip
+                    label={row.status}
+                    size='small'
+                    color={config.color}
+                    icon={config.icon as React.ReactElement}
+                  />
+                );
+              },
+            },
+          ]}
           data={filteredData}
+          loading={loading}
+          error={error}
           filters={filters}
           searchable
           searchPlaceholder='搜索税种、申报期间...'
@@ -490,10 +411,31 @@ const FinanceTaxPage: React.FC = () => {
               buttonText=''
             />
           }
+          rowActions={[
+            {
+              label: '税务申报',
+              icon: <FileText sx={{ width: 16, height: 16 }} />,
+              color: 'success' as const,
+              onClick: (row: TaxEntry) => row.status === '待申报' && handleDeclare(row),
+              show: (row: TaxEntry) => row.status === '待申报',
+            },
+            {
+              label: '税款缴纳',
+              icon: <DollarSign sx={{ width: 16, height: 16 }} />,
+              color: 'warning' as const,
+              onClick: (row: TaxEntry) => row.status === '待缴纳' && handlePay(row),
+              show: (row: TaxEntry) => row.status === '待缴纳',
+            },
+            {
+              label: '税务分析',
+              icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
+              onClick: (row: TaxEntry) => handleAnalysis(row),
+            },
+          ]}
+          onRefresh={loadTaxData}
         />
       </MuiBox>
 
-      {/* Declare Modal */}
       <Dialog
         open={showDeclareModal}
         onClose={() => setShowDeclareModal(false)}
@@ -615,7 +557,6 @@ const FinanceTaxPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Pay Modal */}
       <Dialog
         open={showPayModal}
         onClose={() => setShowPayModal(false)}
@@ -737,7 +678,6 @@ const FinanceTaxPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Analysis Modal */}
       <Dialog
         open={showAnalysisModal}
         onClose={() => setShowAnalysisModal(false)}

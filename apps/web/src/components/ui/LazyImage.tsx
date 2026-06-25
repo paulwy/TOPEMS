@@ -1,141 +1,134 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Box } from '@mui/material';
+import React, { useState, useCallback } from 'react';
+import { Box, Skeleton } from '@mui/material';
+import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 
-interface LazyImageProps {
+export interface LazyImageProps {
   src: string;
   alt: string;
   className?: string;
   style?: React.CSSProperties;
+  width?: number | string;
+  height?: number | string;
   placeholder?: React.ReactNode;
   fallbackSrc?: string;
   onLoad?: () => void;
   onError?: () => void;
+  rootMargin?: string;
+  threshold?: number;
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  borderRadius?: number | string;
 }
 
-const DefaultPlaceholder = () => (
-  <Box
-    sx={{
-      backgroundColor: 'grey.200',
-      borderRadius: '4px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '100%',
-      height: '100%',
-    }}
-  >
-    <svg
-      width='32'
-      height='32'
-      viewBox='0 0 24 24'
-      fill='none'
-      stroke='text.disabled'
-      strokeWidth='2'
-      strokeLinecap='round'
-      strokeLinejoin='round'
-    >
-      <rect
-        x='3'
-        y='3'
-        width='18'
-        height='18'
-        rx='2'
-        ry='2'
-      />
-      <circle
-        cx='8.5'
-        cy='8.5'
-        r='1.5'
-        fill='currentColor'
-      />
-      <polyline points='21 15 16 10 5 21' />
-    </svg>
-  </Box>
+const DefaultPlaceholder: React.FC<{
+  width?: number | string;
+  height?: number | string;
+  borderRadius?: number | string;
+}> = ({ width = '100%', height = '100%', borderRadius = 0 }) => (
+  <Skeleton
+    variant='rectangular'
+    animation='wave'
+    width={width}
+    height={height}
+    sx={{ borderRadius }}
+  />
 );
 
 export const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
   className = '',
-  style = {},
-  placeholder = <DefaultPlaceholder />,
+  style,
+  width,
+  height,
+  placeholder,
   fallbackSrc,
   onLoad,
   onError,
+  rootMargin = '100px',
+  threshold = 0.1,
+  objectFit = 'cover',
+  borderRadius = 0,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
+  const [imgSrc, setImgSrc] = useState<string>('');
 
-  useEffect(() => {
-    const img = imgRef.current;
-    if (!img) return;
+  const { ref, isIntersecting } = useIntersectionObserver({
+    rootMargin,
+    threshold,
+    triggerOnce: true,
+    initialIsIntersecting: false,
+  });
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const imgElement = entry.target as HTMLImageElement;
-            imgElement.src = imgElement.dataset.src || '';
-            observerRef.current?.unobserve(imgElement);
-          }
-        });
-      },
-      {
-        rootMargin: '100px',
-        threshold: 0.1,
-      }
-    );
-
-    observerRef.current.observe(img);
-
-    return () => {
-      observerRef.current?.disconnect();
-    };
-  }, [src]);
-
-  const handleLoad = () => {
+  const handleLoad = useCallback(() => {
     setIsLoaded(true);
     onLoad?.();
+  }, [onLoad]);
+
+  const handleError = useCallback(() => {
+    if (fallbackSrc && !hasError) {
+      setHasError(true);
+      setImgSrc(fallbackSrc);
+    } else {
+      setHasError(true);
+      onError?.();
+    }
+  }, [fallbackSrc, hasError, onError]);
+
+  React.useEffect(() => {
+    if (isIntersecting && !imgSrc) {
+      setImgSrc(src);
+    }
+  }, [isIntersecting, src, imgSrc]);
+
+  React.useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+    setImgSrc('');
+  }, [src]);
+
+  const containerStyle: React.CSSProperties = {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius,
+    ...(width !== undefined ? { width } : {}),
+    ...(height !== undefined ? { height } : {}),
+    ...style,
   };
 
-  const handleError = () => {
-    setHasError(true);
-    onError?.();
+  const imgStyle: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    objectFit,
+    opacity: isLoaded ? 1 : 0,
+    transition: 'opacity 0.3s ease-in-out',
+    display: 'block',
   };
-
-  if (hasError && fallbackSrc) {
-    return (
-      <img
-        src={fallbackSrc}
-        alt={alt}
-        className={className}
-        style={style}
-        onLoad={onLoad}
-      />
-    );
-  }
 
   return (
     <Box
+      ref={ref}
       className={className}
-      sx={style}
+      style={containerStyle}
     >
-      {!isLoaded && placeholder}
-      <img
-        ref={imgRef}
-        data-src={src}
-        alt={alt}
-        style={{
-          display: isLoaded ? 'block' : 'none',
-          width: '100%',
-          height: 'auto',
-          ...style,
-        }}
-        onLoad={handleLoad}
-        onError={handleError}
-      />
+      {!isLoaded &&
+        (placeholder || (
+          <DefaultPlaceholder
+            width={width}
+            height={height}
+            borderRadius={borderRadius}
+          />
+        ))}
+      {imgSrc && (
+        <img
+          src={imgSrc}
+          alt={alt}
+          style={imgStyle}
+          onLoad={handleLoad}
+          onError={handleError}
+          loading='lazy'
+        />
+      )}
     </Box>
   );
 };

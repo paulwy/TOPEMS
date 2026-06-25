@@ -37,7 +37,7 @@ import { Button } from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import type { Incident, IncidentAction } from '@/api/ehs';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 const EhsIncidentReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +48,7 @@ const EhsIncidentReportPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [formData, setFormData] = useState({
+
     title: '',
     description: '',
     incident_type: 'near_miss' as
@@ -62,6 +63,7 @@ const EhsIncidentReportPage: React.FC = () => {
     reported_at: new Date().toISOString().split('T')[0],
     status: 'pending' as 'pending' | 'investigating' | 'resolved' | 'closed',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadIncidents();
@@ -80,7 +82,7 @@ const EhsIncidentReportPage: React.FC = () => {
       }
     } catch (error: unknown) {
       apiLogger.error('加载事件报告失败:', error);
-      toast.error('加载事件报告失败');
+      addNotification({ title: '错误', message: '加载事件报告失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -101,7 +103,7 @@ const EhsIncidentReportPage: React.FC = () => {
       }
     } catch (error: unknown) {
       apiLogger.error('加载事件详情失败:', error);
-      toast.error('加载事件详情失败');
+      addNotification({ title: '错误', message: '加载事件详情失败', type: 'error' });
     }
   };
 
@@ -113,26 +115,26 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const handleCreateIncident = async () => {
     if (!formData.title.trim()) {
-      toast.error('请输入事件标题');
+      addNotification({ title: '错误', message: '请输入事件标题', type: 'error' });
       return;
     }
     if (!formData.description.trim()) {
-      toast.error('请输入事件描述');
+      addNotification({ title: '错误', message: '请输入事件描述', type: 'error' });
       return;
     }
     try {
       const response = await ehsApi.createIncident(formData);
       if (response.success) {
-        toast.success('事件报告创建成功');
+        addNotification({ title: '成功', message: '事件报告创建成功', type: 'success' });
         setShowAddModal(false);
         loadIncidents();
         resetForm();
       } else {
-        toast.error('创建失败，请稍后重试');
+        addNotification({ title: '错误', message: '创建失败，请稍后重试', type: 'error' });
       }
     } catch (error: unknown) {
       apiLogger.error('创建事件报告失败:', error);
-      toast.error('创建失败，请稍后重试');
+      addNotification({ title: '错误', message: '创建失败，请稍后重试', type: 'error' });
     }
   };
 
@@ -141,14 +143,14 @@ const EhsIncidentReportPage: React.FC = () => {
     try {
       const response = await ehsApi.deleteIncident(incidentId);
       if (response.success) {
-        toast.success('事件报告删除成功');
+        addNotification({ title: '成功', message: '事件报告删除成功', type: 'success' });
         loadIncidents();
       } else {
-        toast.error('删除失败，请稍后重试');
+        addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
       }
     } catch (error: unknown) {
       apiLogger.error('删除事件报告失败:', error);
-      toast.error('删除失败，请稍后重试');
+      addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
     }
   };
 

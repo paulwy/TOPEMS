@@ -1,10 +1,6 @@
 import { Grid } from '@/components/Grid';
-/**
- * 合并报表查看页面
- * 查看多公司合并后的财务报表
- */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -60,6 +56,7 @@ import {
   usePublishConsolidationReport,
   useConsolidationScopes,
 } from '@/hooks/useConsolidation';
+import { useNotification } from '@/hooks/useNotification';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
 import { StatCardGroup } from '@/components/mui';
 import type {
@@ -119,6 +116,7 @@ const APPROVAL_STATUS_CONFIG = {
 
 export default function ConsolidationReportsPage() {
   const navigate = useNavigate();
+  const { error: notifyError } = useNotification();
 
   // 状态
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -129,13 +127,14 @@ export default function ConsolidationReportsPage() {
   const [showDetail, setShowDetail] = useState(false);
 
   // 查询合并范围列表
-  const { data: scopesData } = useConsolidationScopes();
+  const { data: scopesData, error: scopesError } = useConsolidationScopes();
 
   // 查询合并报表列表
   const {
     data: reportsData,
     isLoading,
     refetch,
+    error: reportsError,
   } = useConsolidationReports({
     scope_id: selectedScope || undefined,
     report_type: reportType || undefined,
@@ -144,13 +143,33 @@ export default function ConsolidationReportsPage() {
   });
 
   // 查询选中报表详情
-  const { data: reportDetail } = useConsolidationReportLines(selectedReport?.id || '');
+  const { data: reportDetail, error: reportDetailError } = useConsolidationReportLines(
+    selectedReport?.id || ''
+  );
 
   // 审批报表
   const approveReport = useApproveConsolidationReport();
 
   // 发布报表
   const publishReport = usePublishConsolidationReport();
+
+  useEffect(() => {
+    if (scopesError) {
+      notifyError('获取合并范围列表失败');
+    }
+  }, [scopesError, notifyError]);
+
+  useEffect(() => {
+    if (reportsError) {
+      notifyError('获取报表列表失败');
+    }
+  }, [reportsError, notifyError]);
+
+  useEffect(() => {
+    if (reportDetailError) {
+      notifyError('获取报表详情失败');
+    }
+  }, [reportDetailError, notifyError]);
 
   // 处理查看报表详情
   const handleViewReport = (report: ConsolidationReport) => {

@@ -105,6 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
             }
           }}
           sx={{
+            position: 'relative',
             color: active ? 'primary.main' : 'text.secondary',
             backgroundColor: active ? 'primary.50' : 'transparent',
             borderRadius: 1,
@@ -112,7 +113,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
             marginX: 1,
             cursor: hasChildren || item.path ? 'pointer' : 'default',
             pl: depth * 2 + 1,
-            '&:hover': { backgroundColor: 'grey.50' },
+            transition: 'all 0.15s ease-in-out',
+            '&:hover': {
+              backgroundColor: active ? 'primary.50' : 'grey.50',
+              transform: 'translateX(2px)',
+            },
+            // 左侧激活条
+            '&::before': active
+              ? {
+                  content: '""',
+                  position: 'absolute',
+                  left: 0,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 3,
+                  height: '60%',
+                  borderRadius: '0 3px 3px 0',
+                  backgroundColor: 'primary.main',
+                }
+              : {},
           }}
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
@@ -128,7 +147,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
               <ChevronRight size={18} />
             )}
           </ListItemIcon>
-          <ListItemText primary={item.label} />
+          <ListItemText
+            primary={item.label}
+            sx={{
+              '& .MuiListItemText-primary': {
+                fontWeight: active ? 600 : 400,
+                fontSize: '0.875rem',
+              },
+            }}
+          />
           {item.badge && (
             <Chip
               size='small'
@@ -257,12 +284,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
       <List>
         <ListItem
           onClick={() => {
-            navigate('/');
+            navigate('/dashboard');
             onClose();
           }}
           sx={{
-            color: location.pathname === '/' ? 'primary.main' : 'text.secondary',
-            backgroundColor: location.pathname === '/' ? 'primary.50' : 'transparent',
+            color: location.pathname === '/dashboard' ? 'primary.main' : 'text.secondary',
+            backgroundColor: location.pathname === '/dashboard' ? 'primary.50' : 'transparent',
             borderRadius: 1,
             marginY: 0.5,
             marginX: 1,

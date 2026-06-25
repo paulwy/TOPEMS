@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { ArrowRightLeft, Database, Box as BoxIcon, Bell, Settings, Layers } from 'lucide-react';
 import { integrationApi } from '@/api/integration';
+import { useAppStore } from '@/store';
 import type { SyncStats, IntegrationEvent } from '@/api/integration';
 import { logger } from '@/utils/logger';
+import { useNotification } from '@/hooks/useNotification';
 import {
   DashboardTemplate,
   type StatCard,
@@ -17,11 +19,12 @@ import { BarChartComponent } from '@/components/charts/BarChart';
 
 const IntegrationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { error } = useNotification();
   const [stats, setStats] = useState<SyncStats | null>(null);
   const [events, setEvents] = useState<IntegrationEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [statsRes, eventsRes] = await Promise.all([
@@ -31,16 +34,17 @@ const IntegrationDashboardPage: React.FC = () => {
 
       if (statsRes.success && statsRes.data !== undefined) setStats(statsRes.data);
       if (eventsRes.success && eventsRes.data !== undefined) setEvents(eventsRes.data);
-    } catch (error: unknown) {
-      logger.error('Error loading data:', error);
+    } catch (err: unknown) {
+      logger.error('Error loading data:', err);
+      error('加载集成数据失败');
     } finally {
       setLoading(false);
     }
-  };
+  }, [error]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   // 计算同步成功率
   const getSyncRate = (synced: number, total: number) => {

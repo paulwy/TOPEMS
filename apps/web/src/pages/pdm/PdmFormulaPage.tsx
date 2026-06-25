@@ -16,7 +16,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionFormula } from '@/api/pdm';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 const PdmFormulaPage: React.FC = () => {
   const [formulas, setFormulas] = useState<ProductionFormula[]>([]);
@@ -33,6 +33,7 @@ const PdmFormulaPage: React.FC = () => {
     version: '1.0',
     process_id: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadFormulas();
@@ -169,11 +170,11 @@ const PdmFormulaPage: React.FC = () => {
         process_id: formData.process_id || undefined,
         status: 'draft',
       });
-      toast.success('配方创建成功');
+      addNotification({ title: '成功', message: '配方创建成功', type: 'success' });
       setShowCreateModal(false);
       loadFormulas();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建配方失败:', err);
     }
   };

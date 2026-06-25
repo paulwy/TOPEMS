@@ -25,19 +25,9 @@ import type {
   StockTakeItem,
   CreateStockTakeRequest,
   CountItemRequest,
-} from '@/api/shared/wms';
-import {
-  listStockTakes,
-  createStockTake,
-  deleteStockTake,
-  startStockTake,
-  countStockTake,
-  completeStockTake,
-  adjustStockTake,
-  listStockTakeItems,
-} from '@/api/shared/wms';
-import type { Warehouse } from '@/api/shared/wms';
-import { listWarehouses } from '@/api/shared/wms';
+  Warehouse,
+} from '@/api/wms';
+import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Play, CheckCircle2, Eye, Package } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
@@ -97,8 +87,8 @@ const StockTakePage: React.FC = () => {
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
 
-      const response = await listStockTakes(params);
-      if (response.code === 200 && response.data) {
+      const response = await wmsApi.stockTakes.list(params);
+      if (response.success && response.data) {
         setStockTakes(response.data.items || []);
         setTotal(response.data.total || 0);
       }
@@ -121,8 +111,8 @@ const StockTakePage: React.FC = () => {
 
   const fetchWarehouses = async () => {
     try {
-      const response = await listWarehouses({ page: 1, page_size: 100 });
-      if (response.code === 200 && response.data) {
+      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
+      if (response.success && response.data) {
         setWarehouses(response.data.items || []);
       }
     } catch (error: unknown) {
@@ -141,8 +131,8 @@ const StockTakePage: React.FC = () => {
     }
 
     try {
-      const response = await createStockTake(newStockTake);
-      if (response.code === 200) {
+      const response = await wmsApi.stockTakes.create(newStockTake);
+      if (response.success) {
         addNotification({
           type: 'success',
           title: '创建成功',
@@ -169,8 +159,8 @@ const StockTakePage: React.FC = () => {
       }
 
       try {
-        const response = await deleteStockTake(id);
-        if (response.code === 200) {
+        const response = await wmsApi.stockTakes.delete(id);
+        if (response.success) {
           addNotification({
             type: 'success',
             title: '删除成功',
@@ -193,8 +183,8 @@ const StockTakePage: React.FC = () => {
   const handleStartStockTake = useCallback(
     async (id: string) => {
       try {
-        const response = await startStockTake(id);
-        if (response.code === 200) {
+        const response = await wmsApi.stockTakes.start(id);
+        if (response.success) {
           addNotification({
             type: 'success',
             title: '操作成功',
@@ -218,8 +208,8 @@ const StockTakePage: React.FC = () => {
     async (stockTake: StockTake) => {
       setSelectedStockTake(stockTake);
       try {
-        const response = await listStockTakeItems(stockTake.id);
-        if (response.code === 200 && response.data) {
+        const response = await wmsApi.stockTakes.listItems(stockTake.id);
+        if (response.success && response.data) {
           setStockTakeItems(response.data.items || []);
         }
       } catch (error: unknown) {
@@ -239,8 +229,8 @@ const StockTakePage: React.FC = () => {
     if (!selectedStockTake) return;
 
     try {
-      const response = await completeStockTake(selectedStockTake.id);
-      if (response.code === 200) {
+      const response = await wmsApi.stockTakes.complete(selectedStockTake.id);
+      if (response.success) {
         addNotification({
           type: 'success',
           title: '操作成功',
@@ -263,8 +253,8 @@ const StockTakePage: React.FC = () => {
     if (!selectedStockTake) return;
 
     try {
-      const response = await adjustStockTake(selectedStockTake.id);
-      if (response.code === 200) {
+      const response = await wmsApi.stockTakes.adjust(selectedStockTake.id);
+      if (response.success) {
         addNotification({
           type: 'success',
           title: '操作成功',
@@ -293,8 +283,8 @@ const StockTakePage: React.FC = () => {
     }));
 
     try {
-      const response = await countStockTake(selectedStockTake.id, items);
-      if (response.code === 200) {
+      const response = await wmsApi.stockTakes.count(selectedStockTake.id, items);
+      if (response.success) {
         addNotification({
           type: 'success',
           title: '操作成功',
@@ -302,8 +292,8 @@ const StockTakePage: React.FC = () => {
         });
         setShowCountDialog(false);
         // Refresh detail
-        const detailResponse = await listStockTakeItems(selectedStockTake.id);
-        if (detailResponse.code === 200 && detailResponse.data) {
+        const detailResponse = await wmsApi.stockTakes.listItems(selectedStockTake.id);
+        if (detailResponse.success && detailResponse.data) {
           setStockTakeItems(detailResponse.data.items || []);
         }
       }

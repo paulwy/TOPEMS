@@ -16,6 +16,67 @@ export interface IntegrationEvent {
   created_at: string;
 }
 
+// ERP 连接管理相关类型
+export type ErpConnectionType = 'kingdee' | 'yonyou' | 'sap';
+export type ErpConnectionStatus = 'connected' | 'disconnected' | 'error' | 'syncing';
+export type SyncDirection = 'import' | 'export' | 'bidirectional';
+export type SyncMode = 'realtime' | 'scheduled' | 'manual';
+
+export interface ErpConnection {
+  id: string;
+  type: ErpConnectionType;
+  name: string;
+  api_url: string;
+  api_version?: string;
+  app_key?: string;
+  app_secret?: string;
+  sync_direction: SyncDirection;
+  sync_mode: SyncMode;
+  sync_interval?: number;
+  status: ErpConnectionStatus;
+  is_active: boolean;
+  last_sync_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateErpConnectionRequest {
+  type: ErpConnectionType;
+  name: string;
+  api_url: string;
+  api_version?: string;
+  app_key?: string;
+  app_secret?: string;
+  sync_direction?: SyncDirection;
+  sync_mode?: SyncMode;
+  sync_interval?: number;
+}
+
+export interface UpdateErpConnectionRequest {
+  name?: string;
+  api_url?: string;
+  api_version?: string;
+  app_key?: string;
+  app_secret?: string;
+  sync_direction?: SyncDirection;
+  sync_mode?: SyncMode;
+  sync_interval?: number;
+  is_active?: boolean;
+}
+
+export interface TestConnectionRequest {
+  api_url: string;
+  app_key?: string;
+  app_secret?: string;
+  timeout?: number;
+}
+
+export interface TestConnectionResponse {
+  success: boolean;
+  response_time_ms: number;
+  error_message?: string;
+}
+
 export interface CreateIntegrationEventRequest {
   source_system: string;
   target_system: string;
@@ -103,6 +164,32 @@ export interface SyncStats {
   last_sync?: string;
 }
 
+// 同步统计扩展类型
+export interface SyncHistoryItem {
+  id: string;
+  sync_type: string;
+  source_system: string;
+  target_system: string;
+  status: string;
+  total_records: number;
+  success_count: number;
+  failed_count: number;
+  started_at: string;
+  completed_at?: string;
+  duration_ms?: number;
+}
+
+export interface IntegrationSyncStats {
+  total_syncs: number;
+  success_rate: number;
+  last_sync_at?: string;
+  integration_stats: Record<string, {
+    total: number;
+    synced: number;
+    failed: number;
+  }>;
+}
+
 // 转换规则相关类型
 export type RuleStatus = 'active' | 'inactive' | 'draft';
 
@@ -169,6 +256,51 @@ export interface UpdateConversionRuleRequest {
   max_retries?: number;
   retry_interval_secs?: number;
   stop_on_failure?: boolean;
+}
+
+// ERP 映射管理相关类型
+export type MappingType = 'account' | 'customer' | 'supplier' | 'project' | 'department' | 'employee';
+export type MappingDirection = 'to_external' | 'from_external' | 'bidirectional';
+
+export interface ErpMapping {
+  id: string;
+  connection_id: string;
+  mapping_type: MappingType;
+  local_id: string;
+  local_code: string;
+  local_name: string;
+  external_code: string;
+  external_name: string;
+  direction: MappingDirection;
+  is_active: boolean;
+  priority: number;
+  condition?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateErpMappingRequest {
+  mapping_type: MappingType;
+  local_id: string;
+  local_code: string;
+  local_name: string;
+  external_code: string;
+  external_name: string;
+  direction?: MappingDirection;
+  priority?: number;
+  condition?: string;
+}
+
+export interface UpdateErpMappingRequest {
+  local_id?: string;
+  local_code?: string;
+  local_name?: string;
+  external_code?: string;
+  external_name?: string;
+  direction?: MappingDirection;
+  is_active?: boolean;
+  priority?: number;
+  condition?: string;
 }
 
 export interface ConversionExecution {
@@ -314,6 +446,112 @@ export const integrationApi = {
 
   disableConversionRule: async (id: string): Promise<ApiResponse<ConversionRule>> => {
     return apiClient.integration.post(`/api/integration/rules/${id}/disable`);
+  },
+
+  // ERP 连接管理 API
+  listConnections: async (
+    params?: { type?: string; status?: string; page?: number; pageSize?: number }
+  ): Promise<ApiResponse<ErpConnection[]>> => {
+    return apiClient.integration.get('/api/integration/erp/connections', { params });
+  },
+
+  getConnection: async (id: string): Promise<ApiResponse<ErpConnection>> => {
+    return apiClient.integration.get(`/api/integration/erp/connections/${id}`);
+  },
+
+  createConnection: async (
+    data: CreateErpConnectionRequest
+  ): Promise<ApiResponse<ErpConnection>> => {
+    return apiClient.integration.post('/api/integration/erp/connections', data);
+  },
+
+  updateConnection: async (
+    id: string,
+    data: UpdateErpConnectionRequest
+  ): Promise<ApiResponse<ErpConnection>> => {
+    return apiClient.integration.put(`/api/integration/erp/connections/${id}`, data);
+  },
+
+  deleteConnection: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.integration.delete(`/api/integration/erp/connections/${id}`);
+  },
+
+  testConnection: async (
+    data: TestConnectionRequest
+  ): Promise<ApiResponse<TestConnectionResponse>> => {
+    return apiClient.integration.post('/api/integration/erp/connections/test', data);
+  },
+
+  // ERP 映射管理 API
+  listMappings: async (
+    connectionId: string,
+    params?: { mapping_type?: MappingType; page?: number; pageSize?: number }
+  ): Promise<ApiResponse<ErpMapping[]>> => {
+    return apiClient.integration.get(`/api/integration/erp/mappings`, {
+      params: { connection_id: connectionId, ...params },
+    });
+  },
+
+  getMapping: async (id: string): Promise<ApiResponse<ErpMapping>> => {
+    return apiClient.integration.get(`/api/integration/erp/mappings/${id}`);
+  },
+
+  createMapping: async (
+    data: CreateErpMappingRequest
+  ): Promise<ApiResponse<ErpMapping>> => {
+    return apiClient.integration.post('/api/integration/erp/mappings', data);
+  },
+
+  updateMapping: async (
+    id: string,
+    data: UpdateErpMappingRequest
+  ): Promise<ApiResponse<ErpMapping>> => {
+    return apiClient.integration.put(`/api/integration/erp/mappings/${id}`, data);
+  },
+
+  deleteMapping: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.integration.delete(`/api/integration/erp/mappings/${id}`);
+  },
+
+  // 转换规则 API (补充完整)
+  listRules: async (
+    params?: { source_system?: string; target_system?: string; status?: RuleStatus; page?: number; pageSize?: number }
+  ): Promise<ApiResponse<ConversionRule[]>> => {
+    return apiClient.integration.get('/api/integration/conversion-rules', { params });
+  },
+
+  getRule: async (id: string): Promise<ApiResponse<ConversionRule>> => {
+    return apiClient.integration.get(`/api/integration/conversion-rules/${id}`);
+  },
+
+  createRule: async (
+    data: CreateConversionRuleRequest
+  ): Promise<ApiResponse<ConversionRule>> => {
+    return apiClient.integration.post('/api/integration/conversion-rules', data);
+  },
+
+  updateRule: async (
+    id: string,
+    data: UpdateConversionRuleRequest
+  ): Promise<ApiResponse<ConversionRule>> => {
+    return apiClient.integration.put(`/api/integration/conversion-rules/${id}`, data);
+  },
+
+  deleteRule: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.integration.delete(`/api/integration/conversion-rules/${id}`);
+  },
+
+  // 同步统计 API
+  getIntegrationSyncStats: async (
+    params?: { connection_id?: string; start_date?: string; end_date?: string }
+  ): Promise<ApiResponse<IntegrationSyncStats>> => {
+    return apiClient.integration.get('/api/integration/sync-stats', { params });
+  },
+
+  getIntegrationSyncHistory: async (
+    params?: { connection_id?: string; sync_type?: string; status?: string; page?: number; pageSize?: number }
+  ): Promise<ApiResponse<SyncHistoryItem[]>> => {
+    return apiClient.integration.get('/api/integration/sync-stats/history', { params });
   },
 
   health: async (): Promise<ApiResponse<string>> => {

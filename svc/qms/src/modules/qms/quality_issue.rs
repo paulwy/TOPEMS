@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::types::Uuid;
+use sqlx::{FromRow, types::Uuid};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -13,7 +13,7 @@ pub struct IssueQuery {
     pub severity: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct QualityIssue {
     pub id: String,
     pub issue_no: String,
@@ -56,32 +56,16 @@ pub async fn list_issues(
     let offset = (page - 1) * page_size;
 
     let issues = match (query.status.as_ref(), query.severity.as_ref()) {
-        (Some(st), Some(sv)) => sqlx::query_as!(
-            QualityIssue,
-            r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE status = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
-            st, sv, page_size, offset
-        )
+        (Some(st), Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE status = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None) => sqlx::query_as!(
-            QualityIssue,
-            r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            st, page_size, offset
-        )
+        (Some(st), None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(sv)) => sqlx::query_as!(
-            QualityIssue,
-            r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
-            sv, page_size, offset
-        )
+        (None, Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as!(
-            QualityIssue,
-            r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues ORDER BY created_at DESC LIMIT $1 OFFSET $2"#,
-            page_size, offset
-        )
+        (None, None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -103,11 +87,7 @@ pub async fn create_issue(
     
     let related_inspection_id = req.related_inspection_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
-    let issue = sqlx::query_as!(
-        QualityIssue,
-        r#"INSERT INTO qa_quality_issues (issue_no, title, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'open', $7) RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#,
-        issue_no, req.title, req.description, req.severity, req.source, related_inspection_id, req.created_by
-    )
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"INSERT INTO qa_quality_issues (issue_no, title, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'open', $7) RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -129,11 +109,7 @@ pub async fn get_issue(
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
 
-    let issue = sqlx::query_as!(
-        QualityIssue,
-        r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE id = $1"#,
-        id
-    )
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -156,11 +132,7 @@ pub async fn update_issue(
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
 
-    let issue = sqlx::query_as!(
-        QualityIssue,
-        r#"UPDATE qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#,
-        id, req.title, req.description, req.severity, req.status
-    )
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status)
     .fetch_one(&state.pool)
     .await;
 
@@ -183,11 +155,7 @@ pub async fn resolve_issue(
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
 
-    let issue = sqlx::query_as!(
-        QualityIssue,
-        r#"UPDATE qa_quality_issues SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#,
-        id
-    )
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(id)
     .fetch_one(&state.pool)
     .await;
 
@@ -209,10 +177,7 @@ pub async fn delete_issue(
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
 
-    let result = sqlx::query!(
-        r#"DELETE FROM qa_quality_issues WHERE id = $1"#,
-        id
-    )
+    let result = sqlx::query(r#"DELETE FROM qa_quality_issues WHERE id = $1"#).bind(id)
     .execute(&state.pool)
     .await;
 

@@ -358,3 +358,620 @@ pub async fn db_update_task_status(
 
     Some(MobileTask::from_row(&row)).transpose()
 }
+
+pub async fn db_get_offline_operations(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    status: Option<&str>,
+) -> sqlx::Result<Vec<OfflineOperation>> {
+    let query = if let Some(s) = status {
+        sqlx::query(
+            "SELECT * FROM offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC",
+        )
+        .bind(user_id)
+        .bind(s)
+    } else {
+        sqlx::query(
+            "SELECT * FROM offline_operations WHERE user_id = $1 ORDER BY created_at ASC",
+        )
+        .bind(user_id)
+    };
+
+    let rows = query.fetch_all(pool).await?;
+    rows.iter().map(|row| OfflineOperation::from_row(row)).collect()
+}
+
+pub async fn db_create_offline_operation(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    data: CreateOfflineOperation,
+) -> sqlx::Result<OfflineOperation> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    sqlx::query(
+        "INSERT INTO offline_operations (id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    )
+    .bind(id)
+    .bind(user_id)
+    .bind(&data.operation_type)
+    .bind(&data.entity_type)
+    .bind(&data.entity_id)
+    .bind(&data.operation_data)
+    .bind("pending")
+    .bind(0)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(OfflineOperation {
+        id,
+        user_id,
+        operation_type: data.operation_type,
+        entity_type: data.entity_type,
+        entity_id: data.entity_id,
+        operation_data: data.operation_data,
+        sync_status: "pending".to_string(),
+        sync_attempts: 0,
+        last_sync_error: None,
+        created_at: now,
+        synced_at: None,
+    })
+}
+
+pub async fn db_update_offline_operation_status(
+    pool: &Pool<Postgres>,
+    operation_id: Uuid,
+    status: &str,
+    error: Option<&str>,
+) -> sqlx::Result<()> {
+    let now = Utc::now();
+    let attempts = if status == "failed" {
+        sqlx::query_scalar("SELECT sync_attempts + 1 FROM offline_operations WHERE id = $1")
+            .bind(operation_id)
+            .fetch_one(pool)
+            .await?
+    } else {
+        0
+    };
+
+    sqlx::query(
+        "UPDATE offline_operations SET sync_status = $1, sync_attempts = $2, last_sync_error = $3, synced_at = $4 WHERE id = $5",
+    )
+    .bind(status)
+    .bind(attempts)
+    .bind(error)
+    .bind(if status == "synced" { Some(now) } else { None })
+    .bind(operation_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn db_get_sync_policy(pool: &Pool<Postgres>, user_id: Uuid) -> sqlx::Result<Option<SyncPolicy>> {
+    let row = sqlx::query("SELECT * FROM sync_policies WHERE user_id = $1")
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await?;
+
+    row.map(|r| SyncPolicy::from_row(&r)).transpose()
+}
+
+pub async fn db_create_or_update_sync_policy(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    data: UpdateSyncPolicy,
+) -> sqlx::Result<SyncPolicy> {
+    let now = Utc::now();
+
+    let existing = db_get_sync_policy(pool, user_id).await?;
+
+    if let Some(mut policy) = existing {
+        if let Some(v) = data.auto_sync_enabled {
+            policy.auto_sync_enabled = v;
+        }
+        if let Some(v) = data.sync_interval_minutes {
+            policy.sync_interval_minutes = v;
+        }
+        if let Some(v) = data.sync_on_network_change {
+            policy.sync_on_network_change = v;
+        }
+        if let Some(v) = data.conflict_strategy {
+            policy.conflict_strategy = v;
+        }
+        policy.updated_at = now;
+
+        sqlx::query(
+            "UPDATE sync_policies SET auto_sync_enabled = $1, sync_interval_minutes = $2, sync_on_network_change = $3, conflict_strategy = $4, updated_at = $5 WHERE user_id = $6",
+        )
+        .bind(policy.auto_sync_enabled)
+        .bind(policy.sync_interval_minutes)
+        .bind(policy.sync_on_network_change)
+        .bind(&policy.conflict_strategy)
+        .bind(policy.updated_at)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+
+        Ok(policy)
+    } else {
+        let id = Uuid::new_v4();
+        let policy = SyncPolicy {
+            id,
+            user_id,
+            auto_sync_enabled: data.auto_sync_enabled.unwrap_or(true),
+            sync_interval_minutes: data.sync_interval_minutes.unwrap_or(5),
+            sync_on_network_change: data.sync_on_network_change.unwrap_or(true),
+            conflict_strategy: data.conflict_strategy.unwrap_or_else(|| "server优先".to_string()),
+            created_at: now,
+            updated_at: now,
+        };
+
+        sqlx::query(
+            "INSERT INTO sync_policies (id, user_id, auto_sync_enabled, sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        )
+        .bind(policy.id)
+        .bind(policy.user_id)
+        .bind(policy.auto_sync_enabled)
+        .bind(policy.sync_interval_minutes)
+        .bind(policy.sync_on_network_change)
+        .bind(&policy.conflict_strategy)
+        .bind(policy.created_at)
+        .bind(policy.updated_at)
+        .execute(pool)
+        .await?;
+
+        Ok(policy)
+    }
+}
+
+pub async fn db_register_push_device(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    data: CreatePushDevice,
+) -> sqlx::Result<PushDevice> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    sqlx::query(
+        "INSERT INTO push_devices (id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (device_token) DO UPDATE SET user_id = $2, is_active = $8, updated_at = $10",
+    )
+    .bind(id)
+    .bind(user_id)
+    .bind(&data.device_token)
+    .bind(&data.platform)
+    .bind(&data.device_model)
+    .bind(&data.app_version)
+    .bind(&data.os_version)
+    .bind(true)
+    .bind(now)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(PushDevice {
+        id,
+        user_id,
+        device_token: data.device_token,
+        platform: data.platform,
+        device_model: data.device_model,
+        app_version: data.app_version,
+        os_version: data.os_version,
+        is_active: true,
+        created_at: now,
+        updated_at: now,
+    })
+}
+
+pub async fn db_get_push_devices(
+    pool: &Pool<Postgres>,
+    user_id: Option<Uuid>,
+) -> sqlx::Result<Vec<PushDevice>> {
+    let query = if let Some(uid) = user_id {
+        sqlx::query("SELECT * FROM push_devices WHERE user_id = $1 AND is_active = true")
+            .bind(uid)
+    } else {
+        sqlx::query("SELECT * FROM push_devices WHERE is_active = true")
+    };
+
+    let rows = query.fetch_all(pool).await?;
+    rows.iter().map(|row| PushDevice::from_row(row)).collect()
+}
+
+pub async fn db_create_push_notification(
+    pool: &Pool<Postgres>,
+    data: CreatePushNotification,
+) -> sqlx::Result<PushNotification> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    sqlx::query(
+        "INSERT INTO push_notifications (id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+    )
+    .bind(id)
+    .bind(&data.title)
+    .bind(&data.body)
+    .bind(&data.notification_type)
+    .bind(&data.data)
+    .bind(&data.target_type)
+    .bind(&data.target_ids)
+    .bind("pending")
+    .bind(0)
+    .bind(0)
+    .bind(0)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(PushNotification {
+        id,
+        title: data.title,
+        body: data.body,
+        notification_type: data.notification_type,
+        data: data.data,
+        target_type: data.target_type,
+        target_ids: data.target_ids,
+        status: "pending".to_string(),
+        sent_count: 0,
+        delivered_count: 0,
+        clicked_count: 0,
+        created_at: now,
+        sent_at: None,
+    })
+}
+
+pub async fn db_update_push_notification_stats(
+    pool: &Pool<Postgres>,
+    notification_id: Uuid,
+    sent_count: i32,
+    delivered_count: i32,
+    clicked_count: i32,
+) -> sqlx::Result<()> {
+    let now = Utc::now();
+
+    sqlx::query(
+        "UPDATE push_notifications SET status = $1, sent_count = $2, delivered_count = $3, clicked_count = $4, sent_at = $5 WHERE id = $6",
+    )
+    .bind("sent")
+    .bind(sent_count)
+    .bind(delivered_count)
+    .bind(clicked_count)
+    .bind(now)
+    .bind(notification_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn db_get_push_templates(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PushTemplate>> {
+    let rows = sqlx::query("SELECT * FROM push_templates WHERE is_active = true ORDER BY name")
+        .fetch_all(pool)
+        .await?;
+
+    rows.iter().map(|row| PushTemplate::from_row(row)).collect()
+}
+
+pub async fn db_create_push_template(
+    pool: &Pool<Postgres>,
+    name: &str,
+    title_template: &str,
+    body_template: &str,
+    notification_type: &str,
+    description: Option<&str>,
+) -> sqlx::Result<PushTemplate> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    sqlx::query(
+        "INSERT INTO push_templates (id, name, title_template, body_template, notification_type, description, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    )
+    .bind(id)
+    .bind(name)
+    .bind(title_template)
+    .bind(body_template)
+    .bind(notification_type)
+    .bind(description)
+    .bind(true)
+    .bind(now)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(PushTemplate {
+        id,
+        name: name.to_string(),
+        title_template: title_template.to_string(),
+        body_template: body_template.to_string(),
+        notification_type: notification_type.to_string(),
+        description: description.map(|s| s.to_string()),
+        is_active: true,
+        created_at: now,
+        updated_at: now,
+    })
+}
+
+pub async fn db_get_barcode_scans(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    barcode_type: Option<&str>,
+) -> sqlx::Result<Vec<BarcodeScan>> {
+    let query = if let Some(bt) = barcode_type {
+        sqlx::query(
+            "SELECT * FROM barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC",
+        )
+        .bind(user_id)
+        .bind(bt)
+    } else {
+        sqlx::query(
+            "SELECT * FROM barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC",
+        )
+        .bind(user_id)
+    };
+
+    let rows = query.fetch_all(pool).await?;
+    rows.iter().map(|row| BarcodeScan::from_row(row)).collect()
+}
+
+pub async fn db_create_barcode_scan(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    data: CreateBarcodeScan,
+) -> sqlx::Result<BarcodeScan> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    sqlx::query(
+        "INSERT INTO barcode_scans (id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, scanned_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    )
+    .bind(id)
+    .bind(user_id)
+    .bind(&data.barcode)
+    .bind(&data.barcode_type)
+    .bind(&data.decoded_data)
+    .bind(data.location_lat)
+    .bind(data.location_lng)
+    .bind(now)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(BarcodeScan {
+        id,
+        user_id,
+        barcode: data.barcode,
+        barcode_type: data.barcode_type,
+        decoded_data: data.decoded_data,
+        location_lat: data.location_lat,
+        location_lng: data.location_lng,
+        result_action: None,
+        result_data: None,
+        scanned_at: now,
+        created_at: now,
+    })
+}
+
+pub async fn db_get_photo_uploads(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    status: Option<&str>,
+) -> sqlx::Result<Vec<PhotoUpload>> {
+    let query = if let Some(s) = status {
+        sqlx::query(
+            "SELECT * FROM photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC",
+        )
+        .bind(user_id)
+        .bind(s)
+    } else {
+        sqlx::query(
+            "SELECT * FROM photo_uploads WHERE user_id = $1 ORDER BY created_at DESC",
+        )
+        .bind(user_id)
+    };
+
+    let rows = query.fetch_all(pool).await?;
+    rows.iter().map(|row| PhotoUpload::from_row(row)).collect()
+}
+
+pub async fn db_create_photo_upload(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+    data: CreatePhotoUpload,
+) -> sqlx::Result<PhotoUpload> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let file_path = format!("/api/mobile/photos/{}", id);
+
+    sqlx::query(
+        "INSERT INTO photo_uploads (id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, location_lat, location_lng, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+    )
+    .bind(id)
+    .bind(user_id)
+    .bind(&data.file_name)
+    .bind(&file_path)
+    .bind(data.file_size)
+    .bind(&data.mime_type)
+    .bind(data.width)
+    .bind(data.height)
+    .bind(data.compression_ratio)
+    .bind(data.has_watermark)
+    .bind(&data.watermark_text)
+    .bind("uploading")
+    .bind(0)
+    .bind(data.location_lat)
+    .bind(data.location_lng)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(PhotoUpload {
+        id,
+        user_id,
+        file_name: data.file_name,
+        file_path,
+        file_size: data.file_size,
+        mime_type: data.mime_type,
+        width: data.width,
+        height: data.height,
+        compression_ratio: data.compression_ratio,
+        has_watermark: data.has_watermark,
+        watermark_text: data.watermark_text,
+        upload_status: "uploading".to_string(),
+        upload_progress: 0,
+        thumbnail_url: None,
+        location_lat: data.location_lat,
+        location_lng: data.location_lng,
+        created_at: now,
+        uploaded_at: None,
+    })
+}
+
+pub async fn db_update_photo_upload_status(
+    pool: &Pool<Postgres>,
+    upload_id: Uuid,
+    status: &str,
+    progress: i32,
+    thumbnail_url: Option<&str>,
+) -> sqlx::Result<()> {
+    let now = Utc::now();
+
+    sqlx::query(
+        "UPDATE photo_uploads SET upload_status = $1, upload_progress = $2, thumbnail_url = $3, uploaded_at = $4 WHERE id = $5",
+    )
+    .bind(status)
+    .bind(progress)
+    .bind(thumbnail_url)
+    .bind(if status == "completed" { Some(now) } else { None })
+    .bind(upload_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn db_get_mobile_approvals(
+    pool: &Pool<Postgres>,
+    assignee_id: Uuid,
+    status: Option<&str>,
+) -> sqlx::Result<Vec<MobileApproval>> {
+    let query = if let Some(s) = status {
+        sqlx::query(
+            "SELECT * FROM mobile_approvals WHERE assignee_id = $1 AND status = $2 ORDER BY created_at DESC",
+        )
+        .bind(assignee_id)
+        .bind(s)
+    } else {
+        sqlx::query(
+            "SELECT * FROM mobile_approvals WHERE assignee_id = $1 ORDER BY created_at DESC",
+        )
+        .bind(assignee_id)
+    };
+
+    let rows = query.fetch_all(pool).await?;
+    rows.iter().map(|row| MobileApproval::from_row(row)).collect()
+}
+
+pub async fn db_create_mobile_approval(
+    pool: &Pool<Postgres>,
+    data: CreateMobileApproval,
+) -> sqlx::Result<MobileApproval> {
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let applicant_id = Uuid::parse_str(&data.applicant_id).unwrap_or_else(|_| Uuid::new_v4());
+    let assignee_id = Uuid::parse_str(&data.assignee_id).unwrap_or_else(|_| Uuid::new_v4());
+    let priority = data.priority.unwrap_or_else(|| "normal".to_string());
+    let due_date = data
+        .due_date
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s).ok())
+        .map(|d| d.with_timezone(&chrono::Utc));
+
+    sqlx::query(
+        "INSERT INTO mobile_approvals (id, process_instance_id, process_definition_id, process_name, business_key, business_title, applicant_id, applicant_name, assignee_id, assignee_name, task_id, task_name, status, priority, due_date, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+    )
+    .bind(id)
+    .bind(&data.process_instance_id)
+    .bind(&data.process_definition_id)
+    .bind(&data.process_name)
+    .bind(&data.business_key)
+    .bind(&data.business_title)
+    .bind(applicant_id)
+    .bind(&data.applicant_name)
+    .bind(assignee_id)
+    .bind(&data.assignee_name)
+    .bind(&data.task_id)
+    .bind(&data.task_name)
+    .bind("pending")
+    .bind(&priority)
+    .bind(due_date)
+    .bind(now)
+    .bind(now)
+    .execute(pool)
+    .await?;
+
+    Ok(MobileApproval {
+        id,
+        process_instance_id: data.process_instance_id,
+        process_definition_id: data.process_definition_id,
+        process_name: data.process_name,
+        business_key: data.business_key,
+        business_title: data.business_title,
+        applicant_id,
+        applicant_name: data.applicant_name,
+        assignee_id,
+        assignee_name: data.assignee_name,
+        task_id: data.task_id,
+        task_name: data.task_name,
+        status: "pending".to_string(),
+        priority,
+        due_date,
+        comment: None,
+        created_at: now,
+        updated_at: now,
+    })
+}
+
+pub async fn db_update_mobile_approval(
+    pool: &Pool<Postgres>,
+    approval_id: Uuid,
+    action: &str,
+    comment: Option<&str>,
+) -> sqlx::Result<Option<MobileApproval>> {
+    let now = Utc::now();
+    let status = match action {
+        "approve" => "approved",
+        "reject" => "rejected",
+        "transfer" => "transferred",
+        _ => "pending",
+    };
+
+    let result = sqlx::query(
+        "UPDATE mobile_approvals SET status = $1, comment = $2, updated_at = $3 WHERE id = $4",
+    )
+    .bind(status)
+    .bind(comment)
+    .bind(now)
+    .bind(approval_id)
+    .execute(pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Ok(None);
+    }
+
+    let row = sqlx::query("SELECT * FROM mobile_approvals WHERE id = $1")
+        .bind(approval_id)
+        .fetch_one(pool)
+        .await?;
+
+    Some(MobileApproval::from_row(&row)).transpose()
+}

@@ -37,7 +37,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { useToast } from '@/hooks/use-toast';
+import { useAppStore } from '@/store';
 import {
   Package,
   Play,
@@ -133,7 +133,7 @@ export const PluginManagementPage: React.FC = () => {
     installPlugin,
   } = usePluginStore();
 
-  const { toast } = useToast();
+  const addNotification = useAppStore((state) => state.addNotification);
 
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
@@ -189,9 +189,10 @@ export const PluginManagementPage: React.FC = () => {
   const handleEnable = async (pluginCode: string) => {
     const success = await enablePlugin(pluginCode);
     if (success) {
-      toast({
+      addNotification({
         title: '启用成功',
-        description: `${pluginCode} 插件已启用`,
+        message: `${pluginCode} 插件已启用`,
+        type: 'success',
       });
       loadPlugins();
     }
@@ -205,9 +206,10 @@ export const PluginManagementPage: React.FC = () => {
       action: async () => {
         const success = await disablePlugin(pluginCode);
         if (success) {
-          toast({
+          addNotification({
             title: '禁用成功',
-            description: `${pluginCode} 插件已禁用`,
+            message: `${pluginCode} 插件已禁用`,
+            type: 'success',
           });
           loadPlugins();
         }
@@ -224,9 +226,10 @@ export const PluginManagementPage: React.FC = () => {
       action: async () => {
         const success = await uninstallPlugin(pluginCode);
         if (success) {
-          toast({
+          addNotification({
             title: '卸载成功',
-            description: `${pluginCode} 插件已卸载`,
+            message: `${pluginCode} 插件已卸载`,
+            type: 'success',
           });
           loadPlugins();
         }

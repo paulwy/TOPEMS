@@ -24,12 +24,8 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { StatCardGroup } from '@/components/mui';
-/**
- * 期初余额管理页面
- * 管理会计科目的期初余额设置
- */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   Download,
@@ -48,8 +44,9 @@ import {
   useOpeningBalances,
   useSetOpeningBalance,
   useCarryForwardOpeningBalance,
+  useAccountTree,
 } from '@/hooks/useFinance';
-import { EnhancedDataTable } from '@/components/EnhancedDataTable';
+import { useNotification } from '@/hooks/useNotification';
 import type { Account, AccountOpeningBalance, AccountCategory } from '@/types/finance';
 
 // 科目类别配置
@@ -75,6 +72,8 @@ const BALANCE_DIRECTION_CONFIG = {
 };
 
 export default function OpeningBalancePage() {
+  const { error: notifyError } = useNotification();
+
   // 状态
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [selectedCategory, setSelectedCategory] = useState<AccountCategory | ''>('');
@@ -85,15 +84,18 @@ export default function OpeningBalancePage() {
   const [showCarryForwardModal, setShowCarryForwardModal] = useState(false);
   const [carryForwardFrom, setCarryForwardFrom] = useState('');
   const [carryForwardTo, setCarryForwardTo] = useState('');
+  const [allAccounts, setAllAccounts] = useState<Account[]>([]);
 
-  // 模拟数据
-  const [accounts] = useState<Account[]>([]);
+  // 查询科目树
+  const { data: accountTreeData, isLoading: accountLoading, error: accountError } =
+    useAccountTree({});
 
   // 查询期初余额
   const {
     data: openingBalancesData,
     isLoading: openingLoading,
     refetch,
+    error: openingError,
   } = useOpeningBalances({ period });
 
   // 设置期初余额
@@ -101,6 +103,34 @@ export default function OpeningBalancePage() {
 
   // 结转期初余额
   const carryForward = useCarryForwardOpeningBalance();
+
+  useEffect(() => {
+    if (accountError) {
+      notifyError('获取科目列表失败');
+    }
+  }, [accountError, notifyError]);
+
+  useEffect(() => {
+    if (openingError) {
+      notifyError('获取期初余额失败');
+    }
+  }, [openingError, notifyError]);
+
+  useEffect(() => {
+    const flattenTree = (accounts: Account[]): Account[] => {
+      let result: Account[] = [];
+      accounts.forEach((account) => {
+        result.push(account);
+        if (account.children && account.children.length > 0) {
+          result = result.concat(flattenTree(account.children));
+        }
+      });
+      return result;
+    };
+    if (accountTreeData?.data) {
+      setAllAccounts(flattenTree(accountTreeData.data));
+    }
+  }, [accountTreeData]);
 
   // 将期初余额数据转换为map便于查找
   const openingBalanceMap = useMemo(() => {
@@ -113,8 +143,8 @@ export default function OpeningBalancePage() {
 
   // 按类别筛选科目
   const filteredAccounts = useMemo(() => {
-    if (!accounts) return [];
-    return accounts.filter((account) => {
+    if (!allAccounts) return [];
+    return allAccounts.filter((account) => {
       if (selectedCategory && account.category !== selectedCategory) return false;
       if (
         searchKeyword &&
@@ -124,7 +154,9 @@ export default function OpeningBalancePage() {
         return false;
       return true;
     });
-  }, [accounts, selectedCategory, searchKeyword]);
+  }, [allAccounts, selectedCategory, searchKeyword]);
+
+  const isLoading = accountLoading || openingLoading;
 
   // 计算合计
   const totals = useMemo(() => {
@@ -298,6 +330,7 @@ export default function OpeningBalancePage() {
       {/* 期初余额汇总 */}
       <StatCardGroup
         columns={3}
+        loading={isLoading}
         stats={[
           {
             title: '借方合计',
@@ -361,7 +394,24 @@ export default function OpeningBalancePage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredAccounts.map((account) => {
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant='body2' color='text.secondary'>
+                      加载中...
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : filteredAccounts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant='body2' color='text.secondary'>
+                      暂无科目数据
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAccounts.map((account) => {
                 const ob = openingBalanceMap.get(account.id);
                 return (
                   <TableRow key={account.id}>
@@ -498,7 +548,8 @@ export default function OpeningBalancePage() {
                     </TableCell>
                   </TableRow>
                 );
-              })}
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>

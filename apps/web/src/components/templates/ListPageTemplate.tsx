@@ -65,6 +65,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
+import { useAutoBreadcrumbs } from '@/hooks';
 
 // 从 FilterBar 导入 FilterConfig 类型以确保类型一致
 import type { FilterConfig } from '../mui/FilterBar';
@@ -190,6 +191,8 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
   title?: string;
   subtitle?: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
+  /** 是否启用自动面包屑（默认启用） */
+  autoBreadcrumbs?: boolean;
   /** 返回按钮配置 */
   backButton?: {
     href?: string;
@@ -367,7 +370,8 @@ const saveColumnConfig = (key: string, config: ColumnConfig[]): void => {
 export function ListPageTemplate<T>({
   title,
   subtitle,
-  breadcrumbs,
+  breadcrumbs: manualBreadcrumbs,
+  autoBreadcrumbs = true,
   backButton,
   columns,
   data,
@@ -417,6 +421,16 @@ export function ListPageTemplate<T>({
 }: ListPageTemplateProps<T>) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const autoItems = useAutoBreadcrumbs({
+    includeHome: true,
+  });
+
+  const breadcrumbs = manualBreadcrumbs && manualBreadcrumbs.length > 0
+    ? manualBreadcrumbs
+    : autoBreadcrumbs
+    ? autoItems
+    : undefined;
 
   const [sortBy, setSortBy] = useState(defaultSortBy || '');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(defaultSortOrder);

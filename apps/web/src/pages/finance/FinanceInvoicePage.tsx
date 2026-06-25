@@ -17,7 +17,6 @@ import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { StatCard, StatCardGroup } from '@/components/mui';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/notification/NotificationContainer';
 import { receivablePayableApi } from '@/api/finance';
 import type { SalesInvoice, InvoiceStatus, PaginatedResult } from '@/types/finance';
 import { apiLogger } from '@/utils/logger';
@@ -457,10 +456,6 @@ const FinanceInvoicePage: React.FC = () => {
 
   return (
     <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
       <MuiBox
         sx={{
           bgcolor: 'background.paper',

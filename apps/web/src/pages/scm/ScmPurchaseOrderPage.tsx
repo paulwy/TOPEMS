@@ -8,7 +8,7 @@ import {
   Chip,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type {
   PurchaseOrder,
   CreatePurchaseOrderRequest,
@@ -16,7 +16,7 @@ import type {
 } from '@/api/scm';
 import { scmApi } from '@/api/scm';
 import { useAppStore } from '@/store';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, XCircle, AlertCircle, Lock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
@@ -142,6 +142,94 @@ const ScmPurchaseOrderPage: React.FC = () => {
     }
   };
 
+  const handleApprove = useCallback(async (order: PurchaseOrder) => {
+    if (!window.confirm(`确定要审批采购订单 "${order.order_number}" 吗？`)) {
+      return;
+    }
+    try {
+      await scmApi.purchaseOrders.approve(order.id);
+      addNotification({
+        type: 'success',
+        title: '审批成功',
+        message: '采购订单已审批通过',
+      });
+      loadOrders();
+    } catch (error: unknown) {
+      apiLogger.error('审批失败:', error);
+      addNotification({
+        type: 'error',
+        title: '审批失败',
+        message: '审批采购订单失败',
+      });
+    }
+  }, [addNotification]);
+
+  const handleConfirm = useCallback(async (order: PurchaseOrder) => {
+    if (!window.confirm(`确定要确认采购订单 "${order.order_number}" 吗？`)) {
+      return;
+    }
+    try {
+      await scmApi.purchaseOrders.confirm(order.id);
+      addNotification({
+        type: 'success',
+        title: '确认成功',
+        message: '采购订单已确认',
+      });
+      loadOrders();
+    } catch (error: unknown) {
+      apiLogger.error('确认失败:', error);
+      addNotification({
+        type: 'error',
+        title: '确认失败',
+        message: '确认采购订单失败',
+      });
+    }
+  }, [addNotification]);
+
+  const handleCancel = useCallback(async (order: PurchaseOrder) => {
+    if (!window.confirm(`确定要取消采购订单 "${order.order_number}" 吗？`)) {
+      return;
+    }
+    try {
+      await scmApi.purchaseOrders.cancel(order.id);
+      addNotification({
+        type: 'success',
+        title: '取消成功',
+        message: '采购订单已取消',
+      });
+      loadOrders();
+    } catch (error: unknown) {
+      apiLogger.error('取消失败:', error);
+      addNotification({
+        type: 'error',
+        title: '取消失败',
+        message: '取消采购订单失败',
+      });
+    }
+  }, [addNotification]);
+
+  const handleClose = useCallback(async (order: PurchaseOrder) => {
+    if (!window.confirm(`确定要关闭采购订单 "${order.order_number}" 吗？`)) {
+      return;
+    }
+    try {
+      await scmApi.purchaseOrders.close(order.id);
+      addNotification({
+        type: 'success',
+        title: '关闭成功',
+        message: '采购订单已关闭',
+      });
+      loadOrders();
+    } catch (error: unknown) {
+      apiLogger.error('关闭失败:', error);
+      addNotification({
+        type: 'error',
+        title: '关闭失败',
+        message: '关闭采购订单失败',
+      });
+    }
+  }, [addNotification]);
+
   const resetForm = () => {
     setFormData({
       order_number: '',
@@ -205,6 +293,65 @@ const ScmPurchaseOrderPage: React.FC = () => {
       id: 'remarks',
       label: '备注',
       render: (row) => <Box sx={{ fontSize: '0.875rem' }}>{row.remarks || '-'}</Box>,
+    },
+    {
+      id: 'status_actions',
+      label: '状态操作',
+      align: 'center',
+      render: (row) => (
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {row.status === 'pending' && (
+            <>
+              <Button
+                size='small'
+                color='success'
+                onClick={() => handleApprove(row)}
+                startIcon={<Check size={12} />}
+              >
+                审批
+              </Button>
+              <Button
+                size='small'
+                color='error'
+                onClick={() => handleCancel(row)}
+                startIcon={<XCircle size={12} />}
+              >
+                取消
+              </Button>
+            </>
+          )}
+          {row.status === 'approved' && (
+            <>
+              <Button
+                size='small'
+                color='success'
+                onClick={() => handleConfirm(row)}
+                startIcon={<Check size={12} />}
+              >
+                确认
+              </Button>
+              <Button
+                size='small'
+                color='error'
+                onClick={() => handleCancel(row)}
+                startIcon={<XCircle size={12} />}
+              >
+                取消
+              </Button>
+            </>
+          )}
+          {row.status === 'confirmed' && (
+            <Button
+              size='small'
+              color='warning'
+              onClick={() => handleClose(row)}
+              startIcon={<Lock size={12} />}
+            >
+              关闭
+            </Button>
+          )}
+        </Box>
+      ),
     },
   ];
 

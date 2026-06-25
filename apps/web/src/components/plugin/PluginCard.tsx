@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, Typography, Button, Chip, Rating } from '@mui/material';
 import type { Plugin } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useToast } from '@/hooks/use-toast';
+import { useAppStore } from '@/store';
 import { Loading } from '@/components/ui/Loading';
 
 interface PluginCardProps {
@@ -22,21 +22,22 @@ interface PluginCardProps {
 
 export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDetails }) => {
   const { isPluginInstalled, installPlugin, loading } = usePluginStore();
-  const { toast } = useToast();
+  const addNotification = useAppStore((state) => state.addNotification);
   const installed = isPluginInstalled(plugin.code);
 
   const handleInstall = async () => {
     const success = await installPlugin(plugin.code);
     if (success) {
-      toast({
+      addNotification({
         title: '安装成功',
-        description: `${plugin.name} 插件已安装`,
+        message: `${plugin.name} 插件已安装`,
+        type: 'success',
       });
     } else {
-      toast({
+      addNotification({
         title: '安装失败',
-        description: '请稍后重试',
-        variant: 'destructive',
+        message: '请稍后重试',
+        type: 'error',
       });
     }
   };

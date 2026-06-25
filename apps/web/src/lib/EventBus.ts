@@ -74,6 +74,7 @@ type Subscriber = {
   event: string | RegExp;
   callback: (data: unknown) => void;
   once?: boolean;
+  namespace?: string;
 };
 
 class EventBusClass {

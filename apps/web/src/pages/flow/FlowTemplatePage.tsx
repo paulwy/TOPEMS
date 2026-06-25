@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
+import { flowApi } from '@/api/flow';
+import type { Workflow } from '@/api/flow';
+import { useNotification } from '@/hooks/useNotification';
 import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import { Button } from '@mui/material';
 import { Eye, Edit, Copy, Trash2, Plus, FileText } from 'lucide-react';
@@ -15,81 +18,6 @@ interface FlowTemplate {
   creator: string;
   createdAt: string;
 }
-
-const mockTemplates: FlowTemplate[] = [
-  {
-    id: 'TPL-001',
-    name: '标准请假流程',
-    type: 'approval',
-    scope: '全公司',
-    usageCount: 156,
-    creator: '张三',
-    createdAt: '2024-01-10',
-  },
-  {
-    id: 'TPL-002',
-    name: '差旅报销流程',
-    type: 'reimbursement',
-    scope: '全公司',
-    usageCount: 89,
-    creator: '李四',
-    createdAt: '2024-01-15',
-  },
-  {
-    id: 'TPL-003',
-    name: '采购审批流程',
-    type: 'purchase',
-    scope: '采购部',
-    usageCount: 45,
-    creator: '王五',
-    createdAt: '2024-02-01',
-  },
-  {
-    id: 'TPL-004',
-    name: '合同审批流程',
-    type: 'contract',
-    scope: '法务部',
-    usageCount: 23,
-    creator: '赵六',
-    createdAt: '2024-02-10',
-  },
-  {
-    id: 'TPL-005',
-    name: '加班申请流程',
-    type: 'approval',
-    scope: '全公司',
-    usageCount: 234,
-    creator: '张三',
-    createdAt: '2024-02-15',
-  },
-  {
-    id: 'TPL-006',
-    name: '设备借用流程',
-    type: 'approval',
-    scope: '行政部',
-    usageCount: 67,
-    creator: '李四',
-    createdAt: '2024-02-20',
-  },
-  {
-    id: 'TPL-007',
-    name: '入职审批流程',
-    type: 'approval',
-    scope: '人力资源部',
-    usageCount: 12,
-    creator: '孙七',
-    createdAt: '2024-03-01',
-  },
-  {
-    id: 'TPL-008',
-    name: '离职审批流程',
-    type: 'approval',
-    scope: '人力资源部',
-    usageCount: 8,
-    creator: '孙七',
-    createdAt: '2024-03-05',
-  },
-];
 
 const getTypeText = (type: string) => {
   switch (type) {
@@ -107,11 +35,43 @@ const getTypeText = (type: string) => {
 };
 
 const FlowTemplatePage: React.FC = () => {
-  const [data, setData] = useState<FlowTemplate[]>(mockTemplates);
+  const { success, error } = useNotification();
+
+  const [data, setData] = useState<FlowTemplate[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await flowApi.listWorkflows();
+      if (res.success && res.data) {
+        const workflows = res.data.items || [];
+        const templates: FlowTemplate[] = workflows.map((w: Workflow) => ({
+          id: w.id,
+          name: w.name,
+          type: w.data?.type || 'approval',
+          scope: w.data?.scope || '全公司',
+          usageCount: w.data?.usageCount || 0,
+          creator: w.created_by || '-',
+          createdAt: new Date(w.created_at).toISOString().split('T')[0],
+        }));
+        setData(templates);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('Error loading templates:', err);
+      error('加载流程模板失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredData = data.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -127,15 +87,24 @@ const FlowTemplatePage: React.FC = () => {
     apiLogger.info('编辑模板:', template.id);
   };
 
-  const handleCopy = (template: FlowTemplate) => {
-    const newTemplate: FlowTemplate = {
-      ...template,
-      id: `TPL-${String(data.length + 1).padStart(3, '0')}`,
-      name: `${template.name} (副本)`,
-      usageCount: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setData((prev) => [...prev, newTemplate]);
+  const handleCopy = async (template: FlowTemplate) => {
+    try {
+      const workflowRes = await flowApi.getWorkflow(template.id);
+      if (workflowRes.success && workflowRes.data) {
+        const workflow = workflowRes.data;
+        await flowApi.createWorkflow({
+          name: `${workflow.name} (副本)`,
+          description: workflow.description,
+          definition: workflow.definition,
+          is_active: false,
+        });
+        success('模板复制成功');
+        loadData();
+      }
+    } catch (err: unknown) {
+      apiLogger.error('Error copying template:', err);
+      error('复制模板失败');
+    }
   };
 
   const handleDelete = (template: FlowTemplate) => {
@@ -143,9 +112,16 @@ const FlowTemplatePage: React.FC = () => {
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
-    if (selectedTemplate) {
+  const confirmDelete = async () => {
+    if (!selectedTemplate) return;
+    try {
+      await flowApi.deleteWorkflow(selectedTemplate.id);
       setData((prev) => prev.filter((t) => t.id !== selectedTemplate.id));
+      success('模板删除成功');
+    } catch (err: unknown) {
+      apiLogger.error('Error deleting template:', err);
+      error('删除模板失败');
+    } finally {
       setShowDeleteDialog(false);
       setSelectedTemplate(null);
     }
@@ -218,7 +194,6 @@ const FlowTemplatePage: React.FC = () => {
         onClick: (row) => handleDelete(row),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -254,6 +229,7 @@ const FlowTemplatePage: React.FC = () => {
         }}
         columns={columns}
         data={filteredData}
+        loading={loading}
         searchable
         searchPlaceholder='搜索模板名称...'
         searchValue={searchTerm}
@@ -270,6 +246,7 @@ const FlowTemplatePage: React.FC = () => {
             variant: 'contained',
           },
         ]}
+        onRefresh={loadData}
       />
 
       <Dialog

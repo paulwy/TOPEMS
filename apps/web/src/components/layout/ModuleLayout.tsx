@@ -12,6 +12,75 @@ export interface ModuleLayoutProps {
   pluginCode?: string;
 }
 
+/**
+ * 检查路径是否匹配路由模式
+ * 支持动态路由参数如 :id, :code 等
+ */
+function matchPathPattern(pattern: string, actualPath: string): boolean {
+  const patternParts = pattern.split('/');
+  const pathParts = actualPath.split('/');
+
+  if (patternParts.length !== pathParts.length) {
+    return false;
+  }
+
+  for (let i = 0; i < patternParts.length; i++) {
+    const patternPart = patternParts[i];
+    const pathPart = pathParts[i];
+
+    // 动态参数匹配
+    if (patternPart.startsWith(':')) {
+      continue;
+    }
+
+    // 精确匹配
+    if (patternPart !== pathPart) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * 检查路径片段是否是动态参数（如 UUID、数字 ID）
+ */
+function isDynamicParam(segment: string): boolean {
+  // UUID 格式
+  if (/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(segment)) {
+    return true;
+  }
+  // 数字 ID
+  if (/^\d+$/.test(segment)) {
+    return true;
+  }
+  // 其他常见动态参数（如 :id, :code）
+  return false;
+}
+
+/**
+ * 从路由配置中查找匹配的标签
+ * 支持动态路由模式匹配
+ */
+function findLabelWithPattern(items: NavItem[], path: string): string | undefined {
+  for (const item of items) {
+    // 精确匹配
+    if (item.path === path) {
+      return item.label;
+    }
+    // 模式匹配（支持动态路由）
+    if (matchPathPattern(item.path, path)) {
+      return item.label;
+    }
+    // 递归子项
+    if (item.children) {
+      const found = findLabelWithPattern(item.children, path);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
 export const ModuleLayout: React.FC<ModuleLayoutProps> = ({ children, pluginCode }) => {
   const location = useLocation();
   const params = useParams();
@@ -46,22 +115,23 @@ export const ModuleLayout: React.FC<ModuleLayoutProps> = ({ children, pluginCode
 
       if (pathParts.length > 1) {
         const sidebar = navigationRegistry.getSidebarNavItems(pluginCodePart);
-        const findLabel = (items: NavItem[], path: string): string | undefined => {
-          for (const item of items) {
-            if (item.path === path) return item.label;
-            if (item.children) {
-              const found = findLabel(item.children, path);
-              if (found) return found;
-            }
-          }
-          return undefined;
-        };
 
         let currentPath = `/${pluginCodePart}`;
         for (let i = 1; i < pathParts.length; i++) {
           currentPath += `/${pathParts[i]}`;
-          const label = findLabel(sidebar, currentPath) || pathParts[i];
-          crumbs.push({ label, href: currentPath });
+
+          // 使用模式匹配查找标签
+          const label = findLabelWithPattern(sidebar, currentPath);
+
+          // 如果是动态参数，使用友好名称
+          if (!label && isDynamicParam(pathParts[i])) {
+            // 尝试推断父路径的标签 + "详情"
+            const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            const parentLabel = findLabelWithPattern(sidebar, parentPath);
+            crumbs.push({ label: parentLabel ? `${parentLabel}详情` : '详情', href: undefined });
+          } else {
+            crumbs.push({ label: label || pathParts[i], href: currentPath });
+          }
         }
       }
     }

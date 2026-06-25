@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '@/hooks/useNotification';
-import { NotificationContainer } from '@/components/NotificationContainer';
 import { Box, Typography } from '@mui/material';
 
 interface Document {
@@ -222,11 +221,6 @@ const DocumentCenterPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <NotificationContainer
-        notifications={notifications}
-        onClose={hideNotification}
-      />
-
       {/* Header */}
       <Box
         sx={{

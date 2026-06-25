@@ -1,547 +1,212 @@
-import React, { useState, useMemo } from 'react';
-import { apiLogger } from '@/utils/logger';
-import { ArrowLeft, Save, Calendar, Users, DollarSign, Tag, FileText } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { FolderOpen, Calendar, Users, DollarSign, Tag, FileText } from 'lucide-react';
+import FormPageTemplate from '@/components/templates/FormPageTemplate';
+import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { pmApi } from '@/api/pm';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  TextField,
-  FormControlLabel,
-  Typography,
-  FormLabel,
-  TextField as Input,
-  Button,
-} from '@mui/material';
+import { useNotification } from '@/hooks/useNotification';
+import { logger } from '@/utils/logger';
 
-import {
-  AIHelperButton,
-  AICodeGenerator,
-  AITextOptimizer,
-  AIFormValidator,
-  AIDataCompleter,
-} from '@/components/ai';
-import type { CompletionItem } from '@/types/ai';
-import { ImageUpload } from '@/components/common';
+const projectSchema = z.object({
+  name: z.string().min(1, '项目名称不能为空'),
+  code: z.string().min(1, '项目编号不能为空'),
+  project_type: z.enum(['RESEARCH', 'PRODUCTION', 'CONSTRUCTION', 'DESIGN', 'SERVICE']),
+  description: z.string().optional(),
+  budget: z.string().refine((val) => !val || parseFloat(val) >= 0, '预算金额必须为非负数'),
+  leader: z.string().optional(),
+  start_date: z.string().min(1, '开始日期不能为空'),
+  end_date: z.string().min(1, '结束日期不能为空'),
+  tags: z.string().optional(),
+});
 
-type ProjectType = 'RESEARCH' | 'PRODUCTION' | 'CONSTRUCTION' | 'DESIGN' | 'SERVICE';
+type ProjectFormData = z.infer<typeof projectSchema>;
 
-const PROJECT_TYPES: {
-  value: ProjectType;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: 'RESEARCH',
-    label: '科研项目',
-    description: '实验驱动、创新研究、专利申请',
-  },
-  {
-    value: 'PRODUCTION',
-    label: '生产项目',
-    description: '标准化生产、质量控制、量产',
-  },
-  {
-    value: 'CONSTRUCTION',
-    label: '施工项目',
-    description: '资源密集、周期长、工程建设',
-  },
-  {
-    value: 'DESIGN',
-    label: '设计项目',
-    description: '迭代设计、版本管理、产品设计',
-  },
-  {
-    value: 'SERVICE',
-    label: '服务项目',
-    description: '客户导向、灵活交付、咨询服务',
-  },
+const PROJECT_TYPES = [
+  { value: 'RESEARCH', label: '科研项目', description: '实验驱动、创新研究、专利申请' },
+  { value: 'PRODUCTION', label: '生产项目', description: '标准化生产、质量控制、量产' },
+  { value: 'CONSTRUCTION', label: '施工项目', description: '资源密集、周期长、工程建设' },
+  { value: 'DESIGN', label: '设计项目', description: '迭代设计、版本管理、产品设计' },
+  { value: 'SERVICE', label: '服务项目', description: '客户导向、灵活交付、咨询服务' },
 ];
 
 const PmProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    project_type: 'RESEARCH' as ProjectType,
-    description: '',
-    budget: '',
-    leader: '',
-    start_date: '',
-    end_date: '',
-    tags: '',
-    images: [] as string[],
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const { success, error } = useNotification();
+
   const [submitting, setSubmitting] = useState(false);
 
-  const [showAICodeGenerator, setShowAICodeGenerator] = useState(false);
-  const [showAITextOptimizer, setShowAITextOptimizer] = useState(false);
-  const [showAIFormValidator, setShowAIFormValidator] = useState(false);
-  const [showAIDataCompleter, setShowAIDataCompleter] = useState(false);
+  const handleSubmit = useCallback(
+    async (data: unknown) => {
+      const formData = data as ProjectFormData;
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = '请输入项目名称';
-    if (!formData.code.trim()) newErrors.code = '请输入项目编号';
-    if (!formData.project_type) newErrors.project_type = '请选择项目类型';
-    if (!formData.budget || isNaN(parseFloat(formData.budget)))
-      newErrors.budget = '请输入有效预算金额';
-    if (!formData.start_date) newErrors.start_date = '请选择开始日期';
-    if (!formData.end_date) newErrors.end_date = '请选择结束日期';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+      setSubmitting(true);
+      try {
+        const response = await pmApi.projects.create({
+          name: formData.name.trim(),
+          code: formData.code.trim(),
+          project_type: formData.project_type,
+          description: formData.description?.trim() || undefined,
+          budget: formData.budget ? parseFloat(formData.budget) : undefined,
+          leader: formData.leader?.trim() || undefined,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          tags: formData.tags?.trim() ? formData.tags.split(',').map((t) => t.trim()) : undefined,
+        });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setSubmitting(true);
-    try {
-      const response = await pmApi.projects.create({
-        name: formData.name.trim(),
-        code: formData.code.trim(),
-        project_type: formData.project_type,
-        description: formData.description.trim() || undefined,
-        budget: parseFloat(formData.budget),
-        leader: formData.leader.trim() || undefined,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
-        tags: formData.tags.trim() ? formData.tags.split(',').map((t) => t.trim()) : undefined,
-      });
-
-      if (response.success) {
-        navigate(`/pm/projects/${response.data?.id}`);
+        if (response.code === 200 || response.code === 201) {
+          success('项目创建成功');
+          navigate(`/pm/projects/${response.data?.id}`);
+        } else {
+          error(response.message || '创建失败');
+        }
+      } catch (err: unknown) {
+        logger.error('Failed to create project:', err);
+        error('创建项目失败');
+      } finally {
+        setSubmitting(false);
       }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to create project:', error);
-    } finally {
-      setSubmitting(false);
-    }
+    },
+    [error, success, navigate]
+  );
+
+  const handleCancel = () => {
+    navigate('/pm/projects');
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
-  };
-
-  const handleSelectAICode = (code: string) => {
-    setFormData((prev) => ({ ...prev, code }));
-  };
-
-  const handleOptimizedText = (text: string) => {
-    setFormData((prev) => ({ ...prev, description: text }));
-    setShowAITextOptimizer(false);
-  };
-
-  const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
-    const updates: Record<string, any> = {};
-    Object.entries(completions).forEach(([field, item]) => {
-      updates[field] = item.value;
-    });
-    setFormData((prev) => ({ ...prev, ...updates }));
-    setShowAIDataCompleter(false);
-  };
-
-  const handleApplyValidationSuggestions = (suggestions: any[]) => {
-    const updates: Record<string, any> = {};
-    suggestions.forEach((s) => {
-      updates[s.field] = s.value;
-    });
-    setFormData((prev) => ({ ...prev, ...updates }));
-    setShowAIFormValidator(false);
-  };
+  const sections: FormSection[] = [
+    {
+      id: 'basic',
+      title: '基本信息',
+      description: '项目基本信息',
+      icon: <FolderOpen style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'name',
+          label: '项目名称',
+          type: 'text',
+          required: true,
+          placeholder: '请输入项目名称',
+        },
+        {
+          name: 'code',
+          label: '项目编号',
+          type: 'text',
+          required: true,
+          placeholder: '请输入项目编号',
+        },
+        {
+          name: 'project_type',
+          label: '项目类型',
+          type: 'select',
+          required: true,
+          options: PROJECT_TYPES.map((type) => ({
+            label: type.label,
+            value: type.value,
+          })),
+          defaultValue: 'RESEARCH',
+        },
+      ],
+    },
+    {
+      id: 'description',
+      title: '项目描述',
+      description: '项目详细描述',
+      icon: <FileText style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'description',
+          label: '描述',
+          type: 'textarea',
+          rows: 3,
+          placeholder: '请输入项目描述...',
+        },
+      ],
+    },
+    {
+      id: 'budget',
+      title: '预算与负责人',
+      description: '项目预算和负责人信息',
+      icon: <DollarSign style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'budget',
+          label: '项目预算',
+          type: 'number',
+          required: true,
+          placeholder: '请输入预算金额',
+        },
+        {
+          name: 'leader',
+          label: '项目负责人',
+          type: 'text',
+          placeholder: '请输入负责人姓名',
+        },
+      ],
+    },
+    {
+      id: 'dates',
+      title: '时间安排',
+      description: '项目开始和结束时间',
+      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'start_date',
+          label: '开始日期',
+          type: 'date',
+          required: true,
+          placeholder: '请选择开始日期',
+        },
+        {
+          name: 'end_date',
+          label: '结束日期',
+          type: 'date',
+          required: true,
+          placeholder: '请选择结束日期',
+        },
+      ],
+    },
+    {
+      id: 'tags',
+      title: '标签',
+      description: '项目标签',
+      icon: <Tag style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'tags',
+          label: '标签',
+          type: 'text',
+          placeholder: '多个标签用逗号分隔',
+        },
+      ],
+    },
+  ];
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        backgroundColor: 'grey.50',
-      }}
-    >
-      <div style={{ flex: 1, padding: 24 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-            marginBottom: 24,
-          }}
-        >
-          <Button
-            variant='outlined'
-            onClick={() => navigate('/pm/projects')}
-            sx={{ gap: 8 }}
-          >
-            <ArrowLeft sx={{ width: 16, height: 16 }} />
-            返回列表
-          </Button>
-        </div>
-
-        <Card sx={{ maxWidth: 768, margin: '0 auto' }}>
-          <CardHeader>
-            <Typography
-              variant='h6'
-              sx={{ fontSize: '1.25rem' }}
-            >
-              创建项目
-            </Typography>
-            <p style={{ color: 'text.secondary', marginTop: 4 }}>填写项目基本信息</p>
-          </CardHeader>
-          <CardContent>
-            <form style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 16,
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <FormLabel htmlFor='project-name'>
-                    项目名称 <span style={{ color: 'error.main' }}>*</span>
-                  </FormLabel>
-                  <TextField
-                    id='project-name'
-                    value={formData.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder='请输入项目名称'
-                    className={errors.name ? 'border-red-500 focus:ring-red-500' : ''}
-                  />
-                  {errors.name && (
-                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.name}</p>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <FormLabel htmlFor='project-code'>
-                    项目编号 <span style={{ color: 'error.main' }}>*</span>
-                  </FormLabel>
-                  <TextField
-                    id='project-code'
-                    value={formData.code}
-                    onChange={(e) => handleChange('code', e.target.value)}
-                    placeholder='请输入项目编号'
-                    className={errors.code ? 'border-red-500 focus:ring-red-500' : ''}
-                  />
-                  {errors.code && (
-                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.code}</p>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <FormLabel>
-                  项目类型 <span style={{ color: 'error.main' }}>*</span>
-                </FormLabel>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gap: 12,
-                  }}
-                >
-                  {PROJECT_TYPES.map((type) => (
-                    <button
-                      key={type.value}
-                      type='button'
-                      onClick={() => handleChange('project_type', type.value)}
-                      style={{
-                        padding: 16,
-                        border: `1px solid ${formData.project_type === type.value ? 'primary.main' : 'grey.300'}`,
-                        borderRadius: 8,
-                        textAlign: 'left',
-                        backgroundColor:
-                          formData.project_type === type.value ? 'primary.light' : 'transparent',
-                      }}
-                    >
-                      <div style={{ fontWeight: 500, color: 'text.primary' }}>{type.label}</div>
-                      <div
-                        style={{
-                          fontSize: '0.75rem',
-                          color: 'text.secondary',
-                          marginTop: 4,
-                        }}
-                      >
-                        {type.description}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                {errors.project_type && (
-                  <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.project_type}</p>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <FileText sx={{ width: 16, height: 16 }} />
-                    项目描述
-                  </FormLabel>
-                  <AIHelperButton
-                    type='optimize'
-                    onClick={() => setShowAITextOptimizer(true)}
-                    size='small'
-                    variant='outlined'
-                    label='AI 优化'
-                  />
-                </div>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                  placeholder='请输入项目描述...'
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid grey.300',
-                    borderRadius: 8,
-                    outline: 'none',
-                    resize: 'none',
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 16,
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <DollarSign sx={{ width: 16, height: 16 }} />
-                    项目预算 <span style={{ color: 'error.main' }}>*</span>
-                  </FormLabel>
-                  <div style={{ position: 'relative' }}>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        left: 12,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      ¥
-                    </span>
-                    <TextField
-                      type='number'
-                      value={formData.budget}
-                      onChange={(e) => handleChange('budget', e.target.value)}
-                      placeholder='请输入预算金额'
-                      style={{ paddingLeft: 32 }}
-                      className={errors.budget ? 'border-red-500 focus:ring-red-500' : ''}
-                    />
-                  </div>
-                  {errors.budget && (
-                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.budget}</p>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Users sx={{ width: 16, height: 16 }} />
-                    项目负责人
-                  </FormLabel>
-                  <TextField
-                    type='text'
-                    value={formData.leader}
-                    onChange={(e) => handleChange('leader', e.target.value)}
-                    placeholder='请输入负责人姓名'
-                  />
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 16,
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Calendar sx={{ width: 16, height: 16 }} />
-                    开始日期 <span style={{ color: 'error.main' }}>*</span>
-                  </FormLabel>
-                  <TextField
-                    type='date'
-                    value={formData.start_date}
-                    onChange={(e) => handleChange('start_date', e.target.value)}
-                    className={errors.start_date ? 'border-red-500 focus:ring-red-500' : ''}
-                  />
-                  {errors.start_date && (
-                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.start_date}</p>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Calendar sx={{ width: 16, height: 16 }} />
-                    结束日期 <span style={{ color: 'error.main' }}>*</span>
-                  </FormLabel>
-                  <TextField
-                    type='date'
-                    value={formData.end_date}
-                    onChange={(e) => handleChange('end_date', e.target.value)}
-                    className={errors.end_date ? 'border-red-500 focus:ring-red-500' : ''}
-                  />
-                  {errors.end_date && (
-                    <p style={{ color: 'error.main', fontSize: '0.875rem' }}>{errors.end_date}</p>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Tag sx={{ width: 16, height: 16 }} />
-                  标签
-                </FormLabel>
-                <TextField
-                  type='text'
-                  value={formData.tags}
-                  onChange={(e) => handleChange('tags', e.target.value)}
-                  placeholder='多个标签用逗号分隔'
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <FormLabel sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  项目封面图片
-                </FormLabel>
-                <ImageUpload
-                  value={formData.images}
-                  onChange={(files) => setFormData((prev) => ({ ...prev, images: files }))}
-                  maxCount={9}
-                  accept='image/*'
-                  cropEnabled
-                  height={200}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: 16,
-                  borderTop: '1px solid grey.200',
-                }}
-              >
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <AIHelperButton
-                    type='generate'
-                    onClick={() => setShowAICodeGenerator(true)}
-                    size='small'
-                    variant='outlined'
-                    label='生成编号'
-                  />
-                  <AIHelperButton
-                    type='complete'
-                    onClick={() => setShowAIDataCompleter(true)}
-                    size='small'
-                    variant='outlined'
-                    label='智能补全'
-                  />
-                  <AIHelperButton
-                    type='validate'
-                    onClick={() => setShowAIFormValidator(true)}
-                    size='small'
-                    variant='outlined'
-                    label='AI 校验'
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <Button
-                    variant='outlined'
-                    onClick={() => navigate('/pm/projects')}
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    type='submit'
-                    disabled={submitting}
-                    sx={{
-                      gap: 8,
-                      padding: '8px 16px',
-                      backgroundColor: 'primary.dark',
-                      color: 'white',
-                      '&:hover': { backgroundColor: 'primary.dark' },
-                    }}
-                  >
-                    <Save sx={{ width: 16, height: 16 }} />
-                    {submitting ? '提交中...' : '保存项目'}
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      <AICodeGenerator
-        isOpen={showAICodeGenerator}
-        onClose={() => setShowAICodeGenerator(false)}
-        context={{
-          entityType: 'project',
-          name: formData.name,
-        }}
-        onSelect={handleSelectAICode}
-        existingCodes={[]}
-      />
-
-      <AITextOptimizer
-        isOpen={showAITextOptimizer}
-        onClose={() => setShowAITextOptimizer(false)}
-        context={{
-          textType: 'description',
-          name: formData.name,
-        }}
-        originalText={formData.description}
-        onOptimized={handleOptimizedText}
-      />
-
-      <AIDataCompleter
-        isOpen={showAIDataCompleter}
-        onClose={() => setShowAIDataCompleter(false)}
-        completeRequest={{
-          partialData: formData,
-          context: {
-            module: 'pm',
-            entityType: 'project',
-          },
-        }}
-        onApplyCompletion={handleApplyCompletion}
-      />
-
-      <AIFormValidator
-        isOpen={showAIFormValidator}
-        onClose={() => setShowAIFormValidator(false)}
-        validateRequest={{
-          data: formData,
-          context: {
-            module: 'pm',
-            entityType: 'project',
-          },
-        }}
-        onApplySuggestions={handleApplyValidationSuggestions}
-        onFixIssue={() => {}}
-      />
-    </div>
+    <FormPageTemplate
+      title='创建项目'
+      subtitle='填写项目基本信息'
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: '项目管理', href: '/pm' },
+        { label: '项目列表', href: '/pm/projects' },
+        { label: '创建项目' },
+      ]}
+      sections={sections}
+      schema={projectSchema}
+      submitting={submitting}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      submitText='保存项目'
+      cancelText='取消'
+      columns={2}
+      stickyFooter={true}
+    />
   );
 };
 

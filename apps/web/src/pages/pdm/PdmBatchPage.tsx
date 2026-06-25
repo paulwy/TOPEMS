@@ -16,7 +16,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionBatch } from '@/api/pdm';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 const PdmBatchPage: React.FC = () => {
   const [batches, setBatches] = useState<ProductionBatch[]>([]);
@@ -32,6 +32,7 @@ const PdmBatchPage: React.FC = () => {
     quantity: '',
     unit: 'kg',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     loadBatches();
@@ -175,11 +176,11 @@ const PdmBatchPage: React.FC = () => {
         unit: formData.unit,
         status: 'planning',
       });
-      toast.success('生产批次创建成功');
+      addNotification({ title: '成功', message: '生产批次创建成功', type: 'success' });
       setShowCreateModal(false);
       loadBatches();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建生产批次失败:', err);
     }
   };

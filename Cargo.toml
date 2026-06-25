@@ -3,21 +3,7 @@ members = [
     "lib",
     # [核心平台] 统一核心平台
     "svc/unified-core",      # IAM + Doc + Flow + File + Communication
-    # [配置中心]
-    "svc/config-center",     # 统一配置管理服务
-    # [已整合] 统一服务
-    "svc/manufacturing",     # mes + pdm
-    "svc/quality-assurance", # qms + lims + ehs
-    "svc/analytics",        # bi + report
-    # [拆分服务] 独立部署
-    "svc/mes",
-    "svc/pdm",
-    "svc/qms",
-    "svc/lims",
-    "svc/ehs",
-    "svc/bi",
-    "svc/report",
-    # [独立服务]
+    # [独立服务] 业务模块（插件式架构）
     "svc/ai",
     "svc/erp",
     "svc/hrm",
@@ -32,27 +18,27 @@ members = [
     "svc/integration",
     "svc/mobile",
     "svc/monitor",
+    # [生产制造]
+    "svc/mes",
+    "svc/pdm",
+    # [质量与研发]
+    "svc/qms",
+    "svc/lims",
+    "svc/ehs",
+    # [数据分析]
+    "svc/bi",
+    "svc/report",
 ]
 resolver = "2"
 
 # ================================================
-# [已整合服务 - 待删除]
+# [已废弃服务 - 保留代码供参考，不参与构建]
 # ================================================
-# svc/notification   → svc/unified-core
-# svc/im             → svc/unified-core
-# svc/mail           → svc/unified-core
-# svc/mes            → svc/manufacturing
-# svc/pdm            → svc/manufacturing
-# svc/qms            → svc/quality-assurance
-# svc/lims           → svc/quality-assurance
-# svc/ehs            → svc/quality-assurance
-# svc/bi             → svc/analytics
-# svc/report         → svc/analytics
-# svc/iam            → svc/unified-core (已整合)
-# svc/doc            → svc/unified-core (已整合)
-# svc/flow           → svc/unified-core (已整合)
-# svc/file           → svc/unified-core (已整合)
-# svc/communication  → svc/unified-core (已整合)
+# svc/manufacturing    → svc/mes + svc/pdm（已拆分独立部署）
+# svc/quality-assurance → svc/qms + svc/lims + svc/ehs（已拆分独立部署）
+# svc/analytics        → svc/bi + svc/report（已拆分独立部署）
+# svc/config-center    → 功能已整合到 etcd + unified-core 配置管理
+# svc/shared           → 功能已整合到 lib/topems_shared
 # ================================================
 
 [workspace.package]

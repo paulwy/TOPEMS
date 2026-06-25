@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   RefreshCw,
@@ -26,17 +26,34 @@ import {
   TableRow,
   TableCell,
   Chip,
+  Alert,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { Grid } from '@/components/Grid';
+import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import ExportButton from '@/components/export/ExportButton';
-import { apiLogger } from '@/utils/logger';
+import { apiLogger, logger } from '@/utils/logger';
 import {
   DashboardTemplate,
   type StatCard,
   type ChartCard as ChartCardType,
 } from '@/components/templates';
+import {
+  fetchModuleData,
+  fetchRsSummary,
+  fetchLimsSummary,
+  fetchQmsSummary,
+  fetchEhsSummary,
+  fetchSrmSummary,
+  fetchPdmSummary,
+  fetchRsProjectTimeline,
+  fetchLimsSampleTimeline,
+  fetchQmsQualityTrend,
+  fetchEhsIncidentTrend,
+  fetchSrmOrderTimeline,
+  fetchPdmProductionTrend,
+} from '@/api/bi';
 import {
   LineChart as RechartsLineChart,
   Line,
@@ -67,8 +84,8 @@ interface ModuleData {
   detailTable: Array<Record<string, string | number>>;
 }
 
-const getMockData = (moduleId: string): ModuleData => {
-  const mockData: Record<string, ModuleData> = {
+const getFallbackData = (moduleId: string): ModuleData => {
+  const fallbackData: Record<string, ModuleData> = {
     rs: {
       summary: {
         total_projects: 120,
@@ -89,36 +106,7 @@ const getMockData = (moduleId: string): ModuleData => {
         { name: '改进', value: 30 },
         { name: '创新', value: 10 },
       ],
-      detailTable: [
-        {
-          id: 'RS001',
-          project: '产品A研发',
-          status: '进行中',
-          progress: 75,
-          owner: '张三',
-        },
-        {
-          id: 'RS002',
-          project: '产品B改进',
-          status: '已完成',
-          progress: 100,
-          owner: '李四',
-        },
-        {
-          id: 'RS003',
-          project: '技术预研',
-          status: '进行中',
-          progress: 45,
-          owner: '王五',
-        },
-        {
-          id: 'RS004',
-          project: '平台升级',
-          status: '已暂停',
-          progress: 30,
-          owner: '赵六',
-        },
-      ],
+      detailTable: [],
     },
     lims: {
       summary: {
@@ -141,36 +129,7 @@ const getMockData = (moduleId: string): ModuleData => {
         { name: '微生物检验', value: 20 },
         { name: '其他', value: 10 },
       ],
-      detailTable: [
-        {
-          id: 'LM001',
-          sample: '原材料A',
-          type: '化学检验',
-          status: '已完成',
-          result: '合格',
-        },
-        {
-          id: 'LM002',
-          sample: '半成品B',
-          type: '物理检验',
-          status: '进行中',
-          result: '-',
-        },
-        {
-          id: 'LM003',
-          sample: '成品C',
-          type: '微生物检验',
-          status: '已完成',
-          result: '合格',
-        },
-        {
-          id: 'LM004',
-          sample: '原材料D',
-          type: '化学检验',
-          status: '已完成',
-          result: '不合格',
-        },
-      ],
+      detailTable: [],
     },
     qms: {
       summary: {
@@ -191,36 +150,7 @@ const getMockData = (moduleId: string): ModuleData => {
         { name: '合格', value: 97.8 },
         { name: '不合格', value: 2.2 },
       ],
-      detailTable: [
-        {
-          id: 'QM001',
-          inspection: '来料检验',
-          batch: 'LOT2024001',
-          status: '通过',
-          quality: 'A',
-        },
-        {
-          id: 'QM002',
-          inspection: '过程检验',
-          batch: 'LOT2024002',
-          status: '通过',
-          quality: 'A',
-        },
-        {
-          id: 'QM003',
-          inspection: '成品检验',
-          batch: 'LOT2024003',
-          status: '不通过',
-          quality: 'C',
-        },
-        {
-          id: 'QM004',
-          inspection: '出货检验',
-          batch: 'LOT2024004',
-          status: '通过',
-          quality: 'B',
-        },
-      ],
+      detailTable: [],
     },
     ehs: {
       summary: {
@@ -242,36 +172,7 @@ const getMockData = (moduleId: string): ModuleData => {
         { name: '中风险', value: 45 },
         { name: '低风险', value: 65 },
       ],
-      detailTable: [
-        {
-          id: 'EH001',
-          risk: '化学品泄漏',
-          level: '高',
-          status: '已解决',
-          date: '2024-03-15',
-        },
-        {
-          id: 'EH002',
-          risk: '设备故障',
-          level: '中',
-          status: '处理中',
-          date: '2024-04-20',
-        },
-        {
-          id: 'EH003',
-          risk: '高处作业',
-          level: '高',
-          status: '已解决',
-          date: '2024-05-10',
-        },
-        {
-          id: 'EH004',
-          risk: '用电安全',
-          level: '低',
-          status: '已解决',
-          date: '2024-06-01',
-        },
-      ],
+      detailTable: [],
     },
     srm: {
       summary: {
@@ -293,36 +194,7 @@ const getMockData = (moduleId: string): ModuleData => {
         { name: '待审核', value: 45 },
         { name: '不合格', value: 15 },
       ],
-      detailTable: [
-        {
-          id: 'SR001',
-          supplier: '供应商A',
-          type: '原材料',
-          rating: 4.8,
-          status: '合格',
-        },
-        {
-          id: 'SR002',
-          supplier: '供应商B',
-          type: '辅料',
-          rating: 4.2,
-          status: '合格',
-        },
-        {
-          id: 'SR003',
-          supplier: '供应商C',
-          type: '包装',
-          rating: 3.8,
-          status: '待审核',
-        },
-        {
-          id: 'SR004',
-          supplier: '供应商D',
-          type: '原材料',
-          rating: 4.5,
-          status: '合格',
-        },
-      ],
+      detailTable: [],
     },
     pdm: {
       summary: {
@@ -344,39 +216,44 @@ const getMockData = (moduleId: string): ModuleData => {
         { name: '进行中', value: 28 },
         { name: '已取消', value: 7 },
       ],
-      detailTable: [
-        {
-          id: 'PD001',
-          batch: '批次2024001',
-          product: '产品A',
-          status: '已完成',
-          output: 1000,
-        },
-        {
-          id: 'PD002',
-          batch: '批次2024002',
-          product: '产品B',
-          status: '进行中',
-          output: 650,
-        },
-        {
-          id: 'PD003',
-          batch: '批次2024003',
-          product: '产品C',
-          status: '已完成',
-          output: 820,
-        },
-        {
-          id: 'PD004',
-          batch: '批次2024004',
-          product: '产品A',
-          status: '已取消',
-          output: 0,
-        },
-      ],
+      detailTable: [],
     },
   };
-  return mockData[moduleId] || mockData.rs;
+  return fallbackData[moduleId] || fallbackData.rs;
+};
+
+const moduleApiMap: Record<
+  string,
+  {
+    summary: () => Promise<any>;
+    timeline?: () => Promise<any>;
+    distribution?: () => Promise<any>;
+  }
+> = {
+  rs: {
+    summary: fetchRsSummary,
+    timeline: fetchRsProjectTimeline,
+  },
+  lims: {
+    summary: fetchLimsSummary,
+    timeline: fetchLimsSampleTimeline,
+  },
+  qms: {
+    summary: fetchQmsSummary,
+    timeline: fetchQmsQualityTrend,
+  },
+  ehs: {
+    summary: fetchEhsSummary,
+    timeline: fetchEhsIncidentTrend,
+  },
+  srm: {
+    summary: fetchSrmSummary,
+    timeline: fetchSrmOrderTimeline,
+  },
+  pdm: {
+    summary: fetchPdmSummary,
+    timeline: fetchPdmProductionTrend,
+  },
 };
 
 const summaryLabels: Record<string, string> = {
@@ -411,6 +288,7 @@ const BIModuleDetailPage = () => {
   const [moduleData, setModuleData] = useState<ModuleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const config = moduleConfig[moduleId || 'rs'] || {
     name: '未知模块',
@@ -418,30 +296,114 @@ const BIModuleDetailPage = () => {
     color: 'grey.500',
   };
 
-  useEffect(() => {
-    loadModuleData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moduleId]);
-
-  const loadModuleData = async (showRefreshing = false) => {
+  const loadModuleData = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setIsRefreshing(true);
     else setLoading(true);
+    setError(null);
+
+    const modId = moduleId || 'rs';
+    const fallback = getFallbackData(modId);
+
     try {
-      setTimeout(() => {
-        setModuleData(getMockData(moduleId || 'rs'));
-        setLoading(false);
-        setIsRefreshing(false);
-      }, 500);
+      const apiConfig = moduleApiMap[modId];
+      if (!apiConfig) {
+        setModuleData(fallback);
+        return;
+      }
+
+      let summaryData: any = null;
+      let timelineData: any[] = fallback.timeline;
+      let distributionData: any[] = fallback.distribution;
+
+      try {
+        const summaryRes = await apiConfig.summary();
+        if (summaryRes.success && summaryRes.data) {
+          summaryData = summaryRes.data;
+        }
+      } catch (e) {
+        logger.error(`Failed to load ${modId} summary:`, e);
+      }
+
+      if (apiConfig.timeline) {
+        try {
+          const timelineRes = await apiConfig.timeline();
+          if (timelineRes.success && timelineRes.data) {
+            const timelineItems = timelineRes.data.items || timelineRes.data || [];
+            if (Array.isArray(timelineItems) && timelineItems.length > 0) {
+              timelineData = timelineItems.map((item: any, index: number) => ({
+                month: item.month || item.date || `${index + 1}月`,
+                count: item.count || item.value || 0,
+              }));
+            }
+          }
+        } catch (e) {
+          logger.error(`Failed to load ${modId} timeline:`, e);
+        }
+      }
+
+      const summary = summaryData || fallback.summary;
+
+      if (modId === 'rs' && summaryData?.project_type_distribution) {
+        distributionData = Object.entries(summaryData.project_type_distribution).map(
+          ([key, value]) => ({
+            name: key === 'research' ? '研发' : key === 'development' ? '开发' : key === 'improvement' ? '改进' : key,
+            value: value as number,
+          })
+        );
+      } else if (modId === 'lims' && summaryData?.test_type_distribution) {
+        distributionData = Object.entries(summaryData.test_type_distribution).map(
+          ([key, value]) => ({
+            name:
+              key === 'chemical'
+                ? '化学检验'
+                : key === 'physical'
+                  ? '物理检验'
+                  : key === 'microbiological'
+                    ? '微生物检验'
+                    : '其他',
+            value: value as number,
+          })
+        );
+      } else if (modId === 'qms' && summaryData?.defect_types) {
+        distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
+          name: key === 'material' ? '材料' : key === 'process' ? '工艺' : key === 'equipment' ? '设备' : '其他',
+          value: value as number,
+        }));
+      } else if (modId === 'ehs' && summaryData?.risk_distribution) {
+        distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
+          name: key === 'high' ? '高风险' : key === 'medium' ? '中风险' : '低风险',
+          value: value as number,
+        }));
+      } else if (modId === 'pdm' && summaryData?.product_line_usage) {
+        distributionData = Object.entries(summaryData.product_line_usage).map(([key, value]) => ({
+          name: key,
+          value: value as number,
+        }));
+      }
+
+      setModuleData({
+        summary,
+        timeline: timelineData,
+        distribution: distributionData,
+        detailTable: [],
+      });
     } catch (error: unknown) {
-      apiLogger.error('Failed to load module data:', error);
+      logger.error('Failed to load module data:', error);
+      setError('加载模块数据失败，请稍后重试');
+      setModuleData(fallback);
+    } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [moduleId]);
 
-  const handleRefresh = () => {
+  useEffect(() => {
+    loadModuleData();
+  }, [loadModuleData]);
+
+  const handleRefresh = useCallback(() => {
     loadModuleData(true);
-  };
+  }, [loadModuleData]);
 
   const exportData = moduleData?.detailTable || [];
 
@@ -608,6 +570,12 @@ const BIModuleDetailPage = () => {
         </Box>
       }
     >
+      {error && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* 数据明细表 */}
       <Card>
         <CardHeader

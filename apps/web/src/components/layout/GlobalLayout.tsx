@@ -188,66 +188,125 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     return (
       <Box
         sx={{
-          minWidth: 200,
-          maxWidth: 320,
-          p: 1,
+          minWidth: 220,
+          maxWidth: 340,
+          p: 1.5,
           maxHeight: isMobile ? '60vh' : '70vh',
           overflowY: 'auto',
+          // 自定义滚动条
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'divider transparent',
+          '&::-webkit-scrollbar': {
+            width: 6,
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'divider',
+            borderRadius: 3,
+          },
         }}
         onMouseEnter={() => {
           if (anchorEl) setAnchorEl(anchorEl);
         }}
         onMouseLeave={handleCloseMenu}
       >
-        {menuItems.map((child: NavItem) => (
-          <Box
-            key={child.code}
-            onClick={() => handleMenuItemClick(child)}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              p: 1,
-              borderRadius: 1,
-              cursor: 'pointer',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-          >
+        {menuItems.map((child: NavItem, idx: number) => {
+          const childIsActive =
+            child.path === location.pathname ||
+            (child.path && location.pathname.startsWith(child.path + '/'));
+          return (
             <Box
+              key={child.code}
+              onClick={() => handleMenuItemClick(child)}
               sx={{
-                width: 28,
-                height: 28,
-                borderRadius: 1,
-                backgroundColor: 'primary.light',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                opacity: 0.8,
+                gap: 2,
+                p: 1.5,
+                mb: idx < menuItems.length - 1 ? 0.5 : 0,
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease-in-out',
+                position: 'relative',
+                backgroundColor: childIsActive ? 'primary.50' : 'transparent',
+                '&:hover': {
+                  backgroundColor: childIsActive ? 'primary.50' : 'action.hover',
+                  transform: 'translateX(4px)',
+                },
               }}
             >
-              {child.icon ? (
-                renderIcon(child.icon, 16)
-              ) : (
-                <Typography
-                  variant='caption'
-                  sx={{ color: 'primary.main', fontWeight: 600 }}
-                >
-                  {child.label.charAt(0)}
-                </Typography>
+              {/* 左侧激活指示条 */}
+              {childIsActive && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 4,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 3,
+                    height: '50%',
+                    borderRadius: '3px',
+                    backgroundColor: 'primary.main',
+                  }}
+                />
               )}
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
+
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  backgroundColor: childIsActive ? 'primary.main' : 'grey.100',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.15s ease-in-out',
+                }}
               >
-                {child.label}
-              </Typography>
+                {child.icon ? (
+                  renderIcon(child.icon, 18)
+                ) : (
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      color: childIsActive ? 'common.white' : 'primary.main',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {child.label.charAt(0)}
+                  </Typography>
+                )}
+              </Box>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    fontWeight: childIsActive ? 600 : 500,
+                    color: childIsActive ? 'primary.main' : 'text.primary',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  {child.label}
+                </Typography>
+                {child.description && (
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{
+                      display: 'block',
+                      mt: 0.25,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {child.description}
+                  </Typography>
+                )}
+              </Box>
             </Box>
-          </Box>
-        ))}
+          );
+        })}
       </Box>
     );
   };
@@ -276,21 +335,38 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           }
           sx={{
             color: isActive ? 'primary.main' : 'text.primary',
-            fontWeight: isActive ? 600 : 400,
+            fontWeight: isActive ? 600 : 500,
             px: 1.5,
             py: 1,
             minWidth: 'auto',
             textTransform: 'none',
             borderRadius: 1,
             backgroundColor: isActive ? 'primary.light' : 'transparent',
+            transition: 'all 0.2s ease-in-out',
             '&:hover': {
               backgroundColor: isActive ? 'primary.light' : 'action.hover',
+              transform: 'translateY(-1px)',
             },
             cursor: item.path ? 'pointer' : 'default',
           }}
         >
           {item.label}
         </Button>
+        {/* 激活项底部指示条 */}
+        {isActive && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: -2,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: 3,
+              borderRadius: '3px 3px 0 0',
+              backgroundColor: 'primary.main',
+            }}
+          />
+        )}
       </Box>
     );
   };

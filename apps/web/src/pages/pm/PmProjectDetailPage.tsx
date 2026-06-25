@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import {
-  ArrowLeft,
   Edit,
   Users,
   Calendar,
@@ -35,6 +35,7 @@ import {
 import GanttChart from '@/components/pm/GanttChart';
 import { pmApi } from '@/api/pm';
 import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
+import { BackButton } from '@/components/common';
 
 const PmProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -228,14 +229,7 @@ const PmProjectDetailPage: React.FC = () => {
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'slate.50' }}>
       <Box sx={{ flex: 1, p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <Button
-            variant='outlined'
-            onClick={() => navigate('/pm/projects')}
-            sx={{ gap: 1 }}
-          >
-            <ArrowLeft sx={{ width: 16, height: 16 }} />
-            返回列表
-          </Button>
+          <BackButton href='/pm/projects' variant='outlined' label='返回列表' />
           <Box sx={{ flex: 1 }} />
           <Button onClick={() => navigate(`/pm/projects/${id}/edit`)}>
             <Edit sx={{ width: 16, height: 16, mr: 1 }} />

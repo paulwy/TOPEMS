@@ -1,5 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { logger } from '@/utils/logger';
+import { flowApi } from '@/api/flow';
+import type { WorkflowInstance, StatisticsResponse } from '@/api/flow';
+import { useNotification } from '@/hooks/useNotification';
 import {
   Box,
   Card,
@@ -22,93 +25,8 @@ import {
 import { Button } from '@mui/material';
 import { Eye, Bell, Ban, RotateCcw, Search, Activity, Loader2 } from 'lucide-react';
 
-interface FlowInstance {
-  id: string;
-  name: string;
-  applicant: string;
-  currentNode: string;
-  status: 'running' | 'completed' | 'rejected' | 'terminated';
-  duration: string;
-  startTime: string;
-}
-
-const mockInstances: FlowInstance[] = [
-  {
-    id: 'INS-2024-001',
-    name: '请假审批流程',
-    applicant: '张三',
-    currentNode: '部门审批',
-    status: 'running',
-    duration: '2小时30分',
-    startTime: '2024-03-20 09:00',
-  },
-  {
-    id: 'INS-2024-002',
-    name: '费用报销流程',
-    applicant: '李四',
-    currentNode: '财务审批',
-    status: 'running',
-    duration: '5小时15分',
-    startTime: '2024-03-20 08:30',
-  },
-  {
-    id: 'INS-2024-003',
-    name: '采购申请流程',
-    applicant: '王五',
-    currentNode: '已完成',
-    status: 'completed',
-    duration: '1天2小时',
-    startTime: '2024-03-19 10:00',
-  },
-  {
-    id: 'INS-2024-004',
-    name: '合同审批流程',
-    applicant: '赵六',
-    currentNode: '已拒绝',
-    status: 'rejected',
-    duration: '3小时',
-    startTime: '2024-03-20 14:00',
-  },
-  {
-    id: 'INS-2024-005',
-    name: '差旅申请流程',
-    applicant: '孙七',
-    currentNode: '已终止',
-    status: 'terminated',
-    duration: '30分钟',
-    startTime: '2024-03-20 15:30',
-  },
-  {
-    id: 'INS-2024-006',
-    name: '加班申请流程',
-    applicant: '周八',
-    currentNode: '已完成',
-    status: 'completed',
-    duration: '1小时',
-    startTime: '2024-03-20 16:00',
-  },
-  {
-    id: 'INS-2024-007',
-    name: '设备借用流程',
-    applicant: '吴九',
-    currentNode: '部门审批',
-    status: 'running',
-    duration: '45分钟',
-    startTime: '2024-03-20 17:00',
-  },
-  {
-    id: 'INS-2024-008',
-    name: '请假审批流程',
-    applicant: '郑十',
-    currentNode: '经理审批',
-    status: 'running',
-    duration: '1天',
-    startTime: '2024-03-19 17:00',
-  },
-];
-
 const getStatusColor = (
-  status: FlowInstance['status']
+  status: string
 ): 'success' | 'error' | 'warning' | 'default' => {
   switch (status) {
     case 'running':
@@ -118,11 +36,14 @@ const getStatusColor = (
     case 'rejected':
       return 'error';
     case 'terminated':
+    case 'cancelled':
+      return 'default';
+    default:
       return 'default';
   }
 };
 
-const getStatusText = (status: FlowInstance['status']) => {
+const getStatusText = (status: string) => {
   switch (status) {
     case 'running':
       return '进行中';
@@ -131,69 +52,107 @@ const getStatusText = (status: FlowInstance['status']) => {
     case 'rejected':
       return '已拒绝';
     case 'terminated':
+    case 'cancelled':
       return '已终止';
+    case 'pending':
+      return '待处理';
+    default:
+      return status;
   }
 };
 
 const FlowMonitorPage: React.FC = () => {
-  const [data, setData] = useState<FlowInstance[]>(mockInstances);
+  const { success, error } = useNotification();
+
+  const [data, setData] = useState<WorkflowInstance[]>([]);
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState<StatisticsResponse | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [nameFilter, setNameFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
-  const [selectedInstance, setSelectedInstance] = useState<FlowInstance | null>(null);
+  const [selectedInstance, setSelectedInstance] = useState<WorkflowInstance | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [instancesRes, statsRes] = await Promise.all([
+        flowApi.listInstances(),
+        flowApi.getStatistics(),
+      ]);
+
+      if (instancesRes.success && instancesRes.data) {
+        setData(instancesRes.data.items || []);
+      }
+      if (statsRes.success && statsRes.data) {
+        setStats(statsRes.data);
+      }
+    } catch (err: unknown) {
+      logger.error('Error loading flow data:', err);
+      error('加载流程数据失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredData = data.filter((item) => {
     const matchesSearch =
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.applicant.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesName = nameFilter === 'all' || item.name === nameFilter;
+      (item.data?.applicant?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-    return matchesSearch && matchesName && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
   const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
-  const runningCount = data.filter((d) => d.status === 'running').length;
-  const completedCount = data.filter((d) => d.status === 'completed').length;
+  const runningCount = useMemo(() => data.filter((d) => d.status === 'running').length, [data]);
+  const completedCount = useMemo(() => data.filter((d) => d.status === 'completed').length, [data]);
 
-  const handleView = (instance: FlowInstance) => {
+  const uniqueFlowNames = [...new Set(data.map((d) => d.data?.name || d.id))];
+
+  const handleView = (instance: WorkflowInstance) => {
     logger.info('查看实例:', instance.id);
   };
 
-  const handleUrge = (instance: FlowInstance) => {
+  const handleUrge = (instance: WorkflowInstance) => {
     logger.info('催办:', instance.id);
   };
 
-  const handleTerminate = (instance: FlowInstance) => {
+  const handleTerminate = (instance: WorkflowInstance) => {
     setSelectedInstance(instance);
     setShowTerminateDialog(true);
   };
 
-  const confirmTerminate = () => {
-    if (selectedInstance) {
-      setData((prev) =>
-        prev.map((d) =>
-          d.id === selectedInstance.id
-            ? { ...d, status: 'terminated' as const, currentNode: '已终止' }
-            : d
-        )
-      );
+  const confirmTerminate = async () => {
+    if (!selectedInstance) return;
+    try {
+      await flowApi.instances.delete(selectedInstance.id);
+      setData((prev) => prev.filter((d) => d.id !== selectedInstance.id));
+      success('流程实例已终止');
+    } catch (err: unknown) {
+      logger.error('Error terminating instance:', err);
+      error('终止流程失败');
+    } finally {
       setShowTerminateDialog(false);
       setSelectedInstance(null);
     }
   };
 
-  const handleRecall = (instance: FlowInstance) => {
+  const handleRecall = (instance: WorkflowInstance) => {
     logger.info('取回:', instance.id);
   };
 
-  const uniqueFlowNames = [...new Set(data.map((d) => d.name))];
+  const handleRefresh = () => {
+    loadData();
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
@@ -243,7 +202,7 @@ const FlowMonitorPage: React.FC = () => {
                   variant='h4'
                   sx={{ fontWeight: 700, color: 'warning.main' }}
                 >
-                  {runningCount}
+                  {stats?.running_instances || runningCount}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -257,7 +216,7 @@ const FlowMonitorPage: React.FC = () => {
                   variant='h4'
                   sx={{ fontWeight: 700, color: 'success.dark' }}
                 >
-                  {completedCount}
+                  {stats?.completed_instances || completedCount}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -334,7 +293,7 @@ const FlowMonitorPage: React.FC = () => {
             </Select>
           </FormControl>
           <IconButton
-            onClick={() => setLoading(true)}
+            onClick={handleRefresh}
             title='刷新'
           >
             <Loader2
@@ -397,9 +356,9 @@ const FlowMonitorPage: React.FC = () => {
                     }}
                   >
                     <td>{instance.id}</td>
-                    <td>{instance.name}</td>
-                    <td>{instance.applicant}</td>
-                    <td>{instance.currentNode}</td>
+                    <td>{instance.data?.name || instance.workflow_id}</td>
+                    <td>{instance.data?.applicant || instance.initiator_id || '-'}</td>
+                    <td>{instance.current_node || '-'}</td>
                     <td>
                       <Chip
                         size='small'
@@ -407,8 +366,18 @@ const FlowMonitorPage: React.FC = () => {
                         color={getStatusColor(instance.status)}
                       />
                     </td>
-                    <td>{instance.duration}</td>
-                    <td>{instance.startTime}</td>
+                    <td>
+                      {instance.started_at ? (
+                        instance.completed_at ? (
+                          <span>{Math.round((new Date(instance.completed_at).getTime() - new Date(instance.started_at).getTime()) / 60000)} 分钟</span>
+                        ) : (
+                          <span>{Math.round((Date.now() - new Date(instance.started_at).getTime()) / 60000)} 分钟</span>
+                        )
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td>{instance.started_at ? new Date(instance.started_at).toLocaleString('zh-CN') : '-'}</td>
                     <td>
                       <Stack
                         direction='row'

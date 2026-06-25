@@ -19,7 +19,7 @@ import { Plus, Eye, ClipboardList, Clock, ListOrdered } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionStep } from '@/api/pdm';
-import { toast } from 'react-toastify';
+import { useAppStore } from '@/store';
 
 const PdmStepPage: React.FC = () => {
   const [steps, setSteps] = useState<ProductionStep[]>([]);
@@ -37,6 +37,7 @@ const PdmStepPage: React.FC = () => {
     duration_hours: '',
     equipment_required: '',
   });
+  const addNotification = useAppStore((state) => state.addNotification);
 
   // 分页状态
   const [page, setPage] = useState(0);
@@ -185,11 +186,11 @@ const PdmStepPage: React.FC = () => {
         duration_hours: formData.duration_hours ? parseFloat(formData.duration_hours) : undefined,
         equipment_required: formData.equipment_required || undefined,
       });
-      toast.success('工序步骤创建成功');
+      addNotification({ title: '成功', message: '工序步骤创建成功', type: 'success' });
       setShowCreateModal(false);
       loadSteps();
     } catch (err: unknown) {
-      toast.error('创建失败');
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建工序步骤失败:', err);
     }
   };

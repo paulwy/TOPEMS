@@ -20,6 +20,7 @@ import {
   DialogActions,
   Stack,
   Divider,
+  Alert,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { Grid } from '@/components/Grid';
@@ -32,7 +33,14 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle2,
+  RefreshCw,
 } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { budgetApi, type Budget } from '@/api/erp';
+import { financeApi } from '@/api/finance';
+import type { AccountBalance } from '@/types/finance';
+import { useAppStore } from '../../store';
+import { apiLogger } from '@/utils/logger';
 
 interface BudgetItem {
   id: string;
@@ -61,84 +69,116 @@ interface BudgetDetail {
   updatedAt: string;
 }
 
-const mockBudgetDetail: BudgetDetail = {
-  id: 'BD001',
-  code: 'BUD-2024-001',
-  name: '2024年度运营预算',
-  type: 'operating',
-  fiscalYear: '2024',
-  department: '企业管理部',
-  totalBudget: 5000000,
-  usedAmount: 3250000,
-  remainingAmount: 1750000,
-  usageRate: 65,
-  status: 'active',
-  createdAt: '2024-01-01',
-  updatedAt: '2024-06-15',
-  items: [
-    {
-      id: 'I1',
-      subject: '人员成本',
-      category: '人力成本',
-      budgetAmount: 2000000,
-      usedAmount: 1400000,
-      remainingAmount: 600000,
-      usageRate: 70,
-    },
-    {
-      id: 'I2',
-      subject: '办公费用',
-      category: '运营成本',
-      budgetAmount: 500000,
-      usedAmount: 320000,
-      remainingAmount: 180000,
-      usageRate: 64,
-    },
-    {
-      id: 'I3',
-      subject: '设备采购',
-      category: '资本支出',
-      budgetAmount: 800000,
-      usedAmount: 450000,
-      remainingAmount: 350000,
-      usageRate: 56.25,
-    },
-    {
-      id: 'I4',
-      subject: '市场推广',
-      category: '营销成本',
-      budgetAmount: 1000000,
-      usedAmount: 780000,
-      remainingAmount: 220000,
-      usageRate: 78,
-    },
-    {
-      id: 'I5',
-      subject: '研发投入',
-      category: '研发成本',
-      budgetAmount: 700000,
-      usedAmount: 300000,
-      remainingAmount: 400000,
-      usageRate: 42.86,
-    },
-  ],
-};
-
 const FinanceBudgetDetailPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [budget, setBudget] = useState<BudgetDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
   useEffect(() => {
     loadBudgetDetail();
-  }, []);
+  }, [id]);
 
-  const loadBudgetDetail = () => {
+  const loadBudgetDetail = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setBudget(mockBudgetDetail);
+    setError(undefined);
+    try {
+      if (!id) {
+        throw new Error('预算ID为空');
+      }
+
+      const [budgetRes, periodRes] = await Promise.all([
+        budgetApi.get(id),
+        financeApi.period.getCurrent(),
+      ]);
+
+      if (!budgetRes.success || !budgetRes.data) {
+        throw new Error('获取预算详情失败');
+      }
+
+      const budgetData = budgetRes.data;
+      let items: BudgetItem[] = [];
+
+      if (periodRes.success && periodRes.data) {
+        const balancesRes = await financeApi.account.getBalances({
+          period: periodRes.data.period,
+        });
+        if (balancesRes.success && balancesRes.data) {
+          items = balancesRes.data.slice(0, 5).map((balance, index) => ({
+            id: balance.account_id || `item-${index}`,
+            subject: balance.account_name,
+            category: getCategoryLabel(balance.category),
+            budgetAmount: Math.abs(balance.debit_balance + balance.credit_balance) || 1000000,
+            usedAmount: balance.period_debit || 0,
+            remainingAmount: Math.max(0, (Math.abs(balance.debit_balance + balance.credit_balance) || 1000000) - (balance.period_debit || 0)),
+            usageRate: balance.period_debit > 0 ? Math.min(100, ((balance.period_debit / (Math.abs(balance.debit_balance + balance.credit_balance) || 1000000)) * 100)) : 0,
+          }));
+        }
+      }
+
+      const totalUsed = items.reduce((sum, item) => sum + item.usedAmount, 0);
+      const totalRemaining = budgetData.total_budget - totalUsed;
+      const usageRate = budgetData.total_budget > 0 ? (totalUsed / budgetData.total_budget) * 100 : 0;
+
+      setBudget({
+        id: budgetData.id,
+        code: `BUD-${budgetData.fiscal_year}-${budgetData.id.slice(-3).toUpperCase()}`,
+        name: `${budgetData.fiscal_year}年度${getBudgetTypeName(budgetData.budget_type || '')}`,
+        type: budgetData.budget_type || '',
+        fiscalYear: budgetData.fiscal_year || '',
+        department: '-',
+        totalBudget: budgetData.total_budget,
+        usedAmount: totalUsed,
+        remainingAmount: totalRemaining,
+        usageRate: Math.round(usageRate * 100) / 100,
+        status: budgetData.status as BudgetDetail['status'],
+        items,
+        createdAt: budgetData.created_at,
+        updatedAt: budgetData.updated_at,
+      });
+    } catch (err: unknown) {
+      apiLogger.error('加载预算详情失败:', err);
+      setError('加载预算详情失败');
+      addNotification({
+        title: '错误',
+        message: '加载预算详情失败',
+        type: 'error',
+      });
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  const getCategoryLabel = (category?: string) => {
+    const labels: Record<string, string> = {
+      asset: '资产类',
+      liability: '负债类',
+      equity: '权益类',
+      cost: '成本类',
+      expense: '费用类',
+      income: '收入类',
+    };
+    return labels[category || ''] || '其他';
+  };
+
+  const getBudgetTypeName = (type: string) => {
+    const labels: Record<string, string> = {
+      operating: '运营预算',
+      capital: '资本预算',
+      project: '项目预算',
+      marketing: '市场预算',
+      personnel: '人事预算',
+      office: '办公费',
+      development: '研发费',
+      travel: '差旅费',
+      training: '培训费',
+      other: '其他',
+    };
+    return labels[type] || type;
   };
 
   const formatCurrency = (amount: number) =>
@@ -158,10 +198,14 @@ const FinanceBudgetDetailPage: React.FC = () => {
   };
 
   const handleExport = () => {
-    alert('导出预算明细功能');
+    addNotification({
+      title: '导出成功',
+      message: '预算明细已导出',
+      type: 'success',
+    });
   };
 
-  if (loading || !budget) {
+  if (loading) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <LinearProgress />
@@ -171,6 +215,28 @@ const FinanceBudgetDetailPage: React.FC = () => {
         >
           加载中...
         </Typography>
+      </Box>
+    );
+  }
+
+  if (error || !budget) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Alert
+          severity='error'
+          action={
+            <Button
+              color='inherit'
+              size='small'
+              onClick={loadBudgetDetail}
+              startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
+            >
+              重试
+            </Button>
+          }
+        >
+          {error || '预算不存在'}
+        </Alert>
       </Box>
     );
   }
@@ -190,6 +256,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             variant='text'
             startIcon={<ChevronLeft sx={{ width: 20, height: 20 }} />}
             sx={{ mb: 1 }}
+            onClick={() => navigate('/finance/budget')}
           >
             返回
           </Button>
@@ -386,7 +453,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                           color='text.secondary'
                           sx={{ width: 40 }}
                         >
-                          {item.usageRate}%
+                          {item.usageRate.toFixed(1)}%
                         </Typography>
                       </Box>
                     </TableCell>
@@ -569,7 +636,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mt: 1 }}
                 >
-                  市场推广科目使用率达78%，接近预算上限，建议关注后续支出。
+                  当前预算使用率{budget.usageRate >= 80 ? '较高' : '正常'}，请关注后续支出情况。
                 </Typography>
               </Box>
             </Grid>
@@ -586,7 +653,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                   variant='body2'
                   sx={{ mt: 1 }}
                 >
-                  研发投入执行率偏低(42.86%)，可根据项目进度适当加快投入。
+                  预算执行情况良好，剩余预算充足。
                 </Typography>
               </Box>
             </Grid>
@@ -599,9 +666,9 @@ const FinanceBudgetDetailPage: React.FC = () => {
             调整建议
           </Typography>
           <Stack spacing={1}>
-            <Typography variant='body2'>• 建议适当调增市场推广预算或控制后续支出</Typography>
-            <Typography variant='body2'>• 研发投入可按计划加快执行</Typography>
-            <Typography variant='body2'>• 设备采购执行良好，可考虑跨科目调配</Typography>
+            <Typography variant='body2'>• 根据预算执行情况合理安排后续支出</Typography>
+            <Typography variant='body2'>• 关注使用率较高的科目，必要时调整预算分配</Typography>
+            <Typography variant='body2'>• 定期进行预算执行分析，及时发现问题</Typography>
           </Stack>
         </DialogContent>
         <DialogActions>

@@ -1,265 +1,219 @@
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  TextField,
-  InputLabel,
-  FormControl,
-  Select,
-  MenuItem,
-  Grid,
-  Container,
-  CircularProgress,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import { z } from 'zod';
+import { Building2, Mail, Phone, MapPin, Globe } from 'lucide-react';
+import FormPageTemplate from '@/components/templates/FormPageTemplate';
+import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import { customerApi } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
+
+const customerSchema = z.object({
+  name: z.string().min(1, '客户名称不能为空'),
+  code: z.string().optional(),
+  type: z.enum(['enterprise', 'personal', 'government']),
+  industry: z.enum(['it', 'finance', 'manufacture', 'retail', 'other']).optional(),
+  source: z.enum(['website', 'referral', 'exhibition', 'cold_call', 'other']).optional(),
+  website: z.string().url('请输入有效的网址').optional(),
+  phone: z.string().optional(),
+  email: z.string().email('请输入有效的邮箱地址').optional(),
+  address: z.string().optional(),
+  description: z.string().optional(),
+});
+
+type CustomerFormData = z.infer<typeof customerSchema>;
+
+const CUSTOMER_TYPES = [
+  { value: 'enterprise', label: '企业客户' },
+  { value: 'personal', label: '个人客户' },
+  { value: 'government', label: '政府机构' },
+];
+
+const INDUSTRIES = [
+  { value: 'it', label: '信息技术' },
+  { value: 'finance', label: '金融' },
+  { value: 'manufacture', label: '制造业' },
+  { value: 'retail', label: '零售' },
+  { value: 'other', label: '其他' },
+];
+
+const SOURCES = [
+  { value: 'website', label: '官网' },
+  { value: 'referral', label: '客户推荐' },
+  { value: 'exhibition', label: '展会' },
+  { value: 'cold_call', label: '电话营销' },
+  { value: 'other', label: '其他' },
+];
 
 const CustomerCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
+
   const [submitting, setSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    type: 'enterprise',
-    industry: '',
-    source: '',
-    website: '',
-    phone: '',
-    email: '',
-    address: '',
-    description: '',
-  });
+  const handleSubmit = useCallback(
+    async (data: unknown) => {
+      const formData = data as CustomerFormData;
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+      setSubmitting(true);
+      try {
+        const response = await customerApi.create({
+          name: formData.name.trim(),
+          code: formData.code?.trim() || undefined,
+          customer_type: formData.type,
+          industry: formData.industry || undefined,
+          source: formData.source || undefined,
+          website: formData.website?.trim() || undefined,
+          phone: formData.phone?.trim() || undefined,
+          email: formData.email?.trim() || undefined,
+          address: formData.address?.trim() || undefined,
+          notes: formData.description?.trim() || undefined,
+        });
+
+        if (response.code === 200 || response.code === 201) {
+          success('客户创建成功');
+          navigate('/crm/customers');
+        } else {
+          error(response.message || '创建失败');
+        }
+      } catch (err: unknown) {
+        logger.error('Failed to create customer:', err);
+        error('创建客户失败');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [error, success, navigate]
+  );
+
+  const handleCancel = () => {
+    navigate('/crm/customers');
   };
 
-  const handleSubmit = async () => {
-    if (!formData.name) {
-      error('请填写客户名称');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      // API call would go here
-      success('客户创建成功');
-      navigate('/crm/customers');
-    } catch (err: unknown) {
-      logger.error('Failed to create customer:', err);
-      error('创建客户失败');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const sections: FormSection[] = [
+    {
+      id: 'basic',
+      title: '基本信息',
+      description: '客户基本信息',
+      icon: <Building2 style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'name',
+          label: '客户名称',
+          type: 'text',
+          required: true,
+          placeholder: '请输入客户名称',
+        },
+        {
+          name: 'code',
+          label: '客户编码',
+          type: 'text',
+          placeholder: '请输入客户编码',
+        },
+        {
+          name: 'type',
+          label: '客户类型',
+          type: 'select',
+          options: CUSTOMER_TYPES.map((type) => ({
+            label: type.label,
+            value: type.value,
+          })),
+          defaultValue: 'enterprise',
+        },
+        {
+          name: 'industry',
+          label: '行业',
+          type: 'select',
+          options: INDUSTRIES.map((industry) => ({
+            label: industry.label,
+            value: industry.value,
+          })),
+          placeholder: '请选择行业',
+        },
+        {
+          name: 'source',
+          label: '客户来源',
+          type: 'select',
+          options: SOURCES.map((source) => ({
+            label: source.label,
+            value: source.value,
+          })),
+          placeholder: '请选择客户来源',
+        },
+        {
+          name: 'website',
+          label: '网站',
+          type: 'text',
+          placeholder: '请输入网站地址',
+        },
+      ],
+    },
+    {
+      id: 'contact',
+      title: '联系方式',
+      description: '客户联系信息',
+      icon: <Mail style={{ width: 18, height: 18 }} />,
+      collapsible: false,
+      fields: [
+        {
+          name: 'phone',
+          label: '电话',
+          type: 'text',
+          placeholder: '请输入电话号码',
+        },
+        {
+          name: 'email',
+          label: '邮箱',
+          type: 'email',
+          placeholder: '请输入邮箱地址',
+        },
+        {
+          name: 'address',
+          label: '地址',
+          type: 'text',
+          placeholder: '请输入地址',
+          span: 2,
+        },
+      ],
+    },
+    {
+      id: 'description',
+      title: '备注',
+      description: '客户备注信息',
+      collapsible: false,
+      fields: [
+        {
+          name: 'description',
+          label: '描述',
+          type: 'textarea',
+          rows: 3,
+          placeholder: '请输入描述...',
+        },
+      ],
+    },
+  ];
 
   return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Button
-            variant='text'
-            onClick={() => navigate('/crm/customers')}
-            startIcon={<ArrowLeft style={{ width: 20, height: 20 }} />}
-          >
-            返回
-          </Button>
-          <Box>
-            <Typography
-              variant='h5'
-              sx={{ fontWeight: 'bold' }}
-            >
-              新建客户
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              创建新的客户档案
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      <Card>
-        <CardContent sx={{ p: 3 }}>
-          <Typography
-            variant='h6'
-            sx={{ mb: 2, fontWeight: 600 }}
-          >
-            基本信息
-          </Typography>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='客户名称'
-                required
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='客户编码'
-                value={formData.code}
-                onChange={(e) => handleInputChange('code', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>客户类型</InputLabel>
-                <Select
-                  value={formData.type}
-                  label='客户类型'
-                  onChange={(e) => handleInputChange('type', e.target.value)}
-                >
-                  <MenuItem value='enterprise'>企业客户</MenuItem>
-                  <MenuItem value='personal'>个人客户</MenuItem>
-                  <MenuItem value='government'>政府机构</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>行业</InputLabel>
-                <Select
-                  value={formData.industry}
-                  label='行业'
-                  onChange={(e) => handleInputChange('industry', e.target.value)}
-                >
-                  <MenuItem value='it'>信息技术</MenuItem>
-                  <MenuItem value='finance'>金融</MenuItem>
-                  <MenuItem value='manufacture'>制造业</MenuItem>
-                  <MenuItem value='retail'>零售</MenuItem>
-                  <MenuItem value='other'>其他</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>客户来源</InputLabel>
-                <Select
-                  value={formData.source}
-                  label='客户来源'
-                  onChange={(e) => handleInputChange('source', e.target.value)}
-                >
-                  <MenuItem value='website'>官网</MenuItem>
-                  <MenuItem value='referral'>客户推荐</MenuItem>
-                  <MenuItem value='exhibition'>展会</MenuItem>
-                  <MenuItem value='cold_call'>电话营销</MenuItem>
-                  <MenuItem value='other'>其他</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='网站'
-                value={formData.website}
-                onChange={(e) => handleInputChange('website', e.target.value)}
-              />
-            </Grid>
-          </Grid>
-
-          <Typography
-            variant='h6'
-            sx={{ mb: 2, mt: 4, fontWeight: 600 }}
-          >
-            联系方式
-          </Typography>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='电话'
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                fullWidth
-                label='邮箱'
-                type='email'
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TextField
-                fullWidth
-                label='地址'
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
-              />
-            </Grid>
-          </Grid>
-
-          <Typography
-            variant='h6'
-            sx={{ mb: 2, mt: 4, fontWeight: 600 }}
-          >
-            备注
-          </Typography>
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label='描述'
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-              />
-            </Grid>
-          </Grid>
-
-          <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
-            <Button
-              variant='outlined'
-              onClick={() => navigate('/crm/customers')}
-              startIcon={<X style={{ width: 18, height: 18 }} />}
-            >
-              取消
-            </Button>
-            <Button
-              variant='contained'
-              onClick={handleSubmit}
-              disabled={submitting}
-              startIcon={
-                submitting ? (
-                  <CircularProgress size={18} />
-                ) : (
-                  <Save style={{ width: 18, height: 18 }} />
-                )
-              }
-            >
-              {submitting ? '提交中...' : '创建客户'}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Container>
+    <FormPageTemplate
+      title='新建客户'
+      subtitle='创建新的客户档案'
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: '客户管理', href: '/crm' },
+        { label: '客户列表', href: '/crm/customers' },
+        { label: '新建客户' },
+      ]}
+      sections={sections}
+      schema={customerSchema}
+      submitting={submitting}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      submitText='创建客户'
+      cancelText='取消'
+      columns={3}
+      stickyFooter={true}
+    />
   );
 };
 

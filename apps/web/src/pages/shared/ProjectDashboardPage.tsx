@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiLogger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import {
   FolderKanban,
   TrendingUp,

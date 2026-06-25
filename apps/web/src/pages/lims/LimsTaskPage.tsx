@@ -45,6 +45,7 @@ import type {
   LimsStatistics,
 } from '@/api/lims';
 import { limsApi } from '@/api/lims';
+import { useAppStore } from '@/store';
 import { GRADIENTS } from '@/constants/colors';
 import { PageHeader } from '@/components/templates/PageHeader';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';

@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Download, FileText, Calendar, User } from 'lucide-react';
-import { Chip, Box, Typography, Tooltip, IconButton } from '@mui/material';
+import { Chip, Box, Typography, Tooltip, IconButton, Alert } from '@mui/material';
 import { Button } from '@mui/material';
 import {
   ListPageTemplate,
@@ -9,6 +10,13 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import {
+  fetchReports,
+  createReport,
+  updateReport,
+  deleteReport,
+  type Report as ApiReport,
+} from '@/api/bi';
 
 interface Report {
   id: string;
@@ -53,114 +61,59 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-const mockReports: Report[] = [
-  {
-    id: '1',
-    name: '每日生产报表',
-    type: 'daily',
-    creator: '张三',
-    created_at: '2024-01-15T08:00:00Z',
-    updated_at: '2024-06-10T10:30:00Z',
-    status: 'active',
-    description: '每日生产数据汇总报表',
-  },
-  {
-    id: '2',
-    name: '每周质量分析',
-    type: 'weekly',
-    creator: '李四',
-    created_at: '2024-02-20T09:00:00Z',
-    updated_at: '2024-06-09T14:20:00Z',
-    status: 'active',
-    description: '每周质量检验数据分析',
-  },
-  {
-    id: '3',
-    name: '月度销售报告',
-    type: 'monthly',
-    creator: '王五',
-    created_at: '2024-03-10T10:00:00Z',
-    updated_at: '2024-06-01T08:45:00Z',
-    status: 'active',
-    description: '月度销售业绩汇总',
-  },
-  {
-    id: '4',
-    name: '季度研发进度',
-    type: 'quarterly',
-    creator: '赵六',
-    created_at: '2024-01-05T11:00:00Z',
-    updated_at: '2024-04-05T16:00:00Z',
-    status: 'archived',
-    description: '研发项目季度进度报告',
-  },
-  {
-    id: '5',
-    name: '年度财务总结',
-    type: 'annual',
-    creator: '孙七',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-02-28T20:00:00Z',
-    status: 'archived',
-    description: '年度财务数据汇总分析',
-  },
-  {
-    id: '6',
-    name: '设备维护报告',
-    type: 'custom',
-    creator: '周八',
-    created_at: '2024-04-12T13:00:00Z',
-    updated_at: '2024-06-08T09:15:00Z',
-    status: 'draft',
-    description: '设备维护保养记录统计',
-  },
-  {
-    id: '7',
-    name: '库存预警报表',
-    type: 'daily',
-    creator: '吴九',
-    created_at: '2024-05-01T08:00:00Z',
-    updated_at: '2024-06-10T11:30:00Z',
-    status: 'active',
-    description: '库存低于安全库存预警',
-  },
-  {
-    id: '8',
-    name: '人员绩效分析',
-    type: 'monthly',
-    creator: '郑十',
-    created_at: '2024-03-20T14:00:00Z',
-    updated_at: '2024-06-05T15:45:00Z',
-    status: 'active',
-    description: '员工工作绩效月度统计',
-  },
-];
+const apiReportToReport = (apiReport: ApiReport): Report => ({
+  id: apiReport.id,
+  name: apiReport.name,
+  type: apiReport.report_type,
+  creator: (apiReport as any).created_by || '未知',
+  created_at: apiReport.created_at,
+  updated_at: apiReport.updated_at,
+  status: (apiReport as any).status || 'active',
+  description: apiReport.description,
+});
 
 const BIReportPage = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      setTimeout(() => {
-        setReports(mockReports);
-        setLoading(false);
-      }, 500);
-    } catch (error: unknown) {
-      logger.error('Failed to load reports:', error);
+      const res = await fetchReports();
+      if (res.success && res.data) {
+        const apiReports: ApiReport[] = res.data.items || res.data || [];
+        const mappedReports = apiReports.map(apiReportToReport);
+        setReports(mappedReports);
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to load reports:', e);
+      setError('加载报表列表失败，请稍后重试');
+    } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
+
+  const handleDeleteReport = useCallback(async (id: string) => {
+    try {
+      const res = await deleteReport(id);
+      if (res.success) {
+        setReports(reports.filter((r) => r.id !== id));
+      }
+    } catch (e: unknown) {
+      logger.error('Failed to delete report:', e);
+    }
+  }, [reports]);
 
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
@@ -295,12 +248,12 @@ const BIReportPage = () => {
         label: '删除',
         icon: <Trash2 size={16} />,
         color: 'error',
-        onClick: (row) => logger.info('Delete:', row.id),
+        onClick: (row) => handleDeleteReport(row.id),
         confirm: true,
         confirmMessage: '确定要删除这个报表吗?',
       },
     ],
-    []
+    [handleDeleteReport]
   );
 
   const filters = useMemo<FilterConfig[]>(
@@ -350,33 +303,40 @@ const BIReportPage = () => {
   );
 
   return (
-    <ListPageTemplate<Report>
-      title='报表管理'
-      subtitle='创建、管理和生成业务报表'
-      columns={columns}
-      data={filteredReports}
-      loading={loading}
-      searchable
-      searchPlaceholder='搜索报表名称或创建人...'
-      searchValue={searchTerm}
-      onSearch={(value) => setSearchTerm(value)}
-      filters={filters}
-      pagination={pagination}
-      rowActions={rowActions}
-      actions={[
-        {
-          label: '返回数据大屏',
-          variant: 'outlined',
-          onClick: () => logger.info('Back to dashboard'),
-        },
-        {
-          label: '新建报表',
-          icon: <Plus size={16} />,
-          variant: 'contained',
-          onClick: () => logger.info('Create report'),
-        },
-      ]}
-    />
+    <Box sx={{ p: 3 }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      <ListPageTemplate<Report>
+        title='报表管理'
+        subtitle='创建、管理和生成业务报表'
+        columns={columns}
+        data={filteredReports}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索报表名称或创建人...'
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
+        pagination={pagination}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: '返回数据大屏',
+            variant: 'outlined',
+            onClick: () => logger.info('Back to dashboard'),
+          },
+          {
+            label: '新建报表',
+            icon: <Plus size={16} />,
+            variant: 'contained',
+            onClick: () => logger.info('Create report'),
+          },
+        ]}
+      />
+    </Box>
   );
 };
 

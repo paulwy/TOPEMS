@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/utils/logger';
+import { useAppStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -10,6 +11,7 @@ import {
   Database,
   CheckCircle,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import {
   BarChart,
@@ -22,12 +24,19 @@ import {
   PieChart as RechartsPieChart,
   Pie,
 } from 'recharts';
-import { fetchAnalyticsOverview } from '@/api/bi';
+import {
+  fetchAnalyticsOverview,
+  fetchDevelopmentAnalytics,
+  fetchQualityAnalytics,
+  fetchProductionAnalytics,
+  fetchLaboratoryAnalytics,
+  fetchModuleData,
+} from '@/api/bi';
 import { BIChartColors } from '@/components/charts/chartTheme';
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from '@/components/ui/OrganizationFilter';
-import { Box, Typography, Skeleton } from '@mui/material';
+import { Box, Typography, Skeleton, Alert } from '@mui/material';
 import {
   DashboardTemplate,
   type StatCard,
@@ -204,36 +213,181 @@ const ModuleCard = ({
   );
 };
 
+interface ModuleInfo {
+  id: string;
+  name: string;
+  icon: string;
+  stats: Record<string, string | number>;
+  trend: 'up' | 'down' | 'stable';
+  color: string;
+}
+
+const moduleConfigs: Omit<ModuleInfo, 'stats' | 'trend'>[] = [
+  {
+    id: 'development',
+    name: '研发管理',
+    icon: '🔬',
+    color: 'from-blue-500 to-cyan-500',
+  },
+  {
+    id: 'quality',
+    name: '质量管理',
+    icon: '✅',
+    color: 'from-emerald-500 to-teal-500',
+  },
+  {
+    id: 'production',
+    name: '生产数据',
+    icon: '🏭',
+    color: 'from-amber-500 to-orange-500',
+  },
+  {
+    id: 'laboratory',
+    name: '实验室',
+    icon: '🧪',
+    color: 'from-violet-500 to-purple-500',
+  },
+  {
+    id: 'ehs',
+    name: '安全环保',
+    icon: '🛡️',
+    color: 'from-rose-500 to-pink-500',
+  },
+  {
+    id: 'srm',
+    name: '供应链',
+    icon: '📦',
+    color: 'from-cyan-500 to-blue-500',
+  },
+];
+
 const BIAnalyticsPage = () => {
   const [overview, setOverview] = useState<any>(null);
+  const [modulesData, setModulesData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadOverview();
-  }, []);
-
-  const loadOverview = async (showRefreshing = false) => {
+  const loadOverview = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setIsRefreshing(true);
     else setLoading(true);
+    setError(null);
     try {
       const res = await fetchAnalyticsOverview();
       if (res.success && res.data) {
         setOverview(res.data);
       }
+
+      const modulePromises = moduleConfigs.map(async (mod) => {
+        try {
+          const moduleRes = await fetchModuleData(mod.id);
+          if (moduleRes.success && moduleRes.data) {
+            return { id: mod.id, data: moduleRes.data };
+          }
+          return { id: mod.id, data: null };
+        } catch (e) {
+          logger.error(`Failed to load module ${mod.id}:`, e);
+          return { id: mod.id, data: null };
+        }
+      });
+
+      const results = await Promise.all(modulePromises);
+      const dataMap: Record<string, any> = {};
+      results.forEach((r) => {
+        dataMap[r.id] = r.data;
+      });
+      setModulesData(dataMap);
     } catch (e: unknown) {
-      logger.error('Failed to load overview:', e);
+      logger.error('Failed to load analytics:', e);
+      setError('加载分析数据失败，请稍后重试');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
+  }, []);
+
+  useEffect(() => {
+    loadOverview();
+  }, [loadOverview]);
+
+  const handleRefresh = useCallback(() => {
+    loadOverview(true);
+  }, [loadOverview]);
+
+  const getModuleStats = (moduleId: string): Record<string, string | number> => {
+    const data = modulesData[moduleId];
+    if (!data) {
+      const fallbackStats: Record<string, Record<string, string | number>> = {
+        development: { 项目总数: 120, 进行中: 45, 完成率: '85%' },
+        quality: { 检验总数: 3250, 合格率: '97.8%', 待处理: 70 },
+        production: { 批次总数: 450, 完成: 415, 效率: '92%' },
+        laboratory: { 样品总数: 2450, 完成检验: 2150, 仪器使用率: '87.5%' },
+        ehs: { 风险总数: 125, 高风险: 15, 安全事件: 18 },
+        srm: { 供应商总数: 280, 合格: 220, 平均评分: 4.5 },
+      };
+      return fallbackStats[moduleId] || {};
+    }
+
+    const statsMap: Record<string, Record<string, string | number>> = {
+      development: {
+        项目总数: data.total_projects || 0,
+        进行中: data.active_projects || 0,
+        完成率: data.project_status_distribution
+          ? `${Math.round(((data.project_status_distribution.completed || 0) / (data.total_projects || 1)) * 100)}%`
+          : '0%',
+      },
+      quality: {
+        检验总数: data.total_inspections || 0,
+        合格率: data.pass_rate ? `${data.pass_rate}%` : '0%',
+        待处理: data.failed_inspections || 0,
+      },
+      production: {
+        批次总数: data.total_production_batches || 0,
+        完成: data.completed_batches || 0,
+        效率: data.production_efficiency ? `${data.production_efficiency}%` : '0%',
+      },
+      laboratory: {
+        样品总数: data.total_samples || 0,
+        完成检验: data.completed_tests || 0,
+        仪器使用率: data.instrument_usage_rate ? `${data.instrument_usage_rate}%` : '0%',
+      },
+      ehs: {
+        风险总数: data.total_risks || 0,
+        高风险: data.high_risks || 0,
+        安全事件: data.incidents || 0,
+      },
+      srm: {
+        供应商总数: data.total_suppliers || 0,
+        合格: data.qualified || 0,
+        平均评分: data.avg_rating || 0,
+      },
+    };
+    return statsMap[moduleId] || {};
   };
 
-  const handleRefresh = () => {
-    loadOverview(true);
+  const getModuleTrend = (moduleId: string): 'up' | 'down' | 'stable' => {
+    const data = modulesData[moduleId];
+    if (!data) {
+      const fallbackTrends: Record<string, 'up' | 'down' | 'stable'> = {
+        development: 'up',
+        quality: 'up',
+        production: 'stable',
+        laboratory: 'up',
+        ehs: 'down',
+        srm: 'up',
+      };
+      return fallbackTrends[moduleId] || 'stable';
+    }
+    return data.trend || 'stable';
   };
+
+  const modules: ModuleInfo[] = moduleConfigs.map((config) => ({
+    ...config,
+    stats: getModuleStats(config.id),
+    trend: getModuleTrend(config.id),
+  }));
 
   if (loading) {
     return (
@@ -293,57 +447,6 @@ const BIAnalyticsPage = () => {
       </Box>
     );
   }
-
-  const modules = [
-    {
-      id: 'development',
-      name: '研发管理',
-      icon: '🔬',
-      stats: { 项目总数: 120, 进行中: 45, 完成率: '85%' },
-      trend: 'up' as const,
-      color: 'from-blue-500 to-cyan-500',
-    },
-    {
-      id: 'quality',
-      name: '质量管理',
-      icon: '✅',
-      stats: { 检验总数: 3250, 合格率: '97.8%', 待处理: 70 },
-      trend: 'up' as const,
-      color: 'from-emerald-500 to-teal-500',
-    },
-    {
-      id: 'production',
-      name: '生产数据',
-      icon: '🏭',
-      stats: { 批次总数: 450, 完成: 415, 效率: '92%' },
-      trend: 'stable' as const,
-      color: 'from-amber-500 to-orange-500',
-    },
-    {
-      id: 'laboratory',
-      name: '实验室',
-      icon: '🧪',
-      stats: { 样品总数: 2450, 完成检验: 2150, 仪器使用率: '87.5%' },
-      trend: 'up' as const,
-      color: 'from-violet-500 to-purple-500',
-    },
-    {
-      id: 'ehs',
-      name: '安全环保',
-      icon: '🛡️',
-      stats: { 风险总数: 125, 高风险: 15, 安全事件: 18 },
-      trend: 'down' as const,
-      color: 'from-rose-500 to-pink-500',
-    },
-    {
-      id: 'srm',
-      name: '供应链',
-      icon: '📦',
-      stats: { 供应商总数: 280, 合格: 220, 平均评分: 4.5 },
-      trend: 'up' as const,
-      color: 'from-cyan-500 to-blue-500',
-    },
-  ];
 
   const moduleData = overview?.modules || {};
 
@@ -503,6 +606,12 @@ const BIAnalyticsPage = () => {
         />
       }
     >
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* 模块卡片列表 */}
       <Box
         sx={{
